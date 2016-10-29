@@ -1,0 +1,586 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{86D226C5-EF62-4562-AC06-E6A753DFA7CF}</ProjectGuid>
+    <RootNamespace>libdeemon</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)..\</OutDir>
+    <IncludePath>$(ProjectDir)..\include;$(ProjectDir)..\src;$(ProjectDir)..\src\debug_new;$(ProjectDir)..\src\tpp;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)..\build\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)..\</OutDir>
+    <IncludePath>$(ProjectDir)..\include;$(ProjectDir)..\src;$(ProjectDir)..\src\debug_new;$(ProjectDir)..\src\tpp;C:\c\__devl__;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)..\build\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)..\</OutDir>
+    <IncludePath>$(ProjectDir)..\include;$(ProjectDir)..\src;$(ProjectDir)..\src\debug_new;$(ProjectDir)..\src\tpp;C:\c\__devl__;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)..\build\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)..\</OutDir>
+    <IncludePath>$(ProjectDir)..\include;$(ProjectDir)..\src;$(ProjectDir)..\src\debug_new;$(ProjectDir)..\src\tpp;C:\c\__devl__;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)..\build\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>DEE_USE_DEBUG_NEW;DEE_LINK_DLL_EXPORT;DEBUG_NEW_CONFIG_LINK_DLLEXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>DEE_USE_DEBUG_NEW;DEE_LINK_DLL_EXPORT;DEBUG_NEW_CONFIG_LINK_DLLEXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>DEE_USE_DEBUG_NEW;DEE_LINK_DLL_EXPORT;DEBUG_NEW_CONFIG_LINK_DLLEXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>DEE_USE_DEBUG_NEW;DEE_LINK_DLL_EXPORT;DEBUG_NEW_CONFIG_LINK_DLLEXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\debug_new\debug_new.c" />
+    <ClCompile Include="..\src\deemon\array.c" />
+    <ClCompile Include="..\src\deemon\cell.c" />
+    <ClCompile Include="..\src\deemon\cfunction.c" />
+    <ClCompile Include="..\src\deemon\class\class.c" />
+    <ClCompile Include="..\src\deemon\compiler\code.c" />
+    <ClCompile Include="..\src\deemon\compiler\codewriter.c" />
+    <ClCompile Include="..\src\deemon\compiler\lexer.c" />
+    <ClCompile Include="..\src\deemon\compiler\sast.c" />
+    <ClCompile Include="..\src\deemon\compiler\sast_compile.c" />
+    <ClCompile Include="..\src\deemon\compiler\sast_parse.c" />
+    <ClCompile Include="..\src\deemon\compiler\scope.c" />
+    <ClCompile Include="..\src\deemon\compiler\xast.c" />
+    <ClCompile Include="..\src\deemon\compiler\xast_compile.c" />
+    <ClCompile Include="..\src\deemon\compiler\xast_parse.c" />
+    <ClCompile Include="..\src\deemon\deemonrun.c" />
+    <ClCompile Include="..\src\deemon\dex.c" />
+    <ClCompile Include="..\src\deemon\dict.c" />
+    <ClCompile Include="..\src\deemon\enum_attributes.c" />
+    <ClCompile Include="..\src\deemon\error.c" />
+    <ClCompile Include="..\src\deemon\file.c" />
+    <ClCompile Include="..\src\deemon\float.c" />
+    <ClCompile Include="..\src\deemon\foreign_function.c" />
+    <ClCompile Include="..\src\deemon\fs_api.c" />
+    <ClCompile Include="..\src\deemon\gc.c" />
+    <ClCompile Include="..\src\deemon\generic_vtable.c" />
+    <ClCompile Include="..\src\deemon\integer.c" />
+    <ClCompile Include="..\src\deemon\io_buffer.c" />
+    <ClCompile Include="..\src\deemon\iterator.c" />
+    <ClCompile Include="..\src\deemon\list.c" />
+    <ClCompile Include="..\src\deemon\marshal.c" />
+    <ClCompile Include="..\src\deemon\marshal_data.c" />
+    <ClCompile Include="..\src\deemon\math.c" />
+    <ClCompile Include="..\src\deemon\memberdef.c" />
+    <ClCompile Include="..\src\deemon\memberfunction.c" />
+    <ClCompile Include="..\src\deemon\mutex.c" />
+    <ClCompile Include="..\src\deemon\none.c" />
+    <ClCompile Include="..\src\deemon\object.c" />
+    <ClCompile Include="..\src\deemon\pipe.c" />
+    <ClCompile Include="..\src\deemon\process.c" />
+    <ClCompile Include="..\src\deemon\random.c" />
+    <ClCompile Include="..\src\deemon\runtime\builtins.c" />
+    <ClCompile Include="..\src\deemon\runtime\builtin_functions.c" />
+    <ClCompile Include="..\src\deemon\runtime\execute.c" />
+    <ClCompile Include="..\src\deemon\runtime\extern.c" />
+    <ClCompile Include="..\src\deemon\runtime\function.c" />
+    <ClCompile Include="..\src\deemon\runtime\libffi_msvc\closures.c" />
+    <ClCompile Include="..\src\deemon\runtime\libffi_msvc\ffi.c" />
+    <ClCompile Include="..\src\deemon\runtime\libffi_msvc\ffi64.c" />
+    <ClCompile Include="..\src\deemon\runtime\libffi_msvc\prep_cif.c" />
+    <ClCompile Include="..\src\deemon\runtime\libffi_msvc\raw_api.c" />
+    <ClCompile Include="..\src\deemon\runtime\libffi_msvc\types.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\deemon\runtime\sandbox.c" />
+    <ClCompile Include="..\src\deemon\sequence.c" />
+    <ClCompile Include="..\src\deemon\set.c" />
+    <ClCompile Include="..\src\deemon\signalhandler.c" />
+    <ClCompile Include="..\src\deemon\socket.c" />
+    <ClCompile Include="..\src\deemon\struct.c" />
+    <ClCompile Include="..\src\deemon\structured.c" />
+    <ClCompile Include="..\src\deemon\super.c" />
+    <ClCompile Include="..\src\deemon\thread.c" />
+    <ClCompile Include="..\src\deemon\time.c" />
+    <ClCompile Include="..\src\deemon\tls.c" />
+    <ClCompile Include="..\src\deemon\traceback.c" />
+    <ClCompile Include="..\src\deemon\tuple.c" />
+    <ClCompile Include="..\src\deemon\type.c" />
+    <ClCompile Include="..\src\deemon\unicode\string.c" />
+    <ClCompile Include="..\src\deemon\uuid.c" />
+    <ClCompile Include="..\src\deemon\value.c" />
+    <ClCompile Include="..\src\deemon\weakref.c" />
+    <ClCompile Include="..\src\deemon\_deprecated.c" />
+    <ClCompile Include="..\src\tpp\tpp.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\deemon.h" />
+    <ClInclude Include="..\include\deemon\array.h" />
+    <ClInclude Include="..\include\deemon\bool.h" />
+    <ClInclude Include="..\include\deemon\cell.h" />
+    <ClInclude Include="..\include\deemon\cfunction.h" />
+    <ClInclude Include="..\include\deemon\class.h" />
+    <ClInclude Include="..\include\deemon\compiler\code.h" />
+    <ClInclude Include="..\include\deemon\compiler\compiler.h" />
+    <ClInclude Include="..\include\deemon\compiler\lexer.h" />
+    <ClInclude Include="..\include\deemon\cxx\class.h" />
+    <ClInclude Include="..\include\deemon\cxx\dict.h" />
+    <ClInclude Include="..\include\deemon\cxx\file.h" />
+    <ClInclude Include="..\include\deemon\cxx\float.h" />
+    <ClInclude Include="..\include\deemon\cxx\function.h" />
+    <ClInclude Include="..\include\deemon\cxx\integer.h" />
+    <ClInclude Include="..\include\deemon\cxx\list.h" />
+    <ClInclude Include="..\include\deemon\cxx\none.h" />
+    <ClInclude Include="..\include\deemon\cxx\object.h" />
+    <ClInclude Include="..\include\deemon\cxx\string.h" />
+    <ClInclude Include="..\include\deemon\cxx\structured.h" />
+    <ClInclude Include="..\include\deemon\cxx\time.h" />
+    <ClInclude Include="..\include\deemon\cxx\tuple.h" />
+    <ClInclude Include="..\include\deemon\cxx\type.h" />
+    <ClInclude Include="..\include\deemon\deemonrun.h" />
+    <ClInclude Include="..\include\deemon\dex.h" />
+    <ClInclude Include="..\include\deemon\dict.h" />
+    <ClInclude Include="..\include\deemon\error.h" />
+    <ClInclude Include="..\include\deemon\file.h" />
+    <ClInclude Include="..\include\deemon\float.h" />
+    <ClInclude Include="..\include\deemon\foreign_function.h" />
+    <ClInclude Include="..\include\deemon\fs_api.h" />
+    <ClInclude Include="..\include\deemon\gc.h" />
+    <ClInclude Include="..\include\deemon\generic_vtable.h" />
+    <ClInclude Include="..\include\deemon\integer.h" />
+    <ClInclude Include="..\include\deemon\iterator.h" />
+    <ClInclude Include="..\include\deemon\list.h" />
+    <ClInclude Include="..\include\deemon\marshal.h" />
+    <ClInclude Include="..\include\deemon\math.h" />
+    <ClInclude Include="..\include\deemon\memberdef.h" />
+    <ClInclude Include="..\include\deemon\memberfunction.h" />
+    <ClInclude Include="..\include\deemon\mp\mutex.h" />
+    <ClInclude Include="..\include\deemon\mp\pipe.h" />
+    <ClInclude Include="..\include\deemon\mp\process.h" />
+    <ClInclude Include="..\include\deemon\mp\thread.h" />
+    <ClInclude Include="..\include\deemon\mp\tls.h" />
+    <ClInclude Include="..\include\deemon\none.h" />
+    <ClInclude Include="..\include\deemon\object.h" />
+    <ClInclude Include="..\include\deemon\optional\atomic_mutex.h" />
+    <ClInclude Include="..\include\deemon\optional\atomic_once.h" />
+    <ClInclude Include="..\include\deemon\optional\cfunction_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\detail\object_callattr.h" />
+    <ClInclude Include="..\include\deemon\optional\enum_attributes.h" />
+    <ClInclude Include="..\include\deemon\optional\float_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\hash.h" />
+    <ClInclude Include="..\include\deemon\optional\hashmap.h" />
+    <ClInclude Include="..\include\deemon\optional\hashset.h" />
+    <ClInclude Include="..\include\deemon\optional\integer_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\io_buffer.h" />
+    <ClInclude Include="..\include\deemon\optional\memberdef_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\object_attr.h" />
+    <ClInclude Include="..\include\deemon\optional\object_call.h" />
+    <ClInclude Include="..\include\deemon\optional\object_cast.h" />
+    <ClInclude Include="..\include\deemon\optional\object_compare.h" />
+    <ClInclude Include="..\include\deemon\optional\object_copy.h" />
+    <ClInclude Include="..\include\deemon\optional\object_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\object_doc.h" />
+    <ClInclude Include="..\include\deemon\optional\object_io.h" />
+    <ClInclude Include="..\include\deemon\optional\object_malloc.h" />
+    <ClInclude Include="..\include\deemon\optional\object_math.h" />
+    <ClInclude Include="..\include\deemon\optional\object_pool.h" />
+    <ClInclude Include="..\include\deemon\optional\object_refcnt.h" />
+    <ClInclude Include="..\include\deemon\optional\object_sequence.h" />
+    <ClInclude Include="..\include\deemon\optional\object_str.h" />
+    <ClInclude Include="..\include\deemon\optional\object_util.h" />
+    <ClInclude Include="..\include\deemon\optional\object_visit.h" />
+    <ClInclude Include="..\include\deemon\optional\raised_exception.h" />
+    <ClInclude Include="..\include\deemon\optional\std\stdarg.h" />
+    <ClInclude Include="..\include\deemon\optional\std\string.h" />
+    <ClInclude Include="..\include\deemon\optional\string_forward.h" />
+    <ClInclude Include="..\include\deemon\optional\structured_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\structured_lvalue_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\structured_pointer_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\type_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\type_flags.h" />
+    <ClInclude Include="..\include\deemon\optional\type_slots.h" />
+    <ClInclude Include="..\include\deemon\optional\type_util.h" />
+    <ClInclude Include="..\include\deemon\optional\uuid.h" />
+    <ClInclude Include="..\include\deemon\random.h" />
+    <ClInclude Include="..\include\deemon\runtime\builtins.h" />
+    <ClInclude Include="..\include\deemon\runtime\execute.h" />
+    <ClInclude Include="..\include\deemon\runtime\extern.h" />
+    <ClInclude Include="..\include\deemon\runtime\function.h" />
+    <ClInclude Include="..\include\deemon\runtime\sandbox.h" />
+    <ClInclude Include="..\include\deemon\runtime_flags.h" />
+    <ClInclude Include="..\include\deemon\sequence.h" />
+    <ClInclude Include="..\include\deemon\set.h" />
+    <ClInclude Include="..\include\deemon\socket.h" />
+    <ClInclude Include="..\include\deemon\string.h" />
+    <ClInclude Include="..\include\deemon\struct.h" />
+    <ClInclude Include="..\include\deemon\structured.h" />
+    <ClInclude Include="..\include\deemon\super.h" />
+    <ClInclude Include="..\include\deemon\system.h" />
+    <ClInclude Include="..\include\deemon\time.h" />
+    <ClInclude Include="..\include\deemon\traceback.h" />
+    <ClInclude Include="..\include\deemon\tuple.h" />
+    <ClInclude Include="..\include\deemon\type.h" />
+    <ClInclude Include="..\include\deemon\value.h" />
+    <ClInclude Include="..\include\deemon\version.h" />
+    <ClInclude Include="..\include\deemon\weakref.h" />
+    <ClInclude Include="..\src\debug_new\debug_new.h" />
+    <ClInclude Include="..\src\deemon\compiler\codewriter.h" />
+    <ClInclude Include="..\src\deemon\compiler\sast.h" />
+    <ClInclude Include="..\src\deemon\compiler\scope.h" />
+    <ClInclude Include="..\src\deemon\compiler\xast.h" />
+    <ClInclude Include="..\src\deemon\marshal_data.h" />
+    <ClInclude Include="..\src\deemon\runtime\builtin_functions.h" />
+    <ClInclude Include="..\src\deemon\runtime\libffi_msvc\ffi.h" />
+    <ClInclude Include="..\src\deemon\runtime\libffi_msvc\fficonfig.h" />
+    <ClInclude Include="..\src\deemon\runtime\libffi_msvc\ffi_common.h" />
+    <ClInclude Include="..\src\deemon\runtime\libffi_msvc\ffitarget.h" />
+    <ClInclude Include="..\src\deemon\signalhandler.h" />
+    <ClInclude Include="..\src\deemon\uuid_list.h" />
+    <ClInclude Include="..\src\tpp\tpp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\include\deemon\cxx\__string_impl.inl" />
+    <None Include="..\include\deemon\__annotations.inl" />
+    <None Include="..\include\deemon\__atomic_intrin.inl" />
+    <None Include="..\include\deemon\__atomic_intrin_deemon.inl" />
+    <None Include="..\include\deemon\__atomic_intrin_gcc.inl" />
+    <None Include="..\include\deemon\__atomic_intrin_msvc.inl" />
+    <None Include="..\include\deemon\__atomic_intrin_nothread.inl" />
+    <CustomBuild Include="..\src\deemon\runtime\libffi_msvc\win32.S">
+      <FileType>Document</FileType>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cl.exe /EP $(SolutionDir)..\src\deemon\runtime\libffi_msvc\win32.S &gt; $(IntermediateOutputPath)\ffi_win32_plain.asm
+
+ml.exe /c /Cx /coff /Fo $(IntermediateOutputPath)\ffi_win32.obj $(IntermediateOutputPath)\ffi_win32_plain.asm</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cl.exe /EP $(SolutionDir)..\src\deemon\runtime\libffi_msvc\win32.S &gt; $(IntermediateOutputPath)\ffi_win32_plain.asm
+
+ml.exe /c /Cx /coff /Fo $(IntermediateOutputPath)\ffi_win32.obj $(IntermediateOutputPath)\ffi_win32_plain.asm</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntermediateOutputPath)\ffi_win32.obj</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntermediateOutputPath)\ffi_win32.obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntermediateOutputPath)\ffi_win32.obj</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntermediateOutputPath)\ffi_win32.obj</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl.exe /EP $(SolutionDir)..\src\deemon\runtime\libffi_msvc\win32.S &gt; $(IntermediateOutputPath)\ffi_win32_plain.asm
+
+ml.exe /c /Cx /coff /Fo $(IntermediateOutputPath)\ffi_win32.obj $(IntermediateOutputPath)\ffi_win32_plain.asm</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cl.exe /EP $(SolutionDir)..\src\deemon\runtime\libffi_msvc\win32.S &gt; $(IntermediateOutputPath)\ffi_win32_plain.asm
+
+ml.exe /c /Cx /coff /Fo $(IntermediateOutputPath)\ffi_win32.obj $(IntermediateOutputPath)\ffi_win32_plain.asm</Command>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="..\src\deemon\runtime\libffi_msvc\win64.S">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+cl.exe /EP $(SolutionDir)..\src\deemon\runtime\libffi_msvc\win64.S &gt; $(IntermediateOutputPath)/ffi_win64_plain.asm
+
+ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutputPath)/ffi_win64_plain.asm
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntermediateOutputPath)/ffi_win64.obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+cl.exe /EP $(SolutionDir)..\src\deemon\runtime\libffi_msvc\win64.S &gt; $(IntermediateOutputPath)/ffi_win64_plain.asm
+
+ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutputPath)/ffi_win64_plain.asm
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+cl.exe /EP $(SolutionDir)..\src\deemon\runtime\libffi_msvc\win64.S &gt; $(IntermediateOutputPath)/ffi_win64_plain.asm
+
+ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutputPath)/ffi_win64_plain.asm
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+cl.exe /EP $(SolutionDir)..\src\deemon\runtime\libffi_msvc\win64.S &gt; $(IntermediateOutputPath)/ffi_win64_plain.asm
+
+ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutputPath)/ffi_win64_plain.asm
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntermediateOutputPath)/ffi_win64.obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntermediateOutputPath)/ffi_win64.obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntermediateOutputPath)/ffi_win64.obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <None Include="..\include\deemon\__bswap_intrin.inl" />
+    <None Include="..\include\deemon\__conf.inl" />
+    <None Include="..\include\deemon\__ctypes.inl" />
+    <None Include="..\include\deemon\__features.inl" />
+    <None Include="..\include\deemon\__string_api.inl" />
+    <None Include="..\include\deemon\__string_encoding.inl" />
+    <None Include="..\src\debug_new\debug_new_conf.inl" />
+    <None Include="..\src\debug_new\debug_new_disable.inl" />
+    <None Include="..\src\debug_new\debug_new_enable.inl" />
+    <None Include="..\src\deemon\bool.inl" />
+    <None Include="..\src\deemon\class\class.class_attributes.inl" />
+    <None Include="..\src\deemon\class\class.instance_attributes.inl" />
+    <None Include="..\src\deemon\class\class.operators.inl" />
+    <None Include="..\src\deemon\class\class.slot_linker.inl" />
+    <None Include="..\src\deemon\compiler\codewriter.delnoop.inl" />
+    <None Include="..\src\deemon\compiler\codewriter.peephole.inl" />
+    <None Include="..\src\deemon\compiler\sast.assign.inl" />
+    <None Include="..\src\deemon\compiler\sast.attributes.inl" />
+    <None Include="..\src\deemon\compiler\sast.collect_top_scope_children.inl" />
+    <None Include="..\src\deemon\compiler\sast.copy_with_scope.inl" />
+    <None Include="..\src\deemon\compiler\sast.equals.inl" />
+    <None Include="..\src\deemon\compiler\sast.predict_type.inl" />
+    <None Include="..\src\deemon\compiler\sast.repr.inl" />
+    <None Include="..\src\deemon\compiler\sast.uses_variable.inl" />
+    <None Include="..\src\deemon\compiler\sast.visit_all.inl" />
+    <None Include="..\src\deemon\compiler\sast_optimize.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.case_label.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.do_while.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.extern.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.for_or_foreach.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.generator_block.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.if_statement.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.module.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.specialloop.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.typedef.inl" />
+    <None Include="..\src\deemon\compiler\sast_parse.while.inl" />
+    <None Include="..\src\deemon\compiler\xast.assign.inl" />
+    <None Include="..\src\deemon\compiler\xast.attributes.inl" />
+    <None Include="..\src\deemon\compiler\xast.collect_top_scope_children.inl" />
+    <None Include="..\src\deemon\compiler\xast.copy_with_scope.inl" />
+    <None Include="..\src\deemon\compiler\xast.equals.inl" />
+    <None Include="..\src\deemon\compiler\xast.generic_sequence_size.inl" />
+    <None Include="..\src\deemon\compiler\xast.intrinsic_function_slots.inl" />
+    <None Include="..\src\deemon\compiler\xast.new_binary.inl" />
+    <None Include="..\src\deemon\compiler\xast.new_trinary.inl" />
+    <None Include="..\src\deemon\compiler\xast.new_unary.inl" />
+    <None Include="..\src\deemon\compiler\xast.offsetof.inl" />
+    <None Include="..\src\deemon\compiler\xast.optimizer_assumptions.inl" />
+    <None Include="..\src\deemon\compiler\xast.optimize_multivardecl.inl" />
+    <None Include="..\src\deemon\compiler\xast.optimize_sequence.inl" />
+    <None Include="..\src\deemon\compiler\xast.predict_type.inl" />
+    <None Include="..\src\deemon\compiler\xast.repr.inl" />
+    <None Include="..\src\deemon\compiler\xast.sequence_size.inl" />
+    <None Include="..\src\deemon\compiler\xast.typeattriutes.inl" />
+    <None Include="..\src\deemon\compiler\xast.uses_variable.inl" />
+    <None Include="..\src\deemon\compiler\xast.vardeclstorage_from_xast.inl" />
+    <None Include="..\src\deemon\compiler\xast.visit_all.inl" />
+    <None Include="..\src\deemon\compiler\xast_optimize.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.attribute.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.cast_suffix.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.class.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.class_entry.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.del.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.enum.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.exists.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.foreign_function_closure.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.function.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.import.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.init_or_decl.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.named_type_suffix.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.named_type_suffix_impl.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.offsetof.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.operator.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.range_init.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.struct.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.switch_block.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.type.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.types_compatible_p.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.unary.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.unary_with_suffix.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.var_lookup.inl" />
+    <None Include="..\src\deemon\compiler\__keywords.inl" />
+    <None Include="..\src\deemon\compiler\__opcode.inl" />
+    <None Include="..\src\deemon\compiler\__warnings.inl" />
+    <None Include="..\src\deemon\deemonrun.active_features.inl" />
+    <None Include="..\src\deemon\dex.import.inl" />
+    <None Include="..\src\deemon\dict.impl.hashmap.inl" />
+    <None Include="..\src\deemon\file.impl.buffered_read.inl" />
+    <None Include="..\src\deemon\file.impl.read.inl" />
+    <None Include="..\src\deemon\float_impl.inl" />
+    <None Include="..\src\deemon\foreign_function.callback_impl.inl" />
+    <None Include="..\src\deemon\foreign_function.closure.inl" />
+    <None Include="..\src\deemon\fs_api.unicode_impl.inl" />
+    <None Include="..\src\deemon\fs_api.win32_sid.inl" />
+    <None Include="..\src\deemon\interger.impl.inl" />
+    <None Include="..\src\deemon\iterator.zip_iterator.inl" />
+    <None Include="..\src\deemon\marshal.write_object.base.inl" />
+    <None Include="..\src\deemon\math.impl.inl" />
+    <None Include="..\src\deemon\object.core.destroy.inl" />
+    <None Include="..\src\deemon\object.core.gc_malloc.inl" />
+    <None Include="..\src\deemon\object.core.ob_malloc.inl" />
+    <None Include="..\src\deemon\object.core.reference.inl" />
+    <None Include="..\src\deemon\object.deep_equals.inl" />
+    <None Include="..\src\deemon\object.generic_attribute.call_impl.inl" />
+    <None Include="..\src\deemon\object.generic_attribute.del_impl.inl" />
+    <None Include="..\src\deemon\object.generic_attribute.get_impl.inl" />
+    <None Include="..\src\deemon\object.generic_attribute.has_impl.inl" />
+    <None Include="..\src\deemon\object.generic_attribute.inl" />
+    <None Include="..\src\deemon\object.generic_attribute.set_impl.inl" />
+    <None Include="..\src\deemon\object.hash.murmur3_32.inl" />
+    <None Include="..\src\deemon\object.hash.something32.inl" />
+    <None Include="..\src\deemon\object.hash.something64.inl" />
+    <None Include="..\src\deemon\object.impl.call_operators.inl" />
+    <None Include="..\src\deemon\object.impl.castf.inl" />
+    <None Include="..\src\deemon\object.impl.inplace_var_operators.inl" />
+    <None Include="..\src\deemon\object.impl.integer_operators.inl" />
+    <None Include="..\src\deemon\object.impl.marshal.inl" />
+    <None Include="..\src\deemon\object.impl.operators.inl" />
+    <None Include="..\src\deemon\object.impl.operator_attrib.inl" />
+    <None Include="..\src\deemon\object.impl.string_operators.inl" />
+    <None Include="..\src\deemon\object.util.iterate.inl" />
+    <None Include="..\src\deemon\posix_features.inl" />
+    <None Include="..\src\deemon\process.unicode.c.inl" />
+    <None Include="..\src\deemon\runtime\function.call.inl" />
+    <None Include="..\src\deemon\runtime\_execute.inl" />
+    <None Include="..\src\deemon\runtime\_execute_targets.inl" />
+    <None Include="..\src\deemon\runtime\__sum_strings.inl" />
+    <None Include="..\src\deemon\sequence.sum_integrals.inl" />
+    <None Include="..\src\deemon\sequence.sum_strings.inl" />
+    <None Include="..\src\deemon\set.impl.hashset.inl" />
+    <None Include="..\src\deemon\socket.impl.recvdata.inl" />
+    <None Include="..\src\deemon\socket.impl.sockopt.inl" />
+    <None Include="..\src\deemon\structured.get_pointer_impl.inl" />
+    <None Include="..\src\deemon\structured.typef.inl" />
+    <None Include="..\src\deemon\thread.systls.inl" />
+    <None Include="..\src\deemon\tuple.unpack.inl" />
+    <None Include="..\src\deemon\unicode\string.cast.escapecode.inl" />
+    <None Include="..\src\deemon\unicode\string.cast.escapecode.previewsize.impl.inl" />
+    <None Include="..\src\deemon\unicode\string.cast.escapecode.previewsize.inl" />
+    <None Include="..\src\deemon\unicode\string.cast.unicode.inl" />
+    <None Include="..\src\deemon\unicode\string.impl.format.inl" />
+    <None Include="..\src\deemon\unicode\string.impl.itos.inl" />
+    <None Include="..\src\deemon\unicode\string.impl.scanf.inl" />
+    <None Include="..\src\deemon\unicode\string.impl.stof.inl" />
+    <None Include="..\src\deemon\unicode\string.impl.stoi.inl" />
+    <None Include="..\src\deemon\unicode\string.unicode_impl.inl" />
+    <None Include="..\src\deemon\virtual_fs.c.inl" />
+    <None Include="..\src\deemon\virtual_fs.dev_urandom.inl" />
+    <None Include="..\src\deemon\virtual_fs.dev_zero.inl" />
+    <None Include="..\src\deemon\virtual_fs.h.inl" />
+    <None Include="..\src\deemon\__alloca.inl" />
+    <None Include="..\src\deemon\__min_int_t.inl" />
+    <None Include="..\src\deemon\__typecompatible.inl" />
+    <None Include="..\src\deemon\__xconf.inl" />
+    <None Include="..\src\tpp\tpp_conf.inl" />
+    <None Include="..\src\tpp\tpp_keywords.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

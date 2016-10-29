@@ -1,0 +1,82 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+#if __API_VERSION__ < 101
+#	error "API Version too old for this header"
+#endif
+
+#pragma push_macro("shared_lib")
+#undef shared_lib
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class shared_lib(string.T filename) -> shared_lib
+//    @throws Error.SystemError: Failed to open/load the library
+//        Opens a shared library located at 'filename'
+//        NOTE: It is recommended to open dll/so files
+//              with 'shared_lib.open(filename)' instead,
+//              as to take advantage of deemon's internal
+//              cache of loaded libraries.
+//        NOTE: To load deemon extensions, use '__builtin_dex'
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> move(shared_lib right);
+// >> operator move = (shared_lib right) -> shared_lib;
+// >> operator str() -> string;
+// >> operator repr() -> string;
+// >> operator ! () -> bool;
+// >> operator bool() -> bool;
+// >> operator < (shared_lib right) -> bool;
+// >> operator <= (shared_lib right) -> bool;
+// >> operator == (shared_lib right) -> bool;
+// >> operator != (shared_lib right) -> bool;
+// >> operator > (shared_lib right) -> bool;
+// >> operator >= (shared_lib right) -> bool;
+//
+// >> operator () (string import_name) -> none *;
+//    @throws Error.SystemError: Failed to locate import
+//        Returns the address of a given import
+// >> operator [] (string import_name) -> none *;
+//        Same as 'this(import_name)', but returns an
+//        NULL pointer if 'import_name' doesn't exist
+//
+// >> operator __contains__ (string import_name) -> bool;
+//        Returns true/false if 'import_name' exists in 'this'
+//
+// >> class function open(string.T filename) -> dll
+//    @throws Error.SystemError: Failed to open/load the library
+//        Opens a dll/so located at 'filename'
+//        If the library was already opened before, this function
+//        will return the instance that is already loaded.
+//
+// >> function close() -> none
+//        Closes a dll/so handle
+//
+// >> property name -> string = { get }
+//        Returns the filename of a shared_lib
+//
+//////////////////////////////////////////////////////////////////////////
+const shared_lib = __builtin_object(0x008F);
+
+#pragma pop_macro("shared_lib")

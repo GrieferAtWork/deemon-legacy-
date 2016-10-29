@@ -1,0 +1,80 @@
+
+====================================
+ === Compilation / Installation ===
+====================================
+
+Extract all files to a temporary path '/path/to/deemon_root'
+
+=== Linux ===
+	me@me-AwesomePC:/path/to/deemon_root$ sudo ./make.sh install
+
+	# Requirements
+	me@me-AwesomePC:~$ sudo apt-get install gcc
+
+	# Optional Requirements
+	me@me-AwesomePC:~$ 'sudo apt-get install libbluetooth-dev' # Required for bluetooth sockets
+	me@me-AwesomePC:~$ 'sudo apt-get install libncurses5-dev' # Required for the '_curses' and '_debugger' dex
+	
+	# Cleanup
+	me@me-AwesomePC:/path/to/deemon_root$ rm -r *
+
+	# Paths
+	me@me-AwesomePC:~$ which deemon
+	>> /usr/bin/deemon # By default
+	Starting with v101, deemon uses update-alternatives to manage its versions,
+	meaning that parallel installations of future releases can be easily managed.
+    
+	Deemon can be installed anywhere, as long as the entire 'lib' folder
+	is located in the same directory as the 'deemon' executable or
+	in '/usr/lib/deemon'.
+	path/to/deemon/ +
+	                |-- deemon
+	                |
+	                |-- lib +
+	                |       |
+	                |       |-- include +
+	                |       |           |
+	                |       |           | -- ...
+	                |       |
+	                |       |-- dex --- +
+	                |       |           |
+	                |       |           | -- ...
+	                |       |
+	                |       |-- ...
+	                |
+	                |-- ...
+
+	Troubleshoothing:
+		Since my main machine is running windows, you'll probably run into
+		permission problems, where compiler scripts aren't executable.
+		So make sure that 'make.sh' has execute permission:
+		me@me-AwesomePC:/path/to/deemon_root$ chmod +x make.sh
+
+	Tipps:
+		- You can create a static version of deemon by adding '--static' when calling 'make.sh'
+
+=== Windows ===
+	Visual Studio:
+	>> Open ".vs/_project.sln" in visual studio
+	>> Hit compile (CTRL+SHIFT+B or whatever; you know what I mean...)
+	NOTE: If you get an error that the platform toolset wasn't found,
+	      go to the project settings --> General --> Platform Toolset
+	      There you have to select the toolset you're using.
+	      Which should be 'v100' or 'v120'
+	>> Copy 'deemon.exe', 'libdeemon.dll' and the 'lib' folder.
+	   If you want debug information, copy '*.pdb' as well.
+	Requirements:
+	>> Visual Studio (tested: 2013 | should work: 2010)
+
+=== MacOS ===
+	Dunno, don't have one (try the linux way; if that's a no-go, send me the logs...)
+
+=== Notes ===
+	Tested (and working) under:
+	  - Windows 8.1 (x64)
+	  - Ubuntu 12.04.5 (i386|amd64)
+	  - Ubuntu 15.10 (amd64)
+	  - Kubuntu 16.04 (i386|amd64)
+	(Intended) Minimum System Requirements:
+	  - Windows: XP or greater
+	  - Linux: ~Should~ work on any system

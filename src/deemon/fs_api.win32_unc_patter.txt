@@ -1,0 +1,54 @@
+// UTF8 (unary)
+  if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
+     !DeeFS_Utf8Win32IsPathUNC(path)) {
+   DeeObject *temp;
+   if ((temp = DeeFS_Utf8Win32PathUNC(path)) == NULL) return -1;
+   error = _DeeFS_WideChDir(DeeWideString_STR(temp));
+   Dee_DECREF(temp);
+   return error;
+  }
+
+// WIDE (unary)
+  if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
+     !DeeFS_WideWin32IsPathUNC(path)) {
+   DeeObject *temp;
+   if ((temp = DeeFS_WideWin32PathUNC(path)) == NULL) return -1;
+   error = _DeeFS_WideChDir(DeeWideString_STR(temp));
+   Dee_DECREF(temp);
+   return error;
+  }
+
+// UTF8 (binary)
+  if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
+     (!DeeFS_Utf8Win32IsPathUNC(src) ||
+      !DeeFS_Utf8Win32IsPathUNC(dst))) {
+   DeeObject *unc_src,*unc_dst;
+   if ((unc_src = DeeFS_Utf8Win32IsPathUNC(src)
+    ? DeeFS_Utf8Win32PathUNC(src)
+    : DeeWideString_FromUtf8String(src)) == NULL) return -1;
+   if ((unc_dst = DeeFS_Utf8Win32IsPathUNC(dst)
+    ? DeeFS_Utf8Win32PathUNC(dst)
+    : DeeWideString_FromUtf8String(dst)) == NULL) { error = -1; goto err_unc0; }
+   error = _DeeFS_WideWin32HardLink(
+    DeeWideString_STR(unc_src),DeeWideString_STR(unc_dst));
+   Dee_DECREF(unc_dst);
+err_unc0: Dee_DECREF(unc_src);
+   return error;
+  }
+
+// WIDE (binary)
+  if (DEE_FS_WIN32_IS_UNC_ERROR(error)) {
+   DeeObject *temp;
+   if (!DeeFS_WideWin32IsPathUNC(src)) {
+    if ((temp = DeeFS_WideWin32PathUNC(src)) == NULL) return -1;
+    error = _DeeFS_WideWin32HardLink(DeeWideString_STR(temp),dst);
+    goto unc_end0;
+   }
+   if (!DeeFS_WideWin32IsPathUNC(dst)) {
+    if ((temp = DeeFS_WideWin32PathUNC(dst)) == NULL) return -1;
+    error = _DeeFS_WideWin32HardLink(src,DeeWideString_STR(temp));
+unc_end0: Dee_DECREF(temp);
+    return error;
+   }
+  }
+

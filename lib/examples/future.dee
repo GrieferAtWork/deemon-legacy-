@@ -1,0 +1,115 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+
+#include <thread>
+#include <error>
+
+class future {
+
+	//////////////////////////////////////////////////////////////////////////
+	// future(callable generator, object args...) -> future
+	//     Returns a new future object that will already have started
+	//     executing a given generator with the given arguments.
+	this(generator,args...) {
+		this.th = thread(generator,args...);
+		this.th.start();
+	}
+	~this() {
+		print "DTOR";
+		try {
+			this.th.interrupt();
+		} catch (Error.ValueError) {
+			// Thread already joined
+			return;
+		}
+		this.wait();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// function wait() -> none
+	//     Wait for the generator to finish.
+	//     No-op if the generator had already finished
+	function wait() {
+		try {
+			this.th_res = this.th.join();
+		} catch (Error.ValueError) {
+			// Thread already joined
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// function wait_for(unsigned int n_msecs) -> none
+	//     Wait for up to 'n_msecs' milliseconds for the generator to finish.
+	//     No-op if the generator had already finished
+	function wait_for(n_msecs) {
+		try {
+			this.th_res = this.th.join_timed(n_msecs);
+		} catch (Error.ValueError) {
+			// Thread already joined
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// function get() -> object
+	//     Wait for the generator to finish, extract its
+	//     return value and return it to the caller.
+	function get() {
+		if (!__builtin_bound(this.th_res)) {
+			this.wait();
+		}
+		return this.th_res;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// function valid() -> bool
+	//     Returns true if get() was called and a value was returned
+	function valid() {
+		return __builtin_bound(this.th_res);
+	}
+};
+
+//////////////////////////////////////////////////////////////////////////
+// keyword: '__async' <expression>
+//     Returns a future object executing the given <expression>
+//     NOTE: Call '.get()' on the returned expression to retrieve its value
+#define __async   future pack [] ->
+
+
+
+
+
+function add(a,b) {
+	print "a:",a;
+	print "b:",b;
+	return a+b;
+}
+
+ft = __async add(10,20);
+print "Waiting...";
+print ft.get();
+
+
+
+
+
+

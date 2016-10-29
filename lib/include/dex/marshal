@@ -1,0 +1,217 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#pragma once
+
+#include <__stddef.dee>
+
+#pragma push_macro("__marshal")
+#pragma push_macro("readmap")
+#pragma push_macro("writemap")
+#pragma push_macro("write_compiled_file_header")
+#pragma push_macro("is_compiled_file")
+#pragma push_macro("marshal")
+#undef __marshal
+#undef readmap
+#undef writemap
+#undef write_compiled_file_header
+#undef is_compiled_file
+#undef marshal
+module marshal {
+	__unused local __marshal = __builtin_dex("_marshal");
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> class readmap extends object { ... };
+	// >> class readmap(uint16_t version = readmap.VERSION) -> readmap;
+	//    @throws Signal.Interrupt:                  The calling thread was
+	//                                               interrupted.
+	//    @throws Error.SystemError:                 Failed to initalize the
+	//                                               lock.
+	//    @throws Error.RuntimeError.NotImplemented: The given version isn't
+	//                                               supported.
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> class function is_supported(uint16_t version) -> bool;
+	//    @param version: The version to check for support.
+	//    @return: true if the given version is supported.
+	//
+	// >> class const V100 -> unsigned short;
+	//        - v100 (UNSUPPORTED; original version).
+	//
+	// >> class const V101 -> unsigned short;
+	//        - v101 (new in deemon 101:1).
+	//
+	// >> class const V102 -> unsigned short;
+	//        - v102 (new in deemon 102:0).
+	//
+	// >> class const VERSION -> unsigned short;
+	//        - The current marshal version (equal to file.MARSHAL_VERSION).
+	//
+	// >> function read(file fp) -> object;
+	//    @param fp: The file to read from.
+	//    @throws Signal.Interrupt:  The calling thread was interrupted.
+	//    @throws Error.SystemError: Failed to acquire a lock.
+	//    @throws object:            Same as the constructing any object
+	//                               through the marshal.
+	//    @return: The read object.
+	//
+	// >> property uuid -> string = { get() };
+	//    @throws Signal.Interrupt:  The calling thread was interrupted.
+	//    @throws Error.ValueError:  No valid uuid currently associated with
+	//                               the readmap.
+	//    @throws Error.SystemError: Failed to acquire a lock.
+	//    @return: The UUID of the type currently being read.
+	//
+	// >> property version -> uint16_t = { get() };
+	//    @throws Signal.Interrupt:  The calling thread was interrupted.
+	//    @throws Error.SystemError: Failed to acquire a lock.
+	//    @return: The marshal version associated with the readmap.
+	//
+	__unused local readmap = __marshal.readmap;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> class writemap extends object { ... };
+	// >> class writemap(uint32_t flags = writemap.FLAG_DEFAULT) -> writemap;
+	//    @throws Signal.Interrupt:                  The calling thread was
+	//                                               interrupted.
+	//    @throws Error.SystemError:                 Failed to initalize the
+	//                                               lock.
+	//    @throws Error.RuntimeError.NotImplemented: The given flags are
+	//                                               invalid.
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> class const FLAG_NONE -> unsigned int;
+	//
+	// >> class const FLAG_REFERENCE_ALL -> unsigned int;
+	//        - If set, all gc object written can be referenced.Might reduce
+	//          binary size for very big objects.Increases binary size for
+	//          smaller objects.
+	//
+	// >> class const FLAG_TYPE_NAMES -> unsigned int;
+	//        - Write type names.
+	//
+	// >> class const FLAG_UUID_REFS -> unsigned int;
+	//        - Allow uuid references.WARNING: Will cause unknown uuid errors
+	//          if the target doesn't recognize a given uuid.
+	//
+	// >> class const FLAG_DEFAULT -> unsigned int;
+	//        - Default set of flags.
+	//
+	// >> function write(file fp, object ob) -> none;
+	//    @param fp: The file to write to.
+	//    @param ob: The object that should be written.
+	//    @throws Signal.Interrupt:  The calling thread was interrupted.
+	//    @throws Error.SystemError: Failed to acquire a lock.
+	//    @throws object:            Same as the writing ob through the
+	//                               marshal.
+	//
+	// >> function write_string(file fp, string s, size_t max_len = size_t(-1)) -> none;
+	// >> function write_string(file fp, char const * p, size_t max_len = size_t(-1)) -> none;
+	//    @param fp: The file to write to.
+	//    @param max_len: The maximal length of the string that should be
+	//                    written.
+	//    @throws Signal.Interrupt:  The calling thread was interrupted.
+	//    @throws Error.SystemError: Failed to acquire a lock.
+	//    @throws object:            Same as the writing the given string
+	//                               through the marshal.
+	//
+	// >> function write_widestring(file fp, string.wide s, size_t max_len = size_t(-1)) -> none;
+	// >> function write_widestring(file fp, wchar_t const * p, size_t max_len = size_t(-1)) -> none;
+	//    @param fp: The file to write to.
+	//    @param max_len: The maximal length of the string that should be
+	//                    written.
+	//    @throws Signal.Interrupt:  The calling thread was interrupted.
+	//    @throws Error.SystemError: Failed to acquire a lock.
+	//    @throws object:            Same as the writing the given string
+	//                               through the marshal.
+	//
+	// >> function write_utf8string(file fp, string.utf8 s, size_t max_len = size_t(-1)) -> none;
+	// >> function write_utf8string(file fp, char const * p, size_t max_len = size_t(-1)) -> none;
+	//    @param fp: The file to write to.
+	//    @param max_len: The maximal length of the string that should be
+	//                    written.
+	//    @throws Signal.Interrupt:  The calling thread was interrupted.
+	//    @throws Error.SystemError: Failed to acquire a lock.
+	//    @throws object:            Same as the writing the given string
+	//                               through the marshal.
+	//
+	// >> function write_utf16string(file fp, string.utf16 s, size_t max_len = size_t(-1)) -> none;
+	// >> function write_utf16string(file fp, char16_t const * p, size_t max_len = size_t(-1)) -> none;
+	//    @param fp: The file to write to.
+	//    @param max_len: The maximal length of the string that should be
+	//                    written.
+	//    @throws Signal.Interrupt:  The calling thread was interrupted.
+	//    @throws Error.SystemError: Failed to acquire a lock.
+	//    @throws object:            Same as the writing the given string
+	//                               through the marshal.
+	//
+	// >> function write_utf32string(file fp, string.utf32 s, size_t max_len = size_t(-1)) -> none;
+	// >> function write_utf32string(file fp, char32_t const * p, size_t max_len = size_t(-1)) -> none;
+	//    @param fp: The file to write to.
+	//    @param max_len: The maximal length of the string that should be
+	//                    written.
+	//    @throws Signal.Interrupt:  The calling thread was interrupted.
+	//    @throws Error.SystemError: Failed to acquire a lock.
+	//    @throws object:            Same as the writing the given string
+	//                               through the marshal.
+	//
+	// >> property flags -> uint32_t = { get(), del(), set() };
+	//    @throws Signal.Interrupt:                  The calling thread was
+	//                                               interrupted.
+	//    @throws Error.RuntimeError.NotImplemented: The given flags are
+	//                                               invalid.
+	//    @throws Error.SystemError:                 Failed to acquire a lock.
+	//    @return: The marshal version associated with the readmap.
+	//
+	__unused local writemap = __marshal.writemap;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function write_compiled_file_header(file fp) -> none;
+	//    @param fp: The file to write the header to.
+	//    @throws object: Same as writing to fp.
+	//        - Writes the header of a compiled deemon file to fp.
+	__unused local write_compiled_file_header = __marshal.write_compiled_file_header;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function is_compiled_file(file fp) -> (bool,uint32_t,uint16_t);
+	//    @param fp: The file to read the header from.
+	//    @throws object: Same as reading from fp.
+	//        - Checks if fp describes a compiled deemon file by reading a
+	//          compiled file header, as written with
+	//          _marshal.write_compiled_file_header.
+	//        - If the header wasn't found, the tuple '(false,0,0)' is
+	//          returned and fp is rewinded to the position it was at when
+	//          the function was called.
+	//        - If the header was found, it will be skipped and a tuple
+	//          '(true,deemon_version,marshal_version)' is returned, where
+	//          'deemon_version' referrs to the full deemon version that the
+	//          header was generated by, and 'marshal_version' to the marshal
+	//          version that the remainder of the file is written in.
+	__unused local is_compiled_file = __marshal.is_compiled_file;
+
+}
+#pragma pop_macro("__marshal")
+#pragma pop_macro("readmap")
+#pragma pop_macro("writemap")
+#pragma pop_macro("write_compiled_file_header")
+#pragma pop_macro("is_compiled_file")
+#pragma pop_macro("marshal")
+

@@ -1,0 +1,431 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#include <file>
+
+// 100% hacky helper script for creating wrapper functions for curses
+
+outfile = file.writer();
+
+#define _print print outfile: 
+
+struct attr_t { int x; };
+struct chtype { int x; };
+struct WINDOW { int x; };
+struct SCREEN { int x; };
+struct FILE { int x; };
+#define void none
+
+const name_prefix = "curses_";
+
+dict typemap = {
+	"attr_t": pack("attr_t","\" F_attr_t \"",none,none,none,none),
+	"attr_t *": pack("attr_t *","\" F_attr_t \"*",none,none,none,none),
+	"chtype": pack("chtype","\" F_chtype \"",none,none,[](x,name) ->
+		"{\n"
+		" DeeObject *result;\n"
+		" if (DeeCurses_ACQUIRE() != 0) return NULL;\n"
+		" result = DeeObject_New(T_chtype,"+x+");\n"
+		" DeeCurses_RELEASE();\n"
+		" return result;\n"
+		"}","chtype"),
+	"chtype *": pack("chtype *","\" F_chtype \"*",none,none,none,none),
+	"signed char": pack("char","c",none,none,[](x,name) ->
+		"{\n"
+		" DeeObject *result;\n"
+		" if (DeeCurses_ACQUIRE() != 0) return NULL;\n"
+		" result = DeeObject_New(schar,"+x+");\n"
+		" DeeCurses_RELEASE();\n"
+		" return result;\n"
+		"}","signed char"),
+	"signed char *": pack("char *","s",none,none,[](x,name) ->
+		"{\n"
+		" DeeObject *result; char const *s;\n"
+		" if (DeeCurses_ACQUIRE() != 0) return NULL;\n"
+		" if DEE_LIKELY((s = "+x+") != NULL) result = DeeString_New(s);\n"
+		" else result = _deecurses_error("+repr name+");\n"
+		" DeeCurses_RELEASE();\n"
+		" return result;\n"
+		"}","string"),
+	"int": pack("int","d",none,none,[](x,name) ->
+		"{\n"
+		" int err;\n"
+		" if (DeeCurses_ACQUIRE() != 0) return NULL;\n"
+		" err = "+x+";\n"
+		" DeeCurses_RELEASE();\n"
+		" if (err == ERR) return _deecurses_error("+repr name+");\n"
+		" DeeReturn_None;\n"
+		"}",none),
+	"none": pack("void","",none,none,[](x,name) ->
+		"if (DeeCurses_ACQUIRE() != 0) return NULL;\n"
+		""+x+";\n"
+		"DeeCurses_RELEASE();\n"
+		"DeeReturn_None;",none),
+	"none *": pack("void *","p",none,none,none,none),
+	"bool": pack("unsigned char","I8b",none,none,[](x,name) ->
+		"{\n"
+		" int result;\n"
+		" if (DeeCurses_ACQUIRE() != 0) return NULL;\n"
+		" result = "+x+";\n"
+		" DeeCurses_RELEASE();\n"
+		" DeeReturn_Bool(result);\n"
+		"}","bool"),
+	"short": pack("short","hd",none,none,none,none),
+	"short *": pack("short *","hd*",none,none,none,none),
+	"WINDOW *": pack("DeeCursesWindowObject *","o","DeeCursesWindow_Type",[](x) -> x+"->w_wnd",none,none),
+	"SCREEN *": pack("DeeCursesScreenObject *","o","DeeCursesScreen_Type",[](x) -> x+"->s_scrn",none,none),
+};
+
+known_wrappers = [];
+
+#define ENTRY_FOR_TYPE(t) typemap[(t).tp_name]
+function create_wrapper(fullname,ty) {
+	local prefix,none,name = fullname.partition("::" in fullname ? "::" : ".")...;
+	local funcname = "_"+prefix+"_"+name;
+	if (ty.is_pointer()) ty = ty.pointer_base;
+	local args = ty.argv;
+	local doc_rettype = ENTRY_FOR_TYPE(ty.rett)[5];
+	known_wrappers.append(pack name,funcname,name+args+" -> "+doc_rettype);
+	_print "static DeeObject *"+funcname+"(DeeObject *args) {";
+	function tempname(i) -> string::chr('a'+i);
+	for (local i = 0; i < #args; ++i)
+		_print "",ENTRY_FOR_TYPE(args[i])[0],tempname(i)+";",;
+	if (args) _print;
+	local decode_string = "".join(for (x: args) ENTRY_FOR_TYPE(x)[1]);
+	local varnames = ",".join(for (local i = 0; i < #args; ++i) ({
+		local name = tempname(i);
+		local pred = ENTRY_FOR_TYPE(args[i])[3];
+		if (pred !is none) name = pred(name);
+		name;
+	}));
+	local rvarnames = ",".join(for (local i = 0; i < #args; ++i) "&"+tempname(i));
+	_print " if (DeeTuple_Unpack(args,\""+decode_string+":"+name+"\""+(args ? "," : "")+rvarnames+") != 0) return NULL;";
+	for (local i = 0; i < #args; ++i) {
+		local tycheck = ENTRY_FOR_TYPE(args[i])[2];
+		if (tycheck !is none) {
+			_print " if (DeeObject_GetInplaceInstance(&"+tempname(i)+",&"+tycheck+") != 0) return NULL;";
+		}
+	}
+	local pred = ENTRY_FOR_TYPE(ty.rett)[4];
+	if (pred is none) {
+		_print "if (DeeCurses_ACQUIRE() != 0) return NULL;";
+		_print " "+name_prefix+name+"("+varnames+");";
+		_print "DeeCurses_RELEASE();";
+		_print " DeeReturn_None;";
+	} else {
+		_print " "+pred(name_prefix+name+"("+varnames+")",name).replace("\n","\n ");
+	}
+	_print "}";
+}
+
+create_wrapper("curses::addch",(int(*)(const chtype)));
+create_wrapper("curses::addchnstr",(int(*)(const chtype *, int)));
+create_wrapper("curses::addchstr",(int(*)(const chtype *)));
+create_wrapper("curses::addnstr",(int(*)(const char *, int)));
+create_wrapper("curses::addstr",(int(*)(const char *)));
+create_wrapper("curses::attroff",(int(*)(chtype)));
+create_wrapper("curses::attron",(int(*)(chtype)));
+create_wrapper("curses::attrset",(int(*)(chtype)));
+create_wrapper("curses::attr_get",(int(*)(attr_t *, short *, void *)));
+create_wrapper("curses::attr_off",(int(*)(attr_t, void *)));
+create_wrapper("curses::attr_on",(int(*)(attr_t, void *)));
+create_wrapper("curses::attr_set",(int(*)(attr_t, short, void *)));
+create_wrapper("curses::baudrate",(int(*)(void)));
+create_wrapper("curses::beep",(int(*)(void)));
+create_wrapper("curses::bkgd",(int(*)(chtype)));
+create_wrapper("curses::bkgdset",(void(*)(chtype)));
+create_wrapper("curses::border",(int(*)(chtype, chtype, chtype, chtype, chtype, chtype, chtype, chtype)));
+create_wrapper("curses::can_change_color",(bool(*)(void)));
+create_wrapper("curses::cbreak",(int(*)(void)));
+create_wrapper("curses::chgat",(int(*)(int, attr_t, short, const void *)));
+create_wrapper("curses::clearok",(int(*)(WINDOW *, bool)));
+create_wrapper("curses::clear",(int(*)(void)));
+create_wrapper("curses::clrtobot",(int(*)(void)));
+create_wrapper("curses::clrtoeol",(int(*)(void)));
+create_wrapper("curses::color_content",(int(*)(short, short *, short *, short *)));
+create_wrapper("curses::color_set",(int(*)(short, void *)));
+create_wrapper("curses::copywin",(int(*)(const WINDOW *, WINDOW *, int, int, int, int, int, int, int)));
+create_wrapper("curses::curs_set",(int(*)(int)));
+create_wrapper("curses::def_prog_mode",(int(*)(void)));
+create_wrapper("curses::def_shell_mode",(int(*)(void)));
+create_wrapper("curses::delay_output",(int(*)(int)));
+create_wrapper("curses::delch",(int(*)(void)));
+create_wrapper("curses::deleteln",(int(*)(void)));
+create_wrapper("curses::delscreen",(void(*)(SCREEN *)));
+create_wrapper("curses::delwin",(int(*)(WINDOW *)));
+create_wrapper("curses::derwin",(WINDOW*(*)(WINDOW *, int, int, int, int)));
+create_wrapper("curses::doupdate",(int(*)(void)));
+create_wrapper("curses::dupwin",(WINDOW*(*)(WINDOW *)));
+create_wrapper("curses::echochar",(int(*)(const chtype)));
+create_wrapper("curses::echo",(int(*)(void)));
+create_wrapper("curses::erasechar",(char(*)(void)));
+create_wrapper("curses::erase",(int(*)(void)));
+create_wrapper("curses::filter",(void(*)(void)));
+create_wrapper("curses::flash",(int(*)(void)));
+create_wrapper("curses::flushinp",(int(*)(void)));
+create_wrapper("curses::getbkgd",(chtype(*)(WINDOW *)));
+create_wrapper("curses::getnstr",(int(*)(char *, int)));
+create_wrapper("curses::getstr",(int(*)(char *)));
+//create_wrapper("curses::getwin",(WINDOW*(*)(FILE *)));
+create_wrapper("curses::halfdelay",(int(*)(int)));
+create_wrapper("curses::has_colors",(bool(*)(void)));
+create_wrapper("curses::has_ic",(bool(*)(void)));
+create_wrapper("curses::has_il",(bool(*)(void)));
+create_wrapper("curses::hline",(int(*)(chtype, int)));
+create_wrapper("curses::idcok",(void(*)(WINDOW *, bool)));
+create_wrapper("curses::idlok",(int(*)(WINDOW *, bool)));
+create_wrapper("curses::immedok",(void(*)(WINDOW *, bool)));
+create_wrapper("curses::inchnstr",(int(*)(chtype *, int)));
+create_wrapper("curses::inchstr",(int(*)(chtype *)));
+create_wrapper("curses::inch",(chtype(*)(void)));
+create_wrapper("curses::init_color",(int(*)(short, short, short, short)));
+create_wrapper("curses::init_pair",(int(*)(short, short, short)));
+create_wrapper("curses::innstr",(int(*)(char *, int)));
+create_wrapper("curses::insch",(int(*)(chtype)));
+create_wrapper("curses::insdelln",(int(*)(int)));
+create_wrapper("curses::insertln",(int(*)(void)));
+create_wrapper("curses::insnstr",(int(*)(const char *, int)));
+create_wrapper("curses::insstr",(int(*)(const char *)));
+create_wrapper("curses::instr",(int(*)(char *)));
+create_wrapper("curses::intrflush",(int(*)(WINDOW *, bool)));
+create_wrapper("curses::isendwin",(bool(*)(void)));
+create_wrapper("curses::is_linetouched",(bool(*)(WINDOW *, int)));
+create_wrapper("curses::is_wintouched",(bool(*)(WINDOW *)));
+create_wrapper("curses::keypad",(int(*)(WINDOW *, bool)));
+create_wrapper("curses::killchar",(char(*)(void)));
+create_wrapper("curses::leaveok",(int(*)(WINDOW *, bool)));
+create_wrapper("curses::longname",(char*(*)(void)));
+create_wrapper("curses::meta",(int(*)(WINDOW *, bool)));
+create_wrapper("curses::move",(int(*)(int, int)));
+create_wrapper("curses::mvaddch",(int(*)(int, int, const chtype)));
+create_wrapper("curses::mvaddchnstr",(int(*)(int, int, const chtype *, int)));
+create_wrapper("curses::mvaddchstr",(int(*)(int, int, const chtype *)));
+create_wrapper("curses::mvaddnstr",(int(*)(int, int, const char *, int)));
+create_wrapper("curses::mvaddstr",(int(*)(int, int, const char *)));
+create_wrapper("curses::mvchgat",(int(*)(int, int, int, attr_t, short, const void *)));
+create_wrapper("curses::mvcur",(int(*)(int, int, int, int)));
+create_wrapper("curses::mvdelch",(int(*)(int, int)));
+create_wrapper("curses::mvderwin",(int(*)(WINDOW *, int, int)));
+create_wrapper("curses::mvgetnstr",(int(*)(int, int, char *, int)));
+create_wrapper("curses::mvgetstr",(int(*)(int, int, char *)));
+create_wrapper("curses::mvhline",(int(*)(int, int, chtype, int)));
+create_wrapper("curses::mvinch",(chtype(*)(int, int)));
+create_wrapper("curses::mvinchnstr",(int(*)(int, int, chtype *, int)));
+create_wrapper("curses::mvinchstr",(int(*)(int, int, chtype *)));
+create_wrapper("curses::mvinnstr",(int(*)(int, int, char *, int)));
+create_wrapper("curses::mvinsch",(int(*)(int, int, chtype)));
+create_wrapper("curses::mvinsnstr",(int(*)(int, int, const char *, int)));
+create_wrapper("curses::mvinsstr",(int(*)(int, int, const char *)));
+create_wrapper("curses::mvinstr",(int(*)(int, int, char *)));
+//create_wrapper("curses::mvprintw",(int(*)(int, int, const char *, ...)));
+//create_wrapper("curses::mvscanw",(int(*)(int, int, const char *, ...)));
+create_wrapper("curses::mvvline",(int(*)(int, int, chtype, int)));
+create_wrapper("curses::mvwaddchnstr",(int(*)(WINDOW *, int, int, const chtype *, int)));
+create_wrapper("curses::mvwaddchstr",(int(*)(WINDOW *, int, int, const chtype *)));
+create_wrapper("curses::mvwaddch",(int(*)(WINDOW *, int, int, const chtype)));
+create_wrapper("curses::mvwaddnstr",(int(*)(WINDOW *, int, int, const char *, int)));
+create_wrapper("curses::mvwaddstr",(int(*)(WINDOW *, int, int, const char *)));
+create_wrapper("curses::mvwchgat",(int(*)(WINDOW *, int, int, int, attr_t, short, const void *)));
+create_wrapper("curses::mvwdelch",(int(*)(WINDOW *, int, int)));
+create_wrapper("curses::mvwgetnstr",(int(*)(WINDOW *, int, int, char *, int)));
+create_wrapper("curses::mvwgetstr",(int(*)(WINDOW *, int, int, char *)));
+create_wrapper("curses::mvwhline",(int(*)(WINDOW *, int, int, chtype, int)));
+create_wrapper("curses::mvwinchnstr",(int(*)(WINDOW *, int, int, chtype *, int)));
+create_wrapper("curses::mvwinchstr",(int(*)(WINDOW *, int, int, chtype *)));
+create_wrapper("curses::mvwinch",(chtype(*)(WINDOW *, int, int)));
+create_wrapper("curses::mvwinnstr",(int(*)(WINDOW *, int, int, char *, int)));
+create_wrapper("curses::mvwinsch",(int(*)(WINDOW *, int, int, chtype)));
+create_wrapper("curses::mvwinsnstr",(int(*)(WINDOW *, int, int, const char *, int)));
+create_wrapper("curses::mvwinsstr",(int(*)(WINDOW *, int, int, const char *)));
+create_wrapper("curses::mvwinstr",(int(*)(WINDOW *, int, int, char *)));
+create_wrapper("curses::mvwin",(int(*)(WINDOW *, int, int)));
+//create_wrapper("curses::mvwprintw",(int(*)(WINDOW *, int, int, const char *, ...)));
+//create_wrapper("curses::mvwscanw",(int(*)(WINDOW *, int, int, const char *, ...)));
+create_wrapper("curses::mvwvline",(int(*)(WINDOW *, int, int, chtype, int)));
+create_wrapper("curses::napms",(int(*)(int)));
+//create_wrapper("curses::newpad",(WINDOW*(*)(int, int)));
+//create_wrapper("curses::newterm",(SCREEN*(*)(const char *, FILE *, FILE *)));
+//create_wrapper("curses::newwin",(WINDOW*(*)(int, int, int, int)));
+create_wrapper("curses::nl",(int(*)(void)));
+create_wrapper("curses::nocbreak",(int(*)(void)));
+create_wrapper("curses::nodelay",(int(*)(WINDOW *, bool)));
+create_wrapper("curses::noecho",(int(*)(void)));
+create_wrapper("curses::nonl",(int(*)(void)));
+create_wrapper("curses::noqiflush",(void(*)(void)));
+create_wrapper("curses::noraw",(int(*)(void)));
+create_wrapper("curses::notimeout",(int(*)(WINDOW *, bool)));
+create_wrapper("curses::overlay",(int(*)(const WINDOW *, WINDOW *)));
+create_wrapper("curses::overwrite",(int(*)(const WINDOW *, WINDOW *)));
+create_wrapper("curses::pair_content",(int(*)(short, short *, short *)));
+create_wrapper("curses::pechochar",(int(*)(WINDOW *, chtype)));
+create_wrapper("curses::pnoutrefresh",(int(*)(WINDOW *, int, int, int, int, int, int)));
+create_wrapper("curses::prefresh",(int(*)(WINDOW *, int, int, int, int, int, int)));
+//create_wrapper("curses::printw",(int(*)(const char *, ...)));
+//create_wrapper("curses::putwin",(int(*)(WINDOW *, FILE *)));
+create_wrapper("curses::qiflush",(void(*)(void)));
+create_wrapper("curses::raw",(int(*)(void)));
+create_wrapper("curses::redrawwin",(int(*)(WINDOW *)));
+create_wrapper("curses::refresh",(int(*)(void)));
+create_wrapper("curses::reset_prog_mode",(int(*)(void)));
+create_wrapper("curses::reset_shell_mode",(int(*)(void)));
+create_wrapper("curses::resetty",(int(*)(void)));
+//create_wrapper("curses::ripoffline",(int(*)(int, int (*)(WINDOW *, int))));
+create_wrapper("curses::savetty",(int(*)(void)));
+//create_wrapper("curses::scanw",(int(*)(const char *, ...)));
+create_wrapper("curses::scr_dump",(int(*)(const char *)));
+create_wrapper("curses::scr_init",(int(*)(const char *)));
+create_wrapper("curses::scr_restore",(int(*)(const char *)));
+create_wrapper("curses::scr_set",(int(*)(const char *)));
+create_wrapper("curses::scrl",(int(*)(int)));
+create_wrapper("curses::scroll",(int(*)(WINDOW *)));
+create_wrapper("curses::scrollok",(int(*)(WINDOW *, bool)));
+//create_wrapper("curses::set_term",(SCREEN*(*)(SCREEN *)));
+create_wrapper("curses::setscrreg",(int(*)(int, int)));
+create_wrapper("curses::slk_attroff",(int(*)(const chtype)));
+create_wrapper("curses::slk_attr_off",(int(*)(const attr_t, void *)));
+create_wrapper("curses::slk_attron",(int(*)(const chtype)));
+create_wrapper("curses::slk_attr_on",(int(*)(const attr_t, void *)));
+create_wrapper("curses::slk_attrset",(int(*)(const chtype)));
+create_wrapper("curses::slk_attr_set",(int(*)(const attr_t, short, void *)));
+create_wrapper("curses::slk_clear",(int(*)(void)));
+create_wrapper("curses::slk_color",(int(*)(short)));
+create_wrapper("curses::slk_init",(int(*)(int)));
+create_wrapper("curses::slk_label",(char*(*)(int)));
+create_wrapper("curses::slk_noutrefresh",(int(*)(void)));
+create_wrapper("curses::slk_refresh",(int(*)(void)));
+create_wrapper("curses::slk_restore",(int(*)(void)));
+create_wrapper("curses::slk_set",(int(*)(int, const char *, int)));
+create_wrapper("curses::slk_touch",(int(*)(void)));
+create_wrapper("curses::standend",(int(*)(void)));
+create_wrapper("curses::standout",(int(*)(void)));
+create_wrapper("curses::start_color",(int(*)(void)));
+create_wrapper("curses::subpad",(WINDOW*(*)(WINDOW *, int, int, int, int)));
+create_wrapper("curses::subwin",(WINDOW*(*)(WINDOW *, int, int, int, int)));
+create_wrapper("curses::syncok",(int(*)(WINDOW *, bool)));
+create_wrapper("curses::termattrs",(chtype(*)(void)));
+create_wrapper("curses::termname",(char*(*)(void)));
+create_wrapper("curses::timeout",(void(*)(int)));
+create_wrapper("curses::touchline",(int(*)(WINDOW *, int, int)));
+create_wrapper("curses::touchwin",(int(*)(WINDOW *)));
+create_wrapper("curses::typeahead",(int(*)(int)));
+create_wrapper("curses::untouchwin",(int(*)(WINDOW *)));
+create_wrapper("curses::use_env",(void(*)(bool)));
+create_wrapper("curses::vidattr",(int(*)(chtype)));
+create_wrapper("curses::vid_attr",(int(*)(attr_t, short, void *)));
+//create_wrapper("curses::vidputs",(int(*)(chtype, int (*)(int))));
+//create_wrapper("curses::vid_puts",(int(*)(attr_t, short, void *, int (*)(int))));
+create_wrapper("curses::vline",(int(*)(chtype, int)));
+//create_wrapper("curses::vw_printw",(int(*)(WINDOW *, const char *, va_list)));
+//create_wrapper("curses::vwprintw",(int(*)(WINDOW *, const char *, va_list)));
+//create_wrapper("curses::vw_scanw",(int(*)(WINDOW *, const char *, va_list)));
+//create_wrapper("curses::vwscanw",(int(*)(WINDOW *, const char *, va_list)));
+create_wrapper("curses::waddchnstr",(int(*)(WINDOW *, const chtype *, int)));
+create_wrapper("curses::waddchstr",(int(*)(WINDOW *, const chtype *)));
+create_wrapper("curses::waddch",(int(*)(WINDOW *, const chtype)));
+create_wrapper("curses::waddnstr",(int(*)(WINDOW *, const char *, int)));
+create_wrapper("curses::waddstr",(int(*)(WINDOW *, const char *)));
+create_wrapper("curses::wattroff",(int(*)(WINDOW *, chtype)));
+create_wrapper("curses::wattron",(int(*)(WINDOW *, chtype)));
+create_wrapper("curses::wattrset",(int(*)(WINDOW *, chtype)));
+create_wrapper("curses::wattr_get",(int(*)(WINDOW *, attr_t *, short *, void *)));
+create_wrapper("curses::wattr_off",(int(*)(WINDOW *, attr_t, void *)));
+create_wrapper("curses::wattr_on",(int(*)(WINDOW *, attr_t, void *)));
+create_wrapper("curses::wattr_set",(int(*)(WINDOW *, attr_t, short, void *)));
+create_wrapper("curses::wbkgdset",(void(*)(WINDOW *, chtype)));
+create_wrapper("curses::wbkgd",(int(*)(WINDOW *, chtype)));
+create_wrapper("curses::wborder",(int(*)(WINDOW *, chtype, chtype, chtype, chtype, chtype, chtype, chtype, chtype)));
+create_wrapper("curses::wchgat",(int(*)(WINDOW *, int, attr_t, short, const void *)));
+create_wrapper("curses::wclear",(int(*)(WINDOW *)));
+create_wrapper("curses::wclrtobot",(int(*)(WINDOW *)));
+create_wrapper("curses::wclrtoeol",(int(*)(WINDOW *)));
+create_wrapper("curses::wcolor_set",(int(*)(WINDOW *, short, void *)));
+create_wrapper("curses::wcursyncup",(void(*)(WINDOW *)));
+create_wrapper("curses::wdelch",(int(*)(WINDOW *)));
+create_wrapper("curses::wdeleteln",(int(*)(WINDOW *)));
+create_wrapper("curses::wechochar",(int(*)(WINDOW *, const chtype)));
+create_wrapper("curses::werase",(int(*)(WINDOW *)));
+create_wrapper("curses::wgetnstr",(int(*)(WINDOW *, char *, int)));
+create_wrapper("curses::wgetstr",(int(*)(WINDOW *, char *)));
+create_wrapper("curses::whline",(int(*)(WINDOW *, chtype, int)));
+create_wrapper("curses::winchnstr",(int(*)(WINDOW *, chtype *, int)));
+create_wrapper("curses::winchstr",(int(*)(WINDOW *, chtype *)));
+create_wrapper("curses::winch",(chtype(*)(WINDOW *)));
+create_wrapper("curses::winnstr",(int(*)(WINDOW *, char *, int)));
+create_wrapper("curses::winsch",(int(*)(WINDOW *, chtype)));
+create_wrapper("curses::winsdelln",(int(*)(WINDOW *, int)));
+create_wrapper("curses::winsertln",(int(*)(WINDOW *)));
+create_wrapper("curses::winsnstr",(int(*)(WINDOW *, const char *, int)));
+create_wrapper("curses::winsstr",(int(*)(WINDOW *, const char *)));
+create_wrapper("curses::winstr",(int(*)(WINDOW *, char *)));
+create_wrapper("curses::wmove",(int(*)(WINDOW *, int, int)));
+create_wrapper("curses::wnoutrefresh",(int(*)(WINDOW *)));
+create_wrapper("curses::wprintw",(int(*)(WINDOW *, const char *, ...)));
+create_wrapper("curses::wredrawln",(int(*)(WINDOW *, int, int)));
+create_wrapper("curses::wrefresh",(int(*)(WINDOW *)));
+create_wrapper("curses::wscanw",(int(*)(WINDOW *, const char *, ...)));
+create_wrapper("curses::wscrl",(int(*)(WINDOW *, int)));
+create_wrapper("curses::wsetscrreg",(int(*)(WINDOW *, int, int)));
+create_wrapper("curses::wstandend",(int(*)(WINDOW *)));
+create_wrapper("curses::wstandout",(int(*)(WINDOW *)));
+create_wrapper("curses::wsyncdown",(void(*)(WINDOW *)));
+create_wrapper("curses::wsyncup",(void(*)(WINDOW *)));
+create_wrapper("curses::wtimeout",(void(*)(WINDOW *, int)));
+create_wrapper("curses::wtouchln",(int(*)(WINDOW *, int, int, int)));
+create_wrapper("curses::wvline",(int(*)(WINDOW *, chtype, int)));
+
+data = outfile.pack();
+data = data.replace("\" \"","");
+data = data.replace(" \"\" "," ");
+data = data.replace(" \"\"","");
+data = data.replace("\"\" ","");
+print data;
+
+print "\n"*5;
+
+for (local name,funcname,doc: known_wrappers) {
+	doc = doc.replace("WINDOW *","WINDOW");
+	doc = doc.replace("SCREEN *","SCREEN");
+	print " DeeDex_EXPORT_FUNCTION("+repr name+",&"+funcname+","+repr doc+"),";
+}
+print "\n"*5;
+
+for (local name,funcname,doc: known_wrappers) {
+	print "\t__unused local",name,"= __curses."+name+";";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,75 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+#pragma push_macro("random")
+#undef random
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class random() -> random
+//       Creates a (pseudo-)randomly initialized random object
+// >> class random(uint64_t seed) -> random
+// >> copy(random right) -> random
+// >> operator copy = (random right);
+// >> operator = (uint64_t seed);
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class function thread_local() -> random
+//       Returns the thread-local (per-thread) random object
+//
+// >> operator str() -> string
+//
+// >> member seed -> uint64_t;
+//       Unrestricted member access to the seed value
+//
+// >> function next(type object T = int) -> T
+//       @throws Error.TypeError: 'T' is not a structured type
+//       Returns a randomly initialized instance of 'T'
+//       NOTE: 'T' Must be a structured type
+//       HINT: Do this for random numbers: 'my_random.next(int) % 42'
+// 
+// >> function nextflt(type object T = double) -> T
+//       @throws Error.TypeError: 'T' is not a floating point type
+//       Returns a random floating point value between 0.0 and 1.0
+//       NOTE: 'T' Must be a 'float', 'double', or 'long double'
+// 
+// >> function randomize() -> none
+//       Re-initializes the seed using the same method as the constructor
+//
+// >> operator () (type object T = int) -> T
+//       @throws Error.TypeError: 'T' is not a structured type
+//       Alias for 'this.next(T)'
+// 
+// >> operator < (random right) -> bool
+// >> operator <= (random right) -> bool
+// >> operator == (random right) -> bool
+// >> operator != (random right) -> bool
+// >> operator > (random right) -> bool
+// >> operator >= (random right) -> bool
+//       Compares the integral values of the seeds of 'this' agains 'right'
+// 
+//////////////////////////////////////////////////////////////////////////
+const random = __builtin_object(0x0101);
+
+#pragma pop_macro("random")

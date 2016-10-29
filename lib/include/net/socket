@@ -1,0 +1,669 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+#if __API_VERSION__ < 101
+#	error "API Version too old for this header"
+#endif
+
+module net {
+
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> socket(int af, int type, string protocol) -> socket
+	// >> socket(int af, int type = socket.SOCK_STREAM, int protocol = 0) -> socket
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Failed to create socket
+	//        Creates a new low-level socket.
+	//        Usage of this is not recommended if you actually want to
+	//        use any of protocols listed below.
+	//        -> The simples (and most common) way of using this API is to
+	//           simply use 'socket.tcp()' and 'socket.file' attribute.
+	//        -> If 'protocol' is a string, 'getprotobyname' using '/etc/protocol' will be called.
+	//           'protocol' may also be a string describing an integer value for a protocol.
+	//
+	// >> move(socket right) -> socket
+	//        Move-constructor a socket from another
+	//
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> class socket.sockaddr = sockaddr; // See below
+	//
+	// >> operator str() -> string
+	// >> operator repr() -> string
+	//
+	// >> operator !() -> bool
+	// >> operator bool() -> bool
+	//        Returns true/false if the socket isn't closed
+	//
+	// >> operator <  (socket right) -> bool
+	// >> operator <= (socket right) -> bool
+	// >> operator == (socket right) -> bool
+	// >> operator != (socket right) -> bool
+	// >> operator >  (socket right) -> bool
+	// >> operator >= (socket right) -> bool
+	//        Compare the socket file descriptors
+	//
+	// >> property sockaddr -> sockaddr = { read };
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.ValueError: Socket isn't connected/bound
+	//    @throws Error.NetError:   Couldn't retrive address
+	//        Returns sock address (aka. local address)
+	//
+	// >> property peeraddr -> sockaddr = { read };
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Couldn't retrive address
+	//        Returns peer address (aka. remote address)
+	//
+	// >> property address_family -> int = { read };
+	//        Returns the address family of the socket ('af' argument in ctor)
+	//        >> Same as 'this.getsockopt(socket.SOL_SOCKET,socket.SO_DOMAIN)'
+	//
+	// >> property type -> int = { read };
+	//        Returns the socket type ('type' argument in ctor)
+	//        >> Same as 'this.getsockopt(socket.SOL_SOCKET,socket.SO_TYPE)'
+	//
+	// >> property protocol -> int = { read };
+	//        Returns the protocol of the socket ('protocol' argument in ctor)
+	//        >> Same as 'this.getsockopt(socket.SOL_SOCKET,socket.SO_PROTOCOL)'
+	//
+	//
+	//
+	// >> socket.tcp(uint16_t listen_port) -> socket.tcp
+	// >> socket.tcp(...) -> socket.tcp
+	//    @throws Signal.Interrupt:                  The current thread was interrupted
+	//    @throws Error.NetError:                    Failed to create/connect socket
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Invalid address / Unexpected address family
+	//        Create a new server/client TCP socket.
+	//        The client socket will immediatly be connected.
+	//        This type is the preferred way of establishing a TCP connection.
+	//        NOTE: Server sockets are automatically bound and will start listening
+	//        NOTE: The created socket is 'AF_INET' / 'AF_INET6' (generated using 'sockaddr(AF_AUTO,...)')
+	//        s.a.: 'sockaddr(AF_AUTO,...)'
+	//
+	// >> class function tcp_server(uint16_t port, int max_backlog = -1) -> socket
+	//    @throws Signal.Interrupt: The current thread was interrupted
+	//    @throws Error.NetError:   Failed to create/connect socket
+	//        Same as 'socket.tcp(port)', but allows for an
+	//        optional parameter to specify the backlog size.
+	//        If 'max_backlog' is '-1', an appropriate, system-dependent value will be used
+	//        If supported, this function will try to create a dualstack IPv6 socket,
+	//        but if that fails, it will instead create a regular IPv4 socket.
+	//        Note, that in both cases you will be able to connect IPv4 clients to the socket.
+	//        NOTE: The created socket is 'AF_INET'
+	//        s.a.: 'socket.tcp'
+	//
+	// >> class function tcp_client(...) -> socket
+	//    @throws Signal.Interrupt:                  The current thread was interrupted
+	//    @throws Error.NetError:                    Failed to create/connect socket
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Invalid address / Unexpected address family
+	//        Same as 'socket.tcp(...)' and is only here for syntax food...
+	//        NOTE: The created socket is 'AF_INET' / 'AF_INET6' (generated using 'sockaddr(AF_AUTO,...)')
+	//        s.a.: 'socket.tcp'
+	//        s.a.: 'sockaddr(AF_AUTO,...)'
+	//
+	// >> class function udp(uint16_t port) -> socket;
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Coun't create socket
+	//        Opens a new udp socket that can send/receive UDP packets on the given port number.
+	//        This function is the preferred way of establishing a UDP connection.
+	//        NOTE: For send/receive, use 'sendto()' and 'recvfrom()'
+	//        NOTE: The created socket uses 'AF_INET'
+	//
+	//
+	//
+	// >> function flags() -> uint16_t
+	//        Returns a set of socket flags describing the current state of the socket
+	//        s.a.: 'socket.FLAG_*'
+	// 
+	// >> function close() -> none
+	//        Closes/disconnects a socket gracefully.
+	//        No-op if the socket was already closed.
+	//        This call interrupts thread currently blocking because of:
+	//           - receiving data (recv() / ...)
+	//           - sending data (send() / ...)
+	//           - accepting client connections (accept() / ...)
+	//        NOTE: It may take up to 100+ milliseconds for this call to return
+	//        s.a.: 'is_closed()'
+	//
+	// >> function bind(...) -> bool
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Socket was closed / Couldn't bind the socket / couldn't parse address
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Invalid address / Unexpected address family
+	//        Binds the socket to a given sock-address
+	//        Returns false if the socket was already bound
+	//        s.a.: 'is_binding()' / 'is_bound()'
+	//        s.a.: 'sockaddr'
+	//
+	// >> function connect(...) -> bool
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Socket was closed / Couldn't connect the socket / couldn't parse address
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Invalid address / Unexpected address family
+	//        Connects the socket to a given peer-address
+	//        Returns false if the socket was already bound
+	//        s.a.: 'is_connecting()' / 'is_connected()'
+	//        s.a.: 'sockaddr'
+	//
+	// >> function listen(int max_backlog = 5) -> bool
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Socket was closed / Couldn't connect the socket
+	//        Begins listening on the address the socket was bound to
+	//        s.a.: 'is_listenstarting()' / 'is_listening()'
+	//
+	// >> function accept() -> socket
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Socket was closed / Couldn't accept a new client
+	//        Accepts and return a new client connection
+	//        after a call to 'bind()' and 'listen()'
+	//
+	// >> function try_accept() -> socket
+	// >> function try_accept() -> none
+	//    @throws Error.NetError: Socket was closed / couldn't accept a new client
+	//        Tries to accepts and return a new client connection
+	//        after a call to 'bind()' and 'listen()'.
+	//        This function returns immediatly, returning 'none'
+	//        if client was available for connection.
+	//
+	// >> function accept_timed(unsigned int msecs) -> socket
+	// >> function accept_timed(unsigned int msecs) -> none
+	//    @throws Error.NetError: Socket was closed / couldn't accept a new client
+	//        Tries to accepts and return a new client connection
+	//        after a call to 'bind()' and 'listen()'.
+	//        This function returns after 'msecs' milliseconds have passed
+	//        or when the first client connection was encountered.
+	//
+	// >> function recv(size_t max = (size_t)-1) -> string
+	// >> function recv(none *p, size_t size) -> none
+	// >> function recv_ex(int flags) -> string
+	// >> function recv_ex(size_t max, int flags) -> string
+	// >> function recv_ex(none *p, size_t size, int flags) -> none
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Socket was closed / couldn't receive data
+	//        Reads (up to 'max'|'size') bytes of data from
+	//        the socket after a call to 'connect' succeeded.
+	//        -> In most cases you're going to call this one
+	//        -> Equivalent to 'file.read(...)'
+	//
+	// >> function recvall(size_t max = (size_t)-1) -> string
+	// >> function recvall(none *p, size_t size) -> none
+	// >> function recvall_ex(int flags) -> string
+	// >> function recvall_ex(size_t max, int flags) -> string
+	// >> function recvall_ex(none *p, size_t size, int flags) -> none
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Socket was closed / couldn't receive data
+	//        Similar to 'recv', but continue attempting a read until
+	//        the system function 'recv' returns '0', whereas 'socket.recv'
+	//        stops trying once not all data was read.
+	//        -> Basically this reads data until the connection is gracefully terminated.
+	//        -> Equivalent to 'file.readall(...)'
+	//
+	// >> function maybe_recv(size_t max = (size_t)-1) -> string
+	// >> function maybe_recv(none *p, size_t size) -> size_t
+	// >> function maybe_recv_ex(int flags) -> string
+	// >> function maybe_recv_ex(size_t max, int flags) -> string
+	// >> function maybe_recv_ex(none *p, size_t size, int flags) -> size_t
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Socket was closed / couldn't receive data
+	//        Similar to 'recv', but only calls the system 'recv' function
+	//        once, possibly only returning a portion of available data.
+	//        Returns the about of actually read bytes / the read data.
+	//        -> Equivalent to 'file.maybe_read(...)'
+	//
+	// >> function send(string data) -> none
+	// >> function send(none *p, size_t size) -> none
+	// >> function send_ex(string data, int flags) -> none
+	// >> function send_ex(none *p, size_t size, int flags) -> none
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Socket was closed / couldn't send data
+	//    @throws Error.IOError:    Not all data could be send
+	//        Sends data to the peer that a socket is connect to.
+	//        This function automatically splits too big blocks of
+	//        data into smaller ones, possibly invoking the system
+	//        function 'send' multiple times.
+	//        If no more data could be send at all, throw an Error.IOError.
+	//        -> In most cases you're going to call this one
+	//        -> Equivalent to 'file.write(...)'
+	//        e.g.: 'mysock.sendto("127.0.0.1:42","Hi Friend")'
+	//
+	// >> function maybe_send(string data) -> size_t
+	// >> function maybe_send(none *p, size_t size) -> size_t
+	// >> function maybe_send_ex(string data, int flags) -> size_t
+	// >> function maybe_send_ex(none *p, size_t size, int flags) -> size_t
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Socket was closed / couldn't send data
+	//        Sends data to the peer that a socket is connect to.
+	//        This function will only call the system function 'send'
+	//        once, even if not all data could be send.
+	//        -> Equivalent to 'file.maybe_write(...)'
+	//
+	// >> function sendto(..., string data) -> none
+	// >> function sendto(..., none *p, size_t size) -> none
+	// >> function sendto_ex(..., string data, int flags) -> none
+	// >> function sendto_ex(..., none *p, size_t size, int flags) -> none
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Socket was closed / couldn't send data / couldn't parse address
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Invalid address / Unexpected address family
+	//    @throws Error.IOError:                     Not all data could be send
+	//        Sends given data to given address
+	//        NOTE: Since sendto doesn't work stream-based, all data must be
+	//              send at once, meaning that this function will only
+	//              call the underlying system-function 'sendto' once.
+	//              If that call wasn't able to transfer all data,
+	//              an Error.IOError will be thrown.
+	//        e.g.: 'mysock.sendto("127.0.0.1:42","Hi Friend")'
+	//        s.a.: 'maybe_sendto'
+	//        s.a.: 'sockaddr'
+	//
+	// >> function maybe_sendto(..., string data) -> size_t
+	// >> function maybe_sendto(..., none *p, size_t size) -> size_t
+	// >> function maybe_sendto_ex(..., string data, int flags) -> size_t
+	// >> function maybe_sendto_ex(..., none *p, size_t size, int flags) -> size_t
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Socket was closed / couldn't send data / couldn't parse address
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Invalid address / Unexpected address family
+	//        Sends given data to given address, returning the actual amount of send data
+	//        NOTE: Since sendto doesn't work stream-based, all data must be
+	//              send at once, meaning that this function will only
+	//              call the underlying system-function 'sendto' once.
+	//        s.a.: 'sockaddr'
+	//
+	// >> function recvfrom(size_t max_size = (size_t)-1) -> (sockaddr,string)
+	// >> function recvfrom(none *p, size_t size) -> (sockaddr,size_t)
+	// >> function recvfrom_ex(int flags) -> (sockaddr,string)
+	// >> function recvfrom_ex(size_t max_size, int flags) -> (sockaddr,string)
+	// >> function recvfrom_ex(none *p, size_t size, int flags) -> (sockaddr,size_t)
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Socket was closed / couldn't send data
+	//        Receives data after binding the socket to an open port
+	//        -> First return value is the host/port pair of the sender
+	//        -> Second return value is data of the packet that
+	//           was received, or the amount of data that was read.
+	//        NOTE: Since recvfrom must receive all availabe data at once,
+	//              actually discarding excessive data, deemon calculates
+	//              its maximum size for a receive buffer as follows:
+	//              'util::min(max_size,(int)fs::getenv("DEEMON_UDPPACKETSIZE"))'
+	//              If the env variable isn't available, use '576',
+	//              which is the official minimum UDP packet size that any
+	//              standard-conforming network must support, thereby
+	//              also representing the maximum packet size that any
+	//              non-embeded programm shouldn't exceed.
+	//              >> To use bigger packets, set "DEEMON_UDPPACKETSIZE"
+	//                 before the first call to this function.
+	//              s.a.: http://stackoverflow.com/a/4931109
+	//
+	// >> function shutdown(int how = socket.SHUT_RDWR) -> bool
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Couldn't shutdown the socket
+	//        Shuts down the specified functionality of a socket.
+	//        Note, that 'socket.close()' will automatically call
+	//        'shutdown' unless it was already called before.
+	//        >> So calling this doesn't really serve too much of a purpose at all...
+	//        NOTE: Returns false if the socket was already closed/shut down
+	//
+	// >> function is_bound() -> bool
+	//        Returns true if 'bind' was called on the socket
+	//
+	// >> function is_binding() -> bool
+	//        Returns true during a 'bind' called with the socket"),
+	//
+	// >> function is_connected() -> bool
+	//        Returns true if 'connect' was called on the socket"),
+	//
+	// >> function is_connecting() -> bool
+	//        Returns true during a 'connect' called with the socket"),
+	//
+	// >> function is_listening() -> bool
+	//        Returns true if 'listen' was called on the socket"),
+	//
+	// >> function is_listenstarting() -> bool
+	//        Returns true during a 'listen' called with the socket"),
+	//
+	// >> function is_shutdown() -> bool
+	//        Returns true if 'shutdown' or 'close' was called on the socket"),
+	//
+	// >> function is_shuttingdown() -> bool
+	//        Returns true during a 'shutdown' called with the socket"),
+	//
+	// >> function is_closed() -> bool
+	//        Returns true if 'close' was called on the socket"),
+	//
+	//
+	//
+	// >> [[system_dependent]] function setsockopt(int level, int optname, ...) -> none
+	// >> [[system_dependent]] function setsockopt(int level, int optname, none *data, size_t s) -> none
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Socket was closed / failed to get/set option
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported socket options
+	//    @throws Error.ValueError:                  Invalid value
+	//        Sets a given socket option
+	//
+	// >> [[system_dependent]] function getsockopt(int level, int optname) -> object
+	// >> [[system_dependent]] function getsockopt(int level, int optname) -> string
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Socket was closed / failed to get/set option
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported socket options
+	//        Returns the value of a given socket option
+	//
+	//
+	//
+	// >> class socket.file: file { ... };
+	//        Special file object that can be used to stream data into
+	//        and read data out of an established connection.
+	//        -> Uses the 'send()' and 'recv()' functions family
+	//
+	// >> class socket.fileto: file { ... };
+	//        Special file object that can be used to stream
+	//        data into and read data from an specified address,
+	//        only allowing data to be send to/received from a given address.
+	//        Packets received from other sources will silently be dropped.
+	//        NOTE: Since foreign packets will be dropped, it is recommended
+	//              to use 'sendto()' and 'recvfrom()'.
+	//        -> Uses the 'sendto()' and 'recvfrom()' functions family
+	//
+	// >> property file -> socket.file { get }
+	//        Returns the streaming file of this socket.
+	//        Using this file is the preferred way of sending/receiving data,
+	//        instead of 'send' / 'recv' as it provides the full range of common
+	//        file functions, like read() and write(), or line-wise iteration.
+	//        e.g.:
+	//        >> // Simple wget implementation
+	//        >> #include <net/socket>
+	//        >> local fd = net::socket.tcp("google.com:40").file;
+	//        >> fd.write("GET / HTTP/1.1\r\n\r\n");
+	//        >> for (l: fs) print l;
+	//
+	// >> function fileto(...) -> socket.fileto
+	//    @throws Signal.Interrupt:                  The current thread was interrupted
+	//    @throws Error.NetError:                    Failed to lookup address
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Invalid address / Unexpected address family
+	//        Create a new file bound to a given address
+	//        s.a.: 'class socket.fileto'
+	//
+	//
+	//
+	// >> class const SHUT_RD -> int
+	// >> class const SHUT_WR -> int
+	// >> class const SHUT_RDWR -> int
+	//        Constants for use with 'shutdown'
+	//
+	//
+	//
+	//  -----------------------------------------------------------------
+	//  -+-   Constants for use as 'af' in the 'socket' constructor   -+-
+	//  -+-       Support for each of these is system-dependent       -+-
+	//  -+-     The user is responsible to check for availability     -+-
+	//  -----------------------------------------------------------------
+	// NOTE: To check for existance, simply use 'if (__builtin_exists(net::socket.AF_INET6)) { ... }'
+	// >> class const AF_AUTO -> int
+	// >> class const [[system_dependent]] AF_UNIX -> int
+	// >> class const [[system_dependent]] AF_INET -> int
+	// >> class const [[system_dependent]] AF_NETLINK -> int
+	// >> class const [[system_dependent]] AF_RDS -> int
+	// >> class const [[system_dependent]] AF_BLUETOOTH -> int
+	// >> class const [[system_dependent]] AF_INET6 -> int
+	// >> class const [[system_dependent]] <...> -> object
+	//
+	//  -----------------------------------------------------------------
+	//  -+-                       Socket Types                        -+-
+	//  -----------------------------------------------------------------
+	// >> class const [[system_dependent]] SOCK_STREAM -> int
+	// >> class const [[system_dependent]] SOCK_DGRAM -> int
+	// >> class const [[system_dependent]] SOCK_RAW -> int
+	// >> class const [[system_dependent]] SOCK_RDM -> int
+	// >> class const [[system_dependent]] SOCK_SEQPACKET -> int
+	// >> class const [[system_dependent]] <...> -> object
+	//
+	//  -----------------------------------------------------------------
+	//  -+-                     Socket Protocols                      -+-
+	//  -+-   (Also used as option levels in getsockopt/setsockopt)   -+-
+	//  -----------------------------------------------------------------
+	// >> class const IPPROTO_IP -> int
+	// >> class const IPPROTO_ICMP -> int
+	// >> class const IPPROTO_TCP -> int
+	// >> class const IPPROTO_UDP -> int
+	// >> class const IPPROTO_RAW -> int
+	// >> class const [[system_dependent]] BTPROTO_L2CAP -> int
+	// >> class const [[system_dependent]] BTPROTO_HCI -> int
+	// >> class const [[system_dependent]] BTPROTO_SCO -> int
+	// >> class const [[system_dependent]] BTPROTO_RFCOMM -> int
+	// >> class const [[system_dependent]] <...> -> object
+	//
+	//  -----------------------------------------------------------------
+	//  -+-                  Special Address Names                    -+-
+	//  -----------------------------------------------------------------
+	// >> class const [[system_dependent]] BDADDR_ANY -> string
+	// >> class const [[system_dependent]] BDADDR_LOCAL -> string
+	// >> class const INADDR_ANY -> uint32_t
+	// >> class const INADDR_LOOPBACK -> uint32_t
+	// >> class const INADDR_BROADCAST -> uint32_t
+	// >> class const INADDR_NONE -> uint32_t
+	// >> class const INADDR_UNSPEC_GROUP -> uint32_t
+	// >> class const INADDR_ALLHOSTS_GROUP -> uint32_t
+	// >> class const INADDR_MAX_LOCAL_GROUP -> uint32_t
+	// >> class const IPPORT_RESERVED -> uint16_t
+	// >> class const [[system_dependent]] <...> -> object
+	//
+	//  -----------------------------------------------------------------
+	//  -+-                Socket option Names/Values                 -+-
+	//  -----------------------------------------------------------------
+	// >> class const SOL_SOCKET -> int
+	// >> class const SO_ACCEPTCONN -> int
+	// >> class const SO_TYPE -> int
+	// >> class const SO_DOMAIN -> int
+	// >> class const SO_PROTOCOL -> int
+	// >> class const [[system_dependent]] <...> -> object
+
+	//  -----------------------------------------------------------------
+	//  -+-                  Special inet addresses                   -+-
+	//  -----------------------------------------------------------------
+	// >> class const INADDR_ANY -> uint32_t
+	// >> class const INADDR_LOOPBACK -> uint32_t
+	// >> class const INADDR_BROADCAST -> uint32_t
+	// >> class const INADDR_NONE -> uint32_t
+	// >> class const [[system_dependent]] INADDR6_ANY -> uint32_t
+	// >> class const [[system_dependent]] INADDR6_LOOPBACK -> uint32_t
+	// >> class const [[system_dependent]] <...> -> object
+	//
+	//  -----------------------------------------------------------------
+	//  -+-     Socket flags used in 'send_ex/recv_ex' functions      -+-
+	//  -----------------------------------------------------------------
+	// >> class const [[system_dependent]] MSG_CONFIRM -> int
+	// >> class const [[system_dependent]] MSG_DONTROUTE -> int
+	// >> class const [[system_dependent]] MSG_DONTWAIT -> int
+	// >> class const [[system_dependent]] MSG_EOR -> int
+	// >> class const [[system_dependent]] MSG_MORE -> int
+	// >> class const [[system_dependent]] MSG_NOSIGNAL -> int
+	// >> class const [[system_dependent]] MSG_OOB -> int
+	// >> class const [[system_dependent]] MSG_PARTIAL -> int
+	// >> class const [[system_dependent]] MSG_INTERRUPT -> int
+	// >> class const [[system_dependent]] MSG_PUSH_IMMEDIATE -> int
+	// >> class const [[system_dependent]] <...> -> object
+	//
+	//  -----------------------------------------------------------------
+	//  -+-           Socket flags used in 'socket.flags()'           -+-
+	//  -----------------------------------------------------------------
+	// >> class const FLAG_BINDING -> uint16_t
+	// >> class const FLAG_BOUND -> uint16_t
+	// >> class const FLAG_CONNECTING -> uint16_t
+	// >> class const FLAG_CONNECTED -> uint16_t
+	// >> class const FLAG_STARTLISTENING -> uint16_t
+	// >> class const FLAG_LISTENING -> uint16_t
+	// >> class const FLAG_SHUTDOWN -> uint16_t
+	// >> class const FLAG_SHUTTINGDOWN -> uint16_t
+	// >> class const FLAG_CLOSED -> uint16_t
+	//
+	//////////////////////////////////////////////////////////////////////////
+	const socket = __builtin_object(0x018A);
+
+
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> class sockaddr(int af, ...) -> sockaddr
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Couldn't resolve address
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Invalid address / Unexpected address family
+	//        Returns a sockaddr describing an address under
+	//        the given name, using 'af' as family.
+	//
+	// >> The arguments described by '...' vary based on the value of 'af',
+	//    or the address_family set for a given socket.
+	//    The following arguments associated with given af values are supported
+	//
+	//
+	// >> class sockaddr(?, sockaddr right) -> sockaddr
+	//    @throws Error.ValueError: Unexpected address family
+	//        Initialize from another sockaddr with the same address_family
+	// >> class sockaddr(AF_AUTO, sockaddr right) -> sockaddr
+	//        Exception: Allow any kind of sockaddr if we are in auto-mode
+	//
+	// >> class sockaddr(AF_RDF|AF_INET, string address) -> sockaddr
+	// >> class sockaddr(AF_RDF|AF_INET, (uint32_t,uint16_t) address) -> sockaddr
+	// >> class sockaddr(AF_RDF|AF_INET, string address, uint16_t port) -> sockaddr
+	// >> class sockaddr(AF_RDF|AF_INET, uint32_t host, uint16_t port) -> sockaddr
+	// >> class sockaddr(AF_RDF|AF_INET, uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t port) -> sockaddr
+	//
+	// >> class sockaddr(AF_INET6, string address) -> sockaddr
+	// >> class sockaddr(AF_INET6, string address, uint16_t port) -> sockaddr
+	//
+	// >> class sockaddr(AF_UNIX, string path) -> sockaddr
+	//
+	// >> class sockaddr(AF_NETLINK, pid_t pid, __u32 groups) -> sockaddr
+	//
+	// >> class sockaddr(AF_AUTO, string address) -> sockaddr
+	// >> class sockaddr(AF_AUTO, (uint32_t,uint16_t) address) -> sockaddr
+	// >> class sockaddr(AF_AUTO, string address, uint16_t port) -> sockaddr
+	// >> class sockaddr(AF_AUTO, uint32_t host, uint16_t port) -> sockaddr
+	// >> class sockaddr(AF_AUTO, uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t port) -> sockaddr
+	//        These are special, in that they try to auto-detect the address_family
+	//        -> The returned sockaddr may be AF_INET or AF_INET6, or something else
+	//        e.g.: sockaddr.resolve("::1/128")   -> AF_INET6 (localhost)
+	//        e.g.: sockaddr.resolve("127.0.0.1") -> AF_INET  (localhost)
+	//
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> operator str() -> string
+	// >> operator repr() -> string
+	//        Returns a string representing of the given sockaddr.
+	//        Usually, 'str sockaddr' evaluates to a human-readable
+	//        address that could be re-used as an address argument,
+	//        as is the case with AF_INET/AF_INET6.
+	//
+	// >> operator <  (sockaddr right) -> bool
+	// >> operator <= (sockaddr right) -> bool
+	// >> operator == (sockaddr right) -> bool
+	// >> operator != (sockaddr right) -> bool
+	// >> operator >  (sockaddr right) -> bool
+	// >> operator >= (sockaddr right) -> bool
+	//        Compare two sockaddr objects against each other
+	//
+	// >> property address_family -> int = { read }
+	//        Returns the address family of this sockaddr
+	//        s.a.: 'socket.AF_*'
+	// 
+	// >> property inet_host -> uint32_t = { read }
+	//    @throws Error.ValueError:                  Not an AF_INET address
+	//    @throws Error.RuntimeError.NotImplemented: Address family not implemented
+	//        Returns the host of an AF_INET address
+	//
+	// >> property inet_port -> uint16_t = { read }
+	//    @throws Error.ValueError:                  Not an AF_INET/AF_INET6 address
+	//    @throws Error.RuntimeError.NotImplemented: Address family not implemented
+	//        Returns the port of an AF_INET/AF_INET6 address
+	//
+	// >> property inet6_host -> string
+	//    @throws Error.ValueError:                  Not an AF_INET6 address
+	//    @throws Error.RuntimeError.NotImplemented: Address family not implemented
+	//        Returns the host of an AF_INET6 address
+	//
+	// >> property inet6_port -> uint16_t = { read }
+	//    @throws Error.ValueError:                  Not an AF_INET/AF_INET6 address
+	//    @throws Error.RuntimeError.NotImplemented: Address family not implemented
+	//        Alias for 'inet_port' (both do exactly the same)
+	//
+	//
+	//
+	// >> class function resolve(...) -> sockaddr
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Couldn't resolve address
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Unexpected address family
+	//        Returns the host/port address associated with a given address
+	//        >> same as calling 'sockaddr(AF_AUTO,...)'
+	//        s.a.: 'sockaddr'
+	//
+	// >> class function resolve_ex(int af, int protocol, ...) -> sockaddr
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Couldn't resolve address
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Unexpected address family
+	//        Some address families work differently based on the protocol being used.
+	//        For those families, use this function and explicitly state the protocol.
+	//        NOTE: Calling 'sockaddr(af,...)' is identical to 'sockaddr.resolve_ex(af,0,...)'
+	//
+	// >> class function inet_hostname(string host) -> (uint8_t,uint8_t,uint8_t,uint8_t)
+	// >> class function inet_hostname(uint32_t host) -> (uint8_t,uint8_t,uint8_t,uint8_t)
+	// >> class function inet_hostname(uint8_t a, uint8_t b, uint8_t c, uint8_t d) -> (uint8_t,uint8_t,uint8_t,uint8_t)
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Couldn't resolve address
+	//        Returns 4 byte portions of a given AF_INET address
+	//
+	// >> class function inet_aton(string host) -> uint32_t
+	// >> class function inet_aton(uint32_t host) -> uint32_t
+	// >> class function inet_aton(uint8_t a, uint8_t b, uint8_t c, uint8_t d) -> uint32_t
+	//    @throws Signal.Interrupt: The calling thread was interrupted
+	//    @throws Error.NetError:   Couldn't resolve address
+	//        Returns the host of a given AF_INET address
+	//
+	// >> class function inet_ntoa(string address) -> string
+	// >> class function inet_ntoa(string address, uint16_t port) -> string
+	// >> class function inet_ntoa(uint32_t host) -> string
+	// >> class function inet_ntoa(uint32_t host, uint16_t port) -> string
+	// >> class function inet_ntoa((uint32_t,uint16_t) address) -> string
+	// >> class function inet_ntoa(uint8_t a, uint8_t b, uint8_t c, uint8_t d) -> string
+	// >> class function inet_ntoa(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t port) -> string
+	//    @throws Signal.Interrupt:                  The calling thread was interrupted
+	//    @throws Error.NetError:                    Couldn't resolve address
+	//    @throws Error.RuntimeError.NotImplemented: Unsupported address family
+	//    @throws Error.ValueError:                  Unexpected address family
+	//        Returns the hostname (and possibly port) of a given AF_INET ip or address
+	//        If the argument is a string, the call is identical to 'inet_ntoa(inet_aton(address),...)'
+	//
+	//
+	//
+	// >> function __size(int protocol = 0) -> size_t
+	// >> function __size(string protocol) -> size_t
+	//    @throws Error.ValueError: Invalid protocol
+	//        Returns the internal size of a sockaddr
+	//        in the context of a given protocol.
+	//
+	//////////////////////////////////////////////////////////////////////////
+	const sockaddr = __builtin_object(0x015C);
+
+}

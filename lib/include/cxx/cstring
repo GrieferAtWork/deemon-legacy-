@@ -1,0 +1,60 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__cxxdefault.dee>
+
+#ifndef NULL
+#	define NULL none
+#endif
+
+module std {
+
+	__if_not_exists(local size_t) {
+		local const size_t = __SIZE_TYPE__;
+	}
+
+	local const memcpy  = __builtin_object(0x00C5); // void *memcpy(void *dst, void const *src, size_t n);
+	local const memmove = __builtin_object(0x00C6); // void *memmove(void *dst, void const *src, size_t n);
+	local const strcpy  = __builtin_object(0x00CC); // char *strcpy(char *dst, char const *src);
+	local const strncpy = __builtin_object(0x00CD); // char *strncpy(char *dst, char const *src, size_t n);
+	local const strcat  = __builtin_object(0x00CE); // char *strcat(char *dst, char const *src);
+	local const strncat = __builtin_object(0x00EA); // char *strncat(char *dst, char const *src, size_t n);
+
+	local const memcmp  = __builtin_object(0x00C7); // int memcmp(void const *a, void const *b, size_t n);
+	local const strcmp  = __builtin_object(0x00C9); // int strcmp(char const *a, char const *b);
+	local const strcoll = __builtin_object(0x00C8); // int strcoll(char const *a, char const *b);
+	local const strncmp = __builtin_object(0x00CA); // int strncmp(char const *a, char const *b, size_t n);
+	local const strxfrm = __builtin_object(0x00CB); // size_t strxfrm(char *a, char const *b, size_t n)
+
+	local const memchr  = __builtin_object(0x00CF); // void *memchr(void const *p, int c, size_t n);
+	local const strchr  = __builtin_object(0x00D0); // char *strchr(char const *s, int c);
+	local const strcspn = __builtin_object(0x00D1); // size_t strcspn(char const *a, char const *b);
+	local const strpbrk = __builtin_object(0x00D2); // char *strpbrk(char const *a, char const *b);
+	local const strrchr = __builtin_object(0x00D3); // char *strrchr(char const *a, int c);
+	local const strspn  = __builtin_object(0x00D4); // size_t strspn(char const *a, char const *b);
+	local const strstr  = __builtin_object(0x00D5); // char *strstr(char const *a, char const *b);
+	local const strtok  = __builtin_object(0x00D6); // char *strtok(char *a, char const *b);
+
+	local const memset   = __builtin_object(0x00F5); // void *memset(void *p, int c, size_t s);
+	local const strerror = __builtin_object(0x00D7); // string strerror(int error);
+	local const strlen   = __builtin_object(0x00D8); // size_t strlen(char const *s);
+
+}

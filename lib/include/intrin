@@ -1,0 +1,105 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+#include <__stddef.dee>
+
+// Assign function to the intrinsic operator names
+// NOTE: These functions are builtin and sometimes optimized
+//       into direct operator calls, rather than function calls.
+const __str__ = string;
+const __repr__ = __builtin_object(0x002A);
+const __type__ = __builtin_object(0x002B);
+const __copy__ = __builtin_object(0x002C);
+const __move__ = __builtin_object(0x002D);
+const __copyassign__ = __builtin_object(0x0030);
+const __moveassign__ = __builtin_object(0x01D4);
+const __assign__ = __copyassign__;
+const __not__ = __builtin_object(0x0031);
+const __neg__ = __builtin_object(0x0032);
+const __pos__ = __builtin_object(0x0033);
+const __inv__ = __builtin_object(0x0034);
+const __ref__ = __builtin_object(0x0035);
+const __deref__ = __builtin_object(0x0036);
+const __inc__ = __builtin_object(0x0037);
+const __dec__ = __builtin_object(0x0038);
+const __incpost__ = __builtin_object(0x0039);
+const __decpost__ = __builtin_object(0x003A);
+const __lo__ = __builtin_object(0x003B);
+const __le__ = __builtin_object(0x003C);
+const __eq__ = __builtin_object(0x003D);
+const __ne__ = __builtin_object(0x003E);
+const __gr__ = __builtin_object(0x003F);
+const __ge__ = __builtin_object(0x0040);
+const __add__ = __builtin_object(0x0041);
+const __iadd__ = __builtin_object(0x0042);
+const __sub__ = __builtin_object(0x0043);
+const __isub__ = __builtin_object(0x0044);
+const __mul__ = __builtin_object(0x0045);
+const __imul__ = __builtin_object(0x0046);
+const __div__ = __builtin_object(0x0047);
+const __idiv__ = __builtin_object(0x0048);
+const __mod__ = __builtin_object(0x0049);
+const __imod__ = __builtin_object(0x004A);
+const __shl__ = __builtin_object(0x004B);
+const __ishl__ = __builtin_object(0x004C);
+const __shr__ = __builtin_object(0x004D);
+const __ishr__ = __builtin_object(0x004E);
+const __and__ = __builtin_object(0x004F);
+const __iand__ = __builtin_object(0x0050);
+const __or__ = __builtin_object(0x0051);
+const __ior__ = __builtin_object(0x0052);
+const __xor__ = __builtin_object(0x0053);
+const __ixor__ = __builtin_object(0x0054);
+const __pow__ = __builtin_object(0x0055);
+const __ipow__ = __builtin_object(0x0056);
+const __call__ = __builtin_object(0x0057);
+const __size__ = __builtin_object(0x0058);
+const __getitem__ = __builtin_object(0x0059);
+const __setitem__ = __builtin_object(0x005A);
+const __delitem__ = __builtin_object(0x005B);
+const __getrange__ = __builtin_object(0x005C);
+const __setrange__ = __builtin_object(0x005D);
+const __delrange__ = __builtin_object(0x005E);
+const __is__ = __builtin_object(0x005F);
+const __contains__ = __builtin_object(0x0060);
+const __getattr__ = __builtin_object(0x0061);
+const __delattr__ = __builtin_object(0x0062);
+const __setattr__ = __builtin_object(0x0063);
+const __iterself__ = __builtin_object(0x0064);
+const __iternext__ = __builtin_object(0x0065);
+const __hasattr__ = __builtin_object(0x018B);
+const __callv__ = __builtin_object(0x01D5);
+const __hash__ = __builtin_object(0x01D6);
+const __bool__ = __builtin_object(0x01DF);
+
+const __read__ = __builtin_object(0x01E3);
+const __write__ = __builtin_object(0x01E4);
+#if __has_extension(__pointers__)
+const __readp__ = __builtin_object(0x01E5);
+const __writep__ = __builtin_object(0x01E6);
+#endif
+const __readnp__ = __builtin_object(0x01E7);
+const __writenp__ = __builtin_object(0x01E8);
+const __seek__ = __builtin_object(0x01E9);
+const __flush__ = __builtin_object(0x01EA);
+const __trunc__ = __builtin_object(0x01EB);
+const __close__ = __builtin_object(0x01EC);

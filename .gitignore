@@ -1,33 +1,23 @@
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
 *.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
+*.pdb
+*.ilk
+*.exp
 *.dll
 *.so
 *.so.*
-*.dylib
-
-# Executables
 *.exe
 *.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+*.sdf
+*.vcxproj.filters
+*.vcxproj.user
+*.opensdf
+*.v12.suo
 
-# Debug files
-*.dSYM/
-*.su
+build/*
+lib/dex/*
+lib/dex.*/*
+lib/_*.dee
+src/deemon/runtime/libffi_linux/*
+!src/deemon/runtime/libffi_linux/clean_libffi.sh
+!src/deemon/runtime/libffi_linux/make_libffi.sh
+

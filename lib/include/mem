@@ -1,0 +1,259 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+#if __has_feature(__pointers__)
+#pragma push_macro("mem")
+#pragma push_macro("memcpy")
+#pragma push_macro("memmove")
+#pragma push_macro("memcmp")
+#pragma push_macro("strcoll")
+#pragma push_macro("strcmp")
+#pragma push_macro("strncmp")
+#pragma push_macro("strxfrm")
+#pragma push_macro("strcpy")
+#pragma push_macro("strncpy")
+#pragma push_macro("strcat")
+#pragma push_macro("memchr")
+#pragma push_macro("strchr")
+#pragma push_macro("strcspn")
+#pragma push_macro("strpbrk")
+#pragma push_macro("strrchr")
+#pragma push_macro("strspn")
+#pragma push_macro("strstr")
+#pragma push_macro("strtok")
+#pragma push_macro("strerror")
+#pragma push_macro("strlen")
+#pragma push_macro("strnlen")
+#pragma push_macro("strncat")
+#pragma push_macro("memset")
+#pragma push_macro("strdup")
+#pragma push_macro("strndup")
+#pragma push_macro("malloc")
+#pragma push_macro("calloc")
+#pragma push_macro("realloc")
+#pragma push_macro("free")
+#pragma push_macro("aligned_malloc")
+#pragma push_macro("aligned_calloc")
+#pragma push_macro("aligned_realloc")
+#pragma push_macro("aligned_free")
+#undef mem
+#undef memcpy
+#undef memmove
+#undef memcmp
+#undef strcoll
+#undef strcmp
+#undef strncmp
+#undef strxfrm
+#undef strcpy
+#undef strncpy
+#undef strcat
+#undef memchr
+#undef strchr
+#undef strcspn
+#undef strpbrk
+#undef strrchr
+#undef strspn
+#undef strstr
+#undef strtok
+#undef strerror
+#undef strlen
+#undef strnlen
+#undef strncat
+#undef memset
+#undef strdup
+#undef strndup
+#undef malloc
+#undef calloc
+#undef realloc
+#undef free
+#undef aligned_malloc
+#undef aligned_calloc
+#undef aligned_realloc
+#undef aligned_free
+
+module mem {
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::memcpy(none *dst, none *src, size_t n) -> none *
+	//     Copies 'n' bytes of memory from 'src' to 'dst'
+	//     NOTE: the source and destination range may not overlap
+	local const memcpy = __builtin_object(0x00C5);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::memmove(none *dst, none *src, size_t n) -> none *
+	//     Copies 'n' bytes of memory from 'src' to 'dst'
+	//     NOTE: the source and destination range may overlap
+	local const memmove = __builtin_object(0x00C6);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::memcmp(none *a, none *b, size_t n) -> int
+	//     Compares 'n' bytes of memory from 'a' with 'b'.
+	//     Returns < 0:  memory in 'a' is lower than memory in 'b'
+	//     Returns == 0: memory in 'a' is identical to memory in 'b'
+	//     Returns > 0:  memory in 'a' is greater than memory in 'b'
+	local const memcmp = __builtin_object(0x00C7);
+	
+	local const strcoll = __builtin_object(0x00C8);
+	local const strcmp = __builtin_object(0x00C9);
+	local const strncmp = __builtin_object(0x00CA);
+	local const strxfrm = __builtin_object(0x00CB);
+	local const strcpy = __builtin_object(0x00CC);
+	local const strncpy = __builtin_object(0x00CD);
+	local const strcat = __builtin_object(0x00CE);
+	local const memchr = __builtin_object(0x00CF);
+	local const strchr = __builtin_object(0x00D0);
+	local const strcspn = __builtin_object(0x00D1);
+	local const strpbrk = __builtin_object(0x00D2);
+	local const strrchr = __builtin_object(0x00D3);
+	local const strspn = __builtin_object(0x00D4);
+	local const strstr = __builtin_object(0x00D5);
+	local const strtok = __builtin_object(0x00D6);
+	local const strerror = __builtin_object(0x00D7);
+	local const strlen = __builtin_object(0x00D8);
+	local const strnlen = __builtin_object(0x00D9);
+	local const strncat = __builtin_object(0x00EA);
+	local const memset = __builtin_object(0x00F5);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::strdup(char *s) -> char *
+	//     @throws Error.NoMemory: Not enought memory to complete the operation
+	//     Returns a newly malloc-ated character-pointer containing all
+	//     characters leading up to the first \0 character in 's'
+	//     s.a.: 'function mem::free'
+	local const strdup = __builtin_object(0x00E8);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::strdup(char *s, size_t n) -> char *
+	//     @throws Error.NoMemory: Not enought memory to complete the operation
+	//     Returns a newly malloc-ated character-pointer containing all
+	//     characters leading up to the first \0 character in 's', but at most 'n'
+	//     s.a.: 'function mem::free'
+	local const strndup = __builtin_object(0x00E9);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::malloc(size_t s) -> none *
+	//     @throws Error.NoMemory: Not enought memory to complete the operation
+	//     Returns a newly malloc-ated pointer containing 's' bytes
+	//     Returns a NULL-pointer if 's' is zero
+	//     s.a.: 'function mem::free'
+	local const malloc = __builtin_object(0x00DA);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::calloc(size_t n, size_t s) -> none *
+	//     @throws Error.NoMemory: Not enought memory to complete the operation
+	//     Returns a newly malloc-ated pointer containing 'n*s' zero-initialized bytes
+	//     Returns a NULL-pointer if 'n*s' is zero
+	//     s.a.: 'function mem::free'
+	local const calloc = __builtin_object(0x00DB);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::realloc(none *p, size_t s) -> none *
+	//     @throws Error.NoMemory: Not enought memory to complete the operation
+	//     Reallocates 'p' to fit 's' bytes, keeping old data but truncating old bytes.
+	//     Returns the new pointer to the data previously pointed to by 'p', which may differ from 'p'
+	//     Returns a NULL-pointer and frees 'p' if 's' is zero
+	//     s.a.: 'function mem::free'
+	local const realloc = __builtin_object(0x00DC);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::free(none *p) -> none
+	//     Frees a pointer 'p' that was previously returned by:
+	//         strdup, strndup, malloc, calloc or realloc
+	//     No-op if 'p' is a NULL-pointer
+	local const free = __builtin_object(0x00DD);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::aligned_malloc(size_t s, size_t alignment) -> none *
+	//     @throws Error.NoMemory: Not enought memory to complete the operation
+	//     Returns a newly malloc-ated pointer containing 's' bytes, that is
+	//     aligned to the byteborder of 'alignment' (aka. "(uintptr_t)return % alignment == 0")
+	//     Returns a NULL-pointer if 's' is zero
+	//     s.a.: 'function mem::aligned_free'
+	local const aligned_malloc = __builtin_object(0x00DE);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::aligned_calloc(size_t s, size_t alignment) -> none *
+	//     @throws Error.NoMemory: Not enought memory to complete the operation
+	//     Returns a newly malloc-ated pointer containing 's' zero-initialized bytes, that is
+	//     aligned to the byteborder of 'alignment' (aka. "(uintptr_t)return % alignment == 0")
+	//     Returns a NULL-pointer if 's' is zero
+	//     s.a.: 'function mem::aligned_free'
+	local const aligned_calloc = __builtin_object(0x00DF);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::aligned_realloc(none *p, size_t s, size_t alignment) -> none *
+	//     @throws Error.NoMemory: Not enought memory to complete the operation
+	//     Reallocates 'p' to fit 's' bytes, keeping old data but truncating old bytes.
+	//     Returns the new pointer to the data previously pointed to by 'p', which may differ from 'p',
+	//     that is aligned to the byteborder of 'alignment' (aka. "(uintptr_t)return % alignment == 0")
+	//     Returns a NULL-pointer and frees 'p' if 's' is zero
+	//     s.a.: 'function mem::aligned_free'
+	local const aligned_realloc = __builtin_object(0x00E0);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function mem::aligned_free(none *p) -> none
+	//     Frees a pointer 'p' that was previously returned by:
+	//         aligned_malloc, aligned_calloc or aligned_realloc
+	//     No-op if 'p' is a NULL-pointer
+	local const aligned_free = __builtin_object(0x00E1);
+
+}
+
+#pragma pop_macro("mem")
+#pragma pop_macro("memcpy")
+#pragma pop_macro("memmove")
+#pragma pop_macro("memcmp")
+#pragma pop_macro("strcoll")
+#pragma pop_macro("strcmp")
+#pragma pop_macro("strncmp")
+#pragma pop_macro("strxfrm")
+#pragma pop_macro("strcpy")
+#pragma pop_macro("strncpy")
+#pragma pop_macro("strcat")
+#pragma pop_macro("memchr")
+#pragma pop_macro("strchr")
+#pragma pop_macro("strcspn")
+#pragma pop_macro("strpbrk")
+#pragma pop_macro("strrchr")
+#pragma pop_macro("strspn")
+#pragma pop_macro("strstr")
+#pragma pop_macro("strtok")
+#pragma pop_macro("strerror")
+#pragma pop_macro("strlen")
+#pragma pop_macro("strnlen")
+#pragma pop_macro("strncat")
+#pragma pop_macro("memset")
+#pragma pop_macro("strdup")
+#pragma pop_macro("strndup")
+#pragma pop_macro("malloc")
+#pragma pop_macro("calloc")
+#pragma pop_macro("realloc")
+#pragma pop_macro("free")
+#pragma pop_macro("aligned_malloc")
+#pragma pop_macro("aligned_calloc")
+#pragma pop_macro("aligned_realloc")
+#pragma pop_macro("aligned_free")
+
+#else
+#	error "Pointers are disabled in this distribution of deemon"
+#endif

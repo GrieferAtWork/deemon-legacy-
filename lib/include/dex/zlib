@@ -1,0 +1,97 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#pragma once
+
+#include <__stddef.dee>
+
+#pragma push_macro("__zlib")
+#pragma push_macro("ZLibError")
+#pragma push_macro("compress_data")
+#pragma push_macro("uncompress_data")
+#pragma push_macro("Z_NO_COMPRESSION")
+#pragma push_macro("Z_BEST_SPEED")
+#pragma push_macro("Z_BEST_COMPRESSION")
+#pragma push_macro("Z_DEFAULT_COMPRESSION")
+#pragma push_macro("Z_UBER_COMPRESSION")
+#pragma push_macro("zlib")
+#undef __zlib
+#undef ZLibError
+#undef compress_data
+#undef uncompress_data
+#undef Z_NO_COMPRESSION
+#undef Z_BEST_SPEED
+#undef Z_BEST_COMPRESSION
+#undef Z_DEFAULT_COMPRESSION
+#undef Z_UBER_COMPRESSION
+#undef zlib
+module zlib {
+	__unused local __zlib = __builtin_dex("_zlib");
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> class ZlibError extends Error.ValueError { ... };
+	//        - An error type used for wrapping zlib errors.
+	//////////////////////////////////////////////////////////////////////////
+	//
+	__unused local ZLibError = __zlib.ZLibError;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function compress_data(string data, int level = Z_DEFAULT_COMPRESSION) -> string;
+	// >> function compress_data(string data, size_t max_size, int level) -> string;
+	// >> function compress_data(none * data, size_t size, int level = Z_DEFAULT_COMPRESSION) -> string;
+	//    @throws ZLibError: Failed to compress data.
+	//        - Compresses the given data and returns it as a string.
+	__unused local compress_data = __zlib.compress_data;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function uncompress_data(string data, size_t max_size = size_t(-1)) -> string;
+	// >> function uncompress_data(none * data, size_t size) -> string;
+	//    @throws ZLibError: Failed to uncompress data.
+	//        - Uncompresses the given data and returns it as a string.
+	__unused local uncompress_data = __zlib.uncompress_data;
+
+	//////////////////////////////////////////////////////////////////////////
+	__unused local Z_NO_COMPRESSION = __zlib.Z_NO_COMPRESSION;
+
+	//////////////////////////////////////////////////////////////////////////
+	__unused local Z_BEST_SPEED = __zlib.Z_BEST_SPEED;
+
+	//////////////////////////////////////////////////////////////////////////
+	__unused local Z_BEST_COMPRESSION = __zlib.Z_BEST_COMPRESSION;
+
+	//////////////////////////////////////////////////////////////////////////
+	__unused local Z_DEFAULT_COMPRESSION = __zlib.Z_DEFAULT_COMPRESSION;
+
+	//////////////////////////////////////////////////////////////////////////
+	__unused local Z_UBER_COMPRESSION = __zlib.Z_UBER_COMPRESSION;
+
+}
+#pragma pop_macro("__zlib")
+#pragma pop_macro("ZLibError")
+#pragma pop_macro("compress_data")
+#pragma pop_macro("uncompress_data")
+#pragma pop_macro("Z_NO_COMPRESSION")
+#pragma pop_macro("Z_BEST_SPEED")
+#pragma pop_macro("Z_BEST_COMPRESSION")
+#pragma pop_macro("Z_DEFAULT_COMPRESSION")
+#pragma pop_macro("Z_UBER_COMPRESSION")
+#pragma pop_macro("zlib")
+

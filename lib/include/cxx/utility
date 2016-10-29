@@ -1,0 +1,68 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__cxxdefault.dee>
+
+#pragma push_macro("swap")
+#pragma push_macro("forward")
+#pragma push_macro("move")
+#pragma push_macro("pair")
+#pragma push_macro("tuple")
+#pragma push_macro("exchange")
+#pragma push_macro("rel_ops")
+#undef swap
+#undef forward
+#undef move
+#undef pair
+#undef tuple
+#undef exchange
+#undef rel_ops
+module std {
+
+	local const swap = __builtin_object(0x0175);
+
+	// WARNING: 'forward' will not work without a module/namespace prefix
+	local constexpr function forward(x) -> x;
+
+	//local const move = __builtin_object(0x002D);
+
+#undef declval
+	local constexpr function declval(x) -> x;
+#	define declval<T> declval(T)
+
+	local const pair = tuple;
+
+	local constexpr function exchange(__obj,__new_value): __result {
+		__result = move __obj;
+		__obj := __new_value;
+	}
+
+	// Just so it's there
+	module rel_ops {}
+
+}
+#pragma pop_macro("swap")
+#pragma pop_macro("forward")
+#pragma pop_macro("move")
+#pragma pop_macro("pair")
+#pragma pop_macro("tuple")
+#pragma pop_macro("exchange")
+#pragma pop_macro("rel_ops")

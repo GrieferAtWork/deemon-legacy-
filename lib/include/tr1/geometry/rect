@@ -1,0 +1,206 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#ifndef __DEEMON_GUARD_TR1_GEOMETRY_RECT
+#define __DEEMON_GUARD_TR1_GEOMETRY_RECT 1
+
+#include <tr1/geometry/point>
+
+#if __API_VERSION__ < 101
+#	error "API Version too old for this header"
+#endif
+
+#pragma push_macro("tr1")
+#pragma push_macro("geometry")
+#pragma push_macro("rect")
+#pragma push_macro("xmin")
+#pragma push_macro("xmax")
+#pragma push_macro("ymin")
+#pragma push_macro("ymax")
+#pragma push_macro("x")
+#pragma push_macro("y")
+#pragma push_macro("min")
+#pragma push_macro("max")
+#undef tr1
+#undef geometry
+#undef rect
+#undef xmin
+#undef xmax
+#undef ymin
+#undef ymax
+#undef x
+#undef y
+#undef min
+#undef max
+module tr1::geometry {
+	// object xmin;
+	// object xmax;
+	// object ymin;
+	// object ymax;
+
+	const class rect {
+		this() {
+			this.xmin = none;
+			this.xmax = none;
+			this.ymin = none;
+			this.ymax = none;
+		}
+		this(args...) {
+			if (#args == 2) {
+				this.xmin = args[0].x;
+				this.ymin = args[0].y;
+				this.xmax = args[1].x;
+				this.ymax = args[1].y;
+			} else {
+				this.xmin = args.at(0);
+				this.xmax = args.at(1);
+				this.ymin = args.at(2);
+				this.ymax = args.at(3);
+			}
+		}
+		copy(__right) {
+			this.xmin = __right.xmin;
+			this.xmax = __right.xmax;
+			this.ymin = __right.ymin;
+			this.ymax = __right.ymax;
+		}
+		operator = (__right) {
+			this.xmin = __right.xmin;
+			this.xmax = __right.xmax;
+			this.ymin = __right.ymin;
+			this.ymax = __right.ymax;
+		}
+		property sizex = {
+			operator . -> __builtin_object(0x010A)(this.xmax-this.xmin);
+			operator = (__x) { this.xmax = this.xmin+__x; }
+		};
+		property sizey = {
+			operator . -> __builtin_object(0x010A)(this.ymax-this.ymin);
+			operator = (__y) { this.ymax = this.ymin+__y; }
+		};
+		property size = {
+			operator . -> ::tr1::geometry::point(this.sizex,this.sizey);
+			operator = (__size) { this.sizex = __size.x; this.sizey = __size.y; }
+		};
+		property min = {
+			operator . -> ::tr1::geometry::point(this.xmin,this.ymin);
+			operator = (__min) { this.xmin = __min.x; this.ymin = __min.y; }
+		};
+		property max = {
+			operator . -> ::tr1::geometry::point(this.xmax,this.ymax);
+			operator = (__max) { this.xmax = __max.x; this.ymax = __max.y; }
+		};
+
+		operator bool() ->
+			this.xmax != this.xmin && this.ymax != this.ymin;
+
+		operator str() -> "("
+			"("+str this.xmin+","+str this.ymin+"),"
+			"("+str this.xmax+","+str this.ymax+")"
+		")";
+		operator repr() -> "rect("
+			"("+repr this.xmin+","+repr this.ymin+"),"
+			"("+repr this.xmax+","+repr this.ymax+")"
+		")";
+		operator + (__right) {
+			if (__right is ::tr1::geometry::rect) {
+				return ::tr1::geometry::rect(
+					this.xmin+__right.xmin,this.ymin+__right.ymin,
+					this.xmax+__right.xmax,this.ymax+__right.ymax);
+			}
+			return ::tr1::geometry::rect(
+				this.xmin+__right.x,this.ymin+__right.y,
+				this.xmax+__right.x,this.ymax+__right.y);
+		}
+		operator - (__right) {
+			if (__right is ::tr1::geometry::rect) {
+				return ::tr1::geometry::rect(
+					this.xmin-__right.xmin,this.ymin-__right.ymin,
+					this.xmax-__right.xmax,this.ymax-__right.ymax);
+			}
+			return ::tr1::geometry::rect(
+				this.xmin-__right.x,this.ymin-__right.y,
+				this.xmax-__right.x,this.ymax-__right.y);
+		}
+		operator += (__right) {
+			if (__right is ::tr1::geometry::rect) {
+				this.xmin += __right.xmin; this.ymin += __right.ymin;
+				this.xmax += __right.xmax; this.ymax += __right.ymax;
+			} else {
+				this.xmin += __right.x; this.ymin += __right.y;
+				this.xmax += __right.x; this.ymax += __right.y;
+			}
+			return this;
+		}
+		operator -= (__right) {
+			if (__right is ::tr1::geometry::rect) {
+				this.xmin -= __right.xmin; this.ymin -= __right.ymin;
+				this.xmax -= __right.xmax; this.ymax -= __right.ymax;
+			} else {
+				this.xmin -= __right.x; this.ymin -= __right.y;
+				this.xmax -= __right.x; this.ymax -= __right.y;
+			}
+			return this;
+		}
+
+		operator * (__right) ->
+			::tr1::geometry::rect(
+				this.xmin*__right.x,this.ymin*__right.y,
+				this.xmax*__right.x,this.ymax*__right.y);
+		operator / (__right) ->
+			::tr1::geometry::rect(
+				this.xmin/__right.x,this.ymin/__right.y,
+				this.xmax/__right.x,this.ymax/__right.y);
+		operator *= (__right) {
+			this.xmin *= __right.x; this.ymin *= __right.y;
+			this.xmax *= __right.x; this.ymax *= __right.y;
+			return this;
+		}
+		operator /= (__right) {
+			this.xmin /= __right.x; this.ymin /= __right.y;
+			this.xmax /= __right.x; this.ymax /= __right.y;
+			return this;
+		}
+
+		operator __contains__(__right) {
+			if (__right is ::tr1::geometry::rect) {
+				return __right.xmin >= this.xmin && __right.xmax < this.xmax &&
+				       __right.ymin >= this.ymin && __right.ymax < this.ymax;
+			}
+			return __right.x >= this.xmin && __right.x < this.xmax &&
+				   __right.y >= this.ymin && __right.y < this.ymax;
+		}
+
+	};
+
+}
+#pragma pop_macro("tr1")
+#pragma pop_macro("geometry")
+#pragma pop_macro("rect")
+#pragma pop_macro("xmin")
+#pragma pop_macro("xmax")
+#pragma pop_macro("ymin")
+#pragma pop_macro("ymax")
+#pragma pop_macro("x")
+#pragma pop_macro("y")
+#pragma pop_macro("min")
+#pragma pop_macro("max")
+
+#endif /* !__DEEMON_GUARD_TR1_GEOMETRY_RECT */

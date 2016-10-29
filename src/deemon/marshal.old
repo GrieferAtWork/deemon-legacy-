@@ -1,0 +1,2214 @@
+/* Copyright (c) 2016 Griefer@Work (https://sourceforge.net/users/grieferatwork) *
+ *                                                                               *
+ * This software is provided 'as-is', without any express or implied             *
+ * warranty. In no event will the authors be held liable for any damages         *
+ * arising from the use of this software.                                        *
+ *                                                                               *
+ * Permission is granted to anyone to use this software for any purpose,         *
+ * including commercial applications, and to alter it and redistribute it        *
+ * freely, subject to the following restrictions:                                *
+ *                                                                               *
+ * 1. The origin of this software must not be misrepresented; you must not       *
+ *    claim that you wrote the original software. If you use this software       *
+ *    in a product, an acknowledgement in the product documentation would be     *
+ *    appreciated but is not required.                                           *
+ * 2. Altered source versions must be plainly marked as such, and must not be    *
+ *    misrepresented as being the original software.                             *
+ * 3. This notice may not be removed or altered from any source distribution.    *
+ */
+#ifndef GUARD_DEEMON_MARSHAL_C
+#define GUARD_DEEMON_MARSHAL_C 1
+#define DEE_LIMITED_API 1
+
+// TODO: DeeArrayIteratorObject
+
+#include <deemon/__conf.inl>
+#include DEE_INCLUDE_MEMORY_API()
+
+// include/*
+#include <deemon/__bswap_intrin.inl>
+#include <deemon/array.h>
+#include <deemon/bool.h>
+#include <deemon/cfunction.h>
+#include <deemon/compiler/__opcode.inl>
+#include <deemon/compiler/code.h>
+#include <deemon/class.h>
+#include <deemon/deemonrun.h>
+#include <deemon/dict.h>
+#include <deemon/dex.h>
+#include <deemon/error.h>
+#include <deemon/file.h>
+#include <deemon/float.h>
+#include <deemon/fs_api.h>
+#include <deemon/gc.h>
+#include <deemon/integer.h>
+#include <deemon/iterator.h>
+#include <deemon/list.h>
+#include <deemon/marshal.h>
+#include <deemon/memberfunction.h>
+#include <deemon/none.h>
+#include <deemon/object.h>
+#include <deemon/optional/hashmap.h>
+#include <deemon/random.h>
+#include <deemon/runtime/builtins.h>
+#include <deemon/runtime/execute.h>
+#include <deemon/runtime/extern.h>
+#include <deemon/runtime/function.h>
+#include <deemon/set.h>
+#include <deemon/struct.h>
+#include <deemon/structured.h>
+#include <deemon/super.h>
+#include <deemon/traceback.h>
+#include <deemon/tuple.h>
+
+DEE_DECL_BEGIN
+
+DEE_A_RET_WUNUSED Dee_uint32_t DeeMarshalWriteMap_GetFlags(
+ DEE_A_IN struct DeeMarshalWriteMap const *self) {
+ DEE_ASSERT(self);
+ return self->ob_flags;
+}
+void DeeMarshalWriteMap_SetFlags(
+ DEE_A_INOUT struct DeeMarshalWriteMap *self, DEE_A_IN Dee_uint32_t flags) {
+ DEE_ASSERT(self);
+ self->ob_flags = flags;
+}
+DEE_A_RET_EXCEPT(NULL) struct DeeMarshalWriteMap *DeeMarshalWriteMap_Alloc(void) {
+ struct DeeMarshalWriteMap *result;
+ while ((result = (struct DeeMarshalWriteMap *)
+  malloc_nz(sizeof(struct DeeMarshalWriteMap))) == NULL) {
+  if (Dee_CollectMemory()) continue;
+  DeeError_NoMemory();
+  return NULL;
+ }
+ return result;
+}
+DEE_A_RET_EXCEPT(NULL) struct DeeMarshalWriteMap *DeeMarshalWriteMap_New(void) {
+ struct DeeMarshalWriteMap *result;
+ while ((result = (struct DeeMarshalWriteMap *)
+  malloc_nz(sizeof(struct DeeMarshalWriteMap))) == NULL) {
+  if (Dee_CollectMemory()) continue;
+  DeeError_NoMemory();
+  return NULL;
+ }
+ result->ob_ref_next = 0;
+ result->ob_refc = 0;
+ result->ob_refv = NULL;
+#ifdef DEE_DEBUG
+ result->ob_stack = NULL;
+#endif
+ return result;
+}
+void DeeMarshalWriteMap_Free(DEE_A_IN DEE_A_OUT_INVALID struct DeeMarshalWriteMap *self) {
+ DEE_ASSERT(self);
+ free_nn(self);
+}
+void DeeMarshalWriteMap_Delete(DEE_A_IN DEE_A_OUT_INVALID struct DeeMarshalWriteMap *self) {
+ DEE_ASSERT(self);
+ DeeMarshalWriteMap_Quit(self);
+ free_nn(self);
+}
+void DeeMarshalWriteMap_Init(DEE_A_OUT struct DeeMarshalWriteMap *self) {
+ DEE_ASSERT(self);
+ self->ob_ref_next = 0;
+ self->ob_refc = 0;
+ self->ob_refv = NULL;
+#ifdef DEE_DEBUG
+ self->ob_stack = NULL;
+#endif
+}
+void DeeMarshalWriteMap_Quit(DEE_A_IN struct DeeMarshalWriteMap *self) {
+ DEE_ASSERT(self);
+#ifdef DEE_DEBUG
+ DEE_ASSERT(self->ob_stack == NULL && "Write-stack is still active");
+#endif
+ free(self->ob_refv);
+}
+#ifdef DEE_DEBUG
+DEE_A_RET_NOEXCEPT(0) int _DeeMarshalWriteMap_AlreadyWriting(
+ DEE_A_IN struct DeeMarshalWriteMap const *self, DEE_A_INOUT DeeObject *ob) {
+ struct _DeeMarshalWriteStack *iter;
+ DEE_ASSERT(self),iter = self->ob_stack;
+ while (iter) if (iter->s_ob == ob) return 1; else iter = iter->s_prev;
+ return 0;
+}
+#endif
+DEE_A_RET_EXCEPT(-1) Dee_uint32_t _DeeMarshalWriteMap_RegisterID(
+ DEE_A_IN struct DeeMarshalWriteMap *self, DEE_A_IN DeeObject const *ob) {
+ struct _DeeMarshalWriteRef *new_refs;
+ DEE_ASSERT(self);
+ if ((new_refs = (struct _DeeMarshalWriteRef *)realloc_nz(
+  self->ob_refv,(self->ob_refc+1)*sizeof(struct _DeeMarshalWriteRef))) == NULL) {
+  DeeError_NoMemory();
+  return (Dee_uint32_t)-1;
+ }
+ self->ob_refv = new_refs;
+ new_refs += self->ob_refc++;
+ new_refs->ref_ob = ob;
+ return new_refs->ref_id = self->ob_ref_next++;
+}
+DEE_A_RET_NOEXCEPT(-1) Dee_uint32_t _DeeMarshalWriteMap_FindObject(
+ DEE_A_IN struct DeeMarshalWriteMap *self, DEE_A_IN DeeObject const *ob) {
+ struct _DeeMarshalWriteRef *iter,*end;
+ end = (iter = self->ob_refv)+self->ob_refc;
+ while (iter != end) if (iter->ref_ob == ob) return iter->ref_id; else ++iter;
+ return (Dee_uint32_t)-1;
+}
+
+
+
+
+
+DEE_A_RET_EXCEPT(NULL) struct DeeMarshalReadMap *DeeMarshalReadMap_Alloc(void) {
+ struct DeeMarshalReadMap *result;
+ while ((result = (struct DeeMarshalReadMap *)
+  malloc_nz(sizeof(struct DeeMarshalReadMap))) == NULL) {
+  if (Dee_CollectMemory()) continue;
+  DeeError_NoMemory();
+  return NULL;
+ }
+ return result;
+}
+DEE_A_RET_EXCEPT(NULL) struct DeeMarshalReadMap *
+DeeMarshalReadMap_New(DEE_A_IN DeeMarshalVersion version) {
+ struct DeeMarshalReadMap *result;
+ if (_DeeMarshalReadMap_CheckVersion(version) != 0) return NULL;
+ while ((result = (struct DeeMarshalReadMap *)
+  malloc_nz(sizeof(struct DeeMarshalReadMap))) == NULL) {
+  if (Dee_CollectMemory()) continue;
+  DeeError_NoMemory();
+  return NULL;
+ }
+ result->ob_version = version;
+ result->ob_refc = 0;
+ result->ob_refv = NULL;
+ return result;
+}
+void DeeMarshalReadMap_Free(DEE_A_IN DEE_A_OUT_INVALID struct DeeMarshalReadMap *self) {
+ DEE_ASSERT(self);
+ free_nn(self);
+}
+void DeeMarshalReadMap_Delete(DEE_A_IN DEE_A_OUT_INVALID struct DeeMarshalReadMap *self) {
+ DEE_ASSERT(self);
+ DeeMarshalReadMap_Quit(self);
+ free_nn(self);
+}
+DEE_A_RET_WUNUSED int DeeMarshal_IsSupported(DEE_A_IN DeeMarshalVersion version) {
+ if (version > DEE_MARSHAL_VERSION) return 0; // Future version
+ if (version <= DEE_MARSHAL_V100) return 0; // Too old
+ return 1;
+}
+DEE_A_RET_EXCEPT(-1) int _DeeMarshalReadMap_CheckVersion(
+ DEE_A_IN DeeMarshalVersion version) {
+ if (version > DEE_MARSHAL_VERSION) {
+  DeeError_SetStringf(&DeeErrorType_NotImplemented,
+                      "Future marshal version: %d (current: "
+                      DEE_PP_STR(DEE_MARSHAL_VERSION)
+                      ")",version);
+  return -1;
+ } else if (version <= DEE_MARSHAL_V100) {
+  DeeError_SetStringf(&DeeErrorType_NotImplemented,
+                      "No backwards compatibility for marshal version %d (please recompile)",
+                      (int)version);
+  return -1;
+ }
+ return 0;
+}
+DEE_A_RET_EXCEPT(-1) int DeeMarshalReadMap_Init(
+ DEE_A_OUT struct DeeMarshalReadMap *self,
+ DEE_A_IN DeeMarshalVersion version) {
+ DEE_ASSERT(self);
+ if (_DeeMarshalReadMap_CheckVersion(version) == -1) return -1;
+ self->ob_version = version;
+ self->ob_refc = 0;
+ self->ob_refv = NULL;
+ return 0;
+}
+void DeeMarshalReadMap_Quit(DEE_A_IN struct DeeMarshalReadMap *self) {
+ struct _DeeMarshalReadRef *iter,*end;
+ DEE_ASSERT(self);
+ end = (iter = self->ob_refv)+self->ob_refc;
+ while (iter != end) Dee_DECREF((iter++)->ref_ob);
+ free(self->ob_refv);
+}
+
+DEE_A_RET_EXCEPT(-1) int _DeeMarshalReadMap_PushRef(
+ DEE_A_INOUT struct DeeMarshalReadMap *self, DEE_A_IN Dee_uint32_t id, DEE_A_INOUT DeeObject *ob) {
+ struct _DeeMarshalReadRef *new_refs;
+ DEE_ASSERT(self);
+ while ((new_refs = (struct _DeeMarshalReadRef *)realloc_nz(
+  self->ob_refv,(self->ob_refc+1)*sizeof(struct _DeeMarshalReadRef))) == NULL) {
+  if (Dee_CollectMemory()) continue;
+  DeeError_NoMemory();
+  return -1;
+ }
+ self->ob_refv = new_refs;
+ new_refs += self->ob_refc++;
+ new_refs->ref_id = id;
+ Dee_INCREF(new_refs->ref_ob = ob);
+ return 0;
+}
+void _DeeMarshalReadMap_PopRef(
+ DEE_A_INOUT struct DeeMarshalReadMap *self, DEE_A_INOUT DeeObject *ob) {
+ struct _DeeMarshalReadRef *iter,*end;
+ DEE_ASSERT(self);
+ DEE_ASSERT(DeeObject_Check(ob));
+ iter = end = self->ob_refv+self->ob_refc;
+ while (1) {
+  DEE_ASSERTF(iter != self->ob_refv,"Object not found: %k:%k",Dee_TYPE(ob),ob);
+  if ((--iter)->ref_ob == ob) {
+   Dee_DECREF(ob);
+   memcpy(iter,iter+1,(((Dee_size_t)(end-iter))-1)*sizeof(struct _DeeMarshalReadRef));
+   --self->ob_refc;
+   return;
+  }
+ }
+}
+DEE_A_RET_NOEXCEPT(NULL) DeeObject *_DeeMarshalReadMap_GetRef(
+ DEE_A_INOUT struct DeeMarshalReadMap *self, DEE_A_IN Dee_uint32_t id) {
+ struct _DeeMarshalReadRef *iter,*end;
+ DEE_ASSERT(self);
+ end = (iter = self->ob_refv)+self->ob_refc;
+ while (iter != end) if (iter->ref_id == id) return iter->ref_ob; else ++iter;
+ return NULL;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------- //
+//////////////////////////////////////////////////////////////////////////
+
+
+DEE_A_RET_EXCEPT_REF DeeObject *DeeMarshal_ReadObject(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file, DEE_A_IN DeeMarshalVersion version) {
+ DeeObject *result;
+ if (_DeeMarshalReadMap_CheckVersion(version) == -1) return NULL;
+ {struct DeeMarshalReadMap map; _DeeMarshalReadMap_Init(&map,version);
+  result = DeeMarshal_ReadObjectWithMap(file,&map);
+  DeeMarshalReadMap_Quit(&map);
+ }
+ return result;
+}
+DEE_A_RET_EXCEPT(-1) int DeeMarshal_ReadObjects(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file,
+ DEE_A_IN Dee_size_t resultc, DEE_A_OUT_W(resultc) DeeObject **resultv,
+ DEE_A_IN DeeMarshalVersion version) {
+ int result;
+ if (_DeeMarshalReadMap_CheckVersion(version) == -1) return -1;
+ {struct DeeMarshalReadMap map; _DeeMarshalReadMap_Init(&map,version);
+  result = DeeMarshal_ReadObjectsWithMap(file,&map,resultc,resultv);
+  DeeMarshalReadMap_Quit(&map);
+ }
+ return result;
+}
+DEE_A_RET_EXCEPT(-1) int DeeMarshal_WriteObject(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file, DEE_A_IN DeeObject const *ob) {
+ int result; struct DeeMarshalWriteMap map = DeeMarshalWriteMap_INIT();
+ result = DeeMarshal_WriteObjectWithMap(file,&map,ob);
+ DeeMarshalWriteMap_Quit(&map);
+ return result;
+}
+DEE_A_RET_EXCEPT(-1) int DeeMarshal_WriteObjects(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file,
+ DEE_A_IN Dee_size_t objectc, DEE_A_IN_R(objectc) DeeObject const *const *objectv) {
+ int result; struct DeeMarshalWriteMap map = DeeMarshalWriteMap_INIT();
+ result = DeeMarshal_WriteObjectsWithMap(file,&map,objectc,objectv);
+ DeeMarshalWriteMap_Quit(&map);
+ return result;
+}
+DEE_A_RET_EXCEPT(-1) int DeeMarshal_WriteObjectEx(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file, DEE_A_IN DeeObject const *ob, DEE_A_IN Dee_uint32_t flags) {
+ int result; struct DeeMarshalWriteMap map; _DeeMarshalWriteMap_InitEx(&map,flags);
+ result = DeeMarshal_WriteObjectWithMap(file,&map,ob);
+ DeeMarshalWriteMap_Quit(&map);
+ return result;
+}
+DEE_A_RET_EXCEPT(-1) int DeeMarshal_WriteObjectsEx(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file, DEE_A_IN Dee_size_t objectc,
+ DEE_A_IN_R(objectc) DeeObject const *const *objectv, DEE_A_IN Dee_uint32_t flags) {
+ int result; struct DeeMarshalWriteMap map; _DeeMarshalWriteMap_InitEx(&map,flags);
+ result = DeeMarshal_WriteObjectsWithMap(file,&map,objectc,objectv);
+ DeeMarshalWriteMap_Quit(&map);
+ return result;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------- //
+//////////////////////////////////////////////////////////////////////////
+
+typedef Dee_uint8_t marshal_op; 
+
+#if DEE_TYPES_SIZEOF_FLOAT == 4
+#define marshal_float4  float
+#define marshal_float4_ float
+#elif DEE_TYPES_SIZEOF_DOUBLE == 4
+#define marshal_float4  double
+#define marshal_float4_ double
+#elif DEE_TYPES_SIZEOF_LDOUBLE == 4
+#define marshal_float4  long double
+#define marshal_float4_ ldouble
+#endif
+
+#if DEE_TYPES_SIZEOF_FLOAT == 8
+#define marshal_float8  float
+#define marshal_float8_ float
+#elif DEE_TYPES_SIZEOF_DOUBLE == 8
+#define marshal_float8  double
+#define marshal_float8_ double
+#elif DEE_TYPES_SIZEOF_LDOUBLE == 8
+#define marshal_float8  long double
+#define marshal_float8_ ldouble
+#endif
+
+#if DEE_TYPES_SIZEOF_FLOAT == 12
+#define marshal_float12  float
+#define marshal_float12_ float
+#elif DEE_TYPES_SIZEOF_DOUBLE == 12
+#define marshal_float12  double
+#define marshal_float12_ double
+#elif DEE_TYPES_SIZEOF_LDOUBLE == 12
+#define marshal_float12  long double
+#define marshal_float12_ ldouble
+#endif
+
+#if DEE_TYPES_SIZEOF_FLOAT == 16
+#define marshal_float16  float
+#define marshal_float16_ float
+#elif DEE_TYPES_SIZEOF_DOUBLE == 16
+#define marshal_float16  double
+#define marshal_float16_ double
+#elif DEE_TYPES_SIZEOF_LDOUBLE == 16
+#define marshal_float16  long double
+#define marshal_float16_ ldouble
+#endif
+
+#define MOP_NONE            0x00
+#define MOP_BOOL            0x01 // +1 byte
+#define MOP_INT8            0x02 // +1 byte
+#define MOP_INT16           0x03 // +2 bytes
+#define MOP_INT32           0x04 // +4 bytes
+#define MOP_INT64           0x05 // +8 bytes
+#define MOP_UINT8           0x06 // +1 byte
+#define MOP_UINT16          0x07 // +2 bytes
+#define MOP_UINT32          0x08 // +4 bytes
+#define MOP_UINT64          0x09 // +8 bytes
+#define MOP_ATOMICINT8      0x0A // +1 byte
+#define MOP_ATOMICINT16     0x0B // +2 bytes
+#define MOP_ATOMICINT32     0x0C // +4 bytes
+#define MOP_ATOMICINT64     0x0D // +8 bytes
+#define MOP_ATOMICUINT8     0x0E // +1 byte
+#define MOP_ATOMICUINT16    0x0F // +2 bytes
+#define MOP_ATOMICUINT32    0x10 // +4 bytes
+#define MOP_ATOMICUINT64    0x11 // +8 bytes
+#define MOP_FLOAT4          0x12 // +4 bytes
+#define MOP_FLOAT8          0x13 // +8 bytes
+#define MOP_FLOAT12         0x14 // +12 bytes
+#define MOP_FLOAT16         0x15 // +16 bytes
+#define MOP_PTROF           0x16 // __builtin_pointer_add(@read_object:1)
+#define MOP_LVALOF          0x17 // __builtin_lvalue_add(@read_object:1)
+#define MOP_ITERATOR        0x18 // (@read_object:1).__iterself__()
+#define MOP_DICTKEYS        0x19 // (@read_object:1).keys()
+#define MOP_DICTITEMS       0x1A // (@read_object:1).items()
+#define MOP_DICTVALUES      0x1B // (@read_object:1).values()
+// The really complicated stuff
+#define MOP_CODE_v100       0x1C
+#define MOP_FUNC_v100       0x1D
+#define MOP_YFUNC_v100      0x1E
+#define MOP_DLL             0x1F
+#define MOP_ATTR            0x20
+// NOTE: We don't support lvalue types, because those are basically dereferenced
+//       pointers, something that changes every time the program is reloaded.
+#define MOP_STRUCTURED      0x21
+#define MOP_POINTER         0x22 // NOTE: This could be dangerous
+#define MOP_FILE_READER     0x23
+#define MOP_FILE_WRITER     0x24
+#define MOP_RANDOM          0x25
+#define MOP_TRACEBACK       0x26
+#define MOP_TRACEBACKENTRY  0x27
+#define MOP_CLASS           0x28
+#define MOP_OBJECT          0x29
+#define MOP_JOINED_FILE     0x2A
+#define MOP_CODEDEBUG_v100  0x2B
+#define MOP_REFERENCE_SET8  0x2C // Register a referenced object
+#define MOP_REFERENCE_SET16 0x2D // Register a referenced object
+#define MOP_REFERENCE_SET32 0x2E // Register a referenced object
+#define MOP_REFERENCE_GET8  0x2F // Return a referenced object
+#define MOP_REFERENCE_GET16 0x30 // Return a referenced object
+#define MOP_REFERENCE_GET32 0x31 // Return a referenced object
+#define MOP_STRUCT_TYPE     0x32
+#define MOP_ARRAY_TYPE      0x33
+#define MOP_FF_TYPE         0x34 // foreign_function
+#define MOP_RANGE_8         0x35
+#define MOP_RANGE_16        0x36
+#define MOP_RANGE_32        0x37
+#define MOP_RANGE_64        0x38
+#define MOP_RANGE_U8        0x39
+#define MOP_RANGE_U16       0x3A
+#define MOP_RANGE_U32       0x3B
+#define MOP_RANGE_U64       0x3C
+#define MOP_BUILTIN         0x3D // builtin
+#define MOP_TUPLE           0x3E // tuple
+#define MOP_LIST            0x3F // list
+#define MOP_DICT            0x40 // dict
+#define MOP_SET             0x41 // set
+#define MOP_DEX             0x42 // dex module
+#define MOP_UTF8STRING      0x43 // string::utf8
+#define MOP_UTF16STRING     0x44 // string::utf16
+#define MOP_UTF32STRING     0x45 // string::utf32
+#define MOP_WIDESTRING      0x46 // string::wide (stored as utf8)
+#define MOP_SUPER           0x47 // super
+#define MOP_EXTENDED        0xFF // Extended opcode
+
+#ifdef marshal_float4
+DEE_STATIC_INLINE(int) _marshal_write_float4(DeeObject *file, marshal_float4 x) {
+ Dee_uint8_t data[5];
+ data[0] = MOP_FLOAT4;
+ *(marshal_float4 *)(data+1) = x;
+ return DeeFile_WriteAll(file,data,sizeof(data));
+}
+#endif
+#ifdef marshal_float8
+DEE_STATIC_INLINE(int) _marshal_write_float8(DeeObject *file, marshal_float8 x) {
+ Dee_uint8_t data[9];
+ data[0] = MOP_FLOAT8;
+ *(marshal_float8 *)(data+1) = x;
+ return DeeFile_WriteAll(file,data,sizeof(data));
+}
+#endif
+#ifdef marshal_float12
+DEE_STATIC_INLINE(int) _marshal_write_float12(DeeObject *file, marshal_float12 x) {
+ Dee_uint8_t data[13];
+ data[0] = MOP_FLOAT12;
+ *(marshal_float12 *)(data+1) = x;
+ return DeeFile_WriteAll(file,data,sizeof(data));
+}
+#endif
+#ifdef marshal_float16
+DEE_STATIC_INLINE(int) _marshal_write_float16(DeeObject *file, marshal_float16 x) {
+ Dee_uint8_t data[17];
+ data[0] = MOP_FLOAT16;
+ *(marshal_float16 *)(data+1) = x;
+ return DeeFile_WriteAll(file,data,sizeof(data));
+}
+#endif
+
+#ifdef DEE_PLATFORM_BIG_ENDIAN
+DEE_STATIC_INLINE(int) _marshal_write_swapped_code_endian(DeeObject *file, DeeCodeObject *code) {
+ Dee_uint8_t *iter,*end; Dee_uint16_t temp;
+ end = (iter = code->ob_code)+DeeCode_SIZE(code);
+ while (iter != end) {
+  if (DeeFile_WriteAll(file,iter,1) == -1) return -1;
+  if ((*iter++&OPFLAG_ARG)!=0) {
+   // Swap endian of opcode arguments
+   temp = DEE_BUILTIN_LESWAP16(*(Dee_uint16_t*)iter);
+   if (DeeFile_WriteAll(file,&temp,2) == -1) return -1;
+   iter += 2;
+  }
+ }
+}
+DEE_STATIC_INLINE(void) _marshal_swap_code_endian(DeeCodeObject *code) {
+ Dee_uint8_t *iter,*end;
+ end = (iter = code->ob_code)+DeeCode_SIZE(code);
+ while (iter != end) {
+  if ((*iter++&OPFLAG_ARG)!=0) {
+   // Swap endian of opcode arguments
+   *(Dee_uint16_t*)iter = DEE_BUILTIN_LESWAP16(*(Dee_uint16_t*)iter);
+   iter += 2;
+  }
+ }
+}
+#endif
+
+DEE_STATIC_INLINE(int) _marshal_write_dict(
+ DeeObject *file, struct DeeMarshalWriteMap *file_map, DeeObject *dict) {
+ Dee_uint8_t data[9];
+ DeeHashMap_TRAVERSE_VARS;
+ struct _DeeHashMapNode *node;
+ data[0] = MOP_DICT;
+ if ((dict = DeeDict_Copy(dict)) == NULL) return -1;
+ *(Dee_uint64_t*)(data+1) = DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeDict_SIZE(dict));
+ if (DeeFile_WriteAll(file,data,9) == -1) {err: Dee_DECREF(dict); return -1; }
+ DeeHashMap_TRAVERSE(node,DeeDict_MAP(dict)) {
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,_DeeHashMapNode_KEY(node)) == -1 ||
+      DeeMarshal_WriteObjectWithMap(file,file_map,_DeeHashMapNode_ITEM(node)) == -1
+      ) goto err;
+ }
+ Dee_DECREF(dict);
+ return 0;
+}
+DEE_STATIC_INLINE(int) _marshal_write_set(
+ DeeObject *file, struct DeeMarshalWriteMap *file_map, DeeObject *set) {
+ Dee_uint8_t data[9];
+ DeeHashSet_TRAVERSE_VARS;
+ struct _DeeHashSetBucketEntry *entry;
+ data[0] = MOP_SET;
+ if ((set = DeeSet_Copy(set)) == NULL) return -1;
+ *(Dee_uint64_t*)(data+1) = DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeSet_SIZE(set));
+ if (DeeFile_WriteAll(file,data,9) == -1) {err: Dee_DECREF(set); return -1; }
+ DeeHashSet_TRAVERSE(entry,DeeSet_SET(set)) {
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,entry->sbe_key) == -1
+      ) goto err;
+ }
+ Dee_DECREF(set);
+ return 0;
+}
+DEE_STATIC_INLINE(int) _marshal_write_prefixed(
+ DeeObject *file, struct DeeMarshalWriteMap *file_map, marshal_op prefix, DeeObject *iterator_list) {
+ if (DeeFile_WriteAll(file,&prefix,1) == -1) return -1;
+ return DeeMarshal_WriteObjectWithMap(file,file_map,iterator_list);
+}
+DEE_STATIC_INLINE(int) _marshal_write_prefixed2(
+ DeeObject *file, struct DeeMarshalWriteMap *file_map,
+ marshal_op prefix1, marshal_op prefix2, DeeObject *iterator_list) {
+ if (DeeFile_WriteAll(file,&prefix1,1) == -1 ||
+     DeeFile_WriteAll(file,&prefix2,1) == -1) return -1;
+ return DeeMarshal_WriteObjectWithMap(file,file_map,iterator_list);
+}
+DEE_STATIC_INLINE(int) _marshal_write_object_null_is_none(
+ DeeObject *file, struct DeeMarshalWriteMap *file_map, DeeObject *ob) {
+ if (ob) {
+  return DeeMarshal_WriteObjectWithMap(file,file_map,ob);
+ } else {
+  static Dee_uint8_t const op = MOP_NONE;
+  return DeeFile_WriteAll(file,&op,1);
+ }
+}
+DEE_STATIC_INLINE(int) _marshal_write_struct_type(
+ DeeObject *file, struct DeeMarshalWriteMap *file_map, DeeStructTypeObject *ob) {
+ Dee_uint8_t buf[24];
+ Dee_size_t name_len;
+ struct DeeStructMember *iter;
+ buf[0] = MOP_STRUCT_TYPE;
+ *(Dee_uint64_t *)(buf+1) = DeeType_GET_SLOT(ob,tp_p_instance_size);
+ name_len = ((file_map->ob_flags&DEE_MARSHAL_WRITEFLAG_TYPE_NAMES)!=0 && DeeType_NAME(ob)) ? strlen(DeeType_NAME(ob)) : 0;
+ *(Dee_uint64_t *)(buf+9) = (Dee_uint64_t)name_len;
+ if (DeeFile_WriteAll(file,buf,17) == -1) return -1;
+ if (name_len && DeeFile_WriteAll(file,DeeType_NAME(ob),name_len*sizeof(char)) == -1) return -1;
+ if (DeeFile_WriteAll(file,&ob->tp_uuid,16) == -1) return -1;
+ name_len = 0,iter = ob->tp_smembers;
+ while (iter->sm_type) ++name_len,++iter;
+ iter = ob->tp_smembers;
+ *(Dee_uint64_t *)buf = (Dee_uint64_t)name_len;
+ if (DeeFile_WriteAll(file,buf,8) == -1) return -1;
+ while (iter->sm_type) {
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)iter->sm_type) == -1 ||
+      DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)iter->sm_name) == -1) return -1;
+  *(Dee_uint64_t *)buf = (Dee_uint64_t)iter->sm_offset;
+  if (DeeFile_WriteAll(file,buf,8) == -1) return -1;
+  ++iter;
+ }
+ return 0;
+}
+DEE_STATIC_INLINE(int) _marshal_read_struct_type(
+ DeeObject *file, struct DeeMarshalReadMap *file_map, DeeStructTypeObject *ob) {
+ Dee_uint8_t buf[24]; Dee_size_t name_len,max_length,field_length;
+ struct DeeStructMember *iter;
+ if ((*DeeType_GET_SLOT(&DeeStructType_Type,tp_ctor))(
+  &DeeStructType_Type,(DeeObject *)ob) == -1) return -1;
+ if (DeeFile_ReadAll(file,buf,16) == -1) {
+err_r:
+  DeeGC_TrackedRem((DeeObject *)ob);
+  (*DeeType_GET_SLOT(&DeeStructType_Type,tp_dtor))((DeeObject *)ob);
+  (*DeeType_GET_SLOT(&DeeStructuredType_Type,tp_dtor))((DeeObject *)ob);
+  (*DeeType_GET_SLOT(&DeeType_Type,tp_dtor))((DeeObject *)ob);
+  return -1;
+ }
+ DeeType_GET_SLOT(ob,tp_instance_size) = sizeof(DeeStructuredObject)+(
+  DeeType_GET_SLOT(ob,tp_p_instance_size) = max_length = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf));
+ name_len = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)(buf+8));
+ if (name_len) {
+  char *name_buf;
+  while ((name_buf = (char *)malloc_nz((name_len+1)*sizeof(char))) == NULL) {
+   if (Dee_CollectMemory()) continue;
+no_mem: DeeError_NoMemory(); goto err_r;
+  }
+  if (DeeFile_ReadAll(file,name_buf,name_len) == -1) return -1;
+  name_buf[name_len] = '\0';
+  DeeType_GET_SLOT(ob,tp_name) = name_buf;
+  DeeType_GET_SLOT(ob,tp_flags) &= ~DEE_TYPE_FLAG_STATIC_NAME;
+ }
+ if (DeeFile_ReadAll(file,&ob->tp_uuid,16) == -1) return -1;
+ if (DeeFile_ReadAll(file,buf,8) == -1) return -1;
+ if ((name_len = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf)) != 0) {
+  // Member fields
+  while ((iter = (struct DeeStructMember *)malloc_nz((
+   name_len+1)*sizeof(struct DeeStructMember))) == NULL) {
+   if (Dee_CollectMemory()) continue;
+   goto no_mem;
+  }
+  ob->tp_smembers = iter;
+  while (name_len--) {
+   if ((iter->sm_type = (DeeStructuredTypeObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+err_r_fields_0:
+    while (iter != ob->tp_smembers) {
+     --iter;
+     Dee_DECREF(iter->sm_name);
+     Dee_DECREF(iter->sm_type);
+    }
+    free_nn(iter);
+    ob->tp_smembers = _DeeStructType_EmptyMembers;
+    goto err_r;
+   } else if (DeeError_TypeError_CheckType((DeeObject *)iter->sm_type,&DeeStructuredType_Type) == -1) {
+err_r_fields_1:
+    Dee_DECREF(iter->sm_type);
+    goto err_r_fields_0;
+   }
+   if ((iter->sm_name = (DeeStringObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+    goto err_r_fields_1;
+   } else if (DeeError_TypeError_CheckType((DeeObject *)iter->sm_name,&DeeString_Type) == -1) {
+err_r_fields_2:
+    Dee_DECREF(iter->sm_name);
+    goto err_r_fields_1;
+   }
+   if (DeeFile_ReadAll(file,buf,8) == -1) goto err_r_fields_2;
+   field_length = (iter->sm_offset = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf))+
+    DeeType_GET_SLOT(iter->sm_type,tp_p_instance_size);
+   if (field_length > max_length) {
+    DeeError_SetStringf(&DeeErrorType_ValueError,
+                        "Length of field %k %k.%k is out of bound (%Iu > %Iu)",
+                        iter->sm_type,ob,iter->sm_name,field_length,max_length);
+    goto err_r_fields_2;
+   }
+   ++iter;
+  }
+  iter->sm_type = NULL;
+#ifdef DEE_DEBUG
+  iter->sm_name = NULL;
+  iter->sm_offset = 0;
+#endif
+ }
+ DeeStructType_Changed((DeeTypeObject *)ob);
+ return 0;
+}
+
+
+
+struct selfref_data {
+ unsigned int visit_id; /*< gc visit id that we are using to  */
+ DeeObject   *ob;       /*< [0..1] the object we are checking. (set to NULL if it does reference itself) */
+};
+static int _deegc_visit_is_visible(
+ DeeObject *self, struct selfref_data *data) {
+ if (!data->ob) return 0; // Already found
+ if (data->ob == self) {
+  data->ob = NULL; // Found it
+  return 0;
+ } else if (DeeObject_IS_GC(self)) {
+  struct _DeeGCHead *head = DeeGC_OB2HEAD(self);
+  if (head->gc_last_seen != data->visit_id) {
+   head->gc_last_seen = data->visit_id;
+   return 1;
+  }
+  return 0;
+ }
+ return 1;
+}
+DEE_STATIC_INLINE(int) _DeeMarshal_IsReferencingSelf(DeeObject *ob) {
+ DeeObject *gc_iter,*ob_next; DeeTypeObject *tp_iter;
+ struct selfref_data data;
+ if (!DeeObject_IS_GC(ob)) return 0; // Only gc object can reference themselves
+ data.ob = gc_iter = ob;
+ DeeAtomicMutex_AcquireRelaxed(&_dee_gc_collect_lock);
+ data.visit_id = _dee_gc_next_visit_id++;
+ while (1) {
+  ob_next = (DeeObject *)(tp_iter = Dee_TYPE(gc_iter));
+  while (1) {
+   if (DeeType_HAS_SLOT(tp_iter,tp_visit))
+    (*DeeType_GET_SLOT(tp_iter,tp_visit))(
+     gc_iter,(DeeVisitProc)&_deegc_visit_is_visible,&data);
+   if ((tp_iter = DeeType_BASE(tp_iter)) == NULL) break;
+  }
+  if (!data.ob) break; // Found it
+  if (gc_iter == ob_next) break; // nothing left to check...
+  gc_iter = ob_next;
+ }
+ DeeAtomicMutex_Release(&_dee_gc_collect_lock);
+ // data.ob is set to NULL if it is referencing itself
+ return data.ob == NULL;
+}
+
+#define WRITE_N(n,x)\
+do{\
+ (*(DEE_TYPES_UINT(n) *)data) = (DEE_TYPES_UINT(n))(x);\
+ if (DeeFile_WriteAll(file,data,n) == -1) return -1;\
+}while(0)
+DEE_A_RET_EXCEPT(-1) int DeeMarshal_WriteObjectWithMap(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file,
+ DEE_A_INOUT struct DeeMarshalWriteMap *file_map,
+ DEE_A_IN DeeObject const *ob) {
+ DeeTypeObject *ob_type;
+ Dee_uint8_t data[32]; Dee_size_t datasize;
+ Dee_uint32_t existing_id;
+#ifdef DEE_DEBUG
+ struct _DeeMarshalWriteStack stack_entry;
+#endif
+ DEE_ASSERT(DeeObject_Check(file) && DeeFile_Check(file));
+ DEE_ASSERT(DeeObject_Check(ob));
+ DEE_ASSERT(file_map);
+#ifdef DEE_DEBUG
+ DEE_ASSERT(!_DeeMarshalWriteMap_AlreadyWriting(file_map,(DeeObject *)ob) &&
+            "Infinite recursion: Object is already being marshaled");
+ // Add our write operation to the object stack
+ stack_entry.s_prev = file_map->ob_stack;
+ stack_entry.s_ob = ob;
+#define RETURN(x) do{if((x)==-1)goto err;else goto end;}while(0)
+#else
+#define RETURN(x) return x
+#endif
+
+ if ((existing_id = _DeeMarshalWriteMap_FindObject(file_map,ob)) != (Dee_uint32_t)-1) {
+  // Reference an object that was already written
+  if (existing_id <= 0xFF) {
+   data[0] = MOP_REFERENCE_GET8;
+   *(Dee_uint8_t *)(data+1) = (Dee_uint8_t)existing_id;
+   RETURN(DeeFile_WriteAll(file,data,2));
+  } else if (existing_id <= 0xFFFF) {
+   data[0] = MOP_REFERENCE_GET16;
+   *(Dee_uint16_t *)(data+1) = DEE_BUILTIN_LESWAP16((Dee_uint16_t)existing_id);
+   RETURN(DeeFile_WriteAll(file,data,3));
+  } else {
+   data[0] = MOP_REFERENCE_GET32;
+   *(Dee_uint32_t *)(data+1) = DEE_BUILTIN_LESWAP32(existing_id);
+   RETURN(DeeFile_WriteAll(file,data,5));
+  }
+ } else if ((file_map->ob_flags&DEE_MARSHAL_WRITEFLAG_REFERENCE_ALL)!=0
+  ? DeeObject_IS_GC((DeeObject *)ob)
+  : _DeeMarshal_IsReferencingSelf((DeeObject *)ob)) {
+  // Object will be referencing itself --> we need to put a tag on it
+  if ((existing_id = _DeeMarshalWriteMap_RegisterID(file_map,ob)) == (Dee_uint32_t)-1) goto err;
+  if (existing_id <= 0xFF) {
+   data[0] = MOP_REFERENCE_SET8;
+   *(Dee_uint8_t *)(data+1) = (Dee_uint8_t)existing_id;
+   if (DeeFile_WriteAll(file,data,2) == -1) goto err;
+  } else if (existing_id <= 0xFFFF) {
+   data[0] = MOP_REFERENCE_SET16;
+   *(Dee_uint16_t *)(data+1) = DEE_BUILTIN_LESWAP16((Dee_uint16_t)existing_id);
+   if (DeeFile_WriteAll(file,data,3) == -1) goto err;
+  } else {
+   data[0] = MOP_REFERENCE_SET32;
+   *(Dee_uint32_t *)(data+1) = DEE_BUILTIN_LESWAP32(existing_id);
+   if (DeeFile_WriteAll(file,data,5) == -1) goto err;
+  }
+  // Continue writing the object normally
+ }
+
+ ob_type = Dee_TYPE(ob);
+ if (DeeLValueType_Check(ob_type)) {
+  int temp; // Write lvalues as the object they are pointing towards
+  if ((ob = DeeLValue_Value(ob)) == NULL) goto err;
+  temp = DeeMarshal_WriteObjectWithMap(file,file_map,ob);
+  Dee_DECREF(ob);
+  RETURN(temp);
+ }
+ if (ob_type == (DeeTypeObject *)&DeeNone_Type) {
+  data[0] = MOP_NONE;
+  RETURN(DeeFile_WriteAll(file,data,1));
+ }
+ if (ob_type == (DeeTypeObject *)&DeeInt32_Type) {
+  data[0] = MOP_INT32;
+write_i32:
+  *((Dee_int32_t *)(data+1)) = DEE_BUILTIN_LESWAP32(DeeInt32_VALUE(ob));
+  datasize = 5;
+writedata:
+  RETURN(DeeFile_WriteAll(file,data,datasize));
+ }
+ if (ob_type == (DeeTypeObject *)&DeeInt8_Type) {
+  data[0] = MOP_INT8;
+write_i8:
+  *((Dee_int8_t *)(data+1)) = DeeInt8_VALUE(ob);
+  datasize = 2;
+  goto writedata;
+ }
+ if (ob_type == (DeeTypeObject *)&DeeInt16_Type) {
+  data[0] = MOP_INT16;
+write_i16:
+  *((Dee_int16_t *)(data+1)) = DEE_BUILTIN_LESWAP16(DeeInt16_VALUE(ob));
+  datasize = 3;
+  goto writedata;
+ }
+ if (ob_type == (DeeTypeObject *)&DeeInt64_Type) {
+  data[0] = MOP_INT64;
+write_i64:
+  *((Dee_int64_t *)(data+1)) = DEE_BUILTIN_LESWAP64(DeeInt64_VALUE(ob));
+  datasize = 9;
+  goto writedata;
+ }
+ if (ob_type == (DeeTypeObject *)&DeeUInt32_Type) { data[0] = MOP_UINT32; goto write_i32; }
+ if (ob_type == (DeeTypeObject *)&DeeUInt16_Type) { data[0] = MOP_UINT16; goto write_i16; }
+ if (ob_type == (DeeTypeObject *)&DeeUInt8_Type) { data[0] = MOP_UINT8; goto write_i8; }
+ if (ob_type == (DeeTypeObject *)&DeeUInt64_Type) { data[0] = MOP_UINT64; goto write_i64; }
+ if (ob_type == (DeeTypeObject *)&DeeAtomicInt32_Type) { data[0] = MOP_ATOMICINT32; goto write_i32; }
+ if (ob_type == (DeeTypeObject *)&DeeAtomicInt16_Type) { data[0] = MOP_ATOMICINT16; goto write_i16; }
+ if (ob_type == (DeeTypeObject *)&DeeAtomicInt8_Type) { data[0] = MOP_ATOMICINT8; goto write_i8; }
+ if (ob_type == (DeeTypeObject *)&DeeAtomicInt64_Type) { data[0] = MOP_ATOMICINT64; goto write_i64; }
+ if (ob_type == (DeeTypeObject *)&DeeAtomicUInt32_Type) { data[0] = MOP_ATOMICUINT32; goto write_i32; }
+ if (ob_type == (DeeTypeObject *)&DeeAtomicUInt16_Type) { data[0] = MOP_ATOMICUINT16; goto write_i16; }
+ if (ob_type == (DeeTypeObject *)&DeeAtomicUInt8_Type) { data[0] = MOP_ATOMICUINT8; goto write_i8; }
+ if (ob_type == (DeeTypeObject *)&DeeAtomicUInt64_Type) { data[0] = MOP_ATOMICUINT64; goto write_i64; }
+ if (ob_type == (DeeTypeObject *)&DeeFloat_Type) {
+#if DEE_CONFIG_RT_SIZEOF_FLOAT == 4 && defined(marshal_float4)
+  RETURN(_marshal_write_float4(file,(marshal_float4)DeeFloat_VALUE(ob)));
+#elif DEE_CONFIG_RT_SIZEOF_FLOAT == 8 && defined(marshal_float8)
+  RETURN(_marshal_write_float8(file,(marshal_float8)DeeFloat_VALUE(ob)));
+#elif DEE_CONFIG_RT_SIZEOF_FLOAT == 12 && defined(marshal_float12)
+  RETURN(_marshal_write_float12(file,(marshal_float12)DeeFloat_VALUE(ob)));
+#elif DEE_CONFIG_RT_SIZEOF_FLOAT == 16 && defined(marshal_float16)
+  RETURN(_marshal_write_float16(file,(marshal_float16)DeeFloat_VALUE(ob)));
+#else
+#error "Can't write float runtime objects"
+#endif
+ }
+ if (ob_type == (DeeTypeObject *)&DeeDouble_Type) {
+#if DEE_CONFIG_RT_SIZEOF_DOUBLE == 4 && defined(marshal_float4)
+  RETURN(_marshal_write_float4(file,(marshal_float4)DeeDouble_VALUE(ob)));
+#elif DEE_CONFIG_RT_SIZEOF_DOUBLE == 8 && defined(marshal_float8)
+  RETURN(_marshal_write_float8(file,(marshal_float8)DeeDouble_VALUE(ob)));
+#elif DEE_CONFIG_RT_SIZEOF_DOUBLE == 12 && defined(marshal_float12)
+  RETURN(_marshal_write_float12(file,(marshal_float12)DeeDouble_VALUE(ob)));
+#elif DEE_CONFIG_RT_SIZEOF_DOUBLE == 16 && defined(marshal_float16)
+  RETURN(_marshal_write_float16(file,(marshal_float16)DeeDouble_VALUE(ob)));
+#else
+#error "Can't write double runtime objects"
+#endif
+ }
+ if (ob_type == (DeeTypeObject *)&DeeLDouble_Type) {
+#if DEE_CONFIG_RT_SIZEOF_LDOUBLE == 4 && defined(marshal_float4)
+  RETURN(_marshal_write_float4(file,(marshal_float4)DeeLDouble_VALUE(ob)));
+#elif DEE_CONFIG_RT_SIZEOF_LDOUBLE == 8 && defined(marshal_float8)
+  RETURN(_marshal_write_float8(file,(marshal_float8)DeeLDouble_VALUE(ob)));
+#elif DEE_CONFIG_RT_SIZEOF_LDOUBLE == 12 && defined(marshal_float12)
+  RETURN(_marshal_write_float12(file,(marshal_float12)DeeLDouble_VALUE(ob)));
+#elif DEE_CONFIG_RT_SIZEOF_LDOUBLE == 16 && defined(marshal_float16)
+  RETURN(_marshal_write_float16(file,(marshal_float16)DeeLDouble_VALUE(ob)));
+#else
+#error "Can't write long-double runtime objects"
+#endif
+ }
+#if DEE_CONFIG_HAVE_ENCODING_UTF8
+ if (ob_type == &DeeUtf8String_Type) {
+  data[0] = MOP_UTF8STRING;
+  *(Dee_uint64_t *)(data+1) = DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeUtf8String_SIZE(ob));
+  if (DeeFile_WriteAll(file,data,9) == -1 ||
+      DeeFile_WriteAll(file,DeeUtf8String_STR(ob),DeeUtf8String_SIZE(ob)*sizeof(Dee_Utf8Char)) == -1) goto err;
+  goto end;
+ }
+#endif
+#if DEE_CONFIG_HAVE_ENCODING_UTF16
+ if (ob_type == &DeeUtf16String_Type) {
+  data[0] = MOP_UTF16STRING;
+  *(Dee_uint64_t *)(data+1) = DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeUtf16String_SIZE(ob));
+  if (DeeFile_WriteAll(file,data,9) == -1 ||
+      DeeFile_WriteAll(file,DeeUtf16String_STR(ob),DeeUtf16String_SIZE(ob)*sizeof(Dee_Utf16Char)) == -1) goto err;
+  goto end;
+ }
+#endif
+#if DEE_CONFIG_HAVE_ENCODING_UTF32
+ if (ob_type == &DeeUtf32String_Type) {
+  data[0] = MOP_UTF32STRING;
+  *(Dee_uint64_t *)(data+1) = DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeUtf32String_SIZE(ob));
+  if (DeeFile_WriteAll(file,data,9) == -1 ||
+      DeeFile_WriteAll(file,DeeUtf32String_STR(ob),DeeUtf32String_SIZE(ob)*sizeof(Dee_Utf32Char)) == -1) goto err;
+  goto end;
+ }
+#endif
+#if DEE_CONFIG_HAVE_ENCODING_WIDE && DEE_CONFIG_HAVE_ENCODING_UTF8
+ if (ob_type == &DeeWideString_Type) {
+  DeeObject *temp_ob;
+  data[0] = MOP_WIDESTRING;
+  if ((temp_ob = DeeUtf8String_Cast(ob)) == NULL) goto err;
+  *(Dee_uint64_t *)(data+1) = DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeUtf8String_SIZE(temp_ob));
+  if (DeeFile_WriteAll(file,data,9) == -1 ||
+      DeeFile_WriteAll(file,DeeUtf8String_STR(temp_ob),DeeUtf8String_SIZE(temp_ob)*sizeof(Dee_Utf8Char)) == -1) {
+   Dee_DECREF(temp_ob);
+   goto err;
+  }
+  Dee_DECREF(temp_ob);
+  goto end;
+ }
+#endif
+ if (ob_type == &DeeSuper_Type) {
+  Dee_uint32_t derefs;
+  DeeTypeObject const *iter,*end;
+  data[0] = MOP_SUPER;
+  if (DeeFile_WriteAll(file,data,1) == -1 ||
+      DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)DeeSuper_SELF(ob)) == -1) goto err;
+  end = DeeSuper_TYPE(ob);
+  iter = Dee_TYPE(DeeSuper_SELF(ob));
+  derefs = 0;
+  while (iter != end) ++derefs,iter = DeeType_BASE(iter);
+#ifndef DEE_PLATFORM_LIL_ENDIAN
+  derefs = DEE_BUILTIN_LESWAP64(derefs);
+#endif
+  if (DeeFile_WriteAll(file,&derefs,4) == -1) goto err;
+  goto end;
+ }
+ //if (DeeClass_Check(ob_type)) {
+ // DeeObject *dex_name;
+ // DeeClassObject *cls = (DeeClassObject *)ob;
+ // data[0] = MOP_CLASS;
+ // if (DeeFile_WriteAll(file,data,1) == -1) goto err;
+ // goto end;
+ //}
+ if (ob_type == &DeeDexModule_Type) {
+  DeeObject *dex_name;
+  data[0] = MOP_DEX;
+  if (DeeFile_WriteAll(file,data,1) == -1) goto err;
+  if ((dex_name = DeeDexModule_Name(ob)) == NULL) goto err;
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,dex_name) == -1) { Dee_DECREF(dex_name); goto err; }
+  Dee_DECREF(dex_name);
+  goto end;
+ }
+ if (ob_type == (DeeTypeObject *)&DeePointerType_Type) {
+  data[0] = MOP_PTROF;
+  if (DeeFile_WriteAll(file,data,1) == -1 ||
+      DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)DeePointerType_BASE(ob)) == -1) goto err;
+  goto end;
+ }
+ if (ob_type == (DeeTypeObject *)&DeeLValueType_Type) {
+  data[0] = MOP_LVALOF;
+  if (DeeFile_WriteAll(file,data,1) == -1 ||
+      DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)DeePointerType_BASE(ob)) == -1) goto err;
+  goto end;
+ }
+ if (ob_type == &DeeTuple_Type) {
+  data[0] = MOP_TUPLE;
+  *(Dee_uint64_t *)(data+1) = DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeTuple_SIZE(ob));
+  if (DeeFile_WriteAll(file,data,9) == -1) goto err;
+  RETURN(DeeMarshal_WriteObjectsWithMap(file,file_map,
+   DeeTuple_SIZE(ob),(DeeObject const*const*)DeeTuple_ELEM(ob)));
+ }
+ if (ob_type == &DeeList_Type) {
+  int temp;
+  if ((ob = DeeList_Copy(ob)) == NULL) return -1;
+  data[0] = MOP_LIST;
+  *(Dee_uint64_t *)(data+1) = DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeList_SIZE(ob));
+  temp = DeeFile_WriteAll(file,data,9);
+  if (temp == 0) temp = DeeMarshal_WriteObjectsWithMap(file,file_map,
+   DeeList_SIZE(ob),(DeeObject const*const*)DeeList_ELEM(ob));
+  Dee_DECREF(ob);
+  RETURN(temp);
+ }
+ if (ob_type == &DeeDict_Type) RETURN(_marshal_write_dict(file,file_map,(DeeObject *)ob));
+ if (ob_type == &DeeSet_Type) RETURN(_marshal_write_set(file,file_map,(DeeObject *)ob));
+ if (ob_type == &DeeDictKeys_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_DICTKEYS,(DeeObject *)ob));
+ if (ob_type == &DeeDictItems_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_DICTITEMS,(DeeObject *)ob));
+ if (ob_type == &DeeDictValues_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_DICTVALUES,(DeeObject *)ob));
+ if (ob_type == &DeeSetIterator_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_ITERATOR,DeeSetIterator_SET(ob)));
+ if (ob_type == &DeeDictIterator_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_ITERATOR,DeeDictIterator_DICT(ob)));
+ if (ob_type == &DeeDictKeysIterator_Type) RETURN(_marshal_write_prefixed2(file,file_map,MOP_ITERATOR,MOP_DICTKEYS,DeeDictIterator_DICT(ob)));
+ if (ob_type == &DeeDictItemsIterator_Type) RETURN(_marshal_write_prefixed2(file,file_map,MOP_ITERATOR,MOP_DICTITEMS,DeeDictIterator_DICT(ob)));
+#if DEE_CONFIG_HAVE_ENCODING_WIDE
+ if (ob_type == &DeeWideStringIterator_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_ITERATOR,DeeWideStringIterator_STRING(ob)));
+#endif
+#if DEE_CONFIG_HAVE_ENCODING_UTF8
+ if (ob_type == &DeeUtf8StringIterator_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_ITERATOR,DeeUtf8StringIterator_STRING(ob)));
+#endif
+#if DEE_CONFIG_HAVE_ENCODING_UTF16
+ if (ob_type == &DeeUtf16StringIterator_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_ITERATOR,DeeUtf16StringIterator_STRING(ob)));
+#endif
+#if DEE_CONFIG_HAVE_ENCODING_UTF32
+ if (ob_type == &DeeUtf32StringIterator_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_ITERATOR,DeeUtf32StringIterator_STRING(ob)));
+#endif
+ if (ob_type == &DeePointerIterator_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_ITERATOR,DeePointerIterator_OWNER(ob)));
+ if (ob_type == &DeeTracebackIterator_Type) RETURN(_marshal_write_prefixed(file,file_map,MOP_ITERATOR,(DeeObject *)((DeeTracebackIteratorObject *)ob)->ti_traceback));
+ if (ob_type == &DeeYieldFunction_Type) {
+  DeeYieldFunctionObject *func;
+  WRITE_N(1,MOP_YFUNC_v100);
+  func = (DeeYieldFunctionObject *)ob;
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)func->yf_func) != 0) goto err;
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)func->yf_args) != 0) goto err;
+  goto end;
+ }
+ if (ob_type == &DeeYieldFunctionIterator_Type) {
+  DeeYieldFunctionIteratorObject *func_iter;
+  data[0] = MOP_ITERATOR;
+  data[1] = MOP_YFUNC_v100;
+  if (DeeFile_WriteAll(file,data,2) != 0) goto err;
+  func_iter = (DeeYieldFunctionIteratorObject *)ob;
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)func_iter->yi_func) != 0) goto err;
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)func_iter->yi_args) != 0) goto err;
+  goto end;
+ }
+ if (ob_type == &DeeFunction_Type) {
+  DeeFunctionObject *func;
+  WRITE_N(1,MOP_FUNC_v100);
+  func = (DeeFunctionObject *)ob;
+  WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)func->fn_argc));
+  WRITE_N(2,DEE_BUILTIN_LESWAP32(func->fn_flags));
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)func->fn_code) == -1) goto err;
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,Dee_None) == -1) goto err; // defaults
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)func->fn_refs) == -1) goto err;
+  goto end;
+ }
+ if (ob_type == &DeeCodeDebugInfo_Type) {
+  DeeCodeDebugInfoObject *debuginfo = (DeeCodeDebugInfoObject *)ob;
+  WRITE_N(1,MOP_CODEDEBUG_v100);
+  if (_marshal_write_object_null_is_none(file,file_map,(DeeObject *)debuginfo->di_name) == -1) goto err;
+  if (_marshal_write_object_null_is_none(file,file_map,(DeeObject *)debuginfo->di_local_names) == -1) goto err;
+  if (_marshal_write_object_null_is_none(file,file_map,(DeeObject *)debuginfo->di_const_names) == -1) goto err;
+  if (_marshal_write_object_null_is_none(file,file_map,(DeeObject *)debuginfo->di_ref_names) == -1) goto err;
+  if (_marshal_write_object_null_is_none(file,file_map,(DeeObject *)debuginfo->di_arg_names) == -1) goto err;
+  if (debuginfo->di_lno) {
+   Dee_size_t lnosize = _DeeCodeLnOffList_Size(debuginfo->di_lno);
+   WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)lnosize));
+   if (DeeFile_WriteAll(file,debuginfo->di_lno,lnosize*2) == -1) goto err;
+  } else WRITE_N(8,0);
+  goto end;
+ }
+ if (ob_type == &DeeCode_Type) {
+#if DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
+  struct DeeExceptionHandlerEntry *eh_iter,*eh_end;
+#endif
+  DeeCodeObject *code = (DeeCodeObject *)ob;
+  WRITE_N(1,MOP_CODE_v100);
+  WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeCode_SIZE(code)));
+  if (_marshal_write_object_null_is_none(file,file_map,(DeeObject *)code->co_debug) != 0) goto err;
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)code->co_consts) != 0) goto err;
+#if DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
+  WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)code->co_exceptc));
+  eh_end = (eh_iter = code->co_exceptv)+code->co_exceptc;
+  while (eh_iter != eh_end) {
+   WRITE_N(1,eh_iter->e_kind);
+   if (_marshal_write_object_null_is_none(file,file_map,(DeeObject *)eh_iter->e_type) != 0) goto err;
+   WRITE_N(2,DEE_BUILTIN_LESWAP16(eh_iter->e_store));
+   WRITE_N(2,DEE_BUILTIN_LESWAP16(eh_iter->e_stack));
+   WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)eh_iter->e_handler));
+   ++eh_iter;
+  }
+  if (DeeFile_WriteAll(file,&code->co_exceptsize,2) != 0) goto err;
+  WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)code->co_finallyc));
+#else /* DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS */
+  memset(data,0,18);
+  if (DeeFile_WriteAll(file,data,18) == -1) goto err;
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS */
+  WRITE_N(2,DEE_BUILTIN_LESWAP16(code->co_nlocals));
+  WRITE_N(2,DEE_BUILTIN_LESWAP16(code->co_flags));
+  WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)code->co_stacksize));
+#ifdef DEE_PLATFORM_BIG_ENDIAN
+  if (_marshal_write_swapped_code_endian(file,code) == -1) goto err;
+#else
+  if (DeeFile_WriteAll(file,DeeCode_CODE(code),DeeCode_SIZE(code)) == -1) goto err;
+#endif
+  goto end;
+ }
+ if (DeePointerType_Check(ob_type)) {
+  WRITE_N(1,MOP_POINTER);
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)ob_type) == -1) goto err;
+  WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)((Dee_size_t)DeePointer_ADDR(ob))));
+  goto end;
+ }
+ if (DeeStructuredType_Check(ob_type)) {
+  WRITE_N(1,MOP_STRUCTURED);
+  if (DeeStructType_Check(ob_type)) {
+   // TODO: Endian of integer members of struct-types
+  }
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)ob_type) == -1) goto err;
+  if (DeeFile_WriteAll(file,DeeStructured_DATA(ob),DeeType_GET_SLOT(ob_type,tp_p_instance_size)) == -1) goto err;
+  goto end;
+ }
+ if (ob_type == &DeeSharedLib_Type) {
+  int temp;
+  WRITE_N(1,MOP_DLL);
+  if ((ob = DeeSharedLib_Name(ob)) == NULL) goto err;
+  temp = DeeMarshal_WriteObjectWithMap(file,file_map,ob);
+  Dee_DECREF(ob);
+  RETURN(temp);
+ }
+ if (ob_type == &DeeMemberFunction_Type) {
+  int temp;
+  WRITE_N(1,MOP_ATTR);
+  if ((((DeeMemberFunctionObject *)ob)->mf_flags&DEE_MEMBERFUNCTION_FLAG_STRUCTURED_CALL)!=0) {
+   WRITE_N(1,MOP_STRUCTURED);
+   if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)((DeeMemberFunctionObject *)ob)->mf_struct.mfs_type) != 0) goto err;
+   if (DeeFile_WriteAll(file,((DeeMemberFunctionObject *)ob)->mf_struct.mfs_self,
+    DeeType_GET_SLOT(((DeeMemberFunctionObject *)ob)->mf_struct.mfs_type,tp_p_instance_size)) != 0) goto err;
+  } else {
+   if (DeeMarshal_WriteObjectWithMap(file,file_map,((DeeMemberFunctionObject *)ob)->mf_object.mfo_self) != 0) goto err;
+  }
+  if ((ob = DeeMemberFunction_MemberNameObject(ob)) == NULL) goto err;
+  temp = DeeMarshal_WriteObjectWithMap(file,file_map,ob);
+  Dee_DECREF(ob);
+  RETURN(temp);
+ }
+ if (ob_type == (DeeTypeObject *)&DeeFileReader_Type) {
+  WRITE_N(1,MOP_FILE_READER);
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,DeeFileReader_STRING(ob)) == -1) goto err;
+  WRITE_N(8,(Dee_uint64_t)(Dee_size_t)(DeeFileReader_POS(ob)-DeeString_STR(DeeFileReader_STRING(ob))));
+  goto end;
+ }
+ if (ob_type == (DeeTypeObject *)&DeeFileWriter_Type) {
+  WRITE_N(1,MOP_FILE_WRITER);
+  WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeStringWriter_SIZE(DeeFileWriter_WRITER(ob))));
+  DEE_ASSERT(
+   (DeeStringWriter_STR(DeeFileWriter_WRITER(ob)) != NULL) ==
+   (DeeStringWriter_SIZE(DeeFileWriter_WRITER(ob)) != 0));
+  if (DeeFile_WriteAll(file,
+   DeeStringWriter_STR(DeeFileWriter_WRITER(ob)),
+   DeeStringWriter_SIZE(DeeFileWriter_WRITER(ob))) == -1) goto err;
+  WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)(Dee_size_t)(
+   DeeFileWriter_POS(ob)-DeeStringWriter_STR(DeeFileWriter_WRITER(ob)))));
+  goto end;
+ }
+ if (ob_type == &DeeRandom_Type) {
+  WRITE_N(1,MOP_RANDOM);
+  WRITE_N(8,DEE_BUILTIN_LESWAP64(DeeRandom_SEED(ob)));
+  goto end;
+ }
+ if (ob_type == &DeeStructType_Type) {
+  RETURN(_marshal_write_struct_type(file,file_map,(DeeStructTypeObject *)ob));
+ }
+ if (ob_type == &DeeArrayType_Type) {
+  data[0] = MOP_ARRAY_TYPE;
+  *(Dee_uint64_t *)(data+1) = DEE_BUILTIN_LESWAP64((Dee_uint64_t)DeeArrayType_NELEM(ob));
+  if (DeeFile_WriteAll(file,data,9) == -1) goto err;
+  RETURN(DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)DeeArrayType_BASE(ob)));
+ }
+ if (ob_type == &DeeForeignFunctionType_Type) {
+  data[0] = MOP_FF_TYPE;
+  *(Dee_uint16_t *)(data+1) = DEE_BUILTIN_LESWAP16((Dee_uint16_t)((DeeForeignFunctionTypeObject *)ob)->fft_flags);
+  if (DeeFile_WriteAll(file,data,3) == -1) goto err;
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(DeeObject *)(
+   (DeeForeignFunctionTypeObject *)ob)->fft_return_type) == -1) goto err;
+  *(Dee_uint64_t *)data = DEE_BUILTIN_LESWAP64((Dee_uint64_t)((DeeForeignFunctionTypeObject *)ob)->fft_arg_type_c);
+  if (DeeFile_WriteAll(file,data,8) == -1) goto err;
+  if (DeeMarshal_WriteObjectsWithMap(file,file_map,((DeeForeignFunctionTypeObject *)ob)->fft_arg_type_c,
+   (DeeObject const*const*)((DeeForeignFunctionTypeObject *)ob)->fft_arg_type_v) != 0) goto err;
+  goto end;
+ }
+#define MAKE_INT_ITERATOR(n,swap)\
+ if (ob_type == &DeeRangeInt##n##Iterator_Type) {\
+  data[0] = MOP_RANGE_##n;\
+  ((uint##n##_t *)(data+1))[0] = swap((uint##n##_t)((DeeRangeInt##n##IteratorObject *)ob)->rii_begin);\
+  ((uint##n##_t *)(data+1))[1] = swap((uint##n##_t)((DeeRangeInt##n##IteratorObject *)ob)->rii_end);\
+  ((uint##n##_t *)(data+1))[2] = swap((uint##n##_t)((DeeRangeInt##n##IteratorObject *)ob)->rii_step);\
+  RETURN(DeeFile_WriteAll(file,data,1+3*sizeof(int##n##_t)));\
+ }\
+ if (ob_type == &DeeRangeUInt##n##Iterator_Type) {\
+  data[0] = MOP_RANGE_##n;\
+  ((uint##n##_t *)(data+1))[0] = swap(((DeeRangeUInt##n##IteratorObject *)ob)->rii_begin);\
+  ((uint##n##_t *)(data+1))[1] = swap(((DeeRangeUInt##n##IteratorObject *)ob)->rii_end);\
+  ((uint##n##_t *)(data+1))[2] = swap(((DeeRangeUInt##n##IteratorObject *)ob)->rii_step);\
+  RETURN(DeeFile_WriteAll(file,data,1+3*sizeof(uint##n##_t)));\
+ }
+#define NOTHING
+ MAKE_INT_ITERATOR(8,NOTHING)
+#undef NOTHING
+ MAKE_INT_ITERATOR(16,DEE_BUILTIN_LESWAP16)
+ MAKE_INT_ITERATOR(32,DEE_BUILTIN_LESWAP32)
+ MAKE_INT_ITERATOR(64,DEE_BUILTIN_LESWAP64)
+#undef MAKE_INT_ITERATOR
+ if (ob_type == &DeeTraceback_Type) {
+  struct DeeTracebackEntry *iter,*end;
+  WRITE_N(1,MOP_TRACEBACK);
+  WRITE_N(8,DEE_BUILTIN_LESWAP64(DeeTraceback_SIZE(ob)));
+  end = (iter = DeeTraceback_ELEM(ob))+DeeTraceback_SIZE(ob);
+  while (iter != end) {
+   if (_marshal_write_object_null_is_none(file,file_map,DeeTracebackEntry_FUNC(iter)) == -1) goto err;
+   if (_marshal_write_object_null_is_none(file,file_map,DeeTracebackEntry_FILE(iter)) == -1) goto err;
+   WRITE_N(4,DEE_BUILTIN_LESWAP32((Dee_uint32_t)DeeTracebackEntry_LINE(iter)));
+   ++iter;
+  }
+  goto end;
+ }
+ if (ob_type == &DeeTracebackEntry_Type) {
+  WRITE_N(1,MOP_TRACEBACKENTRY);
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,(
+   DeeObject *)((DeeTracebackEntryObject *)ob)->te_traceback) == -1) goto err;
+  WRITE_N(8,DEE_BUILTIN_LESWAP64((Dee_uint64_t)((Dee_size_t)(
+   ((DeeTracebackEntryObject *)ob)->te_elem-
+   DeeTraceback_ELEM(((DeeTracebackEntryObject *)ob)->te_traceback)))));
+  goto end;
+ }
+ if (ob_type == (DeeTypeObject *)&DeeFileJoined_Type) {
+  WRITE_N(1,MOP_JOINED_FILE);
+  if (DeeMarshal_WriteObjectWithMap(file,file_map,DeeFileJoined_FA(ob)) == -1 ||
+      DeeMarshal_WriteObjectWithMap(file,file_map,DeeFileJoined_FB(ob)) == -1
+      ) goto err;
+  goto end;
+ }
+ if (ob_type == (DeeTypeObject *)&DeeObject_Type) {
+  WRITE_N(1,MOP_OBJECT);
+  goto end;
+ }
+
+ // Last chance: Is it a builtin object?
+ data[0] = MOP_BUILTIN;
+ if ((*(Dee_uint16_t *)(data+1) = DeeBuiltin_Id(ob)) == (Dee_uint16_t)-1) {
+  DeeError_SetStringf(&DeeErrorType_TypeError,"Object %s:%k cannot be serialized",
+                      DeeType_NAME(Dee_TYPE(ob)),ob);
+  goto err;
+ }
+ *(Dee_uint16_t *)(data+1) = DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)(data+1));
+ if (DeeFile_WriteAll(file,data,3) == -1) goto err;
+ //goto end;
+#undef RETURN
+end:
+#ifdef DEE_DEBUG
+ file_map->ob_stack = stack_entry.s_prev;
+#endif
+ return 0;
+err:
+#ifdef DEE_DEBUG
+ file_map->ob_stack = stack_entry.s_prev;
+#endif
+ return -1;
+}
+#undef WRITE_N
+
+
+DEE_COMPILER_MSVC_WARNING_PUSH(4701)
+DEE_A_RET_EXCEPT_REF DeeObject *DeeMarshal_ReadObjectWithMap(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file, DEE_A_INOUT struct DeeMarshalReadMap *file_map) {
+ DeeObject *result;
+ Dee_uint8_t buf[32];
+ marshal_op op;
+ int has_reference = 0;
+ Dee_uint32_t reference_id,search_id;
+ DEE_ASSERT(DeeMarshal_IsSupported(file_map->ob_version));
+ DEE_ASSERT(DeeObject_Check(file) && DeeFile_Check(file));
+again:
+ if (DeeFile_Getc(file,&op) == -1) return NULL;
+#define DEFINE_REFERENCE(result,on_error)\
+do{if (has_reference){\
+ if(_DeeMarshalReadMap_PushRef(file_map,reference_id,result)==-1){on_error;}\
+}}while(0)
+
+ switch (op) {
+
+  case MOP_REFERENCE_GET8: {
+   Dee_uint8_t temp;
+   if (DeeFile_ReadAll(file,&temp,1) == -1) return NULL;
+   search_id = (Dee_uint32_t)temp;
+  } goto ref_find;
+
+  case MOP_REFERENCE_GET16: {
+   Dee_uint16_t temp;
+   if (DeeFile_ReadAll(file,&temp,2) == -1) return NULL;
+   search_id = (Dee_uint32_t)DEE_BUILTIN_LESWAP16(temp);
+  } goto ref_find;
+
+  case MOP_REFERENCE_GET32:
+   if (DeeFile_ReadAll(file,&search_id,4) == -1) return NULL;
+   search_id = DEE_BUILTIN_LESWAP32(search_id);
+ref_find:
+   if ((result = _DeeMarshalReadMap_GetRef(file_map,search_id)) == NULL) {
+    DeeError_SetStringf(&DeeErrorType_ValueError,"Marshalled object not found: %I32u",search_id);
+    return NULL;
+   }
+   Dee_INCREF(result);
+   goto ref_default;
+
+  case MOP_REFERENCE_SET8: {
+   Dee_uint8_t temp;
+   has_reference = 1;
+   if (DeeFile_ReadAll(file,&temp,1) == -1) return NULL;
+   reference_id = (Dee_uint32_t)temp;
+  } goto again; // Read the object again (allow for self-referencing)
+
+  case MOP_REFERENCE_SET16: {
+   Dee_uint16_t temp;
+   has_reference = 1;
+   if (DeeFile_ReadAll(file,&temp,2) == -1) return NULL;
+   reference_id = (Dee_uint32_t)DEE_BUILTIN_LESWAP16(temp);
+  } goto again; // Read the object again (allow for self-referencing)
+
+  case MOP_REFERENCE_SET32:
+   has_reference = 1;
+   if (DeeFile_ReadAll(file,&reference_id,4) == -1) return NULL;
+   reference_id = DEE_BUILTIN_LESWAP32(reference_id);
+   goto again; // Read the object again (allow for self-referencing)
+
+  case MOP_NONE:
+   result = DeeNone_New();
+ref_default:
+   DEFINE_REFERENCE(result,goto err_r2);
+   break;
+
+  case MOP_BOOL:
+   if (DeeFile_ReadAll(file,buf,1) == -1) return NULL;
+   result = DeeBool_New(buf[0]);
+   goto ref_default;
+
+  case MOP_INT8:
+  case MOP_UINT8:
+  case MOP_ATOMICINT8:
+  case MOP_ATOMICUINT8:
+   if (DeeFile_ReadAll(file,buf,1) == -1) return NULL;
+   switch (op) {
+    case MOP_INT8: result = DeeInt8_New(*(Dee_int8_t *)buf); break;
+    case MOP_UINT8: result = DeeUInt8_New(*(Dee_uint8_t *)buf); break;
+    case MOP_ATOMICINT8: result = DeeAtomicInt8_New(*(Dee_int8_t *)buf); break;
+    case MOP_ATOMICUINT8: result = DeeAtomicUInt8_New(*(Dee_uint8_t *)buf); break;
+    default: DEE_BUILTIN_UNREACHABLE();
+   }
+ref_default_c:
+   if (!result) return NULL;
+   goto ref_default;
+
+  case MOP_INT16:
+  case MOP_UINT16:
+  case MOP_ATOMICINT16:
+  case MOP_ATOMICUINT16:
+   if (DeeFile_ReadAll(file,buf,2) == -1) return NULL;
+   switch (op) {
+    case MOP_INT16: result = DeeInt16_New((Dee_int16_t)DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)buf)); break;
+    case MOP_UINT16: result = DeeUInt16_New(DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)buf)); break;
+    case MOP_ATOMICINT16: result = DeeAtomicInt16_New((Dee_int16_t)DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)buf)); break;
+    case MOP_ATOMICUINT16: result = DeeAtomicUInt16_New(DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)buf)); break;
+    default: DEE_BUILTIN_UNREACHABLE();
+   }
+   goto ref_default_c;
+
+  case MOP_INT32:
+  case MOP_UINT32:
+  case MOP_ATOMICINT32:
+  case MOP_ATOMICUINT32:
+   if (DeeFile_ReadAll(file,buf,4) == -1) return NULL;
+   switch (op) {
+    case MOP_INT32: result = DeeInt32_New((Dee_int32_t)DEE_BUILTIN_LESWAP32(*(Dee_uint32_t *)buf)); break;
+    case MOP_UINT32: result = DeeUInt32_New(DEE_BUILTIN_LESWAP32(*(Dee_uint32_t *)buf)); break;
+    case MOP_ATOMICINT32: result = DeeAtomicInt32_New((Dee_int32_t)DEE_BUILTIN_LESWAP32(*(Dee_uint32_t *)buf)); break;
+    case MOP_ATOMICUINT32: result = DeeAtomicUInt32_New(DEE_BUILTIN_LESWAP32(*(Dee_uint32_t *)buf)); break;
+    default: DEE_BUILTIN_UNREACHABLE();
+   }
+   goto ref_default_c;
+
+  case MOP_INT64:
+  case MOP_UINT64:
+  case MOP_ATOMICINT64:
+  case MOP_ATOMICUINT64:
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   switch (op) {
+    case MOP_INT64: result = DeeInt64_New((Dee_int64_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf)); break;
+    case MOP_UINT64: result = DeeUInt64_New(DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf)); break;
+    case MOP_ATOMICINT64: result = DeeAtomicInt64_New((Dee_int64_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf)); break;
+    case MOP_ATOMICUINT64: result = DeeAtomicUInt64_New(DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf)); break;
+    default: DEE_BUILTIN_UNREACHABLE();
+   }
+   goto ref_default_c;
+
+  case MOP_FLOAT4:
+#ifdef marshal_float4
+   if (DeeFile_ReadAll(file,buf,4) == -1) return NULL;
+   result = DeeObject_New(marshal_float4_,*(marshal_float4 *)buf);
+   goto ref_default_c;
+#else
+   DeeError_SET_STRING(&DeeErrorType_TypeError,"Unsupported type: float4");
+   return NULL;
+#endif
+
+  case MOP_FLOAT8:
+#ifdef marshal_float8
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   result = DeeObject_New(marshal_float8_,*(marshal_float8 *)buf);
+   goto ref_default_c;
+#else
+   DeeError_SET_STRING(&DeeErrorType_TypeError,"Unsupported type: float8");
+   return NULL;
+#endif
+
+  case MOP_FLOAT12:
+#ifdef marshal_float12
+   if (DeeFile_ReadAll(file,buf,12) == -1) return NULL;
+   result = DeeObject_New(marshal_float12_,*(marshal_float12 *)buf);
+   goto ref_default_c;
+#else
+   DeeError_SET_STRING(&DeeErrorType_TypeError,"Unsupported type: float12");
+   return NULL;
+#endif
+
+  case MOP_FLOAT16:
+#ifdef marshal_float16
+   if (DeeFile_ReadAll(file,buf,16) == -1) return NULL;
+   result = DeeObject_New(marshal_float16_,*(marshal_float16 *)buf);
+   goto ref_default_c;
+#else
+   DeeError_SET_STRING(&DeeErrorType_TypeError,"Unsupported type: float16");
+   return NULL;
+#endif
+
+#define MAKE_INT_ITERATOR(n,swap)\
+  case MOP_RANGE_##n:\
+   if (DeeFile_ReadAll(file,buf,3*sizeof(int##n##_t)) == -1) return NULL;\
+   result = DeeRangeInt##n##Iterator_New(\
+    (int##n##_t)swap(((uint##n##_t*)buf)[0]),\
+    (int##n##_t)swap(((uint##n##_t*)buf)[1]),\
+    (int##n##_t)swap(((uint##n##_t*)buf)[2]));\
+   goto ref_default_c;\
+  case MOP_RANGE_U##n:\
+   if (DeeFile_ReadAll(file,buf,3*sizeof(uint##n##_t)) == -1) return NULL;\
+   result = DeeRangeUInt##n##Iterator_New(\
+    swap(((uint##n##_t*)buf)[0]),\
+    swap(((uint##n##_t*)buf)[1]),\
+    swap(((uint##n##_t*)buf)[2]));\
+   goto ref_default_c;
+#define NOTHING
+  MAKE_INT_ITERATOR(8,NOTHING)
+#undef NOTHING
+  MAKE_INT_ITERATOR(16,DEE_BUILTIN_LESWAP16)
+  MAKE_INT_ITERATOR(32,DEE_BUILTIN_LESWAP32)
+  MAKE_INT_ITERATOR(64,DEE_BUILTIN_LESWAP64)
+#undef MAKE_INT_ITERATOR
+
+  case MOP_PTROF: {
+   DeeObject *result2;
+   if ((result2 = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (!DeeType_Check(result2)) {
+    DeeError_SetStringf(&DeeErrorType_TypeError,
+                        "Expected type for 'MOP_PTROF' (got: %q)",
+                        DeeType_NAME(Dee_TYPE(result2)));
+    Dee_DECREF(result2);
+    return NULL;
+   }
+   result = (DeeObject *)DeeType_Pointer((DeeTypeObject *)result2);
+   Dee_DECREF(result2);
+   if (!result) return NULL;
+   Dee_INCREF(result);
+  } goto ref_default;
+
+  case MOP_LVALOF: {
+   DeeObject *result2;
+   if ((result2 = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (!DeeType_Check(result2)) {
+    DeeError_SetStringf(&DeeErrorType_TypeError,
+                        "Expected type for 'MOP_LVALOF' (got: %q)",
+                        DeeType_NAME(Dee_TYPE(result2)));
+    Dee_DECREF(result2);
+    return NULL;
+   }
+   result = (DeeObject *)DeeType_LValue((DeeTypeObject *)result2);
+   Dee_DECREF(result2);
+   if (!result) return NULL;
+   Dee_INCREF(result);
+  } goto ref_default;
+
+  case MOP_ITERATOR: {
+   DeeObject *result2;
+   if ((result2 = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   result = DeeObject_IterSelf(result2);
+   Dee_DECREF(result2);
+  } goto ref_default_c;
+
+  case MOP_DICTKEYS: {
+   DeeObject *result2;
+   if ((result2 = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (!DeeDict_Check(result2)) {
+    DeeError_SetStringf(&DeeErrorType_TypeError,
+                        "Expected dict for 'MOP_DICTKEYS' (got: %q)",
+                        DeeType_NAME(Dee_TYPE(result2)));
+    Dee_DECREF(result2);
+    return NULL;
+   }
+   result = DeeDict_Keys(result2);
+   Dee_DECREF(result2);
+  } goto ref_default_c;
+
+  case MOP_DICTITEMS: {
+   DeeObject *result2;
+   if ((result2 = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (!DeeDict_Check(result2)) {
+    DeeError_SetStringf(&DeeErrorType_TypeError,
+                        "Expected dict for 'MOP_DICTITEMS' (got: %q)",
+                        DeeType_NAME(Dee_TYPE(result2)));
+    Dee_DECREF(result2);
+    return NULL;
+   }
+   result = DeeDict_Items(result2);
+   Dee_DECREF(result2);
+  } goto ref_default_c;
+
+  case MOP_DICTVALUES: {
+   DeeObject *result2;
+   if ((result2 = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (!DeeDict_Check(result2)) {
+    DeeError_SetStringf(&DeeErrorType_TypeError,
+                        "Expected dict for 'MOP_DICTVALUES' (got: %q)",
+                        DeeType_NAME(Dee_TYPE(result2)));
+    Dee_DECREF(result2);
+    return NULL;
+   }
+   result = DeeDict_Values(result2);
+   Dee_DECREF(result2);
+  } goto ref_default_c;
+
+  case MOP_BUILTIN: {
+   Dee_uint16_t builtin_id;
+   if (DeeFile_ReadAll(file,buf,2) == -1) return NULL;
+   builtin_id = DEE_BUILTIN_LESWAP16(*(Dee_uint16_t*)buf);
+   if ((result = DeeBuiltin_Get(builtin_id)) == NULL) {
+    DeeError_SetStringf(&DeeErrorType_TypeError,
+     "Unknown builtin: %I16x (%I16u)",builtin_id,builtin_id);
+    return NULL;
+   }
+   Dee_INCREF(result);
+  } goto ref_default;
+
+  case MOP_TUPLE: {
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((result = _DeeTuple_NewUnsafe((Dee_size_t)
+    DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf))) == NULL) return NULL;
+   DEFINE_REFERENCE(result,{goto free_res2;});
+   if (DeeMarshal_ReadObjectsWithMap(file,file_map,(Dee_size_t)
+    DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf),DeeTuple_ELEM(result)) == -1) {
+free_res:
+    if (has_reference) _DeeMarshalReadMap_PopRef(file_map,result);
+free_res2:
+    _DeeObject_Delete(result);
+    return NULL;
+   }
+  } break;
+
+  case MOP_LIST: {
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((result = _DeeList_NewUnsafe((Dee_size_t)
+    DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf))) == NULL) return NULL;
+   DEFINE_REFERENCE(result,{goto free_res2;});
+   if (DeeMarshal_ReadObjectsWithMap(file,file_map,(Dee_size_t)
+    DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf),DeeList_ELEM(result)) == -1) {
+    DeeGC_TrackedRem(result);
+    goto free_res;
+   }
+  } break;
+
+  case MOP_DICT: {
+   Dee_size_t dict_size;
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((result = DeeDict_New()) == NULL) return NULL;
+   DEFINE_REFERENCE(result,{goto err_r2;});
+   dict_size = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf);
+   while (dict_size--) {
+    DeeObject *key,*item; int temp;
+    if ((key = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+err_r:
+     if (has_reference) _DeeMarshalReadMap_PopRef(file_map,result);
+err_r2:
+     Dee_DECREF(result);
+     return NULL;
+    }
+    if ((item = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+     Dee_DECREF(key);
+     goto err_r;
+    }
+    temp = DeeDict_SetItem(result,key,item);
+    Dee_DECREF(key);
+    Dee_DECREF(item);
+    if (temp == -1) goto err_r;
+   }
+  } break;
+
+  case MOP_SET: {
+   Dee_size_t set_size;
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((result = DeeSet_New()) == NULL) return NULL;
+   DEFINE_REFERENCE(result,{goto err_r2;});
+   set_size = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf);
+   while (set_size--) {
+    DeeObject *key; int temp;
+    if ((key = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_r;
+    temp = DeeSet_Insert(result,key);
+    Dee_DECREF(key);
+    if (temp == -1) goto err_r;
+   }
+  } break;
+
+#if DEE_CONFIG_HAVE_ENCODING_UTF8
+  case MOP_UTF8STRING:
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((result = DeeUtf8String_NewSized((Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf))) == NULL) return NULL;
+   if (DeeFile_ReadAll(file,DeeUtf8String_STR(result),(Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf)*sizeof(Dee_Utf8Char)) == -1) goto err_r;
+   goto ref_default;
+#endif
+
+#if DEE_CONFIG_HAVE_ENCODING_UTF16
+  case MOP_UTF16STRING:
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((result = DeeUtf16String_NewSized((Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf))) == NULL) return NULL;
+   if (DeeFile_ReadAll(file,DeeUtf16String_STR(result),(Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf)*sizeof(Dee_Utf16Char)) == -1) goto err_r;
+   goto ref_default;
+#endif
+
+#if DEE_CONFIG_HAVE_ENCODING_UTF32
+  case MOP_UTF32STRING:
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((result = DeeUtf32String_NewSized((Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf))) == NULL) return NULL;
+   if (DeeFile_ReadAll(file,DeeUtf32String_STR(result),(Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf)*sizeof(Dee_Utf32Char)) == -1) goto err_r;
+   goto ref_default;
+#endif
+
+#if DEE_CONFIG_HAVE_ENCODING_WIDE && DEE_CONFIG_HAVE_ENCODING_UTF8
+  case MOP_WIDESTRING:
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((result = DeeUtf8String_NewSized((Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf))) == NULL) return NULL;
+   if (DeeFile_ReadAll(file,DeeUtf8String_STR(result),(Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf)*sizeof(Dee_Utf8Char)) == -1) goto err_r;
+   if (DeeWideString_InplaceCast((DeeObject const **)&result) == -1) goto err_r;
+   goto ref_default;
+#endif
+
+  case MOP_SUPER: {
+   Dee_uint32_t derefs,i;
+   if ((result = (*DeeType_GET_SLOT(&DeeSuper_Type,tp_alloc))(&DeeSuper_Type)) == NULL) return NULL;
+   DEFINE_REFERENCE(result,{goto free_res2;});
+   if ((((DeeSuperObject *)result)->s_self = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto free_res2;
+   ((DeeSuperObject *)result)->s_type = Dee_TYPE(DeeSuper_SELF(result));
+   if (DeeFile_ReadAll(file,&derefs,4) == -1) {
+err_super_0: Dee_DECREF(((DeeSuperObject *)result)->s_self); goto free_res2;
+   }
+#ifndef DEE_PLATFORM_LIL_ENDIAN
+   derefs = DEE_BUILTIN_LESWAP64(derefs);
+#endif
+   for (i = 0; i < derefs; ++i) {
+    if ((((DeeSuperObject *)result)->s_type = DeeType_BASE(DeeSuper_TYPE(result))) == NULL) {
+     DeeError_SetStringf(&DeeErrorType_ValueError,
+                         "Too many base references in super for %q:%k (%I32u total)",
+                         DeeType_NAME(Dee_TYPE(((DeeSuperObject *)result)->s_self)),
+                         ((DeeSuperObject *)result)->s_self,derefs);
+     goto err_super_0;
+    }
+   }
+  } break;
+
+  case MOP_DEX: {
+   DeeObject *dex_name;
+   if ((dex_name = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (DeeString_InplaceCast((DeeObject const **)&dex_name) != 0) { Dee_DECREF(dex_name); return NULL; }
+   result = DeeDex_Open(DeeString_STR(dex_name));
+   Dee_DECREF(dex_name);
+   if (!result) return NULL;
+   DEFINE_REFERENCE(result,{goto err_r;});
+  } break;
+
+  case MOP_YFUNC_v100: {
+   DeeYieldFunctionObject *yfunc;
+   if ((yfunc = DeeObject_MALLOCF(DeeYieldFunctionObject)) == NULL) return NULL;
+   DeeObject_INIT(yfunc,&DeeYieldFunction_Type);
+   DEFINE_REFERENCE((DeeObject *)yfunc,{goto err_yfunc_f0;});
+   if ((yfunc->yf_func = (DeeFunctionObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+err_yfunc_1: if (has_reference) _DeeMarshalReadMap_PopRef(file_map,(DeeObject *)yfunc); err_yfunc_f0: _DeeObject_Delete((DeeObject *)yfunc); return NULL;
+   } else if (DeeError_TypeError_CheckType((DeeObject *)yfunc->yf_func,&DeeFunction_Type) == -1) {
+err_yfunc_2: Dee_DECREF(yfunc->yf_func); goto err_yfunc_1;
+   }
+   if ((yfunc->yf_args = (DeeTupleObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_yfunc_2;
+   else if (DeeError_TypeError_CheckType((DeeObject *)yfunc->yf_args,&DeeFunction_Type) == -1) {
+/*err_yfunc_3:*/ Dee_DECREF(yfunc->yf_args); goto err_yfunc_2;
+   }
+   result = (DeeObject *)yfunc;
+  } break;
+
+  case MOP_FUNC_v100: {
+   DeeObject *code,*refs;
+   if (DeeFile_ReadAll(file,buf,10) == -1) return NULL;
+   if ((result = DeeFunction_New(Dee_EmptyCode,Dee_EmptyTuple,
+    (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)(buf+0)),
+            DEE_BUILTIN_LESWAP16(*(Dee_uint16_t*)(buf+8)))) == NULL) return NULL;
+   DEFINE_REFERENCE(result,{goto err_r2;});
+   if ((code = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+    goto err_r;
+   } else if (DeeError_TypeError_CheckType(code,&DeeCode_Type) == -1) {
+err_func_1: Dee_DECREF(code); goto err_r;
+   }
+   if ((refs = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_func_1; // defaults
+   Dee_DECREF(refs);
+   if ((refs = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_func_1;
+   else if (DeeError_TypeError_CheckType(refs,&DeeTuple_Type) == -1) {
+/*err_func_2:*/ Dee_DECREF(refs); goto err_func_1;
+   }
+   Dee_DECREF(((DeeFunctionObject *)result)->fn_code);
+   Dee_DECREF(((DeeFunctionObject *)result)->fn_refs);
+   Dee_INHERIT_REF(((DeeFunctionObject *)result)->fn_code,*(DeeCodeObject **)&code);
+   Dee_INHERIT_REF(((DeeFunctionObject *)result)->fn_refs,*(DeeTupleObject **)&refs);
+  } break;
+
+  case MOP_CODEDEBUG_v100: {
+   DeeCodeDebugInfoObject *codedebug;
+   DeeObject **name_iter,**name_end;
+   if ((codedebug = (DeeCodeDebugInfoObject *)_DeeCodeDebugInfo_New()) == NULL) return NULL;
+   DEFINE_REFERENCE((DeeObject *)codedebug,{goto err_codedebug_f0;});
+   if ((codedebug->di_name = (DeeStringObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+err_codedebug_0: if (has_reference) _DeeMarshalReadMap_PopRef(file_map,(DeeObject *)codedebug);
+err_codedebug_f0: _DeeObject_Delete((DeeObject *)codedebug); return NULL; }
+   else if (DeeNone_Check((DeeObject *)codedebug->di_name)) Dee_CLEAR(codedebug->di_name);
+   else if (DeeError_TypeError_CheckType((DeeObject *)codedebug->di_name,&DeeString_Type) == -1) {
+err_codedebug_1: Dee_XDECREF(codedebug->di_name); goto err_codedebug_0;
+   }
+   if ((codedebug->di_local_names = (DeeTupleObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_codedebug_1;
+   else if (DeeNone_Check((DeeObject *)codedebug->di_local_names)) Dee_CLEAR(codedebug->di_local_names);
+   else if (DeeError_TypeError_CheckType((DeeObject *)codedebug->di_local_names,&DeeTuple_Type) == -1) {
+err_codedebug_2: Dee_XDECREF(codedebug->di_local_names); goto err_codedebug_1;
+   } else {
+    name_end = (name_iter = DeeTuple_ELEM(codedebug->di_local_names))+DeeTuple_SIZE(codedebug->di_local_names);
+    while (name_iter != name_end) if (DeeError_TypeError_CheckType(*name_iter,&DeeString_Type) == -1) goto err_codedebug_2; else ++name_iter;
+   }
+   if ((codedebug->di_const_names = (DeeTupleObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_codedebug_2;
+   else if (DeeNone_Check((DeeObject *)codedebug->di_const_names)) Dee_CLEAR(codedebug->di_const_names);
+   else if (DeeError_TypeError_CheckType((DeeObject *)codedebug->di_const_names,&DeeTuple_Type) == -1) {
+err_codedebug_3: Dee_XDECREF(codedebug->di_const_names); goto err_codedebug_2;
+   } else {
+    name_end = (name_iter = DeeTuple_ELEM(codedebug->di_const_names))+DeeTuple_SIZE(codedebug->di_const_names);
+    while (name_iter != name_end) if (DeeError_TypeError_CheckType(*name_iter,&DeeString_Type) == -1) goto err_codedebug_3; else ++name_iter;
+   }
+   if ((codedebug->di_ref_names = (DeeTupleObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_codedebug_3;
+   else if (DeeNone_Check((DeeObject *)codedebug->di_ref_names)) Dee_CLEAR(codedebug->di_ref_names);
+   else if (DeeError_TypeError_CheckType((DeeObject *)codedebug->di_ref_names,&DeeTuple_Type) == -1) {
+err_codedebug_4: Dee_XDECREF(codedebug->di_ref_names); goto err_codedebug_3;
+   } else {
+    name_end = (name_iter = DeeTuple_ELEM(codedebug->di_ref_names))+DeeTuple_SIZE(codedebug->di_ref_names);
+    while (name_iter != name_end) if (DeeError_TypeError_CheckType(*name_iter,&DeeString_Type) == -1) goto err_codedebug_4; else ++name_iter;
+   }
+   if ((codedebug->di_arg_names = (DeeTupleObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_codedebug_4;
+   else if (DeeNone_Check((DeeObject *)codedebug->di_arg_names)) Dee_CLEAR(codedebug->di_arg_names);
+   else if (DeeError_TypeError_CheckType((DeeObject *)codedebug->di_arg_names,&DeeTuple_Type) == -1) {
+err_codedebug_5: Dee_XDECREF(codedebug->di_arg_names); goto err_codedebug_4;
+   } else {
+    name_end = (name_iter = DeeTuple_ELEM(codedebug->di_arg_names))+DeeTuple_SIZE(codedebug->di_arg_names);
+    while (name_iter != name_end) if (DeeError_TypeError_CheckType(*name_iter,&DeeString_Type) == -1) goto err_codedebug_5; else ++name_iter;
+   }
+
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if (*(Dee_uint64_t *)buf) {
+    Dee_size_t nlno = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf);
+    while ((codedebug->di_lno = (struct _DeeCodeLnOffList *)malloc_nz(
+     (nlno+1)*sizeof(struct _DeeCodeLnOffList))) == NULL) {
+     if (Dee_CollectMemory()) continue;
+     DeeError_NoMemory();
+     goto err_codedebug_5;
+    }
+    ((Dee_uint16_t *)codedebug->di_lno)[nlno] = 0;
+    if (DeeFile_ReadAll(file,codedebug->di_lno,nlno*2) == -1) {
+//err_codedebug_6:
+     free(codedebug->di_lno);
+     goto err_codedebug_5;
+    }
+   } else codedebug->di_lno = NULL;
+   Dee_INHERIT_REF(result,*(DeeObject **)&codedebug);
+  } break;
+
+  case MOP_CODE_v100: {
+#if DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
+   struct DeeExceptionHandlerEntry *eh_iter,*eh_end;
+#endif
+   Dee_size_t object_size;
+   DeeCodeObject *code;
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   object_size = ((Dee_size_t)DEE_BUILTIN_LESWAP64(
+    *(Dee_uint64_t*)buf))+offsetof(DeeCodeObject,co_code);
+   if ((code = (DeeCodeObject *)DeeObject_Malloc(object_size)) == NULL) return NULL;
+   DeeVarObject_INIT(code,&DeeCode_Type,object_size);
+   _DeeCode_InitCommon(code);
+   DEFINE_REFERENCE((DeeObject *)code,{goto err_code_f0;});
+   if ((code->co_debug = (DeeCodeDebugInfoObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+err_code_0: if (has_reference) _DeeMarshalReadMap_PopRef(file_map,(DeeObject *)code);
+err_code_f0: _DeeObject_Delete((DeeObject *)code); return NULL;
+   } else if (DeeNone_Check((DeeObject *)code->co_debug)) { Dee_CLEAR(code->co_debug);
+   } else if (DeeError_TypeError_CheckType((DeeObject *)code->co_debug,&DeeCodeDebugInfo_Type) == -1) {
+err_code_1: Dee_XDECREF(code->co_debug); goto err_code_0;
+   }
+   if ((code->co_consts = (DeeTupleObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+    goto err_code_1;
+   } else if (DeeError_TypeError_CheckType((DeeObject *)code->co_consts,&DeeTuple_Type) == -1) {
+err_code_2: Dee_DECREF(code->co_consts); goto err_code_1;
+   }
+#if DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((code->co_exceptc = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf)) != 0) {
+    while ((eh_iter = (struct DeeExceptionHandlerEntry *)malloc_nz(
+     code->co_exceptc*sizeof(struct DeeExceptionHandlerEntry))) == NULL) {
+     if (Dee_CollectMemory()) continue;
+     DeeError_NoMemory();
+     goto err_code_2;
+    }
+    eh_end = (code->co_exceptv = eh_iter)+code->co_exceptc;
+    while (eh_iter != eh_end) {
+     if (DeeFile_ReadAll(file,buf,1) == -1) {
+err_codeh_3:
+      while (eh_iter != code->co_exceptv) { Dee_XDECREF(eh_iter->e_type); --eh_iter; }
+      free_nn(code->co_exceptv);
+      goto err_code_2;
+     }
+     eh_iter->e_kind = (DeeExceptionHandlerKind)*(Dee_uint8_t*)buf;
+     if ((eh_iter->e_type = (DeeTypeObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_codeh_3;
+     else if (DeeNone_Check((DeeObject *)eh_iter->e_type)) Dee_CLEAR(eh_iter->e_type);
+     else if (DeeError_TypeError_CheckType((DeeObject *)eh_iter->e_type,&DeeType_Type) == -1) {
+err_codeh_4: Dee_XDECREF(eh_iter->e_type); goto err_codeh_3;
+     }
+     if (DeeFile_ReadAll(file,buf,12) == -1) goto err_codeh_4;
+     eh_iter->e_store = DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)(buf+0));
+     eh_iter->e_stack = DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)(buf+2));
+     eh_iter->e_handler = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)(buf+4));
+     ++eh_iter;
+    }
+   } else code->co_exceptv = NULL;
+   if (DeeFile_ReadAll(file,buf,10) == -1) {
+err_code_3:
+    eh_end = (eh_iter = code->co_exceptv)+code->co_exceptc;
+    while (eh_iter != eh_end) Dee_XDECREF((eh_iter++)->e_type);
+    free(code->co_exceptv);
+    goto err_code_2;
+   }
+   code->co_exceptsize = DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)(buf+0));
+   code->co_finallyc = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)(buf+2));
+#else /* DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS */
+   if (DeeFile_Seek(file,18,DEE_SEEK_CUR,NULL) == -1) goto err_code_2;
+#define err_code_3  err_code_2
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS */
+   if (DeeFile_ReadAll(file,buf,12) == -1) goto err_code_3;
+   code->co_nlocals = DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)(buf+0));
+   code->co_flags = DEE_BUILTIN_LESWAP16(*(Dee_uint16_t *)(buf+2));
+   code->co_stacksize = (Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)(buf+4));
+   if (DeeFile_ReadAll(file,code->co_code,DeeCode_SIZE(code)) == -1) goto err_code_3;
+#ifdef DEE_PLATFORM_BIG_ENDIAN
+   _marshal_swap_code_endian(code);
+#endif
+
+   // Calculate execution buffer constants
+   DeeCode_CALCULATE_WBUFFERSIZE(code);
+   Dee_INHERIT_REF(result,*(DeeObject **)&code);
+  } break;
+
+  case MOP_DLL: {
+   DeeObject *name;
+   if ((name = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   result = DeeSharedLib_PoolLoadObject(name);
+   Dee_DECREF(name);
+  } goto ref_default_c;
+
+  case MOP_ATTR: {
+   DeeObject *ob_attr[2];
+   if ((DeeMarshal_ReadObjectsWithMap(file,file_map,2,ob_attr)) == -1) return NULL;
+   if (DeeError_TypeError_CheckType(ob_attr[1],&DeeString_Type) == -1) result = NULL; else {
+    result = DeeObject_GetAttr(ob_attr[0],ob_attr[1]);
+   }
+   Dee_DECREF(ob_attr[0]);
+   Dee_DECREF(ob_attr[1]);
+  } goto ref_default_c;
+
+  case MOP_STRUCTURED: {
+   DeeStructuredTypeObject *structed_type;
+   if ((structed_type = (DeeStructuredTypeObject *)
+    DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (DeeError_TypeError_CheckType((DeeObject *)structed_type,
+    &DeeStructuredType_Type) == -1) result = NULL; else {
+    result = (*DeeType_GET_SLOT(structed_type,tp_alloc))((DeeTypeObject *)structed_type);
+    if (result && DeeFile_ReadAll(file,DeeStructured_DATA(result),
+     DeeType_GET_SLOT(structed_type,tp_p_instance_size)) == -1) {
+     _DeeObject_Delete(result);
+     result = NULL;
+    }
+   }
+   Dee_DECREF(structed_type);
+  } goto ref_default_c;
+
+  case MOP_STRUCT_TYPE: {
+   if ((result = (*DeeType_GET_SLOT(&DeeStructType_Type,tp_alloc))(&DeeStructType_Type)) == NULL) return NULL;
+   DEFINE_REFERENCE(result,goto free_res2);
+   if (_marshal_read_struct_type(file,file_map,(DeeStructTypeObject *)result) == -1) goto free_res;
+  } break;
+
+  case MOP_ARRAY_TYPE: {
+   DeeTypeObject *result2;
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   if ((result2 = (DeeTypeObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (DeeError_TypeError_CheckType((DeeObject *)result2,&DeeStructuredType_Type) == -1) { Dee_DECREF(result2); return NULL; }
+   result = (DeeObject *)DeeType_Array(result2,(Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf));
+   Dee_DECREF(result2);
+   if (!result) return NULL;
+   Dee_INCREF(result);
+  } goto ref_default;
+
+  case MOP_FF_TYPE: {
+   Dee_uint16_t flags;
+   DeeTypeObject *return_type,**argty_v,**argty_iter,**argty_end; Dee_uint64_t argty_c;
+   if (DeeFile_ReadAll(file,&flags,2) == -1) return NULL;
+   if ((return_type = (DeeTypeObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (DeeError_TypeError_CheckType((DeeObject *)return_type,&DeeType_Type) == -1) {
+err_ff_ret: Dee_DECREF(return_type); return NULL;
+   }
+   if (DeeFile_ReadAll(file,&argty_c,8) == -1) goto err_ff_ret;
+   argty_c = DEE_BUILTIN_LESWAP64(argty_c);
+   if (argty_c) {
+    while ((argty_v = (DeeTypeObject **)malloc_nz((
+     Dee_size_t)argty_c*sizeof(DeeTypeObject *))) == NULL) {
+     if (Dee_CollectMemory()) continue;
+     DeeError_NoMemory();
+     goto err_ff_ret;
+    }
+    if (DeeMarshal_ReadObjectsWithMap(file,file_map,(Dee_size_t)argty_c,(DeeObject **)argty_v) == -1) {
+err_ff_argv: free_nn(argty_v); goto err_ff_ret;
+    }
+    argty_end = (argty_iter = argty_v)+(Dee_size_t)argty_c;
+    while (argty_iter != argty_end) {
+     if (DeeError_TypeError_CheckType((DeeObject *)*argty_iter,&DeeType_Type) == -1) {
+      argty_end = (argty_iter = argty_v)+(Dee_size_t)argty_c;
+      while (argty_iter != argty_end) Dee_DECREF(*argty_iter++);
+      goto err_ff_argv;
+     }
+     ++argty_iter;
+    }
+    result = (DeeObject *)DeeType_ForeignFunction(
+     return_type,(DeeFunctionFlags)DEE_BUILTIN_LESWAP16(flags),
+     (Dee_size_t)argty_c,(DeeTypeObject const *const *)argty_v);
+    argty_end = (argty_iter = argty_v)+(Dee_size_t)argty_c;
+    while (argty_iter != argty_end) Dee_DECREF(*argty_iter++);
+    free_nn(argty_v);
+   } else result = (DeeObject *)DeeType_ForeignFunction(
+    return_type,(DeeFunctionFlags)DEE_BUILTIN_LESWAP16(flags),0,NULL);
+   Dee_DECREF(return_type);
+   if (!result) return NULL;
+   Dee_INCREF(result);
+  } goto ref_default;
+
+  case MOP_POINTER: {
+   DeePointerTypeObject *pointer_type;
+   if ((pointer_type = (DeePointerTypeObject *)
+    DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (DeeError_TypeError_CheckType((DeeObject *)pointer_type,
+    &DeePointerType_Type) == -1) result = NULL; else {
+    if (DeeFile_ReadAll(file,buf,8) == -1) result = NULL; else {
+     result = DeePointer_New((DeeTypeObject *)pointer_type,
+      (void *)((Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf)));
+    }
+   }
+   Dee_DECREF(pointer_type);
+  } goto ref_default_c;
+
+  case MOP_FILE_READER: {
+   DeeObject *read_string;
+   if ((result = DeeFileReader_New(Dee_EmptyString)) == NULL) return NULL;
+   DEFINE_REFERENCE(result,{goto err_r2;});
+   if ((read_string = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (DeeError_TypeError_CheckType(read_string,&DeeString_Type) == -1) {
+    Dee_DECREF(read_string);
+    goto err_r;
+   } else {
+    if (DeeFile_ReadAll(file,buf,8) == -1) { Dee_DECREF(read_string); goto err_r; }
+    ((DeeFileReaderObject *)result)->ob_pos = DeeString_STR(read_string)+(Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf);
+    ((DeeFileReaderObject *)result)->ob_end = DeeString_STR(read_string)+DeeString_SIZE(read_string);
+    Dee_DECREF(((DeeFileReaderObject *)result)->ob_string);
+    Dee_INHERIT_REF(((DeeFileReaderObject *)result)->ob_string,*(DeeStringObject **)&read_string);
+   }
+  } break;
+
+  case MOP_OBJECT:
+   result = DeeType_NewInstanceDefault((DeeTypeObject *)&DeeObject_Type);
+   goto ref_default_c;
+
+  case MOP_FILE_WRITER: {
+   if ((result = DeeFileWriter_New()) == NULL) return NULL;
+   if (DeeFile_ReadAll(file,buf,8) == -1) goto err_r;
+   if (DeeStringWriter_CopyFromFile(DeeFileWriter_WRITER(result),file,(
+    Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf)) == -1) goto err_r;
+   if (DeeFile_ReadAll(file,buf,8) == -1) goto err_r;
+   DeeFileWriter_POS(result) = DeeStringWriter_STR(
+    DeeFileWriter_WRITER(result))+(Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t *)buf);
+  } goto ref_default;
+
+  case MOP_RANDOM: {
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   result = DeeRandom_NewWithSeed(DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf));
+  } goto ref_default_c;
+
+  case MOP_TRACEBACK: {
+   struct DeeTracebackEntry *iter,*end;
+   Dee_size_t tb_size;
+   if (DeeFile_ReadAll(file,buf,8) == -1) return NULL;
+   tb_size = offsetof(DeeTracebackObject,tb_traceback)+
+    ((Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf))*sizeof(struct DeeTracebackEntry);
+   if ((result = (DeeObject *)DeeObject_Malloc(tb_size)) == NULL) return NULL;
+   DeeVarObject_INIT(result,&DeeTraceback_Type,tb_size);
+   DEFINE_REFERENCE(result,{goto free_res2;});
+   end = (iter = DeeTraceback_ELEM(result))+DeeTraceback_SIZE(result);
+   while (iter != end) {
+    if ((iter->te_func = (DeeStringObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+err_tb_0:
+     while (iter != DeeTraceback_ELEM(result)) {
+      Dee_XDECREF(iter->te_func);
+      Dee_XDECREF(iter->te_file);
+      --iter;
+     }
+     goto free_res;
+    } else if (DeeNone_Check(DeeTracebackEntry_FUNC(iter))) {
+     Dee_CLEAR(iter->te_func);
+    } else if (DeeError_TypeError_CheckType(DeeTracebackEntry_FUNC(iter),&DeeString_Type) == -1) {
+err_tb_1: Dee_XDECREF(iter->te_func); goto err_tb_0;
+    }
+    if ((iter->te_file = (DeeStringObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto err_tb_1;
+    else if (DeeNone_Check(iter->te_file)) Dee_CLEAR(iter->te_file);
+    else if (DeeError_TypeError_CheckType(DeeTracebackEntry_FILE(iter),&DeeString_Type) == -1) {
+err_tb_2: Dee_XDECREF(iter->te_file); goto err_tb_1;
+    }
+    if (DeeFile_ReadAll(file,buf,4) == -1) goto err_tb_2;
+    iter->te_line = (Dee_int32_t)DEE_BUILTIN_LESWAP32(*(Dee_uint32_t*)buf);
+    ++iter;
+   }
+  } break;
+
+  case MOP_TRACEBACKENTRY: {
+   DeeObject *traceback;
+   if ((traceback = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) return NULL;
+   if (DeeError_TypeError_CheckType(traceback,&DeeTraceback_Type) == -1 ||
+       DeeFile_ReadAll(file,buf,8) == -1) {
+    Dee_DECREF(traceback);
+    return NULL;
+   }
+   result = DeeTracebackEntry_New(
+    traceback,DeeTraceback_ELEM(traceback)+(
+    Dee_size_t)DEE_BUILTIN_LESWAP64(*(Dee_uint64_t*)buf));
+   Dee_DECREF(traceback);
+  } goto ref_default_c;
+
+  case MOP_JOINED_FILE:
+   if ((result = (DeeObject *)DeeObject_MALLOC(DeeFileJoinedObject)) == NULL) return NULL;
+   DeeObject_INIT(result,(DeeTypeObject *)&DeeFileJoined_Type);
+   DEFINE_REFERENCE(result,{goto free_res2;});
+   if ((((DeeFileJoinedObject *)result)->ob_fa = (
+    DeeFileObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) goto free_res;
+   if ((((DeeFileJoinedObject *)result)->ob_fb = (
+    DeeFileObject *)DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+    Dee_DECREF(((DeeFileJoinedObject *)result)->ob_fa);
+    goto free_res;
+   }
+   break;
+
+  default:
+   DeeError_SetStringf(&DeeErrorType_NotImplemented,
+    "Unknown marshal object code: %I8x (%I8u)",op,op);
+   return NULL;
+ }
+ return result;
+}
+DEE_COMPILER_MSVC_WARNING_POP
+
+DEE_A_RET_EXCEPT(-1) int DeeMarshal_ReadObjectsWithMap(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file, DEE_A_INOUT struct DeeMarshalReadMap *file_map, 
+ DEE_A_IN Dee_size_t resultc, DEE_A_OUT_W(resultc) DeeObject **resultv) {
+ DeeObject **iter = resultv;
+ while (resultc--) {
+  if ((*iter = DeeMarshal_ReadObjectWithMap(file,file_map)) == NULL) {
+   while (iter != resultv) Dee_DECREF(*--iter);
+   return -1;
+  }
+  ++iter;
+ }
+ return 0;
+}
+DEE_A_RET_EXCEPT(-1) int DeeMarshal_WriteObjectsWithMap(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file, DEE_A_INOUT struct DeeMarshalWriteMap *file_map,
+ DEE_A_IN Dee_size_t objectc, DEE_A_IN_R(objectc) DeeObject const *const *objectv) {
+ while (objectc--) if (DeeMarshal_WriteObjectWithMap(file,file_map,*objectv++) == -1) return -1;
+ return 0;
+}
+
+
+
+DEE_COMPILER_STRUCTURE_PACKED_BEGIN
+struct DeeCompiledFileHeader {
+ // it's a gonna magic...
+ Dee_uint8_t magic[8];      // == "deemon\x03\x05"
+ Dee_uint32_t reserved_0;   // == 0 (Reserved)
+ Dee_uint16_t reserved_1;   // == 0 (Reserved)
+ Dee_uint16_t marshal_ver;  // == DEE_MARSHAL_VERSION
+ Dee_uint32_t full_version; // == DEE_VERSION_FULL
+};
+DEE_COMPILER_STRUCTURE_PACKED_END
+static struct DeeCompiledFileHeader const default_header = {
+ // ...it's a gonna magic...
+ {'d','e','e','m','o','n','\x03','\x05'},
+ 0,0,DEE_MARSHAL_VERSION,
+ DEE_BUILTIN_LESWAP32_M(DEE_VERSION_FULL)
+};
+
+
+DEE_A_RET_EXCEPT(-1) int DeeMarshal_WriteCompiledFileHeader(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file) {
+#ifdef DEE_PLATFORM_UNIX
+ // Add the script tag to the front of the compiled file
+ // NOTE: Don't be fooled: This is still very much a binary file!
+ if (DeeFile_Printf(file,"#!%K\n",DeeFS_GetDeemonExecutable()) == -1) return -1;
+#else
+ // We use the default linux install path on windows
+ if (DeeFile_PRINT(file,"#!/usr/bin/deemon\n") == -1) return -1;
+#endif
+ if (DeeFile_WriteAll(file,&default_header,sizeof(default_header)) == -1) return -1;
+ return 0;
+}
+
+DEE_STATIC_INLINE(int) _DeeMarshal_IsCompiledFile(
+ DeeObject *file, struct DeeCompiledFileHeader *header,
+ Dee_uint32_t *deemon_version, DeeMarshalVersion *marshal_version) {
+ Dee_size_t did_read;
+ DEE_ASSERT(deemon_version && marshal_version);
+ if (DeeFile_Read(file,header,sizeof(*header),&did_read) == -1) return -1;
+ if (did_read != sizeof(*header)) {
+  if (DeeFile_Seek(file,-(Dee_int64_t)did_read,DEE_SEEK_CUR,NULL) == -1) return -1;
+  return 2; // File too small
+ }
+ // ...One dream, one soul, one prize...
+ if (memcmp(header->magic,default_header.magic,sizeof(default_header.magic)) == 0) {
+  *deemon_version = DEE_BUILTIN_LESWAP32(header->full_version);
+  // NOTE: Technically it would be good enough to simple compare: '*deemon_version > DEE_VERSION_FULL'
+  //       But we check manually in case deemon ever gets a second development branch
+  if (DEE_VERSION_GET_API(*deemon_version) > DEE_VERSION_API ||
+      DEE_VERSION_GET_COMPILER(*deemon_version) > DEE_VERSION_COMPILER ||
+     (DEE_VERSION_GET_API_AND_COMPILER(*deemon_version) ==
+      DEE_VERSION_GET_API_AND_COMPILER(DEE_VERSION_FULL) &&
+      DEE_VERSION_GET_REVISION(*deemon_version) > DEE_VERSION_REVISION)) {
+   //                   ___________________
+   // You've got to go /Back To The Future/
+   if (DeeFile_Printf(
+    DeeFile_Std(DEE_STDERR),"Warning: File %k compiled with future deemon %d/%d:%d\n",
+    file,(int)DEE_VERSION_GET_API(*deemon_version),
+    (int)DEE_VERSION_GET_COMPILER(*deemon_version),
+    (int)DEE_VERSION_GET_REVISION(*deemon_version)
+    ) == -1) return -1;
+  }
+  *marshal_version = (DeeMarshalVersion)DEE_BUILTIN_LESWAP16(header->marshal_ver);
+  return 1;
+ }
+ return 0;
+}
+
+DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeMarshal_IsCompiledFile(
+ DEE_A_INOUT_OBJECT(DeeFileObject) *file, DEE_A_OUT Dee_uint32_t *deemon_version,
+ DEE_A_OUT DeeMarshalVersion *marshal_version) {
+ Dee_size_t did_read; int temp;
+ struct DeeCompiledFileHeader header;
+ DEE_ASSERT(deemon_version && marshal_version);
+ if ((temp = _DeeMarshal_IsCompiledFile(file,&header,deemon_version,marshal_version)) == -1) return -1;
+ if (temp == 1) goto found; // Yes!
+ if (temp == 2) return 0; // File too small
+ // ...One goal, one golden glance of what should be...
+ if (header.magic[0] == '#') {
+  Dee_uint64_t base;
+  Dee_uint8_t ch;
+  if (DeeFile_Seek(file,-(Dee_int64_t)sizeof(header),
+   DEE_SEEK_CUR,&base) == -1) return -1;
+  do { // Skip unix-style exec script linkage
+   if (DeeFile_Read(file,&ch,1,&did_read) == -1) return -1;
+   if (!did_read) goto not_compiled;
+  } while (ch != '\n');
+  // v error or actually found
+  if ((temp = _DeeMarshal_IsCompiledFile(file,&header,deemon_version,marshal_version)) == -1) return -1;
+  if (temp) {
+found:
+   // v101 doesn't implement backwards compatibility
+   if (DEE_VERSION_GET_API(*deemon_version) < 101) {
+    DeeError_SetStringf(&DeeErrorType_NotImplemented,
+     "No backwards compatibility for pre-v101 version %d/%d:%d",
+     (int)DEE_VERSION_GET_API(*deemon_version),
+     (int)DEE_VERSION_GET_COMPILER(*deemon_version),
+     (int)DEE_VERSION_GET_REVISION(*deemon_version));
+    return -1;
+   }
+   return 1;
+  }
+not_compiled:
+  return DeeFile_Seek(file,*(Dee_int64_t*)&base,DEE_SEEK_SET,NULL);
+ }
+ return DeeFile_Seek(file,-(Dee_int64_t)sizeof(header),DEE_SEEK_CUR,NULL);
+}
+
+// ...It's a kind of magic 
+
+DEE_DECL_END
+
+#endif /* !GUARD_DEEMON_MARSHAL_H */

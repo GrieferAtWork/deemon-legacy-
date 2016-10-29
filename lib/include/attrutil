@@ -1,0 +1,60 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+#pragma push_macro("util")
+#pragma push_macro("attr")
+#pragma push_macro("enumattr")
+#undef util
+#undef attr
+#undef enumattr
+module util {
+
+	module attr {
+	
+		//////////////////////////////////////////////////////////////////////////
+		// function callback(type object tp_self, object self, string name, uint32_t flags, none attr_type) -> object
+		// function callback(type object tp_self, object self, string name, uint32_t flags, type object attr_type) -> object
+		// @param tp_self:   The type implementing the attribute
+		// @param self:      The object featuring the given attribute
+		// @param name:      The name of the attribute
+		// @param flags:     Set of 'DEE_ENUMATTRIBUTE_FLAG_*' associated with the attribute
+		// @param attr_type: Type type that would be returned by 'operator __getattr__', or none if unknown
+		//     Callback for 'enumattr'.
+		// function enumattr(object self, callable callback) -> none
+		// @throws Error.*: Same as 'callback'
+		//     Enumerate all known attributes of 'self', excluding custom
+		//     protocols through 'operator .' / '__getattr__'
+		local const enumattr = __builtin_object(0x01E2);
+
+		local const ENUM_ATTR_FLAG_NONE           = 0ui32;
+		local const ENUM_ATTR_FLAG_PERMISSION_GET = 1ui32; /*< Attribute supports get/has queries. */
+		local const ENUM_ATTR_FLAG_PERMISSION_DEL = 2ui32; /*< Attribute supports del queries. */
+		local const ENUM_ATTR_FLAG_PERMISSION_SET = 4ui32; /*< Attribute supports set queries. */
+	}
+
+}
+#pragma pop_macro("util")
+#pragma pop_macro("attr")
+#pragma pop_macro("enumattr")
+
+

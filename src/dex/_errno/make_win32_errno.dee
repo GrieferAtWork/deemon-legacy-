@@ -1,0 +1,86 @@
+#!/usr/bin/deemon
+const copyright = "\
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+";
+
+#include <file>
+#include <fs>
+
+// v You might need to change this one if you want to re-run this
+const input_filename = "c:\\Program Files (x86)\\Windows Kits\\8.1\\Include\\shared\\winerror.h";
+
+fs::chdir(fs::path::head(__FILE__));
+infile = file.io(input_filename,"r");
+
+list known_errors;
+
+messagetext = "";
+in_messagetext = false;
+for (local line: infile) {
+	line = line.strip();
+	if (line.startswith("#define") && in_messagetext) {
+		line = line[#"#define":];
+		local errname,errdefault = line.scanf(" %[^ ] %[^ ]")...;
+		messagetext = messagetext.strip().replace("\n\n","\n");
+		if (errdefault.startswith("_NDIS_ERROR_TYPEDEF_"))
+			errdefault = errdefault.scanf("_NDIS_ERROR_TYPEDEF_(%[^)])")...;
+		else if (errdefault.startswith("_HRESULT_TYPEDEF_"))
+			errdefault = errdefault.scanf("_HRESULT_TYPEDEF_(%[^)])")...;
+		if (errdefault.endswith("L")) errdefault = errdefault[:#errdefault-1];
+		known_errors.append(pack errname,errdefault,messagetext);
+		messagetext = "";
+		in_messagetext = false;
+	} else if (line.startswith("//")) {
+		local pos = line.find("MessageText:");
+		if (pos >= 0) {
+			pos += #"MessageText:";
+			messagetext = line[pos:];
+			in_messagetext = true;
+		} else if (in_messagetext) {
+			messagetext += line[#"//":];
+		}
+	}
+}
+del infile;
+
+outfile = file.io("win32_errors.inl","w");
+print outfile: "/* No ownership of this file's content is claimed. */";
+print outfile: "/* It has been auto-generated from the msvc 'winerror.h' header. */";
+for (local name,def,text: known_errors) {
+	print outfile: "WIN32_ERROR("+name+","+def+")";
+	// v Don't push it. - Let's just continue using FormatMessage...
+	//   >> The _errno dex is already big enough as it is!
+	//print outfile: "WIN32_ERROR("+name+","+def+","+repr text+")";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

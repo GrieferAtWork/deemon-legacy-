@@ -1,0 +1,87 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__cxxdefault.dee>
+
+module std {
+
+#pragma push_macro("pointer_safety")
+#pragma push_macro("relaxed")
+#pragma push_macro("preferred")
+#pragma push_macro("strict")
+#pragma push_macro("get_pointer_safety")
+#pragma push_macro("declare_reachable")
+#pragma push_macro("undeclare_reachable")
+#pragma push_macro("declare_no_pointers")
+#pragma push_macro("undeclare_no_pointers")
+#pragma push_macro("addressof")
+#pragma push_macro("align")
+#undef pointer_safety
+#undef relaxed
+#undef preferred
+#undef strict
+#undef get_pointer_safety
+#undef declare_reachable
+#undef undeclare_reachable
+#undef declare_no_pointers
+#undef undeclare_no_pointers
+#undef addressof
+#undef align
+
+enum class pointer_safety {
+	relaxed = 0,
+	preferred = 1,
+	strict = 2,
+};
+
+const function get_pointer_safety() -> pointer_safety::relaxed;
+
+const function declare_reachable(__p) -> none;
+const function undeclare_reachable(__p) -> __p;
+
+const function declare_no_pointers(__p,__n) -> none;
+const function undeclare_no_pointers(__p,__n) -> none;
+
+const function addressof(__arg) -> &__arg;
+
+const function align(__bound,__size,__ptr,__space) {
+	local __off = (__SIZE_TYPE__)((__UINTPTR_TYPE__)__ptr&(__bound-1));
+	if ((__SIZE_TYPE__)0 < __off) __off = __bound-__off;
+	if (__space < __off || __space - __off < __size)
+		return (none *)none;
+	__ptr := (char *)__ptr+__off;
+	__space -= __off;
+	return __ptr;
+}
+
+#pragma pop_macro("align")
+#pragma pop_macro("addressof")
+#pragma pop_macro("undeclare_no_pointers")
+#pragma pop_macro("declare_no_pointers")
+#pragma pop_macro("undeclare_reachable")
+#pragma pop_macro("declare_reachable")
+#pragma pop_macro("get_pointer_safety")
+#pragma pop_macro("strict")
+#pragma pop_macro("preferred")
+#pragma pop_macro("relaxed")
+#pragma pop_macro("pointer_safety")
+
+}

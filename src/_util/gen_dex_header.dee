@@ -1,0 +1,366 @@
+#!/usr/bin/deemon
+// NOTE: The below copyright also applies to this file
+const copyright = "\
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+";
+
+local _docgen = __builtin_dex("_docgen");
+local doc = _docgen.doc;
+
+#include <attrutil>
+#include <util>
+#include <file>
+#include <error>
+
+const comment_sep = "//////////////////////////////////////////////////////////////////////////";
+const max_line_length = #comment_sep;
+
+function indent(text) -> ("\t"+text.replace("\n","\n\t")).replace("\t#","#");
+function trimlines(text) -> "\n".join(
+	for (local l: text.splitlines(false)) l.rstrip());
+
+function remove_format_tag(text,tag) {
+	local i = 0;
+	while ((i = text.find(tag,i)) != -1) {
+		local before_tag = copy i;
+		i += #tag;
+		local tag_begin = copy i;
+		if (text[i] == "(") {
+			// Tag w/ parenthesis
+			local paren_recursion = 1;
+			while (++i < #text) {
+				if (text[i] == ")") {
+					if (!--paren_recursion) break;
+				} else if (text[i] == "(") {
+					++paren_recursion;
+				}
+			}
+			local tag_text = text[tag_begin+#tag:i];
+			++i;
+			text = text[:before_tag]+tag_text+text[i:];
+		} else {
+			// Regular tag
+			text = text[:before_tag]+text[i:];
+		}
+	}
+	return text;
+}
+function remove_format_tags(text) {
+	text = remove_format_tag(text,"@");
+	text = remove_format_tag(text,"#");
+	return text;
+}
+
+function wrap_lines(text,max_length) {
+	list local result;
+	text = text.strip();
+	while (#text > max_length) {
+		local wrap_pos = text.rfind(" ",0,max_length);
+		if (!wrap_pos || wrap_pos == -1) wrap_pos = max_length;
+		assert wrap_pos <= max_length : str wrap_pos+"<="+str max_length;
+		local taken_line = text[:wrap_pos].rstrip();
+		text = text[wrap_pos:].lstrip();
+		result.append(taken_line);
+	}
+	result.append(text);
+	return result;
+}
+
+function gen_doc_text(doc_text) {
+	const doc_first_prefix = "//        - ";
+	const doc_other_prefix = "//          ";
+	const max_pardoc_linelength = max_line_length-#doc_first_prefix;
+	local pardocs = remove_format_tags(doc_text).splitlines(false);
+	for (local line: pardocs) {
+		if (line.startswith(">>")) {
+			print "//          >>",line[2:].strip();
+		} else if (line.startswith("->")) {
+			print "//            ",line[2:].strip();
+		} else {
+			local line_wraps = wrap_lines(line,max_pardoc_linelength);
+			for (local i,wrapped_line: util::enumerate(line_wraps)) {
+				print (i == 0) ? doc_first_prefix : doc_other_prefix,;
+				print wrapped_line;
+			}
+		}
+	}
+}
+
+function gen_wrapped_lines_with_prefix(first_prefix,other_prefix,text) {
+	for (local i,line: util::enumerate(wrap_lines(
+		text,#comment_sep-#first_prefix))) {
+		print ((i == 0) ? first_prefix : other_prefix)+line;
+	}
+}
+
+function gen_comment_from_throwdoc(docthrows) {
+	local longest_throw_name_length = 0;
+	for (local trw: docthrows) {
+		longest_throw_name_length = util::max(longest_throw_name_length,#trw.name);
+	}
+	for (local trw: docthrows) {
+		if (trw.has_doc()) {
+			local first_prefix = "//    @throws "+trw.name+": ";
+			local trwdoc = remove_format_tags(trw.doc).strip();
+			if (!trwdoc.endswith(".")) trwdoc += ".";
+			first_prefix += " "*(longest_throw_name_length-#trw.name);
+			gen_wrapped_lines_with_prefix(first_prefix,"//"+" "*(#first_prefix-2),trwdoc);
+		} else {
+			print "// @throws",trw.name;
+		}
+	}
+}
+function gen_comment_from_returndoc(docreturn) {
+	if (docreturn.has_doc()) {
+		local retdoc = remove_format_tags(docreturn.doc).strip();
+		if (!retdoc.endswith(".")) retdoc += ".";
+		local const line_prefix = "//    @return: ";
+		gen_wrapped_lines_with_prefix(line_prefix,"//"+" "*(#line_prefix-2),retdoc);
+	}
+}
+function gen_comment_from_paramdoc(docparam) {
+	if (docparam.has_doc()) {
+		local pardoc = remove_format_tags(docparam.doc).strip();
+		if (!pardoc.endswith(".")) pardoc += ".";
+		local const line_prefix = "//    @param ";
+		local used_prefix = line_prefix+docparam.name+": ";
+		gen_wrapped_lines_with_prefix(used_prefix,"//"+" "*(#used_prefix-2),pardoc);
+	}
+}
+
+function gen_comment_from_doc_overload(prefix,method,overload) {
+	print "// >> ",;
+	if (method.is_class()) print "class ",;
+	if (prefix) print prefix,"",;
+	print method.name+"(",;
+	for (local i,par: util::enumerate(overload.params)) {
+		if (i != 0) print ", ",;
+		print par.type,;
+		if (par.has_name()) print "",par.name,;
+		if (par.has_default()) print " =",par.default,;
+	}
+	print ") ->",overload.return.type+";";
+	for (local par: overload.params) {
+		gen_comment_from_paramdoc(par);
+	}
+	gen_comment_from_throwdoc(overload.throws);
+	gen_comment_from_returndoc(overload.return);
+	if (overload.has_doc()) {
+		gen_doc_text(overload.doc);
+	}
+}
+function gen_comment_from_doc;
+function gen_comment_from_doc_method(prefix,method) {
+	if (prefix is none) prefix = method.is_operator() ? "operator" : "function";
+	for (local overload: method.overloads) {
+		gen_comment_from_doc_overload(prefix,method,overload);
+	}
+}
+function gen_comment_from_doc_member(member) {
+	print "// >> ",;
+	if (member.is_class()) print "class ",;
+	if (member.has_value()) {
+		print "const",member.name,"->",member.return.type+";";
+	} else {
+		print "property",member.name,"->",member.return.type,"= { ",;
+		local permissions = [];
+		if (member.has_read()) permissions.append("get()");
+		if (member.has_write()) permissions.append("del()","set()");
+		print ", ".join(permissions),"};";
+	}
+	gen_comment_from_returndoc(member.return);
+	if (member.has_doc()) {
+		gen_doc_text(member.doc);
+	}
+}
+function gen_comment_from_doc_getset(getset) {
+	print "// >> ",;
+	if (getset.is_class()) print "class ",;
+	print "property",getset.name,"->",getset.return.type,"= { ",;
+	local permissions = [];
+	if (getset.has_get()) permissions.append("get()");
+	if (getset.has_del()) permissions.append("del()");
+	if (getset.has_set()) permissions.append("set()");
+	print ", ".join(permissions),"};";
+	gen_comment_from_throwdoc(getset.throws);
+	gen_comment_from_returndoc(getset.return);
+	if (getset.has_doc()) {
+		gen_doc_text(getset.doc);
+	}
+}
+function gen_comment_from_doc_type(d) {
+	print "// >> class",d.constructor.name,"extends",d.base,"{ ... };";
+	if (d.has_descr()) gen_doc_text(d.descr);
+	gen_comment_from_doc_method("",d.constructor);
+	print comment_sep;
+	for (local a: d.attrib) {
+		print "//";
+		gen_comment_from_doc(a);
+	}
+	print "//";
+}
+
+function gen_comment_from_doc(ob) {
+	if (ob.kind == doc.KIND_TYPE) return gen_comment_from_doc_type(ob.type);
+	if (ob.kind == doc.KIND_METHOD) return gen_comment_from_doc_method(none,ob.method);
+	if (ob.kind == doc.KIND_MEMBER) return gen_comment_from_doc_member(ob.member);
+	if (ob.kind == doc.KIND_GETSET) return gen_comment_from_doc_getset(ob.getset);
+}
+
+
+
+function do_gen_dex_header(dex) {
+	list local dex_docs;
+	list local used_keywords;
+	util::attr::enumattr(dex,[](tp_self,self,name,flags,attr_type) {
+		if (util::id(self) == util::id(dex) && tp_self == type dex) {
+			local used_doc;
+			try used_doc = doc(self,name);
+			catch (e...) {
+				try self.operator . (name);
+				catch (...) return; // Attribute cannot be retrived
+				throw e; // Some error in the documentation
+			}
+			dex_docs.append(pack(name,used_doc));
+		}
+	});
+	if (!dex_docs) return;
+	local dexname = type(dex).nameof(dex);
+	print "__unused local _"+dexname,"= __builtin_dex("+repr dexname+");";
+	used_keywords.append("_"+dexname);
+	print;
+	for (local name,doc: dex_docs) {
+		local export_is_conditional = false;
+		// Check for conditional export
+		// NOTE: While this naming convention isn't standard, it is
+		//       consistently used everywhere in the core and the "_"-dex namespace.
+		if (name.startswith("win32")) {
+			export_is_conditional = true;
+			print "#ifdef __WINDOWS__";
+		} else if (name.startswith("posix")) {
+			export_is_conditional = true;
+			print "#ifdef __POSIX__";
+		}
+		print comment_sep;
+		gen_comment_from_doc(doc);
+		print "__unused local",name,"= _"+dexname+"."+name+";";
+		if (export_is_conditional) {
+			print "#endif";
+		}
+		used_keywords.append(name);
+		print;
+	}
+	return used_keywords;
+}
+
+function gen_dex_header(dex,namespace_name) {
+	print copyright;
+	print "#pragma once";
+	print "";
+	print "#include <__stddef.dee>";
+	print "";
+	local old_stdout = file.io.stdout;
+	local buffer = file.io.writer();
+	file.io.stdout = buffer;
+	local used_keywords = do_gen_dex_header(dex);
+	file.io.stdout = old_stdout;
+	local data = buffer.pack().rstrip()+"\n";
+	if (namespace_name) used_keywords.append(namespace_name);
+	for (local kwd: used_keywords) print "#pragma push_macro("+repr kwd+")";
+	for (local kwd: used_keywords) print "#undef",kwd;
+	if (namespace_name) {
+		print "module "+namespace_name+" {";
+		print trimlines(indent(data));
+		print "}";
+	} else {
+		print trimlines(data);
+	}
+	for (local kwd: used_keywords) print "#pragma pop_macro("+repr kwd+")";
+	print;
+}
+
+
+#include <TPP_STR.h>
+#if defined(DO_MAIN) || TPP_STRCMP(__FILE__,__BASE_FILE__) == 0
+
+#include <fs>
+#include <sys>
+
+function usage() {
+	print "Usage: deemon",fs::path::tail(sys.argv[0]),"[ARGS...] NAME [NAMESPACE]";
+	print "   Helper tool for generating dex headers";
+	print;
+	print "ARGS:";
+	print "   --help   Display this help message";
+	print "NAME:";
+	print "   The name of a valid, visible dex";
+	print "NAMESPACE:";
+	print "   The namespace of the dex (usually closely resemples the dex)";
+}
+
+local args = sys.argv[1:];
+while (args && args.front().startswith("-")) {
+	local arg = args.pop_front();
+	switch (arg) {
+		case "--help":
+			usage();
+			return 2;
+			break;
+		default:
+			print "Unknown argument:",repr arg;
+			break;
+	}
+}
+
+if (#args != 2 && #args != 1) {
+	usage();
+	return 1;
+}
+
+gen_dex_header(__builtin_dex(args[0]),#args >= 2 ? args[1] : none);
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

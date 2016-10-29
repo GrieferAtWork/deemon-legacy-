@@ -1,0 +1,38 @@
+## Deemon source code
+## NOTE: This file is derived from /usr/share/nano/c.nanorc
+##       Because of that I intentially left out the copyright.
+
+syntax "deemon" "\.dee$"
+magic "(ASCII|UTF-8 Unicode) deemon program text"
+
+color brightred "\<[A-Z_][0-9A-Z_]+\>"
+color green "\<(float|double|_Bool|bool|char|int|short|long|enum|static|class|struct|union|typedef|extern|(un)?signed|local|global|__scope|__nth|forward|atomic|_Atomic)\>"
+color green "\<(((s?size)|((u_?)?int(8|16|32|64|ptr)))_t|(__)?wchar_t|char(16|32)_t|object|list|tuple|dict|set|string)\>"
+color magenta "\<(final|class|module|this|super|import|const|volatile|function|property|true|false|none|__func__|__FUNCTION__)\>"
+color magenta "\<(for|__foreach|if|while|do|else|case|default|switch|assert|print|try|throw|catch|finally|__loopever|__loopnone|__looponce)\>"
+color brightyellow "\<(operator|is|in|pack|str|repr|type|weak|copy|move)\>"
+color magenta "\<(goto|continue|break|return|yield)\>"
+# color magenta "\<(Error)\>" "\<(.RuntimeError)\>"
+color brightcyan "^[[:space:]]*#[[:space:]]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma)"
+color brightmagenta "'([^'\]|(\\["'abfnrtv\\]))'" "'\\(([0-3]?[0-7]{1,2}))'" "'\\x[0-9A-Fa-f]{1,2}'"
+color brightblack "\<(__(builtin_(object|dex|unreachable|super|noop|constant_p|noexcept|noreturn|noeffect|choose_expr|breakpoint|typeof|predictable|types_compatible_p|help|expect|alloca|bound|exists|unused|dead)|super|noop)|_(Noexcept|Noreturn))\>"
+
+# GCC builtins.
+color cyan "__attribute__[[:space:]]*\(\([^)]*\)\)" "__(aligned|packed|name|deprecated)__"
+
+# Strings.  In general you will want your strings and comments to come last,
+# because highlighting rules are applied in the order they are read in.
+color brightyellow ""([^"]|\\")*"" "<[^[:blank:]=]*>"
+# Multiline strings.  This regex is VERY resource intensive,
+# and sometimes colours things that shouldn't be coloured.
+###color brightyellow start=""(\\.|[^"])*\\[[:space:]]*$" end="^(\\.|[^"])*""
+
+# Comments.
+color brightblue "//.*"
+color brightblue start="/\*" end="\*/"
+
+# Reminders.
+color ,yellow "\<(FIXME|TODO|XXX)\>"
+
+# Trailing whitespace.
+color ,green "[[:space:]]+$"

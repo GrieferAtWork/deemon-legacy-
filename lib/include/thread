@@ -1,0 +1,307 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+const thread_id = unsigned __int32;
+const sempahore_count = unsigned long;
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> semaphore(sempahore_count initial_tickets)
+//    @throws Error.SystemError: Couldn't create a new semaphore
+//        Creates a new semaphore.
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> function semaphore.acquire() -> none
+//    @throws Signal.Interrupt: The current thread was interrupted
+//    @throws Error.SystemError: Couldn't acquire a ticket
+//        Acquires a ticket to this semaphore and waits until one is available.
+//        >> Decreases the ticket counter
+//
+// >> function semaphore.try_acquire() -> bool
+//    @throws Error.SystemError: Couldn't acquire a ticket
+//        Tries to acquire a ticket and returns true, but
+//        fails and returns false if acquire would block.
+//        >> Decreases the ticket counter on success
+//
+// >> function semaphore.acquire_timed(unsigned int msecs) -> bool
+//    @throws Signal.Interrupt: The current thread was interrupted
+//    @throws Error.SystemError: Couldn't acquire a ticket
+//        Tries to acquire a ticket and returns true, but
+//        fails and returns false after msecs of waiting.
+//        >> Decreases the ticket counter on success
+//
+// >> function semaphore.release(sempahore_count n = 1) -> none
+//    @throws Error.ValueError: The calling thread didn't hold a ticket
+//    @throws Error.SystemError: Couldn't release a ticket
+//        Releases 'n' tickets previously acquired with 'acquire()'
+//        >> Increases the ticket counter by 'n'
+//
+//////////////////////////////////////////////////////////////////////////
+const semaphore = __builtin_object(0x007B);
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class mutex()
+//    @throws Error.SystemError: The Semaphore used by the mutex couldn't be created
+//       Creates a new mutex, that is recursive semaphore.
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> function mutex.acquire() -> none
+//    @throws Signal.Interrupt: The current thread was interrupted
+//    @throws Error.SystemError: Couldn't acquire a lock
+//        Acquires a lock to this mutex and waits until one is available.
+//
+// >> function mutex.try_acquire() -> bool
+//    @throws Error.SystemError: Couldn't acquire a lock
+//        Tries to acquire a lock and returns true, but
+//        fails and returns false if acquire would block.
+//
+// >> function mutex.acquire_timed(unsigned int msecs) -> bool
+//    @throws Signal.Interrupt: The current thread was interrupted
+//    @throws Error.SystemError: Couldn't acquire a lock
+//        Tries to acquire a lock and returns true, but
+//        fails and returns false after msecs of waiting.
+//
+// >> function mutex.release() -> none
+//    @throws Error.ValueError: The calling thread didn't hold a lock
+//    @throws Error.SystemError: Couldn't release a lock
+//        Releases a lock previously acquired with 'acquire()'
+//
+//////////////////////////////////////////////////////////////////////////
+const mutex = __builtin_object(0x007C);
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class tls(factory = none)
+//        Create a thread_local_storage variable, to store any given
+//        object thread-local, weaning that every thread using the variable
+//        can assign its own value to be used.
+//        'factory' can be a callable object 'function() -> ...', that
+//        returns the initial object once requested.
+//        If 'factory' is not specified, 'none' will be used as initial object
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> function tls.get() -> object
+//    @throws ...: same as factory
+//        Returns the object currently stored in the calling thread.
+//        If no object was stored before a call to this function,
+//        the factory function set in the constructor is called to
+//        create a new instance, that will be returned
+//
+// >> function tls.set(object v) -> none
+//        Sets the thread-locally stored value to 'v', where v can be any object.
+//        NOTE: The object will be overwritten, meaning that the __assign__
+//              operator of any possible old objects will not be called
+//
+// >> function tls.del() -> none
+//        Deletes the object stored in the calling thread and resets
+//        the state of the tls back to its original, uninitialized state.
+//        The next call to 'get()' will call the factory as if the tls
+//        was never initialized in the current thread.
+//        NOTE: no-op if the value was already deleted / didn't exist.
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class function tls.get_instance_count() -> size_t
+//        Only meant for profiling: returns the amount of existing tls objects.
+//        NOTE: That is <tls handles>, not <objects stored in tls containers>
+//
+//////////////////////////////////////////////////////////////////////////
+const tls = __builtin_object(0x007D);
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class thread(callable func, object ...args)
+// >> class thread(string name, callable func, object ...args)
+//        Create a new thread object with an optional string 'name',
+//        that will execute 'callable' with 'args...' once it is started.
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> function thread.__str__() -> string
+// >> function thread.__repr__() -> string
+// >> function thread.__lo__(thread right) -> bool
+// >> function thread.__le__(thread right) -> bool
+// >> function thread.__eq__(thread right) -> bool
+// >> function thread.__ne__(thread right) -> bool
+// >> function thread.__gr__(thread right) -> bool
+// >> function thread.__ge__(thread right) -> bool
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> function thread.start() -> bool
+//    @throws Error.SystemError:  The thread could not be started
+//        Starts the thread and begins executing 'func' with 'args'
+//
+// >> function thread.id() -> thread_id
+//        Returns the system-specifc id associated with a running thread
+//        Returns (thread_id)-1 if the thread isn't running
+//
+// >> function thread.started() -> bool
+//        Returns true if the thread was started
+//
+// >> function thread.detached() -> bool
+//        Returns true if the thread was detached / joined
+//
+// >> function thread.terminated() -> bool
+//        Returns true if the thread was terminated
+//
+// >> function thread.interrupted() -> bool
+//        Returns true if the thread was interrupted
+//
+// >> function thread.interrupt() -> bool
+//    @throws Error.ValueError:  The thread wasn't started
+//        Sends an interrupt signal to the thread and return true
+//        Returns false if an interrupt signal was already sent
+//
+// >> function thread.detach() -> bool
+//    @throws Error.ValueError:  The thread wasn't started
+//    @throws Error.SystemError: Couldn't detach thread
+//        Detaches the thread from the calling thread
+//        Returns false if the thread was already detached / joined
+//
+// >> function thread.join() -> object
+//    @throws Error.ValueError:  The thread wasn't started
+//    @throws Error.SystemError: Couldn't join thread
+//        Joines the thread and returns the value returned
+//        by the callable object the thread was created with
+//
+// >> function thread.try_join() -> (bool,object)
+//    @throws Error.ValueError:  The thread wasn't started
+//    @throws Error.SystemError: Couldn't join thread
+//        Returns a tuple, where the first item is a boolean
+//        indicating the success of the join, and the second
+//        item is the value returned by the thread function,
+//        or 'none' if the thread is still running
+//
+// >> function thread.join_timed(unsigned int msecs) -> (bool,object)
+//    @throws Error.ValueError:  The thread wasn't started
+//    @throws Error.SystemError: Couldn't join thread
+//        Returns a tuple, where the first item is a boolean
+//        indicating the success of the join, and the second
+//        item is the value returned by the thread function,
+//        or 'none' if the thread is still running.
+//        NOTE: No error is thrown if the function timed out
+//
+// >> property thread.priority -> [get/set] float [default = 0.5f]
+//    [set] @throws Error.ValueError:  The thread was detached
+//        Get / set the priority of a thread as a floating
+//        point value between 0.0f and 1.0f, where 0.0f is
+//        the lowest possible priority and 1.0f is the highest
+//        NOTE: 0.5f always referrs to the regular priority.
+//        NOTE: The setter may clamp the value to into the
+//              range of the system-specifc priority range.
+//              Meaning that precision may be lost getween get and set.
+//        This property can be set before and after 'start()',
+//        buf fails if set after 'join()' or 'detach()'
+//
+//  >> property thread.name -> [get/set] string [default = "__unnamed__" / ctor_arg / callback_name]
+//     [set] @throws Error.ValueError: The thread was already started
+//        Get / set the name associated with the thread.
+//        The name will show up in debuggers, but has no real meaning.
+//        But it is used in the __str__ and __repr__ functions.
+//
+// >> class function thread.self() -> thread
+//        Returns the thread object associated with the calling thread.
+//
+// >> class function thread.selfid() -> thread_id
+//        Returns the id of the calling thread.
+//        Same as calling 'thread.self().id()', but may be faster.
+//
+// >> class function thread.check_interrupt() -> none
+//    @throws Signal.Interrupt: The current thread was interrupted
+//        Manually checks if an interrupt signal was sent to the
+//        calling 'thread.interrupt()'.
+//        This function is called automatically when a blocking
+//        system call like 'file.io.stdout.write(...)' is called.
+//
+// >> class function thread.yield() -> none
+//        Yields execution in the calling thread, and hints
+//        the scheduler to continue execution in another thread.
+//
+// >> class function thread.sleep(unsigned int msecs) -> none
+//    @throws Signal.Interrupt: The current thread was interrupted
+//        Suspends execusion for 'msecs' milliseconds, not using
+//        any system resources and allowing other threads to run.
+//
+// >> class function thread.nointerrupt_begin() -> none
+//        Recursively begins a section of code during which
+//        interrupt signals are not checked.
+//        Such blocks are automatically activated when
+//        executing destructors or finally blocks, where
+//        exceptions and less than welcome.
+//
+// >> class function thread.nointerrupt_end() -> none
+//        Recursively ends a nointerrupt block.
+//
+const thread = __builtin_object(0x007E);
+
+
+//////////////////////////////////////////////////////////////////////////
+// Utility macro, accepting code that will only ever be executed once
+// - Synchronization with other threads is automatic, where
+//   the first thread executes '__VA_ARGS__' while all others
+//   threads attempting to run once wait until it is done.
+//
+// >> #include <thread>
+// >> #include <random>
+// >> // Returns a list of random integers containing 'n' items
+// >> // Only the first caller can determine the real size, and
+// >> // the list returned is the same every time.
+// >> function get_random_list(n) {
+// >> 	static result = list();
+// >> 	__atomic_once {
+// >> 		random rand;
+// >> 		result.reserve(n);
+// >> 		for (local i = 0; i < n; ++i)
+// >> 			result.append(rand());
+// >> 	}
+// >> 	return result;
+// >> }
+#define __atomic_once{...} \
+__loopever {\
+	static local __done = _Atomic __int8(0);\
+	if (__done.compare_exchange(0,1)) {\
+		try {\
+			__VA_ARGS__\
+		} catch (...) {\
+			__done := 0;\
+		}\
+		__done := 2;\
+		break;\
+	} else {\
+		__stack __state = none;\
+		__loopever {\
+			__state = __done.load();\
+			if (__state != 1) break;\
+			thread.yield();\
+		}\
+		if (__state == 2) break;\
+	}\
+}
+
+

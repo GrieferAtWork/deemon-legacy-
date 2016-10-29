@@ -1,0 +1,67 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#ifndef __DEEMON_GUARD_ATOMIC
+#define __DEEMON_GUARD_ATOMIC
+#endif
+
+#ifndef __MEMORY_ORDER_RELAXED
+// Values, as seen in <deemon/integer.h>
+#define __MEMORY_ORDER_RELAXED 0
+#define __MEMORY_ORDER_CONSUME 1
+#define __MEMORY_ORDER_ACQUIRE 2
+#define __MEMORY_ORDER_RELEASE 3
+#define __MEMORY_ORDER_ACQ_REL 4
+#define __MEMORY_ORDER_SEQ_CST 5
+#endif
+
+#pragma push_macro("memory_order_relaxed")
+#pragma push_macro("memory_order_consume")
+#pragma push_macro("memory_order_acquire")
+#pragma push_macro("memory_order_release")
+#pragma push_macro("memory_order_acq_rel")
+#pragma push_macro("memory_order_seq_cst")
+#undef memory_order_relaxed
+#undef memory_order_consume
+#undef memory_order_acquire
+#undef memory_order_release
+#undef memory_order_acq_rel
+#undef memory_order_seq_cst
+
+__if_not_exists(memory_order_relaxed) {
+	const memory_order_relaxed = __MEMORY_ORDER_RELAXED;
+	const memory_order_consume = __MEMORY_ORDER_CONSUME;
+	const memory_order_acquire = __MEMORY_ORDER_ACQUIRE;
+	const memory_order_release = __MEMORY_ORDER_RELEASE;
+	const memory_order_acq_rel = __MEMORY_ORDER_ACQ_REL;
+	const memory_order_seq_cst = __MEMORY_ORDER_SEQ_CST;
+}
+
+#pragma pop_macro("memory_order_relaxed")
+#pragma pop_macro("memory_order_consume")
+#pragma pop_macro("memory_order_acquire")
+#pragma pop_macro("memory_order_release")
+#pragma pop_macro("memory_order_acq_rel")
+#pragma pop_macro("memory_order_seq_cst")
+
+#ifdef __DEEMON_GUARD___CXXDEFAULT_DEE
+#	include <cxx/atomic>
+#endif

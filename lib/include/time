@@ -1,0 +1,201 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+__if_not_exists(time) {
+
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> class time() -> time
+	//    @throws Error.SystemError: Count not retrieve the current time
+	// >> class time(time_t *t) -> time
+	//    @throws Error.SystemError: Count not retrieve the current time
+	// >> class time(unsigned int year, unsigned int month = 0,
+	//               unsigned int mday = 0, unsigned int hour = 0,
+	//               unsigned int minute = 0, unsigned int second = 0,
+	//               unsigned int msecond = 0) -> time
+	// >> copy(time right);
+	// >> operator = (time right);
+	//
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> class function time::now() -> time
+	//    @throws Error.SystemError: Count not retrieve the current time
+	//
+	// >> class function time::tick() -> uint64_t
+	//        Returns the time since the process started in time::freq() / secs
+	//
+	// >> class function time::freq() -> uint64_t
+	//        Returns the amount of ticks passing per second in time::tick()
+	//
+	// >> class function time::from_time_t(time_t t) -> time
+	//        Returns a time object from a given time_t value
+	//
+	// >> class function time::time(
+	//     unsigned int hour = 0, unsigned int minute = 0,
+	//     unsigned int second = 0, unsigned int msecond = 0) -> time
+	//        Returns a time object representing the given data
+	//
+	// >> class function time::date(
+	//     unsigned int year, unsigned int month = 0,
+	//     unsigned int mday = 0) -> time
+	//        Returns a time object representing the given data
+	//
+	// >> class function time::years(uint64_t years) -> time
+	//        Returns a time object representing 'years' years
+	// >> class function time::months(uint64_t months) -> time
+	//        Returns a time object representing 'months' months
+	// >> class function time::weeks(uint64_t weeks) -> time
+	//        Returns a time object representing 'weeks' weeks
+	// >> class function time::days(uint64_t days) -> time
+	//        Returns a time object representing 'days' days
+	// >> class function time::hours(uint64_t hours) -> time
+	//        Returns a time object representing 'hours' hours
+	// >> class function time::minutes(uint64_t minutes) -> time
+	//        Returns a time object representing 'minutes' minutes
+	// >> class function time::seconds(uint64_t seconds) -> time
+	//        Returns a time object representing 'seconds' seconds
+	// >> class function time::mseconds(uint64_t mseconds) -> time
+	//        Returns a time object representing 'mseconds' milliseconds
+	//
+	//
+	// >> operator str -> string;
+	// >> operator repr -> string;
+	//
+	// >> operator + (time right) -> time;
+	// >> operator += (time right) -> time;
+	//        Calculates the combined time of 'this' and 'right'
+	//        by adding together the milliseconds represented by both
+	//
+	// >> operator - (time right) -> time;
+	// >> operator -= (time right) -> time;
+	//        Calculates the difference in milliseconds of 'this' and 'right'
+	//
+	// >> operator % (time right) -> time;
+	// >> operator %= (time right) -> time;
+	//        Returns the modulo of the milliseconds of 'this' and 'right'
+	//
+	// >> operator * (uint64_t right) -> time;
+	// >> operator *= (uint64_t right) -> time;
+	//        Multiplies the milliseconds of 'this' by 'right'
+	//
+	// >> operator / (uint64_t right) -> time;
+	// >> operator /= (uint64_t right) -> time;
+	//        Divides the milliseconds of 'this' by 'right'
+	//
+	// >> operator ++ () -> time;
+	// >> operator -- () -> time;
+	// >> operator __incpost__ () -> time;
+	// >> operator __decpost__ () -> time;
+	//        Increment/Decrement the time by one millisecond
+	//
+	// >> operator < (time right) -> bool;
+	// >> operator <= (time right) -> bool;
+	// >> operator == (time right) -> bool;
+	// >> operator != (time right) -> bool;
+	// >> operator > (time right) -> bool;
+	// >> operator >= (time right) -> bool;
+	//        Compares the total milliseconds of 'this' against 'right'
+	//
+	// >> operator int32_t () -> int32_t;
+	// >> operator int64_t () -> int64_t;
+	// >> operator double () -> double;
+	//        Returns the integral value used to represent the time
+	//        of 'this' in a unix-style 'time_t' value.
+	//
+	// >> operator ! -> bool;
+	// >> operator bool -> bool;
+	//        Returns true/false equivalent to comparing 'this == time(0)'
+	//
+	// >> function format(string fmt) -> string;
+	//        Formats the time using a strftime-style format string
+	//        The value returned by 'operator str' is equivalent to:
+	//        >> this.format("%d.%m.%Y %H:%M:%S")
+	//        s.a.: http://www.cplusplus.com/reference/ctime/strftime/
+	//        NOTE: Local-dependent formats are not yet supported
+	//        NOTE: week-based formats are not yet supported
+	//
+	// NOTE: The del operation of any of the following properties
+	//       is equivalent to assigning '0' to the respective property.
+	// NOTE: [unsigned] being in brackets means that the getter returns
+	//       an unsigned value, while the setter accepts a signed value,
+	//       allowing for underflow/overflow of the value to affect
+	//       overlying time attributes. e.g.:
+	//       >> a = time();
+	//       >> a.wday = -1;
+	//       >> print a; // "this time, last saturday"
+	//
+	// -- Relative time properties --
+	// >> property year -> [unsigned] int = { get,del,set }
+	//        Get/Set the year data (0..~584542046)
+	// >> property month -> [unsigned] int = { get,del,set }
+	//        Get/Set the month of 'year' (0..11)
+	// >> property mweek -> [unsigned] int = { get,del,set }
+	//        Get/Set the week of 'month' (0..4)
+	// >> property yweek -> [unsigned] int = { get,del,set }
+	//        Get/Set the week of 'year' (0..55)
+	// >> property wday -> [unsigned] int = { get,del,set }
+	//        Get/Set the day of 'week' (0..6)
+	// >> property mday -> [unsigned] int = { get,del,set }
+	//        Get/Set the day of 'month' (0..[27|28|29|30])
+	// >> property yday -> [unsigned] int = { get,del,set }
+	//        Get/Set the day of 'year' (0..[365|366])
+	// >> property hour -> [unsigned] int = { get,del,set }
+	//        Get/Set the hour of the active day (0..23)
+	// >> property minute -> [unsigned] int = { get,del,set }
+	//        Get/Set the minute of 'hour' (0..59)
+	// >> property second -> [unsigned] int = { get,del,set }
+	//        Get/Set the second of 'minute' (0..59)
+	// >> property msecond -> [unsigned] int = { get,del,set }
+	//        Get/Set the milliseconds of 'second' (0..999)
+	//
+	// -- Absolute time properties --
+	// >> property years -> uint64_t = { get,set }
+	//        Get/Set the total amount of years since time(0)
+	// >> property months -> uint64_t = { get,set }
+	//        Get/Set the total amount of months since time(0)
+	// >> property weeks -> uint64_t = { get,set }
+	//        Get/Set the total amount of weeks since time(0)
+	// >> property days -> uint64_t = { get,set }
+	//        Get/Set the total amount of days since time(0)
+	// >> property hours -> uint64_t = { get,set }
+	//        Get/Set the total amount of hours since time(0)
+	// >> property minutes -> uint64_t = { get,set }
+	//        Get/Set the total amount of minutes since time(0)
+	// >> property seconds -> uint64_t = { get,set }
+	//        Get/Set the total amount of seconds since time(0)
+	// >> property mseconds -> uint64_t = { get,set }
+	//        Get/Set the total amount of milliseconds since time(0)
+	//
+	//
+	// >> property time -> time = { get,del,set }
+	//        Get/Set the time portion (hour,minute,second,msecond) or 'this'
+	// >> property date -> time = { get,del,set }
+	//        Get/Set the date portion (year,month,mday) or 'this'
+	// >> property time_t -> time_t = { get,del,set }
+	//        Get/Set the unix-style time_t-value of 'this'
+	//
+	//////////////////////////////////////////////////////////////////////////
+	const time = __builtin_object(0x007F);
+
+}
+

@@ -1,0 +1,58 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#ifndef __DEEMON_GUARD_TR1_GEOMETRY_POINT
+#define __DEEMON_GUARD_TR1_GEOMETRY_POINT 1
+
+#if __API_VERSION__ < 101
+#	error "API Version too old for this header"
+#endif
+
+module tr1::geometry {
+
+	const class point {
+		copy(right) { this.x = right.x; this.y = right.y; }
+		this(x,y) { this.x = x; this.y = y; }
+		operator bool() -> this.x && this.y;
+		operator = (right) { this.x = right.x; this.y = right.y; }
+		operator str() -> "("+this.x+","+this.y+")";
+		operator repr() -> "point("+this.x+","+this.y+")";
+		operator + (right) -> point(this.x+right.x,this.y+right.y);
+		operator - (right) -> point(this.x-right.x,this.y-right.y);
+		operator * (right) -> point(this.x*right,this.y*right);
+		operator / (right) -> point(this.x/right,this.y/right);
+		operator += (right) { this.x += right.x; this.y += right.y; return this; }
+		operator -= (right) { this.x -= right.x; this.y -= right.y; return this; }
+		operator *= (right) { this.x *= right; this.y *= right; return this; }
+		operator /= (right) { this.x /= right; this.y /= right; return this; }
+		function distance(to) -> __builtin_object(0x0137)(this.distance_sqr(to));
+		function distance_sqr(to) ->
+			__builtin_object(0x0108)(to.x-this.x)+
+			__builtin_object(0x0108)(to.y-this.y);
+		function project(__angle,__distance) {
+			local __s,__c = ::__builtin_sincos(__angle)...;
+			return point(this.x+__s*__distance,this.y+__c*__distance);
+		}
+		function bearing(to) -> ::__builtin_atan2(to.x-this.x,to.y-this.y);
+	};
+
+}
+
+#endif /* !__DEEMON_GUARD_TR1_GEOMETRY_POINT */

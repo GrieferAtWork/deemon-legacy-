@@ -1,0 +1,1026 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+#include <__stddef.dee>
+
+#pragma push_macro("fs")
+#undef fs
+
+#if __API_VERSION__ >= 101
+#	define __DEEMON_WFS_FUNC(...) __VA_ARGS__;
+#else
+#	define __DEEMON_WFS_FUNC(...)
+#endif
+
+#pragma push_macro("getcwd")
+#pragma push_macro("chdir")
+#pragma push_macro("tmp")
+#pragma push_macro("tmpname")
+#pragma push_macro("home")
+#pragma push_macro("listenv")
+#pragma push_macro("getenv")
+#pragma push_macro("delenv")
+#pragma push_macro("setenv")
+#pragma push_macro("user")
+#pragma push_macro("machine")
+#pragma push_macro("path")
+#pragma push_macro("head")
+#pragma push_macro("tail")
+#pragma push_macro("file")
+#pragma push_macro("ext")
+#pragma push_macro("drive")
+#pragma push_macro("inctrail")
+#pragma push_macro("exctrail")
+#pragma push_macro("abs")
+#pragma push_macro("rel")
+#pragma push_macro("join")
+#pragma push_macro("expanduser")
+#pragma push_macro("expandvars")
+#pragma push_macro("SEP")
+#pragma push_macro("ALTSEP")
+#pragma push_macro("DELIM")
+#pragma push_macro("getatime")
+#pragma push_macro("getctime")
+#pragma push_macro("getmtime")
+#pragma push_macro("gettimes")
+#pragma push_macro("setatime")
+#pragma push_macro("setctime")
+#pragma push_macro("setmtime")
+#pragma push_macro("settimes")
+#pragma push_macro("isabs")
+#pragma push_macro("isfile")
+#pragma push_macro("isdir")
+#pragma push_macro("islink")
+#pragma push_macro("isdrive")
+#pragma push_macro("ismount")
+#pragma push_macro("ishidden")
+#pragma push_macro("isxfile")
+#pragma push_macro("ischrdev")
+#pragma push_macro("isblkdev")
+#pragma push_macro("isfifo")
+#pragma push_macro("issocket")
+#pragma push_macro("exists")
+#pragma push_macro("remove")
+#pragma push_macro("rmfile")
+#pragma push_macro("mkdir")
+#pragma push_macro("rmdir")
+#pragma push_macro("copy_")
+#pragma push_macro("move_")
+#pragma push_macro("link")
+#pragma push_macro("readlink")
+#pragma push_macro("uid_t")
+#pragma push_macro("gid_t")
+#pragma push_macro("chmod")
+#pragma push_macro("getmod")
+#pragma push_macro("chown")
+#pragma push_macro("getown")
+#pragma push_macro("uidof")
+#pragma push_macro("gidof")
+#pragma push_macro("uidname")
+#pragma push_macro("wuidname")
+#pragma push_macro("gidname")
+#pragma push_macro("wgidname")
+#pragma push_macro("dir")
+#pragma push_macro("query")
+#undef getcwd
+#undef chdir
+#undef tmp
+#undef tmpname
+#undef home
+#undef listenv
+#undef getenv
+#undef delenv
+#undef setenv
+#undef user
+#undef machine
+#undef path
+#undef head
+#undef tail
+#undef file
+#undef ext
+#undef drive
+#undef inctrail
+#undef exctrail
+#undef abs
+#undef rel
+#undef join
+#undef expanduser
+#undef expandvars
+#undef SEP
+#undef ALTSEP
+#undef DELIM
+#undef getatime
+#undef getctime
+#undef getmtime
+#undef gettimes
+#undef setatime
+#undef setctime
+#undef setmtime
+#undef settimes
+#undef isabs
+#undef isfile
+#undef isdir
+#undef islink
+#undef isdrive
+#undef ismount
+#undef ishidden
+#undef isxfile
+#undef ischrdev
+#undef isblkdev
+#undef isfifo
+#undef issocket
+#undef exists
+#undef remove
+#undef rmfile
+#undef mkdir
+#undef rmdir
+#undef copy_
+#undef move_
+#undef link
+#undef readlink
+#undef uid_t
+#undef gid_t
+#undef chmod
+#undef getmod
+#undef chown
+#undef getown
+#undef uidof
+#undef gidof
+#undef uidname
+#undef wuidname
+#undef gidname
+#undef wgidname
+#undef dir
+#undef query
+#if __API_VERSION__ >= 101
+#	pragma push_macro("wgetcwd")
+#	pragma push_macro("wtmp")
+#	pragma push_macro("wtmpname")
+#	pragma push_macro("whome")
+#	pragma push_macro("wlistenv")
+#	pragma push_macro("wuser")
+#	pragma push_macro("wmachine")
+#	pragma push_macro("WSEP")
+#	pragma push_macro("WALTSEP")
+#	pragma push_macro("WDELIM")
+#	undef wgetcwd
+#	undef wtmp
+#	undef wtmpname
+#	undef whome
+#	undef wlistenv
+#	undef wuser
+#	undef wmachine
+#	undef WSEP
+#	undef WALTSEP
+#	undef WDELIM
+#endif
+#ifdef __WINDOWS__
+#	pragma push_macro("win32")
+#	pragma push_macro("hardlink")
+#	pragma push_macro("modulename")
+#	pragma push_macro("_dlldirectory")
+#	pragma push_macro("_systemdirectory")
+#	pragma push_macro("_windowsdirectory")
+#	pragma push_macro("_systemwindowsdirectory")
+#	undef win32
+#	undef hardlink
+#	undef modulename
+#	undef _dlldirectory
+#	undef _systemdirectory
+#	undef _systemwindowsdirectory
+#	undef _syswow64directory
+#	if __API_VERSION__ >= 101
+#		pragma push_macro("_syswow64directory")
+#		pragma push_macro("wmodulename")
+#		pragma push_macro("_wdlldirectory")
+#		pragma push_macro("_wsystemdirectory")
+#		pragma push_macro("_wwindowsdirectory")
+#		pragma push_macro("_wsystemwindowsdirectory")
+#		pragma push_macro("_wsyswow64directory")
+#		undef wmodulename
+#		undef _wdlldirectory
+#		undef _wsystemdirectory
+#		undef _wwindowsdirectory
+#		undef _wsystemwindowsdirectory
+#		undef _wsyswow64directory
+#	endif
+#endif
+#ifdef __POSIX__
+#	pragma push_macro("posix")
+#	undef posix
+#endif
+
+module fs {
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::getcwd() -> string.utf8
+	// >> function fs::wgetcwd() -> string.wide
+	//    @throws Error.SystemError: Failed to retrive the current working directory
+	//    @return: The current working directory, as indicated by the OS
+	local const getcwd = __builtin_object(0x009A);
+	__DEEMON_WFS_FUNC(local const wgetcwd = __builtin_object(0x0199))
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::chdir(string.T cwd) -> none
+	//    @throws Error.SystemError: Failed to change the current working directory
+	//        Changes the current working directory to 'cwd'
+	local const chdir = __builtin_object(0x009B);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::tmp() -> string.utf8
+	// >> function fs::wtmp() -> string.wide
+	//    @throws Error.SystemError
+	//    @return: The path to a folder that can be used for temporary files.
+	//        1. Checks for a 'TMPDIR' environmental variable
+	//        2. Checks for a 'TEMP' environmental variable
+	//        3. Checks for a 'TMP' environmental variable
+	//        4. [__WINDOWS__] Use 'GetTempPath' to get the tmp path as designated by the OS
+	//        4. [__POSIX__]   Use the 'P_tmpdir' macro
+	//        5. [__POSIX__]   Return "/tmp"
+	//        NOTE: If the vfs is enabled, you can use "/tmp" in regular paths under windows
+	local const tmp = __builtin_object(0x0164);
+	__DEEMON_WFS_FUNC(local const wtmp = __builtin_object(0x019A))
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::tmpname(string.T path = fs::tmp(), string.T prefix = "unnamed") -> string.T
+	// >> function fs::wtmpname(string.T path = fs::wtmp(), string.T prefix = L"unnamed") -> string.T
+	//    @throws Error.SystemError - Too many temporary files created
+	//    @return: A filename that can be used for a temporary file.
+	//        The filename is build like this:
+	//        >> "<path>/<prefix><XXXX>.tmp"
+	//        Where XXXX is a four-digit hex-code used
+	//        to ensure that the filename is unique.
+	local const tmpname = __builtin_object(0x0168);
+	__DEEMON_WFS_FUNC(local const wtmpname = __builtin_object(0x01A3))
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::home(string.T user) -> string.T
+	// >> function fs::home(none user = none) -> string.utf8
+	// >> function fs::whome(string.T user) -> string.T
+	// >> function fs::whome(none user = none) -> string.wide
+	//    @throws Error.SystemError
+	//    @return: The home directory of a given user or the current user
+	local const home = __builtin_object(0x009C);
+	__DEEMON_WFS_FUNC(local const whome = __builtin_object(0x019B))
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::listenv() -> [(string.utf8,string.utf8)...]
+	// >> function fs::wlistenv() -> [(string.wide,string.wide)...]
+	//    @throws Error.SystemError
+	//    @return: A sequence of 2-tuples containing all environmental variables
+	local const listenv = __builtin_object(0x009D);
+	__DEEMON_WFS_FUNC(local const wlistenv = __builtin_object(0x019C))
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::getenv(string.T name) -> string.T
+	//    @throws Error.SystemError
+	//    @return: The value of a given environmental variable
+	local const getenv = __builtin_object(0x009E);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::delenv(string.T name) -> none
+	//    @throws Error.SystemError
+	//        Deletes a given environmental variable
+	local const delenv = __builtin_object(0x00A0);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::setenv(string.T name, string.T value) -> none
+	//    @throws Error.SystemError
+	//        Sets a given environmental variable
+	local const setenv = __builtin_object(0x00A1);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::user() -> string.utf8
+	// >> function fs::wuser() -> string.wide
+	//    @throws Error.SystemError
+	//    @return: The name of the user that the deemon process is running under
+	local const user = __builtin_object(0x0195);
+	__DEEMON_WFS_FUNC(local const wuser = __builtin_object(0x0197))
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::machine() -> string.utf8
+	// >> function fs::wmachine() -> string.wide
+	//    @throws Error.SystemError
+	//    @return: The name of the machine that deemon is running on
+	local const machine = __builtin_object(0x0196);
+	__DEEMON_WFS_FUNC(local const wmachine = __builtin_object(0x0198))
+
+	module path {
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::head(string.T path) -> string.T
+		//    @return: The head of a path, that is the directory without the filename.
+		//        e.g.: fs::path::head("/foo/bar.txt") --> "/foo/"
+		//        e.g.: fs::path::head("C:/foo/bar.txt") --> "C:/foo/"
+		local const head = __builtin_object(0x00A2);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::tail(string.T path) -> string.T
+		//    @return: The tail of a path, that is the filename + extension
+		//        e.g.: fs::path::tail("/foo/bar.txt") --> "bar.txt"
+		//        e.g.: fs::path::tail("C:/foo/bar.txt") --> "bar.txt"
+		local const tail = __builtin_object(0x00A3);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::file(string.T path) -> string.T
+		//    @return: The file portion of a path, excluding the file extension.
+		//        e.g.: fs::path::file("/foo/bar.txt") --> "bar"
+		//        e.g.: fs::path::file("C:/foo/bar.txt") --> "bar"
+		local const file = __builtin_object(0x00A4);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::ext(string.T path) -> string.T
+		//    @return: The extension of a path, including the leading "." character
+		//        e.g.: fs::path::ext("/foo/bar.txt") --> ".txt"
+		//        e.g.: fs::path::ext("C:/foo/bar.txt") --> ".txt"
+		local const ext = __builtin_object(0x00A5);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::drive(string.T path) -> string.T
+		//    @return: The drive portion of an absolute path on windows, or returns "/" on posix
+		//        e.g.: fs::path::drive("/foo/bar.txt") --> "/"
+		//        e.g.: fs::path::drive("C:/foo/bar.txt") --> "C:/"
+		local const drive = __builtin_object(0x00A6);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::inctrail(string.T path) -> string.T
+		//    @return: The path with a trailing slash included
+		//        e.g.: fs::path::inctrail("/foo/bar/") --> "/foo/bar/"
+		//        e.g.: fs::path::inctrail("/foo/bar")  --> "/foo/bar/"
+		local const inctrail = __builtin_object(0x00A7);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::exctrail(string.T path) -> string.T
+		//    @return: The path with a trailing slash excluded
+		//        e.g.: fs::path::exctrail("/foo/bar/") --> "/foo/bar"
+		//        e.g.: fs::path::exctrail("/foo/bar")  --> "/foo/bar"
+		local const exctrail = __builtin_object(0x00A8);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::abs(string.T path, string.T cwd = (string.T)".") -> string.T
+		//    @return: The new path
+		//        Makes 'path' an absolute path, using 'cwd'
+		//        as the base point for the relative disposition.
+		//        e.g.: fs::path::abs("../user/bar","/home/foobar") --> "/home/user/bar"
+		//        NOTE: If 'path' is already absolute, it will be
+		//              forced relative with 'fs::path::rel(path);'
+		//        NOTE: If 'cwd' is relative, if will be forced absolute
+		//              with 'fs::path::abs(cwd,fs::getcwd())'
+		local const abs = __builtin_object(0x00A9);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::rel(string.T path, string.T cwd = (string.T)".") -> string.T
+		//    @return: The new path
+		//        Creates a relative path leading to 'path', when
+		//        being looked at from 'cwd'.
+		//        e.g.: fs::path::rel("/home/user/bar","/home/foobar") --> "../user/bar"
+		//        NOTE: If 'path' and 'cwd' are on different drives
+		//              on windows, 'path' is returned unchanged.
+		//        NOTE: If 'path' was already relative, if will be forced
+		//              absolute with 'fs::path::abs(path)'
+		//        NOTE: If 'cwd' is relative, if will be forced absolute
+		//              with 'fs::path::abs(cwd,fs::getcwd())'
+		local const rel = __builtin_object(0x00AA);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::join(string.T paths...) -> string.T
+		//    @return: The joined path
+		//        Joins a list of path strings into a full path.
+		//        All path elements are joined with fs::path::SEP,
+		//        before all double path seps are removed.
+		//        An implementation would look like this:
+		//        >> function fs::path::join(paths...): result {
+		//        >>   import fs::path::*;
+		//        >>   result = SEP.join(paths...).replace(ALTSEP,SEP);
+		//        >>   while (SEP+SEP in result)
+		//        >>     result = result.replace(SEP+SEP,SEP);
+		//        >> }
+		local const join = __builtin_object(0x00AB);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::expanduser(string.T path) -> string.T
+		//    @return: The expanded path
+		//    @throws Error.SystemError: Failed to retrive the home path
+		//        Expand the '~' prefix indicating the home path::
+		//        If a name immediatly follows the '~' character,
+		//        that name will be used as profile name instead
+		//        of the standard current user name.
+		//          >> print fs::path::expanduser("~/Documents");     // "/home/awesome_user/Documents"
+		//          >> print fs::path::expanduser("~root/Documents"); // "/root/Documents"
+		//        NOTE: This function is automatically called
+		//              before passing any path string to the
+		//              operating system.
+		local const expanduser = __builtin_object(0x00AC);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::path::expandvars(string.T path) -> string.T
+		//    @throws Error.SystemError: Failed to retrive an env variable
+		//    @return: The expanded path
+		//        Expand environmental vars in a string
+		//        Accepted var formats are (on all platforms):
+		//          >> "%VAR%"  // Windows style
+		//          >> "$VAR"   // Posix style #1
+		//          >> "${VAR}" // Posix style #2
+		//        NOTE: This function is automatically called
+		//              before passing any path string to the
+		//              operating system.
+		local const expandvars = __builtin_object(0x00AD);
+
+#if defined(__WINDOWS__)
+		local const SEP = "\\";
+		local const ALTSEP = "/";
+		local const DELIM = ";";
+#		if __API_VERSION__ >= 101
+		local const WSEP = L"\\";
+		local const WALTSEP = L"/";
+		local const WDELIM = L";";
+#		endif
+#elif defined(__POSIX__)
+		local const SEP = "/";
+		local const ALTSEP = "\\";
+		local const DELIM = ":";
+#		if __API_VERSION__ >= 101
+		local const WSEP = L"/";
+		local const WALTSEP = L"\\";
+		local const WDELIM = L":";
+#		endif
+#else
+#   warning "Can't deduce 'fs::path::xxx' constants for this platform"
+#endif
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::getatime(string.T path) -> time
+	// >> function fs::getatime(file.io fp) -> time
+	//    @throws Error.SystemError: Failed to retrieve the time
+	//        Returns the last access time of a given file/path
+	local const getatime = __builtin_object(0x00AE);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::getctime(string.T path) -> time
+	// >> function fs::getctime(file.io fp) -> time
+	//    @throws Error.SystemError: Failed to retrieve the time
+	//        Returns the creation time of a given file/path
+	local const getctime = __builtin_object(0x00AF);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::getmtime(string.T path) -> time
+	// >> function fs::getmtime(file.io fp) -> time
+	//    @throws Error.SystemError: Failed to retrieve the time
+	//        Returns the time of the last modification to a given file/path
+	local const getmtime = __builtin_object(0x00B0);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::gettimes(string.T path) -> (time,time,time)
+	// >> function fs::gettimes(file.io fp) -> (time,time,time)
+	//    @throws Error.SystemError: Failed to retrieve the time
+	//        Returns a tuple of times for a given file/path
+	//        The returned tuple is equivalent to:
+	//        >> (fs::getatime(path),fs::getctime(path),fs::getmtime(path))
+	local const gettimes = __builtin_object(0x00B1);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::setatime(string.T path, time access_time) -> none
+	// >> function fs::setatime(file.io fp, time access_time) -> none
+	//    @throws Error.SystemError: Failed to set the time
+	//        Sets the last access time of a given file
+	local const setatime = __builtin_object(0x0180);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::setctime(string.T path, time creation_time) -> none
+	// >> function fs::setctime(file.io fp, time creation_time) -> none
+	//    @throws Error.SystemError: Failed to set the time
+	//        Sets the creation time of a given file
+	//        NOTE: no-op on unix-based operating systems
+	local const setctime = __builtin_object(0x0181);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::setmtime(string.T path, time modification_time) -> none
+	// >> function fs::setmtime(file.io fp, time modification_time) -> none
+	//    @throws Error.SystemError: Failed to set the time
+	//        Sets the time of the last modification to a given file
+	local const setmtime = __builtin_object(0x0182);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::settimes(string.T path, time access_time = none, time creation_time = none, time modification_time = none) -> none
+	// >> function fs::settimes(file.io fp, time access_time = none, time creation_time = none, time modification_time = none) -> none
+	//    @throws Error.SystemError: Failed to set the time
+	//        Sets a the times for a given file
+	local const settimes = __builtin_object(0x0183);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::isabs(string.T path) -> bool
+	//    @return: True if the given path is absolute
+	local const isabs = __builtin_object(0x00B2);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::isfile(string.T path) -> bool
+	// >> function fs::isfile(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is a file
+	local const isfile = __builtin_object(0x00B3);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::isdir(string.T path) -> bool
+	// >> function fs::isdir(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is a directory
+	local const isdir = __builtin_object(0x00B4);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::islink(string.T path) -> bool
+	// >> function fs::islink(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is a symbolic link
+	local const islink = __builtin_object(0x00B5);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::isdrive(string.T path) -> bool
+	// >> function fs::isdrive(file.io path) -> bool
+	//    @return: True if path is a drive
+	local const isdrive = __builtin_object(0x00B6);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::ismount(string.T path) -> bool
+	// >> function fs::ismount(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is a mount point
+	local const ismount = __builtin_object(0x00B7);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::ishidden(string.T path) -> bool
+	// >> function fs::ishidden(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is hidden
+	local const ishidden = __builtin_object(0x00B8);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::isxfile(string.T path) -> bool
+	// >> function fs::isxfile(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is executable
+	local const isxfile = __builtin_object(0x00E7);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::ischrdev(string.T path) -> bool
+	// >> function fs::ischrdev(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is a character device
+	local const ischrdev = __builtin_object(0x016E);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::isblkdev(string.T path) -> bool
+	// >> function fs::isblkdev(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is a block device
+	local const isblkdev = __builtin_object(0x016F);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::isfifo(string.T path) -> bool
+	// >> function fs::isfifo(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is a named pipe
+	local const isfifo = __builtin_object(0x0170);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::issocket(string.T path) -> bool
+	// >> function fs::issocket(file.io path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if path is a socket
+	local const issocket = __builtin_object(0x0171);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::exists(string.T path) -> bool
+	//    @throws Error.SystemError: Failed to stat the given path
+	//    @return: True if a path exists (can be a file/directory)
+	local const exists = __builtin_object(0x00B9);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::remove(string.T path) -> none
+	//    @throws Error.SystemError: Failed to remove the given file/path
+	//        Removes a given path (can be a file/directory)
+	local const remove = __builtin_object(0x00BA);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::rmfile(string.T path) -> none
+	//    @throws Error.SystemError: Failed to remove the given file
+	//        Removes a given path (must be a file)
+	local const rmfile = __builtin_object(0x00BB);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::mkdir(string.T path, mode_t mode = 0755) -> none
+	//    @throws Error.SystemError: Failed to create the given path
+	//        Creates a new directory path, with mode as permissions.
+	local const mkdir = __builtin_object(0x00BC);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::rmdir(string.T path) -> none
+	//    @throws Error.SystemError: Failed to remove the given path
+	//        Removes a given path (must be a directory)
+	local const rmdir = __builtin_object(0x00BD);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::copy(string.T src, string.T dst) -> none
+	// >> function fs::copy(string.T src, string.T dst, callable progress) -> none
+	//    @throws Error.SystemError: Failed to copy the given file
+	//        Copies a file locates at 'src' to 'dst'
+	//        The progress callback is executed like this:
+	//        >> progress((double)x) // where 'x' is in 0.0 - 1.0
+	//        NOTE: if given, 'progress' will be executed at least
+	//              twice with 0.0 beforehand and 1.0 afterwards
+	//        NOTE:
+	//          For forward compatibility, it is recommended that
+	//          'progress' take optional variadic arguments:
+	//          >> function on_progress(prct,...) {
+	//          >> 	print "\rProgress:",(int)(prct*100),;
+	//          >> }
+	//          >> fs::copy_(src,dst,on_progress);
+	//          >> print;
+	local const copy_ = __builtin_object(0x00BE);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::move(string.T src, string.T dst) -> none
+	//    @throws Error.SystemError: Failed to move/rename the given file
+	//        Moves/renames a file locates at 'src' to 'dst'
+	local const move_ = __builtin_object(0x00BF);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::link(string.T src, string.T dst) -> none
+	//    @throws Error.SystemError: Failed to link the given file
+	//        Creates a link to 'src' at 'dst'
+	//        NOTE: Under windows, the process must be granted
+	//              the "SeCreateSymbolicLinkPrivilege" right.
+	local const link = __builtin_object(0x00C0);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::readlink(string.T path) -> string.T
+	//    @throws Error.SystemError: Failed to link the read the given link
+	//        Reads a link located at 'path' and returns its destination
+	local const readlink = __builtin_object(0x00C1);
+
+#if __API_VERSION__ >= 101
+	local const uid_t = __unsigned__ __DEEMON_INT(__SIZEOF_UID_T__);
+	local const gid_t = __unsigned__ __DEEMON_INT(__SIZEOF_GID_T__);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::chmod(string.T file, string.utf8 mode) -> none
+	// >> function fs::chmod(string.T file, mode_t mode) -> none
+	// >> function fs::chmod(file.io file, string.utf8 mode) -> none
+	// >> function fs::chmod(file.io file, mode_t mode) -> none
+	//    @throws Error.SystemError: Failed to change access to the given file
+	//    @throws Error.ValueError: Invalid mode string
+	//        Changes permissions of a given file
+	//        NOTE: Mode can be a string that follows the same
+	//              format as the chmod cmd command.
+	//              e.g.: 'chmod("file.txt","+x");' // Add execute permissions for everyone
+	//        NOTE: On windows the only thing you're sadly able to do,
+	//              is to control the read-only flag of the associated file,
+	//              which is set/removed if nobody has write-access ('mode&0222 == 0')
+	local const chmod = __builtin_object(0x01C5);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::getmod(string.T file) -> mode_t
+	// >> function fs::getmod(file.io file) -> mode_t
+	//    @throws Error.SystemError: Failed to stat the given file
+	//    @return: Permissions of the given file
+	local const getmod = __builtin_object(0x01C6);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::chown(string.T file, string.T user_and_group) -> none
+	// >> function fs::chown(string.T file, string.T user, string.T group) -> none
+	// >> function fs::chown(string.T file, string.T user, fs::posix::gid_t group) -> none
+	// >> function fs::chown(string.T file, fs::posix::uid_t user, string.T group) -> none
+	// >> function fs::chown(string.T file, fs::posix::uid_t user, fs::posix::gid_t group) -> none
+	// >> function fs::chown(file.io file, string.T user, string.T group) -> none
+	// >> function fs::chown(file.io file, string.T user, fs::posix::gid_t group) -> none
+	// >> function fs::chown(file.io file, fs::posix::uid_t user, string.T group) -> none
+	// >> function fs::chown(file.io file, fs::posix::uid_t user, fs::posix::gid_t group) -> none
+	//    @throws Error.SystemError: Failed to change access to the given file
+	//        Changes ownership of a given file
+	//        NOTE: 'user_and_group' should be seperated by a ':' (e.g.: 'fs::chmod("my_file","root:root");')
+	//        NOTE: User and group can be a string describing a password
+	//              database entry, or can be the uid_t/gid_t directly.
+	//        NOTE: Using this function on windows requires deemon to run as
+	//              administrator or to be given the 'SeRestorePrivilege' privilege.
+	local const chown = __builtin_object(0x01C7);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::getown(string.T file) -> (fs::uid_t,fs::gid_t)
+	// >> function fs::getown(file.io file) -> (fs::uid_t,fs::gid_t)
+	//    @throws Error.SystemError: Failed to stat the given file
+	//    @return: The owner and group of a given file
+	local const getown = __builtin_object(0x01C8);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> [posix] function fs::uidof(string.T user) -> fs::uid_t
+	// >> [win32] function fs::uidof(string.T user) -> win32_sid
+	//    @throws Error.SystemError: Failed to retrive the uid to a given username
+	//        Returns the uid associated with a given user.
+	//        NOTE: On windows, an SID-object is returned that can be
+	//              used everywhere a uid_t is required.
+	//        NOTE: The user name may contain an optional domain name
+	//              that should be appended alongside an '@' character
+	//              e.g.: 'fs::uidof("cool@dudepc")'
+	local const uidof = __builtin_object(0x01C9);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> [posix] function fs::gidof(string.T group) -> fs::gid_t
+	// >> [win32] function fs::gidof(string.T group) -> win32_sid
+	//    @throws Error.SystemError: Failed to retrive the gid to a given group name
+	//        Returns the gid associated with a given group.
+	//        NOTE: On windows, an SID-object is returned that can be
+	//              used everywhere a gid_t is required.
+	//        NOTE: The user name may contain an optional domain name
+	//              that should be appended alongside an '@' character
+	//              e.g.: 'fs::gidof("cool@dudepc")'
+	local const gidof = __builtin_object(0x01CA);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::uidname(fs::uid_t uid) -> string.utf8
+	// >> function fs::wuidname(fs::uid_t uid) -> string.wide
+	//    @throws Error.SystemError: Failed to retrive the name of a given user
+	//        Returns the name of a given user id
+	local const uidname = __builtin_object(0x01CB);
+	local const wuidname = __builtin_object(0x01CC);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function fs::gidname(fs::gid_t gid) -> string.utf8
+	// >> function fs::wgidname(fs::gid_t gid) -> string.wide
+	//    @throws Error.SystemError: Failed to retrive the name of a given group
+	//    @throws Error.SystemError
+	//        Returns the name of a given group id
+	local const gidname = __builtin_object(0x01CD);
+	local const wgidname = __builtin_object(0x01CE);
+#endif
+
+#ifdef __WINDOWS__
+	module win32 {
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::win32::hardlink(string.T src, string.T dst) -> none
+		//    @throws Error.SystemError: Failed to create a hard link
+		//        Creates a win32 hardlink from 'src' to 'dst'
+		local const hardlink = __builtin_object(0x00ED);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::win32::modulename(none *mod) -> string.utf8
+		// >> function fs::win32::wmodulename(none *mod) -> string.wide
+		//    @throws Error.SystemError: Failed to retrive the name of a module
+		//        Returns the name of a module
+		local const modulename = __builtin_object(0x00EE);
+		__DEEMON_WFS_FUNC(local const wmodulename = __builtin_object(0x019D))
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::win32::_dlldirectory() -> string.utf8
+		// >> function fs::win32::_wdlldirectory() -> string.wide
+		//    @throws Error.SystemError: Failed to retrive the dll directory
+		//        Returns the Win32 DllDirectory (default: "")
+		local const _dlldirectory = __builtin_object(0x0162);
+		__DEEMON_WFS_FUNC(local const _wdlldirectory = __builtin_object(0x019E))
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::win32::_systemdirectory() -> string.utf8
+		// >> function fs::win32::_wsystemdirectory() -> string.wide
+		//    @throws Error.SystemError: Failed to retrive the system directory
+		//        Returns the Win32 SystemDirectory (default: "C:\\Windows\\System32")
+		local const _systemdirectory = __builtin_object(0x0163);
+		__DEEMON_WFS_FUNC(local const _wsystemdirectory = __builtin_object(0x019F))
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::win32::_windowsdirectory() -> string.utf8
+		// >> function fs::win32::_wwindowsdirectory() -> string.wide
+		//    @throws Error.SystemError: Failed to retrive the windows directory
+		//        Returns the Win32 WindowsDirectory (default: "C:\\Windows")
+		local const _windowsdirectory = __builtin_object(0x0165);
+		__DEEMON_WFS_FUNC(local const _wwindowsdirectory = __builtin_object(0x01A0))
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::win32::_systemwindowsdirectory() -> string.utf8
+		// >> function fs::win32::_wsystemwindowsdirectory() -> string.wide
+		//    @throws Error.SystemError: Failed to retrive the system windows directory
+		//        Returns the Win32 SystemWindowsDirectory (default: "C:\\Windows")
+		local const _systemwindowsdirectory = __builtin_object(0x0166);
+		__DEEMON_WFS_FUNC(local const _wsystemwindowsdirectory = __builtin_object(0x01A1))
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::win32::_syswow64directory() -> string.utf8
+		// >> function fs::win32::_wsyswow64directory() -> string.wide
+		//    @throws Error.SystemError: Failed to retrive the syswow64 directory
+		//        Returns the Win32 SysWow64Directory (default: "C:\\Windows\\SysWOW64")
+		local const _syswow64directory = __builtin_object(0x0167);
+		__DEEMON_WFS_FUNC(local const _wsyswow64directory = __builtin_object(0x01A2))
+
+#if __API_VERSION__ >= 101
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::win32::drives() -> [string.utf8...]
+		// >> function fs::win32::wdrives() -> [string.wide...]
+		//    @throws Error.SystemError: Couldn't generate list of drives
+		//    @return: A sequence of available drives (e.g.: ["C:\\","D:\\"])
+		local const drives = __builtin_object(0x01CF);
+		local const wdrives = __builtin_object(0x01D0);
+#endif
+	}
+#endif
+
+#ifdef __POSIX__
+	module posix {
+#if __API_VERSION__ >= 101
+#	define __DEPRECATED_ELEVATED_101(name) \
+		__declspec(__deprecated__("Staring in v101, fs::posix::" name " is platform-independent; Use fs::" name " instead"))
+#else
+#	define __DEPRECATED_ELEVATED_101(name)
+#endif
+
+		local const __DEPRECATED_ELEVATED_101("uid_t") uid_t = __unsigned__ __DEEMON_INT(__SIZEOF_UID_T__);
+		local const __DEPRECATED_ELEVATED_101("gid_t") gid_t = __unsigned__ __DEEMON_INT(__SIZEOF_GID_T__);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::posix::chmod(string.T file, string.utf8 mode) -> none
+		// >> function fs::posix::chmod(string.T file, mode_t mode) -> none
+		// >> function fs::posix::chmod(file.io file, string.utf8 mode) -> none
+		// >> function fs::posix::chmod(file.io file, mode_t mode) -> none
+		//    @throws Error.SystemError
+		//    @throws Error.ValueError
+		//        Changes permissions of a given file
+		//        NOTE: Mode can be a string that follows the same
+		//              format as the chmod cmd command.
+		//              e.g.: 'chmod("file.txt","+x");' // Add execute permissions for everyone
+		local const __DEPRECATED_ELEVATED_101("chmod") chmod = __builtin_object(0x01C5);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::posix::chown(string.T file, string.T user, string.T group) -> none
+		// >> function fs::posix::chown(string.T file, string.T user, fs::gid_t group) -> none
+		// >> function fs::posix::chown(string.T file, fs::uid_t user, string.T group) -> none
+		// >> function fs::posix::chown(string.T file, fs::uid_t user, fs::gid_t group) -> none
+		// >> function fs::posix::chown(file.io file, string.T user, string.T group) -> none
+		// >> function fs::posix::chown(file.io file, string.T user, fs::gid_t group) -> none
+		// >> function fs::posix::chown(file.io file, fs::uid_t user, string.T group) -> none
+		// >> function fs::posix::chown(file.io file, fs::uid_t user, fs::gid_t group) -> none
+		//    @throws Error.SystemError
+		//        Changes ownership of a given file
+		//        NOTE: User and group can be a string describing a password
+		//              database entry, or can be the uid_t/gid_t directly.
+		local const __DEPRECATED_ELEVATED_101("chown") chown = __builtin_object(0x01C7);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::posix::uidof(string.T user) -> fs::uid_t
+		//    @throws Error.SystemError
+		//        Returns the uid associated with a given user
+		local const __DEPRECATED_ELEVATED_101("uidof") uidof = __builtin_object(0x01C9);
+
+		//////////////////////////////////////////////////////////////////////////
+		// >> function fs::posix::gidof(string.T group) -> fs::gid_t
+		//    @throws Error.SystemError
+		//        Returns the gid associated with a given group
+		local const __DEPRECATED_ELEVATED_101("gidof") gidof = __builtin_object(0x01CA);
+	}
+#undef __DEPRECATED_ELEVATED_101
+#endif
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> fs::dir(string.T path) -> fs::dir
+	// >> fs::dir(file.io path) -> fs::dir
+	//    @throws Error.SystemError: Failed to stat the given path
+	//        Iterable object that can be used to list all objects in a directory
+	//        >> // List all files+folders in the user home directory
+	//        >> for (f: fs::dir("~")) print f;
+	//        NOTE: If a widestring is used to open the dir, items are yielded as widestrings
+	local const dir = __builtin_object(0x00C3);
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> fs::query(string.T query) -> fs::query
+	//    @throws Error.SystemError: Failed to stat the path of the given query
+	//        Like dir, but the constructor takes a wildcard-enabled query string
+	//        used to determine which items should be displayed.
+	//        >> // List all posix-style hidden objects in the user home directory
+	//        >> for (f: fs::query("~/.*")) print f;
+	//        Equivalent to:
+	//        >> for (x: fs::dir(fs::path::head(path))) if (x.wmatch(fs::path::tail(path))) { ... }
+	//        NOTE: If the query is a widestring, items are yielded as widestrings
+	local const query = __builtin_object(0x00EB);
+}
+
+#undef __DEEMON_WFS_FUNC
+
+#pragma pop_macro("getcwd")
+#pragma pop_macro("chdir")
+#pragma pop_macro("tmp")
+#pragma pop_macro("tmpname")
+#pragma pop_macro("home")
+#pragma pop_macro("listenv")
+#pragma pop_macro("getenv")
+#pragma pop_macro("delenv")
+#pragma pop_macro("setenv")
+#pragma pop_macro("user")
+#pragma pop_macro("machine")
+#pragma pop_macro("path")
+#pragma pop_macro("head")
+#pragma pop_macro("tail")
+#pragma pop_macro("file")
+#pragma pop_macro("ext")
+#pragma pop_macro("drive")
+#pragma pop_macro("inctrail")
+#pragma pop_macro("exctrail")
+#pragma pop_macro("abs")
+#pragma pop_macro("rel")
+#pragma pop_macro("join")
+#pragma pop_macro("expanduser")
+#pragma pop_macro("expandvars")
+#pragma pop_macro("SEP")
+#pragma pop_macro("ALTSEP")
+#pragma pop_macro("DELIM")
+#pragma pop_macro("getatime")
+#pragma pop_macro("getctime")
+#pragma pop_macro("getmtime")
+#pragma pop_macro("gettimes")
+#pragma pop_macro("setatime")
+#pragma pop_macro("setctime")
+#pragma pop_macro("setmtime")
+#pragma pop_macro("settimes")
+#pragma pop_macro("isabs")
+#pragma pop_macro("isfile")
+#pragma pop_macro("isdir")
+#pragma pop_macro("islink")
+#pragma pop_macro("isdrive")
+#pragma pop_macro("ismount")
+#pragma pop_macro("ishidden")
+#pragma pop_macro("isxfile")
+#pragma pop_macro("ischrdev")
+#pragma pop_macro("isblkdev")
+#pragma pop_macro("isfifo")
+#pragma pop_macro("issocket")
+#pragma pop_macro("exists")
+#pragma pop_macro("remove")
+#pragma pop_macro("rmfile")
+#pragma pop_macro("mkdir")
+#pragma pop_macro("rmdir")
+#pragma pop_macro("copy_")
+#pragma pop_macro("move_")
+#pragma pop_macro("link")
+#pragma pop_macro("readlink")
+#pragma pop_macro("uid_t")
+#pragma pop_macro("gid_t")
+#pragma pop_macro("chmod")
+#pragma pop_macro("getmod")
+#pragma pop_macro("chown")
+#pragma pop_macro("getown")
+#pragma pop_macro("uidof")
+#pragma pop_macro("gidof")
+#pragma pop_macro("uidname")
+#pragma pop_macro("wuidname")
+#pragma pop_macro("gidname")
+#pragma pop_macro("wgidname")
+#pragma pop_macro("dir")
+#pragma pop_macro("query")
+#if __API_VERSION__ >= 101
+#	pragma pop_macro("wgetcwd")
+#	pragma pop_macro("wtmp")
+#	pragma pop_macro("wtmpname")
+#	pragma pop_macro("whome")
+#	pragma pop_macro("wlistenv")
+#	pragma pop_macro("wuser")
+#	pragma pop_macro("wmachine")
+#	pragma pop_macro("WSEP")
+#	pragma pop_macro("WALTSEP")
+#	pragma pop_macro("WDELIM")
+#endif
+#ifdef __WINDOWS__
+#	pragma pop_macro("win32")
+#	pragma pop_macro("hardlink")
+#	pragma pop_macro("modulename")
+#	pragma pop_macro("_dlldirectory")
+#	pragma pop_macro("_systemdirectory")
+#	pragma pop_macro("_windowsdirectory")
+#	pragma pop_macro("_systemwindowsdirectory")
+#	pragma pop_macro("_syswow64directory")
+#	if __API_VERSION__ >= 101
+#		pragma pop_macro("wmodulename")
+#		pragma pop_macro("_wdlldirectory")
+#		pragma pop_macro("_wsystemdirectory")
+#		pragma pop_macro("_wwindowsdirectory")
+#		pragma pop_macro("_wsystemwindowsdirectory")
+#		pragma pop_macro("_wsyswow64directory")
+#	endif
+#endif
+#ifdef __POSIX__
+#	pragma pop_macro("posix")
+#endif

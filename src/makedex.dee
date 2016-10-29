@@ -1,0 +1,397 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// Since at the time of compiling the extension modules,
+// we should already have deemon installed and working,
+// we can simply use it to make our lives a lot easier
+// >> The only restriction here is that we can't use
+//    anything from '__builtin_dex' yet (obviously).
+
+#include <process>
+#include <file>
+#include <pipe>
+#include <fs>
+#include <sys>
+#include <error>
+#include "../include/deemon/version.h" // Need version number for correct linking
+
+#if defined(__WINDOWS__) && 0
+
+print "'makedex.dee' can only be used on linux.";
+print "On windows you must use visual studio.";
+
+#else
+
+fs::chdir(fs::path::head(__FILE__));
+
+const LIBFILE_SUFFIX = ".so";
+install_path = "/usr/lib/deemon/dex";
+
+// List of include paths
+list inc_paths = {
+	fs::path::abs(fs::path::join("..","include")),
+	fs::path::abs(fs::path::join("debug_new")),
+	fs::path::abs(fs::path::join(".")),
+};
+list lib_paths = {
+	fs::path::abs(fs::path::join("..")),
+};
+defines = dict { "DEE_EXTENSION" : "1", "DEE_USE_DEBUG_NEW" : "1" };
+
+debug_mode = true;
+verbose = false;
+force_compile = false;
+
+args = sys.argv[1:];
+while (args && args.front().startswith("-")) {
+	switch (args.front()) {
+		case "--help":
+			print "Usage: deemon makedex.dee [Options...] [pattern=*]";
+			print "Options:";
+			print "\t--help               Show this help and exit";
+			print "\t-ndebug|--no-debug   Compile without debug information";
+			print "\t-a                   Fore recompilation";
+			sys.exit(0);
+		case "-V":
+		case "--verbose":
+			verbose = true;
+			break;
+		case "-ndebug":
+		case "--no-debug":
+			debug_mode = false;
+			break;
+		case "-a":
+			force_compile = true;
+			break;
+		default:
+			print "Unknown argument:",args.front();
+			print "Type 'deemon makedex.dee --help' for more info";
+			sys.exit(1);
+	}
+	args.pop_front();
+}
+
+
+buildpath = fs::path::abs(fs::path::join("..","build"));
+
+pattern = args ? args.front : "*";
+
+function run_cmd(cmd) {
+	local p = process(cmd);
+	p.start();
+	p.join();
+}
+
+
+_filetime_cache = dict {};
+function getfiletime(filename) {
+	filename = fs::path::abs(filename);
+#ifdef __WINDOWS__
+	filename = filename.upper();
+#endif
+	try return _filetime_cache[filename];
+	catch (...);
+	local result = fs::getmtime(filename);
+	_filetime_cache[filename] = result;
+	return result;
+}
+
+
+function do_compile_lib(
+	input_sourcefile,defines,inc_paths,lib_paths,
+	more_compiler_flags,more_linker_flags,
+	dependency_libs,libname,version_dependent) {
+	input_sourcefile = fs::path::rel(input_sourcefile);
+	const build_prefix = "dex.";
+	local output_libfile_raw = version_dependent
+		? fs::path::join("..","lib","dex."+DEE_VERSION_API,libname)
+		: fs::path::join("..","lib","dex",libname);
+	local output_libfile = output_libfile_raw+LIBFILE_SUFFIX;
+	local output_buildpath = fs::path::rel(fs::path::join(buildpath,build_prefix+libname));
+	local output_buildfile = fs::path::rel(fs::path::join(output_buildpath,libname+".o"));
+	local output_depfile = fs::path::rel(fs::path::join(output_buildpath,libname+".mf"));
+	local libpath_args = " ".join(for (x: lib_paths) "-L"+fs::path::rel(x));
+	local incpath_args = " ".join(for (x: inc_paths) "-I"+fs::path::rel(x));
+	local define_args = " ".join(for (x: defines) "-D"+x[0].strip()+((x[1] && x[1].strip() != "1") ? "="+x[1].strip() : ""));
+	local dependency_lib_args = " ".join(for (x: dependency_libs) " -l"+x);
+	local additional_flags = debug_mode ? "-g -D_DEBUG" : "-O3 -DNDEBUG";
+	try fs::mkdir(buildpath); catch (...);
+	try fs::mkdir(output_buildpath); catch (...);
+	try fs::mkdir(fs::path::head(output_libfile)); catch (...);
+	if (force_compile) goto do_compile;
+	if (!fs::isfile(output_libfile)) goto do_compile;
+	try {
+		local last_build_time;
+		try last_build_time = getfiletime(output_buildfile);
+		catch (...) {
+			if (verbose) print "First time compiling:",input_sourcefile;
+			goto do_compile; // If the file doesn't exist
+		}
+		// Parse a gcc-style dependency file into a list of filenames
+		// >> This single-line expression is a perfect
+		//    example of how powerful deemon can be! *smirks*
+		local deps = file.io(output_depfile,"r").read()
+			.replace("\\\n","").replace("\n"," ").partition(":")[2]
+			.split(" ").locate_all([](x) -> #x);
+		if (getfiletime(input_sourcefile) > last_build_time) {
+			if (verbose) print "Changes found in:",input_sourcefile,"(recompiling)";
+			goto do_compile;
+		}
+		for (local dep: deps) {
+			local deptime;
+			try deptime = getfiletime(dep);
+			catch (...) goto do_compile;
+			if (deptime > last_build_time) {
+				if (verbose) print "Changes found in:",dep,"(recompiling: "+input_sourcefile+")";
+				goto do_compile;
+			}
+		}
+		if (verbose) print "No changes made to:",input_sourcefile;
+		return;
+	} catch (Error.IOError.FileNotFound);
+do_compile:
+	try for (x: fs::query(output_libfile_raw+".*"))
+		fs::rmfile(fs::path::join(fs::path::head(output_libfile_raw),x));
+	catch (...);
+
+	print "Compiling:",repr libname;
+	if (verbose) {
+		print "\tinput_sourcefile:",repr input_sourcefile;
+		print "\toutput_libfile:  ",repr output_libfile;
+		print "\toutput_buildfile:",repr output_buildfile;
+		print "\toutput_depfile:  ",repr output_depfile;
+	}
+	run_cmd(
+		"gcc"+
+		" -c"+
+		" -fPIC"+ // Position independent image
+		" "+define_args+
+		" "+incpath_args+
+		" "+additional_flags+
+		" "+more_compiler_flags+
+		" -MMD "+input_sourcefile+
+		" -o "+output_buildfile+
+		" -MF "+output_depfile+
+	"");
+	run_cmd(
+		"gcc "+
+		" "+libpath_args+
+		" "+additional_flags+
+		" "+more_linker_flags+
+		" "+output_buildfile+
+		" -shared"+
+		//" -Wl,-soname,"+libname+
+		" -o "+output_libfile+
+		" -Wl,-soname,"+libname+
+		" ../libdeemon.so."+DEE_VERSION_API+"."+DEE_VERSION_COMPILER+
+		" "+dependency_lib_args+
+	"");
+	try  {
+		local used_install_path = install_path;
+		if (version_dependent) used_install_path += "."+DEE_VERSION_API;
+		try fs::mkdir(used_install_path); catch (...);
+		local destfile = fs::path::join(
+			used_install_path,
+			fs::path::tail(output_libfile));
+		try fs::rmfile(destfile); catch (...);
+		fs::copy_(output_libfile,destfile);
+	} catch (e...) {
+		print "Failed to install",output_libfile,":";
+		print ">>",e;
+	}
+}
+
+
+function has_header(header_name) {
+	static cpp_include_paths = ({
+		// Static initializers are only executed once
+		// >> So they're perfect for lazy initialization
+		// NOTE: When used with multiple threads, only the first
+		//       thread will enter the initialization, while all
+		//       other threads wait until the first one is done.
+		local compiler_includepath = [];
+		local inpaths = false;
+		local p = process("cpp -Wp,-v /dev/null");
+		local or,ow = pipe.new()...;
+		p.stdout = ow; p.stderr = ow;
+		p.start(); ow.close();
+		for (local line: or) {
+			line = line.strip();
+			if (inpaths) {
+				if (line.startswith("End")) inpaths = false;
+				else if (fs::isdir(line)) {
+					compiler_includepath.append(line);
+				}
+			} else {
+				if ("#include" in line) inpaths = true;
+			}
+		}
+		p.join();
+		compiler_includepath;
+	});
+	for (local inc: cpp_include_paths) {
+		local full_pathname = fs::path::join(inc,header_name);
+		if (fs::exists(full_pathname)) return true;
+	}
+	return false;
+}
+
+
+function compile_lib(input_sourcefile) {
+	input_sourcefile = fs::path::abs(input_sourcefile);
+	local defines = copy global defines;
+	local inc_paths = copy global inc_paths;
+	local lib_paths = copy global lib_paths;
+	local version_dependent = false;
+	local more_compiler_flags = "";
+	local more_linker_flags = "";
+	local dependency_libs = [];
+	local lno = 0;
+	local libname = fs::path::file(input_sourcefile);
+	local has_missing_headers = false;
+	// Transform a given path relative to the input file
+	// into a path relative to the CWD (as used by the compiler)
+	function transform_relative(path) ->
+		fs::path::rel(fs::path::abs(
+			path,fs::path::head(input_sourcefile)));
+	function file_and_line() -> input_sourcefile+"("+lno+")";
+	for (local l: file.io(input_sourcefile,"r")) {
+		++lno;
+		l = l.strip();
+		if (l.startswith("//@")) {
+			local config_attr = l[3:];
+			local key,none,value = config_attr.partition("=")...;
+			key = key.strip(),value = value.strip();
+			key = key.lower().replace("::",".");
+			switch (key) {
+
+				case "dex.name": {
+					if (value != libname) {
+						libname = value;
+						if (verbose) print file_and_line(),"[DEX] : Custom libname:",repr value;
+					}
+				} break;
+
+				case "dex.version_dependent": {
+					local new_version_dependent = (bool)value;
+					if (version_dependent != new_version_dependent) {
+						if (verbose) print file_and_line(),"[DEX] : Setting version-dependent:",repr new_version_dependent;
+						version_dependent = new_version_dependent;
+					}
+				} break;
+
+				case "dex.require": {
+					local header_name = value.scanf(" <%[^>]>")...;
+					local found = has_header(header_name);
+					if (!found) {
+						print "Missing header for",libname,":",repr header_name;
+						local fix_command = none;
+						try none,fix_command = value.scanf(" <%[^>]> (%[^)])")...;
+						catch (...);
+						if (fix_command !is none) {
+							fix_command = fix_command.strip();
+							if (fix_command.startswith("$")) {
+								fix_command = fix_command[1:].strip();
+								print "To fix this, run: '"+fix_command+"'";
+							} else {
+								print ">>",fix_command;
+							}
+						}
+						has_missing_headers = true;
+					}
+				} break;
+
+				case "compiler.incpath": {
+					for (local path: value.split(":")) {
+						path = transform_relative(path);
+						if (path !in inc_paths) {
+							inc_paths.append(path);
+							if (verbose) print file_and_line(),"[COMPILER] : Added include path:",repr path;
+						}
+					}
+				} break;
+
+				case "linker.libpath": {
+					for (local path: value.split(":")) {
+						path = transform_relative(path);
+						if (path !in lib_paths) {
+							lib_paths.append(path);
+							if (verbose) print file_and_line(),"[LINKER] : Added lib path:",repr path;
+						}
+					}
+				} break;
+
+				case "linker.lib": {
+					dependency_libs.append(value);
+					if (verbose) print file_and_line(),"[LINKER] : Added lib :",repr value;
+				} break;
+
+				case "linker.pthread": {
+					if ("-pthread" !in more_linker_flags) {
+						more_linker_flags += " -pthread";
+						if (verbose) print file_and_line(),"[LINKER] : Added pthread dependency";
+					}
+				} break;
+
+				default: {
+					print file_and_line(),": Unknown config :",repr key;
+				} break;
+			}
+		}
+	}
+	if (has_missing_headers) return false;
+	return do_compile_lib(
+		input_sourcefile,defines,inc_paths,lib_paths,
+		more_compiler_flags,more_linker_flags,
+		dependency_libs,libname,version_dependent);
+}
+
+
+
+// Compile all the dex source files matching our given pattern
+for (local path: fs::dir("dex"))
+{
+	if (path.startswith(".")) continue;
+	path = fs::path::join("dex",path);
+	if (!fs::isdir(path)) continue;
+	libs = fs::query(fs::path::join(path,pattern+".c"));
+	for (local lib: libs) compile_lib(fs::path::join(path,lib));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+print "DONE";
+
+
+#endif

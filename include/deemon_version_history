@@ -1,0 +1,767 @@
+Copyright (c) 2016 Cyder aka. Griefer@Work (https://sourceforge.net/users/grieferatwork) *
+                                                                                         *
+This software is provided 'as-is', without any express or implied                        *
+warranty. In no event will the authors be held liable for any damages                    *
+arising from the use of this software.                                                   *
+                                                                                         *
+Permission is granted to anyone to use this software for any purpose,                    *
+including commercial applications, and to alter it and redistribute it                   *
+freely, subject to the following restrictions:                                           *
+                                                                                         *
+1. The origin of this software must not be misrepresented; you must not                  *
+   claim that you wrote the original software. If you use this software                  *
+   in a product, an acknowledgement in the product documentation would be                *
+   appreciated but is not required.                                                      *
+2. Altered source versions must be plainly marked as such, and must not be               *
+   misrepresented as being the original software.                                        *
+3. This notice may not be removed or altered from any source distribution.               *
+
+
+//////////////////////////////////////////////////////////////////////////
+// -- v101/101:1 --
+//   Fixed:
+//     - Version numbering system on linux (update-alternatives was broken
+//       and would have prevent backwards-compatibility with future versions)
+//////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////
+// -- v101/101:0 --
+//   Comments:
+//     - Completely rewritten the entire compiler!!!
+//     - Due to various changes, complied code (generated with -o) must be recompiled
+//       NOTE: I could have added backwards compatibility for what I changed,
+//             but I didn't 'cause that would have meant a bunch of extra work.
+//             And besides: This is why I marked the project as still being in alpha...
+//     - Did a whole bunch of work on c/c++ integration, actually resulting in
+//       deemon being able to include itself! (aka. #include <path/to/deemon/include/deemon.h>)
+//     - Reworked the string system and added unicode support
+//       NOTE: Also works in the 'fs', 'file.io' and 'shared_lib' apis, meaning that we are now taking advantage
+//             of the windows widestring Apis while still keeping everything compatible with linux.
+//       Strings encodings (supported: utf8, utf16, utf32 and platform-dependent wide)
+//       can simply be converted into each other by casting to the appropriate string type.
+//     - Added some c++ exclusive apis for convenience (and fun :) )
+//     - Added special filenames '/dev/stdin', '/dev/stdout', '/dev/stderr' to open the std files
+//       on windows. - Works in everything that uses file.io as its file-system interface.
+//       Also added '/dev/null' as an alias for 'NUL'.
+//     - Ability to create your own classes with custom operators, members and getsets
+//     - Much, much more stable runtime/compiler
+//     - More diverse runtime API (added sockets, basic crypo, etc.)
+//   
+//   New:
+//     - Continued work on class API, adding a new calling
+//       convention for calling a function with a 'this' argument.
+//     - Added relaxed comma list rules for some builtin functions
+//     - Added some more tutorial files
+//     - Added lib:<cstdlib>
+//     - Added atof/atoi/atol/atoll to lib:<stdlib.h> / lib:<cstdlib>
+//     - Added atomic_intN_t / atomic_uintN_t to <cxx/atomic> (only available #ifndef __STDC_STRICT__)
+//     - Added 'clear() -> none' and 'test_and_set() -> T' to all atomic types (conforming to atomic_flag behavior)
+//     - Added 'init(T) -> none' to all atomic types (conforming to atomic_init behavior)
+//     - Added 'std::atomic_flag' to <cxx/atomic>
+//     - Added global atomic functions to <cxx/atomic> (as described here: http://en.cppreference.com/w/cpp/atomic)
+//     - Added <cxx/stdatomic.h>
+//     - Added instance pools for expr_ast and stmt_ast
+//     - Added new dict function: get(), pop(), setdefault(), popitem()
+//     - Extern decls are no longer limited to functions
+//     - Added c-style struct types (deemon uses the exact same syntax)
+//     - Added the 'typedef' statement (just like in c)
+//     - Added new type system for foreign_function (replaces extern_function)
+//       - Callback information is now stored inside the type,
+//         allowing foreign_functions to count as structured types.
+//         Though constructing instances of them is prohibited.
+//     - Added c-style type syntax for foreign_function. NOTE: This syntax cannot
+//       be used everywhere as it would cause ambiguities in some situations:
+//        - int(*foo)(float); // typedef-style: local variable 'foo' is a pointer to a foreign function 'int(float)'
+//        - int(*foo)(float); // deemon-style:  call 'int' with deref of 'foo', when call the result with '(float)'
+//       For that reason you cannot use c-style functions in low level applications like this.
+//       But in the situations where this ambiguity does arise, you can use this trick:
+//        - int none,(*foo)(float); // typedef-style: 'none' is ignored if used as a variable name, and 'foo' is a pointer to a foreign function 'int(float)'
+//     - Added find(), index(), count(), empty() and non_empty() to tuple
+//     - Added empty() and non_empty() to string
+//     - Added find(), index(), count() to dict
+//     - Added find(), index(), count(), empty(), non_empty() and clear() to dict.keys, dict.items and dict.values
+//     - Added a new type slot 'tp_clear' used for advanced gc objects (slot_id == 81)
+//     - Added 'DeeError_OCCURRED()', which behaves similar to 'DeeError_Occurred()' but returns
+//       a boolean instead. This version is a little bit faster if an error did actually occur.
+//     - Added '__has_feature(platform_threads)' as runtime equivalent to '!defined(DEE_WITHOUT_THREADS)'
+//     - Added support for 'deprecated' attribute, taking an optional string constant indicating a reason
+//       e.g.: >> typedef [[deprecated("Don't trust ms standards; use 'int'")]] int INT;
+//     - Attributes are now allowed in 'const' statements
+//     - Added support for '_Generic'. It behaves the same as it does in c, using type prediction
+//       to figure out the typing of its expression during compile time. If the type is unpredictable,
+//       the type is assumed to be 'object'. Note, that branch choosing is intelligent, where is prefers
+//       exact matches over sub-class or default matches.
+//       With these utilities, it is useful for compile-time optimizations when choosing
+//       which function to call with a given argument.
+//     - Added a new builtin '__builtin_exists', that can be used to
+//       determine the existence or constants / variables.
+//       For an example, see 'lib/tut/builtin_exists.dee'
+//     - Added support for '__static_if'. (NOTE: You can write 'static' 'if' separated into two token as well)
+//       Behaves similar to preprocessor #if-blocks, but operates on a higher level,
+//       allowing you to select which code to compile based on deemon compile-time constants.
+//       For an example, see 'lib/tut/static_if.dee'
+//     - Added support for '__if_exists' and '__if_not_exists', using a combination
+//       of static_if and __builtin_exists, resulting in them behaving equivalent to:
+//       >> #define __if_exists(x)     __static_if(__builtin_exists(x))
+//       >> #define __if_not_exists(x) __static_if(!__builtin_exists(x))
+//     - Added support for '__builtin_expect', which will be able to provide minor
+//       optimizations by exchanging the order in which conditional asts are compiled.
+//     - Added a warning for switch without cases and switch with only default case
+//     - Added a new error class 'Error.ValueError.IndexError', that is thrown by some new sequence methods
+//     - Added new functions to list, tuple, dict (.at not supported), dict.keys, dict.items and dict.values:
+//       'front() -> object', 'back() -> object', 'at(index) -> object'
+//       - 'at' behaves similar to the tp_seq_get, but throws an 'Error.ValueError.IndexError' if the index is invalid
+//     - Added more functionality to the C api for DeeStringWriter
+//     - None-arguments in function prototypes are ignored. Meaning that now you can write:
+//       >> typedef type none void;
+//       >> extern "foo.dll": void function(void);
+//     - Added support for variadic foreign functions (syntax is identical to c)
+//       >> extern "deemon.exe": object DeeString_Newf(char const *fmt, ...);
+//       >> print DeeString_Newf("foo = %q\nbar = %d","this_is_foo",42);
+//     - Added support for the 'uuid' attribute (will be used to communicate
+//       the identity of special functions/types to the compiler)
+//     - Added type-bound variables, which are variables declared through the c-style sytanx.
+//       >> int x; // 'x' can never be something other than an int
+//       >> x = true; // Cast to integer (1)
+//       >> print type x,x; // prints 'int 1'
+//       >> print __builtin_typeof(x); // 'int' (type-bound variables take part in type prediction)
+//       NOTE: Extern variables are type-bound as well
+//     - Came up with a fairly minor optimization for dicts key lookup, that should
+//       result in quite the performance increase, especially in bigger dicts.
+//     - Added the 'set' type (though it's still lacking some of the higher-level functions)
+//       - The type for set objects is accessible through the builtin keyword 'set'
+//       - Constant instances of sets can be created through 'set {a,b,c}', where a,b and c are its elements
+//     - Added some syntax alias, where...
+//       - 'x !in y' <===> '!(x in y)'
+//       - 'x !is y' <===> '!(x is y)'
+//       - 'x in! y' <===> '!(x in y)'
+//       - 'x is! y' <===> '!(x is y)'
+//     - Added a new builtin: '__builtin_predictable(<expr>)', which evaluates to
+//       constant true/false indicating if type of <expr> can be predicted at compile-time
+//     - Added a new builtin: '__builtin_exprast(<expr>)', which
+//       returns the ast of 'expr' as a compile-time constant.
+//       WARNING: expr_ast objects cannot be marshaled, meaning that using a constant
+//                expression ast results in the code being impossible to output-to-file
+//       This builtin is simply meant for debugging the deemon parser, giving
+//       the ability to print the finalized ast objects that the compiler will generate code from.
+//     - Added some more in-depth optimizations to the '@lhs is @rhs' operator, where
+//       it will evaluate to a compile-time constant if @rhs is a constant and
+//       @lhs is predictable and not evaluating it won't cause any side-effects.
+//       You can think of it like this:
+//       >> __builtin_choose_expr(
+//       >>   __builtin_noeffect(lhs) && __builtin_predictable(lhs),
+//       >>   __builtin_typeof(lhs).same_or_derived(rhs),
+//       >>   lhs is rhs)
+//     - Added a new function 'fill' to list, that can be used to fill the list
+//       with a given item. The function also accepts an optional second argument
+//       that can be used to specify a new size for the list.
+//     - Added support for structured array types
+//     - Added new __builtin_fs function to setting file times
+//       NOTE: These function work just like the getter counterparts
+//       NOTE: The same functions were also added to 'file.io' objects,
+//             allowing you to simply set a file's modification time with 'file.io(...).setatime(...)'
+//       NOTE: I also added getsets 'times -> (time,time,time)', 'atime -> time', 'ctime -> time' and 'mtime -> time' to file
+//     - Added a new getset 'time_t' to time-objects, with can be used to get/set the
+//       time value as a time_t value.
+//     - 'time' can now be implicitly casted to integrals (the returned value is identical to the 'time_t' getset)
+//     - <cxx/time.h> and <cxx/ctime> and mostly standard conforming now (they only miss 'gmtime' at this point)
+//     - Added some more options to 'DeeFile_Std', adding 'stdnull' (empty file) and 'stddbg' (alias for stderr / output with OutputDebugString)
+//     - Added a new file type 'file.joined' that allows simultaneous output into two file objects
+//       It can be created with 'file.joined(file_a,file_b)' or by simply writing 'file_a|file_b'
+//     - Added new function to 'list': push_front(), push_back(), pop_front(), pop_back()
+//     - Implemented the ~common~ algorithm for list objects (aka. __and__, __iand__)
+//     - Fixed a bug in file.reader.tp_read that may have caused read operations to fail
+//     - Marshalling recursive objects now works correctly (but the )
+//     - Added a new function string.hexdump. Follows the same parameter convention
+//       as string.from_data, but returns hex-dump string as produced by the default object repr function.
+//     - Added some c++ headers that include some really high-level functionality when interfacing deemon from c++
+//     - Added the ability to stream into files using the '<<' operator, making for a more c++-esk experience
+//     - Added support for python-style inline-if expressions (<expr> 'if' <expr> ['else' <expr>])
+//     - Added support for opening a 'file.io' in 'fs.dir'
+//     - Added a new function 'dir()' to 'file.io' that behaves the same as 'fs.dir(file.io)'
+//     - Added a new function 'locate', 'rlocate' and 'locate_all' to list
+//       'locate' is a find function that calls a given predicate to compare against an object.
+//       >> print [50,42,11,7,19].locate    ([](x) -> x >= 10 && x <= 20); // prints '11'
+//       >> print [50,42,11,7,19].rlocate   ([](x) -> x >= 10 && x <= 20); // prints '19'
+//       >> print [50,42,11,7,19].locate_all([](x) -> x >= 10 && x <= 20); // prints '[11,19]'
+//       - 'locate' throws an Error.ValueError if no match was found
+//       - 'locate_all' returns an empty list if no match was found
+//     - Added the locate family of functions to tuple and array
+//     - Added new functions 'shrink_to_fit' and 'resize' to list
+//       - shrink_to_fit simply frees unused memory in the list
+//       - resize can be used to resize the list's actual size (new elements are filled with an optional filler argument)
+//     - Added a small API to the builtin shared_lib object, allowing user code to load and import dll/so files
+//     - Added the ability to copy yield_function.iterator under very explicit circumstances
+//       see 'tut/yield_iter_copy.dee' for more information
+//       NOTE: The stack, local variables and arguments are copied using deep copies
+//       >> The behavior can somewhat be compared to what fork() does...
+//          Except that variables references in other scopes are not copied
+//     - Added a new function 'transform', to list
+//       'transform' behaves similar to 'locate_all', where it takes a predicate and return a new list
+//       but unlike 'locate_all', it returns a list of all values returned by the predicate
+//       >> print ["foo","bar"].transform([](x) -> "__"+x+"__"); // prints '[__foo__,__bar__]'
+//     - Added the 'transform' function to tuple and array
+//     - Added windows support for special file names in 'file.io' (and therefor also on the command line)
+//       >> file.io("/dev/null") >> file.io("NUL");
+//       >> file.io("/dev/stdin") >> file.io.stdin;
+//       >> file.io("/dev/stdout") >> file.io.stdout;
+//       >> file.io("/dev/stderr") >> file.io.stderr;
+//     - Added a new command line switch '-in=[auto/code/data]' / '--input=[auto/code/data]'
+//       Can be used to explicitly state the kind of input file given to deemon
+//       Alongside with the special /dev/ files now supported on windows,
+//       this can be used to configure deemon to read code from stdin.
+//       s.a.: "tut/input_type_switch.dee"
+//     - Added the possibility of specifying a size-hint in file.writer
+//     - Added a new feature to deemon with I call Deemon Formatting
+//       Can be used with a new command line switch '-F' / '--format'
+//       Inspired by cog, this allows you to write deemon code in comments
+//       to later have it be executed while the stdout yielded that that code
+//       is then inserted into the source file itself. (s.a. "tut/deemon_format.dee")
+//       NOTE: Just because it's awesome, macros defined outside said
+//             comment can be referenced and will be expanded.
+//     - Added support for 'clock_gettime' in 'time.tick()'
+//     - Added support for an environment variable 'DEEMON_HOME' with can
+//       be set to the path containing deemon's 'lib' folder.
+//       If not set, the folder of the 'deemon' executable is used
+//     - Added a semi-new operator: '!!x' that uses the internal bool operator used in conditional expression.
+//       If the old behavior of two not operators is wanted, you can simply write: '!(!x)'
+//       The difference here is:
+//       >> '(bool)"false"'        // --> false
+//       >> '(bool)"true"'         // --> true
+//       >> '!!""'                 // --> false
+//       >> '!!"non_empty_string"' // --> true
+//     - unnamed var-args can now be referenced by using '...' as variable name
+//       >> function foo(...) { print ...; }
+//       >> foo(10,20,30); // prints '(10,20,30)'
+//     - Added new string types: 'string.wide', 'string.utf8', 'string.utf16' and 'string.utf32'
+//       These map to 'L"..."', 'u"..."' and 'U"..."' respectively
+//       while sharing the same API functionalities (identical to 'string').
+//       Note, that string.utf8 is the same as 'string'
+//     - The file system APIs now work with wide strings
+//     - Added a new error type for dead weak references:
+//       before: Error.ValueError; now: Error.ValueError.ReferenceError
+//     - Added basic support for accessing the items of a yield function through index
+//       Though it really isn't recommended to use this as that's not how they're supposed to be used.
+//     - Implemented 'fs.ismount' / '__builtin_fs_ismount'
+//     - Added new functions 'sorted_insert', 'sorted' and 'reversed' to 'list'
+//       'sorted' and 'reversed' behave the same as their non-member counterparts in lib: <util>
+//     - Added new functions 'sorted' and 'reversed' to 'tuple'
+//     - Accessing file times now works for directories on windows
+//     - Reworked the whole special file system into a virtual-file-system layer on windows.
+//       Layout is based to linux-style file systems and all virtual file paths start with '/'
+//       NOTE: Technically windows has already assigned meaning to paths starting with a '/' or '\\',
+//             referring to the root directory of the current drive, but before I began work
+//             on the vfs, I never even heard about that. So if this interferes with your application,
+//             compile deemon with '-DDEE_CONFIG_HAVE_VFS=0' or even simpler, set an environment
+//             variable 'DEEMON_NOVFS' to something other than '0'
+//       >> To see everything that is supported, simply display 'fs.dir("/")'
+//       - Note, that these do not work in conjunction with 'fs.chdir'
+//       - Currently supported:
+//         - "/dev/stdxxx"
+//         - "/dev/null"
+//         - "/proc/<id>", "/proc/self"
+//           - "/proc/?/exe"
+//           - "/proc/?/cwd"     (NOTE: Only works for the special case of the current process)
+//           - "/proc/?/cmdline" (NOTE: Only displays the executable; arguments are omitted)
+//         - "/tmp/"
+//     - Added 'rfind' and 'rindex' to list and tuple
+//     - Added printf-style functions to create deemon objects
+//       >> Dee_BuildTuple("ddd",10,20,30);
+//       >> Dee_BuildValue("(ddd)",10,20,30);
+//       These functions are also available as 'DeeObject_Callf' and many more
+//     - Rewrote the class API, allowing it to overwrite any non-structured object that uses the standard or gc allocator
+//     - Added a new proxy object 'super' that can be used to access only the super members of an object
+//       In conjunction, all objects have been situated with static attributes 'this', 'super' and 'class'
+//       - ob.this:  Simply returns 'ob' (only there for api completion)
+//       - ob.super: Returns a super object describing the base of 'ob'
+//       - ob.class: Returns the class (usually equivalent to 'type ob') but refers to the implied class
+//                   - LValue objects return the base class
+//                   - Super objects return the described class
+//       In raw [[thiscall]] functions writing 'super' is equivalent to 'this.super'
+//     - Added a new intrinsic function '__super' / '__builtin_super', that
+//       can be used to cast an object to one of its super clases:
+//       >> function __super(type object T) -> object
+//       >> function __super(type object T, object ob) -> object
+//       The 1-parameter version is only allowed in [[thiscall]]
+//       functions, where 'this' will be used for 'ob'.
+//       Both parameters are allowed to only resolve at runtime.
+//     - Added a new attribute 'super' that specifies a type which should be
+//       used by default in '__super'. In essence, super will be an alias for:
+//       >> function [[thiscall,super(xxx)]] {
+//       >>   super.foobar(); // internally translated to '__super(xxx,this).foobar()';
+//       >> }
+//       This attribute is implicity defined for class member functions,
+//       where it points to the expression AST describing the class base.
+//       >> class a    { foo() { print "a::foo()",type this; } };
+//       >> class b: a { foo() { print "b::foo()",type this; } };
+//       >> class c: b { foo() { print "c::foo()",type this; } };
+//       >> inst = c();
+//       >> inst.foo();            // 'c::foo() c'
+//       >> inst.super.foo();      // 'b::foo() c'
+//       >> __super(a,inst).foo(); // 'a::foo() c'
+//     - Usercode can now create classes using a dedicated class syntax
+//     - Added a new class function 'compile' to 'function'
+//       Takes a string/file argument that represents the code that shall be compiled
+//       Also takes a second, optional argument describing the disp_filename in __FILE__ and tracebacks
+//     - Added a new header <function> that defines a constant 'function_', which is the type of a user function
+//       Should be used if you want to access the 'compile' member of function:
+//       >> #include <function>
+//       >> fun = function_::compile("print ...;");
+//       >> fun(10,20,30); // prints '(10,20,30)'
+//     - Added a new c header <deemon/version.h> containing all version information
+//       and compiler features that were previously found in <deemon/__conf.inl>
+//     - Expand expressions can now be used in print statements
+//     - Added a new error type 'Error.RuntimeError.StackOverflow', which is thrown if
+//       the user function stack is greater than a value set by 'Dee_SetStackLimit' / '__builtin_set_stacklimit'
+//       The environment variable 'DEEMON_STACKLIMIT' can be used to override the default.
+//     - Added a new commandline switch '--features', that lists all enabled compiler, language or runtime features
+//       For more information, invoke said switch or read the documentation of 'Dee_GetFeatures'
+//     - Added two new functions to dict: 'setold' and 'setnew', that can be
+//       used to force usage of an existing value or force creation of a new.
+//     - Wildcards can now be used in compiler flag names on the command line
+//     - Added a new member function 'scanf' to all string types.
+//       Can be used to scan a given string, extracting values from it,
+//       by returning a tuple of objects related to the format string:
+//       >> // Awefully specific example, eh? (lsusb)
+//       >> bus,dev,id1,id2 = "Bus 001 Device 004: ID 0846:4260".scanf("%*s %d %*s %d: %*s %d:%d")...;
+//       >> print bus,dev,id1,id2; // 1,4,846,4260
+//     - Added a new module '<util>: module util::seq'
+//       Offers generic versions of all standard sequence member functions:
+//        >> find, rfind, index, rindex, count, locate, rlocate, locate_all,
+//           transform, empty, non_empty, front, back, get, at, reversed,
+//           sorted, segments
+//       For more information, see the accompaning doc strings
+//       NOTE: These functions replace the old '::sorted' and '::reversed'
+//             and can be called at compile-time
+//     - Added more documentation in the runtime library (most notably: <util> is now fully documented)
+//     - A progress callback can now be supplied to 'fs::copy_'
+//     - Added a new statement '__foreach', that behaves similar to the for-each
+//       statement ('for (x: y) { ... }' / '__foreach(x: y)' { ... }), with the
+//       difference that __foreach doesn't call __iterself__ on 'y' before starting to iterate.
+//       And instead assumes 'y' to already be an iterator.
+//     - On windows, the file-system API now automatically converts path names to UNC if
+//       they are too long, meaning that deemon can now be used to create folder structures
+//       so long that even explorer doesn't want to go inside.
+//       NOTE: All existing code will automatically use this feature.
+//       s.a.: 'DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC' in <deemon/version.h>
+//     - Added a syntax for generator expressions with loop constructs.
+//       s.a.: "tut/generators.dee"
+//     - Implemented 'thread.sleep()' for non-windows operating systems
+//     - Added the ability to use conditional branches in generators, allowing
+//       the user to control which elements should actually be yielded.
+//       In the terms of existing functionality, this merges 'transform' with 'locate_all'
+//     - All for-each style constructs now accept an optional 'local' prefix for their loop variable
+//       NOTE: This prefix doesn't change the behavior of where the loop variable is allocated,
+//             but is serves as syntax food, allowing you to explicitly state the implicit local.
+//             >> for (local x: util::range(20)) print x;
+//     - Added a process API (s.a.: lib:<process>)
+//     - Added a new standard sequence function 'contains'
+//       Should behave the same as 'operator in', but allows for an
+//       optional second argument that describes a cmp_eq predicate.
+//     - Added a win32 function for listing all attached drives.
+//     - Added support for an optional predicate in 'find', 'rfind', 'index', 'rindex' and 'count'
+//     - Added a big optimization when checking for a thread interrupt, where
+//       no TLS lookup is required as long as no interrupts are available.
+//     - Added a new optimization for automatically detecting predicate equivalent to builtin functions.
+//       e.g.: "function add(a,b) -> a+b;" >> optimized into >> "add = __add__;"
+//     - Exceptions, such as access violations that might occur with
+//       lvalues are now being transformed into deemon errors.
+//       Note, that this currently only works on windows.
+//     - Improved random seed generation quite a bit, using all kinds of tricks.
+//       From system-specific RNG generators, to abusing (possibly) uninitialized
+//       structured before (sometimes) modulating with the current system time
+//       and finishing up the seed by swapping around its bytes while modulating
+//       it one last time with the addresses of random builtin objects.
+//       -> So entropy now includes all of the following:
+//         - RNG state before initialization (dependent on old heap/stack variables)
+//         - System/OS specific callbacks (possibly w/ hardware support)
+//         - Modulating with the system time
+//         - Swapping around its 8 bytes
+//         - Modulating with addresses of builtin objects
+//     - 'tp_seq_get', 'tp_seq_range_get', 'tp_seq_size' and 'tp_seq_contains' are
+//       now automatically implemented when 'tp_seq_iter_self' is available.
+//     - 'tp_seq_iter_self' is now implemented when 'tp_seq_get' and 'tp_seq_size' is available.
+//     - Added a new generic iterator type: 'DeeGenericSequenceIterator' that implements
+//       an iterator using the 'tp_seq_get' and 'tp_seq_size' operators of a given object.
+//     - Added a new generic iterator type: 'DeeSubRangeIterator' that implements
+//       an iterator using the only yielding elements from a given index-based range.
+//       s.a.: 'DeeSubRangeIterator_New' in '<deemon/iterator.h>'
+//     - Added 3 new operators for var objects: 'tp_copy_new', 'tp_move_new' and 'tp_any_new'
+//     - Completely rewrote the parser, optimizer and compiler, enforcing
+//       deemon's very deeply reaching syntax and making a lot more things
+//       possible at runtime.
+//     - Added foreign function closures (can be created with '__builtin_ff_closure'
+//       or simply by writing a function with a c/c++ header)
+//       >> none func(char const *secret) { print string::from_data(secret); }
+//       >> // Same as:
+//       >> typedef none Tfunc(char const *);
+//       >> func = __builtin_ff_closure(Tfunc,function(psht) { print string::from_data(psht); });
+//       >> // 'func' can now be used as a function pointer in calls to native methods:
+//       >> #ifdef __WINDOWS__
+//       >> extern "libdeemon.dll": none Dee_SetSecretCallback(none (*callback)(char const *));
+//       >> extern "libdeemon.dll": none Dee_RunSecretCallback(none);
+//       >> #else
+//       >> extern "": none Dee_SetSecretCallback(none (*callback)(char const *));
+//       >> extern "": none Dee_RunSecretCallback(none);
+//       >> #endif
+//       >> Dee_SetSecretCallback(func);
+//       >> Dee_RunSecretCallback();
+//     - Added some basic peephole optimizations that are applied near the end of code generation
+//     - Added a new storage class '__stack' for local variables.
+//       These variables are stored inside the stack, thus allowing
+//       for the fastest possible looking and operations.
+//       But using more than one will already be slower than regular locals.
+//       The bytecode generated in the following example will directly stream
+//       data retrieved from 'data' into print (without loading/unloading the element variable).
+//       >> data = [10,20,30];
+//       >> for (__stack x: data)
+//       >>   print x;
+//       In the future, deemon will probably detect situations where __stack variables
+//       would offer a performance boost, meaning that 
+//     - Added a new optimization for reusing local variables (NOTE: somewhat breaks debug information).
+//     - Added the ability of directly expanding the elements of a sequence in a for-each-style loop:
+//       >> dict my_dict = { "foo": 42, "bar": 21 };
+//       >> for (local key,item: my_dict) print key,item; // 'foo 42' 'bar 21'
+//       This is done by expanding the return value of 'operator __iternext__'
+//       once again, producing code similar to (and most likely identical):
+//       >> dict my_dict = { "foo": 42, "bar": 21 };
+//       >> for (__stack local __temp: my_dict) {
+//       >>   local key,item = __temp...;
+//       >>   print key,item; // 'foo 42' 'bar 21'
+//       >> }
+//     - Added two new functions 'unique()' and 'tounique()' to list, that can
+//       be used to remove consecutive elements that are equal to each other.
+//       >> data = get_random_list().sorted().tounique();
+//       >> // 'data' is now sorted and doesn't contain any duplicate entries
+//     - Usercode can now overwrite deemon's std printers by
+//       setting 'file.io.std*' or 'process.self().std*'.
+//       Default printers can be restored using 'del file.io.std*'.
+//       
+//
+//   Changes:
+//     - tp_dtor can no longer revive objects. Only gc object can be revived from within
+//       the newly added tp_clear operator. A new operator that should be implemented by
+//       all GC objects and clears all references that could potentially lead back
+//       to the object being cleared.
+//       tp_clear may be called multiple times or not at all (if DEE_TYPE_FLAG_ALWAYS_CLEAR isn't set),
+//       and should definitely leave the object in a valid state for any other operation could still be
+//       performed on it without causing critical undefined behavior.
+//       Also note, that 'DeeObject_Check' is no longer true within the destructor tp_dtor
+//       >> Basically, the old destructor is now 'tp_clear' (kind-of) and 'tp_dtor' is a real destructor
+//     - removed DEE_PRIVATE_REFCNT_DESTROYING, since it could have
+//       caused some major problems further down the line.
+//     - Rewritten parts of the time API to reduce amount of required api function exports
+//     - Changed __builtin_choose_expr to not emit invalid-const-op warnings in the unused branch
+//     - Changed the syntax for cast expression to where the
+//       type must have only one parenthesis, meaning that:
+//        - '(int)+42' >> same as 'int(+42)'; aka cast
+//        - '((int))+42' >> same as 'int+42'; aka type w/ parenthesis (causes an Error.NotImplemented in this case...)
+//       Basically: For regular parenthesis on types, just add double parenthesis and you'll be good.
+//     - Removed #pragma once from all lib:c/c++ headers (lets only use #include guards so that the user can #undef them)
+//     - <cxx/atomic> is automatically included if <atomic> was included and any c++ emulated header is included.
+//     - Redefining a constant with the same value doesn't yield any warnings
+//     - Extern decls now require a named structured type expression to follow the ':',
+//       using the same syntax as e.g. naming a struct field.
+//     - Renamed <deemon/runtime/extern_function.h> to <deemon/runtime/extern.h>
+//     - Renamed <deemon/pointer.h> to <deemon/structured.h>
+//     - Dlls statically loaded with 'DeeSharedLib_PoolLoad' will be kept alive until deemon is shutdown (Dee_Finalize())
+//     - Renamed 'DeeCodeWriterObject' to 'struct DeeCodeWriter' (reason: it isn't an object)
+//     - find(), index() and count() of list now handle 'Error.RuntimeError.NotImplemented' as not-equal
+//     - Changed list.append and list.extend to accept variadic arguments.
+//       They still behave the same as they did before, but now you can
+//       say 'l.append(10,20,30)', as well as 'l.extend([10,20],[30])'
+//     - Added some c identifiers starting with a single underscore to the list of reserved keywords
+//       (sorry, I forgot about those and I know I said that _* is your namespace, so sorry...)
+//     - The -I option on the command line now converts any relative paths into absolute, using cwd (same as 'fs.path.abs')
+//     - The -I option no longer requires its argument to be whitespace separated (e.g.: '-I..' now works, where previously you'd have to write '-I ..')
+//     - Changed the generic object attribute getter, splitting the const version into a different method
+//     - Name collision warnings will not be displayed when the colliding objects are equivalent (affects the 'import' statement)
+//     - Changed string.join to take a single, generic iterable argument
+//       User code like this: ",".join(10,20,args...); must be changed to ",".join([10,20,args...]);
+//       User code like this: ",".join(elem...); must be changed to ",".join(elem);
+//       - I know this is a pretty severe change for potentially a lot of code.
+//         But face it: this is for the best...
+//     - Reworked DeeStringWriter to be more efficient by preallocating the string object beforehand.
+//       Note though, that due to these changes it lost its binary compatibility with v100.
+//       Also note that I decided to move it into the limited-API portion of the C api
+//       whereas before you could access all its members freely.
+//       To continue using the old StringWriter, '#define DEE_DEPRECATED_API 100' before #including any deemon headers
+//     - Changed the way that underscores in attribute names work
+//       When parsing an attribute name, all leading and ending underscores are removed,
+//       meaning that instead of accepting none, two leading, or two leading and ending,
+//       deemon now supports any combination of any amount of underscores.
+//     - <time> and <cxx/time.h> can now be included at once
+//       This is possible because 'time' (the c-function) now links to 'time' (the deemon type).
+//       As a consequence, creating a time object without any arguments will initialize
+//       it as the current time whereas before it was initialized to time(0).
+//       Also: Calling 'time' with a 'time_t *' pointer as its
+//       first and single argument will store the current time in it as well.
+//     - 'time_t' in <cxx/time.h> and <cxx/sys/types.h> is now the integral type associated
+//       with 'time_t' of the current platform (usually Dee_uint32_t / Dee_uint64_t)
+//     - Access for file.io.stdxxx is now constant, meaning that member access to
+//       these objects is optimized away at compile time.
+//     - Creating a file.io object for directories is now possible on windows.
+//       This allows you to safely use file.io on directory on windows.
+//     - file.tp_str / file.io.tp_str no handled Error.RuntimeError.NotImplemented as thrown by the seek function
+//     - Joining a thread that has crashed will cause an Error.ThreadCrash to be thrown (instead of returning 'none')
+//       An interrupted thread will still return 'none' in join()
+//     - Changed the way lines ids are stored in code objects.
+//       Instead of using an opcode to update the line (which I still do for files),
+//       the line calculated when needed using an address offset lookup list.
+//       >> This speeds up debug code as the debug opcodes no longer have to be executed.
+//     - file.read() in peek mode is now less explicit, by stopping when not all data
+//       could be read, whereas before it only stopped once no more data could be read.
+//       This is required for socket-style file objects, as socket.read would otherwise block indefinitely.
+//       But also resulting from this, pipe.read() no longer blocks until the writer end is closed.
+//       If you want to have the secondary behavior, use 'file.readall()'
+//       For an example where this does make a difference, see 'tut/pipe_thread.dee'
+//     - Unified the data type for the current line to 'Dee_int32_t', changing some structs
+//       and function prototypes (including non-limited apis; sorry...).
+//     - Optimized the __mul__ operator for list, reducing the amount of required allocations to only 1
+//     - Changed the order of __ob_refcnt and __ob_weakcnt.
+//       Although this totally breaks any sort of binary compatibility with v100, it does lead
+//       to a lot of optimization potential, as the regular reference counter is used much more often.
+//       And having the offset of the reference counter at ob+0x00 allows the compiler to completely skip adding said offset.
+//       - This should result in a smaller & faster runtime.
+//     - 'bool' is no longer a structured type
+//       The problem was that structured types enforce the fact that you can simply copy/assign
+//       an object of type T by copying the memory from another object T|S derived_from T.
+//       But since 'bool' has two global instances, we can't ever allow modifications.
+//       NOTE: If you want to know what happened, try this code and see what your code does: 'true := false;'
+//     - I've learned a whole bunch about shell scripting. And using that new know-how, I rewrote
+//       the 'make.sh' and the 'makemake.dee' to be much more comfortable to use.
+//     - The print statement no longer returns a tuple of its print arguments, but instead the file that was printed to
+//     - Classes and functions are now constant (aka. compile-time) objects as long as they don't reference any outside variables
+//       Note though, that you still cannot execute those functions at compile-time, as only the function object is constant
+//     - To ensure thread safety, weak references are now immutable
+//     - The builtin type 'long' is now 64-bit on 64-bit non-windows machines
+//     - Refactored compiler flag names on the command line (sorry about that...)
+//     - Did some cleanup in the library, putting some global functions into modules
+//       e.g.: '<util>' now defines its functions in a module 'util'
+//       NOTE: Don't worry. - There are deprecated imports and old usercode
+//                            should still work as it did before
+//       NOTE: To enforce the v100 API, put this before #including any deemon headers:
+//             '#define __API_VERSION__ 100'
+//             - Note though, that this disables any new headers added in versions 100+
+//     - 'sys::fatal()' no longer executes any callbacks registered with 'sys::atexit()'
+//     - Previously fatal compiler errors can now be warnings too (e.g.: uninitialized local)
+//     - Sat down and changed some of the warnings to be errors by default.
+//     - Compiler errors no longer terminate the current compilation step,
+//       but will prevent the next steps from being executed.
+//     - Variables are no longer implicitly created on first use in an expression,
+//       but instead can only be created in statements.
+//       This doesn't necessarily break existing code, as long as your code wasn't written
+//       around the fact that you were able to do something like this:
+//       >> x = (y = 20)+10; // now produces an error for unknown variable: 'y'
+//       >> print x,y;
+//       If it was, simple declare your expression variable beforehand:
+//       >> local y;
+//       >> x = (y = 20)+10;
+//       >> print x,y;
+//       But as you can see, 'x' can still be declared normally
+//     - Replaced all #include guards with #pragma once (both faster and required for "deemon -F")
+//     - Replaced all '__*_DEFINED' macros with '__if_not_exists' (required for "deemon -F")
+//     - Unified the behavior of 'tp_seq_get' and 'tp_seq_range_get':
+//       All standard-conforming implementations should follow this uuideline.
+//       Note, that intrinsic 'tp_seq_get' and 'tp_seq_range_get' operators follow this uuideline
+//       as well, meaning that you can ignore this if you're only implementing 'tp_seq_iter_self'.
+//       >> function tp_seq_get(self,idx) // Element lookup w/ size modulo
+//       >>   -> self.data[idx % #self];
+//       >> function tp_seq_range_get(self,lo,hi) { // Clamped element lookup
+//       >>   lo = lo is none ? (Dee_size_t)0 : (Dee_size_t)lo;
+//       >>   hi = hi is none ? (Dee_size_t)-1 : (Dee_size_t)hi;
+//       >>   if (hi > #self) hi = #self;
+//       >>   if (lo >= hi) return []; // Or any other empty iterable
+//       >>   return []{ // Or any other iterable
+//       >>     for (i = copy lo; i < hi; ++i)
+//       >>       yield self.data[i];
+//       >>   }();
+//       >> }
+//     - Renamed 'tp_new' to 'tp_any_new'
+//     - Completely rewrote the entire compiler (much better layout
+//       and the possibility for many new optimizations to usercode)
+//     - A lot of functions in the c api, that used to not return references
+//       now actually do. Like 'DeeFile_Std'. So when porting existing code might get a bit hard...
+//
+//   Fixes:
+//     - Fixed some reference leaks
+//       - Dee_Main: Error in 'DeeMarshal_IsCompiledFile' didn't decref 'input_stream'
+//     - Fixed a bug that caused 'DeeMarshal_IsCompiledFile' to fail for small files
+//     - Made the marshaller endian sensitive
+//     - Fixed some headers using outdated runtime behavior from the internal development phase
+//     - Fixed '_MALLOC_DEFINED' to '__MALLOC_DEFINED' in lib:<stdlib.h>
+//     - Fixed some inconsistencies in string.iterator when creating it manually
+//     - Added string.iterator to the list of builtin types (fixes various problems)
+//     - Fixed a bug where dereferencing an lvalue pointer yields the wrong type
+//     - Fixed a bug in the garbage collector where reference loops held
+//       alive through an extern reference not located at the start of the chain
+//       were not detected and treated as dead.
+//     - Fixed a bug where 'DeeTuple_ClearPool()' left the tuple pool in an inconsistent state
+//     - Fixed __setattr__, __setitem__ and __setrange__ to actually leave the rhs value on the stack
+//     - Finished implementing 'DeeHashMap_DelItemStringWithKnownBucket'
+//     - Removed the 'nargs' argument from 'DeeCodeWriter_Init'. That was a remainder
+//       from the development state where arguments were stored the local slots.
+//     - Fixed a bug in list, that may have caused an internal assertion failure when calling erase
+//     - Fixed string.split and string.rsplit in various corner cases, like
+//       '",".split(",") --> ["",""]' and '"foo,".split(",") --> ["foo",""]'
+//     - 'DEE_WITHOUT_THREADS' now works (at least as I write this, it compiles and appears to run as intended)
+//     - Fixed integral constants in user code now actually following the to rules set by 'DEE_CONFIG_RT_*'
+//     - Fixed a reference leak in generic_iterator compare (e.g.: comparing lists)
+//     - Fixed a reference leak in dict.keys.tp_range_get and dict.items.tp_range_get
+//     - Fixed index-based access in dict.keys, dict.items and dict.values
+//     - Fixed class-member access on lvalue types not being forwarded to the underlying type
+//     - Fixed a crash that occurred in tp_p_str of 'float', 'double' and 'long double' (workaround was -noas)
+//     - Fixed a bug that could have caused dicts to crash when removing the same element through 'del'
+//     - Fixed a bug that caused dicts to sometimes not update their begin/end (resulting to reference/memory leaks)
+//     - Fixed the wrong ast being used in some constant optimization cases for '='
+//     - Fixed a bug that could have caused weakref object to be incorrectly allocated
+//     - Fixed a bug that caused #include "xxx" to not properly work in initial source files
+//     - Fixed one typo here, one typo there, but I just know that I mized some...
+//     - Fixed a bug in the copy constructor of 'time'
+//     - Fixed C270 being emitted if the print stream is 'none'
+//     - Fixed a bug that caused 'DeeStringWriter_RepeatChar' to not work properly
+//     - Fixed a bug that caused 'DeeStringWriter_CopyFromFile' to not work properly
+//     - Fixed Marshalling a recursive object (aka. function calling itself,
+//       list containing itself) causing a stack overflow.
+//     - Fixed an assertion failure when trying to cast an empty string to integer
+//     - Fixed expand expressions in a 1-elemental tuple: '(x...)' now work the same as 'pack x...'
+//     - Fixed a whole bunch of potential bugs thanks to sal
+//     - Fixed a bug that prevented string.rjust from working
+//     - Fixed zfill adding zeros on the wrong side (such a dumb bug...)
+//     - Fixed string compare
+//     - Fixed a bug in string.wmatch
+//     - Fixed a couple of bugs related to referencing variables from
+//       sub-weak-scopes of underlying strong-scopes. e.g.: 
+//       >> module mod1 { x = 24; }
+//       >> function foo { print mod1::x; } // Used to crash
+//       >> foo();
+//     - Fixed a bug that could have caused a crash when trying to resize the empty tuple
+//     - Fixed a bug where yield_function.iterator.tp_dtor may have
+//       consumed exceptions without actually having caused them.
+//     - Fixed a bug where integer overflow was wrongly detected
+//     - Fixed a minor bug with unsigned int writing in string.tp_mod (aka. 'DeeString_CFormat')
+//     - Fixed a bug that completely broke list element insert/erase anywhere else but at the end
+//     - Fixed the #include guard of lib: <sys>
+//     - Fixed a crash when __builtin_sum was called with one argument
+//     - Fixed a bug that caused a crash when trying to jump out of a catch-block using 'break' or 'continue'
+//     - Fixed a bug in tranceback.entry where the members had wrong names
+//     - Fixed a conceptual bug where any unused variable will be optimized away if it isn't used.
+//       The problem here being that doing so changes the lifetime of a variable to the point.
+//     - Fixed a whole bunch of string member functions that didn't check their argument types
+//     - Fixed a bug/crash in random.__assign__
+//     - Fixed a stack alignment bug when the default (none) branch was used in conditional expressions
+//     - Fixed a bug where the compiler didn't consume any tokens when facing a '++' / '--' suffix in a constant expression
+//     - Fixed/Rewrote list.iterator. You can now safely modify a list without potentially breaking existing iterators to it.
+//     - Fixed a reference leak in non-variadic __thiscall__ functions, leaking their this-argument
+//     - Fixed a crash when trying to delete the last element of a dict
+//     - Fixed a bug that broken sorting for empty lists
+//     - Fixed a few invalid assertions in tuple functions like 'find', 'count', ...
+//     - Fixed fs.query not ignoring case on windows
+//     - Fixed an oversight that allowed the user to change the value of the global 'true' / 'false' constants
+//     - Fixed linkage configuration on linux to actually export the public api
+//     - Fixed a bug that caused pointers to always be displayed in 32-bit when calling the str or repr operator
+//     - functions can now reference themselves without having to do the double-declaration trick:
+//       >> // function callme; // < v100 required you to explicitly forward-declare the function beforehand
+//       >> function callme(n) { print n; if (n) callme(n-1); }
+//       >> callme(10);
+//     - Stack overflow errors in usercode are now being handled by the runtime
+//     - The builtin list type is now thread-safe and can handle callbacks that modify the same list
+//     - The builtin dict type is now thread-safe and can handle callbacks that modify the same dict
+//     - The builtin set type is now thread-safe and can handle callbacks that modify the same set
+//     - Store/Load is now atomic (and therefor thread-safe) for static variables
+//     - Redid the garbage collector after realizing a fatal flaw in the system
+//       It now makes sure that everything depending on an object can be destroyed as
+//       well before actually going ahead and destroying said object itself.
+//       Note though, that no guaranties can be made about the order of destruction,
+//       meaning that during the destruction of such a chain, it is possible to
+//     - lib: <fs> is now macro-safe (added #pragma push_macro around everything)
+//     - lib: <math> is now macro-safe (added #pragma push_macro around everything)
+//     - Fixed a few issues in win32's implementation of readlink, where
+//       directory junctions still sometimes had that \??\-prefix
+//     - Fixed a bug in the wildcard match algorithm, that prevented detected
+//       of some valid patterns. (e.g: '"foo42bar421foobar".wmatch("*421*")' failed because of the '4' after 'foo')
+//       This only affected fs::query in v100, as string::wmatch wasn't added yet
+//     - Fixed a bug that caused yield-function iterators to clean up their stack twice
+//       (and causing all kinds of problems by decref-ing objects more than once)
+//     - Fixed various technical bugs, oversights and security holes in the thread-API
+//     - Fixed a design-problem with how some functions inform their caller of failure
+//       e.g.: 'operator int () -> -1;' // '-1' is was a special value that informed the
+//             caller of the possibility that an error was thrown.
+//       The problem here was that the error may have already been there before
+//       the call, meaning that calling any of these functions was unsafe while
+//       DeeError_OCCURRED() was returning true.
+//       >> Deprecated operators are still available in the c API, but will be removed in 102
+//     - Fixed a SEGFAULT in string.replace
+//     - Fixed the way errors are handled string.splitlines
+//     - Fixed a design-problem with var object constructor operators
+//     - Fixed 'find' and friends returning an out-of-bounds index on
+//       too short strings, also breaking partition in the process.
+//     
+//   Removed:
+//     - Removed extern_function (replaced with foreign_function)
+//       User code remains unchanged.
+//     - Removed some reserved keywords that I'll never use
+//     - Removed a lot of those *_Init functions for objects.
+//       There is on way non-limited code could ever make use of the
+//       advantage they provide by leaving the allocation up to you.
+//       Especially considering the fact that alloc/free is
+//       a sacred cow as it's part of the virtual type method table.
+//       NOTE: I might have missed some. So if you find any, don't use them.
+//       NOTE: Though I'm not talking about the ones that also feature an associated *_Alloc function!
+//     - 'install.sh' and 'fix_permissions.sh'
+//       Both are no longer required as the functionality is now included in 'make.sh'
+//     - Scratched the idea of having a worker thread that invokes gc.collect_now()
+//       Instead, I reworked the runtime so that upon allocation failure (aka. out-of-memory),
+//       various memory-freeing functions are invoked and used to check if we were able
+//       to collect the memory. If something was freed, the allocation is then retried until
+//       it either succeeds or no more memory can be collected. In which case Error.NoMemory is thrown.
+//     - Error.ValueError.RangeError (Was never used and didn't have any purpose)
+//       Use Error.ValueError.IndexError instead
+//     - Removed <deemon/compiler/expr_ast.h>, <.../stmt_ast.h> and <.../scope.h>
+//       They'll come back at some point, but not now and not looking like they did
+//       in v100 (and still look right now).
+//       The problem is, that everything about the compiler is just waaay too messy
+//       right now. So to spare you from the uglyness and headaches when you'd
+//       eventually be forced to port to some new design, I simply made it private.
+//       -> You can still compile code using the high-level functions in <deemon/deemonrun.h>,
+//          as well as preprocess and deemon-format code using the direct interface(s) to the
+//          lexer in <deemon/compiler/lexer.h>.
+//       EDIT: Though they're still not back, a completely new compiler is now in place
+//     - Removed the DeeCodeWriter portion from <deemon/compiler/code.h>
+//     - Removed the need of variable-size objects having to implement DEE_VAR_OBJECT_HEAD.
+//       Instead, they are allowed to manage their size for themselves and simply have
+//       to implement the regular DEE_OBJECT_HEAD protocol (like every other type).
+//       On a related note, the types of variable-size objects can use tp_instance_size
+//       for any kind of custom data.
+//
+//   Known bugs:
+//     - Some minor portions of the runtime are still not threadsafe
+//     - 'DeeMarshal_IsCompiledFile' still contains a seek that can
+//       cause problems if /dev/stdin is used as the input file
+//       without specifying '-in=code' to skip that check
+//     - No way to specify custom arguments to super constructors in user classes
+//       Currently they just get called with the same arguments as your own constructor
+//       The problem is that deemon works similar to c++, where the super constructor
+//       absolutely __must__ be invoked before any other usercode can be allowed to run.
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// -- v100/100 --
+//   Comments:
+//     - Initial Release (Yay!)
+//
+//   Known bugs:
+//     - Marshalling a recursive object (aka. function calling itself,
+//       list containing itself) will cause a stack overflow.
+//
+//////////////////////////////////////////////////////////////////////////
+

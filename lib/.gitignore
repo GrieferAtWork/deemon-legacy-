@@ -1,0 +1,4 @@
+*.dee
+*.out
+!future.dee
+

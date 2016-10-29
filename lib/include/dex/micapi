@@ -1,0 +1,69 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#pragma once
+
+#include <__stddef.dee>
+
+#pragma push_macro("__micapi")
+#pragma push_macro("mic")
+#pragma push_macro("micapi")
+#undef __micapi
+#undef mic
+#undef micapi
+module micapi {
+	__unused local __micapi = __builtin_dex("_micapi");
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> class mic extends file { ... };
+	// >> class mic(unsigned int channels = 1, unsigned int samples_per_sec = 44100, unsigned int bits_per_sample = 16) -> mic;
+	//    @throws Error.SystemError: Couldn't create microphone file.
+	//        - Creates a new microphone file.
+	//        - NOTE: The read operation of this file object blocks until
+	//          data is available.
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> function begin_record() -> none;
+	//    @throws Error.SystemError: Failed to start recording.
+	//        - Starts recording raw audio data, that can then be read from
+	//          this using regular file read operations, such as file.read.
+	//        - WARNING: Don't forget to turn off recording once you're done
+	//          using mic.end_record, as the internal file buffer will
+	//          otherwise grow to infinite size, eventually taking up all
+	//          available memory.
+	//        - Note that once data is read from this file, that memory can
+	//          be re-used for storing more raw audio data, meaning that
+	//          reading data automatically releases that memory, in
+	//          consequence allowing you to keep the mic on, as long as you
+	//          keep reading from this file.
+	//
+	// >> function end_record() -> none;
+	//    @throws Error.SystemError: Failed to stop recording.
+	//        - Stops recording audio after a previous call to
+	//          mic.begin_record.
+	//
+	__unused local mic = __micapi.mic;
+
+}
+#pragma pop_macro("__micapi")
+#pragma pop_macro("mic")
+#pragma pop_macro("micapi")
+

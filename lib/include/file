@@ -1,0 +1,329 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+#pragma push_macro("file")
+#undef file
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class file() -> file
+//       File objects can be used as argument for the print statement.
+//       To specify the output of a print statment, the destination
+//       stream must suffix the 'print' keyword like this:
+//       >> my_file = ...; // Something derived from 'file'
+//       >> print my_file: "Hello!"; // same as 'my_file.write("Hello!\n")'
+//       If not specified, the print statement will stream to 'file.io.stdout'
+//       Or rather the object bound to file.io.stdout during compilation
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class const file.SEEK_SET = 0;
+// >> class const file.SEEK_CUR = 1;
+// >> class const file.SEEK_END = 2;
+//
+// >> operator | (file right) -> file.joined
+//        Returns a joined file object containing both 'this' and 'right'
+// 
+// >> function file.read(size_t max = (size_t)-1) -> string.utf8
+// >> function file.read(none *ptr, size_t size) -> none
+//    @throws Error.IOError
+//        Reads at most 'max' bytes from a stream. Reads 'size' bytes into 'p'
+//
+// >> function file.readall(size_t max = (size_t)-1) -> string.utf8
+// >> function file.readall(none *ptr, size_t size) -> none
+//    @throws Error.IOError
+//        Similar to 'read()', but keeps trying if data can only be read a piece at a time
+//
+// >> function file.write(string.utf8 data) -> none
+// >> function file.write(none *ptr, size_t size) -> none
+//    @throws Error.IOError
+//        Writes 's' to the stream
+//        Same as maybe_write, but retires until no more data is written and raises an IOException
+//
+// >> function file.maybe_read(size_t max = (size_t)-1) -> string.utf8
+// >> function file.maybe_read(none *ptr, size_t size) -> size_t
+//    @throws Error.IOError
+//        Reads at most 'max' bytes from a stream. Reads at most 'size' bytes into 'p' (returns actual amount read)
+//
+// >> function file.maybe_write(string.utf8 data) -> size_t
+// >> function file.maybe_write(none *ptr, size_t size) -> size_t
+//    @throws Error.IOError
+//        Writes 's' or 'size' bytes starting at 'p' to the stream, but returns the actual amount of bytes written
+//
+// >> function file.readline(size_t max = (size_t)-1) -> string.utf8
+//    @throws Error.IOError
+//        Yields a single line of text from the file, automatically
+//        handling universal line feeds and returning lines
+//        with ending line feeds.
+//        NOTE: This function is internally called when
+//              iterating over a file as in 'for (x: file) ...'
+//
+// >> function file.seek(int64_t off, int whence = file.SEEK_SET) -> uint64_t
+//    @throws Error.IOError
+//        Sets the r/w pointer position within a file and returns the new position from the SEEK_SET
+//
+// >> function file.setpos(uint64_t pos) -> none
+//    @throws Error.IOError
+//        Sets the r/w pointer position within a file
+//        Same as 'seek(pos,SEEK_SET)'
+//
+// >> function file.rewind() -> none
+//    @throws Error.IOError
+//        Places the r/w pointer at the beginning of the file
+//        Same as 'seek(0,SEEK_SET)'
+//
+// >> function file.trunc() -> none
+//    @throws Error.IOError
+//        Truncates the file to end at the current r/w pointer position
+//
+// >> function file.tell() -> uint64_t
+//    @throws Error.IOError
+//        Returns the current position of the r/w pointer position
+//        Same as 'seek(0,file.SEEK_CUR)'
+//
+// >> function file.size() -> uint64_t
+//    @throws Error.IOError
+//        Returns the size of the file
+//        Same as: '({
+//          local o = this.seek(0,file.SEEK_CUR);
+//          local r = this.seek(0,file.SEEK_END);
+//          this.seek(o,file.SEEK_SET);
+//          r;
+//        })'
+//
+// >> function file.flush() -> none
+//    @throws Error.IOError
+//        Flushes any unwritten data onto the disk and releases unused buffers.
+//        May be a no-op
+//
+// >> function file.close() -> none
+//        Closes a file, possibly causing any
+//        subsequence calls to other members to fail.
+//        May be a no-op.
+//        No-op if the stream was already closed.
+//
+// >> function file.getc() -> uint8_t
+//    @throws Error.IOError
+//        Reads one byte and returns it
+//
+// >> function file.putc(uint8_t ch) -> none
+//    @throws Error.IOError
+//        Writes one byte
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class file.io(string.T filename, string.utf8 mode = "r") -> file.io
+//    @throws Error.IOError
+//        Supported modes: "r", "w", "a", "r+", "w+", "a+"
+//        Generic file stream
+//        If 'filename' describes a directory no error is thrown
+//        and calls to 'this.dir()' are allowed.
+//        But attempting to write to the directory might cause an error
+//        depending on the host system's rules for writing to directories.
+//        HINT: Since we can't open directories on windows,
+//              doing so on that platform returns a file.io object
+//              an invalid file handle (aka. INVALID_FILE_HANDLE).
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> function file.io.fileno() -> none * // __WINDOWS__
+// >> function file.io.fileno() -> int    // __POSIX__
+//    @throws Error.SystemError
+//        Return the file number for the opened file
+//
+// >> property file.io.file -> string.T
+//        Returns the filename that was used to open the file
+//
+// >> property file.io.mode -> string
+//        Returns the mode that was used to open the file
+//
+// >> function file.io.reopen(string.T filename, string.utf8 mode = "r") -> none
+//    @throws Error.IOError
+//        Reopens a new file with a new configuration
+//
+// >> function file.io.gettimes() -> (time,time,time)
+//    @throws Error.SystemError
+//        Same as 'fs.gettimes(this)'
+//
+// >> function file.io.getatime() -> time
+//    @throws Error.SystemError
+//        Same as 'fs.getatime(this)'
+//
+// >> function file.io.getctime() -> time
+//    @throws Error.SystemError
+//        Same as 'fs.getctime(this)'
+//
+// >> function file.io.getmtime() -> time
+//    @throws Error.SystemError
+//        Same as 'fs.getmtime(this)'
+//
+// >> function file.io.settimes(time tm_access)
+// >> function file.io.settimes(time tm_access, time tm_creation)
+// >> function file.io.settimes(time tm_access, time tm_creation, time tm_modification)
+//    @throws Error.SystemError
+//        Same as 'fs.settimes(this,tm_access,tm_creation,tm_modification)'
+//
+// >> function file.io.setatime(time tm_access)
+//    @throws Error.SystemError
+//        Same as 'fs.setatime(this,tm_access)'
+//
+// >> function file.io.setctime(time tm_creation)
+//    @throws Error.SystemError
+//        Same as 'fs.setctime(this,tm_creation)'
+//        NOTE: Can only work under windows (Linux only lets you change the other two)
+//
+// >> function file.io.setmtime(time tm_modification)
+//    @throws Error.SystemError
+//        Same as 'fs.setmtime(this,tm_modification)'
+//
+// >> function file.io.isfile() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.isfile(this)'
+//
+// >> function file.io.isdir() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.isdir(this)'
+//
+// >> function file.io.islink() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.islink(this)'
+//
+// >> function file.io.isdrive() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.isdrive(this)'
+//
+// >> function file.io.ismount() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.ismount(this)'
+//
+// >> function file.io.ishidden() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.ishidden(this)'
+//
+// >> function file.io.isxfile() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.isxfile(this)'
+//
+// >> function file.io.ischrdev() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.ischrdev(this)'
+//
+// >> function file.io.isblkdev() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.isblkdev(this)'
+//
+// >> function file.io.isfifo() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.isfifo(this)'
+//
+// >> function file.io.issocket() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.issocket(this)'
+//
+// >> function file.io.dir() -> bool
+//    @throws Error.SystemError
+//        Same as 'fs.dir(this)'
+//
+// >> class property file.io.stdin -> file
+// >> class property file.io.__stdin -> file
+//        Returns a file object bound to stdin
+//
+// >> class property file.io.stdout -> file
+// >> class property file.io.__stdout -> file
+//        Returns a file object bound to stdout
+//
+// >> class property file.io.stderr -> file
+// >> class property file.io.__stderr -> file
+//        Returns a file object bound to stderr
+//
+// >> class property file.io.stdnull -> file
+// >> class property file.io.__stdnull -> file
+//        Returns a file object bound to /dev/null
+//
+// >> class property file.io.stddbg -> file
+// >> class property file.io.__stddbg -> file
+//        Returns a file object bound to stderr [__POSIX__]
+//        Returns a file object bound to OutputDebugString [__WINDOWS__]
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class file.reader(string data) -> file.reader
+//        Generic read-only memory stream
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> property data -> string;
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class file.writer() -> file.writer
+//        Generic read-write memory stream
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> function file.writer.pack() -> string
+//        Packs and returns all data previously written to the stream
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class file.joined(file a, file b) -> file.joined
+//        Create a file object that can be used to write into two files at once
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> member file ob_fa;
+// >> member file ob_fb;
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class file.iterator(file fp) -> file.iterator
+//        Creates an iterator for a given file (same as 'fp.__iterself__()')
+//
+//////////////////////////////////////////////////////////////////////////
+
+const file = __builtin_object(0x0067);
+#pragma pop_macro("file")
+
+
+
+

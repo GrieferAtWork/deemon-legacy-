@@ -1,0 +1,86 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__cxxdefault.dee>
+#include <__deemon_chartraits.dee>
+
+#pragma push_macro("isalnum")
+#pragma push_macro("isalpha")
+#pragma push_macro("isblank")
+#pragma push_macro("iscntrl")
+#pragma push_macro("isdigit")
+#pragma push_macro("isgraph")
+#pragma push_macro("islower")
+#pragma push_macro("isprint")
+#pragma push_macro("ispunct")
+#pragma push_macro("isspace")
+#pragma push_macro("isupper")
+#pragma push_macro("isxdigit")
+#pragma push_macro("tolower")
+#pragma push_macro("toupper")
+#undef isalnum
+#undef isalpha
+#undef isblank
+#undef iscntrl
+#undef isdigit
+#undef isgraph
+#undef islower
+#undef isprint
+#undef ispunct
+#undef isspace
+#undef isupper
+#undef isxdigit
+#undef tolower
+#undef toupper
+
+module std {
+
+	local constexpr function isalnum(__c) -> __deemon_isalnum(__c);
+	local constexpr function isalpha(__c) -> __deemon_isalpha(__c);
+	local constexpr function isblank(__c) -> __deemon_isblank(__c);
+	local constexpr function iscntrl(__c) -> __deemon_iscntrl(__c);
+	local constexpr function isdigit(__c) -> __deemon_isdigit(__c);
+	local constexpr function isgraph(__c) -> __deemon_isgraph(__c);
+	local constexpr function islower(__c) -> __deemon_islower(__c);
+	local constexpr function isprint(__c) -> __deemon_isprint(__c);
+	local constexpr function ispunct(__c) -> __deemon_ispunct(__c);
+	local constexpr function isspace(__c) -> __deemon_isspace(__c);
+	local constexpr function isupper(__c) -> __deemon_isupper(__c);
+	local constexpr function isxdigit(__c) -> __deemon_isxdigit(__c);
+	local constexpr function tolower(__c) -> __deemon_tolower(__c);
+	local constexpr function toupper(__c) -> __deemon_toupper(__c);
+
+}
+
+#pragma pop_macro("isalnum")
+#pragma pop_macro("isalpha")
+#pragma pop_macro("isblank")
+#pragma pop_macro("iscntrl")
+#pragma pop_macro("isdigit")
+#pragma pop_macro("isgraph")
+#pragma pop_macro("islower")
+#pragma pop_macro("isprint")
+#pragma pop_macro("ispunct")
+#pragma pop_macro("isspace")
+#pragma pop_macro("isupper")
+#pragma pop_macro("isxdigit")
+#pragma pop_macro("tolower")
+#pragma pop_macro("toupper")

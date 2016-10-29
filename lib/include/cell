@@ -1,0 +1,87 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+#if __API_VERSION__ < 101
+#	error "API Version too old for this header"
+#endif
+
+#pragma push_macro("cell")
+#undef cell
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class cell() -> cell
+// >> class cell(object ob) -> cell
+//        Container for a single, interchangeable object.
+//        This is the type used by the following syntax:
+//        >> x = <42>; // 'x' is a cell containing the integer '42'
+// >> copy(cell right);
+// >> move(cell right);
+// >> operator copy = (cell right);
+// >> operator move = (cell right);
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> operator str() -> string;
+// >> operator repr() -> string;
+//
+// >> operator = (object value);
+//        Same as calling 'this.set(value)'
+//
+// >> operator < (cell right) -> bool;
+// >> operator <= (cell right) -> bool;
+// >> operator == (cell right) -> bool;
+// >> operator != (cell right) -> bool;
+// >> operator > (cell right) -> bool;
+// >> operator >= (cell right) -> bool;
+//        Compares the ids of stored objects
+//        - Only two cells storing the same instance of an object compare equal
+//        - Two empty cells compare equal as well
+//
+// >> operator !() -> bool;
+// >> operator bool() -> bool;
+//        Returns true/false if an object is stored
+//        NOTE: Value has no meaning in a multi-threaded context
+//
+// >> function get() -> object
+// >> function get(object fallback) -> object
+//    @throws Error.ValueError: No stored object and no fallback specified
+//        Returns the stored object or 'fallback'
+//
+// >> function del() -> none
+//        Deletes the stored object. No-op if no object is stored
+//
+// >> function set(object v) -> none
+//        Overwrites the stored object, replacing it with 'v'
+//
+// >> function exchange(object v) -> object
+// >> function exchange(object v, object fallback) -> object
+//    @throws Error.ValueError: No stored object and no fallback specified
+//        Exchange the stored object with 'v', returning the old or 'fallback'
+//
+// >> property value -> object = { get,del,set }
+//        Property-style alias for get(), del() and set()
+//
+const cell = __builtin_object(0x01C4);
+
+#pragma pop_macro("cell")

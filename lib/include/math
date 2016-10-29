@@ -1,0 +1,777 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+#include <__stddef.dee>
+
+#pragma push_macro("abs")
+#pragma push_macro("acos")
+#pragma push_macro("acosh")
+#pragma push_macro("asin")
+#pragma push_macro("asincos")
+#pragma push_macro("asincosh")
+#pragma push_macro("asinh")
+#pragma push_macro("atan")
+#pragma push_macro("atan2")
+#pragma push_macro("atanh")
+#pragma push_macro("cbrt")
+#pragma push_macro("ceil")
+#pragma push_macro("ceilf")
+#pragma push_macro("copysign")
+#pragma push_macro("cos")
+#pragma push_macro("cosh")
+#pragma push_macro("erf")
+#pragma push_macro("exp")
+#pragma push_macro("exp2")
+#pragma push_macro("expm1")
+#pragma push_macro("fdim")
+#pragma push_macro("floor")
+#pragma push_macro("floorf")
+#pragma push_macro("fmod")
+#pragma push_macro("frexp")
+#pragma push_macro("hypot")
+#pragma push_macro("i32rint")
+#pragma push_macro("i32round")
+#pragma push_macro("i64rint")
+#pragma push_macro("i64round")
+#pragma push_macro("ilogb")
+#pragma push_macro("isfinite")
+#pragma push_macro("isgreater")
+#pragma push_macro("isgreaterequal")
+#pragma push_macro("isinf")
+#pragma push_macro("isless")
+#pragma push_macro("islessequal")
+#pragma push_macro("islessgreater")
+#pragma push_macro("isnan")
+#pragma push_macro("isnormal")
+#pragma push_macro("isunordered")
+#pragma push_macro("lgamma")
+#pragma push_macro("llrint")
+#pragma push_macro("llround")
+#pragma push_macro("log")
+#pragma push_macro("log10")
+#pragma push_macro("log1p")
+#pragma push_macro("log1p")
+#pragma push_macro("log2")
+#pragma push_macro("logb")
+#pragma push_macro("lrint")
+#pragma push_macro("lround")
+#pragma push_macro("math")
+#pragma push_macro("max")
+#pragma push_macro("min")
+#pragma push_macro("modf")
+#pragma push_macro("nearbyint")
+#pragma push_macro("nextafter")
+#pragma push_macro("nexttoward")
+#pragma push_macro("pow")
+#pragma push_macro("remainder")
+#pragma push_macro("remquo")
+#pragma push_macro("rint")
+#pragma push_macro("round")
+#pragma push_macro("roundf")
+#pragma push_macro("scalbi32n")
+#pragma push_macro("scalbn")
+#pragma push_macro("signbit")
+#pragma push_macro("sin")
+#pragma push_macro("sincos")
+#pragma push_macro("sincosh")
+#pragma push_macro("sinh")
+#pragma push_macro("sqr")
+#pragma push_macro("sqrt")
+#pragma push_macro("tan")
+#pragma push_macro("tanh")
+#pragma push_macro("tgamma")
+#pragma push_macro("truncf")
+#undef abs
+#undef acos
+#undef acosh
+#undef asin
+#undef asincos
+#undef asincosh
+#undef asinh
+#undef atan
+#undef atan2
+#undef atanh
+#undef cbrt
+#undef ceil
+#undef ceilf
+#undef copysign
+#undef cos
+#undef cosh
+#undef erf
+#undef exp
+#undef exp2
+#undef expm1
+#undef fdim
+#undef floor
+#undef floorf
+#undef fmod
+#undef frexp
+#undef hypot
+#undef i32rint
+#undef i32round
+#undef i64rint
+#undef i64round
+#undef ilogb
+#undef isfinite
+#undef isgreater
+#undef isgreaterequal
+#undef isinf
+#undef isless
+#undef islessequal
+#undef islessgreater
+#undef isnan
+#undef isnormal
+#undef isunordered
+#undef lgamma
+#undef llrint
+#undef llround
+#undef log
+#undef log10
+#undef log1p
+#undef log2
+#undef logb
+#undef lrint
+#undef lround
+#undef math
+#undef max
+#undef min
+#undef modf
+#undef nearbyint
+#undef nextafter
+#undef nexttoward
+#undef pow
+#undef remainder
+#undef remquo
+#undef rint
+#undef round
+#undef roundf
+#undef scalbi32n
+#undef scalbn
+#undef signbit
+#undef sin
+#undef sincos
+#undef sincosh
+#undef sinh
+#undef sqr
+#undef sqrt
+#undef tan
+#undef tanh
+#undef tgamma
+#undef truncf
+
+module math {
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::sin(float x) -> float
+	// constexpr function math::sin(double x) -> double
+	// constexpr function math::sin(long double x) -> long double
+	local const sin = __builtin_object(0x0119);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::cos(float x) -> float
+	// constexpr function math::cos(double x) -> double
+	// constexpr function math::cos(long double x) -> long double
+	local const cos = __builtin_object(0x011A);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::tan(float x) -> float
+	// constexpr function math::tan(double x) -> double
+	// constexpr function math::tan(long double x) -> long double
+	local const tan = __builtin_object(0x011B);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::sincos(float x) -> (float,float)
+	// constexpr function math::sincos(double x) -> (double,double)
+	// constexpr function math::sincos(long double x) -> (long double,long double)
+	local const sincos = __builtin_object(0x011C);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::asin(float x) -> float
+	// constexpr function math::asin(double x) -> double
+	// constexpr function math::asin(long double x) -> long double
+	local const asin = __builtin_object(0x011D);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::acos(float x) -> float
+	// constexpr function math::acos(double x) -> double
+	// constexpr function math::acos(long double x) -> long double
+	local const acos = __builtin_object(0x011E);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::atan(float x) -> float
+	// constexpr function math::atan(double x) -> double
+	// constexpr function math::atan(long double x) -> long double
+	local const atan = __builtin_object(0x011F);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::atan2(float y, float x) -> float
+	// constexpr function math::atan2(double y, double x) -> double
+	// constexpr function math::atan2(long double y, long double x) -> long double
+	local const atan2 = __builtin_object(0x0120);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::asincos(float x) -> (float,float)
+	// constexpr function math::asincos(double x) -> (double,double)
+	// constexpr function math::asincos(long double x) -> (long double,long double)
+	local const asincos = __builtin_object(0x0121);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::sinh(float x) -> float
+	// constexpr function math::sinh(double x) -> double
+	// constexpr function math::sinh(long double x) -> long double
+	local const sinh = __builtin_object(0x0122);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::cosh(float x) -> float
+	// constexpr function math::cosh(double x) -> double
+	// constexpr function math::cosh(long double x) -> long double
+	local const cosh = __builtin_object(0x0123);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::tanh(float x) -> float
+	// constexpr function math::tanh(double x) -> double
+	// constexpr function math::tanh(long double x) -> long double
+	local const tanh = __builtin_object(0x0124);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::sincosh(float x) -> (float,float)
+	// constexpr function math::sincosh(double x) -> (double,double)
+	// constexpr function math::sincosh(long double x) -> (long double,long double)
+	local const sincosh = __builtin_object(0x0125);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::asinh(float x) -> float
+	// constexpr function math::asinh(double x) -> double
+	// constexpr function math::asinh(long double x) -> long double
+	local const asinh = __builtin_object(0x0126);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::acosh(float x) -> float
+	// constexpr function math::acosh(double x) -> double
+	// constexpr function math::acosh(long double x) -> long double
+	local const acosh = __builtin_object(0x0127);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::atanh(float x) -> float
+	// constexpr function math::atanh(double x) -> double
+	// constexpr function math::atanh(long double x) -> long double
+	local const atanh = __builtin_object(0x0128);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::asincosh(float x) -> (float,float)
+	// constexpr function math::asincosh(double x) -> (double,double)
+	// constexpr function math::asincosh(long double x) -> (long double,long double)
+	local const asincosh = __builtin_object(0x0129);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::exp(float x) -> float
+	// constexpr function math::exp(double x) -> double
+	// constexpr function math::exp(long double x) -> long double
+	local const exp = __builtin_object(0x012A);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::frexp(float x) -> (float,int)
+	// constexpr function math::frexp(double x) -> (double,int)
+	// constexpr function math::frexp(long double x) -> (long double,int)
+	local const frexp = __builtin_object(0x012B);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::log(float x) -> float
+	// constexpr function math::log(double x) -> double
+	// constexpr function math::log(long double x) -> long double
+	local const log = __builtin_object(0x012C);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::log10(float x) -> float
+	// constexpr function math::log10(double x) -> double
+	// constexpr function math::log10(long double x) -> long double
+	local const log10 = __builtin_object(0x012D);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::modf(float x) -> (float,float)
+	// constexpr function math::modf(double x) -> (double,double)
+	// constexpr function math::modf(long double x) -> (long double,long double)
+	local const modf = __builtin_object(0x012E);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::exp2(float x) -> float
+	// constexpr function math::exp2(double x) -> double
+	// constexpr function math::exp2(long double x) -> long double
+	local const exp2 = __builtin_object(0x012F);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::expm1(float x) -> float
+	// constexpr function math::expm1(double x) -> double
+	// constexpr function math::expm1(long double x) -> long double
+	local const expm1 = __builtin_object(0x0130);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::ilogb(float x) -> int
+	// constexpr function math::ilogb(double x) -> int
+	// constexpr function math::ilogb(long double x) -> int
+	local const ilogb = __builtin_object(0x0131);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::log1p(float x) -> float
+	// constexpr function math::log1p(double x) -> double
+	// constexpr function math::log1p(long double x) -> long double
+	local const log1p = __builtin_object(0x0132);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::log2(float x) -> float
+	// constexpr function math::log2(double x) -> double
+	// constexpr function math::log2(long double x) -> long double
+	local const log2 = __builtin_object(0x0133);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::logb(float x) -> float
+	// constexpr function math::logb(double x) -> double
+	// constexpr function math::logb(long double x) -> long double
+	local const logb = __builtin_object(0x0134);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::scalbn(float x, int n) -> float
+	// constexpr function math::scalbn(double x, int n) -> double
+	// constexpr function math::scalbn(long double x, int n) -> long double
+	local const scalbn = __builtin_object(0x0135);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::scalbn(float x, int32_t n) -> float
+	// constexpr function math::scalbn(double x, int32_t n) -> double
+	// constexpr function math::scalbn(long double x, int32_t n) -> long double
+	local const scalbi32n = __builtin_object(0x0136);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::pow(float x, float y) -> float
+	// constexpr function math::pow(double x, double y) -> double
+	// constexpr function math::pow(long double x, long double y) -> long double
+	local const pow = __builtin_object(0x0055);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::sqrt(float x) -> float
+	// constexpr function math::sqrt(double x) -> double
+	// constexpr function math::sqrt(long double x) -> long double
+	local const sqrt = __builtin_object(0x0137);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::cbrt(float x) -> float
+	// constexpr function math::cbrt(double x) -> double
+	// constexpr function math::cbrt(long double x) -> long double
+	local const cbrt = __builtin_object(0x0138);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::hypot(float x, float y) -> float
+	// constexpr function math::hypot(double x, double y) -> double
+	// constexpr function math::hypot(long double x, long double y) -> long double
+	local const hypot = __builtin_object(0x0139);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::erf(float x) -> float
+	// constexpr function math::erf(double x) -> double
+	// constexpr function math::erf(long double x) -> long double
+	local const erf = __builtin_object(0x013A);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::tgamma(float x) -> float
+	// constexpr function math::tgamma(double x) -> double
+	// constexpr function math::tgamma(long double x) -> long double
+	local const tgamma = __builtin_object(0x013B);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::lgamma(float x) -> float
+	// constexpr function math::lgamma(double x) -> double
+	// constexpr function math::lgamma(long double x) -> long double
+	local const lgamma = __builtin_object(0x013C);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::ceilf(float x) -> float
+	// constexpr function math::ceilf(double x) -> double
+	// constexpr function math::ceilf(long double x) -> long double
+	local const ceilf = __builtin_object(0x013D);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::floorf(float x) -> float
+	// constexpr function math::floorf(double x) -> double
+	// constexpr function math::floorf(long double x) -> long double
+	local const floorf = __builtin_object(0x013E);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::truncf(float x) -> float
+	// constexpr function math::truncf(double x) -> double
+	// constexpr function math::truncf(long double x) -> long double
+	local const truncf = __builtin_object(0x013F);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::roundf(float x) -> float
+	// constexpr function math::roundf(double x) -> double
+	// constexpr function math::roundf(long double x) -> long double
+	local const roundf = __builtin_object(0x0140);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::i32round(float x) -> int32_t
+	// constexpr function math::i32round(double x) -> int32_t
+	// constexpr function math::i32round(long double x) -> int32_t
+	local const i32round = __builtin_object(0x0141);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::i64round(float x) -> int64_t
+	// constexpr function math::i64round(double x) -> int64_t
+	// constexpr function math::i64round(long double x) -> int64_t
+	local const i64round = __builtin_object(0x0142);
+
+#if __API_VERSION__ >= 101
+#ifdef __SIZEOF_LONG__
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::lround(float x) -> long
+	// constexpr function math::lround(double x) -> long
+	// constexpr function math::lround(long double x) -> long
+#if __SIZEOF_LONG__ == 4
+	local const lround = __builtin_object(0x0141);
+#elif __SIZEOF_LONG__ == 8
+	local const lround = __builtin_object(0x0142);
+#elif __SIZEOF_LONG__ <= 4
+	local constexpr function lround(__x) -> (long)__builtin_object(0x0141)(__x);
+#else
+	local constexpr function lround(__x) -> (long)__builtin_object(0x0142)(__x);
+#endif
+#endif
+
+#ifdef __SIZEOF_LONG_LONG__
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::llround(float x) -> long long
+	// constexpr function math::llround(double x) -> long long
+	// constexpr function math::llround(long double x) -> long long
+#if __SIZEOF_LONG_LONG__ == 4
+	local const llround = __builtin_object(0x0141);
+#elif __SIZEOF_LONG_LONG__ == 8
+	local const llround = __builtin_object(0x0142);
+#elif __SIZEOF_LONG_LONG__ <= 4
+	local constexpr function llround(__x) -> (long long)__builtin_object(0x0141)(__x);
+#else
+	local constexpr function llround(__x) -> (long long)__builtin_object(0x0142)(__x);
+#endif
+#endif
+#endif
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::fmod(float number, float denom) -> float
+	// constexpr function math::fmod(double number, double denom) -> double
+	// constexpr function math::fmod(long double number, long double denom) -> long double
+	local const fmod = __builtin_object(0x0143);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::rint(float x) -> float
+	// constexpr function math::rint(double x) -> double
+	// constexpr function math::rint(long double x) -> long double
+	local const rint = __builtin_object(0x0144);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::i32rint(float x) -> int32_t
+	// constexpr function math::i32rint(double x) -> int32_t
+	// constexpr function math::i32rint(long double x) -> int32_t
+	local const i32rint = __builtin_object(0x0145);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::i64rint(float x) -> int64_t
+	// constexpr function math::i64rint(double x) -> int64_t
+	// constexpr function math::i64rint(long double x) -> int64_t
+	local const i64rint = __builtin_object(0x0146);
+
+#if __API_VERSION__ >= 101
+#ifdef __SIZEOF_LONG__
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::lrint(float x) -> long
+	// constexpr function math::lrint(double x) -> long
+	// constexpr function math::lrint(long double x) -> long
+#if __SIZEOF_LONG__ == 4
+	local const lrint = __builtin_object(0x0145);
+#elif __SIZEOF_LONG__ == 8
+	local const lrint = __builtin_object(0x0146);
+#elif __SIZEOF_LONG__ <= 4
+	local constexpr function lrint(__x) -> (long)__builtin_object(0x0145)(__x);
+#else
+	local constexpr function lrint(__x) -> (long)__builtin_object(0x0146)(__x);
+#endif
+#endif
+
+#ifdef __SIZEOF_LONG_LONG__
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::llrint(float x) -> long long
+	// constexpr function math::llrint(double x) -> long long
+	// constexpr function math::llrint(long double x) -> long long
+#if __SIZEOF_LONG_LONG__ == 4
+	local const llrint = __builtin_object(0x0145);
+#elif __SIZEOF_LONG_LONG__ == 8
+	local const llrint = __builtin_object(0x0146);
+#elif __SIZEOF_LONG_LONG__ <= 4
+	local constexpr function llrint(__x) -> (long long)__builtin_object(0x0145)(__x);
+#else
+	local constexpr function llrint(__x) -> (long long)__builtin_object(0x0146)(__x);
+#endif
+#endif
+#endif
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::nearbyint(float x) -> float
+	// constexpr function math::nearbyint(double x) -> double
+	// constexpr function math::nearbyint(long double x) -> long double
+	local const nearbyint = __builtin_object(0x0147);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::remainder(float number, float denom) -> float
+	// constexpr function math::remainder(double number, double denom) -> double
+	// constexpr function math::remainder(long double number, long double denom) -> long double
+	local const remainder = __builtin_object(0x0148);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::remquo(float x, float y) -> (float,int)
+	// constexpr function math::remquo(double x, double y) -> (double,int)
+	// constexpr function math::remquo(long double x, long double y) -> (long double,int)
+	local const remquo = __builtin_object(0x0149);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::copysign(float x, float y) -> float
+	// constexpr function math::copysign(double x, double y) -> double
+	// constexpr function math::copysign(long double x, long double y) -> long double
+	local const copysign = __builtin_object(0x014A);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::nextafter(float x, float y) -> float
+	// constexpr function math::nextafter(double x, double y) -> double
+	// constexpr function math::nextafter(long double x, long double y) -> long double
+	local const nextafter = __builtin_object(0x014B);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::nexttoward(float x, long double y) -> float
+	// constexpr function math::nexttoward(double x, long double y) -> double
+	// constexpr function math::nexttoward(long double x, long double y) -> long double
+	local const nexttoward = __builtin_object(0x014C);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::fdim(float x, float y) -> float
+	// constexpr function math::fdim(double x, double y) -> double
+	// constexpr function math::fdim(long double x, long double y) -> long double
+	local const fdim = __builtin_object(0x014D);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::isfinite(float x) -> bool
+	// constexpr function math::isfinite(double x) -> bool
+	// constexpr function math::isfinite(long double x) -> bool
+	local const isfinite = __builtin_object(0x014E);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::isinf(float x) -> bool
+	// constexpr function math::isinf(double x) -> bool
+	// constexpr function math::isinf(long double x) -> bool
+	local const isinf = __builtin_object(0x014F);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::isnan(float x) -> bool
+	// constexpr function math::isnan(double x) -> bool
+	// constexpr function math::isnan(long double x) -> bool
+	local const isnan = __builtin_object(0x0150);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::isnormal(float x) -> bool
+	// constexpr function math::isnormal(double x) -> bool
+	// constexpr function math::isnormal(long double x) -> bool
+	local const isnormal = __builtin_object(0x0151);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::signbit(float x) -> bool
+	// constexpr function math::signbit(double x) -> bool
+	// constexpr function math::signbit(long double x) -> bool
+	local const signbit = __builtin_object(0x0152);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::isgreater(float x, float y) -> bool
+	// constexpr function math::isgreater(double x, double y) -> bool
+	// constexpr function math::isgreater(long double x, long double y) -> bool
+	local const isgreater = __builtin_object(0x0153);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::isgreaterequal(float x, float y) -> bool
+	// constexpr function math::isgreaterequal(double x, double y) -> bool
+	// constexpr function math::isgreaterequal(long double x, long double y) -> bool
+	local const isgreaterequal = __builtin_object(0x0154);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::isless(float x, float y) -> bool
+	// constexpr function math::isless(double x, double y) -> bool
+	// constexpr function math::isless(long double x, long double y) -> bool
+	local const isless = __builtin_object(0x0155);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::islessequal(float x, float y) -> bool
+	// constexpr function math::islessequal(double x, double y) -> bool
+	// constexpr function math::islessequal(long double x, long double y) -> bool
+	local const islessequal = __builtin_object(0x0156);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::islessgreater(float x, float y) -> bool
+	// constexpr function math::islessgreater(double x, double y) -> bool
+	// constexpr function math::islessgreater(long double x, long double y) -> bool
+	local const islessgreater = __builtin_object(0x0157);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::isunordered(float x, float y) -> bool
+	// constexpr function math::isunordered(double x, double y) -> bool
+	// constexpr function math::isunordered(long double x, long double y) -> bool
+	local const isunordered = __builtin_object(0x0158);
+
+
+// Functions shared with <util>
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::min(object args...) -> object
+	//     Returns the lowers element of 'args'
+	//     Objects are always compared with the current winner as lhs operand
+	local const min = __builtin_object(0x0102);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::max(object args...) -> object
+	//     Returns the greatest element of 'args'
+	//     Objects are always compared with the current winner as lhs operand
+	local const max = __builtin_object(0x0103);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::abs(int8_t x) -> int8_t
+	// constexpr function math::abs(int16_t x) -> int16_t
+	// constexpr function math::abs(int32_t x) -> int32_t
+	// constexpr function math::abs(int64_t x) -> int64_t
+	// constexpr function math::abs(uint8_t x) -> uint8_t
+	// constexpr function math::abs(uint16_t x) -> uint16_t
+	// constexpr function math::abs(uint32_t x) -> uint32_t
+	// constexpr function math::abs(uint64_t x) -> uint64_t
+	// constexpr function math::abs(float x) -> float
+	// constexpr function math::abs(double x) -> double
+	// constexpr function math::abs(long double x) -> long double
+	//     Returns the absolute value of 'x'
+	// constexpr function abs(object x) -> object
+	//     Returns the absolute value of 'x'
+	//     equivalent to the following:
+	//     >> function abs(object x) {
+	//     >> 	if (x < (int)0) return -x;
+	//     >> 	return x;
+	//     >> }
+ 	local const abs = __builtin_object(0x010A);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::sqr(object x) -> object
+	//     Returns the sqare of 'x', that is 'x*x'
+	//     >> local const sqr = function [[__name__("sqr")]](x) -> x*x;
+	local const sqr = __builtin_object(0x0108);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::ceil(double x) -> int
+	//     Returns the ceiled integral value of a given double 'x'
+	local const ceil = __builtin_object(0x010B);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::floor(double x) -> int
+	//     Returns the floored integral value of a given double 'x'
+	local const floor = __builtin_object(0x010C);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function math::round(double x) -> int
+	//     Returns the rounded integral value of a given double 'x'
+	local const round = __builtin_object(0x010D);
+
+}
+
+#pragma pop_macro("abs")
+#pragma pop_macro("acos")
+#pragma pop_macro("acosh")
+#pragma pop_macro("asin")
+#pragma pop_macro("asincos")
+#pragma pop_macro("asincosh")
+#pragma pop_macro("asinh")
+#pragma pop_macro("atan")
+#pragma pop_macro("atan2")
+#pragma pop_macro("atanh")
+#pragma pop_macro("cbrt")
+#pragma pop_macro("ceil")
+#pragma pop_macro("ceilf")
+#pragma pop_macro("copysign")
+#pragma pop_macro("cos")
+#pragma pop_macro("cosh")
+#pragma pop_macro("erf")
+#pragma pop_macro("exp")
+#pragma pop_macro("exp2")
+#pragma pop_macro("expm1")
+#pragma pop_macro("fdim")
+#pragma pop_macro("floor")
+#pragma pop_macro("floorf")
+#pragma pop_macro("fmod")
+#pragma pop_macro("frexp")
+#pragma pop_macro("hypot")
+#pragma pop_macro("i32rint")
+#pragma pop_macro("i32round")
+#pragma pop_macro("i64rint")
+#pragma pop_macro("i64round")
+#pragma pop_macro("ilogb")
+#pragma pop_macro("isfinite")
+#pragma pop_macro("isgreater")
+#pragma pop_macro("isgreaterequal")
+#pragma pop_macro("isinf")
+#pragma pop_macro("isless")
+#pragma pop_macro("islessequal")
+#pragma pop_macro("islessgreater")
+#pragma pop_macro("isnan")
+#pragma pop_macro("isnormal")
+#pragma pop_macro("isunordered")
+#pragma pop_macro("lgamma")
+#pragma pop_macro("llrint")
+#pragma pop_macro("llround")
+#pragma pop_macro("log")
+#pragma pop_macro("log10")
+#pragma pop_macro("log1p")
+#pragma pop_macro("log2")
+#pragma pop_macro("logb")
+#pragma pop_macro("lrint")
+#pragma pop_macro("lround")
+#pragma pop_macro("math")
+#pragma pop_macro("max")
+#pragma pop_macro("min")
+#pragma pop_macro("modf")
+#pragma pop_macro("nearbyint")
+#pragma pop_macro("nextafter")
+#pragma pop_macro("nexttoward")
+#pragma pop_macro("pow")
+#pragma pop_macro("remainder")
+#pragma pop_macro("remquo")
+#pragma pop_macro("rint")
+#pragma pop_macro("round")
+#pragma pop_macro("roundf")
+#pragma pop_macro("scalbi32n")
+#pragma pop_macro("scalbn")
+#pragma pop_macro("signbit")
+#pragma pop_macro("sin")
+#pragma pop_macro("sincos")
+#pragma pop_macro("sincosh")
+#pragma pop_macro("sinh")
+#pragma pop_macro("sqr")
+#pragma pop_macro("sqrt")
+#pragma pop_macro("tan")
+#pragma pop_macro("tanh")
+#pragma pop_macro("tgamma")
+#pragma pop_macro("truncf")

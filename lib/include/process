@@ -1,0 +1,232 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+#if __API_VERSION__ < 101
+#	error "API Version too old for this header"
+#endif
+
+#if !__has_extension(__process__)
+#	error "Deemon was compiled without process support or this platform doesn't support processes"
+#endif
+
+#pragma push_macro("process_id")
+#pragma push_macro("process_return")
+#pragma push_macro("process")
+#undef process_id
+#undef process_return
+#undef process
+
+const process_id = unsigned __int32;
+const process_return = unsigned __int32;
+
+//////////////////////////////////////////////////////////////////////////
+//
+// >> process(string.T cmd)
+// >> process(string.T exe, string.T args)
+//        Creates a new non-reference process that will execute the given parameters.
+//        Note, that the commandline is extremly environment-depending and
+//        that deemon does not implement any special unification other than
+//        VFS file names for the executable portion on windows.
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// >> class function enum() -> iterable(process...);
+//    @throws Error.SystemError: Failed to enumerate processes
+//        Enumerates all running processes visible to the caller.
+//        The returned list of processes can also be found in fs::dir("/proc/"),
+//        something that works on both windows (using the vfs) and posix (natively).
+//        All processes returned are process references.
+//
+// >> class function self() -> process
+//        Returns a special process object that describes the current process.
+//        This process is basically a reference, but has special permissions
+//        for various operations under different circumstances.
+//
+// >> property stdin -> file = { get,del,set }
+//    @throws Error.ValueError: Process 'this' is running
+//    @throws Error.ValueError: Process 'this' is a reference
+//        Get/set the stdin file of a process before launch.
+//        If 'this == process.self()', the value can only
+//        be read and is equivalent to file.io.stdin.
+//        HINT: Assign the a pipe.reader to this
+//
+// >> property stdout -> file = { get,del,set }
+//    @throws Error.ValueError: Process 'this' is running
+//    @throws Error.ValueError: Process 'this' is a reference
+//        Get/set the stdout file of a process before launch.
+//        If 'this == process.self()', the value can only
+//        be read and is equivalent to file.io.stdout.
+//        HINT: Assign the a pipe.writer to this
+//
+// >> property stderr -> file = { get,del,set }
+//    @throws Error.ValueError: Process 'this' is running
+//    @throws Error.ValueError: Process 'this' is a reference
+//        Get/set the stderr file of a process before launch.
+//        If 'this == process.self()', the value can only
+//        be read and is equivalent to file.io.stderr.
+//        HINT: Assign the a pipe.writer to this
+//
+// >> property priority -> double = { get,del,set }
+//    @throws Error.SystemError: Couldn't get/set the priority
+//        Get/set the priority of a process as a 0.0 - 1.0 clamped floating point
+//        Precision of this value depends on the host operating system,
+//        but 0.0 describes the lower priority, 1.0 the highest and 0.5 the default.
+//        The delete callback is equivalent to 'set(0.5)'
+//
+// >> property cwd -> string = { get,del,set }
+// >> property wcwd -> string.wide = { get,del,set }
+//    @throws Error.SystemError: Couldn't get/set the cwd
+//    @throws Error.ValueError:  Can't del/set the cwd of a running/reference process
+//        Get/set the initial cwd of the process when it will be stated.
+//        If 'this == process.self()', this attribute is equivalent to fs::chdir() / fs::cwd()
+//        If 'this' is a process reference, you may only read the cwd of the other process.
+//
+// >> property cmd -> string = { get }
+// >> property wcmd -> string.wide = { get }
+//    @throws Error.SystemError: Couldn't get the commandline
+//        Get the commanline of the process before it will be stated.
+//        'this' is allowed to be running or be a process reference.
+//        NOTE: On windows, a running process may modify its commandline,
+//              reflecting those changes to the return value of this property.
+//        NOTE: On posix, some processes may appear to not have a commandline.
+//
+// >> property exe -> string = { get }
+// >> property wexe -> string.wide = { get }
+//    @throws Error.SystemError: Couldn't get the executable
+//        Get the name and path of the executable that a process is running from.
+//        If 'this' isn't running yet, return the exe portion
+//        of the commandline given by the constructor.
+//
+// >> property args -> string = { get }
+// >> property wargs -> string.wide = { get }
+//    @throws Error.SystemError: Couldn't get the arguments
+//        Get the argument portion of the processes commandline
+//
+// >> property argv -> [string...] = { get }
+// >> property wargv -> [string.wide...] = { get }
+//    @throws Error.SystemError: Couldn't get the arguments
+//        Similar to 'args' / 'wargs', but returns the values as a list of strings
+//        NOTE: This describes the native argv value, as calculated from
+//              the original commandline, meaning that 'process.self().argv'
+//              may differ from 'sys.argv'
+//
+// >> property env -> [(string,string)...] = { get,del,set }
+//    @throws Error.ValueError: Can't get/del/set the env block of a running/reference process
+//        Get/del/set the environment variables block of a given process before launch.
+//        Currently you can't read the block of a process that is already running.
+//        If 'this == process.self()', you will interact with the environment block or your own process
+//
+// >> [__WINDOWS__] property win32_priority_boost -> bool = { get,del,set }
+//    @throws Error.SystemError: Can't get/set the priority_boost value
+//        Sets the priority_boost flag of a given win32 process.
+//        NOTE: The process must already be running.
+//
+// >> function start(bool detached = false) -> bool
+//    @throws Signal.Interrupt:  The current thread was interrupted
+//    @throws Error.SystemError: Process could not be started
+//    @throws Error.ValueError:  Can't start a reference process
+//        Starts a non-reference process with the current configuration.
+//        Returns false if the process was already running
+//        if 'detached' is true, the process will be started
+//        without any attachments to the calling (current) process.
+//
+// >> function join() -> process_return
+//    @throws Signal.Interrupt: The current thread was interrupted
+//    @throws Error.SystemError: Could join process
+//        Waits for a process to terminate before returning its exit code.
+//        This call blocks until the process has exited
+//
+// >> function try_join() -> (bool,process_return)
+//    @throws Error.SystemError: Could join process
+//        Returns the exit code of a terminated process
+//        This call returns immediatly, indicating its
+//        success in the 'bool' return argument.
+//
+// >> function join_timed(unsigned int msecs) -> (bool,process_return)
+//    @throws Signal.Interrupt: The current thread was interrupted
+//    @throws Error.SystemError: Could join process
+//        Similar to 'try_join', but keeps trying until 'msecs' milliseconds have passed
+//
+// >> function detach() -> bool
+//        Detach a given process from the current process
+//        Returns false if the process was already detached.
+//        NOTE: no-op on posix
+//
+// >> function terminate(uint32_t exit_code = 0) -> bool
+//    @throws Signal.Interrupt:  The current thread was interrupted
+//    @throws Error.SystemError: Could terminate process
+//    @throws Error.SystemError: Can't terminate the current process
+//        Terminate a given process, turning it into a zombie process.
+//        Returns false if the process was already terminated.
+//        NOTE: If the runtime doesn't allow for '__has_feature(sys_exit)',
+//              this call will throw a 'Error.SystemError' if you try to
+//              terminate yourself.
+//
+// >> function id() -> process_id
+//        Returns the process id of a running process
+//        Returns a meaningless, undefined value if the process wasn't started yet
+//
+// >> function started() -> bool
+//        Returns true if the process was started
+//
+// >> function detached() -> bool
+//        Returns true if the process was detached
+//
+// >> function terminated() -> bool
+//        Returns true if the process was terminated
+//
+// >> [__WINDOWS__] function win32_times() -> (time,time,time,time)
+//    @throws Error.SystemError: ...
+//        Equivalent to:
+//         >> pack this.win32_creation_times(),
+//         >>      this.win32_exit_time(),
+//         >>      this.win32_kernel_time(),
+//         >>      this.win32_user_time();
+//
+// >> [__WINDOWS__] function win32_creation_times() -> time
+//    @throws Error.SystemError: Failed to determine creation time
+//        Returns the timestamp when the process was started initially
+//
+// >> [__WINDOWS__] function win32_exit_time() -> time
+//    @throws Error.SystemError: Failed to determine exit time
+//        Returns the timestamp when the process was terminated
+//
+// >> [__WINDOWS__] function win32_kernel_time() -> time
+//    @throws Error.SystemError: Failed to determine kernel time
+//        Returns the amount of time the process spend inside the kernel
+//
+// >> [__WINDOWS__] function win32_user_time() -> time
+//    @throws Error.SystemError: Failed to determine user time
+//        Returns the amount of time the process spend inside user memory
+//
+// >> [__WINDOWS__] function win32_is_critical() -> bool
+//    @throws Error.SystemError: Failed to determine process-is-critical
+//        Returns true if the process is system-critical
+//        and therefor may not be terminated.
+//    
+//////////////////////////////////////////////////////////////////////////
+const process = __builtin_object(0x0188);
+
+#pragma pop_macro("process")
+#pragma pop_macro("process_return")
+#pragma pop_macro("process_id")

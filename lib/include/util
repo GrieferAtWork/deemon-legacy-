@@ -1,0 +1,701 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+#include <__stddef.dee>
+
+#pragma push_macro("util")
+#pragma push_macro("min")
+#pragma push_macro("max")
+#pragma push_macro("avg")
+#pragma push_macro("all")
+#pragma push_macro("any")
+#pragma push_macro("sum")
+#pragma push_macro("chr")
+#pragma push_macro("ord")
+#pragma push_macro("sqr")
+#pragma push_macro("len")
+#pragma push_macro("ceil")
+#pragma push_macro("floor")
+#pragma push_macro("round")
+#pragma push_macro("range")
+#pragma push_macro("id")
+#pragma push_macro("zip")
+#pragma push_macro("swap")
+#pragma push_macro("abs")
+#pragma push_macro("seq")
+#pragma push_macro("find")
+#pragma push_macro("rfind")
+#pragma push_macro("index")
+#pragma push_macro("rindex")
+#pragma push_macro("count")
+#pragma push_macro("locate")
+#pragma push_macro("rlocate")
+#pragma push_macro("locate_all")
+#pragma push_macro("transform")
+#pragma push_macro("empty")
+#pragma push_macro("non_empty")
+#pragma push_macro("front")
+#pragma push_macro("back")
+#pragma push_macro("get")
+#pragma push_macro("at")
+#pragma push_macro("reversed")
+#pragma push_macro("sorted")
+#pragma push_macro("segments")
+#undef util
+#undef min
+#undef max
+#undef avg
+#undef all
+#undef any
+#undef sum
+#undef chr
+#undef ord
+#undef sqr
+#undef len
+#undef ceil
+#undef floor
+#undef round
+#undef range
+#undef id
+#undef zip
+#undef swap
+#undef abs
+#undef seq
+#undef find
+#undef rfind
+#undef index
+#undef rindex
+#undef count
+#undef locate
+#undef rlocate
+#undef locate_all
+#undef transform
+#undef empty
+#undef non_empty
+#undef front
+#undef back
+#undef get
+#undef at
+#undef reversed
+#undef sorted
+#undef segments
+
+#if __API_VERSION__ < 101
+module __future
+#endif
+module util {
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function min(object args...) -> object
+	//     Returns the lowers element of 'args'
+	//     Objects are always compared with the current winner as lhs operand
+	local const min = __builtin_object(0x0102);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function max(object args...) -> object
+	//     Returns the greatest element of 'args'
+	//     Objects are always compared with the current winner as lhs operand
+	local const max = __builtin_object(0x0103);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function avg(object args...) -> double
+	//     Returns the average of all elements in 'args'
+	//     All elements are casted to double, added and devided by '#args'
+	local const avg = __builtin_object(0x0104);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function all(object args...) -> bool
+	//     Returns true if all elements in 'args' evaluate to '(bool)true'
+	// >> function all(args...) {
+	// >> 	for (x: args) if (!(!!x)) return false;
+	// >> 	return true;
+	// >> }
+	local const all = __builtin_object(0x0105);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function any(object args...) -> bool
+	//     Returns true if any element in 'args' evaluates to '(bool)true'
+	// >> function any(args...) {
+	// >> 	for (x: args) if (!!x) return true;
+	// >> 	return false;
+	// >> }
+	local const any = __builtin_object(0x0106);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function sum(object args...) -> object
+	//     Returns the sum of all arguments by adding them together
+	//     The result is always replaced with the addition of result+next
+	//     Returns 'none' if no arguments are given
+	// >> function sum(args...): result {
+	// >> 	if (!args) return none;
+	// >> 	result = args[0];
+	// >> 	for (x: args[1:]) result = result+x;
+	// >> }
+	local const sum = __builtin_object(0x0107);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function chr(char ch) -> string
+	//     Returns a one-character string
+	//     NOTE: Use of this is not recommended, as
+	//           there is no way of specifying the string encoding
+	local const chr = string::chr;
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function ord(string::utf8 s) -> char
+	// constexpr function ord(string::wide s) -> wchar_t
+	// constexpr function ord(string::utf16 s) -> char16_t
+	// constexpr function ord(string::utf32 s) -> char32_t
+	//     Returns the ordinal value of a one-character string
+	//     NOTE: Equivalent to 's.ord()'
+	local const ord = __builtin_object(0x0109);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function sqr(object x) -> object
+	//     Returns the sqare of 'x', that is 'x*x'
+	//     >> constexpr function sqr(x) -> x*x;
+	local const sqr = __builtin_object(0x0108);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function len(sequence seq) -> object
+	//     Returns the size of a sequence (usually a 'size_t')
+	//     >> equivalent to '#seq'
+	local const len = __builtin_object(0x0058);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function ceil(double x) -> int
+	//     Returns the ceiled integral value of a given double 'x'
+	local const ceil = __builtin_object(0x010B);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function floor(double x) -> int
+	//     Returns the floored integral value of a given double 'x'
+	local const floor = __builtin_object(0x010C);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function round(double x) -> int
+	//     Returns the rounded integral value of a given double 'x'
+	local const round = __builtin_object(0x010D);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function range(int8_t count) -> int8_t.range
+	// constexpr function range(int16_t count) -> int16_t.range
+	// constexpr function range(int32_t count) -> int32_t.range
+	// constexpr function range(int64_t count) -> int64_t.range
+	// constexpr function range(uint8_t count) -> uint8_t.range
+	// constexpr function range(uint16_t count) -> uint16_t.range
+	// constexpr function range(uint32_t count) -> uint32_t.range
+	// constexpr function range(uint64_t count) -> uint64_t.range
+	// constexpr function range(object count) -> generic_range_iterator
+	//     Returns a generator that yields all values between '0'
+	//     or a default-initialized instance of 'count'
+	//
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function range(int8_t begin, int8_t end) -> int8_t.range
+	// constexpr function range(int16_t begin, int16_t end) -> int16_t.range
+	// constexpr function range(int32_t begin, int32_t end) -> int32_t.range
+	// constexpr function range(int64_t begin, int64_t end) -> int64_t.range
+	// constexpr function range(uint8_t begin, uint8_t end) -> uint8_t.range
+	// constexpr function range(uint16_t begin, uint16_t end) -> uint16_t.range
+	// constexpr function range(uint32_t begin, uint32_t end) -> uint32_t.range
+	// constexpr function range(uint64_t begin, uint64_t end) -> uint64_t.range
+	// constexpr function range(object begin, object end) -> generic_range_iterator
+	//     Returns a generator that yields all values between 'begin'
+	//     and 'end' where the iterator is moved with 'operator ++'
+	//
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function range(int8_t begin, int8_t end, int8_t step) -> int8_t.range
+	// constexpr function range(int16_t begin, int16_t end, int16_t step) -> int16_t.range
+	// constexpr function range(int32_t begin, int32_t end, int32_t step) -> int32_t.range
+	// constexpr function range(int64_t begin, int64_t end, int64_t step) -> int64_t.range
+	// constexpr function range(uint8_t begin, uint8_t end, uint8_t step) -> uint8_t.range
+	// constexpr function range(uint16_t begin, uint16_t end, uint16_t step) -> uint16_t.range
+	// constexpr function range(uint32_t begin, uint32_t end, uint32_t step) -> uint32_t.range
+	// constexpr function range(uint64_t begin, uint64_t end, uint64_t step) -> uint64_t.range
+	// constexpr function range(object begin, object end, object step) -> generic_range_iterator
+	//     Returns a generator that yields all values between 'begin' and 'end'
+	//     where the iterator is moved with 'operator += (step)'
+	local const range = __builtin_object(0x0117);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function id(object ob) -> size_t
+	//     Returns an id that is unique to the given object 'ob'
+	//     and not shared by any other object during the lifetime of 'ob'
+	//     NOTES:
+	//      - Since v101, this is no longer the pointer in non-developer builds.
+	//        And yes, obviously it's based on the pointer, but is now being xor'd
+	//        with a random seed that changes every time deemon is started.
+	//        >> So it's still unique, but no longer a gaping security hole
+	//           for accessing otherwise protected parts of the runtime.
+	local const id = __builtin_object(0x0118);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr class zip { constexpr this(object args...) -> zip; }
+	//     Merges #args given sequences into a list of #args-elemntal tuples,
+	//     where the index in every tuple is equivalent to the position of
+	//     the origin sequence in the original argument list. (phew. that sounds way too complicated)
+	//     NOTE: The size of the returned list is 'min(args.transform([](x) -> #x)...)'
+	//     e.g.:
+	//     >> print util::zip([10,20,30],[40,50,60])...;    // prints: "(10,40) (20,50) (30,60)"
+	//     >> print util::zip([10,20,30],[40,50,60,70])...; // prints: "(10,40) (20,50) (30,60)" ('70' is ignored because the shortest sequence's lenght is used)
+	local const zip = __builtin_object(0x015D);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function enumerate(object iterable) -> enumiterator;
+	// constexpr function enumerate(size_t start_index, object iterable) -> enumiterator;
+	local const enumerate = __builtin_object(0x01F1);
+
+	//////////////////////////////////////////////////////////////////////////
+	// function swap(object a, object b) -> none
+	//     @throws Error.TypeError: 'type b' isn't equal to 'type a'
+	//     Swaps the data of two given objects 'a' and 'b' or the same type
+	//     'type a' must implement 'operator __move__' and 'operator __moveassign__'
+	local const swap = __builtin_object(0x0175);
+
+	//////////////////////////////////////////////////////////////////////////
+	// constexpr function abs(int8_t x) -> int8_t
+	// constexpr function abs(int16_t x) -> int16_t
+	// constexpr function abs(int32_t x) -> int32_t
+	// constexpr function abs(int64_t x) -> int64_t
+	// constexpr function abs(uint8_t x) -> uint8_t
+	// constexpr function abs(uint16_t x) -> uint16_t
+	// constexpr function abs(uint32_t x) -> uint32_t
+	// constexpr function abs(uint64_t x) -> uint64_t
+	// constexpr function abs(float x) -> float
+	// constexpr function abs(double x) -> double
+	// constexpr function abs(long double x) -> long double
+	//     Returns the absolute value of 'x'
+	// constexpr function abs(object x) -> object
+	//     Returns the absolute value of 'x'
+	//     equivalent to the following code:
+	//     >> function abs(x) {
+	//     >> 	if (x < (int)0) return -x;
+	//     >> 	return x;
+	//     >> }
+	local const abs = __builtin_object(0x010A);
+
+	// For any object to be compatible with any of the following functions,
+	// it must implement 'operator for' / 'operator __iterself__' (aka. tp_iter_self)
+	module seq {
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function find(sequence seq, object elem, callable pred = none) -> ssize_t
+		//     Generic, iterator-based find function.
+		//     Returns the index of 'elem' in 'seq' or -1 if it wasn't found
+		//     If given, use 'pred' to compare two objects for equality
+		//     NOTE: Tries to call 'seq.find(elem)' / 'seq.find(elem,pred)' before using iterators
+		//     >> function find(seq,elem,pred...) {
+		//     >> 	try return seq.find(elem,pred...);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	local index = 0;
+		//     >> 	for (x: seq) {
+		//     >> 		if (pred ? pred[0](x,elem) : x == elem)
+		//     >> 			return index;
+		//     >> 		++index;
+		//     >> 	}
+		//     >> 	return -1;
+		//     >> }
+		local const find = __builtin_object(0x01B2);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function rfind(sequence seq, object elem, callable pred = none) -> ssize_t
+		//     Generic, iterator-based rfind function.
+		//     Returns the index of 'elem' in 'seq' or -1 if it wasn't found,
+		//     preferring higer indexes over lower ones.
+		//     If given, use 'pred' to compare two objects for equality
+		//     NOTE: Tries to call 'seq.rfind(elem)' / 'seq.rfind(elem,pred)' before using iterators
+		//     >> function rfind(seq,elem,pred...): result {
+		//     >> 	try return seq.rfind(elem,pred...);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	result = -1;
+		//     >> 	local index = 0;
+		//     >> 	for (x: seq) {
+		//     >> 		if (pred ? pred[0](x,elem) : x == elem)
+		//     >> 			result = index;
+		//     >> 		++index;
+		//     >> 	}
+		//     >> }
+		local const rfind = __builtin_object(0x01B3);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function index(sequence seq, object elem, callable pred = none) -> size_t
+		//     Generic, iterator-based index function.
+		//     Returns the index of 'elem' in 'seq' or throws an Error.ValueError if it wasn't found.
+		//     If given, use 'pred' to compare two objects for equality
+		//     NOTE: Tries to call 'seq.index(elem)' / 'seq.index(elem,pred)' before using iterators
+		//     >> function index(seq,elem,pred...) {
+		//     >> 	try return seq.index(elem,pred...);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	local index = 0;
+		//     >> 	for (x: seq) {
+		//     >> 		if (pred ? pred[0](x,elem) : x == elem)
+		//     >> 			return index;
+		//     >> 		++index;
+		//     >> 	}
+		//     >> 	throw Error.ValueError("...");
+		//     >> }
+		local const index = __builtin_object(0x01B4);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function rindex(sequence seq, object elem, callable pred = none) -> size_t
+		//     Generic, iterator-based rindex function.
+		//     Returns the index of 'elem' in 'seq' or throws an Error.ValueError
+		//     if it wasn't found, preferring higer indexes over lower ones.
+		//     If given, use 'pred' to compare two objects for equality
+		//     NOTE: Tries to call 'seq.rindex(elem)' / 'seq.rindex(elem,pred)' before using iterators
+		//     >> function rindex(seq,elem,pred...): result {
+		//     >> 	try return seq.rindex(elem,pred...);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	local index = 0;
+		//     >> 	for (x: seq) {
+		//     >> 		if (pred ? pred[0](x,elem) : x == elem)
+		//     >> 			result = index;
+		//     >> 		++index;
+		//     >> 	}
+		//     >> 	if (!__builtin_bound(result)) throw Error.ValueError("...");
+		//     >> }
+		local const rindex = __builtin_object(0x01B5);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function contains(sequence seq, object elem, callable pred = none) -> bool
+		//     Generic, iterator-based contains function.
+		//     Returns true/false if 'elem' is contained in 'seq'
+		//     If given, use 'pred' to compare two objects for equality
+		//     NOTE: Tries to call 'seq.contains(elem)' / 'seq.contains(elem,pred)' before using iterators.
+		//           If iterators are not implemented either, and no predicate is given, call 'elem in seq'
+		//     >> function contains(seq,elem,pred...): result {
+		//     >> 	try return seq.contains(elem,pred...);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	try for (x: seq) if (pred ? pred[0](x,elem) : x == elem) return true;
+		//     >> 	catch (Error.RuntimeError.NotImplemented e) {
+		//     >> 		if (pred) throw;
+		//     >> 		return elem in seq;
+		//     >> 	}
+		//     >> 	return false;
+		//     >> }
+		local const contains = __builtin_object(0x0189);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function count(sequence seq, object elem, callable pred = none) -> size_t
+		//     Generic, iterator-based count function.
+		//     Returns the amount of objects equivalent to 'elem'
+		//     If given, use 'pred' to compare two objects for equality
+		//     NOTE: Tries to call 'seq.count(elem)' / 'seq.count(elem,pred)' before using iterators
+		//     >> function count(seq,elem,pred...): result {
+		//     >> 	try return seq.count(elem,pred...);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	result = (size_t)0;
+		//     >> 	for (x: seq) if (pred ? pred[0](x,elem) : x == elem) ++result;
+		//     >> }
+		local const count = __builtin_object(0x01B6);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function locate(sequence seq, callable pred) -> object
+		//     Generic, iterator-based locate function.
+		//     Returns the first object 'ob' for which 'pred(ob)' returned true,
+		//     or throws an Error.ValueError if no such object exists.
+		//     NOTE: Tries to call 'seq.locate(pred)' before using iterators
+		//     >> function locate(seq,pred) {
+		//     >> 	try return seq.locate(pred);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	for (x: seq) if (pred(x)) return x;
+		//     >> 	throw Error.ValueError("...");
+		//     >> }
+		local const locate = __builtin_object(0x01B7);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function rlocate(sequence seq, callable pred) -> object
+		//     Generic, iterator-based rlocate function.
+		//     Returns the last object 'ob' for which 'pred(ob)' returned true,
+		//     or throws an Error.ValueError if no such object exists.
+		//     NOTE: Tries to call 'seq.rlocate(pred)' before using iterators
+		//     >> function rlocate(seq,pred): result {
+		//     >> 	try return seq.rlocate(pred);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	for (x: seq) if (pred(x)) result = x;
+		//     >> 	if (!__builtin_bound(result)) throw Error.ValueError("...");
+		//     >> }
+		local const rlocate = __builtin_object(0x01B8);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function locate_all(sequence seq, callable pred) -> object
+		//     Generic, iterator-based locate_all function.
+		//     Returns a sequence of objects 'ob' for which 'pred(ob)' returned true.
+		//     Usually this is a list, but the exact typing depends on 'seq'
+		//     NOTE: Tries to call 'seq.locate_all(pred)' before using iterators
+		//     NOTE: If iterators are used, a 'list' is returned
+		//     >> function locate_all(seq,pred) {
+		//     >> 	try return seq.locate_all(pred);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	return [(for (x: seq) if (pred(x)) x)...];
+		//     >> }
+		local const locate_all = __builtin_object(0x01B9);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function transform(sequence seq, callable pred) -> object
+		//     Generic, iterator-based transform function.
+		//     Returns a copy of 'seq' where all elements have been modified by 'pred'
+		//     NOTE: Tries to call 'seq.transform(pred)' before using iterators
+		//     NOTE: If iterators are used, a 'list' is returned
+		//     >> function transform(seq,pred) {
+		//     >> 	try return seq.transform(pred);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	return [(for (x: seq) pred(x))...];
+		//     >> }
+		local const transform = __builtin_object(0x01BA);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function empty(sequence seq) -> bool
+		//     Generic, iterator-based empty function.
+		//     NOTE: Tries to call 'seq.empty()' before using iterators
+		//     NOTE: Tries to call '#seq' if iterators are not implemented
+		//     >> function empty(seq) {
+		//     >> 	try return seq.empty();
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	local iter = __iterself__(seq);
+		//     >> 	try __iternext__(iter);
+		//     >> 	catch (Signal.StopIteration) return true;
+		//     >> 	catch (Signal.NotImplemented) return #seq == 0;
+		//     >> 	return false;
+		//     >> }
+		local const empty = __builtin_object(0x01BB);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function non_empty(sequence seq) -> bool
+		//     Generic, iterator-based non_empty function.
+		//     NOTE: Tries to call 'seq.non_empty()' before using iterators
+		//     NOTE: Tries to call '#seq' if iterators are not implemented
+		//     >> function non_empty(seq) {
+		//     >> 	try return seq.non_empty();
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	local iter = __iterself__(seq);
+		//     >> 	try __iternext__(iter);
+		//     >> 	catch (Signal.StopIteration) return false;
+		//     >> 	catch (Signal.NotImplemented) return #seq != 0;
+		//     >> 	return true;
+		//     >> }
+		local const non_empty = __builtin_object(0x01BC);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function front(sequence seq) -> object
+		//     Generic, iterator-based front function.
+		//     NOTE: Tries to call 'seq.front()' before using iterators
+		//     >> function front(seq) {
+		//     >> 	try return seq.front();
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	local iter = __iterself__(seq);
+		//     >> 	try return __iternext__(iter);
+		//     >> 	catch (Signal.StopIteration)
+		//     >> 		throw Error.ValueError("...");
+		//     >> }
+		local const front = __builtin_object(0x01BD);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function back(sequence seq) -> object
+		//     Generic, iterator-based back function.
+		//     NOTE: Tries to call 'seq.back()' before using iterators
+		//     >> function back(seq): result {
+		//     >> 	try return seq.back();
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	for (x: seq) result = x;
+		//     >> 	if (!__builtin_bound(result)) throw Error.ValueError("...");
+		//     >> }
+		local const back = __builtin_object(0x01BE);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function get(sequence seq, ssize_t idx) -> object
+		//     Generic, iterator-based getitem function.
+		//     NOTE: Tries to call 'seq[idx]' before using iterators
+		//     >> function get(seq,idx) {
+		//     >> 	try return seq[idx];
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	return [seq...][idx];
+		//     >> }
+		local const get = __builtin_object(0x01BF);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function at(sequence seq, size_t idx) -> object
+		//     Generic, iterator-based at function.
+		//     NOTE: Tries to call 'seq.at(idx)' before using iterators
+		//     >> function at(seq,idx) {
+		//     >> 	try return seq.at(idx);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	idx = copy((size_t)idx);
+		//     >> 	for (x: seq) if (!idx--) return x;
+		//     >> 	throw Error.ValueError.IndexError("...");
+		//     >> }
+		local const at = __builtin_object(0x01C0);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function reversed(sequence seq) -> object
+		//     Generic, iterator-based reversed function.
+		//     NOTE: Tries to call 'seq.reversed()' before using iterators
+		//     NOTE: If iterators are used, a 'list' is returned
+		//     >> function reversed(seq) {
+		//     >> 	try return seq.reversed();
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	return [seq...].reversed();
+		//     >> }
+		local const reversed = __builtin_object(0x01C1);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function sorted(sequence seq) -> object
+		// constexpr function sorted(sequence seq, callable pred) -> object
+		//     Generic, iterator-based sorted function.
+		//     NOTE: Tries to call 'seq.sorted()' / 'seq.sorted(pred)' before using iterators
+		//     NOTE: If iterators are used, a 'list' is returned
+		//     >> function sorted(seq,pred...) {
+		//     >> 	try return seq.sorted(pred...);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	return [seq...].sorted(pred...);
+		//     >> }
+		local const sorted = __builtin_object(0x01C2);
+
+		//////////////////////////////////////////////////////////////////////////
+		// constexpr function segments(sequence seq, size_t n) -> object
+		//     Generic, iterator-based segments function.
+		//     NOTE: Tries to call 'seq.segments(n)' before using iterators
+		//     NOTE: If iterators are used, a 'list' is returned
+		//     >> function segments(seq,n) {
+		//     >> 	try return seq.segments(n);
+		//     >> 	catch (Error.AttributeError);
+		//     >> 	catch (Error.RuntimeError.NotImplemented);
+		//     >> 	return [seq...].segments(n);
+		//     >> }
+		local const segments = __builtin_object(0x01C3);
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// function reduce(callable function, object iterable, object initializer = none) -> object
+	local constexpr function reduce(__function,__iterable,__initializer...) {
+		__initializer = __initializer ? __initializer[0] : none;
+		local __it = __builtin_object(0x0064)(__iterable); // __iterself__
+		if (__initializer is none) {
+			try __initializer = __builtin_object(0x0065)(__it); // __iternext__
+			catch (__builtin_object(0x006E)) { // Signal.StopIteration
+				// Error.TypeError
+				throw __builtin_object(0x0077)("reduce() with empty sequence and no initial value");
+			}
+		}
+		__foreach (__x: __it)
+			__initializer = __function(__initializer,__x);
+		return __initializer;
+	}
+
+}
+
+
+
+#if 1 // __API_VERSION__ < ??? // deprecations no longer supported (enable once we get collisions)
+#if __API_VERSION__ >= 101
+#define __DEPRECATED_UTIL(name)\
+	__declspec(__deprecated__("'::" #name "' is deprecated since v101; Use 'util::" #name "'")) util::name
+#define __DEPRECATED_UTIL_SEQ(name)\
+	__declspec(__deprecated__("'::" #name "' is deprecated since v101; Use 'util::seq::" #name "'")) util::seq::name
+#else
+#define __DEPRECATED_UTIL(name)\
+	__future::util::name
+#define __DEPRECATED_UTIL_SEQ(name)\
+	__future::util::seq::name
+#endif
+
+// Import everything from the v100 global <util> API
+// NOTE: All of these are deprecated in v101+
+// -> use the versions from 'util::*' or explicitly "import module util;"
+import
+	__DEPRECATED_UTIL(min),
+	__DEPRECATED_UTIL(max),
+	__DEPRECATED_UTIL(avg),
+	__DEPRECATED_UTIL(all),
+	__DEPRECATED_UTIL(any),
+	__DEPRECATED_UTIL(sum),
+	__DEPRECATED_UTIL(chr),
+	__DEPRECATED_UTIL(ord),
+	__DEPRECATED_UTIL(len),
+	__DEPRECATED_UTIL(ceil),
+	__DEPRECATED_UTIL(floor),
+	__DEPRECATED_UTIL(round),
+	__DEPRECATED_UTIL(range),
+	__DEPRECATED_UTIL(id),
+	__DEPRECATED_UTIL(zip),
+	__DEPRECATED_UTIL_SEQ(sorted),
+	__DEPRECATED_UTIL_SEQ(reversed);
+#undef __DEPRECATED_UTIL
+#undef __DEPRECATED_UTIL_SEQ
+#endif
+
+
+#pragma pop_macro("util")
+#pragma pop_macro("min")
+#pragma pop_macro("max")
+#pragma pop_macro("avg")
+#pragma pop_macro("all")
+#pragma pop_macro("any")
+#pragma pop_macro("sum")
+#pragma pop_macro("chr")
+#pragma pop_macro("ord")
+#pragma pop_macro("sqr")
+#pragma pop_macro("len")
+#pragma pop_macro("ceil")
+#pragma pop_macro("floor")
+#pragma pop_macro("round")
+#pragma pop_macro("range")
+#pragma pop_macro("id")
+#pragma pop_macro("zip")
+#pragma pop_macro("swap")
+#pragma pop_macro("abs")
+#pragma pop_macro("seq")
+#pragma pop_macro("find")
+#pragma pop_macro("rfind")
+#pragma pop_macro("index")
+#pragma pop_macro("rindex")
+#pragma pop_macro("count")
+#pragma pop_macro("locate")
+#pragma pop_macro("rlocate")
+#pragma pop_macro("locate_all")
+#pragma pop_macro("transform")
+#pragma pop_macro("empty")
+#pragma pop_macro("non_empty")
+#pragma pop_macro("front")
+#pragma pop_macro("back")
+#pragma pop_macro("get")
+#pragma pop_macro("at")
+#pragma pop_macro("reversed")
+#pragma pop_macro("sorted")
+#pragma pop_macro("segments")

@@ -1,0 +1,1679 @@
+/* Copyright (c) 2016 Cyder aka. Griefer@Work (https://sourceforge.net/users/grieferatwork) *
+ *                                                                                          *
+ * This software is provided 'as-is', without any express or implied                        *
+ * warranty. In no event will the authors be held liable for any damages                    *
+ * arising from the use of this software.                                                   *
+ *                                                                                          *
+ * Permission is granted to anyone to use this software for any purpose,                    *
+ * including commercial applications, and to alter it and redistribute it                   *
+ * freely, subject to the following restrictions:                                           *
+ *                                                                                          *
+ * 1. The origin of this software must not be misrepresented; you must not                  *
+ *    claim that you wrote the original software. If you use this software                  *
+ *    in a product, an acknowledgement in the product documentation would be                *
+ *    appreciated but is not required.                                                      *
+ * 2. Altered source versions must be plainly marked as such, and must not be               *
+ *    misrepresented as being the original software.                                        *
+ * 3. This notice may not be removed or altered from any source distribution.               *
+ */
+
+// Mockup of the entire language syntax of deemon
+
+// How to read (I know that a doc needing a doc is bad, but it's really not that complicated...):
+//  x ::= y;     - Define rule x as y
+//  x            - Reference to another rule (imagine it being replaced with the other rule's content)
+//  'x'          - x is a character / character sequence
+//  (x)          - Parenthesis to prevent ambiguity
+//  [x]          - x is optional
+//  a b          - Characters or tokens a and b are whitespace separated
+//  a ## b       - a and b follow each other directly (not whitespace separated)
+//  x ~~ y...    - Only starting at the second occurance of y, y must always be preceided by x
+//  x ~~ y##...  - Only starting at the second occurance of y, y must always be preceided by x. Instances are not whitespace separated
+//  x...         - x can be repeated an unlimited about of times (at least once)
+//  x##...       - x can be repeated an unlimited about of times (at least once). Instances are not whitespace separated
+//  a ## b...    - same as "a ## ('' ~~ b...)"
+//  a... ## b... - same as "('' ~~ a...) ## ('' ~~ b...)"
+//  a... ## b    - same as "('' ~~ a...) ## b"
+//  'a'...'b'    - Range of characters between a and b (including a and b) (same as a|a+1|a+2|a+3|...|b)
+//  x | y        - Either x or y
+//  @file        - Special rule name: Rule describing how a file is parsed
+//
+// NOTES:
+//   - 'return(...)' referrs to what a certain statement / expression returns
+//   - You should also note, that anwhere between two tokens,
+//     the preprocessor can do who-knows-what.
+//     So there might be any kind of hidden preprocesssor directive at any point in the code.
+//   - Also note, that when static if expressions are enabled, those can occurr at any point as well.
+//   - This file also contains some preprocesssor directives,
+//     that further describe availability of certain syntax rules
+//
+// Explaination weak/strong scopes:
+//
+//   - Weak scope:
+//     >> a = 42;
+//     >> { // This is a weak scope
+//     >>   b = a*2;
+//     >> print_b:
+//     >>   print b;
+//     >> } // b is destroyed here
+//     >> print b; // This causes a compiler error (unknown variable: b)
+//     >> goto print_b; // This causes a runtime error:
+//     >>               // >> Unbound local
+//     >>               // at the print statement.
+//
+//   - Strong scope:
+//     >> a = 42;
+//     >> function foo() { // This is a strong scope
+//     >>in_foo:
+//     >>   print a;
+//     >> }
+//     >> foo(); // Prints 42
+//     >> a := 10;
+//     >> foo(); // Prints 10
+//     >> a = 16;
+//     >> foo(); // Still Prints 10 (because 'a' has been assigned a different object)
+//     >>
+//     >> goto in_foo; // Compiler error (undefined label)
+//
+
+
+#if __has_feature(static_if)
+// v101 added static if statements, which can influence which token are seen
+// by the parser, even after the preprocessor has already parsed them.
+// The following describes those overrides from most to least precedence,
+// with '...' referring to a set of tokens emited to the actual parser.
+// Note, that even rules referenced here must also follow all of these.
+// WARNING:
+//     Static if blocks are only parsed on the first pass of an expression.
+//     Meaning that if you use them in an alias block, they will influence
+//     the way that alias is going to be declared.
+//     >> If the static if block must be evaluated wherever the alias would
+//        have been used, it is necessary to use a regular macro instead!
+>> ('__static_if'|'static' 'if') '(' /*constant*/XAst_ParseSingle ')'; '{' ... '}' [__static_if_suffix]; // Only emit '...' if the expression was true
+#if __has_feature(if_exists)
+>> '__if_exists'    '(' XAst_ParseExistsExpression ')' '{' ... '}' [__static_if_suffix];
+>> '__if_no_exists' '(' XAst_ParseExistsExpression ')' '{' ... '}' [__static_if_suffix];
+#endif
+>> ... ; // Default rule: Yield everything the preprocessor gives us
+
+// Suffix for every static-if block.
+// - Can be used to specify an else-block as well as another if expression.
+//   But tokens are only emited if the block that this is a suffix to was false.
+__static_if_suffix ::= >> (
+	  (['static'] 'else'|'__static_else')
+	| ((('__static_elif')
+	   |(['static'] 'elif')
+	   |(['static'] 'else' ['static'] 'if')
+	   ) '(' /*constant*/XAst_ParseSingle ')' ... [__static_if_suffix])
+	| (('__if_exists'|'__if_not_exists') '(' XAst_ParseExistsExpression ')' ... [__static_if_suffix])
+);
+#endif
+
+
+
+
+__alpha  ::= ('a'...'z'|'A'...'Z'|'_');
+__digit  ::= ('0'...'9');
+__alnum  ::= (__alpha|__digit);
+__bdigit ::= ('0'...'1');
+__odigit ::= ('0'...'7');
+__xdigit ::= (__digit|'a'...'f'|'A'...'F');
+__char_data ::= (__digit|__alpha|' '|('\\' ## (
+	'a'|'b'|'c'|'d'|'e'|'f'|'n'|'r'|'t'|'v'|'\''|'\"'|'\\'|'\n'
+	// Maximum of these two is actually based on encoding
+	| (__odigit##...) | (('x'|'u'|'U') ## __xdigit##...)
+)));
+__char ::= '\'' ## __char_data ## '\'';
+__string ::= '\"' ## __char_data ## '\"';
+
+integer_suffix ::= (      // -- type of integer constant
+	('') |                // int
+	('u') |               // unsigned int
+	('l') |               // long
+	('ul'|'lu') |         // unsigned long
+	('ll') |              // long long
+	('ull'|'lul'|'llu') | // unsigned long long
+	('i8') |              // __int8
+	('i16') |             // __int16
+	('i32') |             // __int32
+	('i64') |             // __int64
+	('ui8') |             // unsigned __int8
+	('ui16') |            // unsigned __int16
+	('ui32') |            // unsigned __int32
+	('ui64')              // unsigned __int64
+);
+__dec_integer ::= (
+	'1'...'9' ## [__digit##...]
+);
+__oct_integer ::= (
+	'0' ## [__odigit##...]
+);
+__hex_integer ::= (
+	('0x'|'0X') ## __xdigit##...
+);
+__bin_integer ::= (
+	('0b'|'0B') ## __bdigit##...
+);
+
+integer ::= (
+	  __dec_integer
+	| __oct_integer
+	| __hex_integer
+	| __bin_integer
+) ## [integer_suffix];
+character ::= (
+	  (__char)
+	| ('L' ## __char)
+	| ('u' ## __char)
+	| ('U' ## __char)
+);
+raw_string ::= (
+	(__string) |
+	('L' ## __string)
+	('u' ## __string)
+	('U' ## __string)
+);
+string ::= ((raw_string | '__FUNCTION__')...);
+
+float ::= (
+	(
+		  ([__dec_integer] ## '.' ## (__digit##...))
+		| ( __oct_integer  ## '.' ## (__odigit##...))
+		| ( __hex_integer  ## '.' ## (__xdigit##...))
+		| ( __bin_integer  ## '.' ## (__bdigit##...))
+	) ## [
+		('p'|'P'|'e'|'E') ##
+		[('+'|'-')] ##
+		__digit##...
+	] ## [
+		  ('f'|'F') // type: float
+		| ('l'|'L') // type: long double
+	]               // type: double
+);
+
+
+keyword ::= (__alpha ## [__alnum##...]);
+
+#if __has_feature(__relaxed_comma_list__)
+#	define RELAXED_COMMA  [',']
+#else
+#	define RELAXED_COMMA
+#endif
+
+
+#define IGNORED_UNDERSCORES(x) ['_'##...] ## x ## ['_'##...]
+
+AttributeDecl_ParseNoReturn ::= XAst_ParseSingle;
+AttributeDecl_ParseNoExcept ::= XAst_ParseSingle;
+AttributeDecl_ParseAlignas ::= XAst_ParseSingle;
+AttributeDecl_ParseContent ::= (
+	  (IGNORED_UNDERSCORES('used'))
+	| (IGNORED_UNDERSCORES('unused'))
+	| (IGNORED_UNDERSCORES('copyable'))
+	| (IGNORED_UNDERSCORES('add_result_reference'))
+	| (IGNORED_UNDERSCORES('name') '(' XAst_ParseSingle ')')
+	| (IGNORED_UNDERSCORES('deprecated') ['(' XAst_ParseSingle ')'])
+	| (IGNORED_UNDERSCORES('super') '(' XAst_ParseSingle ')')
+	| (IGNORED_UNDERSCORES('uuid') '(' XAst_ParseSingle ')')
+	| ( // Calling conventions
+         (IGNORED_UNDERSCORES('syssv'))
+       | (IGNORED_UNDERSCORES('stdcall'))
+       | (IGNORED_UNDERSCORES('thiscall'))
+       | (IGNORED_UNDERSCORES('fastcall'))
+       | (IGNORED_UNDERSCORES('cdecl'))
+       | (IGNORED_UNDERSCORES('pascal'))
+       | (IGNORED_UNDERSCORES('register'))
+       | (IGNORED_UNDERSCORES('win64'))
+       | (IGNORED_UNDERSCORES('unix64'))
+	)
+	| (IGNORED_UNDERSCORES('packed'))
+	| (IGNORED_UNDERSCORES('aligned') '(' AttributeDecl_ParseAlignas ')')
+	| (IGNORED_UNDERSCORES('nothrow') ['(' AttributeDecl_ParseNoExcept ')'])
+	| (IGNORED_UNDERSCORES('noreturn') ['(' AttributeDecl_ParseNoReturn ')'])
+);
+
+AttributeDecl_Parse ::= ((
+	  ('[' '[' (',' ~~ AttributeDecl_ParseContent...) RELAXED_COMMA ']' ']')
+	| (('__attribute__'|'__attribute') '(' '(' (',' ~~ AttributeDecl_ParseContent...) RELAXED_COMMA ')' ')')
+	| (('__declspec'|'_declspec') '(' (',' ~~ AttributeDecl_ParseContent...) RELAXED_COMMA ')')
+	| ('_Noreturn' '(' AttributeDecl_ParseNoReturn ')')
+	| ('_Noexcept' '(' AttributeDecl_ParseNoExcept ')')
+	| ( // Calling conventions
+         ('_syssv'|'__syssv')
+       | ('_stdcall'|'__stdcall')
+       | ('_thiscall'|'__thiscall')
+       | ('_fastcall'|'__fastcall')
+       | ('_cdecl'|'__cdecl')
+       | ('_pascal'|'__pascal')
+       | ('_register'|'__register')
+       | ('_win64'|'__win64')
+       | ('_unix64'|'__unix64')
+	)
+)...);
+
+
+SAst_ParseGeneratorBlock ::= (
+
+	// Allow all loop constructs in generator blocks
+	  ('for' '(' XAst_ParseDecl ':' XAst_ParseInit ')' SAst_ParseGeneratorBlock)
+	| ('for' '(' [XAst_ParseDecl] ';' [XAst_ParseInit] ';' [XAst_ParseInit] ')' SAst_ParseGeneratorBlock)
+	| ('while' '(' XAst_ParseDecl ')' SAst_ParseGeneratorBlock)
+	| ('do' SAst_ParseGeneratorBlock 'while' '(' XAst_ParseDecl ')')
+	| ('__looponce' SAst_ParseGeneratorBlock)
+	| ('__loopever' SAst_ParseGeneratorBlock)
+	| ('__loopnone' SAst_ParseGeneratorBlock)
+
+	// Special handling for if-statements:
+	// If the condition if false and no fail branch is given, nothing will be yielded
+	// -> Similar to how the 'locate_all' standard sequence member function works
+	| ('if' '(' XAst_ParseDecl ')' SAst_ParseGeneratorBlock ['else' SAst_ParseGeneratorBlock])
+
+	// Default: Parse a tuple of expression that will be yielded
+	| (XAst_ParseTuple)
+);
+
+XAst_ParseVariableLookupModifiers ::= (
+	// Module modifier
+	//  - Warn if the found variable isn't a module
+	//  - Can't be used to create modules
+	  ('module')
+
+	// Forward-reference/declare variables
+	//  - Warn if a variable was already initialized
+	| ('forward')
+
+	// Reference/declare constant variables (aka. constants)
+	//  - Known at compile-time
+	//  - Warn if referencing non-constant
+	| ('const')
+	
+	// Reference/declare volatile variables
+	//  - Only known at run-time
+	//  - Variables declared with this will not be optimized using assumptions
+	//  - NOTE: The variable might still get removed if it is unused,
+	//          meaning that to disable that optimization too,
+	//          [[used]] must be added to the declaration.
+	| ('volatile')
+
+	// reference/declare static variables
+	//  - Warn if referencing non-static variable
+	// Static variables must always be initialized before they can be used.
+	// They don't have to be initialized at the same point where they were declared,
+	// but the first initialization must occurr in the same scope as their declaration.
+	// The initializer will only be executed once and if it isn't known at compile time,
+	// it will be executed inside of the following code mock-up:
+	// >> #include <thread>
+	// >> static x = runtime_call();
+	// Compiled as:
+	// >> // Initialized in another scope.
+	// >> // Yes, that's not possible in usercode,
+	// >> // but this is done by the compiler.
+	// >> static x;
+	// >> // Initializer of this one is known at
+	// >> // compile-time, so no infinite recursion!
+	// >> static __x_initialized = atomic uint8_t(0);
+	// >>__x_begin:
+	// >> if (__x_initialized.compare_exchange_bool(0,1)) {
+	// >>   try {
+	// >>     x = runtime_call();
+	// >>   } catch (...) {
+	// >>     // Initialization failed. Reset the initialized state flag.
+	// >>     __x_initialized.store(0);
+	// >>     throw;
+	// >>   }
+	// >> } else {
+	// >>   // Idly wait until the static is fully initialized.
+	// >>   while (true) {
+	// >>     __stack local state = __x_initialized.load();
+	// >>     if (state == 2) break; // Initialization has completed
+	// >>     // Error occurred during initialization in another thread (now's our chance)
+	// >>     if (state == 0) goto __x_begin;
+	// >>     ::thread::yield();
+	// >>   }
+	// >> }
+	| ('static')
+
+	// Global scope modifier
+	//  - Only search the global (top-most) scope for the variable
+	//  - If the current scope is the global scope and the
+	//    permission is given, variables may still be created.
+	| ('global'|'::')
+
+	// Local scope modifier
+	//  - Only search the local scope for the variable
+	//  - If permitted to, Force declaration of new
+	//    variables if current scope doesn't contain it
+	| ('local')
+
+	// Reference/declare scope variables
+	//  - Warn if referencing non-scope variable
+	| ('__scope')
+	
+	// Parse attributes if allowed to
+	| ([AttributeDecl_Parse])
+);
+
+XAst_ParseBasicRangeInitializer ::= (
+	// Parse the range initializer type
+	// NOTE: Despite this saying 'tuple', the actual sequence
+	//       type is set by the type hint from the caller.
+	  (XAst_ParseTuple)
+	// NOTE: Recursive ranges have the same
+	//       type hint as their parenting type
+	| ('{' XAst_ParseRangeInitializer '}')
+);
+
+XAst_ParseRangeInitializer ::= ((
+	[(
+		// c-style struct named-member initializer
+		// 'keyword' is compiled as a string key inside of a dict.
+		// Using this syntax forces a the range to evaluate to a dict
+		// >> struct foo { int x,y,z; };
+		// >> foo inst = { .x = 10, .z = 30, .y = 20 };
+		// >> print repr inst;
+		  ('.' keyword '=')
+		// Dict-key initializer.
+		// Using this syntax forces a the range to evaluate to a dict
+		// >> dict my_map = { "foo": "bar", 10: 20, none: 0.5 };
+		// >> print my_map;
+		| (XAst_ParseBasicRangeInitializer ':')
+	)]
+	XAst_ParseBasicRangeInitializer
+)...);
+
+XAst_ParseUnnamedFunction ::= (
+	[':' keyword] // Return variable declaration
+	// Function block
+	[(
+		  ( '->' XAst_ParseSingle)
+		| (['->'] '{' [SAst_Parse...] '}')
+	)]
+);
+XAst_ParseFunction ::= (
+	[AttributeDecl_Parse]
+	// Optional storage name for the variable.
+	// Also used as default for '__attribute__((name(...)))'.
+	[XAst_ParseVariableLookup]
+	XAst_ParseUnnamedFunction
+);
+
+
+XAstOperatorName_Parse ::= (
+
+	  ('\"\"') // An empty string can be used for 'operator __str__'
+	| ('none') // None operator (doesn't exist at runtime; simply converted into nothing)
+	| ('str'|'__str__')
+	| ('repr'|'__repr__')
+	| ('copy'|'__copy__')
+	| ('move'|'__move__')
+	| ('copy' (':='|'=')) // __copyassign__
+	| ('move' (':='|'=')) // __moveassign__
+	| ('__assign__')
+	| (('='|':=') (
+		  ('copy') // __copyassign__
+		| ('move') // __moveassign__
+	))
+	| ('?' '.') // __hasattr__
+	| ('__copyassign__')
+	| ('__moveassign__')
+	| ('__constructor__')
+	| ('__destructor__')
+	| ('__bool__')
+	| ('+') // __pos__ or __add__ (based on argument count)
+	| ('-') // __neg__ or __sub__ (based on argument count)
+	| ('__add__')
+	| ('__sub__')
+	| ('!'|'__not__')
+	| ('~'|'__inv__')
+	| ('__pos__')
+	| ('__neg__')
+	| ('++'|'__inc__')
+	| ('--'|'__dec__')
+	| ('__incpost__')
+	| ('__decpost__')
+	| ('<'|'__lo__'|'__lt__')
+	| ('<='|'__le__')
+	| ('=='|'__eq__')
+	| ('!='|'__ne__')
+	| ('>'|'__gr__'|'__gt__')
+	| ('>='|'__ge__')
+	| ('*') // __mul__ or __deref__
+	| ('__deref__')
+	| ('__mul__')
+	| ('/'|'__div__')
+	| ('%'|'__mod__')
+	| ('<<'|'__shl__')
+	| ('>>'|'__shr__')
+	| ('&') // __and__ or __ref__
+	| ('__ref__')
+	| ('__and__')
+	| ('|'|'__or__')
+	| ('^'|'__xor__')
+	| ('**'|'__pow__')
+	| ('+='|'__iadd__')
+	| ('-='|'__isub__')
+	| ('*='|'__imul__')
+	| ('/='|'__idiv__')
+	| ('&='|'__iand__')
+	| ('<<='|'__ishl__')
+	| ('>>='|'__ishr__')
+	| ('&='|'__iand__')
+	| ('|='|'__ior__')
+	| ('^='|'__ixor__')
+	| ('(' ')'|'__call__')
+	| ('#'|'__size__')
+	| ('__getitem__')
+	| ('__delitem__')
+	| ('__setitem__')
+	| ('__getrange__')
+	| ('__delrange__')
+	| ('__setrange__')
+	| ('__contains__')
+	| ('__getattr__')
+	| ('__hasattr__')
+	| ('__delattr__')
+	| ('__setattr__')
+	| ('for') // __iterself__ yield-wrapper
+	| ('__iterself__')
+	| ('__iternext__')
+	| ('__hash__')
+
+	// File operators
+	// >> file.operator __read__(size_t max_size) -> string;
+	// Only available if pointers are enabled:
+	// >> file.operator __read__(none *p, size_t s) -> size_t;
+	| ('__read__')
+
+	// >> file.operator __write__(string data) -> size_t;
+	// Only available if pointers are enabled:
+	// >> file.operator __write__(none *p, size_t s) -> size_t;
+	| ('__write__')
+
+	// Only available if pointers are enabled
+	// >> file.operator __readp__(none *p, size_t s) -> size_t;
+	| ('__readp__')
+
+	// Only available if pointers are enabled
+	// >> file.operator __writep__(none *p, size_t s) -> size_t;
+	| ('__writep__')
+
+	// >> file.operator __readnp__(size_t max_size) -> string;
+	| ('__readnp__')
+
+	// >> file.operator __writenp__(string data) -> size_t;
+	| ('__writenp__')
+
+	// >> file.operator __seek__(int64_t off, int whence) -> uint64_t;
+	| ('__seek__')
+
+	// >> file.operator __flush__() -> none;
+	| ('__flush__')
+
+	// >> file.operator __trunc__() -> none;
+	| ('__trunc__')
+
+	// >> file.operator __close__() -> none;
+	| ('__close__')
+
+	// Recursion
+	| ('(' XAstOperatorName_Parse ')')
+
+	| ('del' (
+		  ('.')         // __delattr__
+		| ('[' ']')     // __delitem__ / __delrange__
+		| ('[' ':' ']') // __delrange__
+	))
+
+	| ('.')     // __getattr__
+	| ('.' '=') // __setattr__
+
+	| ('[' ']')         // __getitem__ / __getrange__
+	| ('[' ']' '=')     // __setitem__ / __setrange__
+	| ('[' ':' ']')     // __getrange__
+	| ('[' ':' ']' '=') // __setrange__
+
+	// Restricted to known types, parse a type for a cast
+	// operator '__bool__', '__int32__', '__int64__', '__double__' or '__str__'
+	| (XAst_ParseType)
+);
+
+XAst_ParseExistsExpressionUnary ::= ((
+	[( // Parse attributes and lookup modifiers
+		  AttributeDecl_Parse
+		| XAst_ParseVariableLookupModifiers
+	)...]
+
+	// Parse nth variable lookup
+	  ('__nth' '(' XAst_ParseSingle RELAXED_COMMA ')' [XAst_ParseVariableLookupModifiers] keyword)
+
+	// Parse scope variable lookup
+	| ('__scope' '(' XAst_ParseSingle RELAXED_COMMA ')' [XAst_ParseVariableLookupModifiers] keyword)
+	
+	// Parse named variable lookup
+	| ('...'|keyword)
+
+	// Parse a constant unary expression.
+	// If it isn't constant, indicate that the expression doesn't exist
+	| (XAst_ParseUnary)
+
+) [( // Parse suffix, such as attribute lookup
+	(('.'|'::') keyword)
+)...]);
+
+XAst_ParseExistsExpressionLand ::= (
+	  (XAst_ParseExistsExpressionUnary)
+	  // Returns true if both expressions exist
+	| (XAst_ParseExistsExpressionUnary '&&' XAst_ParseExistsExpressionUnary)
+);
+XAst_ParseExistsExpressionLxor ::= (
+	  (XAst_ParseExistsExpressionLand)
+	  // Returns true if existance of both expressions isn't equal
+	| (XAst_ParseExistsExpressionLand '^^' XAst_ParseExistsExpressionLand)
+);
+XAst_ParseExistsExpressionLor ::= (
+	  (XAst_ParseExistsExpressionLxor)
+	  // Returns true if either expression exists
+	| (XAst_ParseExistsExpressionLxor '||' XAst_ParseExistsExpressionLxor)
+);
+XAst_ParseExistsExpressionIf ::= (
+	  (XAst_ParseExistsExpressionLor)
+	| (XAst_ParseExistsExpressionLor '?' (
+		// Parse an exists expression:
+		//  >> a ? b : c
+		// If 'a' exists, return existance of 'b'. Otherwise return it for 'c'
+		// If 'b' isn't given, it has the same value as 'a'
+		// If 'c' isn't given, it is false
+		  (XAst_ParseExistsExpression [':' XAst_ParseExistsExpressionIf])
+		| (':' XAst_ParseExistsExpressionIf)
+	))
+);
+XAst_ParseExistsExpression ::= XAst_ParseExistsExpressionIf;
+
+XAst_ParseClassBase ::= (
+	// Parse a class base declaration
+	((':'|'extends') XAst_ParseSingle)
+);
+
+XAst_ParseStructBlock ::= ([
+	
+	// Parse optional attributes
+	// NOTE: By default, these are initialized to the attributes of the struct.
+	[AttributeDecl_Parse]
+	
+	// Parse the member type base
+	XAst_ParseSingle
+	
+	// Struct member names
+	// NOTE: Only optional if another struct/union type was just parsed:
+	// >> struct my_struct {
+	// >>   int x;
+	// >>   union {
+	// >>     int   iy;
+	// >>     float fy;
+	// >>   }; // < no name required
+	// >>   int z;
+	// >> };
+	// NOTE: The names in this are the member names.
+	[(',' ~~ (
+		XAst_ParseNamedTypeSuffix
+		// TODO: bitfields are not implemented (yet)
+		//[':' XAst_ParseSingle]
+	)...) RELAXED_COMMA]
+	
+	';'
+]...);
+
+XAst_ParseStruct ::= (
+	[(
+		  (XAst_ParseVariableLookupModifiers)
+		| ('final')
+	)...]
+	[keyword [AttributeDecl_Parse]]   // Optional struct name
+	[XAst_ParseClassBase]             // Optional struct base
+	[AttributeDecl_Parse]
+	['{' [XAst_ParseStructBlock] '}'] // Optional struct block
+);
+
+XAst_ParseClassPropertyBlock ::= ( [AttributeDecl_Parse] (
+	[('operator'|'function')] // Optional prefix
+	( // Callback name
+		  ('.'|'get'|'__get__','read')              // __get__ callback
+		| (['.'] '='|'set'|'__set__','write','put') // __set__ callback
+		| ((('-'|'del') ['.'])|'__del__','delete')  // __del__ callback
+	)
+	[AttributeDecl_Parse]
+	XAst_ParseUnnamedFunction
+));
+
+XAst_ParseClassBlockEntry ::= (
+	[';'...]
+	[(
+		// Destructor callback
+		// NOTE: 'keyword' must be the name of the class and cannot be used in unnamed classes
+		  (
+			'~' ('class'|'this'|keyword) [AttributeDecl_Parse]
+			XAst_ParseUnnamedFunction
+			[';'] // Only required for expression-style functions
+		)
+		// Constructor callback
+		// NOTE: 'keyword' - ditto
+		| (
+			('class'|'this'|keyword) [AttributeDecl_Parse]
+			XAst_ParseUnnamedFunction
+			[';'] // Only required for expression-style functions
+		)
+		
+		// Copy/move constructor callback
+		| (
+			'copy' [AttributeDecl_Parse]
+			XAst_ParseUnnamedFunction
+			[';'] // Only required for expression-style functions
+		)
+		| (
+			'move' [AttributeDecl_Parse]
+			XAst_ParseUnnamedFunction
+			[';'] // Only required for expression-style functions
+		)
+		
+		// Operator declaration
+		| (
+			'operator' [AttributeDecl_Parse]
+			XAstOperatorName_Parse
+			[AttributeDecl_Parse]
+			XAst_ParseUnnamedFunction
+			[';'] // Only required for expression-style functions
+		)
+		
+		// Property (aka. getset) declaration
+		| (
+			[['class'] 'property' [AttributeDecl_Parse]]
+			keyword
+			[AttributeDecl_Parse]
+			'=' '{' XAst_ParseClassPropertyBlock '}'
+		)
+		| (
+			[['class'] 'function' [AttributeDecl_Parse]]
+			keyword
+			[AttributeDecl_Parse]
+			XAst_ParseUnnamedFunction
+			[';'] // Only required for expression-style functions
+		)
+		
+	) ';']
+);
+
+XAst_ParseClassBlock ::= ((
+	[AttributeDecl_Parse]
+	XAst_ParseClassBlockEntry
+)...);
+
+XAst_ParseClass ::= (
+	[(
+		  (XAst_ParseVariableLookupModifiers)
+		| ('final')
+	)...]
+	[keyword [AttributeDecl_Parse]]  // Optional class name
+	[XAst_ParseClassBase]            // Optional class base
+	[AttributeDecl_Parse]
+	['{' [XAst_ParseClassBlock] '}'] // Optional class block
+);
+
+XAst_ParseEnumBlock ::= (',' ~~ (
+	[AttributeDecl_Parse]
+	keyword // Enum name
+	[AttributeDecl_Parse]
+	[ // Enum initializer (if not given, count up from 0, or last given initializer)
+		'='
+		[AttributeDecl_Parse]
+		XAst_ParseSingle
+	]
+)...);
+
+XAst_ParseEnum ::= (
+	['class'|'struct'|'union']       // Enum class
+	[(
+		(XAst_ParseVariableLookupModifiers)
+	)...]
+	[keyword [AttributeDecl_Parse]]  // Optional enum name
+	[XAst_ParseClassBase]            // Optional enum base
+	[AttributeDecl_Parse]
+	['{' [XAst_ParseEnumBlock] '}'] // Optional enum block
+);
+
+XAst_ParseCastSuffix ::= (
+	// Cast with argument list (aka. function call)
+	  ('(' XAst_Parse ')')
+	// Cast with single argument that has more parenthesis: double cast.
+	// This is required for code like this:
+	// >> x = "42";
+	// >> print (double)(int)x;
+	| ('(' XAst_ParseSingle ')' [XAst_ParseCastSuffix])
+
+	// Default case: parse a unary expression
+	// >> print (int)42;
+	// Handling of ambiguity:
+	// >> print (int)+x; // 'int.operator __add__(x)' or 'int.operator __call__(x.operator __pos__())' ?
+	//
+	// In this case deemon would correctly choose to compile a cast expression,
+	// but only does so because 'int' is known at compile-time and is a type.
+	//
+	// In other cases, deemon will compile the code using non-unary operators and
+	// not emit a warning (by default), as to not bicker about perfectly fine code.
+	// The warning '603' can be enabled to trace problems with this:
+	// >> #pragma warning(enable: 603)
+	// >> print (20-10)*3; // Emits warning '603' (disabled by default)
+	//
+	// Because of this, a warning is emitted suggesting to alter to code like this:
+	// >> print (int)(+x); // Still compatible with normal c, but doesn't cause the ambiguity.
+	// >> print ((int))+x; // Would technically force deemon to compile as 'int.operator __add__(x)' because of the double parenthesis
+	//
+	// Affect tokens are:
+	//   - '+' (__pos__ vs. __add__)
+	//   - '-' (__neg__ vs. __sub__)
+	//   - '*' (__deref__ vs. __mul__)
+	//   - '&' (__ref__ vs. __and__)
+	//   - '<' (cell vs. __lo__)
+	//   - '[' (list vs. __getitem__)
+	//
+	| (XAst_ParseUnary)
+);
+
+XAst_ParseVariableLookup ::= ( [(
+	  XAst_ParseVariableLookupModifiers
+	| AttributeDecl_Parse
+)...] (
+	// Parse a function
+	// NOTE: If indicated by the lookup modifiers, the function will be constant
+	  ('function' XAst_ParseFunction)
+
+	// Parse / lookup an alias declaration
+	// NOTE: Creating a new one requires the declaration privilege
+	| ('alias' keyword ['=' XAst_Parse])
+
+	| ('final' ( // Final modifier
+		  (('struct'|'union') XAst_ParseStruct)
+		| ('class' XAst_ParseClass)
+	))
+
+	| (('struct'|'union') ['final'] XAst_ParseStruct)
+	| ('class' ['final'] XAst_ParseClass)
+
+	| ('enum' XAst_ParseEnum)
+
+	// Lookup the nth (as set by the given expression) variable
+	| ('__nth' '(' XAst_ParseSingle RELAXED_COMMA ')' [XAst_ParseVariableLookupModifiers...] keyword)
+
+	// Lookup a variable from an explicit scope (as set by the given expression)
+	| ('__scope' '(' XAst_ParseSingle RELAXED_COMMA ')' [XAst_ParseVariableLookupModifiers...] keyword)
+
+	// Default lookup/declaration (using the given modifiers and attributes)
+	| ('...' | keyword)
+
+));
+
+XAst_ParseType ::= ((
+	// const/volatile modifiers
+	// NOTE: The const modifier will set an internal flag that is
+	//       later used for declaring constant functions/classes.
+	[('const'|'volatile')...]
+	(
+		// Basic types (without modifiers)
+		  ('float')
+		| ('object')
+		| ('dict')
+		| ('list')
+		| ('set')
+		| ('tuple')
+		| ('string')
+		| ('_Bool'|'bool')
+		| ('double' 'long'|'long' 'double')
+		| ((
+			[('const'|'volatile')...] // Skip const/volatile modifiers
+			// NOTE: Each group of modifiers (separated by parenthesis) can only be used once
+
+			  ('atomic'|'_Atomic') // Atomic modifier (Not available for floating point types)
+			| ('int')  // Int name modifier (optional in most cases, but on its own a type as well)
+			| ( // Signed/Unsigned modifiers
+				  ('signed'|'__signed'|'__signed__')
+				| ('unsigned'|'__unsigned'|'__unsigned__')
+			)
+			// EXCEPTION: 'long' can be used twice
+			| ('char'|'short'|'long') // Size modifiers
+
+			// Sign-unspecific Absolute types. These can only be used if no size and int modifiers were used
+			// >> signed int8_t;      // Allowed
+			// >> signed char int8_t; // Illegal
+			| ('__int8'|'int8'|'int8_t'|'__int16'|'int16'|'int16_t'|
+			   '__int32'|'int32'|'int32_t'|'__int64'|'int64'|'int64_t')
+
+			// Sign-specific Absolute types. These can only be used if no size, int and signed modifiers were used
+			// >> uint8_t;          // Allowed
+			// >> unsigned uint8_t; // Illegal
+			| ('uint8'|'uint8_t'|'uint16'|'uint16_t'|
+			   'uint32'|'uint32_t'|'uint64'|'uint64_t'|
+			   'wchar_t'|'__wchar_t'|'char16_t'|'char32_t')
+		)...)
+	)
+) | XAst_ParseVariableLookup);
+
+XAst_ParseRawUnary ::= (
+	// NOTE: Attributes are not allowed to be parsed in any context
+	// e.g.:
+	// >> 10 + [[unused]] 20; // ERROR: Attributes not allowed here
+	// >> [[unused]] 10 + 20; // OK (though doesn't do anything and may emit a warning for that in the future)
+	// These attributes are simply meant for function, struct or class declarations
+	[AttributeDecl_Parse]
+(
+
+	// Builtin constants
+	  ('__builtin_object')
+	| ('__builtin_dex')
+	| ('true')
+	| ('false')
+	| ('none')
+
+	| (integer)
+	| (string)
+	| (character)
+	| (float)
+
+	| ('__func__')
+
+	// Parenthesis, statement expression
+	| ('(' (
+		// Statement expression
+		// -> Returns the value of the last statement, or 'none' if none are given
+		  ('{' [SAst_Parse...] '}')
+
+		// Parse an expression with parenthesis
+		// NOTE: Create a tuple if a sequence with more than one element was parsed.
+		| (XAst_Parse)
+	) ')')
+
+	// Cast expression
+	// NOTE: In cases with ambiguity, cast can be suppressed by adding double-parenthesis.
+	| ('(' XAst_Parse ')' [XAst_ParseCastSuffix])
+
+	// Lambda-style function
+	// NOTE: Named lambda functions are deprecated, and the following names
+	//       are not allowed to be used: 'in', 'is' and 'pack'
+	| ('[' [('&'|'=')] ']' XAst_ParseFunction)
+
+	// List expression
+	| ('[' [XAst_ParseList] ']')
+
+	// Packed tuple expression
+	| ('pack' (XAst_ParseTuple | ('(' XAst_ParseTuple ')')))
+
+	// Unary keyword operators
+	| ('str'  (XAst_ParseUnary | ('(' XAst_ParseSingle RELAXED_COMMA ')')))
+	| ('repr' (XAst_ParseUnary | ('(' XAst_ParseSingle RELAXED_COMMA ')')))
+	| ('copy' (XAst_ParseUnary | ('(' XAst_ParseSingle RELAXED_COMMA ')')))
+	| ('move' (XAst_ParseUnary | ('(' XAst_ParseSingle RELAXED_COMMA ')')))
+	| ('type' (XAst_ParseUnary | ('(' XAst_ParseSingle RELAXED_COMMA ')')))
+	| ('weak' (XAst_ParseUnary | ('(' XAst_ParseSingle RELAXED_COMMA ')')))
+
+	// Unary operators
+	| ('!'     XAst_ParseUnary) // __not__
+	| ('!' '!' XAst_ParseUnary) // __bool__
+	| ('&'     XAst_ParseUnary) // __ref__
+	| ('&&'    XAst_ParseUnary) // __ref__ + __ref__
+	| ('*'     XAst_ParseUnary) // __deref__
+	| ('**'    XAst_ParseUnary) // __deref__ + __deref__
+	| ('++'    XAst_ParseUnary) // __inc__ (Increment+Fetch)
+	| ('--'    XAst_ParseUnary) // __dec__ (Decrement+Fetch)
+	| ('#'     XAst_ParseUnary) // __size__
+	| ('~'     XAst_ParseUnary) // __inv__
+	| ('-'     XAst_ParseUnary) // __neg__
+	| ('+'     XAst_ParseUnary) // __pos__
+
+	// Cell syntax
+	// NOTE: Leading '<<' are split into '<' '<'
+	// NOTE: Ending '>>' are split into '>' '>'
+	| ('<' XAst_ParseUnary '>')
+
+	// Super object reference
+	// NOTE: This expression is only parsed in [[thiscall]] functions.
+	//       In other functions, 'super' can be used as a variable name.
+	// NOTE: Member functions of classes are implicitly declared with
+	//       '[[thiscall,super(...)]]', where '...' is the classes actual base.
+	// >> function [[thiscall]] {
+	// >>    print super; // Compiled as 'this.super'.
+	// >>                 // Also emits a warning about unsafe use of 'super',
+	// >>                 // as its type depends on the actual value of 'this'.
+	// >> }
+	// >> function [[thiscall,super(list)]] {
+	// >>    print super; // Compiled as '__super(list,this)'
+	// >> }
+	| ('super')
+
+	// Explicit super view
+	//  -> The second argument is only optional in [[thiscall]] functions,
+	//     where it defaults to the hidden 'this' argument.
+	//  -> The first argument describes the type to which a view should be
+	//     created, and should be 'type arg2' or one of its base-classes.
+	| (('__super'|'__builtin_super') '(' XAst_ParseSingle [',' XAst_ParseSingle] ')')
+
+	// Simulated statement-style if expression.
+	// >> print if (foo()) bar() else foobar();
+	// >> // Same as:
+	// >> print foo() ? bar() : foobar();
+	// Missing branches are substituated just as they are for the '?' operator.
+	| ('if' '(' XAst_ParseSingle ')' (
+		  (XAst_ParseSingle ['else' XAst_ParseSingle])
+		| ('else' XAst_ParseSingle)
+	))
+
+	// Generator expressions
+	// -> These are compiled as aliases for yield-functions:
+	// >> #include <util>
+	// >> print (for (x: util::range(42)) x*2)...;
+	// >> // Same as:
+	// >> print ([]{ for (x: util::range(42)) yield x*2; }())...;
+	| ('for' '(' XAst_ParseDecl ':' XAst_ParseInit ')' SAst_ParseGeneratorBlock)
+	| ('for' '(' [XAst_ParseDecl] ';' [XAst_ParseInit] ';' [XAst_ParseInit] ')' SAst_ParseGeneratorBlock)
+	| ('while' '(' XAst_ParseDecl ')' SAst_ParseGeneratorBlock)
+	| ('do' SAst_ParseGeneratorBlock 'while' '(' XAst_ParseDecl ')')
+	| ('__looponce' SAst_ParseGeneratorBlock)
+	| ('__loopever' SAst_ParseGeneratorBlock)
+	| ('__loopnone' SAst_ParseGeneratorBlock)
+
+	// Switch expression
+	// -> Can be used to simulate C11's _Generic keyword (s.a.: list:<__cdefault.dee>),
+	//    but is capable of doing much more than that, by mapping any constant to
+	//    another expression.
+	// >> x = some_call();
+	// >> print switch (type x) { int: 42, float: 84, default: "unknown" };
+	| ('switch' '(' XAst_ParseSingle ')' '{' ((','|';') ~~ [ [';'...] (
+		// Switch case
+		  (['case'] /*constant*/ XAst_ParseSingle ':' XAst_ParseSingle)
+		| ('default' ':' XAst_ParseSingle)
+	)]...) [';'...] '}')
+
+	// Asorted builtins
+	// Parse, but never evaluate arguments, always returning 'none'.
+	// Useful as drop-in for disabling custom keyword:
+	// >> #ifdef NDEBUG
+	// >> # define log_verbose __noop /* Disable verbose logs. */
+	// >> #else
+	// >> # include <file>
+	// >> module debug { local logfile = file.io("verbose.log","a"); }
+	// >> # define log_verbose print ::debug::logfile:
+	// >> #endif
+	// >>
+	// >> log_verbose "Hi!";
+	// >>
+	| ('__noop' (XAst_ParseTuple | ('(' XAst_ParseTuple ')')))
+	| ('__builtin_noop' '(' XAst_ParseTuple ')')
+
+	// Returns true if the given expression is constant
+	// within the current parser configuration.
+	// NOTE: This function may return false more often under low optimization levels (e.g.: '-O0')
+	// NOTE: In a context where constants should get generated, such as a constant
+	//       initializer, the same constant generator optimizations apply to its argument too.
+	// >> // Run with '-O0'
+	// >> const x = __builtin_constant_p(10+20);
+	// >> print x; // true (because 'x' being constant force-enabled constant optimizations during its initializer)
+	// >> print __builtin_constant_p(10+20); // false (because '10+20' didn't get optimized away)
+	| ('__builtin_constant_p' '(' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Returns true/false if the argument expression will never throw an exception.
+	// Used internally during various optimizations, as well as for testing the compiler.
+	| (('_Noexcept'|'__builtin_noexcept') '(' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Returns true/false if the argument expression will never return to the caller.
+	// Used internally during various optimizations, as well as for testing the compiler.
+	| (('_Noreturn'|'__builtin_noreturn') '(' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Returns true/false if the argument expression does not have any side-effects.
+	// Used internally during various optimizations, as well as for testing the compiler.
+	| ('__builtin_noeffect' '(' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// The first argument must be a constant bool, which is used to either
+	// select the first or the second branch as return value.
+	// -> As dead branch optimization can only be performed much later,
+	//    this can be used to selectively delete branches early on during compilation.
+	// -> Other than that, in essence this does the same as an if-statement
+	//    with a constant condition (that is assuming dead-branch optimizations are turned on)
+	// WARNING: Any label endpoints in the dead branch will be deleted, leading to warning 524
+	//          to be generated at every goto attempting to reach it, as well as bebug builds
+	//          of your code generating OP_UNREACHABLE, causing the same behavior as
+	//          using '__builtin_unreachable()' for every goto
+	// NOTE: The dead branch will not even be evaluted, as all of its tokens will be skipped
+	//       until the first ',' token that isn't wrapped inside additional parenthesis
+	//       created with '(...)', '[...]' or '{...}', meaning that any warnings
+	//       that would have otherwise been created will not be emited either.
+	// NOTE: 99% of '__builtin_choose_expr' can be implemented with macros and static_if:
+	//       >> #if __has_feature(__static_if__) && \
+	//       >>    !__has_builtin(__builtin_choose_expr)
+	//       >> #define __builtin_choose_expr(c,tt,ff) __static_if(c) { tt } else { ff }
+	//       >> #endif
+	//       WARNING: this implementation resolved parenthesis differently,
+	//                not allowing for recursion through '[...]' or '{...}'.
+	| ('__builtin_choose_expr' '(' XAst_ParseSingle ',' XAst_ParseSingle ',' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Marks an expression that is always considered unreachable/noreturn.
+	// >> print __builtin_noreturn(__builtin_unreachable()); // true
+	// In debug builds, an OP_UNREACHABLE is generated that will
+	// cause an 'Error.RuntimeError' that cannot be caught in the current
+	// stackframe before forcing that frame to be closed without execution
+	// of any pending finally or catch blocks and returning that error to the caller.
+	// NOTE: Attempting to run code using runtime-features not supported
+	//       by the implementation of deemon running that code
+	//       (as listed by 'deemon --features'), the same
+	//       behavior as '__builtin_unreachable()' is produced.
+	| ('__builtin_unreachable' '(' RELAXED_COMMA ')')
+
+	// When reached during execution, enters the interactive debugger,
+	// as implemented by the dex function '_debugger.breakpoint()'.
+	| ('__builtin_breakpoint' '(' RELAXED_COMMA ')')
+
+	// Returns the type of the given expression using compile-time type prediction.
+	// NOTE: The expression will never be evaluated during runtime and
+	//       if the type could not be deduced, a warning is produced.
+	// NOTE: Use '__builtin_predictable' to find out if the type of a
+	//       given expression can be predicted during compile-time.
+	// >>
+	// >> // function typeof(object x) -> type object
+	// >> //     Tries to deduce the type of 'x' without evaluating it at compile-time,
+	// >> //     but will evaluate it if it can't be deduced otherwise.
+	// >> #define typeof(x) __builtin_choose_expr(__builtin_predictable(x),__builtin_typeof(x),type(x))
+	// >>
+	// >> typeof(42) x = 42;
+	// >> print type x,x;
+	| ('__builtin_typeof' '(' XAst_ParseSingle RELAXED_COMMA ')')
+	| ('__builtin_predictable' '(' XAst_ParseSingle RELAXED_COMMA ')')
+	
+	// Only here for compatibility with gcc (compares two constant types for equality)
+	| ('__builtin_types_compatible_p' '(' XAst_ParseSingle ',' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Returns the human-readable documentation string
+	// associated with a given object / attribute of an object.
+	// NOTE: Always returns a 'string'
+	| ('__builtin_help' '(' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Branch prediction hint
+	// Ignored in most places, this builtin can be used to hint
+	// towards the likely value of a given expression:
+	// >> x = foo();
+	// >> // The compile will generate code optimized for the case in which 'x' is equal to '42'
+	// >> if (__builtin_expect(x == 42,true)) {
+	// >>   print "x is 42";
+	// >> } else {
+	// >>   print "x isn't 42";
+	// >> }
+	// >>
+	// >> // Same thing...
+	// >> switch (__builtin_expect(x,42)) {
+	// >>   case 42: print "x is 42 (again)"; break;
+	// >>   default: print "x isn't 42 (again)"; break;
+	// >> }
+	// Doing this actually giving any measurable performance boost
+	// isn't guarantied and using in a context that doesn't even
+	// implement any special handling is silently ignored.
+	| ('__builtin_expect' '(' XAst_ParseSingle ',' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Only meant for debugging and only available in developer builds of deemon.
+	// This builtin function returns the given expression ast as an object,
+	// allowing the user to interact with the code, as well as show a string representation of the ast.
+	// WARNING: This builtin is considered to be unsafe, as some ASTs may
+	//          referr to other structured that may no longer exist when
+	//          the user interacts with the ast at runtime.
+	// NOTE: The only officially safe way of interacting with the returned object
+	//       is by retrieving its string representation through 'repr', while
+	//       making sure that this is done at compile-time (already breaks
+	//       if '-O0' turns off constant optimization everywhere).
+	| ('__builtin_exprast' '(' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Returns a void-pointer to 'x' bytes of memory allocated on
+	// the stack, where 'x' is defined by the given expression.
+	// WARNING: This builtin is considered unsafe, as it can lead
+	//          to non-recoverable and non-catchable StackOverflow
+	//          signals.
+	// NOTE: The returned memory will automatically be freed once
+	//       the calling function returns to its caller.
+	// NOTE: If the platform doesn't support dynamically allocating
+	//       memory on the stack, memory is allocated on the heap
+	//       and deemon will internally free those pointers once
+	//       the function that had allocated them returns.
+	| ('__builtin_alloca' '(' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Returns true/false at runtime if the given variable had a value assigned to it.
+	// Note, that some variables, such as static, argument or this-variables must
+	// always be assigned, leading '__builtin_bound' to produce a warning and
+	// return 'true'.
+	// NOTE: The expression may also be an attribute lookup,
+	//       in which case a __hasattr__ operator call is generated.
+	//       Note though, that this will only be done if the attribute
+	//       lookup wasn't resolved at compile-time.
+	//       >> if (!__builtin_bound(this.member)) this.member = 42;
+	//       >> // Same as:
+	//       >> if (!this.operator __hasattr__("member")) this.member = 42;
+	// NOTE: '__builtin_bound' does not count towards the use counter of any given
+	//       variable, in combination with unused-variable-optimization leading
+	//       to situations where a variable seemingly should have been assigned:
+	//       >> x = 42;
+	//       >> print __builtin_bound(x); // Will print false, as 'x' is optimized away
+	//       >> // ... // Code never using 'x' again
+	| ('__builtin_bound' '(' XAst_ParseUnary RELAXED_COMMA ')')
+
+	// Check for the existance of a given exists-expression
+	// The same algorithm is used as by the '__if_exists' and '__if_not_exists'
+	// static-if-style keywords (meant to simulate vc/vc++ behavior).
+	// >> local y = 10;
+	// >> {
+	// >>   local x = 42;
+	// >>   print __builtin_exists(local x); // true
+	// >>   print __builtin_exists(y);       // true
+	// >>   print __builtin_exists(local y); // false
+	// >> }
+	// NOTE: '__builtin_exists' is always resolved at compile-time,
+	//       allowing it to be used whereever a constant expression is needed.
+	// NOTE: '__builtin_exists' can be implemented with macros:
+	// >> #if __has_feature(__if_exists) && \
+	// >>    !__has_builtin(__builtin_exists)
+	// >> #define __builtin_exists(x) __if_exists(x) {true} else {false}
+	// >> #endif
+	| ('__builtin_exists' '(' XAst_ParseExistsExpression RELAXED_COMMA ')')
+
+	// Parses two asts of which the first one will be evaluated at
+	// runtime, yet the expression's value will be defined by the second:
+	// NOTE: '__builtin_exists' can be implemented with macros:
+	// >> #if __has_feature(__expr_statements__) && \
+	// >>    !__has_builtin(__builtin_unused)
+	// >> #define __builtin_unused(unused,result) ({ unused; result; })
+	// >> #endif
+	// NOTE: This builtin is mainly used internally, whenever an expression
+	//       must be evaluated, but is supposed to return something different.
+	//       e.g. (assuming specific optimizations enabled):
+	//        -> 'a || true' --> '__builtin_unused(!!a,true)'
+	//        -> A Must be evaluated and casted to bool, but
+	//           the full expression always returns true.
+	| ('__builtin_unused' '(' XAst_ParseSingle ',' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Creates an ast that is marked as dead in the same way as
+	// putting it into the success-branch of a false if expression.
+	// NOTE: If specific optimizations are enabled, __builtin_dead can be implemented with:
+	// >> #define __builtin_dead(x) (false ? (x))
+	| ('__builtin_dead' '(' XAst_ParseSingle RELAXED_COMMA ')')
+
+	// Parse a basic type expression
+	| (XAst_ParseType)
+));
+
+
+XAst_ParseUnarySuffix ::= ([(
+	// Ignore const/volatile modifiers
+	  ('const' | 'volatile')
+
+	// Function-style call/range argument list
+	// -> This is just a syntax alias for function-calling,
+	//    that should really never be used, except for magic-macro-keywords:
+	// >> function foo(a,b,c) { print a,b,c; }
+	// >> // The following lines all do the same
+	// >> foo     (10,20,30);
+	// >> foo pack(10,20,30);
+	// >> foo pack 10,20,30;
+	// NOTE: The type hint for 'XAst_ParseRangeInitializer' is based on the left-hand-side operand
+	| ('pack' (('(' [XAst_ParseTuple] ')') | [XAst_ParseTuple]))
+	| ('pack' (('(' '{' [XAst_ParseRangeInitializer] '}' ')') | '{' [XAst_ParseRangeInitializer] '}'))
+
+	// Attribute lookup.
+	// -> '::' does the same as '.', but ensures that the left-hand-side
+	//    operand can be resolved at compile-time:
+	// >> const a = "foobar";
+	// >>       b = "barfoo";
+	// >> print a::upper(); // OK
+	// >> print b::upper(); // ERROR
+	// >> print a.upper();  // OK
+	// >> print b.upper();  // OK
+	// -> '->' will dereference the left-hand-side operand before
+	//    performing the attribute lookup:
+	// >> struct MyStruct { int x,y,z; };
+	// >> struct MyStruct inst = { 10,20,30 };
+	// >> p = &inst;
+	// >> // The following lines both do the same
+	// >> print (*p).x;
+	// >> print p->x;
+	| (('.'|'::'|'->') (
+		// NOTE: If the attribute that should be lookup up has a special
+		//       name, such as 'operator' or 'this', you can simply
+		//       use 'operator __getattr__(...)' (or shorter 'operator . (...)'):
+		//       >> print strange_object.this; // Will just return 'strange_object'
+		//       >> print strange_object.operator . ("this"); // Will perform an actual lookup at runtime
+
+		// Explicit operator call
+		  ('operator' XAstOperatorName_Parse '(' [XAst_ParseInitTuple] ')')
+
+		// Syntax food for simply re-returning the left-hand-side operand
+		// -> Can be used to implement a no-op member lookup
+		| ('this')
+
+		// Return a super dereference of the left-hand-side operand
+		| ('super')
+
+		// Returns the logical type of the left-hand-side operand.
+		// Usually, that type is equivalent to 'type lhs', but
+		// some special objects, such as 'super' behave as proxy
+		// objects to other types and return the referenced type:
+		// >> a = list { 10,20,30 };
+		// >> print type a;        // list
+		// >> print a.class;       // list
+		// >> print type a.super;  // super
+		// >> print a.super.class; // object
+		| ('class')
+
+		// Attribute lookup by name. Same as 'operator __getattr__':
+		// >> a = "foobar";
+		// >> print a.upper();
+		// >> print a.operator __getattr__("upper")();
+		| (keyword)
+	))
+
+	// Unsized array type creation
+	| ('[' ']')
+
+	// Item/Index lookup
+	// NOTE: In a range lookup 'x[begin:end]', if 'begin' or 'end'
+	//       are not given, 'none' will be used instead.
+	//       While not explicitly forcing implementers to follow
+	//       this rule, all of deemon's standard runtime objects
+	//       handle 'begin is none' as the lowest possible index
+	//       and 'end is none' as the highest.
+	| ('[' (XAst_ParseSingle | ([XAst_ParseSingle] ':' [XAst_ParseSingle])) ']')
+
+	// Range initializer
+	// NOTE: If know at compile-time and being 'list', 'dict', 'set' or 'tuple',
+	//       the left-hand-side operand will be used as a hint for the type of
+	//       range initializer. Though all types of initializers are always supported.
+	//       If not known, 'list' is used as range type and the left-hand-side will
+	//       be called with that list as a constructor argument.
+	// >> a = list;
+	// >> const b = list;
+	// >> print list { 10,20,30 };    // compiled as '[10,20,30]'
+	// >> print    a { 10,20,30 };    // compiled as 'a([10,20,30])'
+	// >> print    b { 10,20,30 };    // compiled as '[10,20,30]'
+	// >> print list { "foo":"bar" }; // compiled as '[pack("foo","bar")]'
+	// NOTE: The type hint for 'XAst_ParseRangeInitializer' is based on the left-hand-side operand
+	| ('{' [XAst_ParseRangeInitializer] '}')
+
+	// Function call
+	| ('(' (
+		// range initializer (same as writing the initializer without the function-call parenthesis)
+		// NOTE: The type hint for 'XAst_ParseRangeInitializer' is based on the left-hand-side operand
+		  ('{' [XAst_ParseRangeInitializer] '}')
+		// Call argument list (can be empty)
+		// NOTE: If the argument list references non-existing variables,
+		//       the expression will not be compiled as a call, as to
+		//       support later code to compile it as a named-type declaration:
+		// >> local x = 42;
+		// >> int (*x); // compiled as 'int.operator __call__(x.operator __deref__())'
+		// >> int (*y); // compiled as 'y = (int *).operator __call__()'
+		// NOTE: Empty argument lists are always compiled using 'operator __call__'
+		| [XAst_ParseInitTuple]
+	) ')')
+
+	// Suffix operators: Expand expression
+	// Expand expression force the left-hand-side operand to be
+	// expanded to 'n' elements, using generic iterators
+	// (meaning everything iterable can be expanded).
+	// If the sequence doesn't expand to 'n' elements, an error is
+	// caused at runtime (And if already known at compile-time, then as well).
+	// NOTE: When used in a 'XAst_ParseInit' expression, 'n' will be
+	//       equal to the amount of initializer slots. Otherwise 'n' is equal to 1.
+	// NOTE: In a print or yield statement, expand the left-hand-side operand
+	//       to the equivalent of a comma-separated list of all of its elements.
+	| ('...')
+
+	| ('++') // __incpost__ (Fetch+Increment)
+	| ('--') // __decpost__ (Fetch+Decrement)
+
+)...]);
+
+XAst_ParseUnary ::= (XAst_ParseRawUnary XAst_ParseUnarySuffix);
+
+XAst_ParseProd ::= (
+	  (XAst_ParseUnary)
+	// NOTE: This operand will not be compiled
+	//       if the right-hand-side would describe
+	//       a missing local variable.
+	//       This is to allow for pointer-type-suffix in named type declarations.
+	// >> local x = 42;
+	// >> int *x; // Compiled as 'int.operator __mul__(x);'
+	// >> int *y; // Compiled as 'y = (int *).operator __call__();'
+	| (XAst_ParseUnary '*' XAst_ParseUnary)
+	
+	| (XAst_ParseUnary '/' XAst_ParseUnary)
+	| (XAst_ParseUnary '%' XAst_ParseUnary)
+);
+XAst_ParseSum ::= (
+	  (XAst_ParseProd)
+	// If the right-hand-side argument are dots ('...'),
+	// the expression will be compiled as __builtin_sum(lhs):
+	// >> a = foo() + ...;
+	// >> // Same as:
+	// >> #include <util>
+	// >> a = util::sum(foo()...);
+	// NOTE: If the right-hand-side operand is supposed to referr
+	//       to the unnamed varargs argument '...', the dots
+	//       should be written with parenthesis:
+	// >> a = foo() + ...; // Compiled as 'util::sum(foo()...)'
+	// >> a = foo() + (...); // Compiled as 'foo() + (...)'
+	| (XAst_ParseProd '+' ('...' | XAst_ParseProd))
+	| (XAst_ParseProd '-' XAst_ParseProd)
+);
+XAst_ParseShift ::= (
+	  (XAst_ParseSum)
+	| (XAst_ParseSum '<<' XAst_ParseSum)
+	| (XAst_ParseSum '>>' XAst_ParseSum)
+);
+XAst_ParseCmp ::= (
+	  (XAst_ParseShift)
+	| (XAst_ParseShift '<'  XAst_ParseShift)
+	| (XAst_ParseShift '<=' XAst_ParseShift)
+	| (XAst_ParseShift '>'  XAst_ParseShift)
+	| (XAst_ParseShift '>=' XAst_ParseShift)
+);
+XAst_ParseCmpEq ::= (
+	  (XAst_ParseCmp)
+	| (XAst_ParseCmp '==' XAst_ParseCmp)
+	| (XAst_ParseCmp '!=' XAst_ParseCmp)
+	| (XAst_ParseCmp 'in' XAst_ParseCmp)
+	| (XAst_ParseCmp 'is' XAst_ParseCmp)
+	// Not in/is will be compiled as follow:
+	// >> a = foo() !in bar();
+	// >> // Same as:
+	// >> a = !(foo() in bar());
+	| (XAst_ParseCmp (('!' 'in') | ('in' '!')) XAst_ParseCmp)
+	| (XAst_ParseCmp (('!' 'is') | ('is' '!')) XAst_ParseCmp)
+);
+XAst_ParseAnd ::= (
+	  (XAst_ParseCmpEq)
+	// NOTE: This operand will not be compiled
+	//       if the right-hand-side would describe
+	//       a missing local variable.
+	//       This is to allow for lvalue-type-suffix in named type declarations.
+	// >> local x = 42;
+	// >> int &x; // Compiled as 'int.operator __and__(x);'
+	// >> int &y; // Compiled as 'y = (int &).operator __call__();'
+	| (XAst_ParseCmpEq '&' XAst_ParseCmpEq)
+);
+XAst_ParseXor ::= (
+	  (XAst_ParseAnd)
+	| (XAst_ParseAnd '^' XAst_ParseAnd)
+);
+XAst_ParseOr ::= (
+	  (XAst_ParseXor)
+	| (XAst_ParseXor '|' XAst_ParseXor)
+);
+XAst_ParseLand ::= (
+	  (XAst_ParseOr)
+	// If the right-hand-side argument are dots ('...'),
+	// the expression will be compiled as __builtin_all(lhs):
+	// >> a = foo() && ...;
+	// >> // Same as:
+	// >> #include <util>
+	// >> a = util::all(foo()...);
+	// NOTE: If the right-hand-side operand is supposed to referr
+	//       to the unnamed varargs argument '...', the dots
+	//       should be written with parenthesis:
+	// >> a = foo() && ...; // Compiled as 'util::all(foo()...)'
+	// >> a = foo() && (...); // Compiled as 'foo() && (...)'
+	| (XAst_ParseOr '||' ('...' | XAst_ParseOr))
+);
+XAst_ParseLxor ::= (
+	  (XAst_ParseLand)
+	| (XAst_ParseLand '^^' XAst_ParseLand)
+);
+XAst_ParseLor ::= (
+	  (XAst_ParseLxor)
+	// If the right-hand-side argument are dots ('...'),
+	// the expression will be compiled as __builtin_any(lhs):
+	// >> a = foo() || ...;
+	// >> // Same as:
+	// >> #include <util>
+	// >> a = util::any(foo()...);
+	// NOTE: If the right-hand-side operand is supposed to referr
+	//       to the unnamed varargs argument '...', the dots
+	//       should be written with parenthesis:
+	// >> a = foo() || ...; // Compiled as 'util::any(foo()...)'
+	// >> a = foo() || (...); // Compiled as 'foo() || (...)'
+	| (XAst_ParseLxor '||' ('...' | XAst_ParseLxor))
+);
+XAst_ParseIf ::= (
+	  (XAst_ParseLor)
+	| (XAst_ParseLor '?' (
+		// If not given, the fail branch will evaluate to 'none'
+		  (XAst_ParseInit [':' XAst_ParseIf])
+		// If not given, the success branch will evaluate to
+		// the true value. Same as the following code:
+		// >> a = foo() ?: "failed";
+		// >> a = ({ __stack local temp = foo(); temp ? temp : "failed"; });
+		| (':' XAst_ParseIf)
+	))
+);
+XAst_ParseAssign ::= (
+	  (XAst_ParseIf)
+	| (XAst_ParseIf ':=' XAst_ParseIf)
+	| (XAst_ParseIf '+=' XAst_ParseIf)
+	| (XAst_ParseIf '-=' XAst_ParseIf)
+	| (XAst_ParseIf '*=' XAst_ParseIf)
+	| (XAst_ParseIf '/=' XAst_ParseIf)
+	| (XAst_ParseIf '%=' XAst_ParseIf)
+	| (XAst_ParseIf '<<=' XAst_ParseIf)
+	| (XAst_ParseIf '>>=' XAst_ParseIf)
+	| (XAst_ParseIf '&=' XAst_ParseIf)
+	| (XAst_ParseIf '|=' XAst_ParseIf)
+	| (XAst_ParseIf '^=' XAst_ParseIf)
+	| (XAst_ParseIf '**=' XAst_ParseIf)
+);
+
+XAst_ParseNamedTypeSuffix ::= (
+	[AttributeDecl_Parse]
+
+	[( // Type suffix / Name prefix
+		  ('*'|'**')           // Pointer type
+		| ('&')                // LValue type
+		| ('const'|'volatile') // Ignore const/volatile modifiers
+	)...]
+
+	[( // Type name or recursion
+		  ('(' XAst_ParseNamedTypeSuffix ')') // Use the name from the recursive type
+		| (keyword) // Name of this type (Usage is context-specific)
+	) [AttributeDecl_Parse]]
+
+	[( // Type suffix / Name suffix
+		  ('[' [XAst_ParseSingle] ']') // [Unsized] array type
+		  // Foreign function type with argument list
+		  // Unless for foreign_function_closures, the argument names remain unused
+		  ('(' [',' ~~ ('...' | XAst_DoParseNamedType)...] ')' [AttributeDecl_Parse])
+	)...]
+
+);
+
+XAst_DoParseNamedType ::= (XAst_ParseSingle XAst_ParseNamedTypeSuffix);
+
+XAst_ParseNamedTypeDeclSuffix ::= (
+	XAst_ParseNamedTypeSuffix // Name is used for describing local variables name
+	// Optional initializer
+	// NOTE: The initializer will be used as an argument to a constructor
+	//       call of the initializer type. If no initializer is given,
+	//       the default constructor will be called:
+	// >> int x;      // Will be compiled as 'x = int()'
+	// >> int y = 42; // Will be compiled as 'y = int(42)'
+	// NOTE: For performance, if the initializer's type is known at compile-time,
+	//       some constructor-style cast operation will not be performed:
+	// >> const class c1 {
+	// >>   this() { print "Constructor"; }
+	// >>   copy(right) { print "Copy"; }
+	// >> };
+	// >> c1 inst = c1(); // 'operator __copy__' will not be executed, because the
+	// >>                 // declarations's and initializer's type is known at compile-time.
+	// >>                 // This would already fail if 'c1' wasn't a constant class
+	// >> print inst;
+	// Also note, that the following exceptions are made:
+	// >> tuple y = { 10,20,30 }; // compiled as 'y = pack(10,20,30)' instead of 'y = tuple([10,20,30])'
+	// >> list  x = { 10,20,30 }; // compiled as 'x = [10,20,30]' instead of 'x = list([10,20,30])'
+	// >> set   z = { 10,20,30 }; // compiled as 'z = set { 10,20,30 }' instead of 'z = set([10,20,30])'
+	[(
+		// Regular initializer
+		  ('=' XAst_ParseAssign)
+		// Allow range initializers
+		// Sequence types in the range initializer will default to using lists:
+		// >> class TestClass { this(seq) { print type seq; } };
+		// >> TestClass my_var = { 10,20,30 }; // prints 'list'
+		// NOTE: The type hint for 'XAst_ParseRangeInitializer' is based on the type currently being declared
+		| ('=' '{' [XAst_ParseRangeInitializer] '}')
+		// Foreign function closure.
+		// Only allowed if the parsed type is a foreign_function_closure on its top level
+		// >> int add(int x, int y) { return x+y; }
+		// >> Argument names are taken from the
+		// NOTE: If this is the top-level expression, a following ';' is optional
+		| ([':' keyword] '{' [SAst_Parse...] '}')
+		| ([':' keyword] '->' XAst_ParseSingle) // But this one does require a ';'
+	)]
+);
+
+XAst_ParseInitSingle ::= (XAst_ParseAssign ['=' XAst_ParseAssign]);
+XAst_ParseInit ::= ((',' ~~(
+	(',' ~~ XAst_ParseAssign...) // Parse initializer slots
+	// Parse an initializer.
+	// NOTE: If this is an expand expression, expand it to the
+	//       amount of slots contained in the initializer slots above.
+	// NOTE: If it isn't an expand expression, assign it to the last
+	//       initializer slot
+	// >> a,b,c = [10,20,30]...; // compile as: 'a = 10,b = 20,c = 30'
+	// >> a,b,c = [10,20,30];    // compile as: 'a,b,c = [10,20,30]'
+	['=' XAst_ParseAssign]
+)... RELAXED_COMMA) [
+	(',' ~~ XAst_ParseNamedTypeDeclSuffix...) // Name is used as locals name
+	RELAXED_COMMA
+]);
+
+XAst_ParseDeclSingle ::= XAst_ParseInitSingle; // Allow declaration of new variables
+XAst_ParseDecl ::= XAst_ParseInit; // Allow declaration of new variables
+XAst_ParseInitTuple ::= XAst_ParseInit; // Return a tuple, even if only a 'XAst_ParseInitSingle' was parsed
+XAst_ParseDeclTuple ::= XAst_ParseDecl; // Return a tuple, even if only a 'XAst_ParseDeclSingle' was parsed
+XAst_ParseInitList ::= XAst_ParseInit; // Return a tuple, even if only a 'XAst_ParseInitSingle' was parsed
+XAst_ParseDeclList ::= XAst_ParseDecl; // Return a tuple, even if only a 'XAst_ParseDeclSingle' was parsed
+
+XAst_Parse ::= XAst_ParseInit;
+XAst_ParseSingle ::= XAst_ParseInitSingle;
+XAst_ParseTuple ::= XAst_ParseInitTuple;
+XAst_ParseList ::= XAst_ParseInitList;
+
+XAst_ParseDel ::= XAst_ParseUnary;
+XAst_ParseAllDel ::= (',' ~~ XAst_ParseDel... RELAXED_COMMA);
+
+SAst_Parselabel ::= (keyword ':');
+SAst_ParseCase ::= ('case' /*constant*/ XAst_ParseUnary ['...' XAst_ParseUnary] ':');
+SAst_ParseDefault ::= ('default' ':');
+SAst_ParseSingleImport ::= [AttributeDecl_Parse] return(['module' [AttributeDecl_Parse]] keyword [('.'|'::') keyword]... [('.'|'::') '*']);
+SAst_ParseImport ::= ('import' return(',' ~~ SAst_ParseImportSingle...) RELAXED_COMMA ';');
+SAst_ParseEmpty ::= return(none) (';');
+SAst_ParseBlock ::= ('{' [return(SAst_Parse...)] '}');
+SAst_ParseReturn ::= return(none) ('return' [return(XAst_Parse)] ';');
+SAst_ParseYield ::= return(none) ('yield' [return(XAst_ParseTuple)] ';');
+SAst_ParseAssert ::= return(none) (('assert'|'__assert') XAst_Parse [':' XAst_Parse] ';');
+SAst_ParsePrint ::= return(none) ('print' XAst_ParseTuple [':' XAst_ParseTuple] [','] ';');
+SAst_ParseIf ::= ('if' '(' XAst_ParseDecl ')' return(SAst_Parse) ['else' return(SAst_Parse)]);
+SAst_ParseFor ::= return(none) ('for' '(' XAst_ParseDecl ';' XAst_Parse ';' XAst_Parse ')' SAst_Parse);
+SAst_ParseForEach ::= (('__foreach'|'for') '(' XAst_ParseDecl ':' return(XAst_Parse) ')' SAst_Parse);
+SAst_ParseWhile ::= return(none) ('while' '(' XAst_ParseDecl ')' SAst_Parse);
+SAst_ParseDoWhile ::= return(none) ('do' '(' XAst_ParseDecl ')' SAst_Parse 'while' '(' XAst_ParseDecl ')' ';');
+SAst_ParseLoopOnce ::= return(none) ('__looponce' SAst_Parse ';');
+SAst_ParseLoopEver ::= return(none) ('__loopever' SAst_Parse ';');
+SAst_ParseLoopNone ::= return(none) ('__loopnone' SAst_Parse ';');
+SAst_ParseIfTrue ::= ('__if_true' return(SAst_Parse) ['else' SAst_Parse] );
+SAst_ParseIfFalse ::= ('__if_false' SAst_Parse ['else' return(SAst_Parse)] );
+SAst_ParseBreak ::= return(none) ('break' ';'); // Only allowed in loops/switch statements
+SAst_ParseContinue ::= return(none) ('continue' ';'); // Only allowed in loops/switch statements
+SAst_ParseGoto ::= return(none) ('goto' keyword ';');
+SAst_ParseThrow ::= return(none) ('throw' XAst_Parse ';');
+SAst_ParseTryFinallyHandler ::= ('finally' SAst_Parse);
+SAst_ParseTryCatchHandler ::= ('catch' '(' (
+	('...' XAst_ParseUnary)| // Catch all: 'catch (...x)'
+	(XAst_ParseUnary '...')| // Catch all: 'catch (x...)'
+	(XAst_ParseUnary XAst_ParseUnary) // Catch typed: 'catch (object x)'
+) SAst_Parse);
+SAst_ParseTryHandler ::= (SAst_ParseTryFinallyHandler|SAst_ParseTryCatchHandler);
+SAst_ParseTry ::= return(none) ('try' SAst_Parse (SAst_ParseTryHandler)...);
+SAst_ParseModule ::= ('module' keyword [(('.'|'::') keyword)...] return(SAst_Parse));
+SAst_ParseSwitch ::= ('switch' '(' return(XAst_ParseDecl) ')' SAst_Parse); // Allow case labels
+SAst_ParseDel ::= ('del' return(XAst_ParseAllDel) ';');
+SAst_ParseExtern ::= ('extern' [AttributeDecl_Parse] [XAst_Parse ':']
+	[AttributeDecl_Parse] XAst_ParseInit [XAst_ParseNamedTypeSuffix...]); // Name is used as default import name
+
+SAst_ParseExpression ::= ( [AttributeDecl_Parse] (
+	[XAst_ParseVariableLookupModifiers...]
+	(
+		// The following ';' is only optional if this is a brace '{ ... }' style function
+		  ('function' XAst_ParseFunction [';'])
+		// Parse a regular decl-style expression
+		// NOTE: The ';' is optional if the last named-type
+		//       expression was a foreign_function_closure.
+		| (XAst_ParseDecl [';'])
+	)
+))
+
+SAst_Parse ::= ((
+	// Prefix
+	  SAst_Parselabel   // Label
+	| SAst_ParseCase    // Only allowed inside of 'switch'
+	| SAst_ParseDefault // Only allowed inside of 'switch'
+) (
+	  return SAst_ParseImport
+	| return SAst_ParseEmpty
+	| return SAst_ParseBlock
+	| return SAst_ParseReturn
+	| return SAst_ParseYield
+	| return SAst_ParseAssert
+	| return SAst_ParsePrint
+	| return SAst_ParseIf
+	| return SAst_ParseFor
+	| return SAst_ParseForEach
+	| return SAst_ParseWhile
+	| return SAst_ParseDoWhile
+	| return SAst_ParseLoopOnce
+	| return SAst_ParseLoopEver
+	| return SAst_ParseLoopNone
+	| return SAst_ParseIfTrue
+	| return SAst_ParseIfFalse
+	| return SAst_ParseBreak
+	| return SAst_ParseContinue
+	| return SAst_ParseGoto
+	| return SAst_ParseTry
+	| return SAst_ParseModule
+	| return SAst_ParseSwitch
+	| return SAst_ParseDel
+	// The ';' is optional in top-level function/foreign_function_closure declarations
+	| return SAst_ParseExpression
+));
+
+SAst_ParseAll ::= [SAst_Parse...];
+
+
+
+
+@file ::= SAst_ParseAll;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
