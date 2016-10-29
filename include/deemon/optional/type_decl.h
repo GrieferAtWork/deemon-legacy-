@@ -298,10 +298,15 @@ DEE_COMPILER_MSVC_WARNING_POP
 ,DEE_TYPEMEMBER(_tp_alias_uuids,NULL)\
 }
 #define DEE_TYPE_MARSHAL_v100(_tp_uuid,_tp_marshal_ctor,_tp_marshal_put) \
- DEE_TYPE_MARSHAL_v101(_tp_uuid,_tp_marshal_ctor,_tp_marshal_put,null)
+{_tp_uuid\
+,DEE_REQUIRE_TYPECOMPATIBLE(DeeType_SLOT_TYPE(tp_marshal_ctor),DEE_TYPEMEMBER(_tp_marshal_ctor,____MUST_IMPLEMENT____))\
+,DEE_REQUIRE_TYPECOMPATIBLE(DeeType_SLOT_TYPE(tp_marshal_put),DEE_TYPEMEMBER(_tp_marshal_put,____MUST_IMPLEMENT____))\
+,NULL}
 #define DEE_TYPE_MARSHAL_VAR_v100(_tp_uuid,_tp_marshal_new,_tp_marshal_put) \
- DEE_TYPE_MARSHAL_VAR_v101(_tp_uuid,_tp_marshal_new,_tp_marshal_put,null)
-
+{_tp_uuid,(DeeType_SLOT_TYPE(tp_marshal_ctor))\
+ DEE_REQUIRE_TYPECOMPATIBLE(DeeType_SLOT_TYPE(tp_marshal_new),DEE_TYPEMEMBER(_tp_marshal_new,____MUST_IMPLEMENT____))\
+,DEE_REQUIRE_TYPECOMPATIBLE(DeeType_SLOT_TYPE(tp_marshal_put),DEE_TYPEMEMBER(_tp_marshal_put,____MUST_IMPLEMENT____))\
+,NULL}
 
 struct DeeMemberDef;
 struct DeeGetSetDef;

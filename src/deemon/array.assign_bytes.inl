@@ -19,42 +19,53 @@
  * SOFTWARE.                                                                      *
  */
 
-1. If you want to learn how deemon works, check out
-   'LANGUAGE.txt' for the syntax specification and
-   'tut/*' for some code examples.
+#if defined(__INTELLISENSE__) && 0
+#include "array.c"
+#define BYTESIZE 8
+DEE_DECL_BEGIN
+#endif
 
-2. The remainder of this file contains some things
-   concerning the language, which I didn't know where else to put.
-
-- RESERVED IDENTIFERS:
-  Keywords beginning with 2 underscores (e.g.: '__foobar') are
-  reserved for internal usage by the language. But note, that
-  unlike c/c++, deemon does not reserve underscope-uppercase. We
-  only reserve double underscore at the beginning of a keyword.
-
-  Other, new keywords not beginning with two underscores will always
-  require a specific header file which, using a #define assigns a
-  regular name to it. For example: I might add 'static_assert'. But 'static_assert'
-  will never be a reserved identifer. Instead the compiler will look for
-  '__static_assert' and there will be a header in the standard library
-  containing a macro '#define static_assert __static_assert'.
-  So you won't run into name collision until you include that specific header.
-  NOTE: This is a bad example, since 'static_assert' is actually a reserved identifer...
-
-  Note, that there is a list of keywords reserved for future use.
-  It can be found in '<deemon/compiler/__keywords.inl>', but no further
-  keywords will ever get added onto that list. The keywords contain
-  some more things we might need to implement user classes and
-  struct/union/enum type declarations.
+#ifndef BYTESIZE
+#error "Must '#define BYTESIZE' before #including this file"
+#endif
 
 
+static int DEE_PP_CAT_2(_DeeArray_AssignIntegralRangeFromBytes,BYTESIZE)(
+ DeeStructuredTypeObject *elem_type, Dee_size_t elem_count,
+ Dee_uint8_t *dst, DEE_PP_CAT_3(Dee_uint,BYTESIZE,_t) const *src) {
+ Dee_size_t elem_size;
+ DEE_ASSERT(DeeType_Check(elem_type) && DeeStructuredType_Check(elem_type));
+ DEE_ASSERT(!elem_count || dst);
+ DEE_ASSERT(!elem_count || src);
+ DEE_ASSERT(DeeType_GET_SLOT(elem_type,tp_p_instance_size) == 1 ||
+            DeeType_GET_SLOT(elem_type,tp_p_instance_size) == 2 ||
+            DeeType_GET_SLOT(elem_type,tp_p_instance_size) == 4 ||
+            DeeType_GET_SLOT(elem_type,tp_p_instance_size) == 8);
+ elem_size = DeeType_GET_SLOT(elem_type,tp_p_instance_size);
+ switch (elem_size) {
+  // Simple case: memcpy all the way
+  case BYTESIZE/8: memcpy(dst,src,elem_count); break;
+#if BYTESIZE != 8
+  case 1: while (elem_count--) *(Dee_uint8_t  *)dst++ = (Dee_uint8_t )*src++; break;
+#endif
+#if BYTESIZE != 16
+  case 2: while (elem_count--) *(Dee_uint16_t *)dst++ = (Dee_uint16_t)*src++; break;
+#endif
+#if BYTESIZE != 32
+  case 4: while (elem_count--) *(Dee_uint32_t *)dst++ = (Dee_uint32_t)*src++; break;
+#endif
+#if BYTESIZE != 64
+  case 8: while (elem_count--) *(Dee_uint64_t *)dst++ = (Dee_uint64_t)*src++; break;
+#endif
+  default: DEE_BUILTIN_UNREACHABLE();
+ }
+ return 0;
+}
 
 
-
-
-
-
-
-
+#undef BYTESIZE
+//#ifdef __INTELLISENSE__
+//DEE_DECL_END
+//#endif
 
 

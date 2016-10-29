@@ -1780,13 +1780,14 @@ DeeCodeObject _Dee_EmptyCode = {
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS */
  0,                                // co_nlocals
  0,                                // co_stacksize
- 0,                                // co_wsize
+ 1,                                // co_wsize
  0,                                // co_woff_loc
 #if DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
  0,                                // co_woff_except
  0,                                // co_woff_finally
 #endif
- 1,
+ 0,                                // co_woff_sdata
+ 1,                                // co_size
  {OP_RETNONE}                      // co_code (just return 'none')
 };
 

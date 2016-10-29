@@ -128,32 +128,57 @@ static int _DeeArray_AssignRangeFromSequence(
  Dee_DECREF(iter);
  return temp;
 }
+
+static void _DeeArray_ErrorInvalidSequenceSize(
+ DeeStructuredTypeObject *elem_type, Dee_size_t elem_count, Dee_size_t seq_size) {
+ DeeError_SetStringf(&DeeErrorType_ValueError,
+                     "%k[%Iu] expected an iterable of size %Iu (got: %Iu)",
+                     elem_type,elem_count,elem_count,seq_size);
+}
+
+#if !defined(__INTELLISENSE__) || 1
+#define BYTESIZE 8
+#include "array.assign_bytes.inl"
+#define BYTESIZE 16
+#include "array.assign_bytes.inl"
+#define BYTESIZE 32
+#include "array.assign_bytes.inl"
+#endif
+
 static int _DeeArray_AssignIntegralRangeFromSequence(
  DeeStructuredTypeObject *elem_type, Dee_size_t elem_count, Dee_uint8_t *dst, DeeObject *seq) {
+ DEE_ASSERT(DeeType_Check(elem_type) && DeeStructuredType_Check(elem_type));
+ DEE_ASSERT(DeeObject_Check(seq));
+ DEE_ASSERT(!elem_count || dst);
  DEE_ASSERT(DeeType_GET_SLOT(elem_type,tp_p_instance_size) == 1 ||
             DeeType_GET_SLOT(elem_type,tp_p_instance_size) == 2 ||
             DeeType_GET_SLOT(elem_type,tp_p_instance_size) == 4 ||
             DeeType_GET_SLOT(elem_type,tp_p_instance_size) == 8);
- if (DeeString_Check(seq)) {
-  Dee_uint8_t const *src; Dee_size_t elem_size;
-  if (DeeString_SIZE(seq) != elem_count) {
-   DeeError_SetStringf(&DeeErrorType_ValueError,
-    "%k[%Iu] expected an iterable of size %Iu (got: %Iu)",
-    elem_type,elem_count,elem_count,DeeString_SIZE(seq));
-   return -1;
-  }
-  elem_size = DeeType_GET_SLOT(elem_type,tp_p_instance_size);
-  src = (Dee_uint8_t const *)DeeAnyString_DATAV(seq);
-  switch (elem_size) {
-   case 1: memcpy(dst,src,elem_count); break;
-   case 2: while (elem_count--) *(Dee_uint16_t *)dst++ = (Dee_uint16_t)*src++; break;
-   case 4: while (elem_count--) *(Dee_uint32_t *)dst++ = (Dee_uint32_t)*src++; break;
-   case 8: while (elem_count--) *(Dee_uint64_t *)dst++ = (Dee_uint64_t)*src++; break;
-   default: DEE_BUILTIN_UNREACHABLE();
-  }
-  return 0;
+#if DEE_CONFIG_HAVE_ENCODING_UTF8
+ if (DeeUtf8String_Check(seq)) {
+  if (DeeUtf8String_SIZE(seq) != elem_count) { _DeeArray_ErrorInvalidSequenceSize(elem_type,elem_count,DeeUtf8String_SIZE(seq)); return -1; }
+  return _DeeArray_AssignIntegralRangeFromBytes8(elem_type,elem_count,dst,(Dee_uint8_t *)DeeUtf8String_STR(seq));
  }
- // TODO: Other string encodings
+#endif /* DEE_CONFIG_HAVE_ENCODING_UTF8 */
+#if DEE_CONFIG_HAVE_ENCODING_WIDE
+ if (DeeWideString_Check(seq)) {
+  if (DeeWideString_SIZE(seq) != elem_count) { _DeeArray_ErrorInvalidSequenceSize(elem_type,elem_count,DeeWideString_SIZE(seq)); return -1; }
+  return DEE_PP_CAT_2(_DeeArray_AssignIntegralRangeFromBytes,DEE_PP_MUL8(DEE_TYPES_SIZEOF_WCHAR_T))(
+   elem_type,elem_count,dst,(DEE_TYPES_UINT(DEE_TYPES_SIZEOF_WCHAR_T) *)DeeUtf8String_STR(seq));
+ }
+#endif /* DEE_CONFIG_HAVE_ENCODING_WIDE */
+#if DEE_CONFIG_HAVE_ENCODING_UTF16
+ if (DeeUtf16String_Check(seq)) {
+  if (DeeUtf16String_SIZE(seq) != elem_count) { _DeeArray_ErrorInvalidSequenceSize(elem_type,elem_count,DeeUtf16String_SIZE(seq)); return -1; }
+  return _DeeArray_AssignIntegralRangeFromBytes16(elem_type,elem_count,dst,(Dee_uint16_t *)DeeUtf16String_STR(seq));
+ }
+#endif /* DEE_CONFIG_HAVE_ENCODING_UTF16 */
+#if DEE_CONFIG_HAVE_ENCODING_UTF32
+ if (DeeUtf32String_Check(seq)) {
+  if (DeeUtf32String_SIZE(seq) != elem_count) { _DeeArray_ErrorInvalidSequenceSize(elem_type,elem_count,DeeUtf32String_SIZE(seq)); return -1; }
+  return _DeeArray_AssignIntegralRangeFromBytes32(elem_type,elem_count,dst,(Dee_uint32_t *)DeeUtf32String_STR(seq));
+ }
+#endif /* DEE_CONFIG_HAVE_ENCODING_UTF32 */
  return _DeeArray_AssignRangeFromSequence(elem_type,elem_count,dst,seq);
 }
 

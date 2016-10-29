@@ -1,16 +1,16 @@
 #!/bin/bash
 # Copyright (c) 2016 - deemon by Griefer@Work
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -321,7 +321,6 @@ compile_deemon() {
 	update_object_file "$source_path/deemon/signalhandler.c"
 	update_object_file "$source_path/deemon/uuid.c"
 	update_object_file "$source_path/deemon/set.c"
-	update_object_file "$source_path/deemon/system.c"
 	update_object_file "$source_path/deemon/traceback.c"
 	update_object_file "$source_path/deemon/generic_vtable.c"
 	update_object_file "$source_path/deemon/memberdef.c"
@@ -392,7 +391,6 @@ link_deemon() {
 		"$build_path/signalhandler.c.o" \
 		"$build_path/uuid.c.o" \
 		"$build_path/set.c.o" \
-		"$build_path/system.c.o" \
 		"$build_path/traceback.c.o" \
 		"$build_path/generic_vtable.c.o" \
 		"$build_path/memberdef.c.o" \
@@ -464,7 +462,6 @@ link_deemon_static() {
 		"$build_path/signalhandler.c.o" \
 		"$build_path/uuid.c.o" \
 		"$build_path/set.c.o" \
-		"$build_path/system.c.o" \
 		"$build_path/traceback.c.o" \
 		"$build_path/generic_vtable.c.o" \
 		"$build_path/memberdef.c.o" \

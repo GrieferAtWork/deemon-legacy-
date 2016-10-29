@@ -2184,7 +2184,7 @@ err_writer: DeeCodeWriter_Quit(&writer); return NULL;
 do_create_const_function:
    function_object = DeeFunction_New(function_code_ob,Dee_EmptyTuple,argc,flags);
    Dee_DECREF(function_code_ob);
-   if (DEE_UNLIKELY!function_object) return NULL;
+   if DEE_UNLIKELY(!function_object) return NULL;
    ast_result = DeeXAst_NewConst(tk,function_object);
    Dee_DECREF(function_object);
    if DEE_UNLIKELY(!ast_result) return NULL;

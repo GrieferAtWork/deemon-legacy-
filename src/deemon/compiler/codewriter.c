@@ -127,7 +127,7 @@ DEE_A_RET_EXCEPT(-1) Dee_size_t DeeCodeWriterStackMemList_AllocBlock(
    // Insert the new block here!
    if (self->cwsml_memc == self->cwsml_mema &&
        DeeCodeWriterStackMemList_IncBuf(self) != 0) return (Dee_size_t)-1;
-   memmove(iter+1,iter,(Dee_size_t)(end-iter)*sizeof(DeeCodeWriterStackMem));
+   memmove(iter+1,iter,(Dee_size_t)(end-iter)*sizeof(struct DeeCodeWriterStackMem));
    iter->cwsm_start = curpos;
    iter->cwsm_size = s;
    ++self->cwsml_memc;

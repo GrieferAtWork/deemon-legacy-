@@ -176,7 +176,7 @@ struct DeeCodeWriterDebugFnoTab {
  DEE_A_REF struct DeeTupleObject *cwdft_files;  /*< [0..1] Tuple of known filenames. */
 };
 #define DeeCodeWriterDebugFnoTab_Empty(ob) DeeCodeWriterDebugLnoTab_Empty(&(ob)->cwdft_lno)
-#define DeeCodeWriterDebugFnoTab_INIT() {DeeCodeWriterDebugLnoTab(),(Dee_size_t)-1,NULL}
+#define DeeCodeWriterDebugFnoTab_INIT() {DeeCodeWriterDebugLnoTab_INIT(),(Dee_size_t)-1,NULL}
 #define _DeeCodeWriterDebugFnoTab_Init(ob) \
 do{\
  _DeeCodeWriterDebugLnoTab_Init(&(ob)->cwdft_lno);\

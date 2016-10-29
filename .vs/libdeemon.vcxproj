@@ -432,6 +432,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\debug_new\debug_new_conf.inl" />
     <None Include="..\src\debug_new\debug_new_disable.inl" />
     <None Include="..\src\debug_new\debug_new_enable.inl" />
+    <None Include="..\src\deemon\array.assign_bytes.inl" />
     <None Include="..\src\deemon\bool.inl" />
     <None Include="..\src\deemon\class\class.class_attributes.inl" />
     <None Include="..\src\deemon\class\class.instance_attributes.inl" />
