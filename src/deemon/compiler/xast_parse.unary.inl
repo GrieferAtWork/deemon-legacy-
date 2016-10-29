@@ -217,9 +217,6 @@ parse_function:
    return ast_result;
   } break;
 
-  // TODO: __builtin_*
-  // TODO: _Generic
-
   case KWD_str:  kind = DEE_XASTKIND_STR;  goto parse_unary_parenopt;
   case KWD_repr: kind = DEE_XASTKIND_REPR; goto parse_unary_parenopt;
   case KWD_copy: kind = DEE_XASTKIND_COPY; goto parse_unary_parenopt;

@@ -310,6 +310,10 @@ err_struct_base: Dee_XDECREF(struct_base); goto err_struct_name;
   // Set the final struct attribute
   if ((flags&DEE_XAST_PARSESTRUCT_FLAG_FINAL)!=0)
    DeeType_GET_SLOT(struct_object,tp_flags) |= DEE_TYPE_FLAG_NO_SUBCLASS;
+  // Apply uuid to struct type
+  if ((attr->a_flags&DEE_ATTRIBUTE_DECL_FLAG_UUID)!=0) {
+   if (DeeStructType_SetUUID(struct_object,&attr->a_uuid) < 0) goto err_struct_base;
+  }
   // Set the name of the struct
   if (struct_name) {
    if ((vardecl_mode&DEE_XAST_VARDECL_FLAG_ENABLED)==0) {
@@ -338,6 +342,8 @@ err_struct_object_base: Dee_DECREF(struct_object); goto err_struct_base;
   }
  }
  // Set the struct base
+ // TODO: Should there be a warning, and shouldn't we prevent setting the base of an existing struct type?
+ // TODO: Also shouldn't there be a warning for trying to redefine [[name(...)]] or [[uuid(...)]]?
  if (struct_base) {
   if (struct_base->ast_kind != DEE_XASTKIND_CONST) {
    if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_CONSTANT_EXPRESSION_FOR_STRUCT_BASE,
@@ -367,8 +373,6 @@ err_struct_object_base: Dee_DECREF(struct_object); goto err_struct_base;
   }
   Dee_DECREF(struct_base);
  }
-
- // TODO: Apply uuid to struct type
 
  // Parse the struct block
  if (token.tk_id == '{') {
