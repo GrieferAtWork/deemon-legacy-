@@ -3183,8 +3183,10 @@ static struct DeeTypeMarshal _deelist_tp_marshal = DEE_TYPE_MARSHAL_v100(
 
 DeeTypeObject DeeList_Type = {
  DEE_TYPE_OBJECT_HEAD_v100(member("list"),member(
-  "() -> list\n(iterable sequence) -> list\n"
-  "\tA resizeable vector of objects."),member(
+  "()\n"
+  "(iterable sequence)\n"
+  "@param sequence: A given sequence that should be casted to a #(list)."
+  "\tA resizeable and mutable vector of objects."),member(
   DEE_TYPE_FLAG_CONST_CTOR|DEE_TYPE_FLAG_HAS_GC|DEE_TYPE_FLAG_MUST_COPY|
   DEE_TYPE_FLAG_NO_ITERATE_EFFECT|DEE_TYPE_FLAG_FUNDAMENTAL),null),
  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeListObject),
@@ -3278,7 +3280,12 @@ static struct DeeTypeMarshal _deelistiterator_tp_marshal = DEE_TYPE_MARSHAL_v100
 
 
 DeeTypeObject DeeListIterator_Type = {
- DEE_TYPE_OBJECT_HEAD_v100(member("list.iterator"),null,null,null),
+ DEE_TYPE_OBJECT_HEAD_v100(member("list.iterator"),member(
+  "()\n"
+  "(list l, size_t start = 0)\n"
+  "@param l: The list to create an iterator for\n"
+  "@param start: The starting index, defaulting to 0 if not given\n"
+  "\tCreates a new list iterator form a given @list, starting a given index @(start)."),null,null),
  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeListIteratorObject),null,
   member(&_deelistiterator_tp_ctor),
   member(&_deelistiterator_tp_copy_ctor),null,

@@ -42,6 +42,7 @@
 #include <deemon/string.h>
 
 // src/*
+#include <deemon/__xconf.inl>
 #include <deemon/compiler/__opcode.inl>
 #include <deemon/compiler/sast.h>
 #include <deemon/compiler/scope.h>
@@ -57,6 +58,8 @@ DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 DEE_COMPILER_MSVC_WARNING_POP
 #endif
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
+
+// */ (nano...)
 
 DEE_DECL_BEGIN
 // Setup our callbacks to tpp
@@ -156,28 +159,28 @@ DEE_A_RET_EXCEPT(-1) int DeeStructPackingStack_InitCopy(
  DEE_A_IN struct DeeStructPackingStack const *right) {
  Dee_size_t *new_packv;
  DEE_ASSERT(self && right);
- self->ob_struct_packing = right->ob_struct_packing;
- if ((self->ob_struct_packing_c = right->ob_struct_packing_c) != 0) {
+ self->sps_packing = right->sps_packing;
+ if ((self->sps_packing_c = right->sps_packing_c) != 0) {
   while ((new_packv = (Dee_size_t *)malloc_nz(
-   self->ob_struct_packing_c*sizeof(Dee_size_t))) == NULL) {
+   self->sps_packing_c*sizeof(Dee_size_t))) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    DeeError_NoMemory();
    return -1;
   }
-  self->ob_struct_packing_v = new_packv;
-  memcpy(new_packv,right->ob_struct_packing_v,self->ob_struct_packing_c*sizeof(Dee_size_t));
- } else self->ob_struct_packing_v = NULL;
+  self->sps_packing_v = new_packv;
+  memcpy(new_packv,right->sps_packing_v,self->sps_packing_c*sizeof(Dee_size_t));
+ } else self->sps_packing_v = NULL;
  return 0;
 }
 void DeeStructPackingStack_InitMove(
  DEE_A_OUT struct DeeStructPackingStack *self,
  DEE_A_IN struct DeeStructPackingStack *right) {
  DEE_ASSERT(self && right);
- self->ob_struct_packing = right->ob_struct_packing;
- self->ob_struct_packing_c = right->ob_struct_packing_c;
- self->ob_struct_packing_v = right->ob_struct_packing_v;
- right->ob_struct_packing_c = 0;
- right->ob_struct_packing_v = NULL;
+ self->sps_packing = right->sps_packing;
+ self->sps_packing_c = right->sps_packing_c;
+ self->sps_packing_v = right->sps_packing_v;
+ right->sps_packing_c = 0;
+ right->sps_packing_v = NULL;
 }
 
 DEE_A_RET_EXCEPT(-1) int DeeStructPackingStack_Push(
@@ -185,14 +188,14 @@ DEE_A_RET_EXCEPT(-1) int DeeStructPackingStack_Push(
  Dee_size_t *new_stack;
  DEE_ASSERT(self);
  while ((new_stack = (Dee_size_t *)realloc_nz(
-  self->ob_struct_packing_v,(
-  self->ob_struct_packing_c+1)*sizeof(Dee_size_t))) == NULL) {
+  self->sps_packing_v,(
+  self->sps_packing_c+1)*sizeof(Dee_size_t))) == NULL) {
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
   return -1;
  }
- self->ob_struct_packing_v = new_stack;
- new_stack[self->ob_struct_packing_c++] = self->ob_struct_packing;
+ self->sps_packing_v = new_stack;
+ new_stack[self->sps_packing_c++] = self->sps_packing;
  return 0;
 }
 DEE_A_RET_EXCEPT(-1) int DeeStructPackingStack_Pop(
@@ -200,23 +203,23 @@ DEE_A_RET_EXCEPT(-1) int DeeStructPackingStack_Pop(
  Dee_size_t *new_stack,restore_level;
  DEE_ASSERT(self && "Invalid stack");
  DEE_ASSERT(DeeStructPackingStack_SIZE(self) && "Empty stack");
- restore_level = self->ob_struct_packing_v[self->ob_struct_packing_c-1];
- if (self->ob_struct_packing_c == 1) {
-  self->ob_struct_packing_c = 0;
-  free_nn(self->ob_struct_packing_v);
-  self->ob_struct_packing_v = NULL;
+ restore_level = self->sps_packing_v[self->sps_packing_c-1];
+ if (self->sps_packing_c == 1) {
+  self->sps_packing_c = 0;
+  free_nn(self->sps_packing_v);
+  self->sps_packing_v = NULL;
  } else {
   while ((new_stack = (Dee_size_t *)realloc_nnz(
-    self->ob_struct_packing_v,(
-    self->ob_struct_packing_c-1)*sizeof(Dee_size_t))) == NULL) {
+    self->sps_packing_v,(
+    self->sps_packing_c-1)*sizeof(Dee_size_t))) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    DeeError_NoMemory();
    return -1;
   }
-  self->ob_struct_packing_v = new_stack;
-  --self->ob_struct_packing_c;
+  self->sps_packing_v = new_stack;
+  --self->sps_packing_c;
  }
- self->ob_struct_packing = restore_level;
+ self->sps_packing = restore_level;
  return 0;
 }
 
@@ -229,37 +232,37 @@ DEE_A_RET_EXCEPT(-1) int DeeStructPackingStack_Pop(
 
 void DeeFutureTokensList_Quit(DEE_A_IN struct DeeFutureTokensList *self) {
  DeeTokenObject **iter,**end;
- end = (iter = self->ob_future_tokenv)+self->ob_future_tokenc;
+ end = (iter = self->ftl_tokenv)+self->ftl_tokenc;
  while (iter != end) Dee_DECREF(*iter++);
- free(self->ob_future_tokenv);
+ free(self->ftl_tokenv);
 }
 DEE_A_RET_EXCEPT(-1) int DeeFutureTokensList_InitCopy(
  DEE_A_OUT struct DeeFutureTokensList *self,
  DEE_A_IN struct DeeFutureTokensList const *right) {
  DeeTokenObject **vcopy,**end,**src;
- if ((self->ob_future_tokenc = right->ob_future_tokenc) != 0) {
+ if ((self->ftl_tokenc = right->ftl_tokenc) != 0) {
   while ((vcopy = (DeeTokenObject **)malloc_nz(
-   self->ob_future_tokenc*sizeof(DeeTokenObject *))) == NULL) {
+   self->ftl_tokenc*sizeof(DeeTokenObject *))) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    DeeError_NoMemory();
    return -1;
   }
-  end = (self->ob_future_tokenv = vcopy)+self->ob_future_tokenc;
-  src = right->ob_future_tokenv;
+  end = (self->ftl_tokenv = vcopy)+self->ftl_tokenc;
+  src = right->ftl_tokenv;
   while (vcopy != end) Dee_INCREF(*vcopy++ = *src++);
- } else self->ob_future_tokenv = NULL;
- self->ob_future_tokena = self->ob_future_tokenc;
+ } else self->ftl_tokenv = NULL;
+ self->ftl_tokena = self->ftl_tokenc;
  return 0;
 }
 void DeeFutureTokensList_InitMove(
  DEE_A_OUT struct DeeFutureTokensList *self,
  DEE_A_IN struct DeeFutureTokensList *right) {
- self->ob_future_tokenc = right->ob_future_tokenc;
- self->ob_future_tokena = right->ob_future_tokena;
- self->ob_future_tokenv = right->ob_future_tokenv;
- right->ob_future_tokenc = 0;
- right->ob_future_tokena = 0;
- right->ob_future_tokenv = NULL;
+ self->ftl_tokenc = right->ftl_tokenc;
+ self->ftl_tokena = right->ftl_tokena;
+ self->ftl_tokenv = right->ftl_tokenv;
+ right->ftl_tokenc = 0;
+ right->ftl_tokena = 0;
+ right->ftl_tokenv = NULL;
 }
 
 
@@ -1363,14 +1366,14 @@ DEE_A_RET_OBJECT_EXCEPT(DeeTokenObject) *DeeLexer_Yield(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self) {
  DeeTokenObject *result;
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
- if (((DeeLexerObject *)self)->l_future.ob_future_tokenc) {
+ if (((DeeLexerObject *)self)->l_future.ftl_tokenc) {
   Dee_DECREF(((DeeLexerObject *)self)->l_token);
   result = ((DeeLexerObject *)self)->l_token =
-   ((DeeLexerObject *)self)->l_future.ob_future_tokenv[
-    --((DeeLexerObject *)self)->l_future.ob_future_tokenc]; // Transfer reference
+   ((DeeLexerObject *)self)->l_future.ftl_tokenv[
+    --((DeeLexerObject *)self)->l_future.ftl_tokenc]; // Transfer reference
 #ifdef DEE_DEBUG
-  ((DeeLexerObject *)self)->l_future.ob_future_tokenv[
-   ((DeeLexerObject *)self)->l_future.ob_future_tokenc] = NULL;
+  ((DeeLexerObject *)self)->l_future.ftl_tokenv[
+   ((DeeLexerObject *)self)->l_future.ftl_tokenc] = NULL;
 #endif
  } else {
   result = (DeeTokenObject *)DeeLexer_TOKEN(self);
@@ -1388,24 +1391,24 @@ DEE_A_RET_OBJECT_EXCEPT(DeeTokenObject) *DeeLexer_Yield(
 DEE_A_RET_EXCEPT(-1) int DeeLexer_Return(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_INOUT_OBJECT(DeeTokenObject) *token) {
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
- if (((DeeLexerObject *)self)->l_future.ob_future_tokena >
-     ((DeeLexerObject *)self)->l_future.ob_future_tokenc) {
-  Dee_INHERIT_REF(((DeeLexerObject *)self)->l_future.ob_future_tokenv[
-   ((DeeLexerObject *)self)->l_future.ob_future_tokenc++],((DeeLexerObject *)self)->l_token);
+ if (((DeeLexerObject *)self)->l_future.ftl_tokena >
+     ((DeeLexerObject *)self)->l_future.ftl_tokenc) {
+  Dee_INHERIT_REF(((DeeLexerObject *)self)->l_future.ftl_tokenv[
+   ((DeeLexerObject *)self)->l_future.ftl_tokenc++],((DeeLexerObject *)self)->l_token);
  } else {
-  Dee_size_t new_future_size = ((DeeLexerObject *)self)->l_future.ob_future_tokena+1;
+  Dee_size_t new_future_size = ((DeeLexerObject *)self)->l_future.ftl_tokena+1;
   DeeTokenObject **new_future;
   while ((new_future = (DeeTokenObject **)realloc_nz(((
-   DeeLexerObject *)self)->l_future.ob_future_tokenv,
+   DeeLexerObject *)self)->l_future.ftl_tokenv,
    new_future_size*sizeof(DeeTokenObject *))) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    DeeError_NoMemory();
    return -1;
   }
   Dee_INHERIT_REF(new_future[new_future_size-1],((DeeLexerObject *)self)->l_token);
-  ((DeeLexerObject *)self)->l_future.ob_future_tokenv = new_future;
-  ((DeeLexerObject *)self)->l_future.ob_future_tokena = new_future_size;
-  ((DeeLexerObject *)self)->l_future.ob_future_tokenc = new_future_size;
+  ((DeeLexerObject *)self)->l_future.ftl_tokenv = new_future;
+  ((DeeLexerObject *)self)->l_future.ftl_tokena = new_future_size;
+  ((DeeLexerObject *)self)->l_future.ftl_tokenc = new_future_size;
  }
  Dee_INCREF(((DeeLexerObject *)self)->l_token = (DeeTokenObject *)token);
  --((DeeLexerObject *)self)->l_token_pos;
@@ -2679,7 +2682,7 @@ DEE_VISIT_PROC(_deelexer_tp_visit,DeeLexerObject *self) {
  DeeTokenObject **future_begin,**future_end;
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
  Dee_VISIT(self->l_token);
- future_end = (future_begin = self->l_future.ob_future_tokenv)+self->l_future.ob_future_tokenc;
+ future_end = (future_begin = self->l_future.ftl_tokenv)+self->l_future.ftl_tokenc;
  while (future_begin != future_end) Dee_VISIT(*future_begin++);
 }
 
@@ -2790,12 +2793,14 @@ static DeeObject *_deelexer_parse_str(
 
 static struct DeeMemberDef _deetoken_tp_members[] = {
  DEE_MEMBERDEF_NAMED_RO_v100("id",DeeTokenObject,tk_token.tk_id,TPPTokenID),
- DEE_MEMBERDEF_NAMED_RO_v100("tk_id",DeeTokenObject,tk_token.tk_id,TPPTokenID),
- DEE_MEMBERDEF_NAMED_RO_v100("tk_file",DeeTokenObject,tk_token.tk_file,p(void)),
- DEE_MEMBERDEF_NAMED_RO_v100("tk_file_off",DeeTokenObject,tk_token.tk_file_off,Dee_size_t),
- DEE_MEMBERDEF_NAMED_RO_v100("tk_str_file",DeeTokenObject,tk_token.tk_str_file,p(void)),
- DEE_MEMBERDEF_NAMED_RO_v100("tk_str_begin",DeeTokenObject,tk_token.tk_str_begin,p(char)),
- DEE_MEMBERDEF_NAMED_RO_v100("tk_str_end",DeeTokenObject,tk_token.tk_str_end,p(char)),
+#if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
+ DEE_MEMBERDEF_NAMED_RO_v100("__tk_token_tk_id",DeeTokenObject,tk_token.tk_id,TPPTokenID),
+ DEE_MEMBERDEF_NAMED_RO_v100("__tk_token_tk_file",DeeTokenObject,tk_token.tk_file,p(void)),
+ DEE_MEMBERDEF_NAMED_RO_v100("__tk_token_tk_file_off",DeeTokenObject,tk_token.tk_file_off,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__tk_token_tk_str_file",DeeTokenObject,tk_token.tk_str_file,p(void)),
+ DEE_MEMBERDEF_NAMED_RO_v100("__tk_token_tk_str_begin",DeeTokenObject,tk_token.tk_str_begin,p(char)),
+ DEE_MEMBERDEF_NAMED_RO_v100("__tk_token_tk_str_end",DeeTokenObject,tk_token.tk_str_end,p(char)),
+#endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
  DEE_MEMBERDEF_END_v100
 };
 static struct DeeGetSetDef _deetoken_tp_getsets[] = {
@@ -2812,15 +2817,31 @@ static struct DeeMethodDef _deetoken_tp_methods[] = {
 
 
 static struct DeeMemberDef _deelexer_tp_members[] = {
- DEE_MEMBERDEF_NAMED_v100("pack",DeeLexerObject,l_pack.ob_struct_packing,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_v100("pack",DeeLexerObject,l_pack.sps_packing,Dee_size_t),
  DEE_MEMBERDEF_NAMED_RO_v100("token",DeeLexerObject,l_token,object),
- DEE_MEMBERDEF_RO_v100(DeeLexerObject,l_token,object),
- DEE_MEMBERDEF_RO_v100(DeeLexerObject,l_func_name,TPPTokenID),
- DEE_MEMBERDEF_RO_v100(DeeLexerObject,l_suppress_warnings,uint),
- DEE_MEMBERDEF_RO_v100(DeeLexerObject,l_suppress_Wcop,uint),
- DEE_MEMBERDEF_RO_v100(DeeLexerObject,l_token_pos,Dee_uint64_t),
- DEE_MEMBERDEF_RO_v100(DeeLexerObject,l_syntax_recursion,uint),
- DEE_MEMBERDEF_RO_v100(DeeLexerObject,l_max_syntax_recursion,uint),
+#if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_token",DeeLexerObject,l_token,object),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_future_ftl_tokenc",DeeLexerObject,l_future.ftl_tokenc,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_future_ftl_tokena",DeeLexerObject,l_future.ftl_tokena,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_future_ftl_tokenv",DeeLexerObject,l_future.ftl_tokena,p2(void)),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_error_out",DeeLexerObject,l_error_out,object),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_message_out",DeeLexerObject,l_message_out,object),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_error_cur",DeeLexerObject,l_error_cur,Dee_uint32_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_error_max",DeeLexerObject,l_error_max,Dee_uint32_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_error_last",DeeLexerObject,l_error_last,object_null),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_static_if_stack_si_c",DeeLexerObject,l_static_if_stack.si_c,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_static_if_stack_si_v",DeeLexerObject,l_static_if_stack.si_v,p(void)),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_func_name",DeeLexerObject,l_func_name,TPPTokenID),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_suppress_warnings",DeeLexerObject,l_suppress_warnings,uint),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_suppress_Wcop",DeeLexerObject,l_suppress_Wcop,uint),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_pack_sps_packing",DeeLexerObject,l_pack.sps_packing,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_pack_sps_packing_c",DeeLexerObject,l_pack.sps_packing_c,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_pack_sps_packing_v",DeeLexerObject,l_pack.sps_packing_v,p(Dee_size_t)),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_token_pos",DeeLexerObject,l_token_pos,Dee_uint64_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_brace_recursion",DeeLexerObject,l_brace_recursion,Dee_uint32_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_syntax_recursion",DeeLexerObject,l_syntax_recursion,uint),
+ DEE_MEMBERDEF_NAMED_RO_v100("__l_max_syntax_recursion",DeeLexerObject,l_max_syntax_recursion,uint),
+#endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
  DEE_MEMBERDEF_END_v100
 };
 static struct DeeMethodDef _deelexer_tp_methods[] = {

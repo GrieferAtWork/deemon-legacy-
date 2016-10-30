@@ -234,19 +234,19 @@ extern void DeeStaticIfStack_Quit(DEE_A_IN struct DeeStaticIfStack *self);
 #ifdef DEE_LIMITED_API
 #define DEE_STRUCT_PACKING_DEFAULT DEE_TYPES_SIZEOF_POINTER
 struct DeeStructPackingStack {
- Dee_size_t  ob_struct_packing;   /*< Current struct packing mode. */
- Dee_size_t  ob_struct_packing_c; /*< Size of the pack stack. */
- Dee_size_t *ob_struct_packing_v; /*< [0..ob_struct_packing_c] Pushed stack of pack levels. */
+ Dee_size_t  sps_packing;   /*< Current struct packing mode. */
+ Dee_size_t  sps_packing_c; /*< Size of the pack stack. */
+ Dee_size_t *sps_packing_v; /*< [0..sps_packing_c] Pushed stack of pack levels. */
 };
 #define _DeeStructPackingStack_Init(ob) \
- ((ob)->ob_struct_packing=DEE_STRUCT_PACKING_DEFAULT,\
-  (ob)->ob_struct_packing_c=0,\
-  (ob)->ob_struct_packing_v=NULL)
+ ((ob)->sps_packing=DEE_STRUCT_PACKING_DEFAULT,\
+  (ob)->sps_packing_c=0,\
+  (ob)->sps_packing_v=NULL)
 
-#define DeeStructPackingStack_SIZE(ob)  ((Dee_size_t const)(ob)->ob_struct_packing_c)
-#define DeeStructPackingStack_GET(ob)   ((Dee_size_t const)(ob)->ob_struct_packing)
-#define DeeStructPackingStack_SET(ob,v) (void)((ob)->ob_struct_packing=(v))
-#define DeeStructPackingStack_Quit(ob)  free((ob)->ob_struct_packing_v)
+#define DeeStructPackingStack_SIZE(ob)  ((Dee_size_t const)(ob)->sps_packing_c)
+#define DeeStructPackingStack_GET(ob)   ((Dee_size_t const)(ob)->sps_packing)
+#define DeeStructPackingStack_SET(ob,v) (void)((ob)->sps_packing=(v))
+#define DeeStructPackingStack_Quit(ob)  free((ob)->sps_packing_v)
 extern DEE_A_RET_EXCEPT(-1) int DeeStructPackingStack_InitCopy(
  DEE_A_OUT struct DeeStructPackingStack *self, DEE_A_IN struct DeeStructPackingStack const *right);
 extern void DeeStructPackingStack_InitMove(
@@ -260,15 +260,15 @@ extern DEE_A_RET_EXCEPT(-1) int DeeStructPackingStack_Pop(DEE_A_INOUT struct Dee
 
 #ifdef DEE_LIMITED_API
 struct DeeFutureTokensList {
-           Dee_size_t           ob_future_tokenc; /*< Amount of future tokens. */
-           Dee_size_t           ob_future_tokena; /*< Allocated amount of future tokens. */
- DEE_A_REF DeeTokenObject **ob_future_tokenv; /*< [1..1][ob_future_tokenc:0..1] List of future tokens. */
+           Dee_size_t       ftl_tokenc; /*< Amount of future tokens. */
+           Dee_size_t       ftl_tokena; /*< Allocated amount of future tokens. */
+ DEE_A_REF DeeTokenObject **ftl_tokenv; /*< [1..1][ftl_tokenc:0..1] List of future tokens. */
 };
 #define _DeeFutureTokensList_Init(ob) \
- ((ob)->ob_future_tokenc=0,\
-  (ob)->ob_future_tokena=0,\
-  (ob)->ob_future_tokenv=NULL)
-#define DeeFutureTokensList_SIZE(ob)    ((Dee_size_t const)(ob)->ob_future_tokenc)
+ ((ob)->ftl_tokenc=0,\
+  (ob)->ftl_tokena=0,\
+  (ob)->ftl_tokenv=NULL)
+#define DeeFutureTokensList_SIZE(ob)    ((Dee_size_t const)(ob)->ftl_tokenc)
 extern void DeeFutureTokensList_Quit(DEE_A_IN struct DeeFutureTokensList *self);
 extern DEE_A_RET_EXCEPT(-1) int DeeFutureTokensList_InitCopy(
  DEE_A_OUT struct DeeFutureTokensList *self, DEE_A_IN struct DeeFutureTokensList const *right);

@@ -1157,12 +1157,12 @@ static struct DeeTypeMarshal _deecodedebuginfo_tp_marshal = DEE_TYPE_MARSHAL_v10
 
 DeeTypeObject DeeCodeDebugInfo_Type = {
  DEE_TYPE_OBJECT_HEAD_v100(member("code.debuginfo"),member(
-  "code.debuginfo() -> code.debuginfo\n"
-  "code.debuginfo(string name) -> code.debuginfo\n"
-  "code.debuginfo(string name, tuple local_names) -> code.debuginfo\n"
-  "code.debuginfo(string name, tuple local_names, tuple const_names) -> code.debuginfo\n"
-  "code.debuginfo(string name, tuple local_names, tuple const_names, tuple arg_names) -> code.debuginfo\n"
-  "code.debuginfo(string name, tuple local_names, tuple const_names, tuple arg_names, tuple ref_names) -> code.debuginfo\n"),
+  "()\n"
+  "(string name)\n"
+  "(string name, tuple local_names)\n"
+  "(string name, tuple local_names, tuple const_names)\n"
+  "(string name, tuple local_names, tuple const_names, tuple arg_names)\n"
+  "(string name, tuple local_names, tuple const_names, tuple arg_names, tuple ref_names)"),
   member(DEE_TYPE_FLAG_NO_LIFETIME_EFFECT|DEE_TYPE_FLAG_NO_SUBCLASS),null),
  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeCodeDebugInfoObject),null,
   member(&_deecodedebuginfo_tp_ctor),

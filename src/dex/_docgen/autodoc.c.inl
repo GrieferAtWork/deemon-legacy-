@@ -272,13 +272,13 @@ _DeeMemberName_GetDoc(DEE_A_IN_Z char const *member_name) {
      "\tReverses the order of all stored elements, resulting in any element that was previous accessible through @(this.front()) now being located at #(this.back()).\n"
      "\tUnless the size of @this sequence is greater than, or equal to 2, calling this function has no effect.");
  DOC("sort",        "(callable pred = none) -> none\n"
-    "@throws object: Same as calling @pred or #(operator <)\n"
-    "@param pred: User-defined predicate, #none or #__lo__\n"
-    "\tSorts all elements stored in @this sequence in an ascending order according to @pred, or #(operator <).\n"
-    "\tIf @pred is #none or #__lo__, #(operator <) will be used to compare objects");
+     "@throws object: Same as calling @pred or #(operator <)\n"
+     "@param pred: User-defined predicate, #none or #__lo__\n"
+     "\tSorts all elements stored in @this sequence in an ascending order according to @pred, or #(operator <).\n"
+     "\tIf @pred is #none or #__lo__, #(operator <) will be used to compare objects");
  DOC("allocated",   "() -> size_t\n"
-    "\t@return The size of the pre-allocated buffer of @this sequence.\n"
-    "\tThe returned buffersize will never be lower than the effective size of @this sequence.");
+     "\t@return The size of the pre-allocated buffer of @this sequence.\n"
+     "\tThe returned buffersize will never be lower than the effective size of @this sequence.");
  DOC("push_front",  "(object elem...) -> none\n"
      "\tInserts all elements given through varargs at the front of @this sequence"
      "\tAfter this function returns, the first of the given elements is accessible through @(this.front())");
@@ -368,7 +368,7 @@ _DeeMemberName_GetDoc(DEE_A_IN_Z char const *member_name) {
  // Misc.
  DOC("asmrepr",     "() -> string\n"
      "@return: A string representation of the assembly instructions\n"
-     "\tReturns a string representation of this function's assembly instructions")
+     "\tGenerates a string representation of this function's assembly instructions")
 #undef DOC
  return NULL;
 }
