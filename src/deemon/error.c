@@ -523,7 +523,7 @@ _DeeError_HandleAndReturnType(void) {
 }
 
 
-DEE_A_SUCCESS(return != 1) int DeeError_Print(
+DEE_A_SUCCESS(return == 0) int DeeError_Print(
  DEE_A_IN_Z_OPT char const *reason, DEE_A_IN int handle_error) {
  struct DeeRaisedException *entry;
  DeeThreadObject *thread_self;
@@ -540,10 +540,8 @@ DEE_A_SUCCESS(return != 1) int DeeError_Print(
  }
  return 0;
 }
-void DeeError_Display(
- DEE_A_IN_Z_OPT char const *reason,
- DEE_A_INOUT DeeObject *exc,
- DEE_A_IN_OBJECT(DeeTracebackObject) *tb) {
+void DeeError_Display(DEE_A_IN_Z_OPT char const *reason, DEE_A_INOUT DeeObject *exc,
+                      DEE_A_IN_OBJECT(DeeTracebackObject) *tb) {
  DeeStringObject *error_str;
  DEE_ASSERT(DeeObject_Check(exc));
  DEE_ASSERT(DeeObject_Check(tb) && DeeTraceback_Check(tb));
@@ -632,9 +630,7 @@ void DeeError_SetNone(DEE_A_IN DeeTypeObject *type_) {
  }
 }
 
-void DeeError_SetString(
- DEE_A_IN DeeTypeObject *type_,
- DEE_A_IN_Z char const *message) {
+void DeeError_SetString(DEE_A_IN DeeTypeObject *type_, DEE_A_IN_Z char const *message) {
  DeeObject *error,*ctor_args,*msg_ob;
  if DEE_UNLIKELY((msg_ob = DeeString_New(message)) == NULL) return; // Out of memory
  if DEE_UNLIKELY((ctor_args = _DeeTuple_NewUnsafe(1)) == NULL) { Dee_DECREF(msg_ob); return; }

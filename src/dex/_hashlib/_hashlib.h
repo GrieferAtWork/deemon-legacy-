@@ -135,7 +135,6 @@ extern void DeeCRCHasher_AddString(DEE_A_INOUT struct DeeCRCHasher *self, DEE_A_
 
 //////////////////////////////////////////////////////////////////////////
 // Deemon wrapper objects
-
 DEE_OBJECT_DEF(DeeCRCAlgorithmObject);
 struct DeeCRCAlgorithmObject {
  DEE_OBJECT_HEAD

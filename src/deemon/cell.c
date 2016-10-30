@@ -640,7 +640,7 @@ static struct DeeMethodDef const _deecell_tp_methods[] = {
  DEE_METHODDEF_CONST_v100("rfind",member(&_deecell_find),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("rindex",member(&_deecell_index),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("rlocate",member(&_deecell_locate),DEE_DOC_AUTO),
- DEE_METHODDEF_CONST_v100("segments",member(&_deegenericiterable_segments),NULL),
+ DEE_METHODDEF_CONST_v100("segments",member(&_deegenericiterable_segments),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("sorted",member(&_deecell_sorted),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("transform",member(&_deecell_transform),DEE_DOC_AUTO),
  DEE_METHODDEF_END_v100
@@ -704,8 +704,8 @@ static struct DeeTypeMarshal _deecell_tp_marshal = DEE_TYPE_MARSHAL_v100(
 
 DeeTypeObject DeeCell_Type = {
  DEE_TYPE_OBJECT_HEAD_v100(member("cell"),member(
-  "() -> cell\n"
-  "(object stored_value) -> cell\n"
+  "()\n"
+  "(object stored_value)\n"
   "@param stored_value: The value stored inside the cell\n"
   "\tA cell is a builtin sequence type only capable of storing up one element.\n"
   "\tCells are mutable, allowing the stored element to be exchanged at any time.\n"

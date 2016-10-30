@@ -385,6 +385,7 @@
 //       NOTE: The old functions are not deprecated and will not be removed.
 //             Though the new ones allow more control and keep additional exceptions intact.
 //     - Fixed a bug that prevent successful execution of a structured member function called through an lvalue
+//     - Fixed calls to foreign_functions where the called function throws a deemon error
 //     
 //   Optimized:
 //     - Generating an iterator with util::range is now faster

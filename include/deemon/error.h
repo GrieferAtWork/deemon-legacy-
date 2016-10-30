@@ -329,7 +329,7 @@ extern DEE_A_EXEC DEE_A_REF DEE_A_RET_NEVER_NULL DeeTypeObject *_DeeError_Handle
 //  - Returns  0 on success
 //  - Returns  1 if no error occurred that could have been printed
 // If 'reason' is NULL, display "Unhandled exception\n" as reason instead
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_SUCCESS(return != 1) int) DeeError_Print(
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_SUCCESS(return == 0) int) DeeError_Print(
  DEE_A_IN_Z_OPT char const *reason, DEE_A_IN int handle_error);
 DEE_FUNC_DECL(DEE_A_EXEC void) DeeError_Display(
  DEE_A_IN_Z_OPT char const *reason, DEE_A_INOUT DeeObject *exc,
@@ -521,6 +521,28 @@ extern void _DeeError_TODONotImplemented_impl(
 #endif
 #else
 #define DeeError_TODONotImplemented  DeeError_NotImplemented
+#endif
+#elif defined(DEE_LIMITED_DEX)
+#if defined(__GNUC__) || __has_builtin(__builtin_FUNCTION)
+#define DeeError_TODONotImplemented() \
+ DeeError_SetStringf(&DeeErrorType_NotImplemented,\
+                     __FILE__ "(" DEE_PP_STR(__LINE__) ") : %s : TO" "DO : "\
+                     "Someone hasn't gotten around to implementing this...",__builtin_FUNCTION());
+#elif defined(__FUNCTION__) || defined(_MSC_VER)
+#define DeeError_TODONotImplemented() \
+ DeeError_SET_STRING(&DeeErrorType_NotImplemented,\
+                     __FILE__ "(" DEE_PP_STR(__LINE__) ") : " __FUNCTION__ " : TO" "DO : "\
+                     "Someone hasn't gotten around to implementing this...");
+#elif 0 /*< C11? */
+#define DeeError_TODONotImplemented() \
+ DeeError_SetStringf(&DeeErrorType_NotImplemented,\
+                     __FILE__ "(" DEE_PP_STR(__LINE__) ") : %s : TO" "DO : "\
+                     "Someone hasn't gotten around to implementing this...",__func__);
+#else
+#define DeeError_TODONotImplemented() \
+ DeeError_SET_STRING(&DeeErrorType_NotImplemented,\
+                     __FILE__ "(" DEE_PP_STR(__LINE__) ") : TO" "DO : "\
+                     "Someone hasn't gotten around to implementing this...");
 #endif
 #endif
 

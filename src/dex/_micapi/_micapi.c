@@ -254,7 +254,7 @@ DeeFileTypeObject DeeMic_Type = {
    member("mic"),member("("
    "unsigned int channels = " DEE_PP_STR(DEE_MIC_DEFAULT_CHANNELS) ", "
    "unsigned int samples_per_sec = " DEE_PP_STR(DEE_MIC_DEFAULT_SAMPLES_PER_SEC) ", "
-   "unsigned int bits_per_sample = " DEE_PP_STR(DEE_MIC_DEFAULT_BITS_PER_SAMPLE) ") -> mic\n"
+   "unsigned int bits_per_sample = " DEE_PP_STR(DEE_MIC_DEFAULT_BITS_PER_SAMPLE) ")\n"
    "@throws Error.SystemError: Couldn't create microphone #file\n"
    "\tCreates a new microphone #(file).\n"
    "\tNOTE: The read operation of @this #file object blocks until data is available.\n"),null,

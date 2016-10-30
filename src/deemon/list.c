@@ -46,6 +46,7 @@
 #include <deemon/tuple.h>
 
 // /src/*
+#include <deemon/__xconf.inl>
 #include <deemon/marshal_data.h>
 #include <deemon/runtime/builtin_functions.h>
 
@@ -3112,11 +3113,15 @@ static struct DeeMethodDef const _deelist_tp_methods[] = {
  DEE_METHODDEF_END_v100
 };
 
+#if !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
+#define _deelistiterator_tp_members DeeType_DEFAULT_SLOT(tp_members)
+#else /* !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
 static struct DeeMemberDef const _deelistiterator_tp_members[] = {
- DEE_MEMBERDEF_RO_v100(DeeListIteratorObject,li_list,object),
- DEE_MEMBERDEF_RO_v100(DeeListIteratorObject,li_pos,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_RO_v100("__li_list",DeeListIteratorObject,li_list,object),
+ DEE_MEMBERDEF_NAMED_RO_v100("__li_pos",DeeListIteratorObject,li_pos,atomic(Dee_size_t)),
  DEE_MEMBERDEF_END_v100
 };
+#endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
 
 static int DEE_CALL _deelist_tp_marshal_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeListObject *self,

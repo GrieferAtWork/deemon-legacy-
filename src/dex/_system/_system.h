@@ -25,9 +25,7 @@
 #include <deemon/dex.h>
 
 //////////////////////////////////////////////////////////////////////////
-//
-// Dex extension implementing deemon's core <deemon/system.h> file, starting in v102
-//
+// Dex extension implementing deemon's core <deemon/system.h> file, starting with v102
 //////////////////////////////////////////////////////////////////////////
 
 DEE_DECL_BEGIN
@@ -36,8 +34,6 @@ DEE_DECL_BEGIN
 DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 #undef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 #endif
-
-
 
 
 //////////////////////////////////////////////////////////////////////////
