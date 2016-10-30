@@ -183,15 +183,15 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) DeeSharedLib_WideInit(
  DEE_ASSERT(filename);
  // TODO: VFS Support
 #ifdef DEE_PLATFORM_WINDOWS
- if (*filename) {
-  if ((self->sl_handle = (void *)LoadLibraryW(filename)) == NULL) {
+ if DEE_LIKELY(*filename) {
+  if DEE_UNLIKELY((self->sl_handle = (void *)LoadLibraryW(filename)) == NULL) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "LoadLibraryW(%lq) : %K",
                        filename,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
    return -1;
   }
  } else {
-  if ((self->sl_handle = (void *)GetModuleHandleW(NULL)) == NULL) {
+  if DEE_UNLIKELY((self->sl_handle = (void *)GetModuleHandleW(NULL)) == NULL) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "GetModuleHandleW(NULL) : %K",
                        filename,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
@@ -201,7 +201,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) DeeSharedLib_WideInit(
  return 0;
 #else
  int result; DeeObject *filename_ob;
- if ((filename_ob = DeeWideString_New(filename)) == NULL) return -1;
+ if DEE_UNLIKELY((filename_ob = DeeWideString_New(filename)) == NULL) return -1;
  result = DeeSharedLib_WideInitObject(self,filename_ob);
  Dee_DECREF(filename_ob);
  return result;
@@ -211,9 +211,9 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) DeeSharedLib_WideInit(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeSharedLibObject) *DeeSharedLib_Utf8New(
  DEE_A_IN_Z Dee_Utf8Char const *filename) {
  DeeSharedLibObject *result; DEE_ASSERT(filename);
- if ((result = DeeObject_MALLOCF(DeeSharedLibObject,"dll(%s)",filename)) != NULL) {
+ if DEE_LIKELY((result = DeeObject_MALLOCF(DeeSharedLibObject,"dll(%s)",filename)) != NULL) {
   DeeObject_INIT(result,&DeeSharedLib_Type);
-  if (DeeSharedLib_Utf8Init(result,filename) != 0) {
+  if DEE_UNLIKELY(DeeSharedLib_Utf8Init(result,filename) != 0) {
    _DeeObject_DELETE(&DeeSharedLib_Type,result);
    result = NULL;
   }
@@ -223,9 +223,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeSharedLibObject) *DeeSharedLib_Utf8New(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeSharedLibObject) *DeeSharedLib_WideNew(
  DEE_A_IN_Z Dee_WideChar const *filename) {
  DeeSharedLibObject *result; DEE_ASSERT(filename);
- if ((result = DeeObject_MALLOCF(DeeSharedLibObject,"dll(%ls)",filename)) != NULL) {
+ if DEE_LIKELY((result = DeeObject_MALLOCF(DeeSharedLibObject,"dll(%ls)",filename)) != NULL) {
   DeeObject_INIT(result,&DeeSharedLib_Type);
-  if (DeeSharedLib_WideInit(result,filename) != 0) {
+  if DEE_UNLIKELY(DeeSharedLib_WideInit(result,filename) != 0) {
    _DeeObject_DELETE(&DeeSharedLib_Type,result);
    result = NULL;
   }
@@ -237,20 +237,20 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeSharedLibObject) *DeeSharedLib_NewObject(
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *filename) {
  DeeSharedLibObject *result;
  DEE_ASSERT(DeeObject_Check(filename));
- if ((result = DeeObject_MALLOCF(DeeSharedLibObject,"dll(%p)",filename)) != NULL) {
+ if DEE_LIKELY((result = DeeObject_MALLOCF(DeeSharedLibObject,"dll(%p)",filename)) != NULL) {
   DeeObject_INIT(result,&DeeSharedLib_Type);
   if (DeeWideString_Check(filename)) {
-   if (DeeSharedLib_WideInitObject(result,filename) == -1) {
+   if DEE_UNLIKELY(DeeSharedLib_WideInitObject(result,filename) != 0) {
 err:
     _DeeObject_DELETE(&DeeSharedLib_Type,result);
     result = NULL;
    }
   } else {
    int temp;
-   if ((filename = DeeUtf8String_Cast(filename)) == NULL) goto err;
+   if DEE_UNLIKELY((filename = DeeUtf8String_Cast(filename)) == NULL) goto err;
    temp = DeeSharedLib_Utf8InitObject(result,filename);
    Dee_DECREF(filename);
-   if (temp != 0) goto err;
+   if DEE_UNLIKELY(temp != 0) goto err;
   }
  }
  return (DeeObject *)result;
@@ -288,14 +288,14 @@ DEE_A_RET_EXCEPT(NULL) void *DeeSharedLib_Import(
  DEE_A_IN_OBJECT(DeeSharedLibObject) const *self,
  DEE_A_IN_Z char const *name) {
  void *result;
- if ((result = DeeSharedLib_TryImport(self,name)) == NULL) {
+ if DEE_UNLIKELY((result = DeeSharedLib_TryImport(self,name)) == NULL) {
   // Custom system error, to include dll+import names
 #if defined(DEE_DLL_USE_WINDOWS_LOAD_LIBRARY)
-  int error = (int)GetLastError(); SetLastError(0);
+  unsigned long error = DeeSystemError_Win32Consume();
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "GetProcAddress(%R,%q) : %K",
                       DeeSharedLib_Name(self),name,
-                      DeeSystemError_ToString(error));
+                      DeeSystemError_Win32ToString(error));
 #elif defined(DEE_DLL_USE_POSIX_DLFCN)
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "dlsym(%R,%q) : %s",
@@ -314,7 +314,7 @@ DEE_A_RET_NOEXCEPT(NULL) void *DeeSharedLib_TryImport(
  return (void *)GetProcAddress((HMODULE)DeeSharedLib_HANDLE(self),name);
 #elif defined(DEE_DLL_USE_POSIX_DLFCN)
  void *symbol = (void *)dlsym(DeeSharedLib_HANDLE(self),name);
- if (!symbol && name) {
+ if (DEE_UNLIKELY(!symbol) && DEE_LIKELY(name)) {
   char *name2; Dee_size_t len = strlen(name);
 #if DEE_HAVE_ALLOCA
   name2 = (char *)alloca(len+2);
@@ -325,7 +325,7 @@ DEE_A_RET_NOEXCEPT(NULL) void *DeeSharedLib_TryImport(
   //       was responsible.
   //       But seriously: We have no way of reporting
   //                      this out-of-memory error.
-  if (!name2) return NULL;
+  if DEE_UNLIKELY(!name2) return NULL;
 #endif
   name2[0] = '_';
   memcpy(name2+1,name,len*sizeof(char));
@@ -354,38 +354,38 @@ static struct DeeHashMap _dll_pool = DeeHashMap_INIT();
 DEE_A_RET_NOEXCEPT(NULL) void *DeeSharedLib_Utf8PoolTryImport(
  DEE_A_IN_Z Dee_Utf8Char const *filename, DEE_A_IN_Z char const *name) {
  DeeObject *dll;
- if ((dll = DeeSharedLib_Utf8PoolLoad(filename)) == NULL) { DeeError_Handled(); return NULL; }
+ if DEE_UNLIKELY((dll = DeeSharedLib_Utf8PoolLoad(filename)) == NULL) { DeeError_Handled(); return NULL; }
  return DeeSharedLib_TryImport(dll,name);
 }
 DEE_A_RET_NOEXCEPT(NULL) void *DeeSharedLib_WidePoolTryImport(
  DEE_A_IN_Z Dee_WideChar const *filename, DEE_A_IN_Z char const *name) {
  DeeObject *dll;
- if ((dll = DeeSharedLib_WidePoolLoad(filename)) == NULL) { DeeError_Handled(); return NULL; }
+ if DEE_UNLIKELY((dll = DeeSharedLib_WidePoolLoad(filename)) == NULL) { DeeError_Handled(); return NULL; }
  return DeeSharedLib_TryImport(dll,name);
 }
 DEE_A_RET_NOEXCEPT(NULL) void *DeeSharedLib_PoolTryImportObject(
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *filename, DEE_A_IN_Z char const *name) {
  DeeObject *dll;
- if ((dll = DeeSharedLib_PoolLoadObject(filename)) == NULL) { DeeError_Handled(); return NULL; }
+ if DEE_UNLIKELY((dll = DeeSharedLib_PoolLoadObject(filename)) == NULL) { DeeError_Handled(); return NULL; }
  return DeeSharedLib_TryImport(dll,name);
 }
 DEE_A_RET_EXCEPT(NULL) void *DeeSharedLib_Utf8PoolImport(
  DEE_A_IN_Z Dee_Utf8Char const *filename, DEE_A_IN_Z char const *name) {
  DeeObject *dll;
- if ((dll = DeeSharedLib_Utf8PoolLoad(filename)) == NULL) return NULL;
+ if DEE_UNLIKELY((dll = DeeSharedLib_Utf8PoolLoad(filename)) == NULL) return NULL;
  return DeeSharedLib_Import(dll,name);
 }
 DEE_A_RET_EXCEPT(NULL) void *DeeSharedLib_WidePoolImport(
  DEE_A_IN_Z Dee_WideChar const *filename, DEE_A_IN_Z char const *name) {
  DeeObject *dll;
- if ((dll = DeeSharedLib_WidePoolLoad(filename)) == NULL) return NULL;
+ if DEE_UNLIKELY((dll = DeeSharedLib_WidePoolLoad(filename)) == NULL) return NULL;
  return DeeSharedLib_Import(dll,name);
 }
 
 DEE_A_RET_EXCEPT(NULL) void *DeeSharedLib_PoolImportObject(
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *filename, DEE_A_IN_Z char const *name) {
  DeeObject *dll;
- if ((dll = DeeSharedLib_PoolLoadObject(filename)) == NULL) return NULL;
+ if DEE_UNLIKELY((dll = DeeSharedLib_PoolLoadObject(filename)) == NULL) return NULL;
  return DeeSharedLib_Import(dll,name);
 }
 
@@ -394,31 +394,31 @@ DEE_A_RET_OBJECT_EXCEPT(DeeSharedLibObject) *DeeSharedLib_PoolLoadObject(
  DeeObject *result,*utf8_filename;
  Dee_hash_t filename_hash; int temp;
  DEE_ASSERT(DeeObject_Check(filename));
- if ((utf8_filename = DeeUtf8String_Cast(filename)) == NULL) return NULL;
+ if DEE_UNLIKELY((utf8_filename = DeeUtf8String_Cast(filename)) == NULL) return NULL;
  filename_hash = DeeHash_Memory(DeeUtf8String_STR(utf8_filename),DeeUtf8String_SIZE(utf8_filename)*sizeof(Dee_Utf8Char),DEE_HASH_START);
  DeeAtomicMutex_Acquire(&_dll_lock);
- if ((temp = DeeHashMap_GetItemExStringWithKnownBucket(
-  &_dll_pool,DeeUtf8String_STR(utf8_filename),filename_hash,&result)) == -1) {
+ if DEE_UNLIKELY((temp = DeeHashMap_GetItemExStringWithKnownBucket(
+  &_dll_pool,DeeUtf8String_STR(utf8_filename),filename_hash,&result)) < 0) {
   DeeAtomicMutex_Release(&_dll_lock);
   return NULL;
  }
- if (DEE_LIKELY(temp == 0)) {
+ if DEE_LIKELY(DEE_LIKELY(temp == 0)) {
   DeeAtomicMutex_Release(&_dll_lock);
   DEE_ASSERT(!DeeObject_IS_UNIQUE(result));
   Dee_DECREF(result);
  } else {
   DeeAtomicMutex_Release(&_dll_lock);
   result = DeeSharedLib_NewObject(filename);
-  if (DEE_LIKELY(result != NULL)) {
+  if DEE_LIKELY(result != NULL) {
    DeeObject *old;
    DeeAtomicMutex_Acquire(&_dll_lock);
-   if ((temp = DeeHashMap_GetItemExStringWithKnownBucket(
-    &_dll_pool,DeeString_STR(utf8_filename),filename_hash,&old)) == -1) {
+   if DEE_UNLIKELY((temp = DeeHashMap_GetItemExStringWithKnownBucket(
+    &_dll_pool,DeeString_STR(utf8_filename),filename_hash,&old)) < 0) {
     DeeAtomicMutex_Release(&_dll_lock);
     Dee_DECREF(result);
     return NULL;
    }
-   if (DEE_UNLIKELY(temp == 0)) {
+   if DEE_UNLIKELY(temp == 0) {
     DEE_ASSERT(DeeObject_Check(old) && DeeSharedLib_Check(old));
     // Someone must have been faster than us and did
     // everything while we weren't locking the dll
@@ -429,9 +429,8 @@ DEE_A_RET_OBJECT_EXCEPT(DeeSharedLibObject) *DeeSharedLib_PoolLoadObject(
     DEE_ASSERT(!DeeObject_IS_UNIQUE(old));
     Dee_DECREF(old);
     return old;
-   } else if (DEE_UNLIKELY(
-    DeeHashMap_SetItemStringWithKnownBucket(
-    &_dll_pool,DeeString_STR(utf8_filename),filename_hash,result) == -1)) {
+   } else if DEE_UNLIKELY(DeeHashMap_SetItemStringWithKnownBucket(
+    &_dll_pool,DeeString_STR(utf8_filename),filename_hash,result) != 0) {
     // The insertion into the dict failed
     DeeAtomicMutex_Release(&_dll_lock);
     Dee_DECREF(result);
@@ -452,28 +451,28 @@ DEE_A_RET_OBJECT_EXCEPT(DeeSharedLibObject) *DeeSharedLib_Utf8PoolLoad(
  DEE_ASSERT(filename);
  filename_hash = DeeHash_String(filename,DEE_HASH_START);
  DeeAtomicMutex_Acquire(&_dll_lock);
- if ((temp = DeeHashMap_GetItemExStringWithKnownBucket(
-  &_dll_pool,filename,filename_hash,&result)) == -1) {
+ if DEE_UNLIKELY((temp = DeeHashMap_GetItemExStringWithKnownBucket(
+  &_dll_pool,filename,filename_hash,&result)) < 0) {
   DeeAtomicMutex_Release(&_dll_lock);
   return NULL;
  }
- if (DEE_LIKELY(temp == 0)) {
+ if DEE_LIKELY(temp == 0) {
   DeeAtomicMutex_Release(&_dll_lock);
   DEE_ASSERT(!DeeObject_IS_UNIQUE(result));
   Dee_DECREF(result);
  } else {
   DeeAtomicMutex_Release(&_dll_lock);
   result = DeeSharedLib_Utf8New(filename);
-  if (DEE_LIKELY(result != NULL)) {
+  if DEE_LIKELY(result != NULL) {
    DeeObject *old;
    DeeAtomicMutex_Acquire(&_dll_lock);
-   if ((temp = DeeHashMap_GetItemExStringWithKnownBucket(
-    &_dll_pool,filename,filename_hash,&old)) == -1) {
+   if DEE_UNLIKELY((temp = DeeHashMap_GetItemExStringWithKnownBucket(
+    &_dll_pool,filename,filename_hash,&old)) < 0) {
     DeeAtomicMutex_Release(&_dll_lock);
     Dee_DECREF(result);
     return NULL;
    }
-   if (DEE_UNLIKELY(temp == 0)) {
+   if DEE_UNLIKELY(temp == 0) {
     DEE_ASSERT(DeeObject_Check(old) && DeeSharedLib_Check(old));
     // Someone must have been faster than us and did
     // everything while we weren't locking the dll
@@ -483,9 +482,8 @@ DEE_A_RET_OBJECT_EXCEPT(DeeSharedLibObject) *DeeSharedLib_Utf8PoolLoad(
     DEE_ASSERT(!DeeObject_IS_UNIQUE(old));
     Dee_DECREF(old);
     return old;
-   } else if (DEE_UNLIKELY(
-    DeeHashMap_SetItemStringWithKnownBucket(
-    &_dll_pool,filename,filename_hash,result) == -1)) {
+   } else if DEE_UNLIKELY(DeeHashMap_SetItemStringWithKnownBucket(
+    &_dll_pool,filename,filename_hash,result) != 0) {
     // The insertion into the dict failed
     DeeAtomicMutex_Release(&_dll_lock);
     Dee_DECREF(result);
@@ -502,15 +500,17 @@ DEE_A_RET_OBJECT_EXCEPT(DeeSharedLibObject) *DeeSharedLib_WidePoolLoad(
  DeeObject *result,*utf8_filename;
  Dee_hash_t filename_hash; int temp;
  DEE_ASSERT(DeeObject_Check(filename));
- if ((utf8_filename = DeeUtf8String_FromWideString(filename)) == NULL) return NULL;
- filename_hash = DeeHash_Memory(DeeUtf8String_STR(utf8_filename),DeeUtf8String_SIZE(utf8_filename)*sizeof(Dee_Utf8Char),DEE_HASH_START);
+ if DEE_UNLIKELY((utf8_filename = DeeUtf8String_FromWideString(filename)) == NULL) return NULL;
+ filename_hash = DeeHash_Memory(DeeUtf8String_STR(utf8_filename),
+                                DeeUtf8String_SIZE(utf8_filename)*
+                                sizeof(Dee_Utf8Char),DEE_HASH_START);
  DeeAtomicMutex_Acquire(&_dll_lock);
- if ((temp = DeeHashMap_GetItemExStringWithKnownBucket(
-  &_dll_pool,DeeUtf8String_STR(utf8_filename),filename_hash,&result)) == -1) {
+ if DEE_UNLIKELY((temp = DeeHashMap_GetItemExStringWithKnownBucket(
+  &_dll_pool,DeeUtf8String_STR(utf8_filename),filename_hash,&result)) < 0) {
   DeeAtomicMutex_Release(&_dll_lock);
   return NULL;
  }
- if (DEE_LIKELY(temp == 0)) {
+ if DEE_LIKELY(temp == 0) {
   DeeAtomicMutex_Release(&_dll_lock);
   DEE_ASSERT(!DeeObject_IS_UNIQUE(result));
   Dee_DECREF(result);
@@ -521,16 +521,16 @@ DEE_A_RET_OBJECT_EXCEPT(DeeSharedLibObject) *DeeSharedLib_WidePoolLoad(
 #else
   result = DeeSharedLib_Utf8New(DeeUtf8String_STR(utf8_filename));
 #endif
-  if (DEE_LIKELY(result != NULL)) {
+  if DEE_LIKELY(result != NULL) {
    DeeObject *old;
    DeeAtomicMutex_Acquire(&_dll_lock);
-   if ((temp = DeeHashMap_GetItemExStringWithKnownBucket(
-    &_dll_pool,DeeString_STR(utf8_filename),filename_hash,&old)) == -1) {
+   if DEE_UNLIKELY((temp = DeeHashMap_GetItemExStringWithKnownBucket(
+    &_dll_pool,DeeString_STR(utf8_filename),filename_hash,&old)) < 0) {
     DeeAtomicMutex_Release(&_dll_lock);
     Dee_DECREF(result);
     return NULL;
    }
-   if (DEE_UNLIKELY(temp == 0)) {
+   if DEE_UNLIKELY(temp == 0) {
     DEE_ASSERT(DeeObject_Check(old) && DeeSharedLib_Check(old));
     // Someone must have been faster than us and did
     // everything while we weren't locking the dll
@@ -541,9 +541,8 @@ DEE_A_RET_OBJECT_EXCEPT(DeeSharedLibObject) *DeeSharedLib_WidePoolLoad(
     DEE_ASSERT(!DeeObject_IS_UNIQUE(old));
     Dee_DECREF(old);
     return old;
-   } else if (DEE_UNLIKELY(
-    DeeHashMap_SetItemStringWithKnownBucket(
-    &_dll_pool,DeeString_STR(utf8_filename),filename_hash,result) == -1)) {
+   } else if DEE_UNLIKELY(DeeHashMap_SetItemStringWithKnownBucket(
+    &_dll_pool,DeeString_STR(utf8_filename),filename_hash,result) != 0) {
     // The insertion into the dict failed
     DeeAtomicMutex_Release(&_dll_lock);
     Dee_DECREF(result);
@@ -567,9 +566,9 @@ void DeeSharedLib_Shutdown(void) {
 static void _deesharedlib_tp_dtor(DeeSharedLibObject *self) {
  if (self->sl_handle) {
 #if defined(DEE_DLL_USE_WINDOWS_LOAD_LIBRARY)
-  if (!FreeLibrary((HMODULE)self->sl_handle)) SetLastError(0);
+  if DEE_UNLIKELY(!FreeLibrary((HMODULE)self->sl_handle)) SetLastError(0);
 #elif defined(DEE_DLL_USE_POSIX_DLFCN)
-  if (dlclose(self->sl_handle) != 0) (void)dlerror(); // Clear the error
+  if DEE_UNLIKELY(dlclose(self->sl_handle) != 0) (void)dlerror(); // Clear the error
 #endif
  }
 #ifndef DEE_PLATFORM_WINDOWS
@@ -599,31 +598,23 @@ static int _deesharedlib_tp_move_ctor(
 #endif
  return 0;
 }
-static int _deesharedlib_tp_move_assign(
- DeeSharedLibObject *self, DeeSharedLibObject *right) {
- if (self != right) {
-  _deesharedlib_tp_dtor(self);
-  _deesharedlib_tp_move_ctor(Dee_TYPE(self),self,right);
- }
- return 0;
-}
 #if DEE_CONFIG_RUNTIME_HAVE_EXTERN
 static DeeObject *_deesharedlib_tp_call(DeeSharedLibObject *self, DeeObject *args) {
  DeeObject *import_name; void *result;
- if (DeeTuple_Unpack(args,"o:dll.__call__",&import_name) != 0) return NULL;
- if (DeeError_TypeError_CheckTypeExact(import_name,&DeeString_Type) != 0) return NULL;
- if ((result = DeeSharedLib_Import((DeeObject *)self,DeeString_STR(import_name))) == NULL) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:dll.__call__",&import_name) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(import_name,&DeeString_Type) != 0) return NULL;
+ if DEE_UNLIKELY((result = DeeSharedLib_Import((DeeObject *)self,DeeString_STR(import_name))) == NULL) return NULL;
  return DeeVoidPointer_New(result);
 }
 static DeeObject *_deesharedlib_tp_seq_get(DeeSharedLibObject *self, DeeObject *import_name) {
  char const *import_name_str; void *result;
- if (DeeObject_GetPointerEx(import_name,DeeObject_TYPE(char),(void **)&import_name_str) != 0) return NULL;
- if ((result = DeeSharedLib_TryImport((DeeObject *)self,import_name_str)) == NULL) return NULL;
+ if DEE_UNLIKELY(DeeObject_GetPointerEx(import_name,DeeObject_TYPE(char),(void **)&import_name_str) != 0) return NULL;
+ if DEE_UNLIKELY((result = DeeSharedLib_TryImport((DeeObject *)self,import_name_str)) == NULL) return NULL;
  return DeeVoidPointer_New(result);
 }
 static DeeObject *_deesharedlib_tp_seq_contains(DeeSharedLibObject *self, DeeObject *import_name) {
  char const *import_name_str;
- if (DeeObject_GetPointerEx(import_name,DeeObject_TYPE(char),(void **)&import_name_str) != 0) return NULL;
+ if DEE_UNLIKELY(DeeObject_GetPointerEx(import_name,DeeObject_TYPE(char),(void **)&import_name_str) != 0) return NULL;
  DeeReturn_Bool(DeeSharedLib_TryImport((DeeObject *)self,import_name_str) != NULL);
 }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_EXTERN */
@@ -634,11 +625,11 @@ static DeeObject *_deesharedlib_tp_repr(DeeSharedLibObject *self) {
 static int _deesharedlib_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeSharedLibObject *self, DeeObject *args) {
  DeeObject *dll_name; int result;
- if (DeeTuple_Unpack(args,"o:dll",&dll_name) == -1) return -1;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:dll",&dll_name) != 0) return -1;
  if (DeeWideString_Check(dll_name)) {
   return DeeSharedLib_WideInitObject(self,dll_name);
  } else {
-  if ((dll_name = DeeUtf8String_Cast(dll_name)) == NULL) return -1;
+  if DEE_UNLIKELY((dll_name = DeeUtf8String_Cast(dll_name)) == NULL) return -1;
   result = DeeSharedLib_Utf8InitObject(self,dll_name);
   Dee_DECREF(dll_name);
   return result;
@@ -653,12 +644,12 @@ static DeeObject *_deedll_name_get(
 }
 static DeeObject *_deedll_close(
  DeeSharedLibObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- if (DeeTuple_Unpack(args,":close") == -1) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":close") != 0) return NULL;
  if (self->sl_handle) {
 #if defined(DEE_DLL_USE_WINDOWS_LOAD_LIBRARY)
-  if (!FreeLibrary((HMODULE)self->sl_handle)) SetLastError(0);
+  if DEE_UNLIKELY(!FreeLibrary((HMODULE)self->sl_handle)) SetLastError(0);
 #elif defined(DEE_DLL_USE_POSIX_DLFCN)
-  if (dlclose(self->sl_handle) != 0) (void)dlerror(); // Clear the error
+  if DEE_UNLIKELY(dlclose(self->sl_handle) != 0) (void)dlerror(); // Clear the error
 #endif
   self->sl_handle = NULL;
  }
@@ -671,7 +662,7 @@ static DeeObject *_deedll_close(
 static DeeObject *_deedllclass_open(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *dll_name;
- if (DeeTuple_Unpack(args,"o:open",&dll_name) == -1) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:open",&dll_name) != 0) return NULL;
  DeeReturn_XNEWREF(DeeSharedLib_PoolLoadObject(dll_name));
 }
 
@@ -706,14 +697,14 @@ static struct DeeTypeMarshal _deesharedlib_tp_marshal = DEE_TYPE_MARSHAL_v100(
  DeeUUID_INIT_INTERNAL(DEE_MARSHALID_SHAREDLIB),member(NULL),member(NULL)); // Special marshal type
 
 DeeTypeObject DeeSharedLib_Type = {
- DEE_TYPE_OBJECT_HEAD_v100(member("shared_lib"),null,null,null),
+ DEE_TYPE_OBJECT_HEAD_v100(member("shared_lib"),member(
+  "Wrapper for externally loadable shared libraries."),null,null),
  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeSharedLibObject),null,null,null,
   member(&_deesharedlib_tp_move_ctor),
   member(&_deesharedlib_tp_any_ctor)),
  DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,
   member(&_deesharedlib_tp_dtor)),
- DEE_TYPE_OBJECT_ASSIGN_v100(null,
-  member(&_deesharedlib_tp_move_assign),null),
+ DEE_TYPE_OBJECT_ASSIGN_v100(null,null,null),
  DEE_TYPE_OBJECT_CAST_v101(
   member(&DeeSharedLib_Name),
   member(&_deesharedlib_tp_repr),null,null,null),

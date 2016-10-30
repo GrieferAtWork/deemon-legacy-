@@ -149,13 +149,13 @@ DEE_A_RET_EXCEPT(-1) int _DeeStackFrame_InitCopy(
  DEE_ASSERT(DeeObject_Check(code) && DeeCode_Check(code));
  // Make sure we can actually copy code of the given stackframe.
  // NOTE: We allow the copying of any frame if code hasn't been executed, yet
- if ((code->co_flags&DEE_CODE_FLAG_COPY)==0 && _DeeStackFrame_WasExecuted(right)) {
+ if DEE_UNLIKELY((code->co_flags&DEE_CODE_FLAG_COPY)==0 && _DeeStackFrame_WasExecuted(right)) {
   DeeError_SetStringf(&DeeErrorType_NotImplemented,
                       "Can't copy code %k stackframe not marked with [[copyable]]",code);
   return -1;
  }
  // Allocate the work buffer (on the heap)
- if ((self->f_wbuf = (char *)malloc_nz(code->co_wsize)) == NULL) {
+ if DEE_UNLIKELY((self->f_wbuf = (char *)malloc_nz(code->co_wsize)) == NULL) {
   DeeError_NoMemory();
   return -1;
  }
@@ -171,11 +171,11 @@ DEE_A_RET_EXCEPT(-1) int _DeeStackFrame_InitCopy(
  // Copy locals
  self->f_localv = (DeeObject **)((Dee_uintptr_t)self->f_wbuf+code->co_woff_loc);
  if ((copy_flags&DEE_STACKFRAME_COPY_FLAG_LOCALS_DEEPCOPY)!=0) {
-  if (_Dee_XInitObjectVectorDeepCopy(code->co_nlocals,self->f_localv,right->f_localv) != 0) {
+  if DEE_UNLIKELY(_Dee_XInitObjectVectorDeepCopy(code->co_nlocals,self->f_localv,right->f_localv) != 0) {
 err_0: free_nn(self->f_wbuf); DeeAtomicMutex_Release(&right->f_lock); return -1;
   }
  } else if ((copy_flags&DEE_STACKFRAME_COPY_FLAG_LOCALS_COPY)!=0) {
-  if (_Dee_XInitObjectVectorCopy(code->co_nlocals,self->f_localv,right->f_localv) != 0) goto err_0;
+  if DEE_UNLIKELY(_Dee_XInitObjectVectorCopy(code->co_nlocals,self->f_localv,right->f_localv) != 0) goto err_0;
  } else {
   _Dee_XInitObjectVector(code->co_nlocals,self->f_localv,right->f_localv);
  }
@@ -184,22 +184,24 @@ err_0: free_nn(self->f_wbuf); DeeAtomicMutex_Release(&right->f_lock); return -1;
  stack_size = (Dee_size_t)(right->f_stackv_end-right->f_stackv);
  self->f_stackv_end = self->f_stackv+stack_size;
  if ((copy_flags&DEE_STACKFRAME_COPY_FLAG_STACK_DEEPCOPY)!=0) {
-  if (_Dee_InitObjectVectorDeepCopy(stack_size,self->f_stackv,right->f_stackv) != 0) {
+  if DEE_UNLIKELY(_Dee_InitObjectVectorDeepCopy(stack_size,self->f_stackv,right->f_stackv) != 0) {
 err_1: _Dee_XQuitObjectVector(code->co_nlocals,self->f_localv); goto err_0;
   }
  } else if ((copy_flags&DEE_STACKFRAME_COPY_FLAG_STACK_COPY)!=0) {
-  if (_Dee_InitObjectVectorCopy(stack_size,self->f_stackv,right->f_stackv) != 0) goto err_1;
+  if DEE_UNLIKELY(_Dee_InitObjectVectorCopy(stack_size,self->f_stackv,right->f_stackv) != 0) goto err_1;
  } else {
   _Dee_InitObjectVector(stack_size,self->f_stackv,right->f_stackv);
  }
 
  // Copy stored exceptions
  if (right->f_stored_exceptions) {
-  if ((self->f_stored_exceptions = _DeeRaisedException_CopyChain(
+  if DEE_UNLIKELY((self->f_stored_exceptions = _DeeRaisedException_CopyChain(
    right->f_stored_exceptions)) == NULL) {
 /*err_2:*/ _Dee_QuitObjectVector(stack_size,self->f_stackv); goto err_1;
   }
- } else self->f_stored_exceptions = NULL;
+ } else {
+  self->f_stored_exceptions = NULL;
+ }
 
  // Initialize everything that can be done noexcept
  self->f_code = code;
