@@ -67,6 +67,8 @@ int DeeSAst_VisitAll(
    XVISIT_SAST(self->ast_if.if_fail_block);
    break;
   case DEE_SASTKIND_FOR:
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_cond) &&
+              DeeXAst_Check(self->ast_for.f_head_cond));
    XVISIT_XAST(self->ast_for.f_head_init);
    VISIT_XAST(self->ast_for.f_head_cond);
    XVISIT_XAST(self->ast_for.f_head_next);

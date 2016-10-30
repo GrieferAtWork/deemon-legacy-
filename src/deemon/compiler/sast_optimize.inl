@@ -442,6 +442,8 @@ err_for_init_assumptions: DEE_OPTIMIZE_SCOPE_BREAK(init_assumptions); return -1;
     }
     DeeScope_OPTIMIZE(self->ast_for.f_head_cond_scope);
     DEE_OPTIMIZE_SCOPE_ENTER(cond_assumptions,self->ast_for.f_head_cond_scope,&init_assumptions) {
+     DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_cond) &&
+                DeeXAst_Check(self->ast_for.f_head_cond));
      if (DeeXAst_Optimize(self->ast_for.f_head_cond,DEE_OPTIMIZE_ARGS_SCOPE_EX(
       self->ast_for.f_head_cond_scope,&cond_assumptions,optimize_flags|DEE_OPTIMIZE_FLAG_USED)) != 0) {
 err_for_cond_assumptions: DEE_OPTIMIZE_SCOPE_BREAK(cond_assumptions); goto err_for_init_assumptions;

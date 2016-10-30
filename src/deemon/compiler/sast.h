@@ -160,10 +160,10 @@ struct DeeSAstPrintAst {
  DEE_SAST_AST_HEAD
  DEE_A_REF struct DeeXAstObject  *p_file;  /*< [0..1] Output file to stream data into (set to NULL for default - 'file.io.stdout'). */
  DEE_A_REF struct DeeXAstObject  *p_data;  /*< [0..1] Data that will be printed (Must be a tuple AST). */
-#define DEE_SASTPRINT_FLAG_NONE   0x00000000
-#define DEE_SASTPRINT_FLAG_NOLF   0x00000001 /*< Don't append a linefeed. */
-#define DEE_SASTPRINT_FLAG_NOSEP  0x00000002 /*< Don't insert space characters in-between written objects (No way of accessing from usercode right now). */
-#define DEE_SASTPRINT_FLAG_BUFFER 0x00000004 /*< Buffer all objects before writing them all at once (aka. v100-style printing) (No way of accessing from usercode right now). */
+#define DEE_SASTPRINT_FLAG_NONE   DEE_UINT32_C(0x00000000)
+#define DEE_SASTPRINT_FLAG_NOLF   DEE_UINT32_C(0x00000001) /*< Don't append a linefeed. */
+#define DEE_SASTPRINT_FLAG_NOSEP  DEE_UINT32_C(0x00000002) /*< Don't insert space characters in-between written objects (No way of accessing from usercode right now). */
+#define DEE_SASTPRINT_FLAG_BUFFER DEE_UINT32_C(0x00000004) /*< Buffer all objects before writing them all at once (aka. v100-style printing) (No way of accessing from usercode right now). */
            Dee_uint32_t           p_flags; /*< Flags applied when streaming data. */
 };
 struct DeeSAstIfAst {
@@ -241,7 +241,7 @@ struct DeeSAstSwitchAst {
 struct DeeSAstIfConstAst {
  DEE_SAST_AST_HEAD
  DEE_A_REF struct DeeScopeObject *ic_succ_scope; /*< [0..1] Scope in which 'ic_succ_block' is executed. */
- DEE_A_REF struct DeeSAstObject  *ic_succ_block; /*< [0..1] Dead statements. */
+ DEE_A_REF struct DeeSAstObject  *ic_succ_block; /*< [0..1] Live statements. */
  DEE_A_REF struct DeeScopeObject *ic_fail_scope; /*< [0..1] Scope in which 'ic_fail_block' is executed. */
  DEE_A_REF struct DeeSAstObject  *ic_fail_block; /*< [0..1] Dead statements. */
 };

@@ -177,6 +177,13 @@ err_r_if_succ:
   } break;
 
   case DEE_SASTKIND_FOR: {
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_init_scope) && DeeScope_Check(self->ast_for.f_head_init_scope));
+   DEE_ASSERT(!self->ast_for.f_head_init || (DeeObject_Check(self->ast_for.f_head_init) && DeeXAst_Check(self->ast_for.f_head_init)));
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_cond_scope) && DeeScope_Check(self->ast_for.f_head_cond_scope));
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_cond) && DeeXAst_Check(self->ast_for.f_head_cond));
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_scope) && DeeScope_Check(self->ast_for.f_scope));
+   DEE_ASSERT(!self->ast_for.f_head_next || (DeeObject_Check(self->ast_for.f_head_next) && DeeXAst_Check(self->ast_for.f_head_next)));
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_block) && DeeSAst_Check(self->ast_for.f_block));
    if ((ast_result = _DeeSAst_NewUnsafe(DEE_SASTKIND_FOR,
     self->ast_common.ast_token,DeeParserLabelRefList_Empty)) == NULL) return NULL;
    if ((ast_result->ast_for.f_head_init_scope = (DeeScopeObject *)

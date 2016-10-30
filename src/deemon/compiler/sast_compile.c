@@ -485,6 +485,8 @@ empty_print_data:
    // setup the 'cont' label with 'pos1'
    for_cond_pos = DeeCodeWriter_ADDR(writer);
    DeeCodeWriter_PUSH_LOOP(writer,for_cond_pos);
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_cond) &&
+              DeeXAst_Check(self->ast_for.f_head_cond));
    /*if (self->ast_for.f_head_cond)*/ {
     // setup the jump to 'end' if 'done' is true
     if (DeeXAst_Compile(self->ast_for.f_head_cond,
@@ -514,6 +516,8 @@ empty_print_data:
 err_for: DeeCodeWriter_FAIL_LOOP(writer); return -1;
    }
    DeeCodeWriter_POP_LOOP(writer,DeeCodeWriter_ADDR(writer),{return -1;});
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_cond) &&
+              DeeXAst_Check(self->ast_for.f_head_cond));
    /*if (self->ast_for.f_head_cond)*/ {
     // This is where we jump if 'done' is true
     if (DeeCodeWriter_SetFutureSizeArg(writer,for_end_jmparg,(

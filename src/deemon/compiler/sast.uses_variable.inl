@@ -74,6 +74,7 @@ DEE_A_RET_WUNUSED int DeeSAst_UsesVariable
    if (self->ast_if.if_fail_block) CHECK_SAST(self->ast_if.if_fail_block);
    break;
   case DEE_SASTKIND_FOR:
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_cond) && DeeXAst_Check(self->ast_for.f_head_cond));
    if (self->ast_for.f_head_init) CHECK_XAST(self->ast_for.f_head_init);
    CHECK_XAST(self->ast_for.f_head_cond);
    if (self->ast_for.f_head_next) CHECK_XAST(self->ast_for.f_head_next);

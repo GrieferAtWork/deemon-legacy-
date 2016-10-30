@@ -75,6 +75,7 @@ block_err: result = NULL; goto block_end;
     return DeeString_Newf("if (%r);\nelse %r",self->ast_if.if_cond,self->ast_if.if_fail_block);
    else return DeeString_Newf("if (%r);",self->ast_if.if_cond);
   case DEE_SASTKIND_FOR:
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_cond) && DeeXAst_Check(self->ast_for.f_head_cond));
    return DeeString_Newf("for (%K;%K;%K) %r",
                          self->ast_for.f_head_init ? DeeObject_Repr((DeeObject *)self->ast_for.f_head_init) : DeeString_NewSized(0),
                          DeeObject_Repr((DeeObject *)self->ast_for.f_head_cond),

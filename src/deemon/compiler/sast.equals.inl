@@ -72,11 +72,11 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeSAst_Equals(
    if (self->ast_if.if_fail_block && (temp = DeeSAst_Equals(self->ast_if.if_fail_block,right->ast_if.if_fail_block)) <= 0) return temp;
    break;
   case DEE_SASTKIND_FOR:
+   DEE_ASSERT(DeeObject_Check(self->ast_for.f_head_cond) && DeeXAst_Check(self->ast_for.f_head_cond));
    if ((self->ast_for.f_head_init != NULL) != (right->ast_for.f_head_init != NULL) ||
-       (self->ast_for.f_head_cond != NULL) != (right->ast_for.f_head_cond != NULL) ||
        (self->ast_for.f_head_next != NULL) != (right->ast_for.f_head_next != NULL)) return 0;
    if (self->ast_for.f_head_init && (temp = DeeXAst_Equals(self->ast_for.f_head_init,right->ast_for.f_head_init)) <= 0) return temp;
-   if (self->ast_for.f_head_cond && (temp = DeeXAst_Equals(self->ast_for.f_head_cond,right->ast_for.f_head_cond)) <= 0) return temp;
+   if ((temp = DeeXAst_Equals(self->ast_for.f_head_cond,right->ast_for.f_head_cond)) <= 0) return temp;
    if (self->ast_for.f_head_next && (temp = DeeXAst_Equals(self->ast_for.f_head_next,right->ast_for.f_head_next)) <= 0) return temp;
    return DeeSAst_Equals(self->ast_for.f_block,right->ast_for.f_block);
   case DEE_SASTKIND_FORIN:
