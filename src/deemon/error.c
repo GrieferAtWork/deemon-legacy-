@@ -601,6 +601,26 @@ DEE_A_RET_WUNUSED int _DeeError_Occurred(void) {
 }
 
 
+void DeeError_PushState(DEE_A_OUT struct DeeErrorStateData *state) {
+ if DEE_LIKELY((state->esd_threadself = DeeThread_SELF()) != NULL) {
+  if ((state->esd_stored_exceptions = state->esd_threadself->t_exception) != NULL) {
+   DeeAtomicMutex_AcquireRelaxed(&state->esd_threadself->t_exception_lock);
+   state->esd_threadself->t_exception = NULL;
+   DeeAtomicMutex_Release(&state->esd_threadself->t_exception_lock);
+  }
+ } else {
+  state->esd_stored_exceptions = NULL;
+ }
+}
+void DeeError_PopState(DEE_A_IN struct DeeErrorStateData const *state) {
+#ifndef __INTELLISENSE__
+#define _temp_state (*state)
+ DeeError_BREAK_STATE();
+#undef _temp_state
+#endif
+}
+
+
 
 
 

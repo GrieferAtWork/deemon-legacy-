@@ -206,30 +206,44 @@ extern DEE_A_RET_NOEXCEPT(0) int _DeeThread_HasFrame(
  DEE_A_IN struct DeeStackFrame const *frame_) DEE_ATTRIBUTE_NONNULL((1,2));
 
 #define DeeThread_PUSH_EXCEPTIONS(ob)\
-do{ struct DeeRaisedException *_stored_exceptions = \
- ((DeeThreadObject *)Dee_REQUIRES_POINTER(ob))->t_exception;\
- ((DeeThreadObject *)(ob))->t_exception = NULL
+do{ struct DeeRaisedException *_stored_exceptions; \
+ if ((_stored_exceptions = ((DeeThreadObject *)Dee_REQUIRES_POINTER(ob))->t_exception) != NULL) {\
+  DeeAtomicMutex_AcquireRelaxed(&((DeeThreadObject *)Dee_REQUIRES_POINTER(ob))->t_exception_lock);\
+  ((DeeThreadObject *)(ob))->t_exception = NULL;\
+  DeeAtomicMutex_Release(&((DeeThreadObject *)(ob))->t_exception_lock);\
+ }if(0);else
 #define DeeThread_BREAK_EXCEPTIONS(ob)\
- (_stored_exceptions?_DeeThread_RestoreExceptions(((DeeThreadObject *)Dee_REQUIRES_POINTER(ob)),_stored_exceptions):(void)0)
+do{\
+ struct DeeRaisedException *_exc_end;\
+ if (_stored_exceptions) {\
+  if ((_exc_end = (ob)->t_exception) != NULL) {\
+   while (_exc_end->re_prev) _exc_end = _exc_end->re_prev;\
+   DeeAtomicMutex_AcquireRelaxed(&(ob)->t_exception_lock);\
+   _exc_end->re_prev = _stored_exceptions;\
+   DeeAtomicMutex_Release(&(ob)->t_exception_lock);\
+  } else {\
+   DeeAtomicMutex_AcquireRelaxed(&(ob)->t_exception_lock);\
+   (ob)->t_exception = _stored_exceptions;\
+   DeeAtomicMutex_Release(&(ob)->t_exception_lock);\
+  }\
+ }\
+}while(0)
+#define DeeThread_BREAK_EXCEPTIONS_NO_NEW(ob)\
+do{\
+ DEE_ASSERTF(!(ob)->t_exception,"New exceptions did occurr");\
+ if (_stored_exceptions) {\
+  DeeAtomicMutex_AcquireRelaxed(&(ob)->t_exception_lock);\
+  (ob)->t_exception = _stored_exceptions;\
+  DeeAtomicMutex_Release(&(ob)->t_exception_lock);\
+ }\
+}while(0)
 #define DeeThread_POP_EXCEPTIONS(ob)\
- if(_stored_exceptions)_DeeThread_RestoreExceptions(\
-  ((DeeThreadObject *)Dee_REQUIRES_POINTER(ob)),_stored_exceptions);\
+ DeeThread_BREAK_EXCEPTIONS(ob);\
 }while(0)
 #define DeeThread_POP_EXCEPTIONS_NO_NEW(ob)\
- DEE_ASSERT(((DeeThreadObject *)Dee_REQUIRES_POINTER(ob))->t_exception == NULL && "New exceptions were found");\
- ((DeeThreadObject *)Dee_REQUIRES_POINTER(ob))->t_exception=_stored_exceptions;\
+ DeeThread_BREAK_EXCEPTIONS_NO_NEW(ob);\
 }while(0)
 
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) void) _DeeThread_RestoreExceptions(
- DEE_A_INOUT DeeThreadObject *thread, DEE_A_IN struct DeeRaisedException *exc) {
- struct DeeRaisedException *end;
- DEE_ASSERT(thread);
- DEE_ASSERT(exc);
- if ((end = thread->t_exception) != NULL) {
-  while (end->re_prev) end = end->re_prev;
-  end->re_prev = exc;
- } else thread->t_exception = exc;
-}
 
 #ifndef DEE_WITHOUT_THREADS
 #define DeeThread_STATE(ob)       ((DeeThreadObject *)Dee_REQUIRES_POINTER(ob))->t_state

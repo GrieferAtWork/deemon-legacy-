@@ -284,30 +284,31 @@ def_var_data:
   }
  }
 #endif
+ DeeError_PUSH_STATE() {
 #ifndef NOEXCEPT
- DEE_SIGNALHANDLER_BEGIN {
+  DEE_SIGNALHANDLER_BEGIN {
 #endif
 #ifdef VARARGS
-  if (n_varargs) {
-   ffi_cif va_cif;
-   if (ffi_prep_cif_var(&va_cif,tp_self->fft_ffi_cif.abi,
-    (unsigned int)tp_self->fft_arg_type_c,(unsigned int)totalargc,
-    tp_self->fft_ffi_return_type,va_argtypes_mem) != FFI_OK) {
-    DEE_SIGNALHANDLER_DONE;
-    DeeError_RuntimeError("ffi_prep_cif_var failed");
-    HANDLE_ERROR;
-   }
-   ffi_call(&va_cif,(void(*)(void))self,ret_mem,va_argptr_mem);
-  } else
+   if (n_varargs) {
+    ffi_cif va_cif;
+    if (ffi_prep_cif_var(&va_cif,tp_self->fft_ffi_cif.abi,
+     (unsigned int)tp_self->fft_arg_type_c,(unsigned int)totalargc,
+     tp_self->fft_ffi_return_type,va_argtypes_mem) != FFI_OK) {
+     DEE_SIGNALHANDLER_DONE;
+     DeeError_RuntimeError("ffi_prep_cif_var failed");
+     HANDLE_ERROR;
+    }
+    ffi_call(&va_cif,(void(*)(void))self,ret_mem,va_argptr_mem);
+   } else
 #endif
-  {
-   ffi_call(&tp_self->fft_ffi_cif,(void(*)(void))self,
-            ret_mem,(void **)((Dee_uintptr_t)wbuf+tp_self->fft_woff_argptr));
-  }
+   {
+    ffi_call(&tp_self->fft_ffi_cif,(void(*)(void))self,ret_mem,
+            (void **)((Dee_uintptr_t)wbuf+tp_self->fft_woff_argptr));
+   }
 #ifndef NOEXCEPT
- } DEE_SIGNALHANDLER_END ({
-  HANDLE_ERROR;
- });
+  } DEE_SIGNALHANDLER_END ({
+   HANDLE_ERROR;
+  });
 #endif
 #if DEE_HAVE_ALLOCA
 #define RETURN    return
@@ -315,21 +316,28 @@ def_var_data:
 #define RETURN(x) do{result=(x);goto end;}while(0)
 #endif
 #ifndef NOEXCEPT
- // Check that no deemon error was thrown
- if DEE_UNLIKELY(DeeError_OCCURRED()) {
-  // The foreign code threw a deemon error.
-  // >> Now we have to forward that error to the caller
-  // NOTE: In the case of usually returning an object with inherited reference, we need to try and decref the result first
-  if (tp_self->fft_return_kind == DEE_FOREIGN_RETURN_KIND_OBJECT) {
-   Dee_XDECREF(*(DeeObject **)ret_mem);
-  }
-  RETURN(NULL);
- }
+  // Check that no deemon error was thrown
+#if 1
+  if DEE_UNLIKELY(_temp_state.esd_threadself->t_exception != NULL)
 #else
- // Just dump all errors if there are any
- // >> The user said this function was noexcept, and that's what we're enforcing here!
- DeeError_Handled();
+  if DEE_UNLIKELY(DeeError_OCCURRED())
 #endif
+  {
+   // The foreign code threw a deemon error.
+   // >> Now we have to forward that error to the caller
+   // NOTE: In the case of usually returning an object with inherited reference, we need to try and decref the result first
+   if (tp_self->fft_return_kind == DEE_FOREIGN_RETURN_KIND_OBJECT) {
+    Dee_XDECREF(*(DeeObject **)ret_mem);
+   }
+   DeeError_BREAK_STATE();
+   RETURN(NULL);
+  }
+#else
+  // Just dump all errors if there are any
+  // >> The user said this function was noexcept, and that's what we're enforcing here!
+  DeeError_Handled();
+#endif
+ } DeeError_POP_STATE();
  switch (tp_self->fft_return_kind) {
   case DEE_FOREIGN_RETURN_KIND_NONE:
    RETURN(DeeNone_New());

@@ -27,9 +27,9 @@
 #include <deemon/object.h>
 #include <deemon/tuple.h>
 #include <deemon/string.h>
+#include <deemon/mp/thread.h>
 #ifdef DEE_WITHOUT_THREADS
 #include <deemon/optional/raised_exception.h>
-#include <deemon/mp/thread.h>
 #endif
 #endif
 
@@ -360,6 +360,87 @@ extern DeeThreadObject _DeeThread_Self;
 #define DeeError_OCCURRED    _DeeError_Occurred
 #endif
 #endif
+
+
+struct DeeRaisedException;
+struct DeeThreadObject;
+struct DeeErrorStateData {
+ struct DeeThreadObject    *esd_threadself;        /*< [0..1] Calling thread control block. */
+ struct DeeRaisedException *esd_stored_exceptions; /*< [0..1] List of stored exceptions. */
+};
+
+//////////////////////////////////////////////////////////////////////////
+// Push/Pop the thread-local error state, temporarily
+// creating an environment where no errors have occurred.
+// NOTE: Unless you really know that you need this, and what this does, you probably won't need this...
+extern void DeeError_PushState(DEE_A_OUT struct DeeErrorStateData *state) DEE_ATTRIBUTE_NONNULL((1));
+extern void DeeError_PopState(DEE_A_IN struct DeeErrorStateData const *state) DEE_ATTRIBUTE_NONNULL((1));
+
+//////////////////////////////////////////////////////////////////////////
+// Push the error-state around a block where exceptions need to be preserved:
+// >> DeeError_PUSH_STATE() {
+// >>   // If this call fails, handle all errors,
+// >>   // except for those that already existed before.
+// >>   if (SomeDangerousCall() != 0) {
+// >>     DeeError_Handled();
+// >>   }
+// >> } DeeError_POP_STATE();
+#ifndef DEE_LIMITED_DEX
+#define DeeError_PUSH_STATE()\
+do{\
+ struct DeeErrorStateData _temp_state;\
+ DeeError_PushState(&_temp_state)
+#define DeeError_BREAK_STATE()\
+ DeeError_PopState(&_temp_state)
+#define DeeError_POP_STATE()\
+ DeeError_BREAK_STATE();\
+}while(0)
+#else
+#define DeeError_PUSH_STATE()\
+do{\
+ struct DeeErrorStateData _temp_state;\
+ if DEE_LIKELY((_temp_state.esd_threadself = DeeThread_SELF()) != NULL) {\
+  if ((_temp_state.esd_stored_exceptions = _temp_state.esd_threadself->t_exception) != NULL) {\
+   DeeAtomicMutex_AcquireRelaxed(&_temp_state.esd_threadself->t_exception_lock);\
+   _temp_state.esd_threadself->t_exception = NULL;\
+   DeeAtomicMutex_Release(&_temp_state.esd_threadself->t_exception_lock);\
+  }\
+ } else {\
+  _temp_state.esd_stored_exceptions = NULL;\
+ } do
+#define DeeError_BREAK_STATE()\
+do{\
+ if (_temp_state.esd_stored_exceptions) {\
+  struct DeeRaisedException *_exc_end;\
+  if ((_exc_end = _temp_state.esd_threadself->t_exception) != NULL) {\
+   /* Prefix to existing exception chain. */\
+   while (_exc_end->re_prev) _exc_end = _exc_end->re_prev;\
+   DeeAtomicMutex_AcquireRelaxed(&_temp_state.esd_threadself->t_exception_lock);\
+   _exc_end->re_prev = _temp_state.esd_stored_exceptions;\
+   DeeAtomicMutex_Release(&_temp_state.esd_threadself->t_exception_lock);\
+  } else {\
+   /* Insert thread-local. */\
+   DeeAtomicMutex_AcquireRelaxed(&_temp_state.esd_threadself->t_exception_lock);\
+   _temp_state.esd_threadself->t_exception = _temp_state.esd_stored_exceptions;\
+   DeeAtomicMutex_Release(&_temp_state.esd_threadself->t_exception_lock);\
+  }\
+ }\
+}while(0)
+#define DeeError_POP_STATE()\
+ while(0); DeeError_BREAK_STATE();\
+}while(0)
+#endif
+
+// Better syntax highlighting
+#ifdef __INTELLISENSE__
+//#undef DeeError_PUSH_STATE
+//#undef DeeError_BREAK_STATE
+//#undef DeeError_POP_STATE
+//#define DeeError_PUSH_STATE()  if(1)do
+//#define DeeError_BREAK_STATE() break
+//#define DeeError_POP_STATE()   while(0)
+#endif
+
 
 
 #ifdef DEE_LIMITED_DEX
