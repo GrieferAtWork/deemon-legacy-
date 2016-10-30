@@ -59,17 +59,20 @@ class my_class {
 		print "	>> next.next:",this.next.next;
 		
 		// Implicitly executed at the end of the
-		// destructor, all member variables are delete
-		// And the action of doing so is what causes
-		// the attribute errors to occur once the
+		// destructor, all member variables are deleted,
+		// with the action of doing so causing the
+		// attribute errors to occur once the
 		// destruction of another instance of 'my_class'
 		// tries to access those variables:
 		// >> del this.prev;
 		// >> del this.next;
 		// NOTE: Obviously all members are cleared and not
-		//       only the ones which those two names, but
-		//       there is simply no way of expression
+		//       only the ones with those two names, but
+		//       there is simply no way of easily expressing
 		//       an operation like that in usercode atm.
+		//      (You could use util::attr::enumattr in
+		//       conjunction with 'operator del.', but that
+		//       would look too complicated for this tut)
 	}
 
 };

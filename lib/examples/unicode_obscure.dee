@@ -34,26 +34,26 @@ const bd_file = fs::path::join(fs::path::head(__FILE__),"unicode_similar.txt");
 
 // Load the database file describing similar unicode names
 mappings = dict();
-for (l: file::io(bd_file,"r")) {
-  l = l.strip().upper();
-  if (l && !l.startswith("#")) {
-    local d = l.split(" ").locate_all([](x) -> x.non_empty());
-    if (#d == 2 && #d[0] <= 4 && d[0][0] != "A") {
-      local wide_id = string::wide::chr((int)("0x"+d[0]));
-      local name = d[1].lower();
-      mappings.setdefault(name,list()).append(wide_id);
-      //print "found:",d[0],"--",id;
-    }
-  }
+for (local l: file::io(bd_file,"r")) {
+	l = l.strip().upper();
+	if (l && !l.startswith("#")) {
+		local d = l.split(" ").locate_all([](x) -> x.non_empty());
+		if (#d == 2 && #d[0] <= 4 && d[0][0] != "A") {
+			local wide_id = string::wide::chr((int)("0x"+d[0]));
+			local name = d[1].lower();
+			mappings.setdefault(name,list()).append(wide_id);
+			//print "found:",d[0],"--",id;
+		}
+	}
 }
 
 random r;
-for (l: file::io::stdin) for (ch: l) {
-  if (ch in mappings) {
-   rep = mappings[ch];
-   ch = rep[r(unsigned)%#rep];
-  }
-  file::io::stdout.write((string)ch);
+for (local l: file::io::stdin) for (ch: l) {
+	if (ch in mappings) {
+		rep = mappings[ch];
+		ch = rep[r(unsigned)%#rep];
+	}
+	file::io::stdout.write((string)ch);
 }
 
 

@@ -409,7 +409,7 @@ DeeFile_PutLeSmall64(DEE_A_INOUT DeeObject *self, DEE_A_IN Dee_uint64_t value) {
  } else
  // Little endian stores its least significant bit at the front.
  // So all we have to do now, is figure out what the last non-zero slot is.
- if (small64.lil_bytes[7]) small64.marker = DEE_FILE_SMALL64_KIND_64;
+      if (small64.lil_bytes[7]) small64.marker = DEE_FILE_SMALL64_KIND_64;
  else if (small64.lil_bytes[6]) small64.marker = DEE_FILE_SMALL64_KIND_56;
  else if (small64.lil_bytes[5]) small64.marker = DEE_FILE_SMALL64_KIND_48;
  else if (small64.lil_bytes[4]) small64.marker = DEE_FILE_SMALL64_KIND_40;

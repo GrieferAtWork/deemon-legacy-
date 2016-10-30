@@ -24,6 +24,8 @@
 // and then output the highest/lowest volume that was recorded.
 // (Try stroking or blowing your mic while running this script)
 
+// WARNING: Only works under windows right now
+
 #include <micapi>
 
 m1 = micapi::mic();

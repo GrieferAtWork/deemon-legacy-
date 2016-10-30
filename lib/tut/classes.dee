@@ -245,7 +245,7 @@ print "done";
 //	   NOTE: '[weakdef]' means that the operator is only defined if certain conditions are met
 //	         >> In this case, the conditions are implied by the 'if * exists' descriptions.
 //	            e.g.: The intrinsic 'operator < (right)' will only be defined if a user-defined 'operator >= (right)' is available
-//	         >> [weakdef] also prevents cyclic operator class that would call each other indefinitely
+//	         >> [weakdef] also prevents cyclic operators that would call each other indefinitely
 //	class insert_name_here {
 //		[weakdef] class() { /* Magic: If it exists, call the class(args...) constructor with empty arguments */ }
 //		[weakdef] class(args...) { /* Magic: if args are empty, call the class() constructor if it exists.

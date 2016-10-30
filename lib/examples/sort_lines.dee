@@ -24,12 +24,12 @@
 
 #include <file>
 file.io.stdout.write(
-  "\n".join(
-    file.io("/dev/stdin")
-      .read()
-      .splitlines(false)
-      .sorted()
-  )
+	"\n".join(
+		file.io("/dev/stdin")
+			.read()
+			.splitlines(false)
+			.sorted()
+	)
 );
 
 

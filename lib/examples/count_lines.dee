@@ -8,18 +8,20 @@ const exts = [".h",".c",".dee",".inl"];
 
 function walk;
 function walk(p) {
-  for (x: fs.dir(p)) {
-    if (x in ignored) continue;
-    x = fs.path.join(p,x);
-    if (fs.path.ext(x) in exts) yield x;
-    if (fs.isdir(x))
-      yield walk(x)...;
-  }
+	for (x: fs.dir(p)) {
+		if (x in ignored)
+			continue;
+		x = fs.path.join(p,x);
+		if (fs.path.ext(x) in exts)
+			yield x;
+		if (fs.isdir(x))
+			yield walk(x)...;
+	}
 }
 
 if (#sys.argv < 2) {
-  print "Expected path argument";
-  sys.exit(1);
+	print "Expected path argument";
+	sys.exit(1);
 }
 
 lines = 0;
@@ -27,11 +29,11 @@ files = 0;
 total_bytes = 0;
 for (path: sys.argv[1:])
 for (f: walk(path)) {
-  print "Scanning:",f;
-  text = file.io(f,"r").read();
-  total_bytes += #text;
-  lines += #text.splitlines();
-  ++files;
+	print "Scanning:",f;
+	text = file.io(f,"r").read();
+	total_bytes += #text;
+	lines += #text.splitlines();
+	++files;
 }
 
 print "-"*40;

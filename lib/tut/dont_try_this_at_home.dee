@@ -23,7 +23,7 @@
 // Don't worry, this only works in developer builds of deemon.
 // Meaning that overwriting the runtime is __NOT__ intended
 // to be possible without some fancy hacks...
-// WARNING: Hacks like this are not officially endorsed!
+// WARNING: Hacks like these are not officially endorsed!
 //          They are merely meant for allowing usercode to be written
 //          that can be used to debug deemon itself, without having to recompile it.
 //          But if you start messing with undocumented/devel-only stuff like this,

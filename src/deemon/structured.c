@@ -617,7 +617,8 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *DeeObject_TRef(
   }
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTIONCLOSURE
  } else if (tp_self == &DeeForeignFunctionClosure_Type) {
-  if DEE_UNLIKELY((ty = (DeePointerTypeObject *)DeeStructuredType_Pointer(tp_self)) == NULL) return NULL;
+  if DEE_UNLIKELY((ty = (DeePointerTypeObject *)DeeStructuredType_Pointer(
+   DeeForeignFunctionClosure_TYPE(self))) == NULL) return NULL;
   if DEE_LIKELY((result = DEE_OBJECTPOOL_ALLOC(pointer)) != NULL) {
    DeeObject_INIT(result,(DeeTypeObject *)ty);
 DEE_COMPILER_MSVC_WARNING_PUSH(4054)
