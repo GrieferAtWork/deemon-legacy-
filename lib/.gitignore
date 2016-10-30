@@ -1,4 +1,5 @@
 *.dee
 *.out
 !future.dee
-
+!test/*
+!test/*/*
