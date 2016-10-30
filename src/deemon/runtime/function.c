@@ -1037,7 +1037,7 @@ static struct DeeTypeMarshal _deefunction_tp_marshal = DEE_TYPE_MARSHAL_v100(
 
 DeeTypeObject DeeFunction_Type = {
  DEE_TYPE_OBJECT_HEAD_v100(member("function"),member(
-  "(code c, tuple refs = pack(), size_t argc = 0, uint32_t flags = function.FLAG_NONE) -> function\n"
+  "(code c, tuple refs = pack(), size_t argc = 0, uint32_t flags = function.FLAG_NONE)\n"
   "\tCreates a new function object call calls 'code'. Note that 'argc' must be corrent\n"
   "\tand that an incorrect argc-value can cause access violations even when deemon is compiled in debug mode"),
   member(DEE_TYPE_FLAG_NO_LIFETIME_EFFECT|DEE_TYPE_FLAG_HAS_GC|DEE_TYPE_FLAG_NO_SUBCLASS),null),
@@ -1102,11 +1102,11 @@ static struct DeeTypeMarshal _deeyieldfunction_tp_marshal = DEE_TYPE_MARSHAL_v10
 
 DeeTypeObject DeeYieldFunction_Type = {
  DEE_TYPE_OBJECT_HEAD_v100(member("yield_function"),member(
-  "(function func, tuple args) -> yield_function\n"
-  "(function func, tuple args, object this) -> yield_function\n"
-  "\t@param func: The given function\n"
-  "\t@param args: Arguments used to call the given function\n"
-  "\t@param this: The this argument used during [[thiscall]] calls\n"
+  "(function func, tuple args)\n"
+  "(function func, tuple args, object this)\n"
+  "@param func: The given function\n"
+  "@param args: Arguments used to call the given function\n"
+  "@param this: The this argument used during [[thiscall]] calls\n"
   "\tCreates a new yield_function from a given function and arguments.\n"
   "\tNOTE: Using this constructor has the same effect as calling 'func.operator ()(args)'"),
   member(DEE_TYPE_FLAG_NO_LIFETIME_EFFECT|DEE_TYPE_FLAG_NO_SUBCLASS),null),
@@ -1186,7 +1186,7 @@ static struct DeeTypeMarshal _deeyieldfunctioniterator_tp_marshal = DEE_TYPE_MAR
 
 DeeTypeObject DeeYieldFunctionIterator_Type = {
  DEE_TYPE_OBJECT_HEAD_v100(member("yield_function.iterator"),member(
-  "(yield_function func) -> yield_function.iterator\n"
+  "(yield_function func)\n"
   "\tCreates a new yield_function iterator from a given yield_function.\n"
   "\tUsing this constructor has the same effect as calling 'func.operator __iterself__()'"
   "\tNOTE: Copying a yield_function iterator requires the given iterator to not have been used yet, or the code to be marked with [[copyable]]"),

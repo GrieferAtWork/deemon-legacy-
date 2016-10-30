@@ -2790,10 +2790,6 @@ static struct DeeMethodDef const _deexast_tp_class_methods[] = {
  DEE_METHODDEF_END_v100
 };
 
-static struct DeeMemberDef const _deexast_tp_members[] = {
- DEE_MEMBERDEF_v100(DeeXAstObject,ast_kind,DeeXAstKind),
- DEE_MEMBERDEF_END_v100
-};
 DEE_COMPILER_MSVC_WARNING_PUSH(4574)
 static struct DeeMemberDef const _deexast_tp_class_members[] = {
 /*[[[deemon
@@ -3162,6 +3158,106 @@ for (local name: file.io("xast.h")) {
 };
 DEE_COMPILER_MSVC_WARNING_POP
 
+#if !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
+#define _deexast_tp_getsets DeeType_DEFAULT_SLOT(tp_getsets)
+#else /* !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
+#if DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES
+static DeeObject *DEE_CALL _deexast_ast_class_c_uuid_get(
+ DeeXAstObject *self, void *DEE_UNUSED(closure)) {
+ return DeeUUID_ToString(&self->ast_class.c_uuid);
+}
+static int DEE_CALL _deexast_ast_class_c_uuid_set(
+ DeeXAstObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+ if (DeeError_TypeError_CheckTypeExact(v,&DeeString_Type) != 0) return -1;
+ return DeeUUID_FromStringWithError(&self->ast_class.c_uuid,DeeString_STR(v));
+}
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES */
+static struct DeeGetSetDef const _deexast_tp_getsets[] = {
+#if DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES
+ DEE_GETSETDEF_v100("__ast_class_c_uuid",
+  member(&_deexast_ast_class_c_uuid_get),null,
+  member(&_deexast_ast_class_c_uuid_set),"-> string"),
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES */
+ DEE_GETSETDEF_END_v100
+};
+#endif
+static struct DeeMemberDef const _deexast_tp_members[] = {
+ DEE_MEMBERDEF_NAMED_RO_v100("kind",DeeXAstObject,ast_kind,DeeXAstKind),
+#if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_kind",DeeXAstObject,ast_kind,DeeXAstKind),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_common_ast_kind",DeeXAstObject,ast_common.ast_kind,DeeXAstKind),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_common_ast_token",DeeXAstObject,ast_common.ast_token,object,"-> token"),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_const_c_const",DeeXAstObject,ast_const.c_const,object),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_var_vs_var",DeeXAstObject,ast_var.vs_var,object,"-> local_var"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_vardecl_vd_token",DeeXAstObject,ast_vardecl.vd_token,object,"-> token"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_vardecl_vd_var",DeeXAstObject,ast_vardecl.vd_var,object,"-> local_var"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_vardecl_vd_init",DeeXAstObject,ast_vardecl.vd_init,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_multivardecl_mvd_type",DeeXAstObject,ast_multivardecl.mvd_type,DeeXAstKind),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_multivardecl_mvd_varc",DeeXAstObject,ast_multivardecl.mvd_varc,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_multivardecl_mvd_varv",DeeXAstObject,ast_multivardecl.mvd_varv,p(void),"-> DeeVarDeclStorage *"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_multivardecl_mvd_init",DeeXAstObject,ast_multivardecl.mvd_init,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_statement_s_stmt",DeeXAstObject,ast_statement.s_stmt,object,"-> sast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_if",DeeXAstObject,ast_if.if_cond,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_if_if_succ",DeeXAstObject,ast_if.if_succ,object_null,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_if_if_fail",DeeXAstObject,ast_if.if_fail,object_null,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_function_f_name",DeeXAstObject,ast_function.f_name,object_null,"-> string"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_function_f_flags",DeeXAstObject,ast_function.f_flags,Dee_uint32_t,"\tSame as function.FLAG_*."),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_function_f_argc",DeeXAstObject,ast_function.f_argc,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_function_f_argv",DeeXAstObject,ast_function.f_argv,p(void),"-> DeeXAstFunctionAstArgument *"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_function_f_code",DeeXAstObject,ast_function.f_code,object_null,"-> sast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_function_f_scope",DeeXAstObject,ast_function.f_scope,object_null,"-> scope"),
+#if DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_class_c_name",DeeXAstObject,ast_class.c_name,object_null,"-> string"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_class_c_base",DeeXAstObject,ast_class.c_base,object_null,"-> xast"),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_class_c_entryc",DeeXAstObject,ast_class.c_entryc,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_class_c_entryv",DeeXAstObject,ast_class.c_entryv,p(void),"-> DeeXAstClassAstEntry *"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_class_c_tpflags",DeeXAstObject,ast_class.c_tpflags,Dee_uint32_t,"\tSet of type-flags"),
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES */
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_sequence_s_elemc",DeeXAstObject,ast_sequence.s_elemc,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_sequence_s_elemv",DeeXAstObject,ast_sequence.s_elemv,p2(void),"-> DeeXAstObject **"),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_dict_d_elemc",DeeXAstObject,ast_dict.d_elemc,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_dict_d_elemv",DeeXAstObject,ast_dict.d_elemv,p2(void),"-> DeeXAstDictEntry *"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_seq_range_sr_seq",DeeXAstObject,ast_seq_range.sr_seq,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_seq_range_sr_begin",DeeXAstObject,ast_seq_range.sr_begin,object_null,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_seq_range_sr_end",DeeXAstObject,ast_seq_range.sr_end,object_null,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_seq_range_sr_value",DeeXAstObject,ast_seq_range.sr_value,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_attr_c_ac_object",DeeXAstObject,ast_attr_c.ac_object,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_attr_c_ac_name",DeeXAstObject,ast_attr_c.ac_name,object,"-> string"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_attr_ac_value",DeeXAstObject,ast_attr_c.ac_value,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_module_m_module",DeeXAstObject,ast_module.m_module,object,"-> scope"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_delvar_d_token",DeeXAstObject,ast_delvar.d_token,object,"-> token"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_delvar_d_var",DeeXAstObject,ast_delvar.d_var,object,"-> local_var"),
+#if DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_foreignfunction_ff_base",DeeXAstObject,ast_foreignfunction.ff_base,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_foreignfunction_ff_flags",DeeXAstObject,ast_foreignfunction.ff_flags,DeeFunctionFlags,"-> DeeFunctionFlags"),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_foreignfunction_ff_argc",DeeXAstObject,ast_foreignfunction.ff_argc,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_foreignfunction_ff_argv",DeeXAstObject,ast_foreignfunction.ff_argv,p2(void),"-> DeeXAstObject **"),
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION */
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_switch_s_expr",DeeXAstObject,ast_switch.s_expr,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_switch_s_entryc",DeeXAstObject,ast_switch.s_entryc,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_switch_s_entryv",DeeXAstObject,ast_switch.s_entryv,p(void),"-> DeeXAstSwitchEntry *"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_switch_s_default",DeeXAstObject,ast_switch.s_default,object_null,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_ifconst_ic_succ",DeeXAstObject,ast_ifconst.ic_succ,object_null,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_ifconst_ic_fail",DeeXAstObject,ast_ifconst.ic_fail,object_null,"-> xast"),
+#endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
+#if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_BOUND
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_builtin_bound_b_token",DeeXAstObject,ast_builtin_bound.b_token,object,"-> token"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_builtin_bound_b_var",DeeXAstObject,ast_builtin_bound.b_var,object,"-> local_var"),
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_BOUND */
+#if DEE_CONFIG_LANGUAGE_HAVE_EXTERN
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_builtin_extern_ex_file",DeeXAstObject,ast_builtin_extern.ex_file,object_null,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_builtin_extern_ex_name",DeeXAstObject,ast_builtin_extern.ex_name,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_builtin_extern_ex_type",DeeXAstObject,ast_builtin_extern.ex_type,object,"-> xast"),
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_EXTERN */
+#if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_builtin_expect_e_value",DeeXAstObject,ast_builtin_expect.e_value,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_builtin_expect_e_expect",DeeXAstObject,ast_builtin_expect.e_expect,object),
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT */
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_operator_op_a",DeeXAstObject,ast_operator.op_a,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_operator_op_b",DeeXAstObject,ast_operator.op_b,object,"-> xast"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_operator_op_c",DeeXAstObject,ast_operator.op_c,object,"-> xast"),
+ DEE_MEMBERDEF_END_v100
+};
 
 
 
@@ -3189,7 +3285,7 @@ DeeTypeObject DeeXAst_Type = {
   member(&_deexast_tp_cmp_ne),null,null),
  DEE_TYPE_OBJECT_SEQ_v101(null,null,null,null,null,null,null,null,null,null),
  DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,
-  member(_deexast_tp_members),null,member(_deexast_tp_methods),
+  member(_deexast_tp_members),member(_deexast_tp_getsets),member(_deexast_tp_methods),
   member(_deexast_tp_class_members),null,member(_deexast_tp_class_methods)),
  DEE_TYPE_OBJECT_FOOTER_v100
 };
