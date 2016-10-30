@@ -196,7 +196,7 @@ extern DeeTypeObject DeeSingleListIterator_Type;
 
 
 extern DEE_A_RET_EXCEPT(-1) int DeeSingleListNode_PtrFromObject(
- DEE_A_IN DeeSingleList const *list, DEE_A_INOUT DeeObject *index,
+ DEE_A_IN struct DeeSingleList const *list, DEE_A_INOUT DeeObject *index,
  /*ref(sln_refcnt)*/DEE_A_OUT struct DeeSingleListNode **result)
  DEE_ATTRIBUTE_NONNULL((1,2,3));
 

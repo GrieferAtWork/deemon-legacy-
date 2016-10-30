@@ -675,7 +675,7 @@ DEE_A_RET_EXCEPT_REF DeeSingleListIteratorObject *DeeSingleListIterator_New(
  return result;
 }
 DEE_A_RET_EXCEPT(-1) int DeeSingleListNode_PtrFromObject(
- DEE_A_IN DeeSingleList const *list, DEE_A_INOUT DeeObject *index,
+ DEE_A_IN struct DeeSingleList const *list, DEE_A_INOUT DeeObject *index,
  /*ref(sln_refcnt)*/DEE_A_OUT struct DeeSingleListNode **result) {
  Dee_ssize_t index_id; struct DeeSingleListNode *iter;
  if (DeeObject_InstanceOf(index,&DeeSingleListIterator_Type)) {
