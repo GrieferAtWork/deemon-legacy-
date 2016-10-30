@@ -193,6 +193,8 @@
 //       Use as 'deemon --keep-comment -E <file>' to preprocess <file> and keep all comments intact.
 //     - Various user-code attributes, such as [[name(...)]] now accept 'none' as
 //       an argument, which can be used to delete the associated attribute.
+//     - Added a predicate overload to 'list.remove'
+//     - Added more documentation for the members of 'list'
 //
 //   Changes:
 //     - On linux, deemon will now look for dex extensions

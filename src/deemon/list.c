@@ -1140,6 +1140,45 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeList_Remove(
  DeeList_RELEASE(self);
  return 1;
 }
+
+DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeList_RemovePred(
+ DEE_A_INOUT_OBJECT(DeeListObject) *self, DEE_A_INOUT DeeObject *elem,
+ DEE_A_INOUT DeeObject *pred) {
+ Dee_size_t i; int temp; DeeObject *list_elem,*pred_args,*pred_result;
+ DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
+ DEE_ASSERT(DeeObject_Check(elem));
+ DeeList_ACQUIRE(self);
+ for (i = 0; DEE_LIKELY(i < DeeList_SIZE(self)); ++i) {
+  Dee_INCREF(list_elem = DeeList_GET(self,i));
+  DeeList_RELEASE(self);
+  pred_args = DeeTuple_Pack(2,list_elem,elem);
+  Dee_DECREF(list_elem);
+  if DEE_UNLIKELY(!pred_args) return -1;
+  pred_result = DeeObject_Call(pred,pred_args);
+  Dee_DECREF(pred_args);
+  if DEE_UNLIKELY(!pred_result) return -1;
+  temp = DeeObject_Bool(pred_result);
+  Dee_DECREF(pred_result);
+  if DEE_UNLIKELY(temp < 0) {
+   if DEE_UNLIKELY(!DeeError_Catch(&DeeErrorType_NotImplemented)) return -1;
+   temp = 0;
+  }
+  DeeList_ACQUIRE(self);
+  // v make extra sure that this is still the same object!
+  if (temp && list_elem == DeeList_GET(self,i)) { // Found it!
+   memmove(DeeList_ELEM(self)+i,DeeList_ELEM(self)+(i+1),
+          (DeeList_SIZE(self)-i)*sizeof(DeeObject *));
+   --((DeeListObject *)self)->l_len;
+   DeeList_RELEASE(self);
+   Dee_DECREF(list_elem); // Remove the second reference
+   return 0;
+  }
+ }
+ DeeList_RELEASE(self);
+ return 1;
+}
+
+
 DEE_A_RET_EXCEPT(-1) Dee_size_t DeeList_RemoveIf(
  DEE_A_INOUT_OBJECT(DeeListObject) *self, DEE_A_INOUT DeeObject *pred) {
  Dee_size_t n_removed,i; int temp; DeeObject *list_elem,*args,*call_res;
@@ -2733,9 +2772,12 @@ static DeeObject *_deelist_sorted_insert(
 }
 static DeeObject *_deelist_remove(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeObject *elem; int result;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:remove",&elem) != 0) return NULL;
- if DEE_UNLIKELY((result = DeeList_Remove((DeeObject *)self,elem)) != 0) return NULL;
+ DeeObject *elem,*pred = Dee_None; int result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:remove",&elem,&pred) != 0) return NULL;
+ if DEE_UNLIKELY((result = ((DeeNone_Check(pred) || pred == (DeeObject *)&DeeBuiltinFunction___eq__)
+  ? DeeList_Remove((DeeObject *)self,elem)
+  : DeeList_RemovePred((DeeObject *)self,elem,pred)
+  )) != 0) return NULL;
  DeeReturn_Bool(result == 0);
 }
 static DeeObject *_deelist_insert(
@@ -3041,18 +3083,16 @@ static struct DeeMethodDef const _deelist_tp_methods[] = {
  DEE_METHODDEF_CONST_v100("segments",member(&_deelist_segments),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("sorted",member(&_deelist_sorted),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("transform",member(&_deelist_transform),DEE_DOC_AUTO),
- DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),"(callable pred) -> size_t"),
- DEE_METHODDEF_v100("remove",member(&_deelist_remove),"(object elem) -> bool"),
- DEE_METHODDEF_v100("insert",member(&_deelist_insert),"(ssize_t i, object elem) -> none"),
- DEE_METHODDEF_v100("insert_list",member(&_deelist_insert_list),"(ssize_t i, iterable list) -> none"),
- DEE_METHODDEF_v100("insert_iter",member(&_deelist_insert_iter),"(ssize_t i, iterator iter) -> none"),
- DEE_METHODDEF_v100("sorted_insert",member(&_deelist_sorted_insert),
-  "(object elem, callable pred = none) -> none\n"
-  "\tInserts a given element 'elem' into 'this', maintaining a sort order using 'pred' or the '__lo__' operator"),
- DEE_METHODDEF_v100("append",member(&_deelist_append),"(object elem...) -> none"),
- DEE_METHODDEF_v100("extend",member(&_deelist_extend),"(iterable list...) -> none"),
- DEE_METHODDEF_v100("erase",member(&_deelist_erase),"(ssize_t i, size_t n = 1) -> none"),
- DEE_METHODDEF_v100("pop",member(&_deelist_pop),"(ssize_t i = #this-1) -> object"),
+ DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("insert",member(&_deelist_insert),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("insert_list",member(&_deelist_insert_list),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("insert_iter",member(&_deelist_insert_iter),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("sorted_insert",member(&_deelist_sorted_insert),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("append",member(&_deelist_append),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("extend",member(&_deelist_extend),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("erase",member(&_deelist_erase),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("pop",member(&_deelist_pop),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("clear",member(&_deelist_clear),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("resize",member(&_deelist_resize),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("reserve",member(&_deelist_reserve),DEE_DOC_AUTO),
@@ -3061,18 +3101,14 @@ static struct DeeMethodDef const _deelist_tp_methods[] = {
  DEE_METHODDEF_v100("sort",member(&_deelist_sort),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("reversed",member(&_deelist_reversed),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("allocated",member(&_deelist_allocated),DEE_DOC_AUTO),
- DEE_METHODDEF_v100("fill",member(&_deelist_fill),"(object elem, size_t size = #this) -> none"),
+ DEE_METHODDEF_v100("fill",member(&_deelist_fill),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("push_front",member(&_deelist_push_front),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("push_back",member(&_deelist_push_back),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("pop_front",member(&_deelist_pop_front),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("pop_back",member(&_deelist_pop_back),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("unique",member(&_deelist_unique),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("tounique",member(&_deelist_tounique),DEE_DOC_AUTO),
- DEE_METHODDEF_CONST_v100("extend_unique",member(&_deelist_extend_unique),
-  "(sequence seq, callable pred = none) -> list\n"
-  "@param seq: Input sequence to extend the list with\n"
-  "@param pred: User-defined predicate, #none or #__eq__\n"
-  "\tExtends the current list with all elements from @seq, skipping equivalent consecutive elements"),
+ DEE_METHODDEF_CONST_v100("extend_unique",member(&_deelist_extend_unique),DEE_DOC_AUTO),
  DEE_METHODDEF_END_v100
 };
 

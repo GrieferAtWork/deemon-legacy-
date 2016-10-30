@@ -306,6 +306,64 @@ _DeeMemberName_GetDoc(DEE_A_IN_Z char const *member_name) {
      "\tReturns an iterable object who's consecutive items don't compare equal accoring to @pred.\n"
      "\tIf provided, @pred is used to compare two relative objects for equality.\n"
      "\tIf @pred is #none or #__eq__, #(operator ==) will be used for comparison");
+ DOC("remove_if",   "(callable pred) -> size_t\n"
+     "@return: The amount of removed items\n"
+     "@param pred: User-defined predicate to returning a boolean for a given item, if that item should be removed\n"
+     "@throws object: Same as @pred\n"
+     "\tReturns all items matching @pred from @this sequence.");
+ DOC("remove",      "(object elem, callable pred = none) -> bool\n"
+     "@return: #true if an object was found, #false otherwise\n"
+     "@param elem: The element to search for\n"
+     "@param pred: A user-defined predicate for comparing equality, or #none or #__eq__ if #(operator ==) should be used\n"
+     "@throws object: Same as calling #pred, or #(operator ==)\n"
+     "\tSearches for, and removes the first object matching @pred or #(operator ==).");
+ DOC("insert",      "(ssize_t i, object elem) -> none\n"
+     "@param i: Index to insert @elem at, where 0 referrs to the front and #(#this-1) to the back\n"
+     "@param elem: A @object that should be inserted at @i\n"
+     "\tInserts the given object @elem at the given index @i, increasing the "
+       "index of any existing items at positions greater than, or equal to @i by 1.\n"
+     "\tThe given index @i is be clamped to #(0..#this).");
+ DOC("insert_list", "(ssize_t i, iterable list) -> none\n"
+     "@param i: Index to insert @elem at, where 0 referrs to the front and #(#this-1) to the back\n"
+     "@param list: A sequence of objects that should be inserted at @i\n"
+     "\tInserts all elements from a given sequence @list at the given index @i, increasing the "
+       "index of any existing items at positions greater than, or equal to @i by 1."
+     "\tThe given index @i is be clamped to #(0..#this).");
+ DOC("insert_iter", "(ssize_t i, iterator iter) -> none\n"
+     "@param i: Index to insert @elem at, where 0 referrs to the front and #(#this-1) to the back\n"
+     "@param iter: An iterator of objects that should be inserted at @i\n"
+     "\tInserts all elements from a given iterator @iter at the given index @i, increasing the "
+       "index of any existing items at positions greater than, or equal to @i by 1."
+     "\tThe given index @i is be clamped to #(0..#this).");
+ DOC("sorted_insert","(object elem, callable pred = none) -> none\n"
+     "@param elem: The element to be inserted\n"
+     "@param pred: A user-defined predicate used for comparison, or #none or #__lo__ if #(operator <) should be used\n"
+     "\tInserts a given element @elem into @this, maintaining a sort order using @pred or the #(operator <).");
+ DOC("append","(object elem...) -> none\n"
+     "@param elem: Any number of object to be appended at the end of #this\n"
+     "\tAppends all given @elem at the end of @this sequence.");
+ DOC("extend","(iterable seqs...) -> none\n"
+     "@param seqs: Any number of sequence, who's elements should be appended at the end of #this\n"
+     "\tAppends all elements from all given @seqs at the end of @this sequence.");
+ DOC("erase","(ssize_t i, size_t n = 1) -> none\n"
+     "@param i: The index of the first element to be erased\n"
+     "@param n: The amount of elements to be erased, defaulting to 1 if not given\n"
+     "\tErases up to @n elements from @this, starting at @(i).\n"
+     "\tIf not enough items are available, meaning that @i or @i+@n is out of bounds, as many items as possible are deleted.");
+ DOC("pop","(ssize_t i = #this-1) -> object\n"
+     "@throws Error.ValueError: @this sequence is empty\n"
+     "@param i: The index of the item that should be popped, defaulting to the last item of @this sequence\n"
+     "@return: The popped item, originating from the closest index to @i, that is valid\n"
+     "\tIf the given index @i is out of bounds, but @this sequence is not empty, @i is clamped to #(0..#this).");
+ DOC("fill","(object elem, size_t size = #this) -> none\n"
+     "@param elem: The object to fill @this sequence with.\n"
+     "@param size: The size of @this sequence after the function returns. If not given, the size of @this sequence remains unchanged.\n"
+     "\tFills @this sequence with a given @elem, overwriting any existing items before discarding them.");
+ DOC("extend_unique","(sequence seq, callable pred = none) -> none\n"
+     "@throws object: Same as calling @pred, or #(operator ==)\n"
+     "@param seq: Input sequence to extend the list with\n"
+     "@param pred: A user-defined predicate, or #none or #__eq__ if #(operator ==) should be used\n"
+     "\tExtends the current list with all elements from @seq, skipping equivalent consecutive elements");
 
  // Misc.
  DOC("asmrepr",     "() -> string\n"

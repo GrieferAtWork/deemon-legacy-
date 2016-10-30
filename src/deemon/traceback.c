@@ -473,8 +473,8 @@ static struct DeeMethodDef _deetraceback_tp_methods[] = {
 };
 static struct DeeGetSetDef _deetracebackentry_tp_getsets[] = {
  DEE_GETSETDEF_v100("file",member(&_deetracebackentry_file),null,null,"-> string"),
- DEE_GETSETDEF_v100("line",member(&_deetracebackentry_line),null,null,"-> int64_t"),
  DEE_GETSETDEF_v100("func",member(&_deetracebackentry_func),null,null,"-> string"),
+ DEE_GETSETDEF_v100("line",member(&_deetracebackentry_line),null,null,"-> int64_t"),
  DEE_GETSETDEF_END_v100
 };
 

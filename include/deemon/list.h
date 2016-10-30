@@ -362,6 +362,9 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *) DeeList_T
 // >> Returns  1: Element not found
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,1) int) DeeList_Remove(
  DEE_A_INOUT_OBJECT(DeeListObject) *self, DEE_A_INOUT DeeObject *elem) DEE_ATTRIBUTE_NONNULL((1,2));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,1) int) DeeList_RemovePred(
+ DEE_A_INOUT_OBJECT(DeeListObject) *self, DEE_A_INOUT DeeObject *elem,
+ DEE_A_INOUT DeeObject *pred) DEE_ATTRIBUTE_NONNULL((1,2,3));
 
 //////////////////////////////////////////////////////////////////////////
 // Removes all elements for which 'pred(elem)' is true

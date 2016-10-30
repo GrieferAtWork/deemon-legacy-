@@ -57,12 +57,12 @@ DEE_OBJECT_DEF(DeeTracebackEntryObject);
 struct DeeTupleObject;
 struct DeeTracebackEntry {
  DEE_A_REF struct DeeStringObject *te_file; /*< [0..1] Filename of this entry. */
- Dee_int64_t                       te_line; /*< Line within the given file. */
  DEE_A_REF struct DeeStringObject *te_func; /*< [0..1] Name of this entry's function. */
+ Dee_int64_t                       te_line; /*< Line within the given file. */
 };
 #define DeeTracebackEntry_FILE(ob) ((DeeObject *)(ob)->te_file)
-#define DeeTracebackEntry_LINE(ob) (ob)->te_line
 #define DeeTracebackEntry_FUNC(ob) ((DeeObject *)(ob)->te_func)
+#define DeeTracebackEntry_LINE(ob) (ob)->te_line
 struct DeeTracebackObject {
  DEE_OBJECT_HEAD
         Dee_size_t        tb_tracebackc;       /*< Traceback size. */
