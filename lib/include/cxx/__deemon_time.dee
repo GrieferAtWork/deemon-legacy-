@@ -1,0 +1,205 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#pragma push_macro("tm")
+#pragma push_macro("tm_sec")
+#pragma push_macro("tm_min")
+#pragma push_macro("tm_hour")
+#pragma push_macro("tm_mday")
+#pragma push_macro("tm_mon")
+#pragma push_macro("tm_year")
+#pragma push_macro("tm_wday")
+#pragma push_macro("tm_yday")
+#pragma push_macro("tm_isdst")
+#pragma push_macro("time")
+#pragma push_macro("from_time_t")
+#pragma push_macro("format")
+#pragma push_macro("second")
+#pragma push_macro("minute")
+#pragma push_macro("hour")
+#pragma push_macro("mday")
+#pragma push_macro("month")
+#pragma push_macro("year")
+#pragma push_macro("wday")
+#pragma push_macro("yday")
+#pragma push_macro("localtime_r")
+#pragma push_macro("localtime")
+#pragma push_macro("strftime")
+#pragma push_macro("asctime")
+#pragma push_macro("clock")
+#pragma push_macro("ctime")
+
+#undef tm
+#undef tm_sec
+#undef tm_min
+#undef tm_hour
+#undef tm_mday
+#undef tm_mon
+#undef tm_year
+#undef tm_wday
+#undef tm_yday
+#undef tm_isdst
+#undef time
+#undef from_time_t
+#undef format
+#undef second
+#undef minute
+#undef hour
+#undef mday
+#undef month
+#undef year
+#undef wday
+#undef yday
+#undef localtime_r
+#undef localtime
+#undef strftime
+#undef asctime
+#undef clock
+#undef ctime
+
+#ifndef NULL
+#	define NULL none
+#endif
+
+__if_not_exists(local size_t) {
+	local const size_t = __SIZE_TYPE__;
+}
+__if_not_exists(local time_t) {
+	local const time_t = __CAT(__int,__TPP_EVAL(__SIZEOF_TIME_T__*8));
+}
+__if_not_exists(local time) {
+	// 'time' works just like the 'time()' function
+	local const time = __builtin_object(0x007F);
+}
+
+
+local const function clock() -> __builtin_object(0x007F).tick();
+#ifndef CLOCKS_PER_SEC
+#define CLOCKS_PER_SEC  (__builtin_object(0x007F).freq __NO_MACRO())
+#endif
+
+#ifdef __STDC_STRICT__
+local const function strftime(__ptr,__maxsize,__fmt,__time): __result {
+	local __temp = __builtin_object(0x007F).from_time_t(__time).format(__fmt);
+	__result = __builtin_object(0x0102)(__maxsize,#__temp);
+	__builtin_object(0x00C5)(__ptr,__temp,__result);
+}
+#else
+local constexpr function strftime(__fmt,__time) ->
+	__builtin_object(0x007F).from_time_t(__time).format(__fmt);
+#endif
+
+local struct tm {
+	int tm_sec;   // seconds after the minute   - 0-69
+	int tm_min;   // minutes after the hour     - 0-59
+	int tm_hour;  // hours since midnight       - 0-23
+	int tm_mday;  // day of the month           - 1-31
+	int tm_mon;   // months since January       - 0-11
+	int tm_year;  // years since                - 1900
+	int tm_wday;  // days since Sunday          - 0-6
+	int tm_yday;  // days since January 1       - 0-365
+	int tm_isdst; // Daylight Saving Time flag  - 0-1
+};
+
+#ifdef __STDC_STRICT__
+local const function localtime(__timer) {
+	static __tm = struct tm();
+#else
+local const function localtime_r(__timer,__tmp) {
+	local __tm = *__tmp;
+#endif
+	local __t = __builtin_object(0x007F).from_time_t(*__timer);
+	__tm.tm_sec = __t.second;
+	__tm.tm_min = __t.minute;
+	__tm.tm_hour = __t.hour;
+	__tm.tm_mday = __t.mday;
+	__tm.tm_mon = __t.month;
+	__tm.tm_year = __t.year-1900;
+	__tm.tm_wday = __t.wday;
+	__tm.tm_yday = __t.yday;
+	__tm.tm_isdst = 0; // TODO
+#ifdef __STDC_STRICT__
+	return &__tm;
+}
+#else
+	return __tmp;
+}
+local const function localtime(__timer) {
+	static __tm = (struct tm)();
+	return localtime_r(__timer,&__tm);
+}
+#endif
+
+#define __time_from_tm(x) \
+	__builtin_object(0x007F)(\
+	(x)->tm_year+1900,(x)->tm_mon,(x)->tm_mday,\
+	(x)->tm_hour,(x)->tm_min,(x)->tm_sec)
+
+#ifdef __STDC_STRICT__
+local const function asctime(__timeptr) {
+	static __timebuf = none;
+	__timebuf = str __time_from_tm(__timeptr);
+	return (char *)__timebuf;
+}
+local const function ctime(__timer) {
+	static __timebuf = none;
+	__timebuf = str __builtin_object(0x007F).from_time_t(*__timer);
+	return (char *)__timebuf;
+}
+#else
+local constexpr function asctime(__timeptr) -> str __time_from_tm(__timeptr);
+local constexpr function ctime(__timer) -> str __builtin_object(0x007F).from_time_t(*__timer);
+#endif
+
+#undef __time_from_tm
+
+// TODO: gmtime
+
+local constexpr function difftime(a,b) -> b-a;
+
+#pragma pop_macro("tm")
+#pragma pop_macro("tm_sec")
+#pragma pop_macro("tm_min")
+#pragma pop_macro("tm_hour")
+#pragma pop_macro("tm_mday")
+#pragma pop_macro("tm_mon")
+#pragma pop_macro("tm_year")
+#pragma pop_macro("tm_wday")
+#pragma pop_macro("tm_yday")
+#pragma pop_macro("tm_isdst")
+#pragma pop_macro("time")
+#pragma pop_macro("from_time_t")
+#pragma pop_macro("format")
+#pragma pop_macro("second")
+#pragma pop_macro("minute")
+#pragma pop_macro("hour")
+#pragma pop_macro("mday")
+#pragma pop_macro("month")
+#pragma pop_macro("year")
+#pragma pop_macro("wday")
+#pragma pop_macro("yday")
+#pragma pop_macro("localtime_r")
+#pragma pop_macro("localtime")
+#pragma pop_macro("strftime")
+#pragma pop_macro("asctime")
+#pragma pop_macro("clock")
+#pragma pop_macro("ctime")
+

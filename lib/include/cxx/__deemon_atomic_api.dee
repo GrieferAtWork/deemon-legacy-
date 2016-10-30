@@ -1,0 +1,144 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma push_macro("atomic")
+#pragma push_macro("test_and_set")
+#pragma push_macro("clear")
+#pragma push_macro("store")
+#pragma push_macro("load")
+#pragma push_macro("exchange")
+#pragma push_macro("compare_exchange_weak_val")
+#pragma push_macro("compare_exchange_strong_val")
+#pragma push_macro("fetch_add")
+#pragma push_macro("fetch_sub")
+#pragma push_macro("fetch_and")
+#pragma push_macro("fetch_or")
+#pragma push_macro("fetch_xor")
+#pragma push_macro("init")
+#pragma push_macro("type")
+#pragma push_macro("local")
+#pragma push_macro("function")
+#undef atomic
+#undef test_and_set
+#undef clear
+#undef store
+#undef load
+#undef exchange
+#undef compare_exchange_weak_val
+#undef compare_exchange_strong_val
+#undef fetch_add
+#undef fetch_sub
+#undef fetch_and
+#undef fetch_or
+#undef fetch_xor
+#undef init
+#undef type
+#undef local
+#undef function
+
+local constexpr function atomic_flag_test_and_set(__obj) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->test_and_set();
+local constexpr function atomic_flag_test_and_set_explicit(__obj,__order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->test_and_set(__order);
+local constexpr function atomic_flag_clear(__obj) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->clear();
+local constexpr function atomic_flag_clear_explicit(__obj,__order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->clear(__order);
+
+local constexpr function atomic_store(__obj,__desr) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->store(__desr);
+local constexpr function atomic_store_explicit(__obj,__desr,order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->store(__desr,order);
+
+local constexpr function atomic_load(__obj) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->load();
+local constexpr function atomic_load_explicit(__obj,order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->load(order);
+
+local constexpr function atomic_exchange(__obj,__desr) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->exchange(__desr);
+local constexpr function atomic_exchange_explicit(__obj,__desr,order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->exchange(__desr,order);
+
+local constexpr function atomic_exchange_weak(__obj,__expected,__desired): __result {
+	local __old_val = (__builtin_object(0x0087)(type __obj).atomic *)(__obj)->
+		compare_exchange_weak_val(*__expected,__desired);
+	__result = __old_val == *__expected;
+	*__expected := __old_val;
+}
+#pragma warning(suppress: 679 679 679) /* suppress 3 times (__stack variable used in strong scope) */
+local constexpr function atomic_exchange_weak_explicit(__obj,__expected,__desired,__succ,__fail): __result {
+	__stack local __old_val = (__builtin_object(0x0087)(type __obj).atomic *)(__obj)->
+		compare_exchange_weak_val(*__expected,__desired,__succ,__fail);
+	__result = __old_val == *__expected;
+	*__expected := __old_val;
+}
+local constexpr function atomic_exchange_strong(__obj,__expected,__desired): __result {
+	__stack local __old_val = (__builtin_object(0x0087)(type __obj).atomic *)(__obj)->
+		compare_exchange_strong_val(*__expected,__desired);
+	__result = __old_val == *__expected;
+	*__expected := __old_val;
+}
+local constexpr function atomic_exchange_strong_explicit(__obj,__expected,__desired,__succ,__fail): __result {
+	__stack local __old_val = (__builtin_object(0x0087)(type __obj).atomic *)(__obj)->
+		compare_exchange_strong_val(*__expected,__desired,__succ,__fail);
+	__result = __old_val == *__expected;
+	*__expected := __old_val;
+}
+local constexpr function atomic_fetch_add(__obj,__arg) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_add(__arg);
+local constexpr function atomic_fetch_add_explicit(__obj,__arg,__order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_add(__arg,__order);
+local constexpr function atomic_fetch_sub(__obj,__arg) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_sub(__arg);
+local constexpr function atomic_fetch_sub_explicit(__obj,__arg,__order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_sub(__arg,__order);
+local constexpr function atomic_fetch_and(__obj,__arg) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_and(__arg);
+local constexpr function atomic_fetch_and_explicit(__obj,__arg,__order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_and(__arg,__order);
+local constexpr function atomic_fetch_or(__obj,__arg) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_or(__arg);
+local constexpr function atomic_fetch_or_explicit(__obj,__arg,__order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_or(__arg,__order);
+local constexpr function atomic_fetch_xor(__obj,__arg) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_xor(__arg);
+local constexpr function atomic_fetch_xor_explicit(__obj,__arg,__order) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->fetch_xor(__arg,__order);
+local constexpr function atomic_init(__obj,__desired) ->
+	(__builtin_object(0x0087)(type __obj).atomic *)(__obj)->init(__desired);
+
+#pragma pop_macro("function")
+#pragma pop_macro("local")
+#pragma pop_macro("type")
+#pragma pop_macro("init")
+#pragma pop_macro("fetch_xor")
+#pragma pop_macro("fetch_or")
+#pragma pop_macro("fetch_and")
+#pragma pop_macro("fetch_sub")
+#pragma pop_macro("fetch_add")
+#pragma pop_macro("compare_exchange_strong_val")
+#pragma pop_macro("compare_exchange_weak_val")
+#pragma pop_macro("exchange")
+#pragma pop_macro("load")
+#pragma pop_macro("store")
+#pragma pop_macro("clear")
+#pragma pop_macro("test_and_set")
+#pragma pop_macro("atomic")

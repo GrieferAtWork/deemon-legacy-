@@ -1,0 +1,107 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#ifndef __DEEMON_GUARD_GCODE___GC_DEFAULT_DEE
+#define __DEEMON_GUARD_GCODE___GC_DEFAULT_DEE 1
+
+#pragma warning(push,disable: 1)
+
+// I don't expect anyone to remember gcode, but
+// the files in this folder implement what little
+// of a standard library gcode actually had to offer.
+
+// Looking back, gcode isn't really something I'm too proud of,
+// but it was still a part of my learning process and when
+// compared to what deemon is today, I think I've learned quite
+// a lot since then.
+
+// So embracing that past and considering the fact that gcode
+// is kind of the spiritual ancestor to deemon, I decided to
+// include this kind-of backwards compatibility library.
+
+// Of course there are some things we can't replicate
+// (like the wheird way assignment worked). But we're
+// not trying to go back. This is just for fun!
+
+const SInt8 = __signed__ __int8;
+const SInt16 = __signed__ __int16;
+const SInt32 = __signed__ __int32;
+const SInt64 = __signed__ __int64;
+const UInt8 = __unsigned__ __int8;
+const UInt16 = __unsigned__ __int16;
+const UInt32 = __unsigned__ __int32;
+const UInt64 = __unsigned__ __int64;
+const Float = float;
+const Currency = float;
+const Real48 = float;
+const Double = double;
+const Real = double;
+const Extended = long double;
+
+#define __len__    __size__
+#define __name__   __FUNCTION__
+#define __print__  print
+
+#ifndef NULL
+#define NULL none
+#endif
+
+#ifndef begin
+#define begin {
+#endif
+
+#ifndef end
+#define end }
+#endif
+
+// Disable warnings for missing '(' after if statement
+// >> We don't "#define if if (", as to not break real deemon code.
+#pragma warning(disable: 164)
+
+#ifndef then
+#define then  )
+#endif
+
+#ifndef repeat
+#define repeat do
+#endif
+
+#ifndef until
+// Disable warnings for missing '(' and ')' in do ... while(expr)
+// This is required to get repeat...until working like it used to.
+#pragma warning(disable: 173 174)
+#define until while !
+#endif
+
+#define trcdiv    /
+#define truncdiv  /
+#define div       /
+#define truediv   /
+#define mod       %
+#define shl       <<
+#define shr       >>
+#define and       &
+#define or        |
+#define xor       ^
+
+#pragma warning(pop)
+
+#endif /* !__DEEMON_GUARD_GCODE___GC_DEFAULT_DEE */

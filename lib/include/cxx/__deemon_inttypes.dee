@@ -1,0 +1,164 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#if __SIZEOF_INT__ == 1
+#	define __PFX_8  ""
+#elif __SIZEOF_SHORT__ == 1
+#	define __PFX_8  "h"
+#elif __SIZEOF_LONG__ == 1
+#	define __PFX_8  "l"
+#else
+#	define __PFX_8  "I8"
+#endif
+
+#if __SIZEOF_INT__ == 2
+#	define __PFX_16  ""
+#elif __SIZEOF_SHORT__ == 2
+#	define __PFX_16  "h"
+#elif __SIZEOF_LONG__ == 2
+#	define __PFX_16  "l"
+#elif __SIZEOF_CHAR__ == 2
+#	define __PFX_16  "hh"
+#elif __SIZEOF_LLONG__ == 2
+#	define __PFX_16  "ll"
+#else
+#	define __PFX_16  "I16"
+#endif
+
+#if __SIZEOF_INT__ == 4
+#	define __PFX_32  ""
+#elif __SIZEOF_SHORT__ == 4
+#	define __PFX_32  "h"
+#elif __SIZEOF_LONG__ == 4
+#	define __PFX_32  "l"
+#elif __SIZEOF_CHAR__ == 4
+#	define __PFX_32  "hh"
+#elif __SIZEOF_LLONG__ == 4
+#	define __PFX_32  "ll"
+#else
+#	define __PFX_32  "I32"
+#endif
+
+#if __SIZEOF_INT__ == 8
+#	define __PFX_64  ""
+#elif __SIZEOF_SHORT__ == 8
+#	define __PFX_64  "h"
+#elif __SIZEOF_LONG__ == 8
+#	define __PFX_64  "l"
+#elif __SIZEOF_CHAR__ == 8
+#	define __PFX_64  "hh"
+#elif __SIZEOF_LLONG__ == 8
+#	define __PFX_64  "ll"
+#else
+#	define __PFX_64  "I64"
+#endif
+
+#define __PFX(sizeof) __CAT(__PFX_,__TPP_EVAL(sizeof*8))
+
+#define PRId8        __PFX_8 "d"
+#define PRId16       __PFX_16 "d"
+#define PRId32       __PFX_32 "d"
+#define PRId64       __PFX_64 "d"
+#define PRIdLEAST8   __PFX(__SIZEOF_INTLEAST8__)  "d"
+#define PRIdLEAST16  __PFX(__SIZEOF_INTLEAST16__) "d"
+#define PRIdLEAST32  __PFX(__SIZEOF_INTLEAST32__) "d"
+#define PRIdLEAST64  __PFX(__SIZEOF_INTLEAST64__) "d"
+#define PRIdFAST8    __PFX(__SIZEOF_INTFAST8__)  "d"
+#define PRIdFAST16   __PFX(__SIZEOF_INTFAST16__) "d"
+#define PRIdFAST32   __PFX(__SIZEOF_INTFAST32__) "d"
+#define PRIdFAST64   __PFX(__SIZEOF_INTFAST64__) "d"
+#define PRIdMAX      __PFX(__SIZEOF_INTMAX__) "d"
+#define PRIdPTR      __PFX(__SIZEOF_POINTER__) "d"
+
+#define PRIi8        __PFX_8 "i"
+#define PRIi16       __PFX_16 "i"
+#define PRIi32       __PFX_32 "i"
+#define PRIi64       __PFX_64 "i"
+#define PRIiLEAST8   __PFX(__SIZEOF_INTLEAST8__)  "i"
+#define PRIiLEAST16  __PFX(__SIZEOF_INTLEAST16__) "i"
+#define PRIiLEAST32  __PFX(__SIZEOF_INTLEAST32__) "i"
+#define PRIiLEAST64  __PFX(__SIZEOF_INTLEAST64__) "i"
+#define PRIiFAST8    __PFX(__SIZEOF_INTFAST8__)  "i"
+#define PRIiFAST16   __PFX(__SIZEOF_INTFAST16__) "i"
+#define PRIiFAST32   __PFX(__SIZEOF_INTFAST32__) "i"
+#define PRIiFAST64   __PFX(__SIZEOF_INTFAST64__) "i"
+#define PRIiMAX      __PFX(__SIZEOF_INTMAX__) "i"
+#define PRIiPTR      __PFX(__SIZEOF_POINTER__) "i"
+
+#define PRIo8        __PFX_8 "o"
+#define PRIo16       __PFX_16 "o"
+#define PRIo32       __PFX_32 "o"
+#define PRIo64       __PFX_64 "o"
+#define PRIoLEAST8   __PFX(__SIZEOF_INTLEAST8__)  "o"
+#define PRIoLEAST16  __PFX(__SIZEOF_INTLEAST16__) "o"
+#define PRIoLEAST32  __PFX(__SIZEOF_INTLEAST32__) "o"
+#define PRIoLEAST64  __PFX(__SIZEOF_INTLEAST64__) "o"
+#define PRIoFAST8    __PFX(__SIZEOF_INTFAST8__)  "o"
+#define PRIoFAST16   __PFX(__SIZEOF_INTFAST16__) "o"
+#define PRIoFAST32   __PFX(__SIZEOF_INTFAST32__) "o"
+#define PRIoFAST64   __PFX(__SIZEOF_INTFAST64__) "o"
+#define PRIoMAX      __PFX(__SIZEOF_INTMAX__) "o"
+#define PRIoPTR      __PFX(__SIZEOF_POINTER__) "o"
+
+#define PRIu8        __PFX_8 "u"
+#define PRIu16       __PFX_16 "u"
+#define PRIu32       __PFX_32 "u"
+#define PRIu64       __PFX_64 "u"
+#define PRIuLEAST8   __PFX(__SIZEOF_INTLEAST8__)  "u"
+#define PRIuLEAST16  __PFX(__SIZEOF_INTLEAST16__) "u"
+#define PRIuLEAST32  __PFX(__SIZEOF_INTLEAST32__) "u"
+#define PRIuLEAST64  __PFX(__SIZEOF_INTLEAST64__) "u"
+#define PRIuFAST8    __PFX(__SIZEOF_INTFAST8__)  "u"
+#define PRIuFAST16   __PFX(__SIZEOF_INTFAST16__) "u"
+#define PRIuFAST32   __PFX(__SIZEOF_INTFAST32__) "u"
+#define PRIuFAST64   __PFX(__SIZEOF_INTFAST64__) "u"
+#define PRIuMAX      __PFX(__SIZEOF_INTMAX__) "u"
+#define PRIuPTR      __PFX(__SIZEOF_POINTER__) "u"
+
+#define PRIx8        __PFX_8 "x"
+#define PRIx16       __PFX_16 "x"
+#define PRIx32       __PFX_32 "x"
+#define PRIx64       __PFX_64 "x"
+#define PRIxLEAST8   __PFX(__SIZEOF_INTLEAST8__)  "x"
+#define PRIxLEAST16  __PFX(__SIZEOF_INTLEAST16__) "x"
+#define PRIxLEAST32  __PFX(__SIZEOF_INTLEAST32__) "x"
+#define PRIxLEAST64  __PFX(__SIZEOF_INTLEAST64__) "x"
+#define PRIxFAST8    __PFX(__SIZEOF_INTFAST8__)  "x"
+#define PRIxFAST16   __PFX(__SIZEOF_INTFAST16__) "x"
+#define PRIxFAST32   __PFX(__SIZEOF_INTFAST32__) "x"
+#define PRIxFAST64   __PFX(__SIZEOF_INTFAST64__) "x"
+#define PRIxMAX      __PFX(__SIZEOF_INTMAX__) "x"
+#define PRIxPTR      __PFX(__SIZEOF_POINTER__) "x"
+
+#define PRIX8        __PFX_8 "X"
+#define PRIX16       __PFX_16 "X"
+#define PRIX32       __PFX_32 "X"
+#define PRIX64       __PFX_64 "X"
+#define PRIXLEAST8   __PFX(__SIZEOF_INTLEAST8__)  "X"
+#define PRIXLEAST16  __PFX(__SIZEOF_INTLEAST16__) "X"
+#define PRIXLEAST32  __PFX(__SIZEOF_INTLEAST32__) "X"
+#define PRIXLEAST64  __PFX(__SIZEOF_INTLEAST64__) "X"
+#define PRIXFAST8    __PFX(__SIZEOF_INTFAST8__)  "X"
+#define PRIXFAST16   __PFX(__SIZEOF_INTFAST16__) "X"
+#define PRIXFAST32   __PFX(__SIZEOF_INTFAST32__) "X"
+#define PRIXFAST64   __PFX(__SIZEOF_INTFAST64__) "X"
+#define PRIXMAX      __PFX(__SIZEOF_INTMAX__) "X"
+#define PRIXPTR      __PFX(__SIZEOF_POINTER__) "X"

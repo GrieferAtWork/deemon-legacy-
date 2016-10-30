@@ -1,0 +1,56 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// A few simple examples of generators
+#include <util>
+
+#if !__has_feature(__generators__)
+#	error "Generators are not supported by your distribution of deemon"
+#endif
+
+// To understand what a generator is, the following
+// two lines produce 100% the same code:
+gen = function { for (local x: util::range(5)) yield x*2; }();
+gen = for (local x: util::range(5)) x*2;
+print gen...; // 0 2 4 6 8
+
+print (for (x = 0; x < 10; x += 2) 2**x)...; // 1 4 16 64 256
+
+s = "foobar";
+print "-".join(for (local x: s) "!"+x+"!"); // !f!-!o!-!o!-!b!-!a!-!r!
+
+// Generator expression also work for while and do-while,
+// although considering that you can't define loop initializer
+// here, I only added these for completion's sake.
+// >> Proove me wrong, but the only thing you can do with
+//    these, that doesn't rely on 1-time evaluation, using
+//    an underlying variable, is a loop-once and an infinite loop.
+i = 13;
+print (while (i--) i)...;
+i = 37;
+print (do i*2 while (i--))...;
+
+
+
+
+
+

@@ -1,0 +1,119 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// In this tutorial I explain how modules work and what they are
+// If you know your c++, you can just skip this, knowing the following:
+//  >> 'namespace x'       --> 'module x'
+//  >> 'using x::y'        --> 'import x::y' / 'import x.y'
+//  >> 'using namespace x' --> 'import module x' / 'import x.*'
+
+
+module my_module {
+	module sub_module {
+
+		function module_function {
+			print "Hello world from sub_module!";
+		}
+
+	}
+}
+
+// Extending existing modules is very simple...
+// Any since 'module' expects keyword followed by
+// a statement, we can simply chain sub-modules like this:
+module my_module module sub_module {
+
+	function module_function2 {
+		print "Again: Hello world from sub_module!";
+	}
+
+}
+
+// -- Important --
+// Modules are compile-time only objects, meaning
+// you can't dynamically access their members at runtime
+
+
+my_module.sub_module.module_function();
+my_module::sub_module::module_function();
+my_module::sub_module::module_function2();
+
+{
+	// Simply importing a module directly
+	// has the same effect as importing all its elements...
+	import my_module;
+	sub_module.module_function();
+	sub_module.module_function2();
+}
+
+{
+	// ... Like this: This does the same as the above,
+	// but only because we can reference the module
+	// with a single token 'my_module'.
+	import my_module.*;
+	sub_module.module_function();
+	sub_module.module_function2();
+}
+
+{
+	// See: Even though we're importing another module,
+	//      we don't import all of its elements, but
+	//      simply alias it as a local const
+	// NOTE: To make it more clear, I included the const version of the import
+#if 1
+	import my_module.sub_module;
+#else
+	const sub_module = my_module.sub_module;
+#endif
+	sub_module.module_function();
+}
+
+{
+	// Explicitly importing a single element from a module
+	import my_module.sub_module.module_function;
+	module_function();
+}
+
+{
+	// And finally: Importing everything from a given module
+	import my_module.sub_module.*;
+	module_function();
+	module_function2();
+	// NOTE: These del statements won't delete the actual functions,
+	//       since they still exist in the module.
+	del module_function;
+	del module_function2;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

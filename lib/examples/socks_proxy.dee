@@ -1,0 +1,268 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+ 
+// Implementation of a Socks5 Proxy server
+// This one was done extremely hastily, so don't expect to learn too much from this
+
+#include <file>
+#include <fs>
+#include <time>
+#include <error>
+#include <thread>
+#include <net/endian>
+#include <net/socket>
+#include <crypt/base64>
+
+// Port that the server will run on
+const port = 5703;
+
+#define LOG_PROXY_CMD(client,cmd) \
+	print "[CLIENT][CMD]["+(client)+"]",repr((cmd))
+
+#define LOG_TO_FILE 0
+#define LOG_ALL_TRAFFIC 0
+
+#if LOG_TO_FILE
+const logs_folder = fs::path::join(fs::path::head(__FILE__),"socks5_logs");
+#endif
+
+const VER = "\x05";
+const METHOD = "\x00";
+
+const SUCCESS = "\x00";
+const SOCKFAIL = "\x01";
+const NETWORKFAIL = "\x02";
+const HOSTFAIL = "\x04";
+const REFUSED = "\x05";
+const TTLEXPIRED = "\x06";
+const UNSUPPORTCMD = "\x07";
+const ADDRTYPEUNSPPORT = "\x08";
+const UNASSIGNED = "\x09";
+
+struct client_socks5_request {
+	uint8_t ver;
+	uint8_t nmethods;
+	uint8_t methods;
+};
+struct client_socks5_response {
+	uint8_t ver;
+	uint8_t cmd;
+	uint8_t rsv;
+	uint8_t atyp;
+};
+struct ip_address {
+	uint32_t host;
+	uint16_t port;
+};
+
+#if LOG_TO_FILE
+try fs::mkdir(logs_folder);
+catch (...);
+#endif
+
+const function forward_data(log_func,source,dest,from_server) {
+	local source_file = source.file;
+	local dest_file = dest.file;
+	for (;;) {
+		local data = source_file.read();
+		if (!data) break;
+		if (from_server) data = data
+			.replace("Linux","Pingu")
+			.replace("linux","pingu");
+		dest_file.write(data);
+#if LOG_ALL_TRAFFIC
+		log_func(source,"->",dest,":",repr data);
+#endif
+		if (data.startswith("GET")) {
+#if 1
+			local page_suffix = data.splitlines(false)[0].lsstrip("GET ").partition(" ")[0];
+			local page = str dest.peeraddr+page_suffix;
+			print file.io.stderr: "-- Visiting:",page;
+#endif
+		}
+	}
+}
+const function start_forward_thread(log_func,source,dest,from_server) {
+	local result = thread(forward_data,log_func,source,dest,from_server);
+	result.start();
+	return result;
+}
+
+
+const class Socks5ProxyClient {
+	this(server,socket) {
+		this._server = server;
+		this._user_socket = socket;
+		this._host_socket = none;
+#if LOG_TO_FILE
+		local logfile_name = fs::path::join(
+			logs_folder,socket.strpeeraddr.replace(":","_")+".log");
+		this._logfile = file.io(logfile_name,"a");
+#endif
+		this._loglock = mutex();
+		this._threads = [thread(this._threadmain)];
+	}
+	~this() {
+		print "Destroying Client:",this;
+#if LOG_TO_FILE
+		this._logfile.close();
+#endif
+	}
+
+	start() -> this._server.add_connection(this);
+	stop() -> this._server.del_connection(this);
+
+	log(args...) {
+		this._loglock.acquire();
+		try {
+#if LOG_TO_FILE
+			print this._logfile|file.io.stdout: "["+time.now()+"]",args...;
+#else
+			print               file.io.stdout: "["+time.now()+"]",args...;
+#endif
+		} finally {
+			this._loglock.release();
+		}
+	}
+
+	operator str -> "Socks5ProxyClient("+
+		str this._user_socket+" -> "+
+		str this._host_socket+")";
+	operator repr -> "Socks5ProxyClient("+
+		repr this._user_socket+" -> "+
+		repr this._host_socket+")";
+
+	_threadmain() {
+		try {
+			try {
+				local userfile = this._user_socket.file;
+				local hostfile;
+				this.log("Entering configuration mode");
+				local req = userfile.reado(struct client_socks5_request);
+				this.log("Client request:",repr req);
+				userfile.write(VER+METHOD);
+				local res = userfile.reado(struct client_socks5_response);
+				this.log("Client response:",repr res);
+				local ip;
+				if (res.atyp != 0x01) throw "Unsupported address type"+res.atyp;
+				del req,res;
+				local ip = userfile.reado(struct ip_address);
+				local hostaddr = net.socket.sockaddr.inet_ntoa(net::ntoh32(ip.host),net::ntoh16(ip.port));
+				this.log("Leaving configuration mode");
+				this.log("Connecting with specified host address:",hostaddr,"...");
+				this._host_socket = net.socket.tcp(hostaddr);
+				this.log("Connected with specified host address:",hostaddr);
+				hostfile = this._host_socket.file;
+				userfile.write(
+					VER+SUCCESS+"\x00"+"\x01"+
+					string.from_data((char *)&ip,6));
+
+				// Forwarding mode
+				this._threads.append(start_forward_thread(this.log,this._user_socket,this._host_socket,false));
+				forward_data(this.log,this._host_socket,this._user_socket,true);
+
+			} catch (Error e) {
+				this.log("Error:",e);
+				throw;
+			}
+		} finally {
+			this.stop();
+		}
+	}
+};
+
+const class Socks5ProxyServer {
+	this(port) {
+		this._port = port;
+		this._socket = net.socket.tcp(port);
+		this._clients = [];
+		this._thread = thread(this._threadmain);
+	}
+
+	operator str -> "Socks5ProxyServer("+this._socket+")";
+
+	start() {
+		this._thread.start();
+	}
+	stop() {
+		this._thread.interrupt();
+		this._socket.close();
+		this._thread.join();
+		this._thread = none;
+		this._socket = none;
+		while (this._clients)
+			this._clients.back().stop();
+	}
+
+	add_connection(proxy_client) {
+		this._clients.append(proxy_client);
+		print "New connection:",proxy_client;
+		proxy_client._threads[0].start();
+	}
+	del_connection(proxy_client) {
+		if (this._clients.remove(proxy_client)) {
+			print "Closing connection:",proxy_client,"...";
+			for (x: proxy_client._threads) x.interrupt();
+			proxy_client._user_socket.close();
+			proxy_client._host_socket.close();
+			for (x: proxy_client._threads) x.join();
+			proxy_client._threads.clear();
+			proxy_client._threads = none;
+			proxy_client._server = none;
+			proxy_client._user_socket = none;
+			proxy_client._host_socket = none;
+			print "Closed connection:",proxy_client;
+		}
+	}
+
+	_threadmain() {
+		for (;;) {
+			Socks5ProxyClient(
+				this,
+				this._socket.accept()
+			).start();
+		}
+	}
+};
+
+
+
+local server = Socks5ProxyServer(port);
+server.start();
+print "Proxy server",server,"up & Running (Press [RETURN] to exit)";
+
+file.io.stdin.readline();
+server.stop();
+del server;
+
+
+
+
+
+
+
+
+
+
+
+
+

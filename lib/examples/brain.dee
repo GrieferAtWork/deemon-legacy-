@@ -1,0 +1,107 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#include <file>
+#include <sys>
+
+// A standard conforming brainfuck interpreter, written in deemon
+// >> Usage: 'deemon brain.dee <infile>'
+
+#define DEBUG_EXTENSIONS 1 // Adds functionality to '?'
+
+function brain_exec(code) {
+	const brain_min     = 0;
+	const brain_max     = 255;
+	local brain_ptr     = 0;
+	local brain_mem     = [brain_min];
+	local brain_ifstack = [];
+	local l = #code;
+	for (local i = 0; i < l; ++i) {
+parse:
+		local c = code[i];
+		switch (c) {
+			case '>':
+				if (++brain_ptr == #brain_mem)
+					brain_mem.append(brain_min);
+				break;
+			case '<':
+				if (!brain_ptr)
+					throw "Negative pointer";
+				--brain_ptr;
+				break;
+			case '+':
+				if (brain_mem[brain_ptr]++ == brain_max)
+					brain_mem[brain_ptr] := brain_min;
+				break;
+			case '-':
+				if (brain_mem[brain_ptr]-- == brain_min)
+					brain_mem[brain_ptr] := brain_max;
+				break;
+			case '.':
+				file.io.stdout.putc(brain_mem[brain_ptr]);
+				break;
+			case ',':
+				local _d = file.io.stdin.read(1);
+				brain_mem[brain_ptr] := _d ? _d.ord() : -1;
+				break;
+#if DEBUG_EXTENSIONS
+			case '?':
+				print "mem["+brain_ptr+"]:",brain_mem;
+				break;
+#endif
+			case '[':
+				if (brain_mem[brain_ptr])
+					brain_ifstack.append(copy i);
+				else for (local recursion = 1; i < l; ++i) {
+					switch (code[i]) {
+						case '[': ++recursion; break;
+						case ']': if (!--recursion) goto end_if; break;
+						default: break;
+					}
+				}
+end_if:;
+				break;
+			case ']':
+				if (!brain_ifstack)
+					throw "Missing if begin: '['";
+				if (brain_mem[brain_ptr]) {
+					i = brain_ifstack.back();
+					goto parse;
+				} else brain_ifstack.pop();
+				break;
+			default: break;
+		}
+	}
+}
+
+static if (__FILE__ == __BASE_FILE__) {
+	if (#sys.argv < 2) {
+		print "Usage:",sys.argv[0],"<infile>";
+	} else {
+		local data = file.io(sys.argv[1],"r").read();
+		brain_exec(data);
+	}
+}
+
+
+
+

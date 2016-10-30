@@ -1,0 +1,95 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#ifndef __DEEMON_GUARD_GCODE_FS_GC
+#define __DEEMON_GUARD_GCODE_FS_GC 1
+
+#include <gcode/__gc_default.dee>
+#include <__builtin_fs.dee>
+#include <file>
+
+module fs {
+
+	local const absToRel = ::__builtin_fs_path_rel;
+	local const relToAbs = ::__builtin_fs_path_abs;
+	local const function isRel(p) -> !::__builtin_fs_isabs(p);
+	local const mkSymLnk = ::__builtin_fs_link;
+	local const symLnkTarget = ::__builtin_fs_readlink;
+	local const exists = ::__builtin_fs_exists;
+	// This is just guessing; I can't be bothered to actually look into this
+	local const expand = ::__builtin_fs_path_abs;
+	local const expandUNC = ::__builtin_fs_path_abs;
+	local const extractFileName = ::__builtin_fs_path_tail;
+	local const extractFileExt = ::__builtin_fs_path_ext;
+	local const extractFilePath = ::__builtin_fs_path_head;
+	local const function extractFileDir(__p) -> ::__builtin_fs_path_exctrail(::__builtin_fs_path_head(__p));
+	local const extractFileDrive = ::__builtin_fs_path_drive;
+	local const function extractShortPathName(__p) -> __p; // I can't be bothered...
+	local const function fileCreate(__p,...) -> ::file.io(__p,"w+");
+	local const fileDelete = ::__builtin_fs_rmfile;
+	local const function fileRead(__fp,__args...) {
+		if (#__args == 1) {
+			__args[0] := __fp.reado(type __args[0]);
+		} else {
+			__fp.read(__args...);
+		}
+	}
+	local const function fileWrite(__fp,__args...) {
+		if (#__args == 1) {
+			__fp.writeo(__args[0]);
+		} else {
+			__fp.write(__args...);
+		}
+	}
+	local const function fileSeek(__fp,__off,__origin) {
+		__fp.seek(__off,__origin);
+	}
+	local const function fileOpen(__p,...) -> ::file.io(__p,"r+");
+	local const function fileClose(__fp) -> __fp.close();
+	local const fileExists = ::__builtin_fs_isfile;
+	local const function diskFree(__p) -> 0; // Can't be bothered!
+	local const function diskSize(__p) -> 0; // Can't be bothered!
+
+	local const seekFromBeginning = ::file.SEEK_SET;
+	local const seekFromCurrent = ::file.SEEK_CUR;
+	local const seekFromEnd = ::file.SEEK_END;
+
+	local const dirCreate = ::__builtin_fs_mkdir;
+	local const dirExists = ::__builtin_fs_isdir;
+	local const dirDelete = ::__builtin_fs_rmdir;
+	local const function dirCreateStruc(__p) {
+		// This is actually something deemon doesn't have a builtin for...
+		local __total_path = "";
+		for (__part: __builtin_fs_path_abs(__p).replace("\\","/").split("/")) {
+			__total_path = __total_path
+				? __builtin_fs_path_join(__total_path,__part)
+				: __part;
+			if (!__builtin_fs_isdir(__total_path))
+				__builtin_fs_mkdir(__total_path);
+		}
+	}
+
+	local const getCurrentDir = ::__builtin_fs_getcwd;
+	local const setCurrentDir = ::__builtin_fs_chdir;
+
+}
+
+#endif /* !__DEEMON_GUARD_GCODE_FS_GC */

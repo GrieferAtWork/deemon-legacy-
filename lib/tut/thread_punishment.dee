@@ -1,0 +1,76 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// A test script that punishes the thread and gc api, to make sure
+// that everything works threadsafe and correctly
+// NOTE: Output of this script may vary, which is intended.
+
+#include <thread>
+#include <gc>
+
+// NOTE: If you remember this tut from v100, you'll notice the
+//       abscence of the 'dc' lock... That's because dicts are now threadsafe!
+// HINTS:
+//   - If all you read is 'none', get a slower pc
+//   - If all you read are dict reprs, get a faster pc
+
+
+gc_collector = thread("gc.collect",function {
+	print "AAA\n"*100;
+	// Background thread, that constantly collects garbage
+	while (1) {
+		// Manually check for interrupt, because 'mutex.acquire'
+		// will only check if the acquire would block (which it
+		// doesn't once the main thread starts waiting for us)
+		thread.check_interrupt();
+		local collected = gc::collect();
+		if (collected) print "GC: Collected",collected;
+		//thread.sleep(1);
+	}
+});
+
+gc_collector.start();
+
+// Function that returns a weak reference to a dangling dict
+// >> The dict can be destroyed by the gc thread at any time
+function get_weak_self_dict() {
+	d = dict();
+	d["foo"] = "bar";
+	d["bar"] = "foo";
+	d["this"] = d; // Dict contains itself (requires gc to destroy)
+	return weak(d);
+}
+
+w = get_weak_self_dict();
+for (i = 0; i < 20000; ++i) {
+	// Constantly lock the weakref to the dangling dict
+	// Once the gc thread has destroyed the dict, this fails.
+	// The painful part is making this not crash the runtime, which it doesn't.
+	local x = w.try_lock();
+	print repr(x);
+}
+
+// Interrupt + join the gc thread
+print "interrupt:",gc_collector.interrupt();
+gc_collector.join();
+
+

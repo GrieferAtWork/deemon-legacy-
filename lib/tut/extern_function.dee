@@ -1,0 +1,83 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// Simple application, where we local an external
+// windows dll to display a messagebox.
+// Note that external functions work on other platforms as well,
+// but I can't be bothered to lookup similar functions for everything...
+// Hints:
+//   - If you're coming from c/c++, you can remember the following rules:
+//     - void --> type(none)
+//     - NULL/nullptr --> none
+//     - 'const' and 'volatile' in type declarations are ignored
+//     - Attributes are supported in all existing spellings
+//       and are accepted all across the extern declaration.
+//       But be careful with '[[...]]', as it can be parsed as
+//       a __getitem__ operator with a list as argument.
+//       >> _declspec(attr)
+//       >> __declspec(attr)
+//       >> __attribute((attr))
+//       >> __attribute__((attr))
+//       >> [[attr]]
+//     - Some attributes can be written without the surrounding declaration.
+//       These include all calling conventions, but require at least one
+//       preceiding underscore '_'.
+//     - Leading and ending underscores are stripped away inside of attribute declarations,
+//       allowing you to pratically guaranty that they will not be replaced by macros unless you want them to.
+//     - Supported attributes:
+//       - calling conventions:
+//         - Must be prefixed with at least 1 underscore outside of attribute decl
+//         - can be prefixed or suffixed with 2 optional underscores.
+//         Example: All the following do the same:
+//           - _cdecl / - __cdecl
+//           - attribute((cdecl))
+//           - __attribute((cdecl))
+//           - __attribute__((cdecl))
+//           - __declspec(cdecl)
+//           - [[cdecl]]
+//         >> syssv
+//         >> stdcall
+//         >> thiscall
+//         >> fastcall
+//         >> cdecl
+//         >> pascal
+//         >> register
+//         >> win64
+//         >> unix64
+//       - Others:
+//         - name(<str>)
+//           - Overrides the implicit name shared with the variable
+//             used to store the function once it's been loaded.
+//     - To check if an attribute is available, simply use
+//       __has_attribute, __has_cpp_attribute, __has_declspec_attribute
+//       
+
+#ifdef __WINDOWS__
+extern [[__stdcall__]] "User32.dll": int MessageBoxA(
+	type(none) *hWnd, char *lpText, char *lpCaption, unsigned int uType);
+
+MessageBoxA(none,"Messagebox Text!","This is the caption!",0);
+#else
+print "Sorry, but there is no standard way of simply showing a messagebox on linux...";
+#endif
+
+

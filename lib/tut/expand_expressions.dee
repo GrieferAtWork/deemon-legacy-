@@ -1,0 +1,113 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// A few examples that explain how expand expressions are handled
+// The general rule for expand expression goes like this:
+//  >> Whatever if is you're expanding, once expanded it has
+//     the effect of all its elements before manually wrtten in a comma-separeted list
+
+// These two do the same thing
+print ["foobar"...];
+print ["f","o","o","b","a","r"];
+
+// There is only one exception to this rule and it effects the assign '=' operator
+//  >> When used on the right-hand side of an assign, the sequence is expanded
+//     into values based on the about of variables left.
+//
+// NOTE: When using ... on the left-hand side of an assign, it will always
+//       expand to a single element (as is the default behaviour)
+
+
+// none can always be expanded to anything, re-yielding itself
+// >> After this line, a,b,c and d are all initialized to 'none'
+a,b,c,d = none...;
+
+// Guess what this line does
+// HINT: These is no expand expression in this one
+a,b,c,d = 10,20,30,40;
+
+// If you thought python-style, you were wrong
+print a,b,c,d;
+
+// This is what you were thinking about:
+a,b,c,d = (10,20,30,40)...;
+
+print a,b,c,d;
+// It didn't work before, because we were not expanding the sequence on the right side
+// But now that we are, all the variables on the left side get assigned.
+
+
+// when you write:
+// >> 'a,b,c,d = 10,20,30,40;'
+// The compiler sees this:
+// >> '(a,b,c,(d = 10),20,30,40);'
+
+// But when you write:
+// >> 'a,b,c,d = (10,20,30,40)...;'
+// The compiler sees this:
+// >> '((a,b,c,d) = (10,20,30,40)...);'
+
+// Be careful with other operators.
+// Because this doesn't work:
+// >> 'a,b,c,d += (1,1,1,1)...;'
+
+
+// You can use 'none' in the list of arguments that
+// gets expanded, to ignore that specific value
+function get_args() -> pack 10,20,30;
+a,none,b = get_args()...;
+print a,b;
+
+
+
+
+
+
+
+
+// Some notable usage cases
+#include <pipe>
+
+// Directly expand the tuple returned and store it's values
+r,w = pipe.new()...;
+print r,w;
+del r;
+del w;
+
+
+function foo(a,b,c) {
+	print "foo("+a+","+b+","+c+")";
+}
+
+args = (10,20,30);
+
+// Call a function with an expanded argument list
+// NOTE: Technically, this is the fastest way of calling a function,
+//       since the compiler detects that no argument tuple must be created.
+foo(args...);
+
+
+
+
+
+
+

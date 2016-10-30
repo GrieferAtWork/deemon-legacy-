@@ -1,0 +1,99 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+const __builtin_sin = __builtin_object(0x0119);
+const __builtin_cos = __builtin_object(0x011A);
+const __builtin_tan = __builtin_object(0x011B);
+const __builtin_sincos = __builtin_object(0x011C);
+const __builtin_asin = __builtin_object(0x011D);
+const __builtin_acos = __builtin_object(0x011E);
+const __builtin_atan = __builtin_object(0x011F);
+const __builtin_atan2 = __builtin_object(0x0120);
+const __builtin_asincos = __builtin_object(0x0121);
+const __builtin_sinh = __builtin_object(0x0122);
+const __builtin_cosh = __builtin_object(0x0123);
+const __builtin_tanh = __builtin_object(0x0124);
+const __builtin_sincosh = __builtin_object(0x0125);
+const __builtin_asinh = __builtin_object(0x0126);
+const __builtin_acosh = __builtin_object(0x0127);
+const __builtin_atanh = __builtin_object(0x0128);
+const __builtin_asincosh = __builtin_object(0x0129);
+const __builtin_exp = __builtin_object(0x012A);
+const __builtin_frexp = __builtin_object(0x012B);
+const __builtin_log = __builtin_object(0x012C);
+const __builtin_log10 = __builtin_object(0x012D);
+const __builtin_modf = __builtin_object(0x012E);
+const __builtin_exp2 = __builtin_object(0x012F);
+const __builtin_expm1 = __builtin_object(0x0130);
+const __builtin_ilogb = __builtin_object(0x0131);
+const __builtin_log1p = __builtin_object(0x0132);
+const __builtin_log2 = __builtin_object(0x0133);
+const __builtin_logb = __builtin_object(0x0134);
+const __builtin_scalbn = __builtin_object(0x0135);
+const __builtin_scalbi32n = __builtin_object(0x0136);
+const __builtin_pow = __builtin_object(0x0055);
+const __builtin_sqrt = __builtin_object(0x0137);
+const __builtin_cbrt = __builtin_object(0x0138);
+const __builtin_hypot = __builtin_object(0x0139);
+const __builtin_erf = __builtin_object(0x013A);
+const __builtin_tgamma = __builtin_object(0x013B);
+const __builtin_lgamma = __builtin_object(0x013C);
+const __builtin_ceilf = __builtin_object(0x013D);
+const __builtin_floorf = __builtin_object(0x013E);
+const __builtin_truncf = __builtin_object(0x013F);
+const __builtin_roundf = __builtin_object(0x0140);
+const __builtin_i32round = __builtin_object(0x0141);
+const __builtin_i64round = __builtin_object(0x0142);
+const __builtin_fmod = __builtin_object(0x0143);
+const __builtin_rint = __builtin_object(0x0144);
+const __builtin_i32rint = __builtin_object(0x0145);
+const __builtin_i64rint = __builtin_object(0x0146);
+const __builtin_nearbyint = __builtin_object(0x0147);
+const __builtin_remainder = __builtin_object(0x0148);
+const __builtin_remquo = __builtin_object(0x0149);
+const __builtin_copysign = __builtin_object(0x014A);
+const __builtin_nextafter = __builtin_object(0x014B);
+const __builtin_nexttoward = __builtin_object(0x014C);
+const __builtin_fdim = __builtin_object(0x014D);
+const __builtin_isfinite = __builtin_object(0x014E);
+const __builtin_isinf = __builtin_object(0x014F);
+const __builtin_isnan = __builtin_object(0x0150);
+const __builtin_isnormal = __builtin_object(0x0151);
+const __builtin_signbit = __builtin_object(0x0152);
+const __builtin_isgreater = __builtin_object(0x0153);
+const __builtin_isgreaterequal = __builtin_object(0x0154);
+const __builtin_isless = __builtin_object(0x0155);
+const __builtin_islessequal = __builtin_object(0x0156);
+const __builtin_islessgreater = __builtin_object(0x0157);
+const __builtin_isunordered = __builtin_object(0x0158);
+
+__if_not_exists(__builtin_min) {
+	const __builtin_min = __builtin_object(0x0102);
+	const __builtin_max = __builtin_object(0x0103);
+	const __builtin_abs = __builtin_object(0x010A);
+	const __builtin_sqr = __builtin_object(0x0108);
+	const __builtin_ceil = __builtin_object(0x010B);
+	const __builtin_floor = __builtin_object(0x010C);
+	const __builtin_round = __builtin_object(0x010D);
+}
+

@@ -1,0 +1,106 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <net/socket>
+#include <net/proxy>
+
+#if __API_VERSION__ < 101
+#	error "API Version too old for this header"
+#endif
+
+module net::proxy {
+
+	//////////////////////////////////////////////////////////////////////////
+	// function socks5_connect(socket sock, string dest) -> (string proxysockname, string proxypeername)
+	// - Forwards a connection to a socks proxy, to connect with 'dest'
+	// >> #include <file>
+	// >> #include <net/socket>
+	// >> #include <net/proxy>
+	// >> 
+	// >> // Connect a socket to a local proxy on port '9050'
+	// >> local sock = net::socket.tcp("127.0.0.1:9050");
+	// >> 
+	// >> // Establish a proxy connection with google's HTTP port
+	// >> net::proxy::socks5_connect(sock,"google.com:80");
+	// >> 
+	// >> // Send a GET request through the proxy
+	// >> sock.file.write("GET / HTTP/1.0\r\n\r\n");
+	// >> 
+	// >> // Dump everything we've received
+	// >> for (x: sock.file) file.io.stdout.write(x);
+	// >> 
+	const function socks5_connect(__sock,__dest) {
+		// TODO: Support for password proxy
+		local const _generalerrors = (
+			"success",
+			"invalid data",
+			"not connected",
+			"not available",
+			"bad proxy type",
+			"bad input");
+		local const _socks5errors = (
+			"succeeded",
+			"general SOCKS server failure",
+			"connection not allowed by ruleset",
+			"Network unreachable",
+			"Host unreachable",
+			"Connection refused",
+			"TTL expired",
+			"Command not supported",
+			"Address type not supported",
+			"Unknown error");
+		local __sf = __sock.file;
+		__sf.write("\x05\x01\x00");
+		local __chosenauth = __sf.readall(2);
+		if (__chosenauth[0] != "\x05") throw GeneralProxyError(_generalerrors[1]);
+		if (__chosenauth[1] != "\x00") throw "Socks requests passwords... (not implemented)";
+		// Now we can request the actual connection
+		local __req = "\x05\x01\x00";
+		local __destaddr,__destport = socket.resolve(__dest)...;
+		__req += "\x01";
+		__req += string.from_data((char *)&__destaddr,4);
+		__req += string.from_data((char *)&__destport,2);
+		print "Connecting proxy:",socket.inet_ntoa(__destaddr,__destport);
+		__sf.write(__req);
+		
+		local boundaddr;
+		local resp = __sf.readall(4);
+		if (resp[0] != "\x05") {
+			throw GeneralProxyError(_generalerrors[1]);
+		} else if (resp[1] != "\x00") {
+			// Connection failed
+			__stack local errid = (uint8_t)resp[1].ord();
+			throw Socks5Error(_socks5errors[errid <= 8 ? errid : 9]);
+		} else if (resp[3] == "\x01") {
+			boundaddr = __sf.readall(4);
+		} else if (resp[3] == "\x03") {
+			resp += __sf.readall(1);
+			boundaddr = __sf.readall(resp[4]);
+		} else {
+			throw GeneralProxyError(_generalerrors[1]);
+		}
+		local boundport = *(uint16_t *)((char *)__sf.readall(2));
+		local proxysockname = socket.inet_ntoa(*(uint32_t *)(char *)boundaddr,boundport);
+		local proxypeername = socket.inet_ntoa(__destaddr,__destport);
+		return pack proxysockname,proxypeername;
+	}
+
+}

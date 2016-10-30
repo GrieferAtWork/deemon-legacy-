@@ -1,0 +1,106 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+//
+// This file details a shortcoming in the way that class destructors work
+// Note, that this is nothing but a close-to-rare situation
+// in which class-instance attributes seemingly disappear
+// >> If you wonder why this happens, or want to know what to look
+//    out for, read the comment in the destructor implementation
+//
+// If you're wondering how python solves this problem...
+// Well. --  IT DOENS'T!
+// It simply doesn't call your beautiful destructor. :(
+// s.a.: './destructor_conundrum.py'
+// s.a.: http://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python
+// >> ... Circular references which are garbage are detected when the option cycle
+// >> detector is enabled (it’s on by default), but can only be cleaned up if there
+// >> are no Python-level __del__() methods involved. ...
+
+#include <gc>
+
+class my_class {
+
+	my_class() {
+		this.prev = none;
+		this.next = none;
+	}
+	~my_class() {
+		print "Destroying:",this;
+		print "	>> prev:",this.prev;
+		print "	>> next:",this.next;
+		
+		// this is where the problem lies
+		// NOTE: The first destructor call will succeed,
+		//       but all the other will correctly
+		//       claim an Error.AttributeError
+		print "	>> prev.prev:",this.prev.prev;
+		print "	>> prev.next:",this.prev.next;
+		print "	>> next.prev:",this.next.prev;
+		print "	>> next.next:",this.next.next;
+		
+		// Implicitly executed at the end of the
+		// destructor, all member variables are delete
+		// And the action of doing so is what causes
+		// the attribute errors to occur once the
+		// destruction of another instance of 'my_class'
+		// tries to access those variables:
+		// >> del this.prev;
+		// >> del this.next;
+		// NOTE: Obviously all members are cleared and not
+		//       only the ones which those two names, but
+		//       there is simply no way of expression
+		//       an operation like that in usercode atm.
+	}
+
+};
+
+print "Constructing";
+a = my_class();
+b = my_class();
+c = my_class();
+
+a.next = b;
+b.prev = a;
+b.next = c;
+c.prev = b;
+
+del a,b,c;
+gc.collect();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ... I hope I won't regret this rant against python.
+//     So please don't take it too seriously ...

@@ -1,0 +1,374 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// Implementation of a sort-of remote TTY
+// >> This obviously doesn't even come close to what SSH is,
+//    following cringeworthily bad safety guidelines and not simulating a real tty.
+//    But it is implemented in ~1h using pure deemon, even features
+//    the basis of password-based sessions, as well as
+//    user-to-user chatting and stopping the server.
+// >> Start a server with 'deemon remote_tty.dee server [port]'
+// >> Start a client with 'deemon remote_tty.dee client <address> [port]'
+
+#include <gc>
+#include <fs>
+#include <sys>
+#include <file>
+#include <process>
+#include <thread>
+#include <pipe>
+#include <error>
+#include <time>
+#include <net/socket>
+
+// Default port for server/client
+const port = 5731;
+
+// Enable for some nice, hard-coded accouts (yes: sarcasm)
+// >> This dict controls which usernames/passwords are allowed during logins
+// >> The item is the password which you can set to 'none' to allow login w/o password
+#if 1
+const accounts = dict {
+	"root": "secret"
+};
+#endif
+
+
+function run_cmd_output(cmd...) {
+	local proc = process(cmd...);
+	local r,w = pipe.new()...;
+	proc.stdout = w;
+	proc.stderr = w;
+	proc.start();
+	w.close();
+	yield r...; // Return output line-wise
+	proc.join();
+}
+
+const class dc_error: Error {};
+
+// Returns the prefix send to a client's command line
+function status() -> fs::user()+"@"+fs::machine()+":"+fs::getcwd()+"> ";
+function start_server(port) {
+	local connections = [];
+	// Tries to send a message to all connected clients
+	function wall(msg) {
+		for (local con: connections) {
+			try con._socket.file.write(msg);
+			catch (...);
+		}
+	}
+	class connection {
+		this(socket) {
+			this._socket = socket;
+			this._thread = thread(
+				"recv("+this._socket+")",
+				this.thread_main);
+			this.cwd_stack = [];
+			this._login = none;
+			this._tm_login = time.now();
+			this._tm_idle = time.now();
+		}
+		~this() {
+			print "Destroyed connection:",this;
+		}
+		start() {
+			this._thread.start();
+		}
+		stop() {
+			if (connections.remove(this)) {
+				wall("[-] "+repr this._login+" ("+str this._socket+")\n");
+				print "Closing connection:",this;
+				local is_self = this._thread == thread.self();
+				if (!is_self) this._thread.interrupt();
+				this._socket.close();
+				if (!is_self) this._thread.join();
+				print "Closed connection:",this;
+				// Do some cleanup to that the connection can be destroyed.
+				// >> If we don't do this, it would continue to linger until
+				//    deemon would shut down, or a gc-cycle would be invoked
+				//    LOOP: this --> this._thread --> this._thread.ob_callback_func --> this
+				//                ^--- break it here
+				this._thread = none;
+				this._socket = none;
+				
+				// Not really necessary, but helpful to make sure the
+				// connection isn't kept alive by a dead object.
+				gc.collect();
+			}
+		}
+		operator str {
+			if (this._login is none) {
+				return "before_login("+this._socket+")";
+			}
+			return this._login;
+		}
+		operator repr {
+			return str this+"@"+str this._socket+
+				"\tLOGIN("+this._tm_login+" / "+(time.now()-this._tm_login)+")"
+				"\tIDLE("+this._tm_idle+" / "+(time.now()-this._tm_idle)+")"
+			;
+		}
+
+		mychdir(cwd) {
+			if (cwd == "-") {
+				fs::chdir(this.cwd_stack.pop_back());
+			} else {
+				this.cwd_stack.append(fs::getcwd());
+				fs::chdir(cwd);
+			}
+		}
+
+		// Execute a command related to the other clients or the server
+		// >> This function is called if a given client command starts with ':'
+		remote_tty_config(cmd) {
+			print "TTY:",this._socket,":",repr cmd;
+			local sockfile = this._socket.file;
+			local handlers = dict {};
+			handlers["exit"] = "logout";
+			handlers["logout"] = function() { throw dc_error("User logged out"); };
+			handlers["users"] = "w";
+			handlers["w"] = function() {
+				local cons = copy connections;
+				for (x: cons) print sockfile: repr x;
+				del cons;
+			};
+			handlers["who"] = function() {
+				local cons = copy connections;
+				for (x: cons) print sockfile: str x;
+				del cons;
+			};
+			handlers["wall"] = function(...) {
+				wall("\nMessage from:"+this+"\n>> "+(" ".join(...))+"\n\n");
+			};
+			handlers["kick"] = "dc";
+			handlers["disconnect"] = "dc";
+			handlers["dc"] = function(pattern) {
+				for (x: connections) {
+					if (x != this && (str x).wmatch(pattern)) {
+						print sockfile: "Disconnected:",repr x;
+						x.stop();
+					}
+				}
+			};
+			handlers["stop"] = function() { sys.exit(0); };
+			handlers["restart"] = function() {
+				local p = process(" ".join(sys.argv));
+				p.start();
+				p.detach();
+				del p;
+				sys.exit(0);
+			};
+			handlers["help"] = function() {
+				print sockfile: ">> Known commands >>";
+				for (entry: handlers) {
+					local key,item = entry...;
+					print sockfile: ">>",repr key,"=",repr item;
+				}
+			};
+			try {
+				cmd = list(for (x: cmd.split(" ")) if (x) x);
+				local fun;
+				try {
+					// Search for the handler function that should be used
+					fun = cmd[0];
+					while (fun is string)
+						fun = handlers[fun];
+				} catch (Error.ValueError) {
+					print sockfile: "Unknown TYY command:",repr cmd[0];
+					print sockfile: "Type ':help' for a list of commands";
+					return;
+				}
+				// Execute the function with a basic argv-style split of the given commandline
+				fun(cmd[1:]...);
+			} finally {
+				// Clear the handlers manually, so they don't cause the following GC cycle:
+				// handlers -> handlers["cleanup"] -> handlers
+				// >> This cycle would otherwise keep the connection
+				//    alive until the next call to gc.collect().
+				handlers.clear();
+			}
+		}
+
+		// Main function for the session thread of a client
+		thread_main() {
+			try {
+				try {
+					local sockfile = this._socket.file;
+					print "Now listening on:",this._socket;
+					for (;;) {
+						while (this._login is none) {
+							sockfile.write("Login as:");
+							local login_name = sockfile.readline().strip();
+							__if_exists(accounts) {
+								local req_passwd;
+								try req_passwd = accounts[login_name];
+								catch (Error.ValueError) {
+									print sockfile: "Invalid user:",repr login_name;
+									continue;
+								}
+								if (req_passwd !is none) {
+									sockfile.write("Password:");
+									local user_password = sockfile.readline().strip();
+									if (user_password != req_passwd) {
+										print sockfile: "Invalid password";
+										continue;
+									}
+								}
+							}
+							print "User logged in:",repr login_name,"from",repr this._socket;
+							wall("[+] "+repr login_name+" ("+str this._socket+")\n");
+							this._login = login_name;
+						}
+						sockfile.write(this._login+"/"+status());
+						l = sockfile.readline().strip();
+						this._tm_idle = time.now();
+						if (this._login !is none) try {
+							if (l.startswith(":")) {
+								l = l[1:];
+								if (!l) {
+									while (1) {
+										sockfile.write(">> Remote TTY config >> :");
+										l = sockfile.readline().strip();
+										this._tm_idle = time.now();
+										if (!l) break;
+										this.remote_tty_config(l);
+									}
+								} else {
+									this.remote_tty_config(l);
+								}
+							} else {
+								print "CMD:",this._socket,":",repr l;
+								if (l == "cd") {
+									this.mychdir("~");
+								} else if (l.startswith("cd ")) {
+									local cd_dir = l[#"cd ":];
+									if (!cd_dir) cd_dir = "~";
+									this.mychdir(cd_dir);
+								} else if (l) {
+									for (o: run_cmd_output(l))
+										sockfile.write(o);
+								}
+							}
+						} catch (Signal) {
+							throw;
+						} catch (dc_error) {
+							return;
+						} catch (e...) {
+							print "ERROR:",repr e;
+							print sockfile: repr e;
+						}
+					}
+				} catch (Error.NetError e) {
+					print "NETERROR:",e;
+					throw;
+				}
+			} finally {
+				this.stop();
+			}
+		}
+	};
+	local server_sock = net.socket.tcp(port);
+	print "Remote TTY server up & running:",server_sock;
+	local accept_thread = thread([] {
+		for (;;) {
+			client_sock = server_sock.accept();
+			print "New connection:",client_sock;
+			local newcon = connection(client_sock);
+			connections.append(newcon);
+			newcon.start();
+			del newcon;
+		}
+	});
+	accept_thread.start();
+	
+	print "Press [RETURN] to stop...";
+	file.io.stdin.readline();
+	
+	accept_thread.interrupt();
+	server_sock.close();
+	while (connections) connections.back().stop();
+	accept_thread.join();
+}
+
+
+
+function start_client(address) {
+	print "Connecting:",address;
+	local con = net.socket.tcp(address);
+	print "Connected:",con;
+	local confile = con.file;
+	local reader = thread([]{
+		for (;;) {
+			file.io.stdout.putc(confile.getc());
+		}
+	});
+	reader.start();
+	try {
+		for (;;) {
+			cmd = file.io.stdin.readline();
+			confile.write(cmd);
+		}
+	} catch (Error.NetError e) {
+		print "Disconnected:",e;
+		reader.interrupt();
+		con.close();
+		reader.join();
+	}
+}
+
+
+static if (__FILE__ == __BASE_FILE__) {
+	args = sys.argv[1:];
+	while (args.front().startswith("-")) {
+		arg = args.pop_front();
+		print "Unknown argument:",arg;
+	}
+	mode = args.pop_front();
+	if (mode == "server") {
+		local port = args ? (int)args[0] : ::port;
+#ifndef __WINDOWS__
+		// Make sure you don't accidentally run this as root
+		// HINT: You may, or may not want to get rid of this...
+		if (fs::user().strip().lower() == "root") {
+			print "+---------------------------------------------------+";
+			print "| WARNING: You shouldn't run 'remote_tty' as root.  |";
+			print "|          Doing so grants all clients root rights. |";
+			print "+---------------------------------------------------+";
+			print "| Press [RETURN] to continue of [CTRL+C] to abort   |";
+			print "+---------------------------------------------------+";
+			file.io.stdin.readline();
+		}
+#endif
+		start_server(port);
+	} else if (mode == "client") {
+		ip = args ? args.pop_front() : "127.0.0.1";
+		if (":" !in ip) ip += ":"+port;
+		start_client(ip);
+	} else {
+		print "Unknown mode:",mode;
+	}
+}
+
+
+
+

@@ -1,0 +1,109 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+const __builtin_fs_getcwd = __builtin_object(0x009A);
+const __builtin_fs_chdir = __builtin_object(0x009B);
+const __builtin_fs_wgetcwd = __builtin_object(0x0199);
+const __builtin_fs_gethome = __builtin_object(0x009C);
+const __builtin_fs_wgethome = __builtin_object(0x019B);
+const __builtin_fs_gettmp = __builtin_object(0x0164);
+const __builtin_fs_wgettmp = __builtin_object(0x019A);
+const __builtin_fs_gettmpname = __builtin_object(0x0168);
+const __builtin_fs_wgettmpname = __builtin_object(0x01A3);
+const __builtin_fs_listenv = __builtin_object(0x009D);
+const __builtin_fs_wlistenv = __builtin_object(0x019C);
+const __builtin_fs_getenv = __builtin_object(0x009E);
+const __builtin_fs_delenv = __builtin_object(0x00A0);
+const __builtin_fs_setenv = __builtin_object(0x00A1);
+const __builtin_fs_path_head = __builtin_object(0x00A2);
+const __builtin_fs_path_tail = __builtin_object(0x00A3);
+const __builtin_fs_path_file = __builtin_object(0x00A4);
+const __builtin_fs_path_ext = __builtin_object(0x00A5);
+const __builtin_fs_path_drive = __builtin_object(0x00A6);
+const __builtin_fs_path_inctrail = __builtin_object(0x00A7);
+const __builtin_fs_path_exctrail = __builtin_object(0x00A8);
+const __builtin_fs_path_abs = __builtin_object(0x00A9);
+const __builtin_fs_path_rel = __builtin_object(0x00AA);
+const __builtin_fs_path_join = __builtin_object(0x00AB);
+const __builtin_fs_path_expanduser = __builtin_object(0x00AC);
+const __builtin_fs_path_expandvars = __builtin_object(0x00AD);
+const __builtin_fs_getatime = __builtin_object(0x00AE);
+const __builtin_fs_getctime = __builtin_object(0x00AF);
+const __builtin_fs_getmtime = __builtin_object(0x00B0);
+const __builtin_fs_gettimes = __builtin_object(0x00B1);
+const __builtin_fs_setatime = __builtin_object(0x0180);
+const __builtin_fs_setctime = __builtin_object(0x0181);
+const __builtin_fs_setmtime = __builtin_object(0x0182);
+const __builtin_fs_settimes = __builtin_object(0x0183);
+const __builtin_fs_isabs = __builtin_object(0x00B2);
+const __builtin_fs_isfile = __builtin_object(0x00B3);
+const __builtin_fs_isdir = __builtin_object(0x00B4);
+const __builtin_fs_islink = __builtin_object(0x00B5);
+const __builtin_fs_isdrive = __builtin_object(0x00B6);
+const __builtin_fs_ismount = __builtin_object(0x00B7);
+const __builtin_fs_ishidden = __builtin_object(0x00B8);
+const __builtin_fs_isxfile = __builtin_object(0x00E7);
+const __builtin_fs_ischrdev = __builtin_object(0x016E);
+const __builtin_fs_isblkdev = __builtin_object(0x016F);
+const __builtin_fs_isfifo = __builtin_object(0x0170);
+const __builtin_fs_issocket = __builtin_object(0x0171);
+const __builtin_fs_exists = __builtin_object(0x00B9);
+const __builtin_fs_remove = __builtin_object(0x00BA);
+const __builtin_fs_rmfile = __builtin_object(0x00BB);
+const __builtin_fs_mkdir = __builtin_object(0x00BC);
+const __builtin_fs_rmdir = __builtin_object(0x00BD);
+const __builtin_fs_copy = __builtin_object(0x00BE);
+const __builtin_fs_move = __builtin_object(0x00BF);
+const __builtin_fs_link = __builtin_object(0x00C0);
+const __builtin_fs_readlink = __builtin_object(0x00C1);
+const __builtin_fs_chmod = __builtin_object(0x01C5);
+const __builtin_fs_getmod = __builtin_object(0x01C6);
+const __builtin_fs_chown = __builtin_object(0x01C7);
+const __builtin_fs_getown = __builtin_object(0x01C8);
+const __builtin_fs_uidof = __builtin_object(0x01C9);
+const __builtin_fs_gidof = __builtin_object(0x01CA);
+const __builtin_fs_uidname = __builtin_object(0x01CB);
+const __builtin_fs_wuidname = __builtin_object(0x01CC);
+const __builtin_fs_gidname = __builtin_object(0x01CD);
+const __builtin_fs_wgidname = __builtin_object(0x01CE);
+#ifdef __WINDOWS__
+	const __builtin_fs_win32hardlink = __builtin_object(0x00ED);
+	const __builtin_fs_win32modulename = __builtin_object(0x00EE);
+	const __builtin_fs_win32wmodulename = __builtin_object(0x019D);
+	const __builtin_fs_win32dlldirectory = __builtin_object(0x0162);
+	const __builtin_fs_win32wdlldirectory = __builtin_object(0x019E);
+	const __builtin_fs_win32systemdirectory = __builtin_object(0x0163);
+	const __builtin_fs_win32wsystemdirectory = __builtin_object(0x019F);
+	const __builtin_fs_win32windowsdirectory = __builtin_object(0x0165);
+	const __builtin_fs_win32wwindowsdirectory = __builtin_object(0x01A0);
+	const __builtin_fs_win32systemwindowsdirectory = __builtin_object(0x0166);
+	const __builtin_fs_win32wsystemwindowsdirectory = __builtin_object(0x01A1);
+	const __builtin_fs_win32syswow64directory = __builtin_object(0x0167);
+	const __builtin_fs_win32wsyswow64directory = __builtin_object(0x01A2);
+	const __builtin_fs_win32drives = __builtin_object(0x01CF);
+	const __builtin_fs_win32wdrives = __builtin_object(0x01D0);
+#endif
+const __builtin_fs_user = __builtin_object(0x0195);
+const __builtin_fs_wuser = __builtin_object(0x0197);
+const __builtin_fs_machine = __builtin_object(0x0196);
+const __builtin_fs_wmachine = __builtin_object(0x0198);

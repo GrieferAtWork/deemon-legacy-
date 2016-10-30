@@ -1,0 +1,61 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include <__stddef.dee>
+
+#if __has_feature(__pointers__)
+const __builtin_memcpy = __builtin_object(0x00C5);
+const __builtin_mempcpy = __builtin_object(0x00F6);
+const __builtin_memccpy = __builtin_object(0x00F7);
+const __builtin_rawmemchr = __builtin_object(0x00F8);
+const __builtin_memmove = __builtin_object(0x00C6);
+const __builtin_memcmp = __builtin_object(0x00C7);
+const __builtin_strcoll = __builtin_object(0x00C8);
+const __builtin_strcmp = __builtin_object(0x00C9);
+const __builtin_strncmp = __builtin_object(0x00CA);
+const __builtin_strxfrm = __builtin_object(0x00CB);
+const __builtin_strcpy = __builtin_object(0x00CC);
+const __builtin_strncpy = __builtin_object(0x00CD);
+const __builtin_stpcpy = __builtin_object(0x00FF);
+const __builtin_stpncpy = __builtin_object(0x0100);
+const __builtin_strcat = __builtin_object(0x00CE);
+const __builtin_memchr = __builtin_object(0x00CF);
+const __builtin_memrchr = __builtin_object(0x00F9);
+const __builtin_strchr = __builtin_object(0x00D0);
+const __builtin_strchrnul = __builtin_object(0x00FA);
+const __builtin_strcasestr = __builtin_object(0x00FB);
+const __builtin_strcasecmp = __builtin_object(0x00FC);
+const __builtin_strncasecmp = __builtin_object(0x00FE);
+const __builtin_memmem = __builtin_object(0x00FD);
+const __builtin_strcspn = __builtin_object(0x00D1);
+const __builtin_strpbrk = __builtin_object(0x00D2);
+const __builtin_strrchr = __builtin_object(0x00D3);
+const __builtin_strspn = __builtin_object(0x00D4);
+const __builtin_strstr = __builtin_object(0x00D5);
+const __builtin_strtok = __builtin_object(0x00D6);
+const __builtin_strerror = __builtin_object(0x00D7);
+const __builtin_strlen = __builtin_object(0x00D8);
+const __builtin_strnlen = __builtin_object(0x00D9);
+const __builtin_strdup = __builtin_object(0x00E8);
+const __builtin_strndup = __builtin_object(0x00E9);
+const __builtin_strncat = __builtin_object(0x00EA);
+const __builtin_memset = __builtin_object(0x00F5);
+#endif

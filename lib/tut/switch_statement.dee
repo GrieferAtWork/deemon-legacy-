@@ -1,0 +1,64 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// Just a quick little example of a switch statement and all it can do
+// NOTE: Switch statements work with any type, meaning you
+//       can actually use them with stuff like strings.
+//       (Of cource it must be possible to compare the types)
+
+x = 42; // Just play around with this value...
+
+print "switch begin";
+print "switch_expr:",({
+	switch (x) {
+
+		// v be careful to have some whitespace between the '10' and the '...',
+		//   as the preprocessor with interpret it as a point otherwise.
+		case 10 ... 20: // Case ranges (inclusive; x >= 10 && x <= 20)
+			print "10...20";
+			if (x == 15) {
+		case 42: // Cases don't have to be on the same scope as the switch
+				print "15 or 42";
+			}
+			break;
+
+		case 0:
+			print "ZERO";
+			// fallthrough
+
+		default:
+			print "DEFAULT";
+			break;
+
+	}
+});
+print "switch end";
+
+
+
+
+
+
+
+
+
+

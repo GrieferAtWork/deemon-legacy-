@@ -1,0 +1,45 @@
+
+#include <fs>
+#include <file>
+#include <sys>
+
+const ignored = ["libffi","libffi_linux","libffi_msvc","__devl"];
+const exts = [".h",".c",".dee",".inl"];
+
+function walk;
+function walk(p) {
+  for (x: fs.dir(p)) {
+    if (x in ignored) continue;
+    x = fs.path.join(p,x);
+    if (fs.path.ext(x) in exts) yield x;
+    if (fs.isdir(x))
+      yield walk(x)...;
+  }
+}
+
+if (#sys.argv < 2) {
+  print "Expected path argument";
+  sys.exit(1);
+}
+
+lines = 0;
+files = 0;
+total_bytes = 0;
+for (path: sys.argv[1:])
+for (f: walk(path)) {
+  print "Scanning:",f;
+  text = file.io(f,"r").read();
+  total_bytes += #text;
+  lines += #text.splitlines();
+  ++files;
+}
+
+print "-"*40;
+print "Total lines:",lines;
+print "Total files:",files;
+print "Total bytes:",total_bytes;
+print "Averange file lines:",(double)lines/(double)files;
+print "Averange lines size:",(double)total_bytes/(double)lines;
+print "-"*40;
+
+

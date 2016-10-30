@@ -1,0 +1,87 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// Small example of an AF_UNIX-style socket
+// Usage:
+//  -> First instance of this creates a socket-file in "/tmp/"
+//     Then starts a server that listens for new connections on that socket
+//  -> Second..nth instance connects to that server using the socket file.
+//     All client instances will send a short message before terminating their connection
+
+#include <fs>
+#include <file>
+#include <thread>
+#include <net/socket>
+
+import module net;
+
+const sockfile = "/tmp/my_sockfile";
+sa = sockaddr(socket::AF_UNIX,sockfile);
+
+if (fs::exists(sockfile)) {
+	// Client
+	sock = socket(socket::AF_UNIX);
+	sock.connect(sa);
+	print sock.file: "Hello!";
+	print repr sock;
+	sock.close();
+	
+} else {
+	// Server
+	try fs::remove(sockfile); catch (...);
+	sock = socket(socket::AF_UNIX);
+
+	sock.bind(sa);
+	sock.listen();
+
+	ac_thread = thread([]{
+		for (;;) {
+			thread([](client){
+				print "New connection:",client;
+				for (l: client.file) print repr l;
+				client.close();
+			},sock.accept()).start();
+		}
+	});
+	ac_thread.start();
+	print "Server up. Press [RETURN] to exit:",repr sock;
+	file.io.stdin.readline();
+	
+	ac_thread.interrupt();
+	sock.close();
+	ac_thread.join();
+	fs::remove(sockfile);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

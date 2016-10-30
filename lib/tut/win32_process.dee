@@ -1,0 +1,79 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#include <pipe>
+#include <process>
+
+// Create pipes for stdin, stdout and stderr
+ir,iw = pipe.new()...;
+or,ow = pipe.new()...;
+er,ew = pipe.new()...;
+
+// Create a process for 'cmd'
+p = process("cmd");
+
+// Redirect std files
+p.stdin = ir;
+p.stdout = ow;
+p.stderr = ew;
+
+// Start the process
+p.start();
+
+// Close our references to the writer files
+// NOTE: Can only be done after the process has started
+ow.close();
+ew.close();
+
+// Feed 'cmd' with some commands
+// NOTE: As soon as they are written, they will already start getting executed
+iw.write("tree C:\\foobar\n");
+
+// Close the input writer once we are done writing commands (signals end-of-input)
+iw.close();
+
+print p.terminated();
+
+// Capture output from 'cmd'
+// NOTE: This is done live, meaning that
+//       output is read as soon as it arrives.
+//       >> You proove yourself that it works by
+//          commenting out the 'iw.close()'
+for (l: or) print ">>",l.rstrip("\n").center(100);
+for (l: er) print "ERR>>",l.rstrip("\n");
+
+print p;
+print p.win32_times();
+
+// Finally join the process (though it should already have terminated)
+print "RETURN:",p.join();
+
+
+
+
+
+
+
+
+
+
+

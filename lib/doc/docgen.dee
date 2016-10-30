@@ -1,0 +1,1150 @@
+#!/usr/bin/deemon
+// NOTE: The below copyright also applies to this file
+const copyright = "\
+Copyright (c) 2016 Griefer@Work (https://sourceforge.net/users/grieferatwork)
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgement in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+";
+
+#include <file>
+#include <util>
+#include <error>
+
+#define DO_INDENT
+
+// v causes problems with stuff like 'Error.RuntimeError' (do you mean the attribute, or type?)
+//#define LINK_ATTRIBUTES
+
+local docgen = __builtin_dex("_docgen");
+local doc = docgen.doc;
+
+#define get_effective_name(x)\
+({\
+	__stack local _name = (x);\
+	::effective_name_map.get(_name,_name);\
+})
+
+// Map internal names to those used by the standard headers
+dict effective_name_map = {
+	"__builtin_min"             : "util::min",
+	"__builtin_max"             : "util::max",
+	"__builtin_avg"             : "util::avg",
+	"__builtin_all"             : "util::all",
+	"__builtin_any"             : "util::any",
+	"__builtin_sum"             : "util::sum",
+	"__builtin_chr"             : "util::chr",
+	"__builtin_ord"             : "util::ord",
+	"__builtin_sqr"             : "util::sqr",
+	"__builtin_len"             : "util::len",
+	"__builtin_ceil"            : "util::ceil",
+	"__builtin_floor"           : "util::floor",
+	"__builtin_round"           : "util::round",
+	"__builtin_range"           : "util::range",
+	"__builtin_id"              : "util::id",
+	"__builtin_zip"             : "util::zip",
+	"__builtin_enumerate"       : "util::enumerate",
+	"__builtin_swap"            : "util::swap",
+	"__builtin_abs"             : "util::abs",
+	"__builtin_seq_find"        : "util::seq::find",
+	"__builtin_seq_rfind"       : "util::seq::rfind",
+	"__builtin_seq_index"       : "util::seq::index",
+	"__builtin_seq_rindex"      : "util::seq::rindex",
+	"__builtin_seq_contains"    : "util::seq::contains",
+	"__builtin_seq_count"       : "util::seq::count",
+	"__builtin_seq_locate"      : "util::seq::locate",
+	"__builtin_seq_rlocate"     : "util::seq::rlocate",
+	"__builtin_seq_locate_all"  : "util::seq::locate_all",
+	"__builtin_seq_transform"   : "util::seq::transform",
+	"__builtin_seq_empty"       : "util::seq::empty",
+	"__builtin_seq_non_empty"   : "util::seq::non_empty",
+	"__builtin_seq_front"       : "util::seq::front",
+	"__builtin_seq_back"        : "util::seq::back",
+	"__builtin_seq_get"         : "util::seq::get",
+	"__builtin_seq_at"          : "util::seq::at",
+	"__builtin_seq_reversed"    : "util::seq::reversed",
+	"__builtin_seq_sorted"      : "util::seq::sorted",
+	"__builtin_seq_segments"    : "util::seq::segments",
+
+	"__builtin_fs_getcwd"          : "fs::getcwd",
+	"__builtin_fs_wgetcwd"         : "fs::wgetcwd",
+	"__builtin_fs_chdir"           : "fs::chdir",
+	"__builtin_fs_tmp"             : "fs::tmp",
+	"__builtin_fs_wtmp"            : "fs::wtmp",
+	"__builtin_fs_tmpname"         : "fs::tmpname",
+	"__builtin_fs_wtmpname"        : "fs::wtmpname",
+	"__builtin_fs_home"            : "fs::home",
+	"__builtin_fs_whome"           : "fs::whome",
+	"__builtin_fs_listenv"         : "fs::listenv",
+	"__builtin_fs_wlistenv"        : "fs::wlistenv",
+	"__builtin_fs_getenv"          : "fs::getenv",
+	"__builtin_fs_delenv"          : "fs::delenv",
+	"__builtin_fs_setenv"          : "fs::setenv",
+	"__builtin_fs_user"            : "fs::user",
+	"__builtin_fs_wuser"           : "fs::wuser",
+	"__builtin_fs_machine"         : "fs::machine",
+	"__builtin_fs_wmachine"        : "fs::wmachine",
+	"__builtin_fs_path_head"       : "fs::path::head",
+	"__builtin_fs_path_tail"       : "fs::path::tail",
+	"__builtin_fs_path_file"       : "fs::path::file",
+	"__builtin_fs_path_ext"        : "fs::path::ext",
+	"__builtin_fs_path_drive"      : "fs::path::drive",
+	"__builtin_fs_path_inctrail"   : "fs::path::inctrail",
+	"__builtin_fs_path_exctrail"   : "fs::path::exctrail",
+	"__builtin_fs_path_abs"        : "fs::path::abs",
+	"__builtin_fs_path_rel"        : "fs::path::rel",
+	"__builtin_fs_path_join"       : "fs::path::join",
+	"__builtin_fs_path_expanduser" : "fs::path::expanduser",
+	"__builtin_fs_path_expandvars" : "fs::path::expandvars",
+	"__builtin_fs_chmod"           : "fs::chmod",
+	"__builtin_fs_getmod"          : "fs::getmod",
+	"__builtin_fs_chown"           : "fs::chown",
+	"__builtin_fs_getown"          : "fs::getown",
+	"__builtin_fs_uidof"           : "fs::uidof",
+	"__builtin_fs_gidof"           : "fs::gidof",
+	"__builtin_fs_uidname"         : "fs::uidname",
+	"__builtin_fs_wuidname"        : "fs::wuidname",
+	"__builtin_fs_gidname"         : "fs::gidname",
+	"__builtin_fs_wgidname"        : "fs::wgidname",
+#ifdef __WINDOWS__
+	"__builtin_fs_win32hardlink"                : "fs::win32::hardlink",
+	"__builtin_fs_win32modulename"              : "fs::win32::modulename",
+	"__builtin_fs_win32wmodulename"             : "fs::win32::wmodulename",
+	"__builtin_fs_win32dlldirectory"            : "fs::win32::_dlldirectory",
+	"__builtin_fs_win32wdlldirectory"           : "fs::win32::_wdlldirectory",
+	"__builtin_fs_win32systemdirectory"         : "fs::win32::_systemdirectory",
+	"__builtin_fs_win32wsystemdirectory"        : "fs::win32::_wsystemdirectory",
+	"__builtin_fs_win32windowsdirectory"        : "fs::win32::_windowsdirectory",
+	"__builtin_fs_win32wwindowsdirectory"       : "fs::win32::_wwindowsdirectory",
+	"__builtin_fs_win32systemwindowsdirectory"  : "fs::win32::_systemwindowsdirectory",
+	"__builtin_fs_win32wsystemwindowsdirectory" : "fs::win32::_wsystemwindowsdirectory",
+	"__builtin_fs_win32syswow64directory"       : "fs::win32::_syswow64directory",
+	"__builtin_fs_win32wsyswow64directory"      : "fs::win32::_wsyswow64directory",
+	"__builtin_fs_win32drives"                  : "fs::win32::drives",
+	"__builtin_fs_win32wdrives"                 : "fs::win32::wdrives",
+#endif
+	"dir"                          : "fs::dir",
+	"query"                        : "fs::query",
+	
+	"__builtin_sin"            : "math::sin",
+	"__builtin_cos"            : "math::cos",
+	"__builtin_tan"            : "math::tan",
+	"__builtin_sincos"         : "math::sincos",
+	"__builtin_asin"           : "math::asin",
+	"__builtin_acos"           : "math::acos",
+	"__builtin_atan"           : "math::atan",
+	"__builtin_atan2"          : "math::atan2",
+	"__builtin_asincos"        : "math::asincos",
+	"__builtin_sinh"           : "math::sinh",
+	"__builtin_cosh"           : "math::cosh",
+	"__builtin_tanh"           : "math::tanh",
+	"__builtin_sincosh"        : "math::sincosh",
+	"__builtin_asinh"          : "math::asinh",
+	"__builtin_acosh"          : "math::acosh",
+	"__builtin_atanh"          : "math::atanh",
+	"__builtin_asincosh"       : "math::asincosh",
+	"__builtin_exp"            : "math::exp",
+	"__builtin_frexp"          : "math::frexp",
+	"__builtin_log"            : "math::log",
+	"__builtin_log10"          : "math::log10",
+	"__builtin_modf"           : "math::modf",
+	"__builtin_exp2"           : "math::exp2",
+	"__builtin_expm1"          : "math::expm1",
+	"__builtin_ilogb"          : "math::ilogb",
+	"__builtin_log1p"          : "math::log1p",
+	"__builtin_log2"           : "math::log2",
+	"__builtin_logb"           : "math::logb",
+	"__builtin_scalbn"         : "math::scalbn",
+	"__builtin_scalbi32n"      : "math::scalbi32n",
+	"__builtin_pow"            : "math::pow",
+	"__builtin_sqrt"           : "math::sqrt",
+	"__builtin_cbrt"           : "math::cbrt",
+	"__builtin_hypot"          : "math::hypot",
+	"__builtin_erf"            : "math::erf",
+	"__builtin_tgamma"         : "math::tgamma",
+	"__builtin_lgamma"         : "math::lgamma",
+	"__builtin_ceilf"          : "math::ceilf",
+	"__builtin_floorf"         : "math::floorf",
+	"__builtin_truncf"         : "math::truncf",
+	"__builtin_roundf"         : "math::roundf",
+	"__builtin_i32round"       : "math::i32round",
+	"__builtin_i64round"       : "math::i64round",
+	"__builtin_fmod"           : "math::fmod",
+	"__builtin_rint"           : "math::rint",
+	"__builtin_i32rint"        : "math::i32rint",
+	"__builtin_i64rint"        : "math::i64rint",
+	"__builtin_nearbyint"      : "math::nearbyint",
+	"__builtin_remainder"      : "math::remainder",
+	"__builtin_remquo"         : "math::remquo",
+	"__builtin_copysign"       : "math::copysign",
+	"__builtin_nextafter"      : "math::nextafter",
+	"__builtin_nexttoward"     : "math::nexttoward",
+	"__builtin_fdim"           : "math::fdim",
+	"__builtin_isfinite"       : "math::isfinite",
+	"__builtin_isinf"          : "math::isinf",
+	"__builtin_isnan"          : "math::isnan",
+	"__builtin_isnormal"       : "math::isnormal",
+	"__builtin_signbit"        : "math::signbit",
+	"__builtin_isgreater"      : "math::isgreater",
+	"__builtin_isgreaterequal" : "math::isgreaterequal",
+	"__builtin_isless"         : "math::isless",
+	"__builtin_islessequal"    : "math::islessequal",
+	"__builtin_islessgreater"  : "math::islessgreater",
+	"__builtin_isunordered"    : "math::isunordered",
+	"__builtin_min"            : "math::min",
+	"__builtin_max"            : "math::max",
+	"__builtin_abs"            : "math::abs",
+	"__builtin_sqr"            : "math::sqr",
+	"__builtin_ceil"           : "math::ceil",
+	"__builtin_floor"          : "math::floor",
+	"__builtin_round"          : "math::round",
+
+};
+
+
+
+
+function indent(text) -> "    "+text.replace("\n","\n    ");
+function fmt_type(text) -> "<b class=\"type\">"+text.strip()+"</b>";
+function fmt_proto_keyword(text) -> "<b class=\"proto_keyword\">"+text.strip()+"</b>";
+function fmt_code_kwd_1(text) -> "<b class=\"code_kwd_1\">"+text.strip()+"</b>";
+function fmt_code_kwd_2(text) -> "<b class=\"code_kwd_2\">"+text.strip()+"</b>";
+function fmt_code_kwd_3(text) -> "<b class=\"code_kwd_3\">"+text.strip()+"</b>";
+function fmt_code_kwd_4(text) -> "<b class=\"code_kwd_4\">"+text.strip()+"</b>";
+function fmt_code_kwd_5(text) -> "<b class=\"code_kwd_5\">"+text.strip()+"</b>";
+function fmt_code_kwd_6(text) -> "<b class=\"code_kwd_6\">"+text.strip()+"</b>";
+function fmt_code_string(text) -> "<b class=\"code_string\">"+text.strip()+"</b>";
+function fmt_code_ppdir(text) -> "<b class=\"code_ppdir\">"+text.strip()+"</b>";
+function fmt_code_comment(text) -> "<b class=\"code_comment\">"+text.strip()+"</b>";
+function fmt_parprefix(text) -> "<b class=\"parprefix\">"+text+"</b>";
+function fmt_bold(text) -> "<b>"+text+"</b>";
+function fmt_code(text) -> "<code>"+text+"</code>";
+function fmt_example_code(text) {
+	return "<div class=\"example_code\"><code>"+text+"</code></div>";
+}
+
+dict active_docs;
+
+dict effective_link_name = {
+	// NOTE: The following effective links assume a default configuration
+	"type object": "type",
+	"signed short": "short",
+	"signed int": "short",
+	"signed long": "int",
+	"unsigned long": "unsigned int",
+	"signed long long": "long long",
+	"char": "signed char",
+	"string.utf8": "string",
+	"__int8": "signed char",
+	"__int16": "short",
+	"__int32": "int",
+	"__int64": "long long",
+	"int8_t": "signed char",
+	"int16_t": "short",
+	"int32_t": "int",
+	"int64_t": "long long",
+	"uint8_t": "unsigned char",
+	"uint16_t": "unsigned short",
+	"uint32_t": "unsigned int",
+	"uint64_t": "unsigned long long",
+};
+
+function get_link_name(text) {
+	text = text.replace("::",".");
+	return effective_link_name.get(text,text);
+}
+
+function add_link_ex(link_text,text) {
+	link_text = get_link_name(link_text);
+	if (link_text in active_docs
+#ifdef LINK_ATTRIBUTES
+	|| link_text.partition(".")[0] in active_docs
+#endif
+	    ) {
+		return "<a href=\"#"+link_text+"\">"+text+"</a>";
+	}
+#if 0
+	return "<a href=\"http://www.google.com\">"+text+"</a>";
+#else
+	return text;
+#endif
+}
+function add_link(text) -> add_link_ex(text,text);
+
+_html_print = <>;
+#define html_print (_html_print.get())
+#define capture_stdout(...)\
+({\
+	file.writer local _buffer;\
+	local _old_stdout = file.io.stdout;\
+	file.io.stdout = _buffer;\
+	try {\
+		(__VA_ARGS__);\
+	} finally {\
+		file.io.stdout = _old_stdout;\
+	}\
+	_buffer.pack();\
+})
+#ifdef DO_INDENT
+#define print_with_tag(tag,...)\
+({\
+	print "<"+(tag)+">";\
+	print indent(capture_stdout(__VA_ARGS__).rstrip());\
+	print "</"+(tag).partition(" ")[0]+">";\
+})
+#else
+#define print_with_tag(tag,...)\
+({\
+	print "<"+(tag)+">";\
+	(__VA_ARGS__);\
+	print "</"+(tag).partition(" ")[0]+">";\
+})
+#endif
+
+// Calls 'fmt' for all occurrence of 'tag'
+function format_tags_2(text,tag,fmt) {
+	local i = 0,last_tag_begin = 0;
+	assert #tag != 0;
+	result = "";
+	// Search and format
+	while ((i = text.find(tag,i)) != -1) {
+		local tag_text;
+		result += text[last_tag_begin:i];
+		i += #tag;
+		if (i >= #text) break;
+		local tag_begin = copy i;
+		if (text[i] == "(") {
+			local paren_recursion = 1;
+			++tag_begin;
+			while (++i < #text) {
+				if (text[i] == ")") {
+					if (!--paren_recursion) break;
+				} else if (text[i] == "(") {
+					++paren_recursion;
+				}
+			}
+			tag_text = text[tag_begin:i];
+			++i;
+		} else if (i == #tag || !text[i-(1+#tag)].isalnum()) {
+			while (i < #text && (
+				   text[i].isalnum()
+				|| text[i] in pack '.',':'
+			)) ++i;
+			tag_text = text[tag_begin:i];
+		} else {
+			last_tag_begin = i-#tag;
+			continue;
+		}
+		result += fmt(tag_text);
+		last_tag_begin = i;
+	}
+	result += text[last_tag_begin:];
+	return result;
+}
+
+dict format_keywords = {
+	// Level 1 keywords
+	"function": fmt_code_kwd_1, "class": fmt_code_kwd_1,
+	"module": fmt_code_kwd_1, "struct": fmt_code_kwd_1,
+	"union": fmt_code_kwd_1, "extends": fmt_code_kwd_1,
+	"enum": fmt_code_kwd_1, "property": fmt_code_kwd_1,
+	"operator": fmt_code_kwd_1, "final": fmt_code_kwd_1,
+
+	// Level 2 keywords
+	"do": fmt_code_kwd_2, "while": fmt_code_kwd_2, "print": fmt_code_kwd_2,
+	"try": fmt_code_kwd_2, "catch": fmt_code_kwd_2,
+	"throw": fmt_code_kwd_2, "finally": fmt_code_kwd_2,
+	"if": fmt_code_kwd_2, "else": fmt_code_kwd_2, "elif": fmt_code_kwd_2,
+	"import": fmt_code_kwd_2, "extern": fmt_code_kwd_2, "del": fmt_code_kwd_2,
+	"return": fmt_code_kwd_2, "yield": fmt_code_kwd_2, "break": fmt_code_kwd_2,
+	"continue": fmt_code_kwd_2, "goto": fmt_code_kwd_2, "for": fmt_code_kwd_2,
+	"__foreach": fmt_code_kwd_2, "__looponce": fmt_code_kwd_2, "__loopnone": fmt_code_kwd_2,
+	"__loopever": fmt_code_kwd_2, "__if_true": fmt_code_kwd_2, "__if_false": fmt_code_kwd_2,
+	"switch": fmt_code_kwd_2, "case": fmt_code_kwd_2, "default": fmt_code_kwd_2,
+	"typedef": fmt_code_kwd_2, "assert": fmt_code_kwd_2, "__assert": fmt_code_kwd_2,
+	"pack": fmt_code_kwd_2,"is": fmt_code_kwd_2, "in": fmt_code_kwd_2,
+	"copy": fmt_code_kwd_2, "move": fmt_code_kwd_2, "type": fmt_code_kwd_2,
+	"weak": fmt_code_kwd_2, "__super": fmt_code_kwd_2, "__static_if": fmt_code_kwd_2,
+	"__static_else": fmt_code_kwd_2, "__static_elif": fmt_code_kwd_2, "__if_exists": fmt_code_kwd_2,
+	"__if_not_exists": fmt_code_kwd_2,
+
+	// Level 3 keywords
+	"local": fmt_code_kwd_3, "global": fmt_code_kwd_3, "forward": fmt_code_kwd_3,
+	"static": fmt_code_kwd_3, "__stack": fmt_code_kwd_3,
+	"__scope": fmt_code_kwd_3,"__nth": fmt_code_kwd_3,"constexpr": fmt_code_kwd_3,
+	"__int8": fmt_code_kwd_3, "int8_t": fmt_code_kwd_3, "uint8_t": fmt_code_kwd_3,
+	"__int16": fmt_code_kwd_3,"int16_t": fmt_code_kwd_3,"uint16_t": fmt_code_kwd_3,
+	"__int32": fmt_code_kwd_3,"int32_t": fmt_code_kwd_3,"uint32_t": fmt_code_kwd_3,
+	"__int64": fmt_code_kwd_3,"int64_t": fmt_code_kwd_3,"uint64_t": fmt_code_kwd_3,
+	"signed": fmt_code_kwd_3,"__signed": fmt_code_kwd_3,"__signed__": fmt_code_kwd_3,
+	"unsigned": fmt_code_kwd_3,"__unsigned": fmt_code_kwd_3,"__unsigned__": fmt_code_kwd_3,
+	"const": fmt_code_kwd_3,"__const": fmt_code_kwd_3,"__const__": fmt_code_kwd_3,
+	"volatile": fmt_code_kwd_3,"__volatile": fmt_code_kwd_3,"__volatile__": fmt_code_kwd_3,
+	"char": fmt_code_kwd_3,"short": fmt_code_kwd_3,"int": fmt_code_kwd_3,
+	"long": fmt_code_kwd_3,"float": fmt_code_kwd_3,"double": fmt_code_kwd_3,
+	"atomic": fmt_code_kwd_3,"_Atomic": fmt_code_kwd_3, "alias": fmt_code_kwd_3,
+	"wchar_t": fmt_code_kwd_3,"__wchar_t": fmt_code_kwd_3,
+	"bool": fmt_code_kwd_3, "_Bool": fmt_code_kwd_3,
+	"string": fmt_code_kwd_3, "object": fmt_code_kwd_3,
+	"list": fmt_code_kwd_3, "tuple": fmt_code_kwd_3,
+	"set": fmt_code_kwd_3,
+
+	// Level 4 keywords
+	"true": fmt_code_kwd_4, "false": fmt_code_kwd_4,
+	"this": fmt_code_kwd_4, "super": fmt_code_kwd_4,
+	"none": fmt_code_kwd_4,
+
+	// Level 5 keywords
+	"_declspec": fmt_code_kwd_5, "__declspec": fmt_code_kwd_5,
+	"__attribute": fmt_code_kwd_5, "__attribute__": fmt_code_kwd_5,
+	"__builtin_object": fmt_code_kwd_5,
+	"__builtin_dex": fmt_code_kwd_5,
+	"__noop": fmt_code_kwd_5,
+	"__builtin_noop": fmt_code_kwd_5,
+	"__builtin_unused": fmt_code_kwd_5,
+	"__builtin_dead": fmt_code_kwd_5,
+	"__builtin_noexcept": fmt_code_kwd_5,
+	"__builtin_noreturn": fmt_code_kwd_5,
+	"__builtin_noeffect": fmt_code_kwd_5,
+	"__builtin_constant_p": fmt_code_kwd_5,
+	"__builtin_choose_expr": fmt_code_kwd_5,
+	"__builtin_unreachable": fmt_code_kwd_5,
+	"__builtin_types_compatible_p": fmt_code_kwd_5,
+	"__builtin_breakpoint": fmt_code_kwd_5,
+	"__builtin_typeof": fmt_code_kwd_5,
+	"__builtin_offsetof": fmt_code_kwd_5,
+	"__builtin_exists": fmt_code_kwd_5,
+	"__builtin_expect": fmt_code_kwd_5,
+	"__builtin_predictable": fmt_code_kwd_5,
+	"__builtin_exprast": fmt_code_kwd_5,
+	"__builtin_alloca": fmt_code_kwd_5,
+	"__builtin_bound": fmt_code_kwd_5,
+	"__builtin_super": fmt_code_kwd_5,
+
+	// Level 6 keywords
+	"Signal": fmt_code_kwd_6,
+	"Interrupt": fmt_code_kwd_6,
+	"StopIteration": fmt_code_kwd_6,
+	"Error": fmt_code_kwd_6,
+	"AttributeError": fmt_code_kwd_6,
+	"CompilerError": fmt_code_kwd_6,
+	"ThreadCrash": fmt_code_kwd_6,
+	"NoMemory": fmt_code_kwd_6,
+	"RuntimeError": fmt_code_kwd_6,
+	"TypeError": fmt_code_kwd_6,
+	"ValueError": fmt_code_kwd_6,
+	"NetError": fmt_code_kwd_6,
+	"SystemError": fmt_code_kwd_6,
+	"IOError": fmt_code_kwd_6,
+	"NotImplemented": fmt_code_kwd_6,
+	"UnboundLocal": fmt_code_kwd_6,
+	"AssertionError": fmt_code_kwd_6,
+	"StackOverflow": fmt_code_kwd_6,
+	"SegFault": fmt_code_kwd_6,
+	"IllegalInstruction": fmt_code_kwd_6,
+	"DivideByZero": fmt_code_kwd_6,
+	"KeyError": fmt_code_kwd_6,
+	"IndexError": fmt_code_kwd_6,
+	"UnicodeError": fmt_code_kwd_6,
+	"ReferenceError": fmt_code_kwd_6,
+	"FileNotFound": fmt_code_kwd_6,
+};
+function highlight_syntax(text) {
+	// Highlight syntax
+	local kwd_end = 0;
+	while (kwd_end < #text) {
+		while (kwd_end < #text) {
+			local ch = text[kwd_end];
+			if (ch.isalnum()) break;
+			if (ch == "#" && text[text.rfind("\n",0,kwd_end)+1:kwd_end].replace("&#62;","").strip() == "") {
+				// Preprocessor directive (only allow at the start of a line)
+				local pp_end = text.find("\n",kwd_end);
+				if (pp_end == -1) pp_end = #text;
+				local pp_text = text[kwd_end:pp_end];
+				//print file.io.stderr: repr pp_text;
+				pp_text = fmt_code_ppdir(pp_text);
+				text = text[:kwd_end]+pp_text+text[pp_end:];
+				kwd_end += #pp_text;
+				break;
+			}
+			if (ch == "/" && text[kwd_end+1] == "/") {
+				// Line comment
+				local pp_end = text.find("\n",kwd_end);
+				if (pp_end == -1) pp_end = #text;
+				local com_text = text[kwd_end:pp_end];
+				//print file.io.stderr: repr com_text;
+				com_text = fmt_code_comment(com_text);
+				text = text[:kwd_end]+com_text+text[pp_end:];
+				kwd_end += #com_text;
+				break;
+			}
+			if ((ch == "\"" || ch == "\'") && (!kwd_end || (
+				text[kwd_end-1] != "\\" ||
+				text[kwd_end-2] == "\\"
+			))) {
+				local string_end = kwd_end+1;
+				while ((string_end = text.find(ch,string_end)) != -1 &&
+				       (text[string_end-1] == "\\" &&
+				        text[string_end-2] != "\\")) ++string_end;
+				// In string/char
+				if (string_end == -1) return text; ++string_end;
+				local text_str = text[kwd_end:string_end];
+				//print file.io.stderr: repr text_str;
+				text_str = fmt_code_string(text_str);
+				text = text[:kwd_end]+text_str+text[string_end:];
+				kwd_end += #text_str;
+				break;
+			}
+			++kwd_end;
+		}
+		local kwd_start = copy kwd_end;
+		while (text[kwd_end].isalnum()) ++kwd_end;
+		local kwd = text[kwd_start:kwd_end];
+		local fmt = format_keywords.get(kwd,none);
+		if (fmt !is none) {
+			kwd = fmt(kwd);
+			text = text[:kwd_start]+kwd+text[kwd_end:];
+			kwd_end = kwd_start+#kwd;
+		}
+	}
+	return text;
+}
+
+function format_tags(text,tag,fmt) {
+	lines = text.splitlines(false);
+	result = for (l: lines) (
+		l.startswith(">>") || l.startswith("->")
+			? l
+			: format_tags_2(l,tag,fmt)
+	);
+	return "\n".join(result);
+}
+
+function format_user_code(text) {
+	const list ord_replace = { '<','>' };
+	lines = text.splitlines(false);
+	result = [(for (l: lines) ({
+		if (l.startswith(">>") || l.startswith("->")) {
+			local should_highlight_syntax = l.startswith(">>");
+			if (should_highlight_syntax) {
+				l = ">"+l;
+			} else {
+				l = l[2:];
+			}
+			for (local id: ord_replace) {
+				l = l.replace(string::chr(id),"&#%d;" % id);
+			}
+			if (should_highlight_syntax) l = highlight_syntax(l);
+			l = l.replace("\t","&nbsp;&nbsp;&nbsp;&nbsp;");
+			l = fmt_example_code(l);
+		}
+		l;
+	}))...];
+	for (local i = 0; i < #result-1; ++i) {
+		if (result[i].endswith("</div>") &&
+		    result[i+1].startswith("<div")) {
+			result[i] = result[i][:#result[i]-#"</div>"];
+			result[i+1] = result[i+1][result[i+1].find(">")+1:];
+		}
+	}
+	result = "\n".join(result);
+
+	return result;
+}
+
+function format_user_text(text) {
+	text = format_tags(text,"@",[](x) {
+		return fmt_code(x);
+	});
+	text = format_tags(text,"#",[](x) {
+		return fmt_code(fmt_type(add_link(get_effective_name(x))));
+	});
+	text = format_user_code(text);
+	if (text && text[0].islower()) {
+		text = text[0].upper()+text[1:];
+	}
+	return text;
+}
+
+function prefix_a_or_an(text) {
+	text = text.strip();
+	if (!text) return "A";
+	local first_ch = text[0].lower();
+	if (first_ch in pack("a","e","i","o","u")) {
+		return "An #("+text+")";
+	} else {
+		return "A #("+text+")";
+	}
+}
+
+
+function get_paramdoc(par,last_overload) {
+	local pardoc;
+	if (par.has_doc()) {
+		pardoc = par.doc;
+	} else if (last_overload) {
+		local object_name = get_effective_name(str par.type);
+		if (object_name == "object") {
+			pardoc = par.has_varg() ? "Any number of objects" : "Any object";
+		} else if (object_name == "none") {
+			pardoc = "Nothing";
+		} else if (object_name.endswith("object")) {
+			pardoc = par.has_varg() ? "Any number of "+object_name+"s" : prefix_a_or_an(object_name);
+		} else {
+			if (object_name.lstrip("u").rsstrip("_t") in pack(
+				"int8","int16","int32","int64","float","double",
+				"long double","int","nsigned","signed","signed int","nsigned int","size","ssize",
+				"short","nsigned short","char","signed char","nsigned char",
+				"long","long long","nsigned long","unsigned long long")) {
+				pardoc = par.has_varg() ? "Any number of "+object_name+" values" : prefix_a_or_an(object_name)+" value";
+			} else if (object_name == "bool") {
+				pardoc = par.has_varg() ? "Any number of boolean values" : "A boolean value";
+			} else if (object_name.endswith("*")) {
+				pardoc = par.has_varg() ? "Any number of "+object_name+" pointers" : prefix_a_or_an(object_name)+" pointer";
+			} else if (object_name.endswith("&")) {
+				pardoc = par.has_varg() ? "Any number of "+object_name+" lvalues" : prefix_a_or_an(object_name)+" lvalue";
+			} else if (object_name.startswith("(") && object_name.endswith(")")) {
+				pardoc = par.has_varg()
+					? "Any number of "+object_name[1:#object_name-1].replace(",",", ")+" tuples"
+					: prefix_a_or_an(object_name[1:#object_name-1].replace(",",", "))+" tuple";
+			} else {
+				pardoc = par.has_varg() ? "Any number of "+object_name+" objects" : prefix_a_or_an(object_name)+" object";
+			}
+		}
+		if (par.has_default()) {
+			pardoc += " (defaults to "+fmt_code(fmt_type("#("+get_effective_name(par.default)+")"))+" if omitted)";
+		}
+	} else {
+		pardoc = "";
+	}
+	pardoc = pardoc.strip();
+	if (pardoc && !pardoc.endswith(".")) pardoc += ".";
+	return pardoc;
+}
+function html_doc_overload(m,o,prefix,last_overload) {
+	assert m is doc.method;
+	assert o is doc.method.overload;
+	last_overload = last_overload || o.has_doc() || o.return.has_doc();
+	print_with_tag("code",{
+		print_with_tag("b class=\"prototype\"",{
+			if (m.is_class() && prefix != "class") print fmt_proto_keyword("class ");
+			if (m.is_constexpr()) print fmt_proto_keyword("constexpr ");
+			print fmt_proto_keyword(prefix),"",;
+			if (m.has_thistype()) {
+				print add_link(get_effective_name(m.thistype))+"::",;
+				static if (__TPP_EVAL(defined(LINK_ATTRIBUTES))) {
+					print add_link_ex(get_effective_name(m.thistype)+"::"+m.name,m.name)+"(",;
+				} else {
+					print m.name+"(",;
+				}
+			} else {
+				static if (__TPP_EVAL(defined(LINK_ATTRIBUTES))) {
+					print add_link(get_effective_name(m.name))+"(",;
+				} else {
+					print get_effective_name(m.name)+"(",;
+				}
+			}
+			for (local i,par: util::enumerate(o.params)) {
+				if (i != 0) print ", ",;
+				print fmt_type(add_link(get_effective_name(par.type))),;
+				if (par.has_name()) {
+					print "",par.name,;
+				}
+				if (par.has_varg()) {
+					print "...",;
+				}
+				if (par.has_default()) {
+					print " =",fmt_type(add_link(get_effective_name(par.default))),;
+				}
+			}
+			print ") -> "+fmt_type(add_link(get_effective_name(o.return.type)))+";<br>";
+		});
+	});
+
+	for (local err: o.throws) {
+		local trwdoc;
+		if (err.has_doc()) {
+			trwdoc = err.doc;
+		} else {
+			trwdoc = "An "+fmt_code(fmt_type(add_link(get_effective_name(err.name))))+" might be thrown";
+		}
+		trwdoc = trwdoc.strip();
+		if (!trwdoc.endswith(".")) trwdoc += ".";
+		trwdoc = format_user_text(trwdoc);
+		print fmt_parprefix("Throws:"),fmt_code(fmt_type(add_link(get_effective_name(err.name))))+":",trwdoc,"<br>";
+	}
+	for (local i,par: util::enumerate(o.params)) {
+		local pardoc = get_paramdoc(par,last_overload).strip();
+		if (pardoc) {
+			pardoc = format_user_text(pardoc);
+			print fmt_parprefix("Parameter #"+(i+1)+":"),;
+			if (par.has_name()) print "",par.name+":",;
+			print "",pardoc,"<br>";
+		}
+	}
+	local retdoc = get_paramdoc(o.return,last_overload).strip();
+	if (retdoc) {
+		retdoc = format_user_text(retdoc);
+		print fmt_parprefix("Return:"),retdoc,"<br>";
+	}
+	if (o.has_doc()) {
+		local fundoc = o.doc;
+		local fundoc = format_user_text(fundoc);
+		print "<dd>"+fundoc.replace("\n","\n<br>")+"\n<br>";
+	}
+
+}
+function html_doc_method(m,prefix) {
+	local n_overloads = #m.overloads;
+	for (local i,o: util::enumerate(m.overloads)) {
+		html_doc_overload(m,o,prefix,i == n_overloads-1);
+	}
+}
+function html_doc_member(m) {
+	assert m is doc.member;
+	print_with_tag("code",{
+		print_with_tag("b class=\"prototype\"",{
+			if (m.is_class()) print fmt_proto_keyword("class ");
+			if (m.has_value()) print fmt_proto_keyword("constexpr ");
+			print fmt_proto_keyword("property ");
+			if (m.is_atomic()) print fmt_proto_keyword("atomic ");
+			print add_link(get_effective_name(m.thistype))+"::",;
+			static if (__TPP_EVAL(defined(LINK_ATTRIBUTES))) {
+				print add_link_ex(get_effective_name(m.thistype)+"::"+m.name,m.name),;
+			} else {
+				print m.name,;
+			}
+			print " -> "+fmt_type(add_link(get_effective_name(m.return.type)))+" = { ",;
+			if (m.has_value()) {
+				print "get() -> ",fmt_type(add_link(get_effective_name(repr m.value)))+";",;
+			} else {
+				local permissions = [];
+				if (m.has_read()) permissions.append("get()");
+				if (m.has_write()) permissions.append("del()","set()");
+				print ", ".join(permissions),;
+			}
+			print " }<br>";
+		});
+	});
+	local retdoc = get_paramdoc(m.return,true).strip();
+	if (retdoc) {
+		retdoc = format_user_text(retdoc);
+		print fmt_parprefix("Return:"),retdoc,"<br>";
+	}
+	if (m.has_doc()) {
+		local memberdoc = m.doc;
+		local memberdoc = format_user_text(memberdoc);
+		print "<dd>"+memberdoc.replace("\n","\n<br>")+"\n<br>";
+	}
+}
+function html_doc_getset(m) {
+	assert m is doc.getset;
+	print_with_tag("code",{
+		print_with_tag("b class=\"prototype\"",{
+			if (m.is_class()) print fmt_proto_keyword("class ");
+			if (m.is_constexpr()) print fmt_proto_keyword("constexpr ");
+			print fmt_proto_keyword("property ");
+			if (m.has_thistype()) {
+				print add_link(get_effective_name(m.thistype))+"::",;
+				static if (__TPP_EVAL(defined(LINK_ATTRIBUTES))) {
+					print add_link_ex(get_effective_name(m.thistype)+"::"+m.name,m.name),;
+				} else {
+					print m.name,;
+				}
+			} else {
+				static if (__TPP_EVAL(defined(LINK_ATTRIBUTES))) {
+					print add_link(get_effective_name(m.name)),;
+				} else {
+					print get_effective_name(m.name),;
+				}
+			}
+			print " -> "+fmt_type(add_link(get_effective_name(m.return.type)))+" = { ",;
+			local permissions = [];
+			if (m.has_get()) permissions.append("get()");
+			if (m.has_del()) permissions.append("del()");
+			if (m.has_set()) permissions.append("set()");
+			print ", ".join(permissions),;
+			print " }<br>";
+		});
+	});
+	local retdoc = get_paramdoc(m.return,true).strip();
+	if (retdoc) {
+		retdoc = format_user_text(retdoc);
+		print fmt_parprefix("Return:"),retdoc,"<br>";
+	}
+	if (m.has_doc()) {
+		local memberdoc = m.doc;
+		local memberdoc = format_user_text(memberdoc);
+		print "<dd>"+memberdoc.replace("\n","\n<br>")+"\n<br>";
+	}
+}
+
+dict html_map = {
+	doc.KIND_GENERIC: function(d) {
+		assert d is doc;
+		d = d.generic;
+		print fmt_bold(d.name)+"<br>";
+		print_with_tag("pre",d.doc);
+	},
+	doc.KIND_METHOD: function(d) {
+		assert d is doc;
+		html_doc_method(d.method,"function");
+	},
+	doc.KIND_MEMBER: function(d) {
+		assert d is doc;
+		html_doc_member(d.member);
+	},
+	doc.KIND_GETSET: function(d) {
+		assert d is doc;
+		html_doc_getset(d.getset);
+	},
+	doc.KIND_TYPE: function(d) {
+		assert d is doc;
+		d = d.type;
+		print_with_tag("code",{
+			print_with_tag("b class=\"prototype\"",{
+				print fmt_proto_keyword("class"),add_link(get_effective_name(d.name)),;
+				if (d.has_base()) {
+					print;
+					print "",fmt_proto_keyword("extends"),add_link(get_effective_name(d.base)),;
+				}
+			});
+		});
+		print " {<br>";
+		print_with_tag("table cellpadding=15 width=\"90%\"",{
+			if (d.has_constructor()) {
+				print_with_tag("tr",{
+					print_with_tag("td align=left colspan=3",{
+						print "<hr size=1>";
+						html_doc_method(d.constructor,"class");
+					});
+				});
+			}
+			for (local a: d.attrib) {
+				print_with_tag("tr",{
+					print_with_tag("td align=left",{
+						static if (__TPP_EVAL(defined(LINK_ATTRIBUTES))) {
+							print "<hr size=1 id=\""+get_link_name(get_effective_name(d.name)+"."+a.name)+"\">";
+						} else {
+							print "<hr size=1>";
+						}
+						html_print(a);
+					});
+				});
+			}
+		});
+		print "};<br>";
+	},
+};
+
+
+_html_print.set(function(d) {
+	assert d is doc;
+	html_map.get(d.kind,none)(d);
+});
+
+function print_html_doc(docs...) {
+	for (local d: docs) {
+		active_docs[get_effective_name(d.name).replace("::",".")] = d;
+	}
+	print "<!DOCTYPE html>";
+	print "<!-- "+copyright.strip().replace("\n","\n     ")+"\n-->";
+	print_with_tag("html",{
+		print_with_tag("head",{
+			print_with_tag("style",{
+				print "body           { background-color: #EEEEEE; color: #111111; }";
+				print ".prototype     { color: #000000; font-size: 12pt; }";
+				print ".proto_keyword { color: #1e76fa; font-weight: bold; }";
+				print ".type          { color: #c639ac; font-weight: bold; }";
+				print ".parprefix     { color: #01985e; font-weight: bold; }";
+				print ".example_code  { background-color: #e2f7a1; color: #353B53; }";
+				print ".code_kwd_1    { color: #0099ff; font-weight: bold; }";
+				print ".code_kwd_2    { color: #cc5200; font-weight: bold; }";
+				print ".code_kwd_3    { color: #0099ff; font-weight: bold; }";
+				print ".code_kwd_4    { color: #cc5200; font-weight: bold; }";
+				print ".code_kwd_5    { color: #666699; font-style: italic; }";
+				print ".code_kwd_6    { color: #666699; font-weight: bold; }";
+				print ".code_string   { color: #339933; }";
+				print ".code_comment  { color: #01985e; font-style: italic; }";
+				print ".code_ppdir    { font-weight: bold; }";
+			});
+		});
+		print_with_tag("body",{
+			print_with_tag("center",{
+				for (local d: docs) {
+					print_with_tag("table cellpadding=0 width=\"90%\"",{
+						print_with_tag("tr",{
+							print_with_tag("td align=left colspan=3",{
+								print "<hr size=1 id=\""+get_link_name(get_effective_name(d.name))+"\">";
+								html_print(d);
+							});
+						});
+					});
+				}
+			});
+		});
+	});
+	active_docs.clear();
+}
+
+#define __doc doc pack
+
+function collectdocs_core() {
+	yield __doc object;
+	yield __doc type none;
+	yield __doc type object;
+	yield __doc tuple;
+	yield __doc list;
+	yield __doc set;
+	yield __doc dict;
+	yield __doc dict.keys;
+	yield __doc dict.items;
+	yield __doc dict.values;
+	yield __doc type <>;
+	yield __doc type weak none;
+	yield __doc type function;
+	yield __doc type(function).yield;
+	yield __doc type(function).yield.iterator;
+	yield __doc type(function).code;
+	yield __doc type(function).code.debuginfo;
+	yield __doc type(42 .super);
+}
+function collectdocs_string() {
+	yield __doc string::utf8;
+	yield __doc string::utf8::iterator;
+	yield __doc string::wide;
+	yield __doc string::wide::iterator;
+	yield __doc string::utf16;
+	yield __doc string::utf16::iterator;
+	yield __doc string::utf32;
+	yield __doc string::utf32::iterator;
+}
+
+function collectdocs_integral() {
+	yield __doc bool;
+	yield __doc float;
+	yield __doc double;
+	yield __doc long double;
+	yield __doc int8_t;
+	yield __doc int16_t;
+	yield __doc int32_t;
+	yield __doc int64_t;
+	yield __doc uint8_t;
+	yield __doc uint16_t;
+	yield __doc uint32_t;
+	yield __doc uint64_t;
+	yield __doc atomic int8_t;
+	yield __doc atomic int16_t;
+	yield __doc atomic int32_t;
+	yield __doc atomic int64_t;
+	yield __doc atomic uint8_t;
+	yield __doc atomic uint16_t;
+	yield __doc atomic uint32_t;
+	yield __doc atomic uint64_t;
+}
+
+#include <file>
+function collectdocs_file() {
+	yield __doc file;
+	yield __doc file.io;
+	yield __doc file.reader;
+	yield __doc file.writer;
+	yield __doc file.joined;
+	yield __doc file.iterator;
+}
+
+#include <util>
+function collectdocs_util() {
+	yield __doc util::min;
+	yield __doc util::max;
+	yield __doc util::avg;
+	yield __doc util::all;
+	yield __doc util::any;
+	yield __doc util::sum;
+	yield __doc util::chr;
+	yield __doc util::ord;
+	yield __doc util::sqr;
+	yield __doc util::len;
+	yield __doc util::ceil;
+	yield __doc util::floor;
+	yield __doc util::round;
+	yield __doc util::range;
+	yield __doc util::id;
+	yield __doc util::zip;
+	yield __doc util::enumerate;
+	yield __doc util::swap;
+	yield __doc util::abs;
+	yield __doc util::seq::find;
+	yield __doc util::seq::rfind;
+	yield __doc util::seq::index;
+	yield __doc util::seq::rindex;
+	yield __doc util::seq::contains;
+	yield __doc util::seq::count;
+	yield __doc util::seq::locate;
+	yield __doc util::seq::rlocate;
+	yield __doc util::seq::locate_all;
+	yield __doc util::seq::transform;
+	yield __doc util::seq::empty;
+	yield __doc util::seq::non_empty;
+	yield __doc util::seq::front;
+	yield __doc util::seq::back;
+	yield __doc util::seq::get;
+	yield __doc util::seq::at;
+	yield __doc util::seq::reversed;
+	yield __doc util::seq::sorted;
+	yield __doc util::seq::segments;
+}
+
+#include <fs>
+function collectdocs_fs() {
+	yield __doc fs::getcwd;
+	yield __doc fs::wgetcwd;
+	yield __doc fs::chdir;
+	yield __doc fs::tmp;
+	yield __doc fs::wtmp;
+	yield __doc fs::tmpname;
+	yield __doc fs::wtmpname;
+	yield __doc fs::home;
+	yield __doc fs::whome;
+	yield __doc fs::listenv;
+	yield __doc fs::wlistenv;
+	yield __doc fs::getenv;
+	yield __doc fs::delenv;
+	yield __doc fs::setenv;
+	yield __doc fs::user;
+	yield __doc fs::wuser;
+	yield __doc fs::machine;
+	yield __doc fs::wmachine;
+	yield __doc fs::path::head;
+	yield __doc fs::path::tail;
+	yield __doc fs::path::file;
+	yield __doc fs::path::ext;
+	yield __doc fs::path::drive;
+	yield __doc fs::path::inctrail;
+	yield __doc fs::path::exctrail;
+	yield __doc fs::path::abs;
+	yield __doc fs::path::rel;
+	yield __doc fs::path::join;
+	yield __doc fs::path::expanduser;
+	yield __doc fs::path::expandvars;
+	yield __doc fs::chmod;
+	yield __doc fs::getmod;
+	yield __doc fs::chown;
+	yield __doc fs::getown;
+	yield __doc fs::uidof;
+	yield __doc fs::gidof;
+	yield __doc fs::uidname;
+	yield __doc fs::wuidname;
+	yield __doc fs::gidname;
+	yield __doc fs::wgidname;
+#ifdef __WINDOWS__
+	yield __doc fs::win32::hardlink;
+	yield __doc fs::win32::modulename;
+	yield __doc fs::win32::wmodulename;
+	yield __doc fs::win32::_dlldirectory;
+	yield __doc fs::win32::_wdlldirectory;
+	yield __doc fs::win32::_systemdirectory;
+	yield __doc fs::win32::_wsystemdirectory;
+	yield __doc fs::win32::_windowsdirectory;
+	yield __doc fs::win32::_wwindowsdirectory;
+	yield __doc fs::win32::_systemwindowsdirectory;
+	yield __doc fs::win32::_wsystemwindowsdirectory;
+	yield __doc fs::win32::_syswow64directory;
+	yield __doc fs::win32::_wsyswow64directory;
+	yield __doc fs::win32::drives;
+	yield __doc fs::win32::wdrives;
+#endif
+	yield __doc fs::dir;
+	yield __doc fs::query;
+}
+
+#include <thread>
+function collectdocs_thread() {
+	yield __doc thread;
+	yield __doc mutex;
+	yield __doc semaphore;
+}
+
+#include <pipe>
+function collectdocs_pipe() {
+	yield __doc pipe;
+}
+
+#include <attrutil>
+#include <error>
+function collectdocs_error() {
+	function get_all_reachable_docs(start) {
+		local list result;
+		function do_collect(collection_start) {
+			if (collection_start !in result) {
+				result.append(collection_start);
+				util::attr::enumattr(collection_start,[](tp_self,self,name,flags,attr_type) {
+					if (tp_self == type collection_start) {
+						local attr = collection_start.operator . (name);
+						if (attr is type object) {
+							//print file.io.stderr: str tp_self+"::"+name,"=",repr attr;
+							do_collect(attr);
+						}
+					}
+				});
+			}
+		}
+		do_collect(start);
+		return result;
+	}
+	for (local x: get_all_reachable_docs(Signal)) if (x != object) yield __doc x;
+	for (local x: get_all_reachable_docs(Error)) if (x != object) yield __doc x;
+}
+
+#include <random>
+function collectdocs_random() {
+	yield __doc random;
+}
+
+#include <time>
+function collectdocs_time() {
+	yield __doc time;
+}
+
+#include <shared_lib>
+function collectdocs_shared_lib() {
+	yield __doc shared_lib;
+}
+
+
+
+local list requested_docs;
+requested_docs.append(collectdocs_core()...);
+requested_docs.append(collectdocs_string()...);
+requested_docs.append(collectdocs_integral()...);
+requested_docs.append(collectdocs_file()...);
+requested_docs.append(collectdocs_util()...);
+requested_docs.append(collectdocs_fs()...);
+requested_docs.append(collectdocs_thread()...);
+requested_docs.append(collectdocs_pipe()...);
+requested_docs.append(collectdocs_error()...);
+requested_docs.append(collectdocs_random()...);
+requested_docs.append(collectdocs_time()...);
+requested_docs.append(collectdocs_shared_lib()...);
+print_html_doc(requested_docs...);
+
+//d.type.ctor.name;
+//print type d;
+//print repr d;
+
+
+
+

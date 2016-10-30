@@ -1,0 +1,229 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#pragma push_macro("read")
+#pragma push_macro("write")
+#pragma push_macro("maybe_write")
+#pragma push_macro("readline")
+#pragma push_macro("seek")
+#pragma push_macro("setpos")
+#pragma push_macro("rewind")
+#pragma push_macro("trunc")
+#pragma push_macro("tell")
+#pragma push_macro("size")
+#pragma push_macro("flush")
+#pragma push_macro("close")
+#pragma push_macro("getc")
+#pragma push_macro("putc")
+
+#undef read
+#undef write
+#undef maybe_write
+#undef readline
+#undef seek
+#undef setpos
+#undef rewind
+#undef trunc
+#undef tell
+#undef size
+#undef flush
+#undef close
+#undef getc
+#undef putc
+
+#undef stdin
+#undef stdout
+#undef stderr
+
+local const fopen = __builtin_object(0x0068);
+local const function fclose(__stream) { __stream.close(); return 0; }
+local const function fflush(__stream) { __stream.flush(); return 0; }
+local const function fgetc(__stream) -> __stream.getc();
+#ifdef __STDC_STRICT__
+local const function fgetpos(__stream,__pos) {
+	*__pos = __stream.tell();
+	return 0;
+}
+local const function fgets(__str,__num,__stream) {
+	local __temp = __stream.read(__num);
+	__builtin_object(0x00C5)(__str,__temp,#__temp*__SIZEOF_CHAR__);
+	return __str;
+}
+#else
+local const function fgetpos(__stream) -> __stream.tell();
+local const function fgets(__num,__stream) -> __stream.read(__num);
+#endif
+local const function fprintf(__stream,__fmt,__args...) -> __stream.maybe_write(__fmt%__args);
+local const function vfprintf(__stream,__fmt,__args) -> __stream.maybe_write(__fmt%__args);
+local const function fputc(__chr,__stream) { __stream.putc(__chr); return __chr; }
+local const function fputs(__str,__stream) { print __stream: __str; return 0; }
+#ifdef __STDC_STRICT__
+local const function fread(__ptr,__size,__count,__stream): __result {
+	__size = __size*__count;
+	local __temp = __stream.read(__size);
+	__result = #__temp;
+	__builtin_object(0x00C5)(__ptr,__temp,__result*__SIZEOF_CHAR__);
+}
+#else
+local const function fread(__size,__count,__stream) -> __stream.read(__size*__count);
+#endif
+local const function fseek(__stream,__offset,__origin) {
+	__stream.seek(__offset,__origin);
+	return 0;
+}
+local const function fsetpos(__stream,__pos) {
+#ifdef __STDC_STRICT__
+	__stream.setpos(*__pos);
+#else
+	__stream.setpos(__pos);
+#endif
+	return 0;
+}
+local const function ftell(__stream) -> __stream.tell();
+local const function fwrite(__ptr,__size,__count,__stream) ->
+	__stream.maybe_write(string.from_data(__ptr,__size*__count));
+local const function getchar() -> __builtin_object(0x0068).stdin.getc();
+local const function getc(__stream) -> __stream.getc();
+#ifdef __STDC_STRICT__
+local const function gets(__str) {
+	local __ln = __builtin_object(0x0068).stdin.readline();
+	__ln = __ln[:#__ln-1];
+	__builtin_object(0x00C5)(__str,__ln,(#__ln+1)*__SIZEOF_CHAR__);
+	return __str;
+}
+#else
+local const function gets(): __result {
+	__result = __builtin_object(0x0068).stdin.readline();
+	__result = __result[:#__result-1];
+}
+#endif
+local const function perror(__str) {}
+local const function printf(__fmt,__args...) ->
+	__builtin_object(0x0068).stdout.maybe_write(__fmt%__args);
+local const function putc(__chr,__stream) {
+	__stream.putc(__chr);
+	return __chr;
+}
+local const function putchar(__chr) {
+	__builtin_object(0x0068).stdout.putc(__chr);
+	return __chr;
+}
+local const function puts(__str) {
+	print __builtin_object(0x0068).stdout: __str;
+}
+local const function remove(__filename) {
+	__builtin_object(0x00BA)(string.from_data(__filename));
+	return 0;
+}
+local const function rename(__oldname,__newname) {
+	__builtin_object(0x00BF)(__newname,__oldname);
+	return 0;
+}
+local const function rewind(__stream) -> __stream.rewind();
+#ifdef __STDC_STRICT__
+local const function sprintf(__str,__fmt,__args...) {
+	local __temp = __fmt % __args;
+	__builtin_object(0x00C5)(__str,__temp,#__temp);
+	return (int)#__temp;
+}
+local const function snprintf(__str,__n,__fmt,__args...) {
+	local __temp = __fmt % __args;
+	local __result = __builtin_min(__n,#__temp);
+	__builtin_object(0x00C5)(__str,__temp,__result);
+	return (int)__result;
+}
+local const function vsprintf(__str,__fmt,__args) {
+	local __temp = __fmt % __args;
+	__builtin_object(0x00C5)(__str,__temp,#__temp);
+	return (int)#__temp;
+}
+local const function vsnprintf(__str,__n,__fmt,__args) {
+	local __temp = __fmt % __args;
+	local __result = __builtin_min(__n,#__temp);
+	__builtin_object(0x00C5)(__str,__temp,__result);
+	return (int)__result;
+}
+#else
+local const function sprintf(__fmt,__args...) -> __fmt % __args;
+local const function vsprintf(__fmt,__args) -> __fmt % __args;
+#endif
+
+#pragma pop_macro("read")
+#pragma pop_macro("write")
+#pragma pop_macro("maybe_write")
+#pragma pop_macro("readline")
+#pragma pop_macro("seek")
+#pragma pop_macro("setpos")
+#pragma pop_macro("rewind")
+#pragma pop_macro("trunc")
+#pragma pop_macro("tell")
+#pragma pop_macro("size")
+#pragma pop_macro("flush")
+#pragma pop_macro("close")
+#pragma pop_macro("getc")
+#pragma pop_macro("putc")
+
+#pragma push_macro("file")
+#pragma push_macro("io")
+#pragma push_macro("stdin")
+#pragma push_macro("stdout")
+#pragma push_macro("stderr")
+#undef file
+#undef io
+#undef stdin
+#undef stdout
+#undef stderr
+
+local alias stdin  = __builtin_object(0x0068).stdin;
+local alias stdout = __builtin_object(0x0068).stdout;
+local alias stderr = __builtin_object(0x0068).stderr;
+
+#ifdef __CXXSTDIO
+#pragma push_macro("cin")
+#pragma push_macro("cout")
+#pragma push_macro("cerr")
+#pragma push_macro("endl")
+#undef cin
+#undef cout
+#undef cerr
+#undef endl
+local alias cin  = __builtin_object(0x0068).stdin;
+local alias cout = __builtin_object(0x0068).stdout;
+local alias cerr = __builtin_object(0x0068).stderr;
+#ifdef __WINDOWS__
+local const endl = "\r\n";
+#elif defined(__APPLE__)
+local const endl = "\r";
+#else
+local const endl = "\n";
+#endif
+#pragma pop_macro("cin")
+#pragma pop_macro("cout")
+#pragma pop_macro("cerr")
+#pragma pop_macro("endl")
+#endif
+
+#pragma pop_macro("file")
+#pragma pop_macro("io")
+#pragma pop_macro("stdin")
+#pragma pop_macro("stdout")
+#pragma pop_macro("stderr")
+

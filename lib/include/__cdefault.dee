@@ -1,0 +1,93 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+#include <__stddef.dee>
+#include <__builtin_gcc.dee>
+
+#pragma warning(push, disable: 1)
+
+#ifndef void
+#	define void none
+#endif
+
+#ifndef __STDC__
+#	if __has_extension(__static_if) && __has_builtin(__builtin_exists)
+#		if !__has_extension(__if_exists)
+#			define __if_exists(x)     __static_if(__builtin_exists(x))
+#		endif /* !__if_exists */
+#		if !__has_extension(__if_not_exists)
+#			define __if_not_exists(x) __static_if(!__builtin_exists(x))
+#		endif /* !__if_not_exists */
+#	endif /* __static_if && __builtin_exists */
+#endif /* !__STDC__ */
+
+#ifndef _Generic
+//////////////////////////////////////////////////////////////////////////
+// >> T _Generic(object ob, ...);
+// C99-style _Generic implementation, returning
+// the value associated with the correct switch.
+#	define _Generic(x,...) (switch (type(x)) { __VA_ARGS__ })
+#endif
+
+
+#ifndef sizeof
+//////////////////////////////////////////////////////////////////////////
+// >> size_t sizeof(type object T);
+// >> size_t sizeof(object ob);
+// Returns the size of a structured type / structured instance
+// NOTE: If 'x' is a constant expression, 'sizeof(x)' is too
+// NOTE: If evaluating 'x' causes side-effects, 'x' is only evaluated once
+// NOTE: sizeof tries its best not to evaluate it's
+//       argument during runtime, but if it has to, it will.
+// >> t = int32_t;
+// >> x = 42i32;
+// >> print sizeof(int32_t); // 4
+// >> print sizeof(42i32);   // 4
+// >> print sizeof(t);       // 4
+// >> print sizeof(x);       // 4
+
+#define sizeof(T) \
+__builtin_choose_expr(\
+	__builtin_constant_p(T),\
+		__builtin_choose_expr(\
+			(((T)) is type object),\
+				((T)).__p_instance_size__,\
+				__builtin_typeof(T).__p_instance_size__\
+		),\
+		__builtin_choose_expr(\
+			__builtin_noeffect(T),\
+				(\
+					((T)) is type object \
+						?    ((T)).__p_instance_size__\
+						: type(T) .__p_instance_size__\
+				),({\
+					local __stack __x=((T));\
+					__x is type object \
+						?      __x .__p_instance_size__\
+						: type(__x).__p_instance_size__;\
+				})\
+		)\
+)
+constexpr function sizeof __NO_MACRO(T) -> sizeof(T);
+#endif
+
+#pragma warning(pop)

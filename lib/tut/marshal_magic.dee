@@ -1,0 +1,78 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#include <file>
+#include <fs>
+
+// To see what this script does, execute it twice
+// >> The first time around it will create a
+//    compiled output file containing 'export_function'
+// >> The second time around, it will load that
+//    file and execute the previously exported function.
+
+// Make sure we're working in the script folder
+fs.chdir(fs.path.head(__FILE__));
+
+const filename = "marshal_magic_compiled.dc";
+
+if (fs.isfile(filename)) {
+	// Load the exported function
+	export_function = file.io(filename,"r").readm();
+
+	print "calling imported function";
+	print export_function();
+	print "imported function called";
+
+} else {
+	text = "Referenced text";
+	function export_function {
+		print "Hello World from exported function";
+		return text;
+	}
+	fc = file.io(filename,"w");
+	fc.writem(export_function);
+	fc.close();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

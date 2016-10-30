@@ -1,0 +1,135 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// Implementation of a linked_list class in user code
+
+#include <error>
+
+class linked_list_node {
+	linked_list_node(_prev,_next,_value) {
+		this._prev = _prev;
+		this._next = _next;
+		this._value = _value;
+	}
+	//~linked_list_node() {
+	//	print "Destroying node:",this._value,this;
+	//	print "	>>",this._prev;
+	//	print "	>>",this._next;
+	//}
+	operator str -> "("+this._prev+","+this._value+","+this._next+")";
+};
+
+class linked_list {
+
+	linked_list() {
+		this._front = none;
+		this._back = none;
+	}
+	~linked_list() {
+		// Everything in here is optional.
+		// Its just here to enforce the destruction
+		// of all list items asap. (instead of having to wait for the gc)
+		local node_iter = this._front;
+		while (node_iter !is none) {
+			local next_node = node_iter._next;
+			del node_iter._prev;
+			del node_iter._next;
+			node_iter = next_node;
+			// when 'next_node' goes out of the scope, its value gets destroyed as well
+		}
+	}
+
+	push_front(ob) {
+		local new_node = linked_list_node(none,this._front,ob);
+		if (this._back is none) this._back = new_node;
+		this._front._prev = new_node;
+		this._front = new_node;
+	}
+	push_back(ob) {
+		local new_node = linked_list_node(this._back,none,ob);
+		if (this._front is none) this._front = new_node;
+		this._back._next = new_node;
+		this._back = new_node;
+	}
+	pop_front() {
+		local pop_node = this._front;
+		if (pop_node is none)
+			throw Error.ValueError("Empty list");
+		if (pop_node == this._back) this._back = none;
+		this._front = pop_node._next;
+		this._front._prev = none; // unlink
+		return pop_node._value;
+	}
+	pop_back() {
+		local pop_node = this._back;
+		if (pop_node is none)
+			throw Error.ValueError("Empty list");
+		if (pop_node == this._front) this._front = none;
+		this._back = pop_node._prev;
+		this._back._next = none; // unlink
+		return pop_node._value;
+	}
+
+	// Iterator support
+	operator for {
+		local node_iter = this._front;
+		while (node_iter !is none) {
+			yield node_iter._value;
+			node_iter = node_iter._next;
+		}
+	}
+
+	operator str -> "linked_list {"+", ".join(this)+"}";
+	operator repr -> "linked_list(_front: "+this._front+", _back:"+this._back+")";
+
+};
+
+#include <gc>
+#include <util>
+
+l1 = linked_list();
+l1.push_front(21);
+l1.push_front(42);
+l1.push_front(84);
+for (x: util::range(0,20)) l1.push_back(copy x);
+gc.collect();
+print l1;
+
+l1.pop_front();
+print l1;
+l1.pop_front();
+print l1;
+l1.pop_back();
+print l1;
+
+del l1;
+gc.collect();
+
+print "DONE";
+
+
+
+
+
+
+
+
