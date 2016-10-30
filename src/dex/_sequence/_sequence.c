@@ -218,18 +218,15 @@ DEE_A_RET_EXCEPT(-1) int DeeSingleList_AssignAllFromIterator(
 
 DEE_A_RET_EXCEPT(-1) int DeeSingleList_AppendAllFromIterator(
  DEE_A_INOUT struct DeeSingleList *self, DEE_A_INOUT DeeObject *iterator) {
- DeeObject *elem; int error; struct DeeSingleListNode *pos,*newpos;
+ DeeObject *elem; int error; struct DeeSingleListNode *pos;
  DEE_ASSERT(self);
  DEE_ASSERT(DeeObject_Check(iterator)); pos = NULL;
  while ((error = DeeObject_IterNextEx(iterator,&elem)) == 0) {
-  error = DeeSingleList_InsertAfter(self,pos,elem,&newpos);
-  if (pos) DeeSingleListNode_DECREF(pos);
+  pos = DeeSingleList_PushBack(self,elem);
   Dee_DECREF(elem);
-  if (error != 0) return error;
-  DEE_ASSERT(newpos);
-  pos = newpos;
+  if (!pos) return -1;
+  DeeSingleListNode_DECREF(pos);
  }
- if (pos) DeeSingleListNode_DECREF(pos);
  if DEE_UNLIKELY(error < 0) { _DeeSingleList_Quit(self); return error; }
  return 0;
 }
@@ -665,6 +662,56 @@ void DeeSingleListIterator_Next(
 
 
 
+DEE_A_RET_EXCEPT_REF DeeSingleListIteratorObject *DeeSingleListIterator_New(
+ DEE_A_INOUT DeeSingleListObject *list, DEE_A_INOUT_OPT struct DeeSingleListNode *node) {
+ DeeSingleListIteratorObject *result;
+ DEE_ASSERT(DeeObject_Check(list) && DeeObject_InstanceOf(list,&DeeSingleList_Type));
+ if DEE_LIKELY((result = DeeObject_MALLOC(DeeSingleListIteratorObject)) != NULL) {
+  DeeObject_INIT(result,&DeeSingleListIterator_Type);
+  if ((result->sli_iter.sli_node = node) != NULL) DeeSingleListNode_INCREF(node);
+  Dee_INCREF(result->sli_list = list);
+  DeeAtomicMutex_Init(&result->sli_lock);
+ }
+ return result;
+}
+DEE_A_RET_EXCEPT(-1) int DeeSingleListNode_PtrFromObject(
+ DEE_A_IN DeeSingleList const *list, DEE_A_INOUT DeeObject *index,
+ /*ref(sln_refcnt)*/DEE_A_OUT struct DeeSingleListNode **result) {
+ Dee_ssize_t index_id; struct DeeSingleListNode *iter;
+ if (DeeObject_InstanceOf(index,&DeeSingleListIterator_Type)) {
+  if (&((DeeSingleListIteratorObject *)index)->sli_list->sl_list != list) {
+   DeeError_SetStringf(&DeeErrorType_ValueError,
+                       "Iterator %k is from a different list",index);
+   return -1;
+  }
+  DeeAtomicMutex_AcquireRelaxed(&((DeeSingleListIteratorObject *)index)->sli_lock);
+  if ((*result = ((DeeSingleListIteratorObject *)index)->sli_iter.sli_node) != NULL)
+   DeeSingleListNode_INCREF(*result);
+  DeeAtomicMutex_Release(&((DeeSingleListIteratorObject *)index)->sli_lock);
+  return 0;
+ }
+ if (DeeObject_Cast(Dee_ssize_t,index,&index_id) != 0) return -1;
+ DeeAtomicMutex_AcquireRelaxed(&list->sl_lock);
+ if (!list->sl_size) {
+  DeeAtomicMutex_Release(&list->sl_lock);
+  *result = NULL;
+  return 0;
+ }
+ DEE_ASSERT(list->sl_front);
+ DEE_ASSERT(list->sl_back);
+ DEE_PRIVATE_CLAMP_INDEX(index_id,list->sl_size);
+ iter = list->sl_front;
+ while (index_id--) { DEE_ASSERT(iter); iter = iter->sln_next; }
+ DEE_ASSERT(iter);
+ DeeSingleListNode_INCREF(iter);
+ DeeAtomicMutex_Release(&list->sl_lock);
+ *result = iter;
+ return 0;
+}
+
+
+
+
 
 
 
@@ -742,7 +789,7 @@ static DeeObject *_deesinglelist_tp_str(DeeSingleListObject *self) {
  DeeSingleList_TRAVERSE_SAFE(&iter,&self->sl_list) {
   if (first) first = 0;
   else {
-   if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,", ") != 0) {
+   if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,",") != 0) {
 err_iter: DeeSingleListIterator_Quit(&iter); goto err;
    }
   }
@@ -762,7 +809,7 @@ static DeeObject *_deesinglelist_tp_repr(DeeSingleListObject *self) {
  DeeSingleList_TRAVERSE_SAFE(&iter,&self->sl_list) {
   if (first) first = 0;
   else {
-   if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,", ") != 0) {
+   if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,",") != 0) {
 err_iter: DeeSingleListIterator_Quit(&iter); goto err;
    }
   }
@@ -792,7 +839,38 @@ _deesinglelist_tp_seq_iter_self(DeeSingleListObject *self) {
  DeeAtomicMutex_Init(&result->sli_lock);
  return result;
 }
-
+static DeeObject *_deesinglelistiterator_tp_str(DeeSingleListIteratorObject *self) {
+ DeeObject *elem; struct DeeSingleListNode *stored_node;
+ DeeAtomicMutex_AcquireRelaxed(&self->sli_lock);
+ if (!self->sli_iter.sli_node) {
+  DeeAtomicMutex_Release(&self->sli_lock);
+  DeeReturn_STATIC_STRING("<single_list.iterator>");
+ }
+ stored_node = self->sli_iter.sli_node;
+ DeeSingleListNode_INCREF(stored_node);
+ DeeAtomicMutex_Release(&self->sli_lock);
+ DeeAtomicMutex_AcquireRelaxed(&self->sli_list->sl_list.sl_lock);
+ Dee_INCREF(elem = stored_node->sln_elem);
+ DeeAtomicMutex_Release(&self->sli_list->sl_list.sl_lock);
+ DeeSingleListNode_DECREF(stored_node);
+ return DeeString_Newf("<single_list.iterator -> %K>",elem);
+}
+static DeeObject *_deesinglelistiterator_tp_repr(DeeSingleListIteratorObject *self) {
+ DeeObject *elem; struct DeeSingleListNode *stored_node;
+ DeeAtomicMutex_AcquireRelaxed(&self->sli_lock);
+ if (!self->sli_iter.sli_node) {
+  DeeAtomicMutex_Release(&self->sli_lock);
+  DeeReturn_STATIC_STRING("<single_list.iterator>");
+ }
+ stored_node = self->sli_iter.sli_node;
+ DeeSingleListNode_INCREF(stored_node);
+ DeeAtomicMutex_Release(&self->sli_lock);
+ DeeAtomicMutex_AcquireRelaxed(&self->sli_list->sl_list.sl_lock);
+ Dee_INCREF(elem = stored_node->sln_elem);
+ DeeAtomicMutex_Release(&self->sli_list->sl_list.sl_lock);
+ DeeSingleListNode_DECREF(stored_node);
+ return DeeString_Newf("<single_list.iterator -> %R>",elem);
+}
 
 
 
@@ -882,6 +960,52 @@ static int DEE_CALL _deesinglelistiterator_tp_marshal_put(
 
 
 
+static DeeSingleListIteratorObject *DEE_CALL _deesinglelist_begin(
+ DeeSingleListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ struct DeeSingleListNode *result_node;
+ DeeSingleListIteratorObject *result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":begin") != 0) return NULL;
+ if DEE_UNLIKELY((result_node = DeeSingleList_Front(&self->sl_list)) == NULL) return NULL;
+ result = DeeSingleListIterator_New(self,result_node);
+ if (result_node) DeeSingleListNode_DECREF(result_node);
+ return result;
+}
+static DeeSingleListIteratorObject *DEE_CALL _deesinglelist_end(
+ DeeSingleListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":end") != 0) return NULL;
+ return DeeSingleListIterator_New(self,NULL);
+}
+
+
+static DeeSingleListIteratorObject *DEE_CALL _deesinglelist_insert(
+ DeeSingleListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *index,*elem; struct DeeSingleListNode *pos,*result_node; int error;
+ DeeSingleListIteratorObject *result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"oo:insert",&index,&elem) != 0) return NULL;
+ if DEE_UNLIKELY(DeeSingleListNode_PtrFromObject(&self->sl_list,index,&pos) != 0) return NULL;
+ error = DeeSingleList_Insert(&self->sl_list,pos,elem,&result_node);
+ if (pos) DeeSingleListNode_DECREF(pos);
+ if DEE_UNLIKELY(error != 0) return NULL;
+ result = DeeSingleListIterator_New(self,result_node);
+ if (result_node) DeeSingleListNode_DECREF(result_node);
+ return result;
+}
+static DeeSingleListIteratorObject *DEE_CALL _deesinglelist_insert_after(
+ DeeSingleListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *index,*elem; struct DeeSingleListNode *pos,*result_node; int error;
+ DeeSingleListIteratorObject *result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"oo:insert_after",&index,&elem) != 0) return NULL;
+ if DEE_UNLIKELY(DeeSingleListNode_PtrFromObject(&self->sl_list,index,&pos) != 0) return NULL;
+ error = DeeSingleList_InsertAfter(&self->sl_list,pos,elem,&result_node);
+ if (pos) DeeSingleListNode_DECREF(pos);
+ if DEE_UNLIKELY(error != 0) return NULL;
+ result = DeeSingleListIterator_New(self,result_node);
+ if (result_node) DeeSingleListNode_DECREF(result_node);
+ return result;
+}
+
+
+
 static struct DeeMethodDef const _deesinglelist_tp_methods[] = {
  // TODO: Intrinsic versions of all functions below
  DEE_METHODDEF_CONST_v100("at",member(&_deegenericiterable_at),DEE_DOC_AUTO),
@@ -901,9 +1025,16 @@ static struct DeeMethodDef const _deesinglelist_tp_methods[] = {
  DEE_METHODDEF_CONST_v100("segments",member(&_deegenericiterable_segments),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("sorted",member(&_deegenericiterable_sorted),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("transform",member(&_deegenericiterable_transform),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("begin",member(&_deesinglelist_begin),"() -> single_list.iterator"),
+ DEE_METHODDEF_v100("end",member(&_deesinglelist_end),"() -> single_list.iterator"),
+ DEE_METHODDEF_v100("insert",member(&_deesinglelist_insert),
+                    "(ssize_t index, object elem) -> single_list.iterator\n"
+                    "(single_list.iterator index, object elem) -> single_list.iterator\n"),
+ DEE_METHODDEF_v100("insert_after",member(&_deesinglelist_insert_after),
+                    "(ssize_t index, object elem) -> single_list.iterator\n"
+                    "(single_list.iterator index, object elem) -> single_list.iterator\n"),
  //TODO: DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("insert",member(&_deelist_insert),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("insert_list",member(&_deelist_insert_list),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("insert_iter",member(&_deelist_insert_iter),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("sorted_insert",member(&_deelist_sorted_insert),DEE_DOC_AUTO),
@@ -1007,7 +1138,9 @@ DeeTypeObject DeeSingleListIterator_Type = {
  DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,
   member(&_deesinglelistiterator_tp_dtor)),
  DEE_TYPE_OBJECT_ASSIGN_v100(null,null,null),
- DEE_TYPE_OBJECT_CAST_v101(null,null,null,null,null),
+ DEE_TYPE_OBJECT_CAST_v101(
+  member(&_deesinglelistiterator_tp_str),
+  member(&_deesinglelistiterator_tp_repr),null,null,null),
  DEE_TYPE_OBJECT_OBJECT_v101(null,
   member(&_deesinglelistiterator_tp_visit),null),
  DEE_TYPE_OBJECT_MATH_v101(

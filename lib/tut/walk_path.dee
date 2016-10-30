@@ -24,7 +24,6 @@
 #include <fs>
 #include <error>
 
-function walk;
 function walk(p) {
 	try {
 		for (x: fs.dir(p)) {
@@ -34,7 +33,7 @@ function walk(p) {
 			else
 				yield x;
 		}
-	} catch (Error::SystemError) {
+	} catch (Error.SystemError) {
 	}
 }
 

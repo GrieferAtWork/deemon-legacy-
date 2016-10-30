@@ -21,7 +21,7 @@
  */
 
 // Only functions marked as '[[copyable]]'
-// are allowed to copy stackframes.
+// are allowed to have their stackframes copied.
 function [[copyable]] test() {
 	print "Begin";
 	yield 10;

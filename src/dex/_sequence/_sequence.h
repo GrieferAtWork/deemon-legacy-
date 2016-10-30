@@ -62,7 +62,7 @@ do{ DeeAtomicInt_IncFetch((ob)->sln_refcnt,memory_order_seq_cst); }while(0)
 #define DeeSingleListNode_DECREF(ob)\
 do{\
  if (!DeeAtomicInt_DecFetch((ob)->sln_refcnt,memory_order_seq_cst)) {\
-  DEE_ASSERTF((ob)->sln_next == NULL,"Dead node has successor");\
+  /*DEE_ASSERTF((ob)->sln_next == NULL,"Dead node has successor");*/\
   Dee_DECREF((ob)->sln_elem);\
   free_nn(ob);\
  }\
@@ -186,11 +186,19 @@ struct DeeSingleListIteratorObject {
  struct DeeAtomicMutex          sli_lock; /*< Lock for this iterator. */
 };
 
+extern DEE_A_RET_EXCEPT_REF DeeSingleListIteratorObject *DeeSingleListIterator_New(
+ DEE_A_INOUT DeeSingleListObject *list,
+ DEE_A_INOUT_OPT struct DeeSingleListNode *node) DEE_ATTRIBUTE_NONNULL((1));
+
 
 extern DeeTypeObject DeeSingleList_Type;
 extern DeeTypeObject DeeSingleListIterator_Type;
 
 
+extern DEE_A_RET_EXCEPT(-1) int DeeSingleListNode_PtrFromObject(
+ DEE_A_IN DeeSingleList const *list, DEE_A_INOUT DeeObject *index,
+ /*ref(sln_refcnt)*/DEE_A_OUT struct DeeSingleListNode **result)
+ DEE_ATTRIBUTE_NONNULL((1,2,3));
 
 
 DEE_DECL_END
