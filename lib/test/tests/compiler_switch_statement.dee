@@ -1,0 +1,87 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+const function get_switch(x) {
+	switch (x) {
+
+		// v be careful to have some whitespace between the '10' and the '...',
+		//   as the preprocessor with interpret it as a point otherwise.
+		case 10 ... 20: // Case ranges (inclusive; x >= 10 && x <= 20)
+			if (x == 15) {
+		case 42: // Cases don't have to be on the same scope as the switch
+				return "15 or 42";
+			}
+			return "10...20";
+
+		case 0:
+			return "ZERO";
+			// fallthrough
+
+		default:
+			break;
+	}
+	return "DEFAULT";
+}
+
+assert get_switch(10) == "10...20";
+assert get_switch(11) == "10...20";
+assert get_switch(12) == "10...20";
+assert get_switch(19) == "10...20";
+assert get_switch(20) == "10...20";
+assert get_switch(21) != "10...20";
+assert get_switch(15) == "15 or 42";
+assert get_switch(42) == "15 or 42";
+assert get_switch(0)  == "ZERO";
+assert get_switch(77) == "DEFAULT";
+
+
+{
+local dead = false; // Hide the fact that the branch is actually dead
+
+if (dead) (({
+	local key = "a";
+
+	switch (key) {
+		// At one point there was a problem where the case was disappearing
+		// due to deemon optimizing the scope containing the print statements here away.
+		// >> That's been fixed now, but if it returns, this code will cause some compiler errors, bickering about undefined label endpoints
+		// TODO: The problem persists, and there must be some code that has the same problem
+		// TODO: This test case doesn't seem to cover that case, as a user still reports having the same problem unless compiling with -O0
+		// EDIT: The problem can now also be subverted with '-Cno-o-DEL_NOEFFECT', meaning we have narrowed it down to only a few routines within the optimizer
+		// EDIT2: The problem is now fixed (it only occurred if a no-effect statement caused a block to shrink down to 1 statement (as now tested by the __noop))
+		case "a": {
+			print "A";
+			__noop "Foobar";
+		} break;
+		case "b": {
+			print "B";
+		} break;
+		case "c": {
+			print "C";
+		} break;
+		default:
+			print "default";
+			break;
+	}
+}));
+
+}

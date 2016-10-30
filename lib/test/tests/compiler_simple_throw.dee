@@ -1,0 +1,127 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#include "__utils.dee"
+#include <__builtin_gcc.dee>
+
+// Internally, there are a lot of no-op being removed in here.
+// >> Make sure that they always properly re-align the lno tab.
+// NOTE: Don't use the function directly, but through a volatile
+//       function calling it. That way we can prevent any compiler
+//       optimizations from trying to evaluate the function at compile-time.
+// NOTE: Currently, deemon doesn't optimize '__builtin_LINE',
+//       but it might at some point in the future.
+volatile local bltn_ln = __builtin_LINE;
+#define assert_line() assert_equals(__LINE__,bltn_ln())
+
+// Test some simple throw statements
+//print repr __builtin_exprast
+(({
+	local const reachable_begin = __TPP_COUNTER(reachable)+1;
+	volatile local list reached;
+	// __builtin_reachable can be used to ensure a specific
+	// statement being reached and executed before the program terminates.
+	// NOTE: '__TPP_COUNTER' is an extension from tpp, evaluating
+	//       to an ever-incrementing preprocessor constant that is
+	//       unique to the provided keyword (in this case: 'reachable')
+#define __builtin_reachable() reached.append(__TPP_COUNTER(reachable))
+
+	__builtin_reachable();
+
+	assert_line();
+	try {
+		assert_line();
+		__builtin_reachable();
+		throw "Error #1";
+		__builtin_unreachable();
+	} catch (e...) {
+		__builtin_reachable();
+		assert e == "Error #1";
+		__builtin_reachable();
+	}
+	__builtin_reachable();
+
+	try {
+		__builtin_reachable();
+		assert_line();
+		throw "Error #2";
+		__builtin_unreachable();
+	} catch (...e) {
+		assert_line();
+		__builtin_reachable();
+		assert_line();
+		assert e == "Error #2";
+		__builtin_reachable();
+	}
+	__builtin_reachable();
+
+	try {
+		assert_line();
+		__builtin_reachable();
+		try {
+			assert_line();
+			__builtin_reachable();
+			try {
+				assert_line();
+				__builtin_reachable();
+				throw "nested";
+			} catch (object e) {
+				__builtin_reachable();
+				assert_line();
+				throw e;
+				__builtin_unreachable();
+			} catch (string e) {
+				__builtin_unreachable();
+			}
+			__builtin_unreachable();
+		} catch (int e) {
+			__builtin_unreachable();
+		}
+		__builtin_unreachable();
+	} catch (string e) {
+		assert_line();
+		__builtin_reachable();
+		assert e == "nested";
+	}
+	assert_line();
+
+	const reachable_end = __TPP_COUNTER(reachable);
+	for (local i = reachable_begin; i < reachable_end; ++i) {
+		assert i in reached : "Position not reachabed:"+str i;
+	}
+	assert_line();
+
+}));
+
+
+
+
+
+
+
+
+
+
+
+
+
+

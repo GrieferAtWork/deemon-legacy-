@@ -1,0 +1,63 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// Test breaking out of a catch block
+// NOTE: We execute this code in a different thread,
+//       as the bug that this is ensuring to not occurr
+//       is only detected once the thread executing the
+//       code in question terminates.
+//    >> In v101:1, this code used to leave one of the two
+//       exceptions being handled ("A" and "B") dangling
+//       on the stack of currently handled exceptions.
+
+#include <error>
+#include <thread>
+(({
+	local function critical_function(){
+		__looponce {
+			try {
+				throw "A";
+				__builtin_unreachable();
+			} catch (...) {
+				try {
+					throw "B";
+					__builtin_unreachable();
+				} catch (...) {
+					// This break escapes from two exception handlers
+					break;
+				}
+				__builtin_unreachable();
+			}
+			__builtin_unreachable();
+		}
+	}
+
+	__if_exists(critical_function) {
+		local t = thread(critical_function);
+		t.start();
+		t.join();
+
+		// And for good measure, call the function in the current thread as well
+		critical_function();
+	}
+}));
+

@@ -1,0 +1,215 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#define ASSERT_SAME_TYPE(x)\
+({\
+  __stack local temp = (x);\
+  __stack local pred = __builtin_typeof(x);\
+  assert pred == type temp :\
+    "Invalid predicted typeof(" #x ") " \
+	"(predicted: "+str pred+"; really: "+str type temp+")";\
+})
+
+#include <math>
+
+// Test Type prediction
+//print repr __builtin_exprast
+(({
+	volatile x = 42;
+	volatile y = 84;
+	ASSERT_SAME_TYPE(-(bool)x);
+	ASSERT_SAME_TYPE(-(float)x);
+	ASSERT_SAME_TYPE(-(double)x);
+	ASSERT_SAME_TYPE(-(long double)x);
+	ASSERT_SAME_TYPE(-(int8_t)x);
+	ASSERT_SAME_TYPE(-(int16_t)x);
+	ASSERT_SAME_TYPE(-(int32_t)x);
+	ASSERT_SAME_TYPE(-(int64_t)x);
+	ASSERT_SAME_TYPE(-(uint8_t)x);
+	ASSERT_SAME_TYPE(-(uint16_t)x);
+	ASSERT_SAME_TYPE(-(uint32_t)x);
+	ASSERT_SAME_TYPE(-(uint64_t)x);
+	ASSERT_SAME_TYPE(+(bool)x);
+	ASSERT_SAME_TYPE(+(float)x);
+	ASSERT_SAME_TYPE(+(double)x);
+	ASSERT_SAME_TYPE(+(long double)x);
+	ASSERT_SAME_TYPE(+(int8_t)x);
+	ASSERT_SAME_TYPE(+(int16_t)x);
+	ASSERT_SAME_TYPE(+(int32_t)x);
+	ASSERT_SAME_TYPE(+(int64_t)x);
+	ASSERT_SAME_TYPE(+(uint8_t)x);
+	ASSERT_SAME_TYPE(+(uint16_t)x);
+	ASSERT_SAME_TYPE(+(uint32_t)x);
+	ASSERT_SAME_TYPE(+(uint64_t)x);
+	ASSERT_SAME_TYPE(~(bool)x);
+	ASSERT_SAME_TYPE(~(int8_t)x);
+	ASSERT_SAME_TYPE(~(int16_t)x);
+	ASSERT_SAME_TYPE(~(int32_t)x);
+	ASSERT_SAME_TYPE(~(int64_t)x);
+	ASSERT_SAME_TYPE(~(uint8_t)x);
+	ASSERT_SAME_TYPE(~(uint16_t)x);
+	ASSERT_SAME_TYPE(~(uint32_t)x);
+	ASSERT_SAME_TYPE(~(uint64_t)x);
+	ASSERT_SAME_TYPE(!(bool)x);
+	ASSERT_SAME_TYPE(!(float)x);
+	ASSERT_SAME_TYPE(!(double)x);
+	ASSERT_SAME_TYPE(!(long double)x);
+	ASSERT_SAME_TYPE(!(int8_t)x);
+	ASSERT_SAME_TYPE(!(int16_t)x);
+	ASSERT_SAME_TYPE(!(int32_t)x);
+	ASSERT_SAME_TYPE(!(int64_t)x);
+	ASSERT_SAME_TYPE(!(uint8_t)x);
+	ASSERT_SAME_TYPE(!(uint16_t)x);
+	ASSERT_SAME_TYPE(!(uint32_t)x);
+	ASSERT_SAME_TYPE(!(uint64_t)x);
+	// NOTE: Bool doesn't support the inplace versions without any context
+	ASSERT_SAME_TYPE(++(int8_t)x);
+	ASSERT_SAME_TYPE(++(int16_t)x);
+	ASSERT_SAME_TYPE(++(int32_t)x);
+	ASSERT_SAME_TYPE(++(int64_t)x);
+	ASSERT_SAME_TYPE(++(uint8_t)x);
+	ASSERT_SAME_TYPE(++(uint16_t)x);
+	ASSERT_SAME_TYPE(++(uint32_t)x);
+	ASSERT_SAME_TYPE(++(uint64_t)x);
+	ASSERT_SAME_TYPE(--(int8_t)x);
+	ASSERT_SAME_TYPE(--(int16_t)x);
+	ASSERT_SAME_TYPE(--(int32_t)x);
+	ASSERT_SAME_TYPE(--(int64_t)x);
+	ASSERT_SAME_TYPE(--(uint8_t)x);
+	ASSERT_SAME_TYPE(--(uint16_t)x);
+	ASSERT_SAME_TYPE(--(uint32_t)x);
+	ASSERT_SAME_TYPE(--(uint64_t)x);
+	ASSERT_SAME_TYPE((int8_t)x++);
+	ASSERT_SAME_TYPE((int16_t)x++);
+	ASSERT_SAME_TYPE((int32_t)x++);
+	ASSERT_SAME_TYPE((int64_t)x++);
+	ASSERT_SAME_TYPE((uint8_t)x++);
+	ASSERT_SAME_TYPE((uint16_t)x++);
+	ASSERT_SAME_TYPE((uint32_t)x++);
+	ASSERT_SAME_TYPE((uint64_t)x++);
+	ASSERT_SAME_TYPE((int8_t)x--);
+	ASSERT_SAME_TYPE((int16_t)x--);
+	ASSERT_SAME_TYPE((int32_t)x--);
+	ASSERT_SAME_TYPE((int64_t)x--);
+	ASSERT_SAME_TYPE((uint8_t)x--);
+	ASSERT_SAME_TYPE((uint16_t)x--);
+	ASSERT_SAME_TYPE((uint32_t)x--);
+	ASSERT_SAME_TYPE((uint64_t)x--);
+
+	ASSERT_SAME_TYPE((bool)x+y);
+	ASSERT_SAME_TYPE((float)x+y);
+	ASSERT_SAME_TYPE((double)x+y);
+	ASSERT_SAME_TYPE((long double)x+y);
+	ASSERT_SAME_TYPE((int8_t)x+y);
+	ASSERT_SAME_TYPE((int16_t)x+y);
+	ASSERT_SAME_TYPE((int32_t)x+y);
+	ASSERT_SAME_TYPE((int64_t)x+y);
+	ASSERT_SAME_TYPE((uint8_t)x+y);
+	ASSERT_SAME_TYPE((uint16_t)x+y);
+	ASSERT_SAME_TYPE((uint32_t)x+y);
+	ASSERT_SAME_TYPE((uint64_t)x+y);
+
+	// NOTE: Floating point types don't implement binary operators
+	ASSERT_SAME_TYPE((bool)x&y);
+	ASSERT_SAME_TYPE((int8_t)x&y);
+	ASSERT_SAME_TYPE((int16_t)x&y);
+	ASSERT_SAME_TYPE((int32_t)x&y);
+	ASSERT_SAME_TYPE((int64_t)x&y);
+	ASSERT_SAME_TYPE((uint8_t)x&y);
+	ASSERT_SAME_TYPE((uint16_t)x&y);
+	ASSERT_SAME_TYPE((uint32_t)x&y);
+	ASSERT_SAME_TYPE((uint64_t)x&y);
+
+	ASSERT_SAME_TYPE((bool)x<<y);
+	ASSERT_SAME_TYPE((int8_t)x<<y);
+	ASSERT_SAME_TYPE((int16_t)x<<y);
+	ASSERT_SAME_TYPE((int32_t)x<<y);
+	ASSERT_SAME_TYPE((int64_t)x<<y);
+	ASSERT_SAME_TYPE((uint8_t)x<<y);
+	ASSERT_SAME_TYPE((uint16_t)x<<y);
+	ASSERT_SAME_TYPE((uint32_t)x<<y);
+	ASSERT_SAME_TYPE((uint64_t)x<<y);
+
+	ASSERT_SAME_TYPE((float)x += y);
+	ASSERT_SAME_TYPE((double)x += y);
+	ASSERT_SAME_TYPE((long double)x += y);
+	ASSERT_SAME_TYPE((int8_t)x += y);
+	ASSERT_SAME_TYPE((int16_t)x += y);
+	ASSERT_SAME_TYPE((int32_t)x += y);
+	ASSERT_SAME_TYPE((int64_t)x += y);
+	ASSERT_SAME_TYPE((uint8_t)x += y);
+	ASSERT_SAME_TYPE((uint16_t)x += y);
+	ASSERT_SAME_TYPE((uint32_t)x += y);
+	ASSERT_SAME_TYPE((uint64_t)x += y);
+
+	ASSERT_SAME_TYPE((float)x /= y);
+	ASSERT_SAME_TYPE((double)x /= y);
+	ASSERT_SAME_TYPE((long double)x /= y);
+	ASSERT_SAME_TYPE((int8_t)x /= y);
+	ASSERT_SAME_TYPE((int16_t)x /= y);
+	ASSERT_SAME_TYPE((int32_t)x /= y);
+	ASSERT_SAME_TYPE((int64_t)x /= y);
+	ASSERT_SAME_TYPE((uint8_t)x /= y);
+	ASSERT_SAME_TYPE((uint16_t)x /= y);
+	ASSERT_SAME_TYPE((uint32_t)x /= y);
+	ASSERT_SAME_TYPE((uint64_t)x /= y);
+
+	ASSERT_SAME_TYPE(math::sin((int)x));
+	ASSERT_SAME_TYPE(math::sin((float)x));
+	ASSERT_SAME_TYPE(math::sin((double)x));
+	ASSERT_SAME_TYPE(math::sin((long double)x));
+	ASSERT_SAME_TYPE(math::atan2((int)x,y));
+	ASSERT_SAME_TYPE(math::atan2((float)x,y));
+	ASSERT_SAME_TYPE(math::atan2((double)x,y));
+	ASSERT_SAME_TYPE(math::atan2((long double)x,y));
+	ASSERT_SAME_TYPE(math::sincos((int)x));
+	ASSERT_SAME_TYPE(math::sincos((float)x));
+	ASSERT_SAME_TYPE(math::sincos((double)x));
+	ASSERT_SAME_TYPE(math::sincos((long double)x));
+	ASSERT_SAME_TYPE(math::ilogb((int)x));
+	ASSERT_SAME_TYPE(math::ilogb((float)x));
+	ASSERT_SAME_TYPE(math::ilogb((double)x));
+	ASSERT_SAME_TYPE(math::ilogb((long double)x));
+	ASSERT_SAME_TYPE(math::i32round((int)x));
+	ASSERT_SAME_TYPE(math::i32round((float)x));
+	ASSERT_SAME_TYPE(math::i32round((double)x));
+	ASSERT_SAME_TYPE(math::i32round((long double)x));
+	ASSERT_SAME_TYPE(math::i64round((int)x));
+	ASSERT_SAME_TYPE(math::i64round((float)x));
+	ASSERT_SAME_TYPE(math::i64round((double)x));
+	ASSERT_SAME_TYPE(math::i64round((long double)x));
+	ASSERT_SAME_TYPE(math::remquo((int)x,y));
+	ASSERT_SAME_TYPE(math::remquo((float)x,y));
+	ASSERT_SAME_TYPE(math::remquo((double)x,y));
+	ASSERT_SAME_TYPE(math::remquo((long double)x,y));
+	ASSERT_SAME_TYPE(math::isfinite((int)x));
+	ASSERT_SAME_TYPE(math::isfinite((float)x));
+	ASSERT_SAME_TYPE(math::isfinite((double)x));
+	ASSERT_SAME_TYPE(math::isfinite((long double)x));
+	ASSERT_SAME_TYPE(math::isgreater((int)x,y));
+	ASSERT_SAME_TYPE(math::isgreater((float)x,y));
+	ASSERT_SAME_TYPE(math::isgreater((double)x,y));
+	ASSERT_SAME_TYPE(math::isgreater((long double)x,y));
+
+}));
+
+#undef ASSERT_SAME_TYPE

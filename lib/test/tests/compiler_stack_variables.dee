@@ -1,0 +1,184 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// Stack variables are somewhat special, and when used
+// properly can immensely speed up execution of a program.
+// Basically, instead of being stored in a local variable slot,
+// stack variables are kept on the stack, which is then rotated
+// in order to bring a specific variable to its top.
+// 
+// But due to that rotation, using them improperly will result
+// in extremely poor code execution.
+// 
+// NOTE: This test is in no case a good example of proper usage.
+//       It is mearly meant to simulate any many random situations
+//       a stack variable might find itself in, while making
+//       sure that its value will always be what it should be.
+
+
+#include <util>
+
+#define sadd(a,b)\
+(({\
+	__stack volatile local __a = (a);\
+	__stack volatile local __b = (b);\
+	__stack volatile local __result = __a+__b;\
+	assert __a == (a);\
+	assert __b == (b);\
+	__result;\
+}))
+#define ssub(a,b)\
+(({\
+	__stack volatile local __a = (a);\
+	__stack volatile local __b = (b);\
+	__stack volatile local __result = __a-__b;\
+	assert __a == (a);\
+	assert __b == (b);\
+	__result;\
+}))
+
+
+// Just do some random stuff with stack variables
+// and make sure that we always get what we wanted to.
+volatile local seq = [10,20,30];
+for (local i,x: util::enumerate(seq)) {
+	assert sadd(10,20) == 30;
+	assert ssub(10,20) == -10;
+	assert sadd(x,ssub(10,20)) == x-10;
+	assert sadd(x,ssub(sadd(2,7),20)) == x-11;
+	assert seq[i] == x;
+}
+
+
+// The following is a re-implementation of the algorithm
+// used by the '_hashlib' dex for generating its lookup tables.
+// Being quite complex, this re-implementation only uses __stack variables
+#define DEEMON_REFLECT(x,n_bits)\
+({\
+	__stack local __x = (x);\
+	__stack local __xt = __x.class;\
+	__stack local __r = (__xt)0;\
+	for (__stack local i = 0; i < (n_bits); ++i) {\
+		if (__x&(__xt(1) << i))\
+			__r |= __xt(1) << (((n_bits)-1)-i);\
+	}\
+	__r;\
+})
+
+#define DEEMON_GENERATE_CRC(width,polynom,reflect_input)\
+({\
+	__stack local result = [0]*256;\
+	__stack local width_mask = uint64_t(1) << ((width)-1);\
+	__stack local type_mask  = uint64_t(1);\
+	for (__stack local i = 1; i < (width); ++i) {\
+		type_mask <<= 1;\
+		type_mask |= 0x1;\
+	}\
+	__stack local hash_width = width;\
+	if (hash_width > 32) hash_width = 64;\
+	else if (hash_width > 16) hash_width = 32;\
+	else if (hash_width > 8) hash_width = 16;\
+	else hash_width = 8;\
+	__stack local crc_shift = 0;\
+	if ((width) < 8) crc_shift = 8-(width);\
+	for (__stack local i = uint64_t(0); i < 256; ++i) {\
+		__stack local reg = uint64_t((reflect_input) ? DEEMON_REFLECT(i,8) : copy i);\
+		reg <<= ((width)-8)+crc_shift;\
+		for (__stack local j = 0; j < 8; ++j) {\
+			if (reg & (width_mask << crc_shift)) {\
+				reg = (reg << 1) ^ ((polynom) << crc_shift);\
+			} else {\
+				reg <<= 1;\
+			}\
+		}\
+		if (reflect_input) {\
+			reg >>= crc_shift;\
+			reg = DEEMON_REFLECT(reg,width);\
+			reg <<= crc_shift;\
+		}\
+		reg >>= crc_shift;\
+		reg &= type_mask;\
+		reg <<= (hash_width-(width));\
+		result[i] = reg;\
+	}\
+	result;\
+})
+
+{
+	__stack local crc32_table = DEEMON_GENERATE_CRC(32,0x04c11db7,true);
+	__stack local list correct_crc32_table = {
+		0x00000000ui32,0x77073096ui32,0xee0e612cui32,0x990951baui32,0x076dc419ui32,0x706af48fui32,0xe963a535ui32,0x9e6495a3ui32,
+		0x0edb8832ui32,0x79dcb8a4ui32,0xe0d5e91eui32,0x97d2d988ui32,0x09b64c2bui32,0x7eb17cbdui32,0xe7b82d07ui32,0x90bf1d91ui32,
+		0x1db71064ui32,0x6ab020f2ui32,0xf3b97148ui32,0x84be41deui32,0x1adad47dui32,0x6ddde4ebui32,0xf4d4b551ui32,0x83d385c7ui32,
+		0x136c9856ui32,0x646ba8c0ui32,0xfd62f97aui32,0x8a65c9ecui32,0x14015c4fui32,0x63066cd9ui32,0xfa0f3d63ui32,0x8d080df5ui32,
+		0x3b6e20c8ui32,0x4c69105eui32,0xd56041e4ui32,0xa2677172ui32,0x3c03e4d1ui32,0x4b04d447ui32,0xd20d85fdui32,0xa50ab56bui32,
+		0x35b5a8faui32,0x42b2986cui32,0xdbbbc9d6ui32,0xacbcf940ui32,0x32d86ce3ui32,0x45df5c75ui32,0xdcd60dcfui32,0xabd13d59ui32,
+		0x26d930acui32,0x51de003aui32,0xc8d75180ui32,0xbfd06116ui32,0x21b4f4b5ui32,0x56b3c423ui32,0xcfba9599ui32,0xb8bda50fui32,
+		0x2802b89eui32,0x5f058808ui32,0xc60cd9b2ui32,0xb10be924ui32,0x2f6f7c87ui32,0x58684c11ui32,0xc1611dabui32,0xb6662d3dui32,
+		0x76dc4190ui32,0x01db7106ui32,0x98d220bcui32,0xefd5102aui32,0x71b18589ui32,0x06b6b51fui32,0x9fbfe4a5ui32,0xe8b8d433ui32,
+		0x7807c9a2ui32,0x0f00f934ui32,0x9609a88eui32,0xe10e9818ui32,0x7f6a0dbbui32,0x086d3d2dui32,0x91646c97ui32,0xe6635c01ui32,
+		0x6b6b51f4ui32,0x1c6c6162ui32,0x856530d8ui32,0xf262004eui32,0x6c0695edui32,0x1b01a57bui32,0x8208f4c1ui32,0xf50fc457ui32,
+		0x65b0d9c6ui32,0x12b7e950ui32,0x8bbeb8eaui32,0xfcb9887cui32,0x62dd1ddfui32,0x15da2d49ui32,0x8cd37cf3ui32,0xfbd44c65ui32,
+		0x4db26158ui32,0x3ab551ceui32,0xa3bc0074ui32,0xd4bb30e2ui32,0x4adfa541ui32,0x3dd895d7ui32,0xa4d1c46dui32,0xd3d6f4fbui32,
+		0x4369e96aui32,0x346ed9fcui32,0xad678846ui32,0xda60b8d0ui32,0x44042d73ui32,0x33031de5ui32,0xaa0a4c5fui32,0xdd0d7cc9ui32,
+		0x5005713cui32,0x270241aaui32,0xbe0b1010ui32,0xc90c2086ui32,0x5768b525ui32,0x206f85b3ui32,0xb966d409ui32,0xce61e49fui32,
+		0x5edef90eui32,0x29d9c998ui32,0xb0d09822ui32,0xc7d7a8b4ui32,0x59b33d17ui32,0x2eb40d81ui32,0xb7bd5c3bui32,0xc0ba6cadui32,
+		0xedb88320ui32,0x9abfb3b6ui32,0x03b6e20cui32,0x74b1d29aui32,0xead54739ui32,0x9dd277afui32,0x04db2615ui32,0x73dc1683ui32,
+		0xe3630b12ui32,0x94643b84ui32,0x0d6d6a3eui32,0x7a6a5aa8ui32,0xe40ecf0bui32,0x9309ff9dui32,0x0a00ae27ui32,0x7d079eb1ui32,
+		0xf00f9344ui32,0x8708a3d2ui32,0x1e01f268ui32,0x6906c2feui32,0xf762575dui32,0x806567cbui32,0x196c3671ui32,0x6e6b06e7ui32,
+		0xfed41b76ui32,0x89d32be0ui32,0x10da7a5aui32,0x67dd4accui32,0xf9b9df6fui32,0x8ebeeff9ui32,0x17b7be43ui32,0x60b08ed5ui32,
+		0xd6d6a3e8ui32,0xa1d1937eui32,0x38d8c2c4ui32,0x4fdff252ui32,0xd1bb67f1ui32,0xa6bc5767ui32,0x3fb506ddui32,0x48b2364bui32,
+		0xd80d2bdaui32,0xaf0a1b4cui32,0x36034af6ui32,0x41047a60ui32,0xdf60efc3ui32,0xa867df55ui32,0x316e8eefui32,0x4669be79ui32,
+		0xcb61b38cui32,0xbc66831aui32,0x256fd2a0ui32,0x5268e236ui32,0xcc0c7795ui32,0xbb0b4703ui32,0x220216b9ui32,0x5505262fui32,
+		0xc5ba3bbeui32,0xb2bd0b28ui32,0x2bb45a92ui32,0x5cb36a04ui32,0xc2d7ffa7ui32,0xb5d0cf31ui32,0x2cd99e8bui32,0x5bdeae1dui32,
+		0x9b64c2b0ui32,0xec63f226ui32,0x756aa39cui32,0x026d930aui32,0x9c0906a9ui32,0xeb0e363fui32,0x72076785ui32,0x05005713ui32,
+		0x95bf4a82ui32,0xe2b87a14ui32,0x7bb12baeui32,0x0cb61b38ui32,0x92d28e9bui32,0xe5d5be0dui32,0x7cdcefb7ui32,0x0bdbdf21ui32,
+		0x86d3d2d4ui32,0xf1d4e242ui32,0x68ddb3f8ui32,0x1fda836eui32,0x81be16cdui32,0xf6b9265bui32,0x6fb077e1ui32,0x18b74777ui32,
+		0x88085ae6ui32,0xff0f6a70ui32,0x66063bcaui32,0x11010b5cui32,0x8f659effui32,0xf862ae69ui32,0x616bffd3ui32,0x166ccf45ui32,
+		0xa00ae278ui32,0xd70dd2eeui32,0x4e048354ui32,0x3903b3c2ui32,0xa7672661ui32,0xd06016f7ui32,0x4969474dui32,0x3e6e77dbui32,
+		0xaed16a4aui32,0xd9d65adcui32,0x40df0b66ui32,0x37d83bf0ui32,0xa9bcae53ui32,0xdebb9ec5ui32,0x47b2cf7fui32,0x30b5ffe9ui32,
+		0xbdbdf21cui32,0xcabac28aui32,0x53b39330ui32,0x24b4a3a6ui32,0xbad03605ui32,0xcdd70693ui32,0x54de5729ui32,0x23d967bfui32,
+		0xb3667a2eui32,0xc4614ab8ui32,0x5d681b02ui32,0x2a6f2b94ui32,0xb40bbe37ui32,0xc30c8ea1ui32,0x5a05df1bui32,0x2d02ef8dui32,
+	};
+	assert crc32_table == correct_crc32_table;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

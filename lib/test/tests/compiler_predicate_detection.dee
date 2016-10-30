@@ -1,0 +1,103 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+#include <intrin>
+#include <cell>
+#include "__utils.dee"
+
+assert [](x) { return str x; } == __str__;
+assert [](x) { return repr x; } == __repr__;
+assert [](x) { return type x; } == __type__;
+assert [](x) { return copy x; } == __copy__;
+assert [](x) { return move x; } == __move__;
+assert [](x,y) { return x.operator __copyassign__(y); } == __copyassign__;
+assert [](x,y) { return x.operator __moveassign__(y); } == __moveassign__;
+assert [](x) { return !x; } == __not__;
+assert [](x) { return -x; } == __neg__;
+assert [](x) { return +x; } == __pos__;
+assert [](x) { return ~x; } == __inv__;
+assert [](x) { return &x; } == __ref__;
+assert [](x) { return *x; } == __deref__;
+assert [](x) { return ++x; } == __inc__;
+assert [](x) { return --x; } == __dec__;
+assert [](x) { return x++; } == __incpost__;
+assert [](x) { return x--; } == __decpost__;
+assert [](x,y) { return x < y; } == __lo__;
+assert [](x,y) { return x <= y; } == __le__;
+assert [](x,y) { return x == y; } == __eq__;
+assert [](x,y) { return x != y; } == __ne__;
+assert [](x,y) { return x > y; } == __gr__;
+assert [](x,y) { return x >= y; } == __ge__;
+assert [](x,y) { return x+y; } == __add__;
+assert [](x,y) { return x += y; } == __iadd__;
+assert [](x,y) { return x-y; } == __sub__;
+assert [](x,y) { return x -= y; } == __isub__;
+assert [](x,y) { return x*y; } == __mul__;
+assert [](x,y) { return x *= y; } == __imul__;
+assert [](x,y) { return x/y; } == __div__;
+assert [](x,y) { return x /= y; } == __idiv__;
+assert [](x,y) { return x%y; } == __mod__;
+assert [](x,y) { return x %= y; } == __imod__;
+assert [](x,y) { return x << y; } == __shl__;
+assert [](x,y) { return x <<= y; } == __ishl__;
+assert [](x,y) { return x >> y; } == __shr__;
+assert [](x,y) { return x >>= y; } == __ishr__;
+assert [](x,y) { return x&y; } == __and__;
+assert [](x,y) { return x &= y; } == __iand__;
+assert [](x,y) { return x|y; } == __or__;
+assert [](x,y) { return x |= y; } == __ior__;
+assert [](x,y) { return x^y; } == __xor__;
+assert [](x,y) { return x ^= y; } == __ixor__;
+assert [](x,y) { return x**y; } == __pow__;
+assert [](x,y) { return x **= y; } == __ipow__;
+assert [](x,y) { return x **= y; } == __ipow__;
+assert [](x,y) { return x(y...); } == __call__;
+assert [](x,y...) { return x(y...); } == __callv__;
+assert [](x) { return #x; } == __size__;
+assert [](x,y) { return x[y]; } == __getitem__;
+assert [](x,y,z) { return x[y] = z; } == __setitem__;
+assert [](x,y) { return ({ del x[y]; }); } == __delitem__;
+assert [](x,begin,end) { return x[begin:end]; } == __getrange__;
+assert [](x,begin,end,v) { return x[begin:end] = v; } == __setrange__;
+assert [](x,begin,end) { return ({ del x[begin:end]; }); } == __delrange__;
+assert [](x,y) { return x is y; } == __is__;
+assert [](x,y) { return y in x; } == __contains__;
+assert [](x,y) { return x.operator . (y); } == __getattr__;
+assert [](x,y) { return x.operator ?. (y); } == __hasattr__;
+assert [](x,y) { return x.operator del. (y); } == __delattr__;
+assert [](x,y,z) { return x.operator .= (y,z); } == __setattr__;
+assert [](x) { return x.operator __iterself__(); } == __iterself__;
+assert [](x) { return x.operator __iternext__(); } == __iternext__;
+assert [](x) { return <x>; } == cell;
+#if 0 /* TODO */
+function random_function(x,y,a...) { print "This is a random function"; }
+assert [](x) { return random_function(x); } == random_function;
+assert [](x,a,b,c) { return random_function(x,a,b,c); } == random_function;
+#endif
+
+// this was a problem at one point, so...
+assert [](x,unused) { return str x; } != __str__;
+assert [](x...) { return str x; } != __str__;
+
+
+

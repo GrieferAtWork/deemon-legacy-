@@ -1,0 +1,180 @@
+#!/usr/bin/deemon -Omax
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+#include "__utils.dee"
+
+// Sanity checks
+same_code(42,42);
+same_code(int,int);
+same_code(none,none);
+same_code(({ }),({ }));
+same_code(__FUNCTION__,__func__);
+same_code(42,({ 42; }));
+same_code(none,({ }));
+
+// Lambda syntax
+same_code((function{ print "Hello"; }),([] { print "Hello"; }));
+same_code((function{ print "Hello"; }),([&]{ print "Hello"; }));
+same_code((function{ print "Hello"; }),([=]{ print "Hello"; }));
+
+// Removal of constants from scopes during optimization
+same_code(({ const foo = 42; }),({ 42; }));
+
+
+// Removing unused blocks (scopes)
+same_code(
+	({ {{{{ print "Hello"; }}}} }),
+	({      print "Hello";      }));
+
+// Simplification of statements --> expressions
+same_code(
+	({ local a,b,c; print ({ if (a) { b; } else { c; } }); }),
+	({ local a,b,c; print a ? b : c; }));
+
+// Catch object --> catch all
+same_code(
+	({ try { throw "NOPE"; } catch (object e) { throw e; } }),
+	({ try { throw "NOPE"; } catch (...) { throw; } }));
+
+// Detection of explicit rethrow
+same_code(
+	({ try { throw "NOPE"; } catch (e...) { print "Error"; throw e; } }),
+	({ try { throw "NOPE"; } catch (...) { print "Error"; throw; } }));
+
+// No-op catch handler
+same_code(
+	({ try { throw "NOPE"; } catch (int x) { throw; } }),
+	({ throw "NOPE"; }));
+same_code(
+	({ try { throw "NOPE"; } catch (...) { throw; } }),
+	({ throw "NOPE"; }));
+
+// noexcept try block
+same_code(
+	({ try { 42; } catch (...) { print "Oh no!"; } }),
+	({ 42; }));
+same_code(
+	({ try { 42; } finally { print "done"; } }),
+	({ 42; print "done"; }));
+same_code(
+	({ local i; try { i; } finally { print "done"; } }),
+	({ print "done"; }));
+
+// deletion of unreachable code
+same_code( // Unreachable after simple noreturn
+	({ return; print "Unreachable"; }),
+	({ return; }));
+diff_code( // Reachable after possible noreturn (imagine the hidden no-op else branch)
+	({ local x; if (x) return; print "Reachable"; }),
+	({ local x; if (x) return; }));
+same_code( // Unreachable after parallel noreturn ast
+	({ local x; if (x) return; else throw "Nope!"; print "Unreachable"; }),
+	({ local x; if (x) return; else throw "Nope!"; }));
+
+// As of v101:2, deemon can detect this
+same_code( // Unreachable after noreturn ast (w/ re-reachable)
+	([]{ goto end; print "Unreachable"; end: print "Reachable"; }),
+	([]{ goto end;                      end: print "Reachable"; }));
+same_code( // Unreachable after parallel noreturn ast (w/ re-reachable)
+	([]{ local x = none; if (x) goto end; else return; print "Unreachable"; end: print "Reachable"; }),
+	([]{ local x = none; if (x) goto end; else return;                      end: print "Reachable"; }));
+
+same_code( // Unreachable in conditional branch w/ noreturn
+	({ local x; if (x) { return; print "Unreachable"; } print "Reachable"; }),
+	({ local x; if (x) { return;                      } print "Reachable"; }));
+
+// deletion of code without side-effects
+same_code(
+	({ print "a"; 42; print "b"; }),
+	({ print "a";     print "b"; }));
+
+// deletion of dead branches
+same_code(
+	({ if (false) { print "Unreachable"; } print "Reachable"; }),
+	({                                     print "Reachable"; }));
+	
+// foreach yield --> yieldall
+same_code(
+	([]{ local seq = []; for (local x: seq) yield x; }),
+	([]{ local seq = []; yield seq...; }));
+	
+// catch object --> catch all
+same_code(
+	({ try throw "NOPE!"; catch (object); }),
+	({ try throw "NOPE!"; catch (...);    }));
+	
+// throw --> rethrow
+same_code(
+	({ try throw "NOPE!"; catch (e...) throw e; }),
+	({ try throw "NOPE!"; catch  (...) throw;   }));
+
+// remove rethrow catchall
+same_code(
+	({ try throw "NOPE!"; catch (...) throw; }),
+	({     throw "NOPE!";                    }));
+
+
+// Inlining of expanded sequence elements
+same_code(({ local a,b,c,d; print [a,b,c,d]; }),({ local a,b,c,d; print [[a]...,b,[c,d]...]; }));
+same_code(({ local a,b,c,d; print [a,b,c,d]; }),({ local a,b,c,d; print [[a]...,b,c,d]; }));
+same_code(({ local a,b,c,d; print [a,b,c,d]; }),({ local a,b,c,d; print [a,b,[c]...,d]; }));
+same_code(({ local a,b,c,d; print [a,b,c,d]; }),({ local a,b,c,d; print [[a,b,[c]...]...,d]; }));
+same_code(({ local a,b,c,d; print [a,b,c,d]; }),({ local a,b,c,d; print [[a,b,c,d]...]; }));
+same_code(({ local a,b,c,d; print [a,b,c,d]; }),({ local a,b,c,d; print [[a,[b,c]...,d]...]; }));
+same_code(({ local a,b,c,d; print [a,b,c,d]; }),({ local a,b,c,d; print [[a,[b,c]...,[d]...]...]; }));
+same_code(({ local a,b,c,d; print [a,b,c,d]; }),({ local a,b,c,d; print [a,[b,c,d]...]; }));
+same_code(({ local a,b,c,d; print [a,b,c,d]; }),({ local a,b,c,d; print [[a,b,c]...,d]; }));
+
+// Removing unreferenced labels
+same_code(
+	([]{unreferenced_label: print "Hello"; }),
+	([]{                    print "Hello"; }));
+([]{
+	local x = false;
+	if (x) goto referenced_label;
+	// Not removing referenced labels
+	diff_code(
+		({referenced_label: print "Hello"; }),
+		({                  print "Hello"; }));
+referenced_label:; // Not a redefinition, as the ast above will be deleted
+})();
+
+
+// Optimization of sequence expanding
+same_code(
+	({ local seq; for (none: seq); }),
+	({ local seq; seq...; }));
+
+
+
+
+
+
+
+
+
+
+
+
+
+

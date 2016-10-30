@@ -215,10 +215,9 @@ void DeeCodeWriterDebugLnoTab_Relocate(
  DEE_A_INOUT struct DeeCodeWriterDebugLnoTab *self,
  DEE_A_IN Dee_size_t start, DEE_A_IN Dee_size_t size) {
  // Relocate debug line-number information
- Dee_size_t new_lno_addr,lno_addr,lno_offset_fix;
+ Dee_size_t new_lno_addr,lno_addr = 0;
+ Dee_size_t lno_offset_fix = size;
  struct _DeeCodeLnOffList *lno_iter,*lno_end;
- DEE_ASSERT(self);
- lno_offset_fix = size; lno_addr = 0;
  lno_end = (lno_iter = self->cwdlt_lnov)+self->cwdlt_lnoc;
  while (lno_iter != lno_end) {
   new_lno_addr = lno_addr+lno_iter->lno_addroff;
@@ -244,14 +243,14 @@ void DeeCodeWriterDebugLnoTab_Relocate(
 }
 
 
-DEE_A_RET_EXCEPT(-1) int DeeCodeWriterDebugLnoTab_PutAddrLnoff(
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeCodeWriterDebugLnoTab_PutAddrLnoff(
  DEE_A_INOUT struct DeeCodeWriterDebugLnoTab *self,
  DEE_A_IN Dee_size_t addr, DEE_A_IN Dee_int64_t lnoff) {
  struct _DeeCodeLnOffList *lno; Dee_size_t addroff;
  DEE_ASSERT(self);
  addroff = addr-self->cwdlt_addr;
- if (!addroff && self->cwdlt_lnoc)
-  return 0; // Don't put debug information if nothing changed and this isn't the first info
+ if (self->cwdlt_lnoc && !addroff)
+  return 1; // Don't put debug information if nothing changed and this isn't the first info
  self->cwdlt_addr = addr;
  // Add a new lno entry
  while (1) {
@@ -284,7 +283,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriterDebugLnoTab_PutAddrLnoff(
 DEE_A_RET_EXCEPT(-1) int DeeCodeWriterDebugFnoTab_PutAddrFile(
  DEE_A_INOUT struct DeeCodeWriterDebugFnoTab *self,
  DEE_A_IN Dee_size_t addr, DEE_A_INOUT DeeStringObject *file) {
- Dee_size_t fileid; DeeStringObject **iter,**end;
+ Dee_size_t fileid; DeeStringObject **iter,**end; int error;
  DEE_ASSERT(self);
  DEE_ASSERT(DeeObject_Check(file) && DeeString_Check(file));
  DEE_ASSERT(!self->cwdft_files || (DeeObject_Check(
@@ -310,10 +309,10 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriterDebugFnoTab_PutAddrFile(
   if ((self->cwdft_files = (DeeTupleObject *)DeeTuple_Pack(1,file)) == NULL) return -1;
  }
 put_fileid:
- if (DeeCodeWriterDebugLnoTab_PutAddrLnoff(&self->cwdft_lno,addr,
-  ((Dee_int64_t)fileid-(Dee_int64_t)(Dee_ssize_t)self->cwdft_fileid)) != 0) return -1;
- self->cwdft_fileid = fileid;
- return 0;
+ error = DeeCodeWriterDebugLnoTab_PutAddrLnoff(&self->cwdft_lno,addr,((
+  Dee_int64_t)fileid-(Dee_int64_t)(Dee_ssize_t)self->cwdft_fileid));
+ if (error == 0) self->cwdft_fileid = fileid;
+ return error;
 }
 
 DEE_A_RET_MAYBE_NULL char const *DeeCodeWriterDebugFnoTab_Addr2File(
@@ -369,9 +368,12 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriterDebug_PutFileAndLine(
  DEE_ASSERT(self);
  if (line != self->cwd_line) {
   // Put line information
-  if (DeeCodeWriterDebugLnoTab_PutAddrLnoff(
-   &self->cwd_lno,addr,line-self->cwd_line) != 0) return -1;
-  self->cwd_line = line;
+  error = DeeCodeWriterDebugLnoTab_PutAddrLnoff(&self->cwd_lno,addr,
+                                                line-self->cwd_line);
+  if (error < 0) return error;
+  else if (error == 0) {
+   self->cwd_line = line;
+  }
  }
  if (filename && filename != self->cwd_file) {
   // Put file information

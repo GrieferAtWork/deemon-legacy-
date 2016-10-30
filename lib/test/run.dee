@@ -1,0 +1,140 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+#include <fs>
+#include <sys>
+#include <pipe>
+#include <file>
+#include <process>
+
+
+local fast_mode = false;
+local tests = [];
+args = list(sys.argv);
+fs::chdir(fs::path::head(args.pop_front()));
+
+
+while (args && args.front().startswith("-")) {
+	arg = args.pop_front();
+	switch (arg) {
+		case "--fast":
+			// Disable level-2 tests (that is compilation and reparsing through the marshal)
+			fast_mode = true;
+			break;
+		case "--help":
+			print "Usage: deemon run.dee [ARGS...] [NAMES...=*]";
+			print "ARGS:";
+			print "    --help    Display this help message";
+			print "    --fast    Disable level-2 tests (compiling to marshaled data and reparsing that data)";
+			print "NAMES:";
+			print "    An optional list of test names accepting wildcards and defaulting to '*'";
+			print;
+			return 2;
+		default:
+			print file.io.stderr: "Unknown commandline switch:",arg;
+			break;
+	}
+}
+
+// Collect tests
+if (#args) {
+	for (local arg: args) {
+		for (local f: fs::query("tests/"+arg)) {
+			if (!f.startswith("__"))
+				tests.append(fs::path::abs(fs::path::join("tests",f)));
+		}
+	}
+} else {
+	for (local f: fs::dir("tests")) {
+		if (!f.startswith("__"))
+			tests.append(fs::path::abs(fs::path::join("tests",f)));
+	}
+}
+
+deemon_exe = fs::readlink("/proc/self/exe");
+
+for (local x: tests) {
+	local test,error,r,w,output_data;
+	print "Testing:",x;
+	test = process(deemon_exe,["-Omax",x]);
+	test.start();
+	error = test.join();
+	if (error != 0) {
+test_error:
+		print "\nTest failed with:",error,"\n";
+		return error;
+	}
+	if (!fast_mode) {
+		// Run the same test again, but this time generate a compiled source file
+		// NOTE: We stream the data through a pipe as
+		//       to not have to create a temporary file.
+		r,w = pipe.new()...;
+		test = process(deemon_exe,["-Omax","-c","-o /dev/stdout",x]);
+		test.stdout = w;
+		test.start();
+		w.close();
+		output_data = r.readall();
+		r.close();
+		error = test.join();
+		if (error != 0) goto test_error;
+		r,w = pipe.new()...;
+		test = process(deemon_exe,["-in=data","/dev/stdin"]);
+		test.stdin = r;
+		test.start();
+		r.close();
+		w.write(output_data);
+		w.close();
+		error = test.join();
+		if (error != 0) goto test_error;
+	}
+}
+
+print "\n>>> Everything OK <<<\n";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

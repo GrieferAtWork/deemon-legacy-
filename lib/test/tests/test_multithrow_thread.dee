@@ -1,0 +1,85 @@
+#!/usr/bin/deemon -Omax
+/* Copyright (c) 2016 Griefer@Work (https://sourceforge.net/users/grieferatwork) *
+ *                                                                               *
+ * This software is provided 'as-is', without any express or implied             *
+ * warranty. In no event will the authors be held liable for any damages         *
+ * arising from the use of this software.                                        *
+ *                                                                               *
+ * Permission is granted to anyone to use this software for any purpose,         *
+ * including commercial applications, and to alter it and redistribute it        *
+ * freely, subject to the following restrictions:                                *
+ *                                                                               *
+ * 1. The origin of this software must not be misrepresented; you must not       *
+ *    claim that you wrote the original software. If you use this software       *
+ *    in a product, an acknowledgement in the product documentation would be     *
+ *    appreciated but is not required.                                           *
+ * 2. Altered source versions must be plainly marked as such, and must not be    *
+ *    misrepresented as being the original software.                             *
+ * 3. This notice may not be removed or altered from any source distribution.    *
+*/
+
+#include <thread>
+#include <error>
+
+
+// Multiple exceptions (aka. throw-in-finall) have always been kind-of weird
+// >> And while the standard doesn't specify what should happen when a
+//    thread terminates with multiple exceptions set and is later re-joined,
+//    it is something possible to do in usercode, making it weakly
+//    undefined behavior with the requirement that at least one
+//    exception it packaged into an Error.ThreadCrash and rethrown.
+
+(({
+
+	local t = thread([]{
+		try {
+			throw "A";
+		} finally {
+			throw "B";
+		}
+	});
+
+	t.start();
+	local n_caught_exceptions = 0;
+	try {
+		try {
+			t.join();
+		} catch (Error.ThreadCrash) {
+			++n_caught_exceptions;
+		}
+	} catch (Error.ThreadCrash) {
+		++n_caught_exceptions;
+	}
+	
+	// Make sure that this corner-case is handled correctly
+	// HINT: Griefer@Work's implementation of deemon only throws
+	//       one error, though this is weak undefined behavior,
+	//       meaning two would be standard-conforming.
+	assert n_caught_exceptions == 1 || n_caught_exceptions == 2;
+
+}));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

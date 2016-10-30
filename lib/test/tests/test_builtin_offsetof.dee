@@ -1,0 +1,66 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+
+(({
+
+	struct test_struct {
+		int x;
+		float y;
+		struct {
+			double k;
+		} z[10];
+	};
+	// legacy_offsetof: Using legacy code, return the offset of a structure member
+	// -> This macro describes a C-standard-conforming implementation of 'offsetof'
+	// (Although I don't remember if (like deemon) C guaranties resolution of index-lookup)
+#define legacy_offsetof(s,m) __SIZE_TYPE__(&((s*)0)->m)
+	assert __builtin_offsetof(struct test_struct,z[4].k) ==
+	          legacy_offsetof(struct test_struct,z[4].k);
+	// Since what 'legacy_offsetof' does is actually something the compiler
+	// can optimize away, this test ensures that whatever the runtime would
+	// calculate is also equivalent to '__builtin_offsetof'
+	// -> We do this by forcing runtime evaluation with a local variable
+	local p = (struct test_struct *)0;
+	assert __SIZE_TYPE__(&p->z[4].k) == __builtin_offsetof(struct test_struct,z[4].k);
+
+	assert __builtin_types_compatible_p(struct test_struct,struct test_struct);
+	assert !__builtin_types_compatible_p(struct test_struct,int);
+#undef legacy_offsetof
+}));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

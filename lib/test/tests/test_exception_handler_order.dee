@@ -1,0 +1,60 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#include <error>
+
+//print repr __builtin_exprast
+(({
+	local list caught_errors;
+	try {
+		try {
+			// Throw an error
+			throw "Error!";
+		} catch (string e) {
+			assert e == "Error!";
+			// This handler should get executed
+			caught_errors.append(e);
+			// Throwing another exception won't invoke
+			// another handler from the list of handlers
+			// associated with this try-block
+			throw 42;
+		} catch (...) {
+			// aka. This shouldn't get executed!
+			__builtin_unreachable();
+		}
+		// We shouldn't get here either... (sanity check)
+		__builtin_unreachable();
+	} catch (e...) {
+		if (e is Error.RuntimeError.AssertionError) throw; // forward assertion errors
+		// This is where the 'throw 42;' should jump to
+		// >> Make sure it's the right error and add it to the list of caught ones
+		assert e is int;
+		assert e == 42;
+		caught_errors.append(e);
+	}
+
+	// Make sure all the right errors were caught in the right order
+	assert caught_errors == ["Error!",42];
+}));
+
+
+

@@ -16,7 +16,6 @@
 build/*
 lib/dex/*
 lib/dex.*/*
-lib/_*.dee
 src/deemon/runtime/libffi_linux/*
 !src/deemon/runtime/libffi_linux/clean_libffi.sh
 !src/deemon/runtime/libffi_linux/make_libffi.sh

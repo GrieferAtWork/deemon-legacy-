@@ -1,0 +1,164 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#include <file>
+#include <util>
+#include <error>
+
+(({
+	local function serialize(ob) {
+		file::writer buffer;
+		buffer.writem(ob);
+		return buffer.pack();
+	}
+	local function deserialize(data) {
+		file::writer buffer;
+		buffer.write(data);
+		buffer.rewind();
+		return buffer.readm();
+	}
+
+	local class_with_uuid_called = <>;
+	local class [[uuid("{834C96CC-C76B-4634-90DD-39AE157C00E2}")]] my_class_with_uuid {
+		foo_function() { class_with_uuid_called.set(this); return "Secret #1"; }
+	};
+
+	{
+		local data = serialize(my_class_with_uuid());
+		// By checking for the string 'foo_function' in the
+		// serialized data, we can find out if the class type
+		// was written as well.
+		assert "foo_function" !in data: "class with uuid should not have been serialized";
+		local inst = deserialize(data);
+		local res = inst.foo_function();
+		assert res is string && res == "Secret #1";
+		assert util::id(class_with_uuid_called.get()) == util::id(inst);
+	}
+	class_with_uuid_called.del();
+	// Retry writing an instance, but delete the class declaration
+	local inst2 = my_class_with_uuid();
+	del my_class_with_uuid;
+	local data = serialize(inst2);
+	del inst2;
+
+	// The declaration shouldn't be present here either
+	assert "foo_function" !in data: "class with uuid should not have been serialized";
+
+	// Now then! The following line should throw an error because
+	// no known type is matching the uuid of the class we just delete.
+	// >> Thus, the data can no longer be parsed
+	assert ({
+		__stack local exc = false;
+		try {
+			deserialize(data);
+			// v This is the error it should throw.
+		} catch (Error.RuntimeError.NotImplemented) {
+			exc = true;
+		}
+		exc;
+	});
+
+	// Do some more testing without a uuid in the type
+	// >> This time, the class declaration should be written
+	local class_without_uuid_called = <>;
+	local class my_class_without_uuid {
+		bar_function() { class_without_uuid_called.set(this); return "Secret #2"; }
+	};
+
+	local data = serialize(my_class_without_uuid());
+	assert "bar_function" in data: "class without uuid should have been serialized";
+	local inst = deserialize(data);
+	local res = inst.bar_function();
+	assert res is string && res == "Secret #2";
+	// Since the type was serialized, the type of 'inst' is different from 'my_class_without_uuid'
+	assert util::id(type inst) != util::id(my_class_without_uuid);
+
+	// Let me explain the following line.
+	// >> Since we just serialized the class type as well,
+	//    we also had to serialize all of the references
+	//    that any of its operators had.
+	//    Meaning that the link that used to point at 'class_without_uuid_called'
+	//    is no longer real, and instead points at an invisible cell only
+	//    accessible through 'bar_function'.
+	assert class_without_uuid_called.empty();
+
+#if 0
+	// This doesn't work currently
+	// -> The problem is, that in line <#1>, a type is serialized
+	//    that has a reference to one of its own instances:
+	//
+	//    class_without_uuid_called --> inst
+	//           ^                       |
+	//           |                       v
+	//      bar_function <---- my_class_without_uuid
+	//
+	// -> Now the serialization isn't really the problem (if you
+	//    let this run, you'll see it works and returns exactly
+	//    what it is supposed to return).
+	// -> What doesn't work is the 'deserialize' on line <#2>.
+	//    Because the thing that the marshal is incapable of doing right
+	//    now, is the loopback from 'my_class_without_uuid' to 'inst'.
+	//    Because in order to create the class, it implicitly requires
+	//    the reference to 'inst' (the marshal will choose reference id 0x0 in this case)
+	//    Yet in order to register 'inst' as an available reference, it would
+	//    have to be allocated first. But in order to do that, it needs
+	//    to have a valid type (my_class_without_uuid).
+	//    --> And with that, we're back at the start, having just
+	//        created a reference loop that can't be resolved when being parsed.
+	//    --> The marshal won't crash and burn though.
+	//        'deserialize' will just tell you that reference 0x0
+	//        (the one supposed to point at 'inst') was never defined,
+	//        causing it to abort and fail just as it should.
+	//
+	// Conclusion:
+	//    In order to get the read part of this working, the marshal
+    //    would require the ability of returning references to objects
+    //    before they would have been initialized.
+    //    While that is possible with a function like:
+    //    >> // Registers a pointer to an object, to be filled with NULL and
+    //    >> // assigned an actual object at some point in the future.
+    //    >> int DeeMarshal_ReadFutureObjectWithMap(..., DEE_A_OUT DeeObject **ob);
+    //    This would completely destroy the possibility of safe [1..1] object
+    //    references, thereby preventing this from being a feasable solution.
+    //
+
+	// Now we delete the class declaration and re-serialize the instance
+	class_without_uuid_called.del();
+	del my_class_without_uuid;
+	local new_data = serialize(inst); // #1
+	del inst;
+
+	print string::hexdump(data);
+	print string::hexdump(new_data);
+	// At this point, neither the class, nor an instance exists.
+	// >> All that is left, is the serialized data of one of its instances.
+	local disconnected_instance = deserialize(new_data); // #2
+	assert (type disconnected_instance).tp_name == "my_class_without_uuid";
+	assert disconnected_instance.bar_function() == "Secret #2";
+	assert class_without_uuid_called.empty();
+#endif
+
+}));
+
+
+
+

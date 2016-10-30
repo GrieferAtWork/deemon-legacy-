@@ -1084,7 +1084,7 @@ static int DEE_CALL _deecodedebuginfo_tp_marshal_ctor(
    }
    if DEE_UNLIKELY(DeeFile_ReadAll(infile,self->di_fno,fno_size*sizeof(struct _DeeCodeLnOffList)) != 0)
    {err_fno: free_nn(self->di_fno); goto err_lno; }
-   ((Dee_uint16_t *)self->di_fno)[lno_size] = 0;
+   ((Dee_uint16_t *)self->di_fno)[fno_size] = 0;
    // Read the filename tab
    if DEE_UNLIKELY((self->di_file_names = (struct DeeTupleObject  *)
     DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) goto err_fno;

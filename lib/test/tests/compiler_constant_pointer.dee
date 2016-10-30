@@ -1,0 +1,65 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+ 
+// Test some stuff about pointers known at compile-time
+// >> Basically, pointers to strings aren't allowed at compile-time
+
+
+// Sanity checks
+assert __builtin_constant_p("foobar");
+assert __builtin_constant_p(L"foobar");
+assert __builtin_constant_p(u"foobar");
+assert __builtin_constant_p(U"foobar");
+assert __builtin_constant_p(0);
+assert __builtin_constant_p(none);
+assert __builtin_constant_p(char *);
+assert __builtin_constant_p(wchar_t *);
+assert __builtin_constant_p(char16_t *);
+assert __builtin_constant_p(char32_t *);
+
+// Make sure that the string-pointer isn't constant
+// >> If we allowed it to be, it would point into invalid memory at runtime
+// Plus: It would point somewhere else everytime the program is run.
+// And what kind of constant changes all the time?
+assert !__builtin_constant_p((char *)"foobar");
+assert  __builtin_constant_p((char *)0);
+assert  __builtin_constant_p((char *)none);
+
+// Some more sanity checks, making sure that this applies to all string types
+// (Note: it should always, as the compiler uses a white-list of types suitable
+//        for compile-time pointer resolution, that only includes integral types)
+assert !__builtin_constant_p((wchar_t *)L"foobar");
+assert !__builtin_constant_p((char16_t *)u"foobar");
+assert !__builtin_constant_p((char32_t *)U"foobar");
+
+
+
+
+
+
+
+
+
+
+
+

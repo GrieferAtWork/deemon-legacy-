@@ -1,0 +1,141 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+(({
+
+[[unused]] hashlib = __builtin_dex("_hashlib");
+[[unused]] crc = hashlib.crc;
+[[unused]] crc_algorithm = hashlib.crc_algorithm;
+
+function hex(x) {
+	local size = x.class.tp_p_instance_size;
+	return ("%#."+(size*2)+"I"+(size*8)+"x") % x;
+}
+
+function check_crc(name,check) {
+	res = crc(name,"123456789");
+	if (res != check)
+		print "[-] Invalid hash for %-20s: %s != %s" % (name,hex(res),hex(check));
+	//else
+	//	print "[+] Correct hash for %-20s: %s == %s" % (name,hex(res),hex(check));
+}
+
+
+check_crc("CRC-1",0x1ui8);
+check_crc("CRC-3/ROHC",0x6ui8);
+check_crc("CRC-4/INTERLAKEN",0xbui8);
+check_crc("CRC-4/ITU",0x7ui8);
+check_crc("CRC-5/EPC",0x00ui8);
+check_crc("CRC-5/ITU",0x07ui8);
+check_crc("CRC-5/USB",0x19ui8);
+check_crc("CRC-6/CDMA2000-A",0x0dui8);
+check_crc("CRC-6/CDMA2000-B",0x3bui8);
+check_crc("CRC-6/DARC",0x26ui8);
+check_crc("CRC-6/ITU",0x06ui8);
+check_crc("CRC-7",0x75ui8);
+check_crc("CRC-7/ROHC",0x53ui8);
+check_crc("CRC-7/UMTS",0x61ui8);
+check_crc("CRC-8",0xf4ui8);
+check_crc("CRC-8/AUTOSAR",0xdfui8);
+check_crc("CRC-8/CDMA2000",0xdaui8);
+check_crc("CRC-8/DARC",0x15ui8);
+check_crc("CRC-8/DVB-S2",0xbcui8);
+check_crc("CRC-8/EBU",0x97ui8);
+check_crc("CRC-8/I-CODE",0x7eui8);
+check_crc("CRC-8/ITU",0xa1ui8);
+check_crc("CRC-8/LTE",0xeaui8);
+check_crc("CRC-8/MAXIM",0xa1ui8);
+check_crc("CRC-8/OPENSAFETY",0x3eui8);
+check_crc("CRC-8/ROHC",0xd0ui8);
+check_crc("CRC-8/SAE-J1850",0x4bui8);
+check_crc("CRC-8/WCDMA",0x25ui8);
+check_crc("CRC-10",0x199ui16);
+check_crc("CRC-10/CDMA2000",0x233ui16);
+check_crc("CRC-11",0x5a3ui16);
+check_crc("CRC-11/UMTS",0x061ui16);
+check_crc("CRC-12/CDMA2000",0xd4dui16);
+check_crc("CRC-12/DECT",0xf5bui16);
+//TODO: check_crc("CRC-12/UMTS",0xdafui16);
+check_crc("CRC-13/BBC",0x04faui16);
+check_crc("CRC-14/DARC",0x082dui16);
+check_crc("CRC-15",0x059eui16);
+check_crc("CRC-15/MPT1327",0x2566ui16);
+check_crc("ARC",0xbb3dui16);
+check_crc("CRC-16/AUG-CCITT",0xe5ccui16);
+check_crc("CRC-16/BUYPASS",0xfee8ui16);
+check_crc("CRC-16/CCITT-FALSE",0x29b1ui16);
+check_crc("CRC-16/CDMA2000",0x4c06ui16);
+check_crc("CRC-16/CMS",0xaee7ui16);
+check_crc("CRC-16/DDS-110",0x9ecfui16);
+check_crc("CRC-16/DECT-R",0x007eui16);
+check_crc("CRC-16/DECT-X",0x007fui16);
+check_crc("CRC-16/DNP",0xea82ui16);
+check_crc("CRC-16/EN-13757",0xc2b7ui16);
+check_crc("CRC-16/GENIBUS",0xd64eui16);
+check_crc("CRC-16/LJ1200",0xbdf4ui16);
+check_crc("CRC-16/MAXIM",0x44c2ui16);
+check_crc("CRC-16/MCRF4XX",0x6f91ui16);
+check_crc("CRC-16/OPENSAFETY-A",0x5d38ui16);
+check_crc("CRC-16/OPENSAFETY-B",0x20feui16);
+check_crc("CRC-16/PROFIBUS",0xa819ui16);
+check_crc("CRC-16/RIELLO",0x63d0ui16);
+check_crc("CRC-16/T10-DIF",0xd0dbui16);
+check_crc("CRC-16/TELEDISK",0x0fb3ui16);
+check_crc("CRC-16/TMS37157",0x26b1ui16);
+check_crc("CRC-16/USB",0xb4c8ui16);
+check_crc("CRC-A",0xbf05ui16);
+check_crc("KERMIT",0x2189ui16);
+check_crc("MODBUS",0x4b37ui16);
+check_crc("X-25",0x906eui16);
+check_crc("XMODEM",0x31c3ui16);
+check_crc("CRC-24",0x21cf02ui32);
+check_crc("CRC-24/BLE",0xd39857ui32);
+//check_crc("CRC-24/BLE",0xc25a56ui32); // that's not the checksum...
+check_crc("CRC-24/FLEXRAY-A",0x7979bdui32);
+check_crc("CRC-24/FLEXRAY-B",0x1f23b8ui32);
+check_crc("CRC-24/INTERLAKEN",0xb4f3e6ui32);
+check_crc("CRC-24/LTE-A",0xcde703ui32);
+check_crc("CRC-24/LTE-B",0x23ef52ui32);
+check_crc("CRC-30/CDMA",0x04c34abfui32);
+check_crc("CRC-31/PHILIPS",0x0ce9e46cui32);
+check_crc("CRC-32",0xcbf43926ui32);
+check_crc("CRC-32/AUTOSAR",0x1697d06aui32);
+check_crc("CRC-32/BZIP2",0xfc891918ui32);
+check_crc("CRC-32C",0xe3069283ui32);
+check_crc("CRC-32D",0x87315576ui32);
+check_crc("CRC-32/MPEG-2",0x0376e6e7ui32);
+check_crc("CRC-32/POSIX",0x765e7680ui32);
+check_crc("CRC-32Q",0x3010bf7fui32);
+check_crc("JAMCRC",0x340bc6d9ui32);
+check_crc("XFER",0xbd0be338ui32);
+
+check_crc("CRC-40/GSM",0xd4164fc646ui64);
+check_crc("CRC-64",0x6c40df5f0b497347ui64);
+check_crc("CRC-64/WE",0x62ec59e3f1a4f00aui64);
+check_crc("CRC-64/XZ",0x995dc9bbdf1939faui64);
+//check_crc("CRC-82/DARC",0x09ea83f625023801fd612ui128); // that's future's music...
+
+check_crc("CRC-64/JONES",0xCAA717168609F281ui64);
+check_crc("CRC-64/ECMA",0x2b9c7ee4e2780c8aui64);
+check_crc("CRC-64/ISO",0x46a5a9388a5beffeui64);
+
+}));

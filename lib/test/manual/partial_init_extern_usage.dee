@@ -1,0 +1,71 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+// This test ensures that deemon can correctly handle
+// usage of an instance while that instance is still being constructed.
+// >> Alongside that, we also make sure that only the correct destructors
+//    of partially constructed objects get executed (something, that's quite
+//    complicated, as the runtime can't change the type of a partially
+//    constructed object if it isn't unique (aka. used externally))
+// NOTE: The actual output of this prograss will differ every time
+//       it is called, due to the nature of multi-threading.
+
+#include <thread>
+#include <error>
+
+cl = <>; // Reminder: this is a cell
+class a {
+	property foo = { get() -> this.value; }
+	this() { print __FUNCTION__; cl.set(this); }
+	~this() { print __FUNCTION__; }
+};
+class b: a {
+	this() { print __FUNCTION__; }
+	~this() { print __FUNCTION__; }
+};
+class c: b {
+	this() { print __FUNCTION__; this.value = 42; throw "NOPE"; }
+	~this() { print "YOU WEREN'T SUPPOSED TO GET HERE " __FUNCTION__ "!\n"*100; }
+};
+
+
+t = thread([]{
+	// Just a thread that constantly reads from the cell
+	// that the class instance is stored inside of.
+	for (;;) {
+		thread.check_interrupt();
+		try print cl.get().foo;
+		catch (Error.AttributeError e) print e;
+		catch (...);
+	}
+});
+
+t.start();
+assert cl.empty();
+
+local temp = c();
+print "c() returned:",temp;
+print "cell contains:",cl.get();
+
+t.interrupt();
+t.join();
+

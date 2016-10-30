@@ -1,0 +1,82 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+#include "__utils.dee"
+
+assert_equals("42",                          "".replace("","42"));
+assert_equals("",                            "".replace(" ","42"));
+assert_equals("",                            "".replace("",""));
+assert_equals(" ",                           " ".replace("",""));
+assert_equals("42",                          " ".replace(" ","42"));
+assert_equals("42 ",                         " ".replace(" ","42 "));
+assert_equals(" 42",                         " ".replace(" "," 42"));
+assert_equals(" 42 ",                        " ".replace(" "," 42 "));
+assert_equals("-,-foo-,-bar-,-",             ",foo,bar,".replace(",","-,-"));
+assert_equals(["foo\r\n","bar\r\n","foobar"],"foo\r\nbar\r\nfoobar".splitlines(true));
+assert_equals(["foo\r","bar\r","foobar"],    "foo\rbar\rfoobar".splitlines(true));
+assert_equals(["foo\n","bar\n","foobar"],    "foo\nbar\nfoobar".splitlines(true));
+assert_equals(["foo","bar","foobar"],        "foo\r\nbar\r\nfoobar".splitlines(false));
+assert_equals(["foo","bar","foobar"],        "foo\rbar\rfoobar".splitlines(false));
+assert_equals(["foo","bar","foobar"],        "foo\nbar\nfoobar".splitlines(false));
+assert_equals([10,20,30],                    [pack(10,20,30)...]);
+
+// v101:2-style string formating
+assert_equals("Griefer@Work",        "{me}".format({ .me = "Griefer@Work" }));
+assert_equals("GRIEFER@WORK",        "{me.upper()}".format({ .me = "Griefer@Work" }));
+assert_equals("riefer@Work",         "{me[1:]}".format({ .me = "Griefer@Work" }));
+assert_equals("Goiefeo@Wook",        "{me.replace(r,o)}".format({ .me = "Griefer@Work" }));
+assert_equals("Hello foo, I'm bar",  "Hello {}, I'm {}".format({ "foo","bar" }));
+assert_equals("Hello foo, I'm bar",  "Hello {0}, I'm {1}".format({ "foo","bar" }));
+assert_equals("Hello foo, I'm bar",  "Hello {1}, I'm {0}".format({ "bar","foo" }));
+assert_equals("Hello FOO, I'm bar",  "Hello {1.upper()}, I'm {0}".format({ "bar","foo" }));
+assert_equals("Hello  foo , I'm bar","Hello {you.center({width})}, I'm {me}".format({ .you = "foo", .me = "bar", .width = 5 }));
+
+
+{ // Runtime initialization of static variables
+	function static_init(x) {
+		// v static variable initialized at runtime
+		//   Note, that we can cause this to throw an error
+		static result = ({ if (x == 20) throw "Nope!"; x+7; });
+		return result;
+	}
+
+	assert ({ local r; try r = static_init(20); catch (e...) r = e; r; }) == "Nope!";
+	assert ({ local r; try r = static_init(20); catch (e...) r = e; r; }) == "Nope!";
+	assert static_init(10) == 17;
+	assert static_init(20) == 17;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

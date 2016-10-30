@@ -1,0 +1,55 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#include <error>
+
+// Make sure throw-in-finally works as intended
+(({
+	local n_exceptions = 0;
+	try {
+		try {
+			// Cause two errors to exist at once
+			try {
+				throw "Error #1";
+			} finally {
+				throw "Error #2";
+			}
+		} catch (local e...) {
+			// Catch the first and make sure its the correct one
+			assert e == "Error #2";
+			++n_exceptions;
+		}
+		// We should never get here, dispite the presence of a catch-all handler
+		__builtin_unreachable();
+	} catch (local e...) {
+		// Incase the first assertion already failed...
+		if (e is Error.RuntimeError.AssertionError) throw;
+		// Catch the second
+		assert e == "Error #1";
+		++n_exceptions;
+	}
+	assert n_exceptions == 2;
+}));
+
+
+
+

@@ -1,0 +1,107 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+// Sanity checks for stuff that should really go without saying...
+
+// Ugh... whatevs.
+// >> Make sure that asserts work correctly
+assert true;
+assert true == true;
+assert false == false;
+assert false != true;
+assert true != false;
+
+// make sure that assertions can also fail
+assert ({
+	// NOTE: 'volatile' is required to prevent the
+	//       optimizer from inlining these variables.
+	volatile local fail = false;
+	volatile local failed = false;
+	try assert fail;
+	catch (...) failed = true;
+	failed;
+}) : "Assertions don't work, so you probably can't even read this...";
+
+// Test integer/float/character/string constants
+assert 42 is int;
+assert 42u is unsigned int;
+assert 42l is long;
+assert 42ul is unsigned long;
+assert 42ll is long long;
+assert 42ull is unsigned long long;
+assert 42i8 is int8_t;
+assert 42i16 is int16_t;
+assert 42i32 is int32_t;
+assert 42ui8 is uint8_t;
+assert 42ui16 is uint16_t;
+assert 42ui32 is uint32_t;
+assert 42.0f is float;
+assert 42.0 is double;
+assert 42.0L is long double;
+assert '\x42' is char;
+assert L'\x42' is wchar_t;
+assert u'\x42' is char16_t;
+assert U'\x42' is char32_t;
+assert "foobar" is string;
+assert L"foobar" is string::wide;
+assert u"foobar" is string::utf16;
+assert U"foobar" is string::utf32;
+
+#if _INTEGRAL_MAX_BITS >= 64
+assert 42i64 is int64_t;
+assert 42ui64 is uint64_t;
+#if _INTEGRAL_MAX_BITS >= 128
+assert 42i128 is int128_t;
+assert 42ui128 is uint128_t;
+#if _INTEGRAL_MAX_BITS >= 256
+assert 42i256 is int256_t;
+assert 42ui256 is uint256_t;
+#if _INTEGRAL_MAX_BITS >= 512
+assert 42i512 is int512_t;
+assert 42ui512 is uint512_t;
+#if _INTEGRAL_MAX_BITS >= 1024
+assert 42i1024 is int1024_t;
+assert 42ui1024 is uin1024_t;
+#endif
+#endif
+#endif
+#endif
+#endif
+
+// Yes! Unlike gcode, deemon actually knows about operator order!
+assert 2+2*2 == 6;
+assert 2*2+2 == 6;
+
+// I guess test integer underflow... °~°
+assert uint8_t(-1) == 0xFF;
+
+// Detecting and parsing these were a problem that tpp had once
+assert .0f is float;
+assert .0 is double;
+assert .0L is long double;
+
+// Test integer promotion
+assert (10i8+20i8) is int;
+assert (10ui8+20ui8) is int; // NOTE: Promoted to 'int', not 'unsigned int'
+
+

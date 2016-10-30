@@ -1,0 +1,191 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#pragma once
+
+// Sanity checks on simple statements
+assert  __builtin_noeffect(({ 42; }));
+assert  __builtin_noexcept(({ 42; }));
+assert !__builtin_noreturn(({ 42; }));
+assert !__builtin_noeffect(({ print; }));
+assert !__builtin_noexcept(({ print; }));
+assert !__builtin_noreturn(({ print; }));
+assert !__builtin_noeffect(({ print 42; }));
+assert !__builtin_noexcept(({ print 42; }));
+assert !__builtin_noreturn(({ print 42; }));
+assert !__builtin_noeffect(({ return; }));
+assert  __builtin_noexcept(({ return; }));
+assert  __builtin_noreturn(({ return; }));
+assert !__builtin_noeffect(({ return 42; }));
+assert  __builtin_noexcept(({ return 42; }));
+assert  __builtin_noreturn(({ return 42; }));
+assert !__builtin_noeffect(({ throw; }));
+assert !__builtin_noexcept(({ throw; }));
+assert  __builtin_noreturn(({ throw; }));
+assert !__builtin_noeffect(({ throw 42; }));
+assert !__builtin_noexcept(({ throw 42; }));
+assert  __builtin_noreturn(({ throw 42; }));
+
+// noexcept
+assert !__builtin_noeffect(({ try { print "Hi!"; return; } catch (...) { } }));
+assert  __builtin_noexcept(({ try { print "Hi!"; return; } catch (...) { } }));
+assert !__builtin_noreturn(({ try { print "Hi!"; return; } catch (...) { } }));
+
+// empty try block sanity checks
+assert  __builtin_noeffect(({ try { } catch (...) { } }));
+assert  __builtin_noexcept(({ try { } catch (...) { } }));
+assert !__builtin_noreturn(({ try { } catch (...) { } }));
+
+// noexcept try block sanity checks
+assert  __builtin_noexcept(({ try { local i = 42; } catch (...) { } }));
+assert !__builtin_noreturn(({ try { local i = 42; } catch (...) { } }));
+
+// noreturn in try-block
+assert  __builtin_noexcept(({ try { return; } catch (...) { } }));
+assert  __builtin_noreturn(({ try { return; } catch (...) { } }));
+
+// noexcept sanity checks
+assert  __builtin_noexcept(({ local i = 42; }));
+assert !__builtin_noreturn(({ local i = 42; }));
+
+// noreturn after noexcept in try-block
+assert  __builtin_noexcept(({ try { local i = 42; return; } catch (...) { } }));
+assert  __builtin_noreturn(({ try { local i = 42; return; } catch (...) { } }));
+
+// Stand-alone throw
+assert !__builtin_noexcept(({ throw "NOPE!"; }));
+assert  __builtin_noreturn(({ throw "NOPE!"; }));
+
+// Throw w/ catch-all handler
+assert  __builtin_noexcept(({ try { throw "NOPE!"; } catch (...) { } }));
+assert !__builtin_noreturn(({ try { throw "NOPE!"; } catch (...) { } }));
+
+// Detection of noreturn/noexcept in parallel branches
+assert !__builtin_noeffect(({ local x; if (x) return; }));
+assert  __builtin_noexcept(({ local x; if (x) return; }));
+assert !__builtin_noreturn(({ local x; if (x) return; }));
+assert !__builtin_noeffect(({ local x; if (x) return; else return; }));
+assert  __builtin_noexcept(({ local x; if (x) return; else return; }));
+assert  __builtin_noreturn(({ local x; if (x) return; else return; }));
+assert !__builtin_noeffect(({ local x; if (x) return; else return x; }));
+assert  __builtin_noexcept(({ local x; if (x) return; else return x; }));
+assert  __builtin_noreturn(({ local x; if (x) return; else return x; }));
+assert !__builtin_noeffect(({ local x; if (x) return; else throw x; }));
+assert !__builtin_noexcept(({ local x; if (x) return; else throw x; }));
+assert  __builtin_noreturn(({ local x; if (x) return; else throw x; }));
+assert !__builtin_noeffect(({ local x; if (x) return; else throw "Nope!"; }));
+assert !__builtin_noexcept(({ local x; if (x) return; else throw "Nope!"; }));
+assert  __builtin_noreturn(({ local x; if (x) return; else throw "Nope!"; }));
+
+// Make sure noreturn detection on infinite-loops works
+assert  __builtin_noreturn(({ __loopever { } }));
+assert !__builtin_noreturn(({ __loopever { break; } }));
+assert  __builtin_noreturn(({ __loopever { return; } }));
+
+// NOTE: test return in conditions
+// HINT: __loopever is simply the internal representation of a 'while (true)' loop
+assert !__builtin_noreturn(({ local x; __loopever { if (x) break; } }));
+assert !__builtin_noreturn(({ local x; __loopever { if (!x) break; } }));
+assert !__builtin_noreturn(({ local x; __loopever { if (x) break; else break; } }));
+assert !__builtin_noreturn(({ local x; __loopever { if (x) break; else return; } }));
+assert  __builtin_noreturn(({ local x; __loopever { if (x) throw; else return; } }));
+assert !__builtin_noreturn(({ local x; __loopever { if (x) throw; else break; } }));
+loop_ever_global_label:
+assert  __builtin_noreturn(({ __loopever { goto loop_ever_global_label; } }));
+
+// Make sure that dead loop work
+// HINT: __loopnone is simply the internal representation of a 'while (false)' loop
+assert !__builtin_noreturn(({ __loopnone { } }));
+assert !__builtin_noreturn(({ __loopnone { __builtin_unreachable(); } }));
+assert !__builtin_noreturn(({ __loopnone { return; } }));
+assert !__builtin_noreturn(({ __loopnone { throw; } }));
+loop_none_global_label:
+assert !__builtin_noreturn(({ __loopnone { goto loop_none_global_label; } }));
+
+// Make sure break correctly prevents noreturn from being detected.
+// HINT: __looponce is simply the internal representation of a 'do ...; while (0)' loop
+assert !__builtin_noreturn(({ local x; __looponce { if (x) return; } }));
+assert !__builtin_noreturn(({ local x; __looponce { if (x) throw; } }));
+assert !__builtin_noreturn(({ local x; __looponce { if (x) return; else break; } }));
+assert !__builtin_noreturn(({ local x; __looponce { if (x) throw; else break; } }));
+assert  __builtin_noreturn(({ local x; __looponce { if (x) return; else throw; } }));
+loop_once_global_label:
+assert  __builtin_noreturn(({ local x; __looponce { if (x) goto loop_once_global_label; else return; } }));
+assert !__builtin_noreturn(({ local x; __looponce { if (x) goto loop_once_local_label; else return; } loop_once_local_label:; }));
+
+assert __builtin_noreturn(({ __looponce { return; } }));
+assert __builtin_noreturn(({ __looponce { throw; } }));
+assert __builtin_noreturn(({ __looponce { __builtin_unreachable(); } }));
+assert __builtin_noreturn(({ __looponce { __builtin_unreachable(); break; } }));
+assert !__builtin_noreturn(({ __looponce { break; __builtin_unreachable(); } }));
+assert !__builtin_noreturn(({
+	__looponce {
+		try {
+			throw "A";
+			__builtin_unreachable();
+		} catch (...) {
+			break;
+			__builtin_unreachable();
+		}
+		__builtin_unreachable();
+	}
+}));
+assert __builtin_noreturn(({
+	__looponce {
+		try {
+			throw "A";
+			__builtin_unreachable();
+		} catch (...) {
+			// v Reaching this unreachable is what causes the noreturn
+			__builtin_unreachable();
+		}
+		__builtin_unreachable();
+	}
+}));
+
+
+// This one's quite difficult (and working):
+// >> both branches of the 'if' (which is always executed) lead to
+//    noreturn statements, but the entire block isn't, as 'goto local_label'
+//    points back into the same block.
+// >> Because of this, the attribute functions have the 'root_ast' parameter
+global_label:
+assert !__builtin_noreturn(({ local x; if (x) goto local_label;  else return 42; local_label: print "HERE"; }));
+assert  __builtin_noreturn(({ local x; if (x) goto global_label; else return 42;              print "HERE"; }));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

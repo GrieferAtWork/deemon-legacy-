@@ -149,7 +149,7 @@ extern DEE_A_RET_WUNUSED Dee_int64_t DeeCodeWriterDebugLnoTab_Addr2Line(
  DEE_A_IN Dee_size_t addr) DEE_ATTRIBUTE_NONNULL((1));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriterDebugLnoTab_IncBuf(
  DEE_A_INOUT struct DeeCodeWriterDebugLnoTab *self) DEE_ATTRIBUTE_NONNULL((1));
-extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriterDebugLnoTab_PutAddrLnoff(
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeCodeWriterDebugLnoTab_PutAddrLnoff(
  DEE_A_INOUT struct DeeCodeWriterDebugLnoTab *self,
  DEE_A_IN Dee_size_t addr, DEE_A_IN Dee_int64_t lnoff) DEE_ATTRIBUTE_NONNULL((1));
 

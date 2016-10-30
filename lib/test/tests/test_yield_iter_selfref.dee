@@ -1,0 +1,107 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+
+// Through some really mean hacking, it is possible for
+// yield_function iterators to see themselves.
+// >> Because of that, v102:0 changed them to be gc types, allowing the
+//    following test to run successfully without causing reference/memory leaks
+
+#include <gc>
+
+
+local const reachable_begin = __TPP_COUNTER(reachable)+1;
+volatile local list reached;
+// __builtin_reachable can be used to ensure a specific
+// statement being reached and executed before the program terminates.
+// NOTE: '__TPP_COUNTER' is an extension from tpp, evaluating
+//       to an ever-incrementing preprocessor constant that is
+//       unique to the provided keyword (in this case: 'reachable')
+#define __builtin_reachable() reached.append(__TPP_COUNTER(reachable))
+
+
+cl = <>;
+function test() {
+	__builtin_reachable();
+	local self = cl.get();
+	__builtin_reachable();
+	assert self is type(test()).iterator;
+	try {
+		__builtin_reachable();
+		self.operator __iternext__();
+		__builtin_unreachable();
+	} catch(...) {
+		__builtin_reachable();
+	}
+	__builtin_reachable();
+	try {
+		__builtin_reachable();
+		yield 42;
+		__builtin_unreachable();
+	} finally {
+		__builtin_reachable();
+	}
+	__builtin_unreachable();
+}
+
+iter = test().operator __iterself__();
+cl.set(iter);
+elem = iter.operator __iternext__();
+assert elem is int;
+assert elem == 42;
+
+const reachable_end = __TPP_COUNTER(reachable);
+function all_reached() {
+	for (local i = reachable_begin; i < reachable_end; ++i) {
+		if (i !in reached) return false;
+	}
+	return true;
+}
+
+// We can't collect stuff yet...
+assert gc::collect() == 0;
+
+assert !all_reached();
+del iter;
+del test;
+del cl;
+assert !all_reached();
+
+// The reference loop is no longer visible.
+// --> This collection should clean it up, also executing the finally block
+assert gc::collect() != 0;
+
+//assert all_reached(); // Checked in detail below...
+
+for (local i = reachable_begin; i < reachable_end; ++i) {
+	assert i in reached : "Position not reachabed:"+str i;
+}
+
+
+
+
+
+
+
+
+
+
