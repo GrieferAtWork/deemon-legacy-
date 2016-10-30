@@ -340,11 +340,8 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
  (void)flags;
 
 #if DEE_XCONFIG_RUNTIME_HAVE_INIT_QUIT_RECURSION
- if (DeeAtomicInt_DecFetch(_dee_initquit_recursion,memory_order_seq_cst) != 0) {
-  // Wait for the library to be finalized
-  while (DeeAtomicInt_Load(_dee_initialized,memory_order_seq_cst)) DeeThread_SleepNoInterrupt(1);
-  return;
- }
+ if (DeeAtomicInt_DecFetch(_dee_initquit_recursion,memory_order_seq_cst) != 0)
+  return; // Don't wait! Otherwise we get a deadlock
 #endif
 
 #if DEE_CONFIG_RUNTIME_HAVE_EXIT
