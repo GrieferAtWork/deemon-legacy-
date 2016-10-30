@@ -704,7 +704,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeObject_THasAttr(
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStructured_GetAttr) return DeeStructured_THasAttr(tp_self,self,attr);
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStruct_GetAttr) return DeeStruct_THasAttr(tp_self,self,attr);
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
- if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) return DeeObject_PHasAttr(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr);
+ if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) {
+  int error; DEE_LVALUE_SIGNALHANDLER_BEGIN {
+   error = DeeObject_PHasAttr(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr);
+  } DEE_LVALUE_SIGNALHANDLER_END({ error = -1; });
+  return error;
+ }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deedexmodule_tp_attr_get) return DeeDexModule_HasAttrString(self,DeeString_STR(attr));
  result = (*func)(self,(DeeObject *)attr);
@@ -771,7 +776,12 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallAttr(
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStructured_GetAttr) return DeeStructured_TCallAttr(tp_self,self,attr,args);
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStruct_GetAttr) return DeeStruct_TCallAttr(tp_self,self,attr,args);
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
- if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) return DeeObject_PCallAttr(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr,args);
+ if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) {
+  DEE_LVALUE_SIGNALHANDLER_BEGIN {
+   result = DeeObject_PCallAttr(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr,args);
+  } DEE_LVALUE_SIGNALHANDLER_END({ result = NULL; });
+  return result;
+ }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
  if DEE_UNLIKELY((callback = (*func)(self,(DeeObject *)attr)) == NULL) return NULL;
  result = DeeObject_Call(callback,args);
@@ -797,7 +807,12 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TGetAttrString(
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStructured_GetAttr) return DeeStructured_TGetAttrString(tp_self,self,attr);
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStruct_GetAttr) return DeeStruct_TGetAttrString(tp_self,self,attr);
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
- if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) return DeeObject_PGetAttrString(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr);
+ if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) {
+  DEE_LVALUE_SIGNALHANDLER_BEGIN {
+   result = DeeObject_PGetAttrString(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr);
+  } DEE_LVALUE_SIGNALHANDLER_END({ result = NULL; });
+  return result;
+ }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deedexmodule_tp_attr_get) return DeeDexModule_GetAttrString(self,attr);
  if DEE_UNLIKELY((attr_ob = DeeString_New(attr)) == NULL) return NULL;
@@ -822,7 +837,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeObject_THasAttrString(
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStructured_GetAttr) return DeeStructured_THasAttrString(tp_self,self,attr);
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStruct_GetAttr) return DeeStruct_THasAttrString(tp_self,self,attr);
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
- if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) return DeeObject_PHasAttrString(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr);
+ if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) {
+  int error; DEE_LVALUE_SIGNALHANDLER_BEGIN {
+   error = DeeObject_PHasAttrString(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr);
+  } DEE_LVALUE_SIGNALHANDLER_END({ error = -1; });
+  return error;
+ }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deedexmodule_tp_attr_get) return DeeDexModule_HasAttrString(self,attr);
  if DEE_UNLIKELY((attr_ob = DeeString_New(attr)) == NULL) return -1;
@@ -888,7 +908,7 @@ DEE_A_RET_EXCEPT(-1) int DeeObject_TSetAttrString(
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallAttrString(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_IN_Z char const *attr, DEE_A_INOUT_OBJECT(DeeTupleObject) *args) {
- DeeTypeObject const *tp_iter; DeeObject *temp,*member;
+ DeeTypeObject const *tp_iter; DeeObject *result,*member;
  DeeType_SLOT_TYPE(tp_attr_get) func;
  DEE_ASSERT(DeeObject_Check(self));
  DEE_ASSERT(DeeObject_Check(args) && DeeTuple_Check(args));
@@ -903,22 +923,27 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallAttrString(
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStructured_GetAttr) return DeeStructured_TCallAttrString(tp_self,self,attr,args);
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&DeeStruct_GetAttr) return DeeStruct_TCallAttrString(tp_self,self,attr,args);
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
- if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) return DeeObject_PCallAttrString(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr,args);
+ if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deelvalue_tp_attr_get) {
+  DEE_LVALUE_SIGNALHANDLER_BEGIN {
+   result = DeeObject_PCallAttrString(DeeLValueType_BASE(Dee_TYPE(self)),DeeLValue_ADDR(self),attr,args);
+  } DEE_LVALUE_SIGNALHANDLER_END({ result = NULL; });
+  return result;
+ }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
  if (func == (DeeType_SLOT_TYPE(tp_attr_get))&_deedexmodule_tp_attr_get) {
   if ((member = DeeDexModule_GetAttrString(self,attr)) == NULL) return NULL;
-  temp = DeeObject_Call(member,args);
+  result = DeeObject_Call(member,args);
   Dee_DECREF(member);
-  return temp;
+  return result;
  }
  // Fallback: Get member + call it
- if DEE_UNLIKELY((temp = DeeString_New(attr)) == NULL) return NULL;
- member = (*func)(self,temp);
- Dee_DECREF(temp);
+ if DEE_UNLIKELY((result = DeeString_New(attr)) == NULL) return NULL;
+ member = (*func)(self,result);
+ Dee_DECREF(result);
  if DEE_UNLIKELY(!member) return NULL;
- temp = DeeObject_Call(member,args);
+ result = DeeObject_Call(member,args);
  Dee_DECREF(member);
- return temp;
+ return result;
 }
 
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallAttrStringObjArgs(

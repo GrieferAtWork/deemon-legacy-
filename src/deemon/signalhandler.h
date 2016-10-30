@@ -106,9 +106,9 @@ if(1){int _seh_setjmp_res;\
 #ifdef DEE_PLATFORM_UNIX
 #if DEE_XCONFIG_SIGNALHANDLER_ALLOW_POSIX_SIGNALS
 struct DeeSignalHandler_PosixRegData {
- struct DeeSignalHandler_PosixRegData *prev;       // Previous handler
- jmp_buf                               context;    // Handler context
- int                                   foundsig;   // Found signal
+ struct DeeSignalHandler_PosixRegData *prev;     /* [0..1] Previous handler. */
+ jmp_buf                               context;  /* Handler context. */
+ int                                   foundsig; /* Found signal. */
 };
 extern void DeeSignalHandler_PosixBegin(DEE_A_IN struct DeeSignalHandler_PosixRegData *reg);
 extern void DeeSignalHandler_PosixEnd(void);
@@ -118,16 +118,16 @@ extern void DeeSignalHandler_PosixThrowSignal(int signo);
 #define DEE_INSTALL_SIGNALHANDLERS   DeeSignalHandler_PosixInstall
 #define DEE_UNINSTALL_SIGNALHANDLERS DeeSignalHandler_PosixUninstall
 #define DEE_SIGNALHANDLER_BEGIN \
-if(1){int _seh_setjmp_res;\
+if(1){int _sig_setjmp_res;\
  struct DeeSignalHandler_PosixRegData _sig_reg;\
- if((_seh_setjmp_res=setjmp(_sig_reg.context)\
+ if((_sig_setjmp_res=setjmp(_sig_reg.context)\
  )==0)DeeSignalHandler_PosixBegin(&_sig_reg);\
- while(1){if(_seh_setjmp_res!=0)break;else
+ while(1){if(_sig_setjmp_res!=0)break;else
 #define DEE_SIGNALHANDLER_DONE \
  DeeSignalHandler_PosixEnd()
 #define DEE_SIGNALHANDLER_END(on_failure) \
  break;}DEE_SIGNALHANDLER_DONE;\
- if(_seh_setjmp_res!=0){\
+ if(_sig_setjmp_res!=0){\
  DeeSignalHandler_PosixThrowSignal(_sig_reg.foundsig);\
  {on_failure;}}\
 }else(void)0

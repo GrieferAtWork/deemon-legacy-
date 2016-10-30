@@ -172,13 +172,13 @@ end:
 
 
 struct print_locals_data {
- WINDOW      *wnd;
- Dee_size_t   current_entry;
- Dee_size_t   first_entry;
- Dee_size_t   selected_entry;
- Dee_uint32_t selected_uid;
+ WINDOW    *wnd;
+ Dee_size_t current_entry;
+ Dee_size_t first_entry;
+ Dee_size_t selected_entry;
+ DeeVarUID  selected_uid;
 };
-static char const *uid_typename(Dee_uint32_t uid) {
+static char const *uid_typename(DeeVarUID uid) {
  switch (DEE_STACKFRAME_VARUID_TYPE(uid)) {
   case DEE_STACKFRAME_VARTYPE_LOCALS: return "local";
   case DEE_STACKFRAME_VARTYPE_STATIC: return "static";
@@ -191,7 +191,7 @@ static char const *uid_typename(Dee_uint32_t uid) {
 }
 
 static int DEE_CALL print_locals(
- DEE_A_IN Dee_uint32_t uid, DEE_A_IN_OPT char const *name,
+ DEE_A_IN DeeVarUID uid, DEE_A_IN_OPT char const *name,
  DEE_A_IN_OPT DeeObject *value, struct print_locals_data *data) {
  Dee_size_t idx,missing; int screen_line,screen_width,temp;
  if (data->current_entry >= data->first_entry) {
@@ -246,7 +246,7 @@ no_value:
 void DeeDebugger_PrintLocals(
  DEE_A_IN WINDOW *wnd, DEE_A_IN struct DeeStackFrame *frame,
  DEE_A_IN Dee_size_t first_entry, DEE_A_IN Dee_size_t selected_entry,
- DEE_A_OUT_OPT Dee_size_t *total_entries, DEE_A_OUT_OPT Dee_uint32_t *selected_uid) {
+ DEE_A_OUT_OPT Dee_size_t *total_entries, DEE_A_OUT_OPT DeeVarUID *selected_uid) {
  struct print_locals_data data;
  data.wnd = wnd;
  data.current_entry = 0;

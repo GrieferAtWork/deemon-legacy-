@@ -44,9 +44,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int _DeeObject_TGenericCallAttrString(
  DeeObject *temp;
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(args) && DeeTuple_Check(args));
-#ifdef STRUCTURED
- DEE_ASSERT(self);
-#else
+#ifndef STRUCTURED
  DEE_ASSERT(DeeObject_Check(self));
  DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
 #endif
@@ -106,8 +104,8 @@ use_method:
 #endif
     DEE_ASSERT(methods->d_func);
 #ifdef STRUCTURED
-    if ((*DeeMethodDef_SFUNC(methods))((DeeStructuredTypeObject *)
-          tp_self,self,args,methods->d_closure)) return -1;
+    if DEE_UNLIKELY((*result = (*DeeMethodDef_SFUNC(methods))((
+     DeeStructuredTypeObject *)tp_self,self,args,methods->d_closure)) == NULL) return -1;
 #else
     if ((*result = DEE_UNLIKELY((methods->d_flags&DEE_METHODDEF_FLAG_STRUCT)!=0)
      ? (*DeeMethodDef_SFUNC(methods))((DeeStructuredTypeObject *)

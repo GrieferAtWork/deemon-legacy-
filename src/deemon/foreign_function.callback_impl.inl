@@ -314,15 +314,42 @@ def_var_data:
 #else
 #define RETURN(x) do{result=(x);goto end;}while(0)
 #endif
+#ifndef NOEXCEPT
+ // Check that no deemon error was thrown
+ if DEE_UNLIKELY(DeeError_OCCURRED()) {
+  // The foreign code threw a deemon error.
+  // >> Now we have to forward that error to the caller
+  // NOTE: In the case of usually returning an object with inherited reference, we need to try and decref the result first
+  if (tp_self->fft_return_kind == DEE_FOREIGN_RETURN_KIND_OBJECT) {
+   Dee_XDECREF(*(DeeObject **)ret_mem);
+  }
+  RETURN(NULL);
+ }
+#else
+ // Just dump all errors if there are any
+ // >> The user said this function was noexcept, and that's what we're enforcing here!
+ DeeError_Handled();
+#endif
  switch (tp_self->fft_return_kind) {
   case DEE_FOREIGN_RETURN_KIND_NONE:
    RETURN(DeeNone_New());
   case DEE_FOREIGN_RETURN_KIND_STRUCTURED:
    RETURN(DeeStructured_NewFromData(tp_self->fft_return_type,ret_mem));
   case DEE_FOREIGN_RETURN_KIND_OBJECT_ADDREF:
-   Dee_XINCREF(*(DeeObject **)ret_mem);
+   // Make sure a valid object is returned
+   if (!*(DeeObject **)ret_mem) {
+    DeeError_SET_STRING(&DeeErrorType_ValueError,
+                        "foreign_function_call returned an invalid object");
+    RETURN(NULL);
+   }
+   Dee_INCREF(*(DeeObject **)ret_mem);
    RETURN(*(DeeObject **)ret_mem);
   case DEE_FOREIGN_RETURN_KIND_OBJECT:
+   // *ditto*
+   if (!*(DeeObject **)ret_mem) {
+    DeeError_SET_STRING(&DeeErrorType_ValueError,
+                        "foreign_function_call returned an invalid object");
+   }
    RETURN(*(DeeObject **)ret_mem);
   case DEE_FOREIGN_RETURN_KIND_WIDESTRING_FROM_POINTER: {
    Dee_WideChar *const str_p = *(Dee_WideChar **)ret_mem;

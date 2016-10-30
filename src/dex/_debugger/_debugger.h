@@ -25,8 +25,7 @@
 #include <deemon/mp/thread.h>
 #include <deemon/runtime/execute.h>
 #include <deemon/compiler/code.h>
-
-#include "../_curses/_curses.h"
+#include <dex/_curses/_curses.h>
 
 DEE_DECL_BEGIN
 
@@ -57,7 +56,7 @@ extern void DeeDebugger_ModalLoop_Locals(
 extern void DeeDebugger_PrintLocals(
  DEE_A_IN WINDOW *wnd, DEE_A_IN struct DeeStackFrame *frame,
  DEE_A_IN Dee_size_t first_entry, DEE_A_IN Dee_size_t selected_entry,
- DEE_A_OUT_OPT Dee_size_t *total_entries, DEE_A_OUT_OPT Dee_uint32_t *selected_uid);
+ DEE_A_OUT_OPT Dee_size_t *total_entries, DEE_A_OUT_OPT DeeVarUID *selected_uid);
 
 
 #ifdef GUARD_DEEMON_DEX_DEBUGGER_C
