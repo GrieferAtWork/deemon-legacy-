@@ -25,6 +25,10 @@
 //  >> 'namespace x'       --> 'module x'
 //  >> 'using x::y'        --> 'import x::y' / 'import x.y'
 //  >> 'using namespace x' --> 'import module x' / 'import x.*'
+// As a matter of fact, including any c++ emulated header will
+// implicitly define 'namespace' and 'using' as macros:
+//  >> #define namespace module
+//  >> #define using     import
 
 
 module my_module {

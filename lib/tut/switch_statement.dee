@@ -32,7 +32,7 @@ print "switch_expr:",({
 	switch (x) {
 
 		// v be careful to have some whitespace between the '10' and the '...',
-		//   as the preprocessor with interpret it as a point otherwise.
+		//   as the preprocessor will otherwise interpret it as a floating point.
 		case 10 ... 20: // Case ranges (inclusive; x >= 10 && x <= 20)
 			print "10...20";
 			if (x == 15) {

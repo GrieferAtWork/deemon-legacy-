@@ -20,6 +20,11 @@
  * SOFTWARE.                                                                      *
  */
 
+// NOTE: static-if is just a high-level alternative for using preprocessor blocks
+//    >> Below, the preprocessor can't see 'mode', as it's not declared as a constants
+//       Also note, that unlike preprocessor blocks,
+//       static-if isn't evaluated by 'deemon -E'.
+
 // If 'mode' is true, prints "bar\nfoo\n"; otherwise prints "bar\n"
 
 const mode = true;

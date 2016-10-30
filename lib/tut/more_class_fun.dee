@@ -52,8 +52,8 @@ class a_class {
 		yield this.z;
 	}
 #else
-	// If you understand the following line, you'll have no
-	// problems understanding any of the deeper things deemon can do.
+	// If you understand the following block, you'll have no
+	// problems grasping any of the deeper things deemon can do.
 	operator __iterself__ -> ([]{
 		yield this.x;
 		yield this.y;

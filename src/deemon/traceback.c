@@ -393,10 +393,10 @@ static int _deetracebackentry_tp_copy_assign(
  return 0;
 }
 static DeeObject *_deetracebackentry_tp_str(DeeTracebackEntryObject *self) {
- return DeeString_Newf("%k(%I32d) : %k\n",
-  self->te_elem->te_file ? (DeeObject *)self->te_elem->te_file : (DeeObject *)&_deetb_unknown_field,
-  self->te_elem->te_line+1,
-  self->te_elem->te_func ? (DeeObject *)self->te_elem->te_func : (DeeObject *)&_deetb_unknown_field);
+ return DeeString_Newf("%k(%I64d) : %k\n",
+                       self->te_elem->te_file ? (DeeObject *)self->te_elem->te_file : (DeeObject *)&_deetb_unknown_field,
+                       self->te_elem->te_line+1,
+                       self->te_elem->te_func ? (DeeObject *)self->te_elem->te_func : (DeeObject *)&_deetb_unknown_field);
 }
 static DeeObject *_deetracebackentry_tp_cmp_lo(DeeTracebackEntryObject *self, DeeTracebackEntryObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeTracebackEntry_Type) == -1) return NULL; DeeReturn_Bool(self->te_elem < right->te_elem); }
 static DeeObject *_deetracebackentry_tp_cmp_le(DeeTracebackEntryObject *self, DeeTracebackEntryObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeTracebackEntry_Type) == -1) return NULL; DeeReturn_Bool(self->te_elem <= right->te_elem); }

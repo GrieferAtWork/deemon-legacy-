@@ -23,13 +23,19 @@
 #include <process>
 #include <thread>
 
-print (("-"*60)+"\n")*10;
-for (x = 3000; x != 0; --x) {
+// Please don't get mad...
+// And please don't run this without thinking twice...
+
+print (("-"*60)+"\n")*5,;
+print "!!!PRESS CTRL+C TO ABORT!!!";
+print (("-"*60)+"\n")*5;
+
+for (local x = 3000; x != 0; --x) {
 	print "\rSafe your work ("+x+")!!!",;
 	thread.sleep(1);
 }
 
-for (x: process.enum()) {
+for (local x: process.enum()) {
 	if (x != process.self()) {
 		try {
 			x.terminate(); 

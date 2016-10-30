@@ -32,7 +32,7 @@
 #ifdef __DEEMON_DEVEL__ /* DEVEL --> Developer Build */
 
 // Foreign function closure
-object my_list_str(object self) {
+[[cdecl]] object my_list_str(object self) {
 	print "But I am...";
 	return "...Serious, that is.";
 }
