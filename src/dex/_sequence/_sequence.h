@@ -181,8 +181,8 @@ struct DeeSingleListObject {
 };
 struct DeeSingleListIteratorObject {
  DEE_OBJECT_HEAD
- DEE_A_REF DeeSingleListObject *sli_list; /*< [1..1] Keep-alive reference to the list. */
- struct DeeSingleListIterator   sli_iter; /*< Internal iterator. */
+ DEE_A_REF DeeSingleListObject *sli_list; /*< [0..1][lock(sli_lock)] Keep-alive reference to the list. */
+ struct DeeSingleListIterator   sli_iter; /*< [lock(sli_lock)] Internal iterator. */
  struct DeeAtomicMutex          sli_lock; /*< Lock for this iterator. */
 };
 
