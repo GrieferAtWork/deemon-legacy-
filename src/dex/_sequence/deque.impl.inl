@@ -109,7 +109,7 @@ void FUNC(DeeDeque_Clear)(DEE_A_INOUT struct DeeDeque *self LOCK_ARG(DEE_A_INOUT
   // Try to return the pre-allocated buffers
   // NOTE: can't restore the buffer if a new one was allocated,
   //       or if the bucketsize got changed in the mean-time.
-  if (!self->d_bucketc && self->d_bucketsize == old_bucketsize) {
+  if (!self->d_bucketroot && self->d_bucketsize == old_bucketsize) {
    DEE_ASSERT(!self->d_bucketelema);
    DEE_ASSERT(!self->d_bucketelemv);
    DEE_ASSERT(!self->d_bucketa);
@@ -252,6 +252,85 @@ err_nomem:
  DeeError_NoMemory();
  return -1;
 }
+
+
+DEE_A_RET_EXCEPT_REF DeeObject *FUNC(DeeDeque_PopFront)(
+ DEE_A_INOUT struct DeeDeque *self LOCK_ARG(DEE_A_INOUT)) {
+ DeeObject *result;
+ DeeDeque_AssertIntegrity(self);
+ ACQUIRE;
+ if DEE_UNLIKELY(DeeDeque_EMPTY(self)) {
+  RELEASE;
+  _sequence_emptyerror();
+  return NULL; // Error: Empty deque
+ }
+ // Transfer reference
+ --self->d_elemc;
+#ifdef DEE_DEBUG
+ result = *self->d_begin;
+ *self->d_begin = NULL;
+ ++self->d_begin;
+#else
+ result = *self->d_begin++;
+#endif
+ if DEE_UNLIKELY(self->d_begin == DeeDeque_FRONT_BUCKET(self)->db_elemv+self->d_bucketsize) {
+  // Front bucket now empty --> mark it as such, and update the begin pointer
+  ++self->d_bucketv;
+  if DEE_LIKELY(--self->d_bucketc != 0) {
+   self->d_begin = DeeDeque_FRONT_BUCKET(self)->db_elemv;
+  } else {
+   // Deque is now empty
+now_empty:
+   DEE_ASSERT(!self->d_elemc);
+   self->d_begin = NULL;
+   self->d_end = NULL;
+   self->d_bucketv = NULL;
+  }
+ } else if DEE_UNLIKELY(self->d_begin == self->d_end) {
+  DEE_ASSERT(self->d_bucketc == 1);
+  self->d_bucketc = 0;
+  goto now_empty;
+ }
+ RELEASE;
+ return result;
+}
+DEE_A_RET_EXCEPT_REF DeeObject *FUNC(DeeDeque_PopBack)(
+ DEE_A_INOUT struct DeeDeque *self LOCK_ARG(DEE_A_INOUT)) {
+ DeeObject *result;
+ DeeDeque_AssertIntegrity(self);
+ ACQUIRE;
+ if DEE_UNLIKELY(DeeDeque_EMPTY(self)) {
+  RELEASE;
+  _sequence_emptyerror();
+  return NULL; // Error: Empty deque
+ }
+ // Transfer reference
+ --self->d_elemc;
+ result = *--self->d_end;
+#ifdef DEE_DEBUG
+ *self->d_end = NULL;
+#endif
+ if DEE_UNLIKELY(self->d_end == DeeDeque_BACK_BUCKET(self)->db_elemv) {
+  // Back bucket now empty --> mark it as such
+  if DEE_LIKELY(--self->d_bucketc != 0) {
+   self->d_end = DeeDeque_BACK_BUCKET(self)->db_elemv+self->d_bucketsize;
+  } else {
+   // Deque is now empty
+now_empty:
+   DEE_ASSERT(!self->d_elemc);
+   self->d_begin = NULL;
+   self->d_end = NULL;
+   self->d_bucketv = NULL;
+  }
+ } else if DEE_UNLIKELY(self->d_begin == self->d_end) {
+  DEE_ASSERT(self->d_bucketc == 1);
+  self->d_bucketc = 0;
+  goto now_empty;
+ }
+ RELEASE;
+ return result;
+}
+
 
 
 

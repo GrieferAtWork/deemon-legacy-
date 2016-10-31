@@ -32,7 +32,8 @@
 // A dex providing additional sequence types, such as
 //  - single_list // Singly-linked list (forwards-pointing nodes)
 //  - double_list // Double-linked list
-//  - deque
+//  - deque       // Double-ended queue
+//  - static_list // List with a fixed maximum-length
 // WARNING: Currently, not all list types are (fully) implemented
 
 DEE_DECL_BEGIN

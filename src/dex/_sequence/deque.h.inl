@@ -71,20 +71,17 @@ struct DeeDeque {
   (ob)->d_bucketsize != 0\
 ,"Broken deque: Invalid bucket size")\
 ,DEE_ASSERTF(\
-   ((ob)->d_elemc != 0)\
-== ((ob)->d_bucketc != 0)\
-== ((ob)->d_bucketv != NULL)\
-== ((ob)->d_begin != NULL)\
-== ((ob)->d_end != NULL)\
-== ((ob)->d_begin != (ob)->d_end)\
+   (((ob)->d_elemc != 0) == ((ob)->d_bucketc != 0))\
+&& (((ob)->d_elemc != 0) == ((ob)->d_bucketv != NULL))\
+&& (((ob)->d_elemc != 0) == ((ob)->d_begin != NULL))\
+&& (((ob)->d_elemc != 0) == ((ob)->d_end != NULL))\
+&& (((ob)->d_elemc != 0) == ((ob)->d_begin != (ob)->d_end))\
 ,"Broken deque: Contained pointers contradict each other")\
 ,DEE_ASSERTF(\
-   ((ob)->d_bucketelema != 0)\
-== ((ob)->d_bucketelemv != NULL)\
+   (((ob)->d_bucketelema != 0) == ((ob)->d_bucketelemv != NULL))\
 ,"Broken deque: elemv-buffer size contradicts start-pointer")\
 ,DEE_ASSERTF(\
-   ((ob)->d_bucketa != 0)\
-== ((ob)->d_bucketroot != NULL)\
+   (((ob)->d_bucketa != 0) == ((ob)->d_bucketroot != NULL))\
 ,"Broken deque: allocated bucket size contradicts start-pointer")\
 ,DEE_ASSERTF(\
   /* Allocated elements requires a valid elemv-cache. */\
@@ -148,6 +145,10 @@ extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushFront(DEE_A_INOUT struct DeeDeque *
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushFrontWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushBack(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushBackWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
+extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_PopFront(DEE_A_INOUT struct DeeDeque *self) DEE_ATTRIBUTE_NONNULL((1));
+extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_PopFrontWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2));
+extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_PopBack(DEE_A_INOUT struct DeeDeque *self) DEE_ATTRIBUTE_NONNULL((1));
+extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_PopBackWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2));
 
 #define DeeDeque_INIT()              DeeDeque_INIT_EX(DEE_DEQUE_DEFUALT_BUCKET_SIZE)
 #define DeeDeque_INIT_EX(bucketsize) {0,bucketsize,0,NULL,0,NULL,0,NULL,NULL,NULL}

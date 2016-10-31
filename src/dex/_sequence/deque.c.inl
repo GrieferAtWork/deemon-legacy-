@@ -200,44 +200,45 @@ void DeeDeque_Quit(DEE_A_IN struct DeeDeque *self) {
  struct DeeDequeBucket *iter,*end;
  DeeObject **elem_iter,**elem_end;
  DeeDeque_AssertIntegrity(self);
- if (!self->d_elemc) return;
- // Clear the first bucket
- elem_iter = self->d_begin;
- DEE_ASSERT(elem_iter >= self->d_bucketv->db_elemv &&
-            elem_iter < self->d_bucketv->db_elemv+self->d_bucketsize);
- if (self->d_bucketc == 1) {
-  // Special case: Only need to delete a single bucket partially
-  elem_end = self->d_end;
-  DEE_ASSERT(elem_end > self->d_bucketv->db_elemv &&
-             elem_end <= self->d_bucketv->db_elemv+self->d_bucketsize);
-  DEE_ASSERT(elem_iter != elem_end);
-  do Dee_DECREF(*elem_iter);
-  while (++elem_iter != elem_end);
- } else {
-  elem_end = self->d_bucketv->db_elemv+self->d_bucketsize;
-  DEE_ASSERT(elem_iter != elem_end);
-  do Dee_DECREF(*elem_iter);
-  while (++elem_iter != elem_end);
-  // Clear all intermediate buckets
-  DEE_ASSERT(self->d_bucketc >= 2);
-  end = (iter = self->d_bucketv+1)+(self->d_bucketc-2);
-  while (iter != end) {
-   DEE_ASSERT(iter->db_elemv);
-   DEE_ASSERT(self->d_bucketsize);
-   elem_end = (elem_iter = iter->db_elemv)+self->d_bucketsize;
+ if (self->d_elemc) {
+  // Clear the first bucket
+  elem_iter = self->d_begin;
+  DEE_ASSERT(elem_iter >= self->d_bucketv->db_elemv &&
+             elem_iter < self->d_bucketv->db_elemv+self->d_bucketsize);
+  if (self->d_bucketc == 1) {
+   // Special case: Only need to delete a single bucket partially
+   elem_end = self->d_end;
+   DEE_ASSERT(elem_end > self->d_bucketv->db_elemv &&
+              elem_end <= self->d_bucketv->db_elemv+self->d_bucketsize);
+   DEE_ASSERT(elem_iter != elem_end);
    do Dee_DECREF(*elem_iter);
    while (++elem_iter != elem_end);
-   ++iter;
+  } else {
+   elem_end = self->d_bucketv->db_elemv+self->d_bucketsize;
+   DEE_ASSERT(elem_iter != elem_end);
+   do Dee_DECREF(*elem_iter);
+   while (++elem_iter != elem_end);
+   // Clear all intermediate buckets
+   DEE_ASSERT(self->d_bucketc >= 2);
+   end = (iter = self->d_bucketv+1)+(self->d_bucketc-2);
+   while (iter != end) {
+    DEE_ASSERT(iter->db_elemv);
+    DEE_ASSERT(self->d_bucketsize);
+    elem_end = (elem_iter = iter->db_elemv)+self->d_bucketsize;
+    do Dee_DECREF(*elem_iter);
+    while (++elem_iter != elem_end);
+    ++iter;
+   }
+   // Clear the end bucket
+   DEE_ASSERT(end == self->d_bucketv+self->d_bucketc-1);
+   elem_end = self->d_end;
+   DEE_ASSERT(elem_end > end->db_elemv &&
+              elem_end <= end->db_elemv+self->d_bucketsize);
+   elem_iter = end->db_elemv;
+   DEE_ASSERT(elem_iter != elem_end);
+   do Dee_DECREF(*elem_iter);
+   while (++elem_iter != elem_end);
   }
-  // Clear the end bucket
-  DEE_ASSERT(end == self->d_bucketv+self->d_bucketc-1);
-  elem_end = self->d_end;
-  DEE_ASSERT(elem_end > end->db_elemv &&
-             elem_end <= end->db_elemv+self->d_bucketsize);
-  elem_iter = end->db_elemv;
-  DEE_ASSERT(elem_iter != elem_end);
-  do Dee_DECREF(*elem_iter);
-  while (++elem_iter != elem_end);
  }
 
  // Free all allocated element vectors
@@ -273,6 +274,8 @@ static int DEE_CALL _deedeque_tp_any_ctor(
 }
 static void DEE_CALL _deedeque_tp_dtor(DeeDequeObject *self) { DeeDeque_Quit(&self->d_deq); }
 static void DEE_CALL _deedeque_tp_clear(DeeDequeObject *self) { DeeDeque_Clear(&self->d_deq); }
+static int DEE_CALL _deedeque_tp_bool(DeeDequeObject *self) { return !DeeDeque_EMPTY(&self->d_deq); }
+static DeeObject *DEE_CALL _deedeque_tp_not(DeeDequeObject *self) { DeeReturn_Bool(DeeDeque_EMPTY(&self->d_deq)); }
 DEE_VISIT_PROC(_deedeque_tp_visit,DeeDequeObject *self) {
  DeeDeque_TRAVERSE_VARS; DeeObject *elem;
  DeeDeque_ACQUIRE(self);
@@ -432,6 +435,20 @@ static DeeObject *_deedeque_push_back(
  if (DeeDeque_PushBackWithLock(&self->d_deq,elem,&self->d_lock) != 0) return NULL;
  DeeReturn_None;
 }
+static DeeObject *_deedeque_pop_front(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":pop_front") != 0) return NULL;
+ if DEE_UNLIKELY((result = DeeDeque_PopFrontWithLock(&self->d_deq,&self->d_lock)) == NULL) return NULL;
+ return result;
+}
+static DeeObject *_deedeque_pop_back(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":pop_back") != 0) return NULL;
+ if DEE_UNLIKELY((result = DeeDeque_PopBackWithLock(&self->d_deq,&self->d_lock)) == NULL) return NULL;
+ return result;
+}
 
 
 
@@ -477,6 +494,8 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  DEE_METHODDEF_v100("end",member(&_deedeque_end),"() -> deque.iterator"),
  DEE_METHODDEF_v100("push_front",member(&_deedeque_push_front),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("push_back",member(&_deedeque_push_back),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("pop_front",member(&_deedeque_pop_front),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("pop_back",member(&_deedeque_pop_back),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("insert_list",member(&_deelist_insert_list),DEE_DOC_AUTO),
@@ -495,10 +514,6 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  //TODO: DEE_METHODDEF_CONST_v100("reversed",member(&_deelist_reversed),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_CONST_v100("allocated",member(&_deelist_allocated),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("fill",member(&_deelist_fill),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("push_front",member(&_deelist_push_front),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("push_back",member(&_deelist_push_back),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("pop_front",member(&_deelist_pop_front),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("pop_back",member(&_deelist_pop_back),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("unique",member(&_deelist_unique),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_CONST_v100("tounique",member(&_deelist_tounique),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_CONST_v100("extend_unique",member(&_deelist_extend_unique),DEE_DOC_AUTO),
@@ -528,8 +543,9 @@ DeeTypeObject DeeDeque_Type = {
   member(&_deedeque_tp_visit),
   member(&_deedeque_tp_clear)),
  DEE_TYPE_OBJECT_MATH_v101(
-  null,null,null,null,null,null,null,null,null,null,null,
-  null,null,null,null,null,null,null,null,null,null,null,
+  member(&_deedeque_tp_not),member(&_deedeque_tp_bool),
+  null,null,null,null,null,null,null,null,null,null,
+  null,null,null,null,null,null,null,null,null,null,
   null,null,null,null,null,null,null,null,null,null),
  DEE_TYPE_OBJECT_COMPARE_v100(null,null,null,null,null,null),
  DEE_TYPE_OBJECT_SEQ_v101(
