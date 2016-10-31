@@ -42,6 +42,12 @@
 #include <deemon/optional/type_decl.h>
 #include <deemon/optional/type_slots.h>
 
+#ifndef __INTELLISENSE__
+#include "deque.c.inl"
+#else
+#include "deque.h.inl"
+#endif
+
 DEE_DECL_BEGIN
 
 void _sequence_emptyerror(void) {
@@ -719,7 +725,6 @@ DEE_A_RET_EXCEPT(-1) int DeeSingleListNode_PtrFromObject(
 
 
 
-
 //////////////////////////////////////////////////////////////////////////
 // VTable: single_list
 static int _deesinglelist_tp_ctor(
@@ -839,6 +844,70 @@ _deesinglelist_tp_seq_iter_self(DeeSingleListObject *self) {
  if (result_node) DeeSingleListNode_DECREF(result_node);
  return result;
 }
+static int DEE_CALL _deesinglelist_tp_marshal_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeeSingleListObject *self,
+ DeeObject *infile, struct DeeMarshalReadMap *map) {
+ (void)self,infile,map; // TODO
+ DeeError_TODONotImplemented();
+ return -1;
+}
+
+static int DEE_CALL _deesinglelist_tp_marshal_put(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeeSingleListObject *self,
+ DeeObject *outfile, struct DeeMarshalWriteMap *map) {
+ (void)self,outfile,map; // TODO
+ DeeError_TODONotImplemented();
+ return -1;
+}
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// VTable: single_list.iterator
+static int _deesinglelistiterator_tp_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self),
+ DeeSingleListIteratorObject *self) {
+ DeeSingleListIteratorObject_Init(self);
+ return 0;
+}
+static int _deesinglelistiterator_tp_copy_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self),
+ DeeSingleListIteratorObject *self, DeeSingleListIteratorObject *right) {
+ DeeSingleListIteratorObject_InitCopy(self,right);
+ return 0;
+}
+static int _deesinglelistiterator_tp_move_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self),
+ DeeSingleListIteratorObject *self, DeeSingleListIteratorObject *right) {
+ DeeSingleListIteratorObject_InitMove(self,right);
+ return 0;
+}
+static void _deesinglelistiterator_tp_dtor(DeeSingleListIteratorObject *self) {
+ Dee_XDECREF(self->sli_list);
+ DeeSingleListIterator_Quit(&self->sli_iter);
+}
+static void _deesinglelistiterator_tp_clear(DeeSingleListIteratorObject *self) {
+ struct DeeSingleListNode *old_node;
+ DeeSingleListObject *old_list;
+ DeeAtomicMutex_AcquireRelaxed(&self->sli_lock);
+ old_node = self->sli_iter.sli_node;
+ old_list = self->sli_list;
+ self->sli_iter.sli_node = NULL;
+ self->sli_list = NULL;
+ DeeAtomicMutex_Release(&self->sli_lock);
+ if (old_node) DeeSingleListNode_DECREF(old_node);
+ Dee_XDECREF(old_list);
+}
+DEE_VISIT_PROC(_deesinglelistiterator_tp_visit,DeeSingleListIteratorObject *self) {
+ Dee_VISIT(self->sli_list);
+}
 static DeeObject *_deesinglelistiterator_tp_str(DeeSingleListIteratorObject *self) {
  DeeObject *elem; DeeSingleListObject *list; struct DeeSingleListNode *stored_node;
  DeeAtomicMutex_AcquireRelaxed(&self->sli_lock);
@@ -877,41 +946,8 @@ static DeeObject *_deesinglelistiterator_tp_repr(DeeSingleListIteratorObject *se
  Dee_DECREF(list);
  return DeeString_Newf("<single_list.iterator -> %R>",elem);
 }
-
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////
-// VTable: single_list.iterator
-static void _deesinglelistiterator_tp_dtor(DeeSingleListIteratorObject *self) {
- Dee_XDECREF(self->sli_list);
- DeeSingleListIterator_Quit(&self->sli_iter);
-}
-static void _deesinglelistiterator_tp_clear(DeeSingleListIteratorObject *self) {
- struct DeeSingleListNode *old_node;
- DeeSingleListObject *old_list;
- DeeAtomicMutex_AcquireRelaxed(&self->sli_lock);
- old_node = self->sli_iter.sli_node;
- old_list = self->sli_list;
- self->sli_iter.sli_node = NULL;
- self->sli_list = NULL;
- DeeAtomicMutex_Release(&self->sli_lock);
- if (old_node) DeeSingleListNode_DECREF(old_node);
- Dee_XDECREF(old_list);
-}
-DEE_VISIT_PROC(_deesinglelistiterator_tp_visit,DeeSingleListIteratorObject *self) {
- Dee_VISIT(self->sli_list);
- //DeeAtomicMutex_AcquireRelaxed(&self->sli_lock);
- //if (self->sli_iter.sli_node) Dee_VISIT(self->sli_iter.sli_node->sln_elem);
- //DeeAtomicMutex_Release(&self->sli_lock);
-}
 static int _deesinglelistiterator_tp_seq_iter_next(
- DEE_A_INOUT struct DeeSingleListIteratorObject *self, DEE_A_OUT DeeObject **result) {
+ DeeSingleListIteratorObject *self, DeeObject **result) {
  struct DeeSingleListNode *old_node,*new_node;
  DeeSingleListObject *list;
  DEE_ASSERT(self); DEE_ASSERT(result);
@@ -950,22 +986,38 @@ again:
  DeeSingleListNode_DECREF(old_node);
  return 0;
 }
-
-static int DEE_CALL _deesinglelist_tp_marshal_ctor(
- DeeTypeObject *DEE_UNUSED(tp_self), DeeSingleListObject *self,
- DeeObject *infile, struct DeeMarshalReadMap *map) {
- (void)self,infile,map; // TODO
- DeeError_TODONotImplemented();
- return -1;
+#if 0
+static DeeSingleListIteratorObject *_deesinglelistiterator_tp_add(
+ DeeSingleListIteratorObject *self, DeeObject *right) {
+ DeeSingleListIteratorObject *result; Dee_ssize_t n;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,right,&n) != 0) return NULL;
+ if DEE_UNLIKELY((result = DeeGC_MALLOC(DeeSingleListIteratorObject)) == NULL) return NULL;
+ DeeSingleListIteratorObject_InitCopy(result,self);
+ if DEE_LIKELY(result->sli_list != NULL) {
+  if (n > 0) {
+   struct DeeSingleListNode *new_node;
+   DeeAtomicMutex_AcquireRelaxed(&result->sli_list->sl_list.sl_lock);
+   new_node = result->sli_iter.sli_node;
+   while (new_node) {
+    new_node = new_node->sln_next;
+    if (!--n) { DeeSingleListNode_INCREF(new_node); break; }
+   }
+   DeeAtomicMutex_Release(&result->sli_list->sl_list.sl_lock);
+   if (result->sli_iter.sli_node)
+    DeeSingleListNode_DECREF(result->sli_iter.sli_node);
+   result->sli_iter.sli_node = new_node;
+  } else if (n < 0) {
+   // TODO...
+  }
+ }
+ DeeGC_TrackedAdd((DeeObject *)result);
+ return result;
 }
+#endif
 
-static int DEE_CALL _deesinglelist_tp_marshal_put(
- DeeTypeObject *DEE_UNUSED(tp_self), DeeSingleListObject *self,
- DeeObject *outfile, struct DeeMarshalWriteMap *map) {
- (void)self,outfile,map; // TODO
- DeeError_TODONotImplemented();
- return -1;
-}
+
+
+
 
 static int DEE_CALL _deesinglelistiterator_tp_marshal_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeSingleListIteratorObject *self,
@@ -1209,6 +1261,7 @@ int DeeDex_Main(DEE_A_INOUT struct DeeDexContext *context) {
 
 struct DeeDexExportDef DeeDex_Exports[] = {
  DeeDex_EXPORT_OBJECT("single_list",&DeeSingleList_Type),
+ DeeDex_EXPORT_OBJECT("deque",&DeeDeque_Type),
  DeeDex_EXPORT_END
 };
 

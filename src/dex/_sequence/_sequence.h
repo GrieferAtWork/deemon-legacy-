@@ -185,6 +185,31 @@ struct DeeSingleListIteratorObject {
  struct DeeSingleListIterator   sli_iter; /*< [lock(sli_lock)] Internal iterator. */
  struct DeeAtomicMutex          sli_lock; /*< Lock for this iterator. */
 };
+#define DeeSingleListIteratorObject_Init(ob)\
+do{\
+ (ob)->sli_list = NULL;\
+ (ob)->sli_iter.sli_node = NULL;\
+ DeeAtomicMutex_Init(&(ob)->sli_lock);\
+}while(0)
+#define DeeSingleListIteratorObject_InitCopy(ob,right)\
+do{\
+ DeeAtomicMutex_AcquireRelaxed(&(right)->sli_lock);\
+ Dee_INCREF((ob)->sli_list = (right)->sli_list);\
+ (ob)->sli_iter.sli_node = (right)->sli_iter.sli_node;\
+ if ((ob)->sli_iter.sli_node) DeeSingleListNode_INCREF((ob)->sli_iter.sli_node);\
+ DeeAtomicMutex_Release(&(right)->sli_lock);\
+ DeeAtomicMutex_Init(&(ob)->sli_lock);\
+}while(0)
+#define DeeSingleListIteratorObject_InitMove(ob,right)\
+do{\
+ DeeAtomicMutex_AcquireRelaxed(&(right)->sli_lock);\
+ (ob)->sli_list = (right)->sli_list;\
+ (ob)->sli_iter.sli_node = (right)->sli_iter.sli_node;\
+ (right)->sli_list = NULL;\
+ (right)->sli_iter.sli_node = NULL;\
+ DeeAtomicMutex_Release(&(right)->sli_lock);\
+ DeeAtomicMutex_Init(&(ob)->sli_lock);\
+}while(0)
 
 extern DEE_A_RET_EXCEPT_REF DeeSingleListIteratorObject *DeeSingleListIterator_New(
  DEE_A_INOUT DeeSingleListObject *list,
@@ -200,6 +225,10 @@ extern DEE_A_RET_EXCEPT(-1) int DeeSingleListNode_PtrFromObject(
  /*ref(sln_refcnt)*/DEE_A_OUT struct DeeSingleListNode **result)
  DEE_ATTRIBUTE_NONNULL((1,2,3));
 
+
+
+extern void _sequence_emptyerror(void);
+extern void _sequence_indexerror(DEE_A_IN Dee_size_t size, DEE_A_IN Dee_size_t index);
 
 DEE_DECL_END
 
