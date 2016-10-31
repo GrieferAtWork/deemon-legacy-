@@ -418,6 +418,20 @@ static DeeDequeIteratorObject *_deedeque_end(
  DeeAtomicMutex_Init(&result->di_lock);
  return result;
 }
+static DeeObject *_deedeque_push_front(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *elem;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:push_front",&elem) != 0) return NULL;
+ if (DeeDeque_PushFrontWithLock(&self->d_deq,elem,&self->d_lock) != 0) return NULL;
+ DeeReturn_None;
+}
+static DeeObject *_deedeque_push_back(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *elem;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:push_back",&elem) != 0) return NULL;
+ if (DeeDeque_PushBackWithLock(&self->d_deq,elem,&self->d_lock) != 0) return NULL;
+ DeeReturn_None;
+}
 
 
 
@@ -461,6 +475,8 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  DEE_METHODDEF_v100("clear",member(&_deedeque_clear),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("begin",member(&_deedeque_begin),"() -> deque.iterator"),
  DEE_METHODDEF_v100("end",member(&_deedeque_end),"() -> deque.iterator"),
+ DEE_METHODDEF_v100("push_front",member(&_deedeque_push_front),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("push_back",member(&_deedeque_push_back),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("insert_list",member(&_deelist_insert_list),DEE_DOC_AUTO),

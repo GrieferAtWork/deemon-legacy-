@@ -142,6 +142,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(DeeDeque_Contains)(
  DEE_A_INOUT DeeObject *elem LOCK_ARG(DEE_A_INOUT)) {
  DeeObject *deq_elem; int error;
  DeeDeque_TRAVERSE_SAFE_VARS;
+ DeeDeque_AssertIntegrity(self);
  ACQUIRE;
  DeeDeque_TRAVERSE_SAFE(deq_elem,self) {
   Dee_INCREF(deq_elem);
@@ -159,6 +160,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(DeeDeque_ContainsPred)(
  DEE_A_INOUT DeeObject *pred LOCK_ARG(DEE_A_INOUT)) {
  DeeObject *deq_elem,*pred_args,*pred_result; int error;
  DeeDeque_TRAVERSE_SAFE_VARS;
+ DeeDeque_AssertIntegrity(self);
  ACQUIRE;
  DeeDeque_TRAVERSE_SAFE(deq_elem,self) {
   Dee_INCREF(deq_elem);
@@ -177,6 +179,80 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(DeeDeque_ContainsPred)(
  RELEASE;
  return 0;
 }
+
+
+DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_PushFront)(
+ DEE_A_INOUT struct DeeDeque *self,
+ DEE_A_INOUT DeeObject *elem LOCK_ARG(DEE_A_INOUT)) {
+ DeeDeque_AssertIntegrity(self);
+ DEE_ASSERT(DeeObject_Check(elem));
+again:
+ ACQUIRE;
+ if DEE_UNLIKELY(DeeDeque_EMPTY(self)) {
+  // Empty deque --> Special code for allocating the first element
+  DeeDeque_ALLOC_FIRST(self,elem,goto err_nomem);
+  RELEASE;
+  return 0;
+ }
+ if DEE_UNLIKELY(DeeDeque_FRONT_BUCKET_FULL_NZ(self)) {
+  if DEE_UNLIKELY(DeeDeque_EMPBUCKETCACHE_LEFT(self)) {
+   // Allocate a new bucket
+   DeeDeque_INCBUCKETCACHE_LEFT(self,goto err_nomem);
+  }
+  if (DeeDeque_EMPELEMVCACHE_LEFT(self)) {
+   // Allocate a new elemv-cache entry
+   DeeDeque_ADDELEMVCACHE_LEFT(self,goto err_nomem);
+  }
+  // Begin using a new bucket on the left
+  self->d_begin = (--self->d_bucketv)->db_elemv+self->d_bucketsize;
+  ++self->d_bucketc;
+ }
+ Dee_INCREF(*--self->d_begin = elem);
+ ++self->d_elemc;
+ RELEASE;
+ return 0;
+err_nomem:
+ RELEASE;
+ if DEE_LIKELY(Dee_CollectMemory()) goto again;
+ DeeError_NoMemory();
+ return -1;
+}
+DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_PushBack)(
+ DEE_A_INOUT struct DeeDeque *self,
+ DEE_A_INOUT DeeObject *elem LOCK_ARG(DEE_A_INOUT)) {
+ DeeDeque_AssertIntegrity(self);
+ DEE_ASSERT(DeeObject_Check(elem));
+again:
+ ACQUIRE;
+ if DEE_UNLIKELY(DeeDeque_EMPTY(self)) {
+  // Empty deque --> Special code for allocating the first element
+  DeeDeque_ALLOC_FIRST(self,elem,goto err_nomem);
+  RELEASE;
+  return 0;
+ }
+ if DEE_UNLIKELY(DeeDeque_BACK_BUCKET_FULL_NZ(self)) {
+  if DEE_UNLIKELY(DeeDeque_EMPBUCKETCACHE_RIGHT(self)) {
+   // Allocate a new bucket
+   DeeDeque_INCBUCKETCACHE_RIGHT(self,goto err_nomem);
+  }
+  if (DeeDeque_EMPELEMVCACHE_RIGHT(self)) {
+   // Allocate a new elemv-cache entry
+   DeeDeque_ADDELEMVCACHE_RIGHT(self,goto err_nomem);
+  }
+  // Begin using a new bucket on the left
+  self->d_end = self->d_bucketv[self->d_bucketc++].db_elemv;
+ }
+ Dee_INCREF(*self->d_end++ = elem);
+ ++self->d_elemc;
+ RELEASE;
+ return 0;
+err_nomem:
+ RELEASE;
+ if DEE_LIKELY(Dee_CollectMemory()) goto again;
+ DeeError_NoMemory();
+ return -1;
+}
+
 
 
 
