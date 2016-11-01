@@ -209,7 +209,8 @@ void DeeDeque_Quit(DEE_A_IN struct DeeDeque *self) {
    elem_end = self->d_end;
    DEE_ASSERT(elem_end > self->d_bucketv->db_elemv &&
               elem_end <= self->d_bucketv->db_elemv+self->d_bucketsize);
-   DEE_ASSERT(elem_iter != elem_end);
+   DEE_ASSERT(elem_iter < elem_end);
+   DEE_ASSERT(elem_end == elem_iter+self->d_elemc);
    do Dee_DECREF(*elem_iter);
    while (++elem_iter != elem_end);
   } else {
@@ -531,6 +532,13 @@ static DeeObject *DEE_CALL _deedeque_insert_iter(
  if DEE_UNLIKELY(DeeDeque_InsertIteratorWithLock(&self->d_deq,i,iter,&self->d_lock) != 0) return NULL;
  DeeReturn_None;
 }
+static DeeObject *DEE_CALL _deedeque_erase(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_size_t i,n = 1;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu|Iu:erase",&i,&n) != 0) return NULL;
+ if DEE_UNLIKELY(DeeDeque_EraseWithLock(&self->d_deq,i,n,&self->d_lock) != 0) return NULL;
+ DeeReturn_None;
+}
 static DeeObject *DEE_CALL _deedeque_shrink_to_fit(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_uint32_t flags = DEE_DEQUE_SHRINKTOFIT_FLAG_DEFAULT;
@@ -544,6 +552,7 @@ static DeeObject *DEE_CALL _deedeque_tp_bucketrepr(
  DeeObject *result; DeeStringWriter writer = DeeStringWriter_INIT();
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":bucketrepr") != 0) return NULL;
  DeeDeque_ACQUIRE(self);
+ DeeDeque_AssertIntegrity(&self->d_deq);
  if (DeeDeque_EMPTY(&self->d_deq)) {
   DeeDeque_RELEASE(self);
  } else {
@@ -647,6 +656,7 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  DEE_METHODDEF_v100("insert_iter",member(&_deedeque_insert_iter),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("shrink_to_fit",member(&_deedeque_shrink_to_fit),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("bucketrepr",member(&_deedeque_tp_bucketrepr),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("erase",member(&_deedeque_erase),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("sorted_insert",member(&_deelist_sorted_insert),DEE_DOC_AUTO),

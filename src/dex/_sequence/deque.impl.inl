@@ -706,6 +706,81 @@ DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_InsertIterator)(
 }
 
 
+DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_Erase)(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i,
+ DEE_A_IN Dee_size_t n LOCK_ARG(DEE_A_INOUT)) {
+ Dee_size_t elem_after,collect_n,shift_n; DeeObject **erasedv,**iter,**end;
+ struct _DeeDequeFastIterator collect_iter,shift_dst,shift_src;
+again:
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
+ if DEE_UNLIKELY(i >= DeeDeque_SIZE(self)) { RELEASE; return 0; }
+ if DEE_UNLIKELY(i+n >= DeeDeque_SIZE(self)) n = DeeDeque_SIZE(self)-i;
+ if DEE_UNLIKELY(!n) { RELEASE; return 0; }
+ elem_after = DeeDeque_SIZE(self)-(i+n);
+ if DEE_UNLIKELY((erasedv = (DeeObject **)
+  malloc_nz(n*sizeof(DeeObject *))) == NULL) {
+  RELEASE;
+  if DEE_LIKELY(Dee_CollectMemory()) goto again;
+  DeeError_NoMemory();
+  return -1;
+ }
+
+ // Collect all items that should be deleted
+ collect_n = n,iter = erasedv;
+ _DeeDequeFastIterator_InitForward(&collect_iter,self,i);
+ while (1) {
+  *iter++ = *_DeeDequeFastIterator_ELEM(&collect_iter);
+#ifdef DEE_DEBUG
+  *_DeeDequeFastIterator_ELEM(&collect_iter) = NULL;
+#endif
+  if DEE_UNLIKELY(!--collect_n) break;
+  _DeeDequeFastIterator_Next(&collect_iter,self);
+ }
+ DEE_ASSERT(iter == erasedv+n);
+
+ if (i < elem_after) {
+  // Less items towards the left --> take away from the left
+  _DeeDequeFastIterator_InitReverse(&shift_src,self,i);
+  _DeeDequeFastIterator_InitReverse(&shift_dst,self,i+n);
+  shift_n = i;
+  while (shift_n--) {
+   _DeeDequeFastIterator_Prev(&shift_src,self);
+   _DeeDequeFastIterator_Prev(&shift_dst,self);
+   *_DeeDequeFastIterator_ELEM(&shift_dst) = *_DeeDequeFastIterator_ELEM(&shift_src);
+#ifdef DEE_DEBUG
+   *_DeeDequeFastIterator_ELEM(&shift_src) = NULL;
+#endif
+  }
+  DeeDeque_RETURN_LEFT_N(self,n);
+ } else {
+  // Less items towards the right --> take away from the right
+  _DeeDequeFastIterator_InitForward(&shift_src,self,i+n);
+  _DeeDequeFastIterator_InitForward(&shift_dst,self,i);
+  DEE_ASSERT(elem_after == DeeDeque_SIZE(self)-(i+n));
+  shift_n = elem_after;
+  while (shift_n--) {
+   *_DeeDequeFastIterator_ELEM(&shift_dst) = *_DeeDequeFastIterator_ELEM(&shift_src);
+#ifdef DEE_DEBUG
+   *_DeeDequeFastIterator_ELEM(&shift_src) = NULL;
+#endif
+   _DeeDequeFastIterator_Next(&shift_src,self);
+   _DeeDequeFastIterator_Next(&shift_dst,self);
+  }
+  DeeDeque_RETURN_RIGHT_N(self,n);
+ }
+ DeeDeque_AssertIntegrity(self);
+ RELEASE;
+ // Actually destroy all the erased elements
+ end = (iter = erasedv)+n;
+ DEE_ASSERT(n);
+ do Dee_DECREF(*iter++); while (iter != end);
+ free_nn(erasedv);
+ return 0;
+}
+
+
+
 
 void FUNC(DeeDeque_ShrinkToFit)(
  DEE_A_INOUT struct DeeDeque *self,

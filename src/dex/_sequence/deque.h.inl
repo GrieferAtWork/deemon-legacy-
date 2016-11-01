@@ -177,6 +177,8 @@ extern DEE_A_RET_EXCEPT(-1) int DeeDeque_Insert(DEE_A_INOUT struct DeeDeque *sel
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_INOUT DeeObject *elem, struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3,4));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertVector(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN Dee_size_t elemc, DEE_A_IN_R(n) DeeObject *const *elemv) DEE_ATTRIBUTE_NONNULL((1));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertVectorWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN Dee_size_t elemc, DEE_A_IN_R(n) DeeObject *const *elemv, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,5));
+extern DEE_A_RET_EXCEPT(-1) int DeeDeque_Erase(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN Dee_size_t n) DEE_ATTRIBUTE_NONNULL((1));
+extern DEE_A_RET_EXCEPT(-1) int DeeDeque_EraseWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN Dee_size_t n, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,4));
 #define DeeDeque_InsertSequence(self,i,sequence)              DeeDeque_TInsertSequence(self,i,Dee_TYPE(sequence),sequence)
 #define DeeDeque_InsertSequenceWithLock(self,i,sequence,lock) DeeDeque_TInsertSequenceWithLock(self,i,Dee_TYPE(sequence),sequence,lock)
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_TInsertSequence(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN DeeTypeObject const *tp_sequence, DEE_A_INOUT DeeObject *sequence) DEE_ATTRIBUTE_NONNULL((1,3,4));
@@ -451,12 +453,12 @@ do{\
 }while(0)
 #define DeeDeque_CONSUME_LEFT_N(ob,n)\
 do{\
+ Dee_size_t aligned_n,bucket_offset;\
  (ob)->d_elemc += (n);\
  if ((ob)->d_begin >= (ob)->d_bucketv[0].db_elemv+(n)) {\
   /* Enough free slots in the first bucket. --> No underflow. */\
   (ob)->d_begin -= (n);\
  } else {\
-  Dee_size_t aligned_n,bucket_offset;\
   aligned_n = (n)-((ob)->d_begin-(ob)->d_bucketv[0].db_elemv);\
   DEE_LVERBOSE4("aligned_n = %Iu\n",aligned_n);\
   bucket_offset = aligned_n/(ob)->d_bucketsize;\
@@ -485,6 +487,68 @@ do{\
   (ob)->d_bucketc += bucket_offset;\
   DEE_ASSERT((ob)->d_bucketc <= (ob)->d_bucketa);\
   (ob)->d_end = (ob)->d_bucketv[(ob)->d_bucketc-1].db_elemv+(aligned_n-(bucket_offset*(ob)->d_bucketsize));\
+ }\
+}while(0)
+#define DeeDeque_RETURN_LEFT_N(ob,n)\
+do{\
+ Dee_size_t aligned_n,bucket_offset;\
+ DEE_ASSERT((ob)->d_elemc >= (n));\
+ if (((ob)->d_elemc -= (n)) == 0) {\
+  (ob)->d_bucketc = 0;\
+  (ob)->d_bucketv = NULL;\
+  (ob)->d_begin = NULL;\
+  (ob)->d_end = NULL;\
+ } else if ((ob)->d_bucketc == 1) {\
+  (ob)->d_begin += (n);\
+  DEE_ASSERT((ob)->d_begin <= (ob)->d_end);\
+ } else {\
+  Dee_size_t index_front = (Dee_size_t)((ob)->d_begin-(ob)->d_bucketv[0].db_elemv);\
+  aligned_n = index_front+(n);\
+  if (aligned_n < (ob)->d_bucketsize) {\
+   /* Enough used slots in the first bucket. --> No overflow. */\
+   (ob)->d_begin += (n);\
+  } else {\
+   bucket_offset = aligned_n/(ob)->d_bucketsize;\
+   DEE_ASSERT(bucket_offset != 0);\
+   DEE_ASSERT((ob)->d_bucketc >= bucket_offset);\
+   (ob)->d_bucketv += bucket_offset;\
+   (ob)->d_bucketc -= bucket_offset;\
+   DEE_ASSERT((ob)->d_bucketc != 0);\
+   (ob)->d_begin = (ob)->d_bucketv[0].db_elemv+(aligned_n-(bucket_offset*(ob)->d_bucketsize));\
+   DEE_ASSERT((ob)->d_begin >= (ob)->d_bucketv[0].db_elemv);\
+   DEE_ASSERT((ob)->d_begin < (ob)->d_bucketv[0].db_elemv+(ob)->d_bucketsize);\
+  }\
+ }\
+}while(0)
+#define DeeDeque_RETURN_RIGHT_N(ob,n)\
+do{\
+ Dee_size_t aligned_n,bucket_offset;\
+ DEE_ASSERT((ob)->d_elemc >= (n));\
+ if (((ob)->d_elemc -= (n)) == 0) {\
+  (ob)->d_bucketc = 0;\
+  (ob)->d_bucketv = NULL;\
+  (ob)->d_begin = NULL;\
+  (ob)->d_end = NULL;\
+ } else if ((ob)->d_bucketc == 1) {\
+  (ob)->d_end -= (n);\
+  DEE_ASSERT((ob)->d_end >= (ob)->d_begin);\
+ } else {\
+  Dee_size_t index_back = (Dee_size_t)((ob)->d_end-(ob)->d_bucketv[(ob)->d_bucketc-1].db_elemv);\
+  if (index_back >= (n)) {\
+   /* Enough free slots in the last bucket. --> No overflow. */\
+   (ob)->d_end -= (n);\
+  } else {\
+   aligned_n = (n)-index_back;\
+   DEE_LDEBUG("aligned_n = %Iu\n",aligned_n);\
+   bucket_offset = aligned_n/(ob)->d_bucketsize;\
+   if ((aligned_n%(ob)->d_bucketsize)!=0) ++bucket_offset;\
+   DEE_LDEBUG("bucket_offset = %Iu\n",bucket_offset);\
+   DEE_ASSERT((ob)->d_bucketc >= bucket_offset);\
+   (ob)->d_bucketc -= bucket_offset;\
+   DEE_ASSERT((ob)->d_bucketc != 0);\
+   DEE_ASSERT((ob)->d_bucketc <= (ob)->d_bucketa);\
+   (ob)->d_end = (ob)->d_bucketv[(ob)->d_bucketc-1].db_elemv+((bucket_offset*(ob)->d_bucketsize)-aligned_n);\
+  }\
  }\
 }while(0)
 
