@@ -724,6 +724,13 @@ struct DeeDequeIterator {
  DeeObject            **di_elem_iter;   /*< [1..1][0..1] Position in current bucket. */
  DeeObject            **di_elem_end;    /*< [1..1][0..1] End of the current bucket. */
 };
+#define DeeDequeIterator_DONE(ob)\
+ ((ob)->di_bucket_iter == (ob)->di_bucket_end && \
+  (ob)->di_elem_iter == (ob)->di_elem_end)
+#define DeeDequeIterator_ELEM(ob)   ((DeeObject **)(ob)->di_elem_iter)
+#define DeeDequeIterator_GET_NZ(ob) (*DeeDequeIterator_ELEM(ob))
+#define DeeDequeIterator_GET(ob)    (DeeDequeIterator_DONE(ob) ? NULL : DeeDequeIterator_GET_NZ(ob))
+
 #define DeeDequeIterator_INDEX_NZ(ob,deq)\
  (Dee_size_t)((((ob)->di_bucket_iter-(deq)->d_bucketv)*(deq)->d_bucketsize+\
                ((ob)->di_elem_iter-(ob)->di_bucket_iter->db_elemv))-\

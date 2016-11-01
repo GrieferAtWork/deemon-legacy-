@@ -692,6 +692,22 @@ static int DEE_CALL _deedequeiterator_tp_seq_iter_next(
  DeeAtomicMutex_Release(&self->di_lock);
  return DEE_LIKELY(*result != NULL) ? 0 : 1;
 }
+static DeeObject *DEE_CALL _deedequeiterator_tp_str(DeeDequeIteratorObject *self) {
+ DeeObject *elem;
+ DeeAtomicMutex_AcquireRelaxed(&self->di_lock);
+ Dee_XINCREF(elem = DeeDequeIterator_GET(&self->di_iter));
+ DeeAtomicMutex_Release(&self->di_lock);
+ if (!elem) DeeReturn_STATIC_STRING("<deque.iterator>");
+ return DeeString_Newf("<deque.iterator -> %K>",elem);
+}
+static DeeObject *DEE_CALL _deedequeiterator_tp_repr(DeeDequeIteratorObject *self) {
+ DeeObject *elem;
+ DeeAtomicMutex_AcquireRelaxed(&self->di_lock);
+ Dee_XINCREF(elem = DeeDequeIterator_GET(&self->di_iter));
+ DeeAtomicMutex_Release(&self->di_lock);
+ if (!elem) DeeReturn_STATIC_STRING("<deque.iterator>");
+ return DeeString_Newf("<deque.iterator -> %R>",elem);
+}
 
 
 
@@ -781,7 +797,13 @@ DeeTypeObject DeeDeque_Type = {
   null,null,null,null,null,null,null,null,null,null,
   null,null,null,null,null,null,null,null,null,null,
   null,null,null,null,null,null,null,null,null,null),
- DEE_TYPE_OBJECT_COMPARE_v100(null,null,null,null,null,null),
+ DEE_TYPE_OBJECT_COMPARE_v100(
+  member(&_deegenericiterable_tp_cmp_lo),
+  member(&_deegenericiterable_tp_cmp_le),
+  member(&_deegenericiterable_tp_cmp_eq),
+  member(&_deegenericiterable_tp_cmp_ne),
+  member(&_deegenericiterable_tp_cmp_gr),
+  member(&_deegenericiterable_tp_cmp_ge)),
  DEE_TYPE_OBJECT_SEQ_v101(
   member(&_deedeque_tp_seq_get),
   member(&_deedeque_tp_seq_del),
@@ -802,8 +824,8 @@ DeeTypeObject DeeDequeIterator_Type = {
  DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,member(&_deedequeiterator_tp_dtor)),
  DEE_TYPE_OBJECT_ASSIGN_v100(null,null,null),
  DEE_TYPE_OBJECT_CAST_v101(
-  member(&_deedeque_tp_str),
-  member(&_deedeque_tp_repr),null,null,null),
+  member(&_deedequeiterator_tp_str),
+  member(&_deedequeiterator_tp_repr),null,null,null),
  DEE_TYPE_OBJECT_OBJECT_v101(null,
   member(&_deedequeiterator_tp_visit),null),
  DEE_TYPE_OBJECT_MATH_v101(
