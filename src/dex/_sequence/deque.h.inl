@@ -40,6 +40,10 @@ DEE_PRIVATE_DECL_DEE_TYPE_OBJECT
 DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 #undef DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 #endif
+#ifdef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
+DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
+#undef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
+#endif
 
 
 struct DeeDequeBucket {
@@ -112,13 +116,13 @@ struct DeeDeque {
   (ob)->d_bucketelemv >= (ob)->d_bucketroot\
 ,"Broken deque: elemv-start lies below bucket-root")\
 ,DEE_ASSERTF(\
-  (ob)->d_bucketv >= (ob)->d_bucketelemv\
+  !(ob)->d_bucketv || ((ob)->d_bucketv >= (ob)->d_bucketelemv)\
 ,"Broken deque: bucket-start lies below elemv-start")\
 ,DEE_ASSERTF(\
   ((ob)->d_bucketelemv+(ob)->d_bucketelema) <= ((ob)->d_bucketroot+(ob)->d_bucketa)\
 ,"Broken deque: elemv-end lies aboce bucket-root-end")\
 ,DEE_ASSERTF(\
-  ((ob)->d_bucketv+(ob)->d_bucketc) <= ((ob)->d_bucketelemv+(ob)->d_bucketelema)\
+  !(ob)->d_bucketv || (((ob)->d_bucketv+(ob)->d_bucketc) <= ((ob)->d_bucketelemv+(ob)->d_bucketelema))\
 ,"Broken deque: elemv-end lies aboce bucket-root-end")\
 )
 #ifdef __INTELLISENSE__
@@ -171,6 +175,12 @@ extern DEE_A_RET_EXCEPT(-1) int DeeDeque_TInsertSequence(DEE_A_INOUT struct DeeD
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_TInsertSequenceWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN DeeTypeObject const *tp_sequence, DEE_A_INOUT DeeObject *sequence, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3,4,5));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertIterator(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_INOUT DeeObject *iterator) DEE_ATTRIBUTE_NONNULL((1,3));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertIteratorWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_INOUT DeeObject *iterator, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3,4));
+
+#define DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV      0x00000001 /*< Free unused elemv-entries. */
+#define DEE_DEQUE_SHRINKTOFIT_FLAG_BUCKETS    0x00000002 /*< Free unused buckets. */
+#define DEE_DEQUE_SHRINKTOFIT_FLAG_SHIFT_ELEM 0x00000004 /*< Shift elements to free up to one more bucket. */
+extern void DeeDeque_ShrinkToFit(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_uint32_t flags) DEE_ATTRIBUTE_NONNULL((1));
+extern void DeeDeque_ShrinkToFitWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_uint32_t flags, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3));
 
 //////////////////////////////////////////////////////////////////////////
 // Shifts the elements in the deque left/right, making the region

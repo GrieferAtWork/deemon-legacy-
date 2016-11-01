@@ -97,9 +97,9 @@ void FUNC(DeeDeque_Clear)(DEE_A_INOUT struct DeeDeque *self LOCK_ARG(DEE_A_INOUT
   // Clear the end bucket
   DEE_ASSERT(end == old_bucketv+old_bucketc-1);
   elem_end = old_end;
-  DEE_ASSERT(elem_end >= end[1].db_elemv &&
-             elem_end < end[1].db_elemv+old_bucketsize);
-  elem_iter = end[1].db_elemv;
+  DEE_ASSERT(elem_end >= end->db_elemv &&
+             elem_end < end->db_elemv+old_bucketsize);
+  elem_iter = end->db_elemv;
   DEE_ASSERT(elem_iter != elem_end);
   do Dee_DECREF(*elem_iter);
   while (++elem_iter != elem_end);
@@ -479,6 +479,105 @@ DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_InsertIterator)(
  return error;
 }
 
+
+
+void FUNC(DeeDeque_ShrinkToFit)(
+ DEE_A_INOUT struct DeeDeque *self,
+ DEE_A_IN Dee_uint32_t flags LOCK_ARG(DEE_A_INOUT)) {
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
+ if (DeeDeque_EMPTY(self)) { RELEASE; return; }
+ if ((flags&DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV)!=0) {
+  Dee_size_t used_size,avail_size,overflow,old_start_offset,new_start_offset,shift;
+  // Step #1: Shift elements to reduce the needed bucket count by up to one
+  used_size = DeeDeque_SIZE(self);
+  avail_size = self->d_bucketc*self->d_bucketsize;
+  DEE_ASSERT(avail_size >= used_size);
+  overflow = avail_size-used_size;
+  DEE_ASSERT(overflow < self->d_bucketsize*2);
+  if (overflow >= self->d_bucketsize) {
+   struct _DeeDequeFastIterator src_iter,dst_iter;
+   // Yes: We can shift the elements to free up one more bucket
+   // NOTE: The new start of the deque will be at 
+   //       >> self->d_bucketelemv[0].db_elemv+new_start_offset;
+   new_start_offset = (overflow-self->d_bucketsize)/2;
+   old_start_offset = (Dee_size_t)(self->d_begin-self->d_bucketv[0].db_elemv);
+   DEE_ASSERT(old_start_offset > new_start_offset);
+   shift = old_start_offset-new_start_offset;
+   _DeeDequeFastIterator_InitFront(&src_iter,self);
+   self->d_begin -= shift;
+   // Underflow the previous end into the bucket preceding it
+   // >> Now the last bucket is no longer in use
+   DEE_ASSERTF(self->d_end-shift < self->d_bucketv[self->d_bucketc-1].db_elemv,
+               "End pointer to last bucket can't shift into previous bucket");
+   self->d_end = self->d_bucketv[self->d_bucketc-2].db_elemv+(self->d_bucketsize-(
+    self->d_bucketv[self->d_bucketc-1].db_elemv-(self->d_end-shift)));
+   --self->d_bucketc;
+   _DeeDequeFastIterator_InitFront(&dst_iter,self);
+   // Shift the elements from 'src_iter' to 'dst_iter'
+   while (used_size--) {
+    *_DeeDequeFastIterator_ELEM(&dst_iter) = *_DeeDequeFastIterator_ELEM(&src_iter);
+#ifdef DEE_DEBUG
+    *_DeeDequeFastIterator_ELEM(&src_iter) = NULL;
+#endif
+    _DeeDequeFastIterator_Next(&dst_iter,self);
+    _DeeDequeFastIterator_Next(&src_iter,self);
+   }
+   DEE_ASSERT(_DeeDequeFastIterator_ELEM(&dst_iter) == self->d_end);
+   DEE_ASSERT(_DeeDequeFastIterator_ELEM(&src_iter) == self->d_end+shift);
+  }
+  DeeDeque_AssertIntegrity(self);
+ }
+ if ((flags&DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV)!=0) {
+  // Free unused elemv-entries
+  DEE_ASSERT(self->d_bucketelemv <= self->d_bucketv);
+  while (self->d_bucketelemv != self->d_bucketv) {
+   // Free one elemv-entry at the front
+   free_nn(self->d_bucketelemv->db_elemv);
+   --self->d_bucketelema;
+   ++self->d_bucketelemv;
+  }
+  DEE_ASSERT(self->d_bucketelemv == self->d_bucketv);
+  DEE_ASSERT(self->d_bucketelema >= self->d_bucketc);
+  while (self->d_bucketelema != self->d_bucketc) {
+   // Free one elemv-entry at the back
+   --self->d_bucketelema;
+   free_nn(self->d_bucketelemv[self->d_bucketelema].db_elemv);
+  }
+  DEE_ASSERT(self->d_bucketelema == self->d_bucketc);
+  DeeDeque_AssertIntegrity(self);
+ }
+ if ((flags&DEE_DEQUE_SHRINKTOFIT_FLAG_BUCKETS)!=0 &&
+     self->d_bucketelema != self->d_bucketa) {
+  struct DeeDequeBucket *new_root;
+  // Relocate the bucket vector to only take as much memory as we need
+  DEE_ASSERT(self->d_bucketelema <= self->d_bucketa);
+  DEE_ASSERT(self->d_bucketelemv >= self->d_bucketroot);
+  if (self->d_bucketroot != self->d_bucketelemv) {
+   Dee_size_t shift_offset;
+   // Shift the elemv-start to match the root pointer
+   memmove(self->d_bucketroot,self->d_bucketelemv,
+           self->d_bucketelema*sizeof(struct DeeDequeBucket));
+   shift_offset = (Dee_size_t)(self->d_bucketelemv-self->d_bucketroot);
+   self->d_bucketelemv = self->d_bucketroot;
+   self->d_bucketv -= shift_offset;
+  }
+  DEE_ASSERT(self->d_bucketelemv == self->d_bucketroot);
+  DEE_ASSERT(self->d_bucketv >= self->d_bucketroot);
+  // With the elemv-cache matching the root pointer, we can easily reallocate
+  // the bucket root to have 'self->d_bucketa' match 'self->d_bucketelema'
+  if ((new_root = (struct DeeDequeBucket *)realloc_nnz(
+   self->d_bucketroot,self->d_bucketelema*
+   sizeof(struct DeeDequeBucket))) != NULL) {
+   self->d_bucketv = new_root+(self->d_bucketv-self->d_bucketroot);
+   self->d_bucketa = self->d_bucketelema;
+   self->d_bucketelemv = new_root;
+   self->d_bucketroot = new_root;
+  } // else { /* Ignore out-of-memory here */ }
+  DeeDeque_AssertIntegrity(self);
+ }
+ RELEASE;
+}
 
 
 

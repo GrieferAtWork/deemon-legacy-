@@ -518,6 +518,13 @@ static DeeObject *DEE_CALL _deedeque_insert_iter(
  if DEE_UNLIKELY(DeeDeque_InsertIteratorWithLock(&self->d_deq,i,iter,&self->d_lock) != 0) return NULL;
  DeeReturn_None;
 }
+static DeeObject *DEE_CALL _deedeque_shrink_to_fit(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_uint32_t flags = (DEE_DEQUE_SHRINKTOFIT_FLAG_BUCKETS|DEE_DEQUE_SHRINKTOFIT_FLAG_SHIFT_ELEM);
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"|I32u:shrink_to_fit",&flags) != 0) return NULL;
+ DeeDeque_ShrinkToFitWithLock(&self->d_deq,flags,&self->d_lock);
+ DeeReturn_None;
+}
 
 
 
@@ -568,6 +575,7 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  DEE_METHODDEF_v100("insert",member(&_deedeque_insert),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("insert_list",member(&_deedeque_insert_list),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("insert_iter",member(&_deedeque_insert_iter),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("shrink_to_fit",member(&_deedeque_shrink_to_fit),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("insert_list",member(&_deelist_insert_list),DEE_DOC_AUTO),
