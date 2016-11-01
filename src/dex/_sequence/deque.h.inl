@@ -179,21 +179,28 @@ extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertVector(DEE_A_INOUT struct DeeDequ
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertVectorWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN Dee_size_t elemc, DEE_A_IN_R(n) DeeObject *const *elemv, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,5));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_Erase(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN Dee_size_t n) DEE_ATTRIBUTE_NONNULL((1));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_EraseWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN Dee_size_t n, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,4));
+extern DEE_A_RET_EXCEPT(-1) int DeeDeque_EraseReleaseLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN Dee_size_t n, DEE_A_IN_LOCKED struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,4));
 #define DeeDeque_InsertSequence(self,i,sequence)              DeeDeque_TInsertSequence(self,i,Dee_TYPE(sequence),sequence)
 #define DeeDeque_InsertSequenceWithLock(self,i,sequence,lock) DeeDeque_TInsertSequenceWithLock(self,i,Dee_TYPE(sequence),sequence,lock)
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_TInsertSequence(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN DeeTypeObject const *tp_sequence, DEE_A_INOUT DeeObject *sequence) DEE_ATTRIBUTE_NONNULL((1,3,4));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_TInsertSequenceWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN DeeTypeObject const *tp_sequence, DEE_A_INOUT DeeObject *sequence, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3,4,5));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertIterator(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_INOUT DeeObject *iterator) DEE_ATTRIBUTE_NONNULL((1,3));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertIteratorWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_INOUT DeeObject *iterator, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3,4));
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeDeque_Remove(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem) DEE_ATTRIBUTE_NONNULL((1,2));
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeDeque_RemoveWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeDeque_RemovePred(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem, DEE_A_INOUT DeeObject *pred) DEE_ATTRIBUTE_NONNULL((1,2,3));
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeDeque_RemovePredWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem, DEE_A_INOUT DeeObject *pred, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
+extern DEE_A_RET_EXCEPT(-1) Dee_size_t DeeDeque_RemoveIf(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *pred) DEE_ATTRIBUTE_NONNULL((1,2));
+extern DEE_A_RET_EXCEPT(-1) Dee_size_t DeeDeque_RemoveIfWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *pred, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
 
-#define DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV      0x00000001 /*< Free unused elemv-entries. */
-#define DEE_DEQUE_SHRINKTOFIT_FLAG_BUCKETS    0x00000002 /*< Free unused buckets. */
-#define DEE_DEQUE_SHRINKTOFIT_FLAG_SHIFT_ELEM 0x00000004 /*< Shift elements to free up to one more bucket. */
+
+#define DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV      DEE_UINT32_C(0x00000001) /*< Free unused elemv-entries. */
+#define DEE_DEQUE_SHRINKTOFIT_FLAG_BUCKETS    DEE_UINT32_C(0x00000002) /*< Free unused buckets. */
+#define DEE_DEQUE_SHRINKTOFIT_FLAG_SHIFT_ELEM DEE_UINT32_C(0x00000004) /*< Shift elements to free up to one more bucket. */
 #define DEE_DEQUE_SHRINKTOFIT_FLAG_DEFAULT \
  (DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV\
  |DEE_DEQUE_SHRINKTOFIT_FLAG_BUCKETS\
  |DEE_DEQUE_SHRINKTOFIT_FLAG_SHIFT_ELEM)
-
 extern void DeeDeque_ShrinkToFit(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_uint32_t flags) DEE_ATTRIBUTE_NONNULL((1));
 extern void DeeDeque_ShrinkToFitWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_uint32_t flags, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3));
 
@@ -717,6 +724,10 @@ struct DeeDequeIterator {
  DeeObject            **di_elem_iter;   /*< [1..1][0..1] Position in current bucket. */
  DeeObject            **di_elem_end;    /*< [1..1][0..1] End of the current bucket. */
 };
+#define DeeDequeIterator_INDEX_NZ(ob,deq)\
+ (Dee_size_t)((((ob)->di_bucket_iter-(deq)->d_bucketv)*(deq)->d_bucketsize+\
+               ((ob)->di_elem_iter-(ob)->di_bucket_iter->db_elemv))-\
+                DeeDeque_FRONT_UNUSED_NZ(deq))
 #define DeeDequeIterator_InitBegin(ob,deq)\
 (DeeDeque_AssertIntegrity(deq),\
  (ob)->di_bucket_end = ((ob)->di_bucket_iter = (deq)->d_bucketv)+(deq)->d_bucketc,\
@@ -750,11 +761,15 @@ struct DeeDequeIterator {
 #define DeeDeque_TRAVERSE(elem,deq)\
  if((DeeDequeIterator_InitBegin(&_di_iter,deq),0));else\
  while (((elem) = DeeDequeIterator_Yield(&_di_iter,deq)) != NULL)
+
 #define DeeDeque_TRAVERSE_SAFE_VARS \
  struct DeeDequeIterator _di_iter
 #define DeeDeque_TRAVERSE_SAFE(elem,deq)\
  if((DeeDequeIterator_InitBegin(&_di_iter,deq),0));else\
  while (((elem) = DeeDequeIterator_YieldSafe(&_di_iter,deq)) != NULL)
+#define DeeDeque_TRAVERSE_INDEX(deq)         (DeeDequeIterator_INDEX_NZ(&_di_iter,deq)-1)
+#define DeeDeque_TRAVERSE_SAFE_INDEX(deq)    (DeeDequeIterator_INDEX_NZ(&_di_iter,deq)-1)
+#define DeeDeque_TRAVERSE_SAFE_VALIDATE(deq) DeeDequeIterator_Validate(&_di_iter,deq)
 
 
 DEE_OBJECT_DEF(DeeDequeObject);

@@ -705,14 +705,24 @@ DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_InsertIterator)(
  return error;
 }
 
-
-DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_Erase)(
+#ifdef WITH_LOCK
+DEE_A_RET_EXCEPT(-1) int DeeDeque_EraseWithLock(
  DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i,
- DEE_A_IN Dee_size_t n LOCK_ARG(DEE_A_INOUT)) {
+ DEE_A_IN Dee_size_t n, DEE_A_INOUT struct DeeAtomicMutex *lock) {
+ ACQUIRE;
+ return DeeDeque_EraseReleaseLock(self,i,n,lock);
+}
+DEE_A_RET_EXCEPT(-1) int DeeDeque_EraseReleaseLock(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i,
+ DEE_A_IN Dee_size_t n, DEE_A_IN_LOCKED struct DeeAtomicMutex *lock)
+#else
+DEE_A_RET_EXCEPT(-1) int DeeDeque_Erase(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i, DEE_A_IN Dee_size_t n)
+#endif
+{
  Dee_size_t elem_after,collect_n,shift_n; DeeObject **erasedv,**iter,**end;
  struct _DeeDequeFastIterator collect_iter,shift_dst,shift_src;
-again:
- ACQUIRE;
+again: // NOTE: A lock is already given by the caller
  DeeDeque_AssertIntegrity(self);
  if DEE_UNLIKELY(i >= DeeDeque_SIZE(self)) { RELEASE; return 0; }
  if DEE_UNLIKELY(i+n >= DeeDeque_SIZE(self)) n = DeeDeque_SIZE(self)-i;
@@ -721,7 +731,7 @@ again:
  if DEE_UNLIKELY((erasedv = (DeeObject **)
   malloc_nz(n*sizeof(DeeObject *))) == NULL) {
   RELEASE;
-  if DEE_LIKELY(Dee_CollectMemory()) goto again;
+  if DEE_LIKELY(Dee_CollectMemory()) { ACQUIRE; goto again; }
   DeeError_NoMemory();
   return -1;
  }
@@ -879,6 +889,133 @@ void FUNC(DeeDeque_ShrinkToFit)(
 }
 
 
+DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(DeeDeque_Remove)(
+ DEE_A_INOUT struct DeeDeque *self,
+ DEE_A_INOUT DeeObject *elem LOCK_ARG(DEE_A_INOUT)) {
+ /* Currently broken... */
+ DeeDeque_TRAVERSE_SAFE_VARS;
+ DeeObject *deq_elem; int temp;
+ DEE_ASSERT(DeeObject_Check(elem));
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
+ DeeDeque_TRAVERSE_SAFE(deq_elem,self) {
+  Dee_INCREF(deq_elem);
+  RELEASE;
+  temp = DeeObject_CompareEq(deq_elem,elem);
+  Dee_DECREF(deq_elem);
+  if DEE_UNLIKELY(temp != 0) {
+   if DEE_UNLIKELY(temp < 0 && !DeeError_Catch(
+    &DeeErrorType_NotImplemented)) return temp; // Error
+   else {
+    DEE_ASSERT(temp > 0); // Found it
+    // Make sure the deque hasn't changed in the meantime
+    ACQUIRE;
+    if (!DeeDeque_TRAVERSE_SAFE_VALIDATE(self)) break;
+#ifdef WITH_LOCK
+    if DEE_UNLIKELY(DeeDeque_EraseReleaseLock(self,
+     DeeDeque_TRAVERSE_SAFE_INDEX(self),1,lock) < 0) return -1;
+#else
+    if DEE_UNLIKELY(DeeDeque_Erase(self,
+     DeeDeque_TRAVERSE_SAFE_INDEX(self),1) < 0) return -1;
+#endif
+    return 1;
+   }
+  }
+  ACQUIRE;
+  if DEE_UNLIKELY(!DeeDeque_TRAVERSE_SAFE_VALIDATE(self)) break;
+ }
+ RELEASE;
+ return 0;
+}
+DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(DeeDeque_RemovePred)(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem,
+ DEE_A_INOUT DeeObject *pred LOCK_ARG(DEE_A_INOUT)) {
+ /* Currently broken... */
+ DeeDeque_TRAVERSE_SAFE_VARS;
+ DeeObject *deq_elem,*pred_args,*pred_result; int temp;
+ DEE_ASSERT(DeeObject_Check(elem));
+ DEE_ASSERT(DeeObject_Check(pred));
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
+ DeeDeque_TRAVERSE_SAFE(deq_elem,self) {
+  Dee_INCREF(deq_elem);
+  RELEASE;
+  pred_args = DeeTuple_Pack(2,deq_elem,elem);
+  Dee_DECREF(deq_elem);
+  if DEE_UNLIKELY(!pred_args) return -1;
+  pred_result = DeeObject_Call(pred,pred_args);
+  Dee_DECREF(pred_args);
+  if DEE_UNLIKELY(!pred_result) return -1;
+  temp = DeeObject_Bool(pred_result);
+  Dee_DECREF(pred_result);
+  if DEE_UNLIKELY(temp != 0) {
+   if DEE_UNLIKELY(temp < 0 && !DeeError_Catch(
+    &DeeErrorType_NotImplemented)) return temp; // Error
+   else {
+    DEE_ASSERT(temp > 0); // Found it
+    // Make sure the deque hasn't changed in the meantime
+    ACQUIRE;
+    if (!DeeDeque_TRAVERSE_SAFE_VALIDATE(self)) break;
+#ifdef WITH_LOCK
+    if DEE_UNLIKELY(DeeDeque_EraseReleaseLock(self,
+     DeeDeque_TRAVERSE_SAFE_INDEX(self),1,lock) < 0) return -1;
+#else
+    if DEE_UNLIKELY(DeeDeque_Erase(self,
+     DeeDeque_TRAVERSE_SAFE_INDEX(self),1) < 0) return -1;
+#endif
+    return 1;
+   }
+  }
+  ACQUIRE;
+  if DEE_UNLIKELY(!DeeDeque_TRAVERSE_SAFE_VALIDATE(self)) break;
+ }
+ RELEASE;
+ return 0;
+}
+DEE_A_RET_EXCEPT(-1) Dee_size_t FUNC(DeeDeque_RemoveIf)(
+ DEE_A_INOUT struct DeeDeque *self,
+ DEE_A_INOUT DeeObject *pred LOCK_ARG(DEE_A_INOUT)) {
+ /* Currently broken... */
+ DeeDeque_TRAVERSE_SAFE_VARS; Dee_size_t result = 0;
+ DeeObject *deq_elem,*pred_args,*pred_result; int temp;
+ DEE_ASSERT(DeeObject_Check(pred));
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
+ DeeDeque_TRAVERSE_SAFE(deq_elem,self) {
+  Dee_INCREF(deq_elem);
+  RELEASE;
+  pred_args = DeeTuple_Pack(1,deq_elem);
+  Dee_DECREF(deq_elem);
+  if DEE_UNLIKELY(!pred_args) return (Dee_size_t)-1;
+  pred_result = DeeObject_Call(pred,pred_args);
+  Dee_DECREF(pred_args);
+  if DEE_UNLIKELY(!pred_result) return (Dee_size_t)-1;
+  temp = DeeObject_Bool(pred_result);
+  Dee_DECREF(pred_result);
+  if DEE_UNLIKELY(temp != 0) {
+   if DEE_UNLIKELY(temp < 0 && !DeeError_Catch(
+    &DeeErrorType_NotImplemented)) return (Dee_size_t)-1; // Error
+   else {
+    DEE_ASSERT(temp > 0); // Found it
+    // Make sure the deque hasn't changed in the meantime
+    ACQUIRE;
+    if (!DeeDeque_TRAVERSE_SAFE_VALIDATE(self)) break;
+#ifdef WITH_LOCK
+    if DEE_UNLIKELY(DeeDeque_EraseReleaseLock(self,
+     DeeDeque_TRAVERSE_SAFE_INDEX(self),1,lock) < 0) return (Dee_size_t)-1;
+#else
+    if DEE_UNLIKELY(DeeDeque_Erase(self,
+     DeeDeque_TRAVERSE_SAFE_INDEX(self),1) < 0) return (Dee_size_t)-1;
+#endif
+    ++result;
+   }
+  }
+  ACQUIRE;
+  if DEE_UNLIKELY(!DeeDeque_TRAVERSE_SAFE_VALIDATE(self)) break;
+ }
+ RELEASE;
+ return result;
+}
 
 
 #undef FUNC

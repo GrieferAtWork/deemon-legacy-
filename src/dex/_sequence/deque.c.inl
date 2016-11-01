@@ -43,6 +43,7 @@
 #include <deemon/tuple.h>
 #include <deemon/super.h>
 #include <deemon/list.h>
+#include <deemon/runtime/builtin_functions.h>
 
 DEE_DECL_BEGIN
 
@@ -539,6 +540,24 @@ static DeeObject *DEE_CALL _deedeque_erase(
  if DEE_UNLIKELY(DeeDeque_EraseWithLock(&self->d_deq,i,n,&self->d_lock) != 0) return NULL;
  DeeReturn_None;
 }
+static DeeObject *DEE_CALL _deedeque_remove(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *elem,*pred = Dee_None; int error;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:remove",&elem,&pred) != 0) return NULL;
+ if DEE_UNLIKELY((error = ((DeeNone_Check(pred) && pred != &DeeBuiltinFunction___eq__)
+  ? DeeDeque_RemoveWithLock(&self->d_deq,elem,&self->d_lock)
+  : DeeDeque_RemovePredWithLock(&self->d_deq,elem,pred,&self->d_lock)
+  )) < 0) return NULL;
+ DeeReturn_Bool(error);
+}
+static DeeObject *DEE_CALL _deedeque_remove_if(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *pred = Dee_None; Dee_size_t result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:remove",&pred) != 0) return NULL;
+ if DEE_UNLIKELY((result = DeeDeque_RemoveIfWithLock(
+  &self->d_deq,pred,&self->d_lock)) == (Dee_size_t)-1) return NULL;
+ return DeeObject_New(Dee_size_t,result);
+}
 static DeeObject *DEE_CALL _deedeque_shrink_to_fit(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_uint32_t flags = DEE_DEQUE_SHRINKTOFIT_FLAG_DEFAULT;
@@ -657,17 +676,16 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  DEE_METHODDEF_v100("shrink_to_fit",member(&_deedeque_shrink_to_fit),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("bucketrepr",member(&_deedeque_tp_bucketrepr),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("erase",member(&_deedeque_erase),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("append",member(&_deedeque_push_back),DEE_DOC_AUTO),
+ //TODO: Broken: DEE_METHODDEF_v100("remove",member(&_deedeque_remove),DEE_DOC_AUTO),
+ //TODO: Broken: DEE_METHODDEF_v100("remove_if",member(&_deedeque_remove_if),DEE_DOC_AUTO),
+
  //TODO: DEE_METHODDEF_v100("sorted_insert",member(&_deelist_sorted_insert),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("append",member(&_deelist_append),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("extend",member(&_deelist_extend),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("erase",member(&_deelist_erase),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("pop",member(&_deelist_pop),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("clear",member(&_deelist_clear),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("resize",member(&_deelist_resize),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("reserve",member(&_deelist_reserve),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("shrink_to_fit",member(&_deelist_shrink_to_fit),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("reverse",member(&_deelist_reverse),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("sort",member(&_deelist_sort),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_CONST_v100("reversed",member(&_deelist_reversed),DEE_DOC_AUTO),
