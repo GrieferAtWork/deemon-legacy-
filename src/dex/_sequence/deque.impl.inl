@@ -142,8 +142,8 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(DeeDeque_Contains)(
  DEE_A_INOUT DeeObject *elem LOCK_ARG(DEE_A_INOUT)) {
  DeeObject *deq_elem; int error;
  DeeDeque_TRAVERSE_SAFE_VARS;
- DeeDeque_AssertIntegrity(self);
  ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
  DeeDeque_TRAVERSE_SAFE(deq_elem,self) {
   Dee_INCREF(deq_elem);
   RELEASE;
@@ -160,8 +160,8 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(DeeDeque_ContainsPred)(
  DEE_A_INOUT DeeObject *pred LOCK_ARG(DEE_A_INOUT)) {
  DeeObject *deq_elem,*pred_args,*pred_result; int error;
  DeeDeque_TRAVERSE_SAFE_VARS;
- DeeDeque_AssertIntegrity(self);
  ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
  DeeDeque_TRAVERSE_SAFE(deq_elem,self) {
   Dee_INCREF(deq_elem);
   RELEASE;
@@ -184,10 +184,10 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(DeeDeque_ContainsPred)(
 DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_PushFront)(
  DEE_A_INOUT struct DeeDeque *self,
  DEE_A_INOUT DeeObject *elem LOCK_ARG(DEE_A_INOUT)) {
- DeeDeque_AssertIntegrity(self);
  DEE_ASSERT(DeeObject_Check(elem));
 again:
  ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
  if DEE_UNLIKELY(DeeDeque_EMPTY(self)) {
   // Empty deque --> Special code for allocating the first element
   DeeDeque_ALLOC_FIRST(self,elem,goto err_nomem);
@@ -199,9 +199,9 @@ again:
    // Allocate a new bucket
    DeeDeque_INCBUCKETCACHE_LEFT(self,goto err_nomem);
   }
-  if (DeeDeque_EMPELEMVCACHE_LEFT(self)) {
+  if DEE_UNLIKELY(DeeDeque_EMPELEMVCACHE_LEFT(self)) {
    // Allocate a new elemv-cache entry
-   DeeDeque_ADDELEMVCACHE_LEFT(self,goto err_nomem);
+   DeeDeque_INCELEMVCACHE_LEFT(self,goto err_nomem);
   }
   // Begin using a new bucket on the left
   self->d_begin = (--self->d_bucketv)->db_elemv+self->d_bucketsize;
@@ -220,10 +220,10 @@ err_nomem:
 DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_PushBack)(
  DEE_A_INOUT struct DeeDeque *self,
  DEE_A_INOUT DeeObject *elem LOCK_ARG(DEE_A_INOUT)) {
- DeeDeque_AssertIntegrity(self);
  DEE_ASSERT(DeeObject_Check(elem));
 again:
  ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
  if DEE_UNLIKELY(DeeDeque_EMPTY(self)) {
   // Empty deque --> Special code for allocating the first element
   DeeDeque_ALLOC_FIRST(self,elem,goto err_nomem);
@@ -232,12 +232,10 @@ again:
  }
  if DEE_UNLIKELY(DeeDeque_BACK_BUCKET_FULL_NZ(self)) {
   if DEE_UNLIKELY(DeeDeque_EMPBUCKETCACHE_RIGHT(self)) {
-   // Allocate a new bucket
-   DeeDeque_INCBUCKETCACHE_RIGHT(self,goto err_nomem);
+   DeeDeque_INCBUCKETCACHE_RIGHT(self,goto err_nomem); // Allocate a new bucket
   }
-  if (DeeDeque_EMPELEMVCACHE_RIGHT(self)) {
-   // Allocate a new elemv-cache entry
-   DeeDeque_ADDELEMVCACHE_RIGHT(self,goto err_nomem);
+  if DEE_UNLIKELY(DeeDeque_EMPELEMVCACHE_RIGHT(self)) {
+   DeeDeque_INCELEMVCACHE_RIGHT(self,goto err_nomem); // Allocate a new elemv-cache entry
   }
   // Begin using a new bucket on the left
   self->d_end = self->d_bucketv[self->d_bucketc++].db_elemv;
@@ -257,8 +255,8 @@ err_nomem:
 DEE_A_RET_EXCEPT_REF DeeObject *FUNC(DeeDeque_PopFront)(
  DEE_A_INOUT struct DeeDeque *self LOCK_ARG(DEE_A_INOUT)) {
  DeeObject *result;
- DeeDeque_AssertIntegrity(self);
  ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
  if DEE_UNLIKELY(DeeDeque_EMPTY(self)) {
   RELEASE;
   _sequence_emptyerror();
@@ -297,8 +295,8 @@ now_empty:
 DEE_A_RET_EXCEPT_REF DeeObject *FUNC(DeeDeque_PopBack)(
  DEE_A_INOUT struct DeeDeque *self LOCK_ARG(DEE_A_INOUT)) {
  DeeObject *result;
- DeeDeque_AssertIntegrity(self);
  ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
  if DEE_UNLIKELY(DeeDeque_EMPTY(self)) {
   RELEASE;
   _sequence_emptyerror();
@@ -329,6 +327,156 @@ now_empty:
  }
  RELEASE;
  return result;
+}
+
+
+DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_Insert)(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i,
+ DEE_A_INOUT DeeObject *elem LOCK_ARG(DEE_A_INOUT)) {
+ Dee_size_t used_i; DeeObject **elem_slot;
+ DEE_ASSERT(DeeObject_Check(elem));
+again:
+ used_i = i;
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
+ if (DeeDeque_EMPTY(self)) {
+  DeeDeque_ALLOC_FIRST(self,elem,goto err_nomem);
+  RELEASE;
+  return 0;
+ }
+ if (used_i > DeeDeque_SIZE(self)) used_i = DeeDeque_SIZE(self);
+ if (used_i >= DeeDeque_SIZE(self)/2) {
+  // Closer to the right --> Insert on the right
+  if DEE_UNLIKELY(DeeDeque_EMPBUCKETCACHE_RIGHT(self)) {
+   DeeDeque_INCBUCKETCACHE_RIGHT(self,goto err_nomem); // Allocate a new bucket
+  }
+  if DEE_UNLIKELY(DeeDeque_EMPELEMVCACHE_RIGHT(self)) {
+   DeeDeque_INCELEMVCACHE_RIGHT(self,goto err_nomem); // Allocate a new elemv-cache entry
+  }
+  _DeeDeque_ShiftRight(self,used_i,1);
+ } else {
+  // Closer to the left --> Insert on the left
+  if DEE_UNLIKELY(DeeDeque_EMPBUCKETCACHE_LEFT(self)) {
+   DeeDeque_INCBUCKETCACHE_LEFT(self,goto err_nomem); // Allocate a new bucket
+  }
+  if DEE_UNLIKELY(DeeDeque_EMPELEMVCACHE_LEFT(self)) {
+   DeeDeque_INCELEMVCACHE_LEFT(self,goto err_nomem); // Allocate a new elemv-cache entry
+  }
+  _DeeDeque_ShiftLeft(self,used_i,1);
+ }
+ DeeDeque_AssertIntegrity(self);
+ elem_slot = DeeDeque_ELEM_NZ(self,used_i);
+ Dee_INCREF(*elem_slot = elem);
+ RELEASE;
+ return 0;
+err_nomem:
+ DeeDeque_AssertIntegrity(self);
+ RELEASE;
+ if DEE_LIKELY(Dee_CollectMemory()) goto again;
+ DeeError_NoMemory();
+ return -1;
+}
+
+DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_InsertVector)(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i,
+ DEE_A_IN Dee_size_t elemc, DEE_A_IN_R(n) DeeObject *const *elemv LOCK_ARG(DEE_A_INOUT)) {
+ Dee_size_t used_i; DeeObject **iter,**end;
+ Dee_size_t req_freebucketc,free_slots,uncovered_elemc;
+ struct _DeeDequeFastIterator fill_iter;
+ DEE_ASSERT(!elemc || elemv);
+ if (!elemc) return 0;
+again:
+ used_i = i;
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
+ if (DeeDeque_EMPTY(self)) {
+  // TODO: Simply assign the vector
+  // NOTE: This code is just a placeholder and lacks in integrity when if comes to multi-threading
+  RELEASE;
+  if (FUNC(DeeDeque_PushFront)(self,*elemv LOCK_PAR) != 0) return -1;
+  return FUNC(DeeDeque_InsertVector)(self,1,elemc-1,elemv+1 LOCK_PAR);
+ }
+ if (used_i > DeeDeque_SIZE(self)) used_i = DeeDeque_SIZE(self);
+ if (used_i >= DeeDeque_SIZE(self)/2) {
+  // Closer to the right --> Insert on the right
+  free_slots = DeeDeque_BACK_UNUSED_NZ(self);
+  if (elemc > free_slots) {
+   // Must allocate more buckets in the right
+   uncovered_elemc = elemc-free_slots;
+   req_freebucketc = uncovered_elemc/self->d_bucketsize;
+   if ((uncovered_elemc%self->d_bucketsize)!=0) ++req_freebucketc;
+   DeeDeque_INCBUCKETCACHE_RIGHT_N(self,req_freebucketc,goto err_nomem);
+   DeeDeque_INCELEMVCACHE_RIGHT_N(self,req_freebucketc,goto err_nomem);
+  }
+  _DeeDeque_ShiftRight(self,used_i,elemc);
+ } else {
+  // Closer to the left --> Insert on the left
+  free_slots = DeeDeque_FRONT_UNUSED_NZ(self);
+  if (elemc > free_slots) {
+   // Must allocate more buckets in the right
+   uncovered_elemc = elemc-free_slots;
+   req_freebucketc = uncovered_elemc/self->d_bucketsize;
+   if ((uncovered_elemc%self->d_bucketsize)!=0) ++req_freebucketc;
+   DeeDeque_INCBUCKETCACHE_LEFT_N(self,req_freebucketc,goto err_nomem);
+   DeeDeque_INCELEMVCACHE_LEFT_N(self,req_freebucketc,goto err_nomem);
+  }
+  _DeeDeque_ShiftLeft(self,used_i,elemc);
+ }
+ DeeDeque_AssertIntegrity(self);
+
+ // Fill the now free memory
+ _DeeDequeFastIterator_InitForward(&fill_iter,self,used_i);
+ end = (iter = (DeeObject **)elemv)+elemc;
+ while (iter != end) {
+  Dee_INCREF(*_DeeDequeFastIterator_ELEM(&fill_iter) = *iter++);
+  _DeeDequeFastIterator_Next(&fill_iter,self);
+ }
+
+ DeeDeque_AssertIntegrity(self);
+ RELEASE;
+ return 0;
+err_nomem:
+ DeeDeque_AssertIntegrity(self);
+ RELEASE;
+ if DEE_LIKELY(Dee_CollectMemory()) goto again;
+ DeeError_NoMemory();
+ return -1;
+}
+
+
+DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_TInsertSequence)(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i,
+ DEE_A_IN DeeTypeObject const *tp_sequence,
+ DEE_A_INOUT DeeObject *sequence LOCK_ARG(DEE_A_INOUT)) {
+ DeeObject *temp; int error;
+ if (tp_sequence == &DeeTuple_Type) return FUNC(DeeDeque_InsertVector)(
+  self,i,DeeTuple_SIZE(sequence),DeeTuple_ELEM(sequence) LOCK_PAR);
+ if (tp_sequence == &DeeSuper_Type) return FUNC(DeeDeque_TInsertSequence)(
+  self,i,DeeSuper_TYPE(sequence),DeeSuper_SELF(sequence) LOCK_PAR);
+ if (tp_sequence == &DeeList_Type) {
+  if (DeeObject_IS_UNIQUE(sequence)) {
+   return FUNC(DeeDeque_InsertVector)(self,i,DeeList_SIZE(sequence),
+                                      DeeList_ELEM(sequence) LOCK_PAR);
+  }
+  if DEE_UNLIKELY((temp = DeeObject_Copy(sequence)) == NULL) return -1;
+  error = FUNC(DeeDeque_InsertVector)(self,i,DeeList_SIZE(temp),
+                                      DeeList_ELEM(temp) LOCK_PAR);
+  Dee_DECREF(temp);
+  return error;
+ }
+ if DEE_UNLIKELY((temp = DeeObject_TIterSelf(tp_sequence,sequence)) == NULL) return -1;
+ error = FUNC(DeeDeque_InsertIterator)(self,i,temp LOCK_PAR);
+ Dee_DECREF(temp);
+ return error;
+}
+DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_InsertIterator)(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t i,
+ DEE_A_INOUT DeeObject *iterator LOCK_ARG(DEE_A_INOUT)) {
+ DeeObject *temp; int error; // todo: Optimize?
+ if DEE_UNLIKELY((temp = DeeList_NewFromIterator(iterator)) == NULL) return -1;
+ error = FUNC(DeeDeque_InsertVector)(self,i,DeeList_SIZE(temp),DeeList_ELEM(temp) LOCK_PAR);
+ Dee_DECREF(temp);
+ return error;
 }
 
 

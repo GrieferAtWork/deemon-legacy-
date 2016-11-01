@@ -250,6 +250,54 @@ void DeeDeque_Quit(DEE_A_IN struct DeeDeque *self) {
 }
 
 
+void _DeeDeque_ShiftRight(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t free_start,
+ DEE_A_IN Dee_size_t free_count) {
+ struct _DeeDequeFastIterator src_iter,dst_iter;
+ Dee_size_t shift_count;
+ DeeDeque_AssertIntegrity(self);
+ shift_count = self->d_elemc-free_start;
+ // Consume elements on the right
+ DeeDeque_CONSUME_RIGHT_N(self,free_count);
+ DeeDeque_AssertIntegrity(self);
+ _DeeDequeFastIterator_InitReverse(&src_iter,self,self->d_elemc-free_count);
+ _DeeDequeFastIterator_InitReverse(&dst_iter,self,self->d_elemc);
+ // Must Iterate downwards to shift everything to the right
+ // without overriding anything we'll still need (aka. the memmove rule)
+ while (shift_count--) {
+  _DeeDequeFastIterator_Prev(&src_iter,self);
+  _DeeDequeFastIterator_Prev(&dst_iter,self);
+  *_DeeDequeFastIterator_ELEM(&dst_iter) = *_DeeDequeFastIterator_ELEM(&src_iter);
+#ifdef DEE_DEBUG
+  *_DeeDequeFastIterator_ELEM(&src_iter) = NULL;
+#endif
+ }
+}
+void _DeeDeque_ShiftLeft(
+ DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t free_start,
+ DEE_A_IN Dee_size_t free_count) {
+ struct _DeeDequeFastIterator src_iter,dst_iter;
+ Dee_size_t shift_count;
+ DeeDeque_AssertIntegrity(self);
+ shift_count = free_start;
+ // Consume elements on the left
+ DeeDeque_CONSUME_LEFT_N(self,free_count);
+ _DeeDequeFastIterator_InitForward(&src_iter,self,free_count);
+ _DeeDequeFastIterator_InitFront(&dst_iter,self);
+ // Must Iterate upwards to shift everything to the right
+ // without overriding anything we'll still need (aka. the memmove rule)
+ while (shift_count--) {
+  *_DeeDequeFastIterator_ELEM(&dst_iter) = *_DeeDequeFastIterator_ELEM(&src_iter);
+#ifdef DEE_DEBUG
+  *_DeeDequeFastIterator_ELEM(&src_iter) = NULL;
+#endif
+  _DeeDequeFastIterator_Next(&src_iter,self);
+  _DeeDequeFastIterator_Next(&dst_iter,self);
+ }
+}
+
+
+
 #ifndef __INTELLISENSE__
 #define WITH_LOCK
 #include "deque.impl.inl"
@@ -389,13 +437,13 @@ _deedeque_tp_seq_iter_self(DeeDequeObject *self) {
  DeeAtomicMutex_Init(&result->di_lock);
  return result;
 }
-static DeeObject *_deedeque_clear(
+static DeeObject *DEE_CALL _deedeque_clear(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":clear") != 0) return NULL;
  DeeDeque_ClearWithLock(&self->d_deq,&self->d_lock);
  DeeReturn_None;
 }
-static DeeDequeIteratorObject *_deedeque_begin(
+static DeeDequeIteratorObject *DEE_CALL _deedeque_begin(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeDequeIteratorObject *result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":begin") != 0) return NULL;
@@ -408,7 +456,7 @@ static DeeDequeIteratorObject *_deedeque_begin(
  DeeAtomicMutex_Init(&result->di_lock);
  return result;
 }
-static DeeDequeIteratorObject *_deedeque_end(
+static DeeDequeIteratorObject *DEE_CALL _deedeque_end(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeDequeIteratorObject *result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":end") != 0) return NULL;
@@ -421,33 +469,54 @@ static DeeDequeIteratorObject *_deedeque_end(
  DeeAtomicMutex_Init(&result->di_lock);
  return result;
 }
-static DeeObject *_deedeque_push_front(
+static DeeObject *DEE_CALL _deedeque_push_front(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:push_front",&elem) != 0) return NULL;
  if (DeeDeque_PushFrontWithLock(&self->d_deq,elem,&self->d_lock) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deedeque_push_back(
+static DeeObject *DEE_CALL _deedeque_push_back(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:push_back",&elem) != 0) return NULL;
  if (DeeDeque_PushBackWithLock(&self->d_deq,elem,&self->d_lock) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deedeque_pop_front(
+static DeeObject *DEE_CALL _deedeque_pop_front(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":pop_front") != 0) return NULL;
  if DEE_UNLIKELY((result = DeeDeque_PopFrontWithLock(&self->d_deq,&self->d_lock)) == NULL) return NULL;
  return result;
 }
-static DeeObject *_deedeque_pop_back(
+static DeeObject *DEE_CALL _deedeque_pop_back(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":pop_back") != 0) return NULL;
  if DEE_UNLIKELY((result = DeeDeque_PopBackWithLock(&self->d_deq,&self->d_lock)) == NULL) return NULL;
  return result;
+}
+static DeeObject *DEE_CALL _deedeque_insert(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_size_t i; DeeObject *elem;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iuo:insert",&i,&elem) != 0) return NULL;
+ if DEE_UNLIKELY(DeeDeque_InsertWithLock(&self->d_deq,i,elem,&self->d_lock) != 0) return NULL;
+ DeeReturn_None;
+}
+static DeeObject *DEE_CALL _deedeque_insert_list(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_size_t i; DeeObject *seq;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iuo:insert_list",&i,&seq) != 0) return NULL;
+ if DEE_UNLIKELY(DeeDeque_InsertSequenceWithLock(&self->d_deq,i,seq,&self->d_lock) != 0) return NULL;
+ DeeReturn_None;
+}
+static DeeObject *DEE_CALL _deedeque_insert_iter(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_size_t i; DeeObject *iter;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iuo:insert_iter",&i,&iter) != 0) return NULL;
+ if DEE_UNLIKELY(DeeDeque_InsertIteratorWithLock(&self->d_deq,i,iter,&self->d_lock) != 0) return NULL;
+ DeeReturn_None;
 }
 
 
@@ -496,6 +565,9 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  DEE_METHODDEF_v100("push_back",member(&_deedeque_push_back),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("pop_front",member(&_deedeque_pop_front),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("pop_back",member(&_deedeque_pop_back),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("insert",member(&_deedeque_insert),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("insert_list",member(&_deedeque_insert_list),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("insert_iter",member(&_deedeque_insert_iter),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("insert_list",member(&_deelist_insert_list),DEE_DOC_AUTO),
