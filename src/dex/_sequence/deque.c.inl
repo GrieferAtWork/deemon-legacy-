@@ -434,6 +434,19 @@ static DeeObject *DEE_CALL _deedeque_tp_seq_get(
  DeeDeque_RELEASE(self);
  return result;
 }
+static int DEE_CALL _deedeque_tp_seq_del(
+ DeeDequeObject *self, DeeObject *index) {
+ DeeObject *result; Dee_ssize_t i;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,index,&i) != 0) return -1;
+ DeeDeque_ACQUIRE(self);
+ if (DeeDeque_EMPTY(&self->d_deq)) {
+  DeeDeque_RELEASE(self);
+  _sequence_emptyerror();
+  return -1;
+ }
+ DEE_PRIVATE_CLAMP_INDEX(i,DeeDeque_SIZE(&self->d_deq));
+ return DeeDeque_EraseReleaseLock(&self->d_deq,i,1,&self->d_lock);
+}
 static int DEE_CALL _deedeque_tp_seq_set(
  DeeDequeObject *self, DeeObject *index, DeeObject *v) {
  DeeObject **elemp,*old_elem; Dee_ssize_t i;
@@ -452,6 +465,15 @@ static int DEE_CALL _deedeque_tp_seq_set(
  DeeDeque_RELEASE(self);
  Dee_DECREF(old_elem);
  return 0;
+}
+static int DEE_CALL _deedeque_tp_seq_range_del(
+ DeeDequeObject *self, DeeObject *begino, DeeObject *endo) {
+ DeeObject *result; Dee_ssize_t begin,end;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,begino,&begin) != 0) return -1;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,endo,&end) != 0) return -1;
+ if (begin < 0) begin = 0; if (end < 0) end = 0;
+ if (end >= begin) return 0;
+ return DeeDeque_EraseWithLock(&self->d_deq,(Dee_size_t)begin,(Dee_size_t)(end-begin),&self->d_lock);
 }
 static DeeObject *DEE_CALL _deedeque_tp_seq_size(DeeDequeObject *self) {
  Dee_size_t result;
@@ -761,10 +783,12 @@ DeeTypeObject DeeDeque_Type = {
   null,null,null,null,null,null,null,null,null,null),
  DEE_TYPE_OBJECT_COMPARE_v100(null,null,null,null,null,null),
  DEE_TYPE_OBJECT_SEQ_v101(
-  member(&_deedeque_tp_seq_get),null,
+  member(&_deedeque_tp_seq_get),
+  member(&_deedeque_tp_seq_del),
   member(&_deedeque_tp_seq_set),
   member(&_deedeque_tp_seq_size),
-  member(&_deedeque_tp_seq_contains),null,null,null,
+  member(&_deedeque_tp_seq_contains),
+  null,member(&_deedeque_tp_seq_range_del),null,
   member(&_deedeque_tp_seq_iter_self),null),
  DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,
   null,null,member(_deedeque_tp_methods),
