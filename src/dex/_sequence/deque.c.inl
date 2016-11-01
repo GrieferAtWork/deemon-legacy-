@@ -333,6 +333,36 @@ static int DEE_CALL _deedeque_tp_any_ctor(
  DeeAtomicMutex_Init(&self->d_lock);
  return DeeDeque_InitFromSequenceEx(&self->d_deq,bucket_size,sequence);
 }
+static int DEE_CALL _deedeque_tp_copy_assign(DeeDequeObject *self, DeeDequeObject *right) {
+ struct DeeDeque new_deque,old_deque;
+ if DEE_UNLIKELY(DeeDeque_InitCopyWithLock(&new_deque,&right->d_deq,&right->d_lock) != 0) return -1;
+ DeeAtomicMutex_AcquireRelaxed(&self->d_lock);
+ memcpy(&old_deque,&self->d_deq,sizeof(struct DeeDeque));
+ memcpy(&self->d_deq,&new_deque,sizeof(struct DeeDeque));
+ DeeAtomicMutex_Release(&self->d_lock);
+ DeeDeque_Quit(&old_deque);
+ return 0;
+}
+static int DEE_CALL _deedeque_tp_move_assign(DeeDequeObject *self, DeeDequeObject *right) {
+ struct DeeDeque new_deque,old_deque;
+ DeeDeque_InitMoveWithLock(&new_deque,&right->d_deq,&right->d_lock);
+ DeeAtomicMutex_AcquireRelaxed(&self->d_lock);
+ memcpy(&old_deque,&self->d_deq,sizeof(struct DeeDeque));
+ memcpy(&self->d_deq,&new_deque,sizeof(struct DeeDeque));
+ DeeAtomicMutex_Release(&self->d_lock);
+ DeeDeque_Quit(&old_deque);
+ return 0;
+}
+static int DEE_CALL _deedeque_tp_any_assign(DeeDequeObject *self, DeeObject *sequence) {
+ struct DeeDeque new_deque,old_deque;
+ if (DeeDeque_InitFromSequence(&new_deque,sequence) != 0) return -1;
+ DeeAtomicMutex_AcquireRelaxed(&self->d_lock);
+ memcpy(&old_deque,&self->d_deq,sizeof(struct DeeDeque));
+ memcpy(&self->d_deq,&new_deque,sizeof(struct DeeDeque));
+ DeeAtomicMutex_Release(&self->d_lock);
+ DeeDeque_Quit(&old_deque);
+ return 0;
+}
 static void DEE_CALL _deedeque_tp_dtor(DeeDequeObject *self) { DeeDeque_Quit(&self->d_deq); }
 static void DEE_CALL _deedeque_tp_clear(DeeDequeObject *self) { DeeDeque_Clear(&self->d_deq); }
 static int DEE_CALL _deedeque_tp_bool(DeeDequeObject *self) { return !DeeDeque_EMPTY(&self->d_deq); }
@@ -714,7 +744,10 @@ DeeTypeObject DeeDeque_Type = {
  DEE_TYPE_OBJECT_DESTRUCTOR_v100(
   member(&_DeeGC_TpFree),
   member(&_deedeque_tp_dtor)),
- DEE_TYPE_OBJECT_ASSIGN_v100(null,null,null),
+ DEE_TYPE_OBJECT_ASSIGN_v100(
+  member(&_deedeque_tp_copy_assign),
+  member(&_deedeque_tp_move_assign),
+  member(&_deedeque_tp_any_assign)),
  DEE_TYPE_OBJECT_CAST_v101(
   member(&_deedeque_tp_str),
   member(&_deedeque_tp_repr),null,null,null),
