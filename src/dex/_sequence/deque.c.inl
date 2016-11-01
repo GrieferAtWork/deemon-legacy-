@@ -313,6 +313,18 @@ static int DEE_CALL _deedeque_tp_ctor(
  DeeAtomicMutex_Init(&self->d_lock);
  return 0;
 }
+static int DEE_CALL _deedeque_tp_copy_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeeDequeObject *self, DeeDequeObject *right) {
+ if (DeeDeque_InitCopyWithLock(&self->d_deq,&right->d_deq,&right->d_lock) != 0) return -1;
+ DeeAtomicMutex_Init(&self->d_lock);
+ return 0;
+}
+static int DEE_CALL _deedeque_tp_move_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeeDequeObject *self, DeeDequeObject *right) {
+ DeeDeque_InitMoveWithLock(&self->d_deq,&right->d_deq,&right->d_lock);
+ DeeAtomicMutex_Init(&self->d_lock);
+ return 0;
+}
 static int DEE_CALL _deedeque_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeDequeObject *self, DeeObject *args) {
  DeeObject *sequence; Dee_size_t bucket_size = DEE_DEQUE_DEFUALT_BUCKET_SIZE;
@@ -610,7 +622,9 @@ DeeTypeObject DeeDeque_Type = {
   member(DEE_TYPE_FLAG_HAS_GC),null),
  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeDequeObject),
   member(&_DeeGC_TpAlloc),
-  member(&_deedeque_tp_ctor),null,null,
+  member(&_deedeque_tp_ctor),
+  member(&_deedeque_tp_copy_ctor),
+  member(&_deedeque_tp_move_ctor),
   member(&_deedeque_tp_any_ctor)),
  DEE_TYPE_OBJECT_DESTRUCTOR_v100(
   member(&_DeeGC_TpFree),

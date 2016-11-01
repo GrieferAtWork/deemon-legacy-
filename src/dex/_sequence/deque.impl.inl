@@ -44,6 +44,131 @@ DEE_DECL_BEGIN
 #endif
 
 
+DEE_A_RET_EXCEPT(-1) int FUNC(DeeDeque_InitCopy)(
+ DEE_A_OUT struct DeeDeque *self,
+ DEE_A_IN struct DeeDeque const *right LOCK_ARG(DEE_A_INOUT)) {
+ struct DeeDequeBucket *iter,*end,*src;
+ DeeObject **elem_iter,**elem_end,**elem_src;
+again:
+ DEE_ASSERT(self);
+ ACQUIRE;
+again_locked:
+ DeeDeque_AssertIntegrity(right);
+ if (DeeDeque_EMPTY(right)) {
+  DeeDeque_InitEx(self,right->d_bucketsize);
+ } else {
+  DEE_ASSERT(right->d_bucketc != 0);
+  self->d_bucketc = right->d_bucketc;
+  self->d_bucketsize = right->d_bucketsize;
+  if DEE_UNLIKELY((self->d_bucketroot = (struct DeeDequeBucket *)malloc_nz(
+   self->d_bucketc*sizeof(struct DeeDequeBucket))) == NULL) {
+   RELEASE;
+   if (Dee_CollectMemory()) goto again;
+   DeeError_NoMemory();
+  }
+  end = (iter = self->d_bucketroot)+self->d_bucketc;
+  DEE_ASSERT(iter != end);
+  do {
+   if DEE_UNLIKELY((iter->db_elemv = (DeeObject **)malloc_nz(
+    self->d_bucketsize*sizeof(DeeObject *))) == NULL) {
+    RELEASE;
+    if (Dee_CollectMemory()) {
+     ACQUIRE;
+     if (self->d_bucketc != right->d_bucketc || 
+         self->d_bucketsize != right->d_bucketsize) {
+      // The other deque changed in a way that forces us to start over
+      while (iter != self->d_bucketroot) { --iter; free_nn(iter->db_elemv); }
+      free_nn(self->d_bucketroot);
+      goto again_locked;
+     }
+    }
+    while (iter != self->d_bucketroot) { --iter; free_nn(iter->db_elemv); }
+    free_nn(self->d_bucketroot);
+    DeeError_NoMemory();
+    return -1;
+   }
+  } while (++iter != end);
+  DEE_ASSERT(self->d_bucketc == right->d_bucketc);
+  DEE_ASSERT(self->d_bucketsize == right->d_bucketsize);
+  // Buckets & elemv-buffers are now allocated.
+  // >> From here on, everything is noexcept
+  self->d_elemc = right->d_elemc;
+  self->d_bucketv = self->d_bucketroot;
+  self->d_bucketelemv = self->d_bucketroot;
+  self->d_bucketa = right->d_bucketc;
+  self->d_bucketelema = right->d_bucketc;
+  self->d_begin = self->d_bucketv[0].db_elemv+(right->d_begin-right->d_bucketv[0].db_elemv);
+  self->d_end = self->d_bucketv[self->d_bucketc-1].db_elemv+(
+   right->d_end-right->d_bucketv[right->d_bucketc-1].db_elemv);
+  // Last thing to do: Actually copy all the stored elements (by-reference)
+  if (self->d_bucketc == 1) {
+   // Special case: Only one bucket (begin & end share the same vector)
+   elem_src = right->d_begin;
+   elem_iter = self->d_begin;
+   elem_end = self->d_end;
+   do Dee_INCREF(*elem_iter++ = *elem_src++);
+   while (elem_iter != elem_end);
+  } else {
+   // Special case: First bucket
+   elem_src = right->d_begin;
+   elem_iter = self->d_begin;
+   elem_end = self->d_bucketv[0].db_elemv+self->d_bucketsize;
+   do Dee_INCREF(*elem_iter++ = *elem_src++);
+   while (elem_iter != elem_end);
+   // Copy all full buckets
+   end = (iter = self->d_bucketv+1)+(self->d_bucketc-2);
+   src = right->d_bucketv+1;
+   do {
+    elem_end = (elem_iter = iter->db_elemv)+self->d_bucketsize;
+    elem_src = src->db_elemv;
+    do Dee_INCREF(*elem_iter++ = *elem_src++);
+    while (elem_iter != elem_end);
+    ++iter,++src;
+   } while (iter != end);
+   // Sepcial case: Last bucket
+   DEE_ASSERT(end == self->d_bucketv+(self->d_bucketc-1));
+   DEE_ASSERT(src == right->d_bucketv+(right->d_bucketc-1));
+   elem_iter = end->db_elemv;
+   elem_end = self->d_end;
+   elem_src = src->db_elemv;
+   do Dee_INCREF(*elem_iter++ = *elem_src++);
+   while (elem_iter != elem_end);
+  }
+ }
+ RELEASE;
+ DeeDeque_AssertIntegrity(self);
+ return 0;
+}
+void FUNC(DeeDeque_InitMove)(
+ DEE_A_OUT struct DeeDeque *self,
+ DEE_A_INOUT struct DeeDeque *right LOCK_ARG(DEE_A_INOUT)) {
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(right);
+ self->d_elemc       = right->d_elemc;
+ self->d_bucketsize  = right->d_bucketsize;
+ self->d_bucketelema = right->d_bucketelema;
+ self->d_bucketelemv = right->d_bucketelemv;
+ self->d_bucketa     = right->d_bucketa;
+ self->d_bucketroot  = right->d_bucketroot;
+ self->d_bucketc     = right->d_bucketc;
+ self->d_bucketv     = right->d_bucketv;
+ self->d_begin       = right->d_begin;
+ self->d_end         = right->d_end;
+ right->d_elemc = 0;
+ right->d_bucketelema = 0;
+ right->d_bucketelemv = NULL;
+ right->d_bucketa = 0;
+ right->d_bucketroot = NULL;
+ right->d_bucketc = 0;
+ right->d_bucketv = NULL;
+ right->d_begin = NULL;
+ right->d_end = NULL;
+ DeeDeque_AssertIntegrity(right);
+ RELEASE;
+ DeeDeque_AssertIntegrity(self);
+}
+
+
 
 void FUNC(DeeDeque_Clear)(DEE_A_INOUT struct DeeDeque *self LOCK_ARG(DEE_A_INOUT)) {
  struct DeeDequeBucket *iter,*end,*old_bucketelemv,*old_bucketroot,*old_bucketv;

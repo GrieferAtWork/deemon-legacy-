@@ -150,6 +150,10 @@ extern DEE_A_RET_EXCEPT(-1) int DeeDeque_TInitFromSequenceEx(
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InitFromIteratorEx(
  DEE_A_OUT struct DeeDeque *self, DEE_A_IN Dee_size_t bucket_size,
  DEE_A_INOUT DeeObject *iterator) DEE_ATTRIBUTE_NONNULL((1,3));
+extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InitCopy(DEE_A_OUT struct DeeDeque *self, DEE_A_IN struct DeeDeque const *right) DEE_ATTRIBUTE_NONNULL((1,2));
+extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InitCopyWithLock(DEE_A_OUT struct DeeDeque *self, DEE_A_IN struct DeeDeque const *right, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
+extern void DeeDeque_InitMove(DEE_A_OUT struct DeeDeque *self, DEE_A_INOUT struct DeeDeque *right) DEE_ATTRIBUTE_NONNULL((1,2));
+extern void DeeDeque_InitMoveWithLock(DEE_A_OUT struct DeeDeque *self, DEE_A_INOUT struct DeeDeque *right, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
 extern void DeeDeque_Quit(DEE_A_IN struct DeeDeque *self) DEE_ATTRIBUTE_NONNULL((1));
 extern void DeeDeque_Clear(DEE_A_INOUT struct DeeDeque *self) DEE_ATTRIBUTE_NONNULL((1));
 extern void DeeDeque_ClearWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2));
