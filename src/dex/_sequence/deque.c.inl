@@ -482,16 +482,18 @@ static DeeDequeIteratorObject *DEE_CALL _deedeque_end(
 }
 static DeeObject *DEE_CALL _deedeque_push_front(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeObject *elem;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:push_front",&elem) != 0) return NULL;
- if (DeeDeque_PushFrontWithLock(&self->d_deq,elem,&self->d_lock) != 0) return NULL;
+ if DEE_UNLIKELY(((DeeTuple_SIZE(args) == 1)
+  ? DeeDeque_PushFrontWithLock(&self->d_deq,DeeTuple_GET(args,0),&self->d_lock)
+  : DeeDeque_PushFrontVectorWithLock(&self->d_deq,DeeTuple_SIZE(args),DeeTuple_ELEM(args),&self->d_lock)
+  ) != 0) return NULL;
  DeeReturn_None;
 }
 static DeeObject *DEE_CALL _deedeque_push_back(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeObject *elem;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:push_back",&elem) != 0) return NULL;
- if (DeeDeque_PushBackWithLock(&self->d_deq,elem,&self->d_lock) != 0) return NULL;
+ if DEE_UNLIKELY(((DeeTuple_SIZE(args) == 1)
+  ? DeeDeque_PushBackWithLock(&self->d_deq,DeeTuple_GET(args,0),&self->d_lock)
+  : DeeDeque_PushBackVectorWithLock(&self->d_deq,DeeTuple_SIZE(args),DeeTuple_ELEM(args),&self->d_lock)
+  ) != 0) return NULL;
  DeeReturn_None;
 }
 static DeeObject *DEE_CALL _deedeque_pop_front(
@@ -536,11 +538,11 @@ static DeeObject *DEE_CALL _deedeque_shrink_to_fit(
  DeeDeque_ShrinkToFitWithLock(&self->d_deq,flags,&self->d_lock);
  DeeReturn_None;
 }
-static DeeObject *DEE_CALL _deedeque_tp_bucketusage(
+static DeeObject *DEE_CALL _deedeque_tp_bucketrepr(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t n_buckets,bucket_size,front_unused,back_unused,digmax,i,full_max;
  DeeObject *result; DeeStringWriter writer = DeeStringWriter_INIT();
- if DEE_UNLIKELY(DeeTuple_Unpack(args,":bucketusage") != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":bucketrepr") != 0) return NULL;
  DeeDeque_ACQUIRE(self);
  if (DeeDeque_EMPTY(&self->d_deq)) {
   DeeDeque_RELEASE(self);
@@ -644,7 +646,7 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  DEE_METHODDEF_v100("insert_list",member(&_deedeque_insert_list),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("insert_iter",member(&_deedeque_insert_iter),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("shrink_to_fit",member(&_deedeque_shrink_to_fit),DEE_DOC_AUTO),
- DEE_METHODDEF_v100("bucketusage",member(&_deedeque_tp_bucketusage),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("bucketrepr",member(&_deedeque_tp_bucketrepr),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("sorted_insert",member(&_deelist_sorted_insert),DEE_DOC_AUTO),

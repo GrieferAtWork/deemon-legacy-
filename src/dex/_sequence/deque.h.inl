@@ -165,6 +165,10 @@ extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushFront(DEE_A_INOUT struct DeeDeque *
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushFrontWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushBack(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushBackWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
+extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushFrontVector(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t elemc, DEE_A_IN_R(n) DeeObject *const *elemv) DEE_ATTRIBUTE_NONNULL((1,2));
+extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushFrontVectorWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t elemc, DEE_A_IN_R(n) DeeObject *const *elemv, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
+extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushBackVector(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t elemc, DEE_A_IN_R(n) DeeObject *const *elemv) DEE_ATTRIBUTE_NONNULL((1,2));
+extern DEE_A_RET_EXCEPT(-1) int DeeDeque_PushBackVectorWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_size_t elemc, DEE_A_IN_R(n) DeeObject *const *elemv, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
 extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_PopFront(DEE_A_INOUT struct DeeDeque *self) DEE_ATTRIBUTE_NONNULL((1));
 extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_PopFrontWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_PopBack(DEE_A_INOUT struct DeeDeque *self) DEE_ATTRIBUTE_NONNULL((1));
