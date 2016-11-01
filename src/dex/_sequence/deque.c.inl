@@ -102,8 +102,7 @@ DEE_A_RET_EXCEPT(-1) int DeeDeque_InitFromVectorEx(
  }
 
  DEE_ASSERT(elemc > bucket_size);
- DEE_ASSERT((self->d_bucketc*bucket_size)-elemc == bucket_size-(elemc%bucket_size));
- n_overallocated_slots = bucket_size-(elemc%bucket_size);
+ n_overallocated_slots = (self->d_bucketc*bucket_size)-elemc;
  unused_begin_storage = n_overallocated_slots/2;
  used_begin_storage = bucket_size-unused_begin_storage;
  used_end_storage = used_begin_storage;
@@ -532,10 +531,67 @@ static DeeObject *DEE_CALL _deedeque_insert_iter(
 }
 static DeeObject *DEE_CALL _deedeque_shrink_to_fit(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- Dee_uint32_t flags = (DEE_DEQUE_SHRINKTOFIT_FLAG_BUCKETS|DEE_DEQUE_SHRINKTOFIT_FLAG_SHIFT_ELEM);
+ Dee_uint32_t flags = DEE_DEQUE_SHRINKTOFIT_FLAG_DEFAULT;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|I32u:shrink_to_fit",&flags) != 0) return NULL;
  DeeDeque_ShrinkToFitWithLock(&self->d_deq,flags,&self->d_lock);
  DeeReturn_None;
+}
+static DeeObject *DEE_CALL _deedeque_tp_bucketusage(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_size_t n_buckets,bucket_size,front_unused,back_unused,digmax,i,full_max;
+ DeeObject *result; DeeStringWriter writer = DeeStringWriter_INIT();
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":bucketusage") != 0) return NULL;
+ DeeDeque_ACQUIRE(self);
+ if (DeeDeque_EMPTY(&self->d_deq)) {
+  DeeDeque_RELEASE(self);
+ } else {
+  n_buckets = self->d_deq.d_bucketc;
+  bucket_size = self->d_deq.d_bucketsize;
+  front_unused = DeeDeque_FRONT_UNUSED_NZ(&self->d_deq);
+  back_unused = DeeDeque_BACK_UNUSED_NZ(&self->d_deq);
+  DeeDeque_RELEASE(self);
+  if (n_buckets == 1) {
+   if (DeeStringWriter_WRITE_STRING(&writer,"0 |") != 0) goto err;
+   if (DeeStringWriter_RepeatChar(&writer,' ',front_unused) != 0) goto err;
+   if (DeeStringWriter_RepeatChar(&writer,'O',bucket_size-(front_unused+back_unused)) != 0) goto err;
+   if (DeeStringWriter_RepeatChar(&writer,' ',back_unused) != 0) goto err;
+   if (DeeStringWriter_WRITE_STRING(&writer,"|\n") != 0) goto err;
+  } else {
+   i = n_buckets,digmax = 1;
+   while ((i /= 10) != 0) ++digmax;
+   if (DeeStringWriter_RepeatChar(&writer,'0',digmax) != 0) goto err;
+   if (DeeStringWriter_WRITE_STRING(&writer," |") != 0) goto err;
+   if (DeeStringWriter_RepeatChar(&writer,' ',front_unused) != 0) goto err;
+   if (DeeStringWriter_RepeatChar(&writer,'O',bucket_size-front_unused) != 0) goto err;
+   if (DeeStringWriter_WRITE_STRING(&writer,"|\n") != 0) goto err;
+   full_max = Dee_MIN((n_buckets-1),16);
+   for (i = 1; i < full_max; ++i) {
+    if (digmax >= 2) {
+     if (DeeStringWriter_RepeatChar(&writer,'0',digmax-2) != 0) goto err;
+     if (DeeStringWriter_Writef(&writer,"%.2Iu",i) != 0) goto err;
+    } else {
+     if (DeeStringWriter_Writef(&writer,"%.1Iu",i) != 0) goto err;
+    }
+    if (DeeStringWriter_WRITE_STRING(&writer," |") != 0) goto err;
+    if (DeeStringWriter_RepeatChar(&writer,'O',bucket_size) != 0) goto err;
+    if (DeeStringWriter_WRITE_STRING(&writer,"|\n") != 0) goto err;
+   }
+   if (full_max != n_buckets-1) {
+    if (DeeStringWriter_RepeatChar(&writer,'.',digmax) != 0) goto err;
+    if (DeeStringWriter_WRITE_STRING(&writer," |") != 0) goto err;
+    if (DeeStringWriter_RepeatChar(&writer,'O',bucket_size) != 0) goto err;
+    if (DeeStringWriter_WRITE_STRING(&writer,"|\n") != 0) goto err;
+   }
+   if (DeeStringWriter_Writef(&writer,"%Iu |",n_buckets-1) != 0) goto err;
+   if (DeeStringWriter_RepeatChar(&writer,'O',bucket_size-back_unused) != 0) goto err;
+   if (DeeStringWriter_RepeatChar(&writer,' ',back_unused) != 0) goto err;
+   if (DeeStringWriter_WRITE_STRING(&writer,"|\n") != 0) goto err;
+  }
+ }
+ result = DeeStringWriter_Pack(&writer);
+end: DeeStringWriter_Quit(&writer);
+ return result;
+err: result = NULL; goto end;
 }
 
 
@@ -588,10 +644,9 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  DEE_METHODDEF_v100("insert_list",member(&_deedeque_insert_list),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("insert_iter",member(&_deedeque_insert_iter),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("shrink_to_fit",member(&_deedeque_shrink_to_fit),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("bucketusage",member(&_deedeque_tp_bucketusage),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove_if",member(&_deelist_remove_if),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("remove",member(&_deelist_remove),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("insert_list",member(&_deelist_insert_list),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("insert_iter",member(&_deelist_insert_iter),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("sorted_insert",member(&_deelist_sorted_insert),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("append",member(&_deelist_append),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("extend",member(&_deelist_extend),DEE_DOC_AUTO),

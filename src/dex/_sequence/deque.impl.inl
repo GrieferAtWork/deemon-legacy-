@@ -515,11 +515,16 @@ again:
  ACQUIRE;
  DeeDeque_AssertIntegrity(self);
  if (DeeDeque_EMPTY(self)) {
-  // TODO: Simply assign the vector
-  // NOTE: This code is just a placeholder and lacks in integrity when if comes to multi-threading
+#if 1
+  DeeDeque_ALLOC_FIRST_N(self,elemc,(DeeObject **)elemv,goto err_nomem);
+  RELEASE;
+  return 0;
+#else
+  // NOTE: This code was just a placeholder and lacks in integrity when if comes to multi-threading
   RELEASE;
   if (FUNC(DeeDeque_PushFront)(self,*elemv LOCK_PAR) != 0) return -1;
   return FUNC(DeeDeque_InsertVector)(self,1,elemc-1,elemv+1 LOCK_PAR);
+#endif
  }
  if (used_i > DeeDeque_SIZE(self)) used_i = DeeDeque_SIZE(self);
  if (used_i >= DeeDeque_SIZE(self)/2) {
@@ -633,7 +638,7 @@ void FUNC(DeeDeque_ShrinkToFit)(
    self->d_begin -= shift;
    // Underflow the previous end into the bucket preceding it
    // >> Now the last bucket is no longer in use
-   DEE_ASSERTF(self->d_end-shift < self->d_bucketv[self->d_bucketc-1].db_elemv,
+   DEE_ASSERTF(self->d_end-shift <= self->d_bucketv[self->d_bucketc-1].db_elemv,
                "End pointer to last bucket can't shift into previous bucket");
    self->d_end = self->d_bucketv[self->d_bucketc-2].db_elemv+(self->d_bucketsize-(
     self->d_bucketv[self->d_bucketc-1].db_elemv-(self->d_end-shift)));
@@ -648,8 +653,6 @@ void FUNC(DeeDeque_ShrinkToFit)(
     _DeeDequeFastIterator_Next(&dst_iter,self);
     _DeeDequeFastIterator_Next(&src_iter,self);
    }
-   DEE_ASSERT(_DeeDequeFastIterator_ELEM(&dst_iter) == self->d_end);
-   DEE_ASSERT(_DeeDequeFastIterator_ELEM(&src_iter) == self->d_end+shift);
   }
   DeeDeque_AssertIntegrity(self);
  }

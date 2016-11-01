@@ -183,6 +183,11 @@ extern DEE_A_RET_EXCEPT(-1) int DeeDeque_InsertIteratorWithLock(DEE_A_INOUT stru
 #define DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV      0x00000001 /*< Free unused elemv-entries. */
 #define DEE_DEQUE_SHRINKTOFIT_FLAG_BUCKETS    0x00000002 /*< Free unused buckets. */
 #define DEE_DEQUE_SHRINKTOFIT_FLAG_SHIFT_ELEM 0x00000004 /*< Shift elements to free up to one more bucket. */
+#define DEE_DEQUE_SHRINKTOFIT_FLAG_DEFAULT \
+ (DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV\
+ |DEE_DEQUE_SHRINKTOFIT_FLAG_BUCKETS\
+ |DEE_DEQUE_SHRINKTOFIT_FLAG_SHIFT_ELEM)
+
 extern void DeeDeque_ShrinkToFit(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_uint32_t flags) DEE_ATTRIBUTE_NONNULL((1));
 extern void DeeDeque_ShrinkToFitWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_IN Dee_uint32_t flags, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3));
 
@@ -457,6 +462,8 @@ do{\
   (ob)->d_bucketc += bucket_offset;\
   DEE_ASSERT((ob)->d_bucketc <= (ob)->d_bucketa);\
   (ob)->d_begin = (ob)->d_bucketv[0].db_elemv+((bucket_offset*(ob)->d_bucketsize)-aligned_n);\
+  DEE_ASSERT((ob)->d_begin >= (ob)->d_bucketv[0].db_elemv);\
+  DEE_ASSERT((ob)->d_begin < (ob)->d_bucketv[0].db_elemv+(ob)->d_bucketsize);\
  }\
 }while(0)
 #define DeeDeque_CONSUME_RIGHT_N(ob,n)\
@@ -491,6 +498,7 @@ do{\
    malloc_nz(sizeof(struct DeeDequeBucket))) == NULL) {__VA_ARGS__;}\
   (ob)->d_bucketa = 1;\
   DEE_ASSERT((ob)->d_bucketelema == 0);\
+  DEE_ASSERT((ob)->d_bucketelemv == NULL);\
  }\
  if (!(ob)->d_bucketelema) {\
   DEE_ASSERT(!(ob)->d_bucketelemv);\
@@ -508,6 +516,104 @@ do{\
  (ob)->d_begin = (ob)->d_bucketv[0].db_elemv+((ob)->d_bucketsize/2);\
  (ob)->d_end = (ob)->d_begin+1;\
  Dee_INCREF(*(ob)->d_begin = (elem));\
+}while(0)
+
+#define DeeDeque_ALLOC_FIRST_N(ob,elemc,elemv,...)\
+do{\
+ Dee_size_t min_bucketc,startend_elemc,overflow_elemc;\
+ DeeObject **iter,**end,**src;\
+ struct DeeDequeBucket *bucket_iter,*bucket_end;\
+ DEE_ASSERT(!(ob)->d_elemc);\
+ DEE_ASSERT(!(ob)->d_bucketc);\
+ DEE_ASSERT(!(ob)->d_bucketv);\
+ DEE_ASSERT(!(ob)->d_begin);\
+ DEE_ASSERT(!(ob)->d_end);\
+ DEE_ASSERT((elemc) != 0);\
+ min_bucketc = (elemc)/(ob)->d_bucketsize;\
+ if (((elemc)%(ob)->d_bucketsize)!=0) ++min_bucketc;\
+ if ((ob)->d_bucketa < min_bucketc) {\
+  struct DeeDequeBucket *new_root;\
+  /* Must actually allocate the bucket */\
+  if DEE_UNLIKELY((new_root = (struct DeeDequeBucket *)realloc_nz(\
+   (ob)->d_bucketroot,min_bucketc*sizeof(struct DeeDequeBucket))) == NULL) {__VA_ARGS__;}\
+  DEE_ASSERT(((ob)->d_bucketelema != 0) == ((ob)->d_bucketelemv != 0));\
+  if ((ob)->d_bucketelema) { /* Relocate the elemv-cache */\
+   (ob)->d_bucketelemv = new_root+(min_bucketc+((ob)->d_bucketelemv-(ob)->d_bucketroot));\
+  }\
+  /* NOTE: No need to relocate the d_bucketv-vector, as that one's NULL (aka. empty) */\
+  (ob)->d_bucketroot = new_root;\
+  (ob)->d_bucketa = min_bucketc;\
+ }\
+ if ((ob)->d_bucketelema < min_bucketc) {\
+  Dee_size_t more_before,more_after;\
+  /* Must actually allocate the bucket elements */\
+  if (!(ob)->d_bucketelemv) (ob)->d_bucketelemv = (ob)->d_bucketroot;\
+  /* Figure out how many additional elemv-buffers are required at the front and back. */\
+  more_before = (Dee_size_t)((ob)->d_bucketelemv-(ob)->d_bucketroot);\
+  if (more_before >= min_bucketc) {\
+   more_before = min_bucketc,more_after = 0;\
+  } else {\
+   DEE_ASSERT(min_bucketc > more_before);\
+   more_after = (Dee_size_t)(((ob)->d_bucketroot+(ob)->d_bucketa)-\
+                             ((ob)->d_bucketelemv+(ob)->d_bucketelema));\
+   if (more_after > min_bucketc-more_before) more_after = min_bucketc-more_before;\
+  }\
+  DEE_LVERBOSE3("more_before = %Iu\n",more_before);\
+  DEE_LVERBOSE3("more_after = %Iu\n",more_after);\
+  /* Allocate 'more_before' elemv-entries before '(ob)->d_bucketelemv' */\
+  while (more_before--) {\
+   DEE_ASSERT((ob)->d_bucketelemv > (ob)->d_bucketroot);\
+   if DEE_UNLIKELY(((ob)->d_bucketelemv[-1].db_elemv = (DeeObject **)\
+    malloc_nz((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
+   --(ob)->d_bucketelemv;\
+   ++(ob)->d_bucketelema;\
+  }\
+  /* Allocate 'more_after' elemv-entries starting at '(ob)->d_bucketelemv+(ob)->d_bucketelema' */\
+  while (more_after--) {\
+   DEE_ASSERT((ob)->d_bucketelemv+(ob)->d_bucketelema < (ob)->d_bucketroot+(ob)->d_bucketa);\
+   if DEE_UNLIKELY(((ob)->d_bucketelemv[(ob)->d_bucketelema].db_elemv = (DeeObject **)\
+    malloc_nz((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
+   ++(ob)->d_bucketelema;\
+  }\
+ }\
+ (ob)->d_bucketc = min_bucketc;\
+ /* Choose the center-most bucket. */\
+ DEE_ASSERT((ob)->d_bucketa >= min_bucketc);\
+ (ob)->d_bucketv = (ob)->d_bucketroot+(((ob)->d_bucketa-min_bucketc)/2);\
+ (ob)->d_elemc = (elemc);\
+ /* Choose the center-most elem-pointer. */\
+ src = (elemv);\
+ if (min_bucketc == 1) {\
+  DEE_ASSERT((elemc) <= (ob)->d_bucketsize);\
+  overflow_elemc = (ob)->d_bucketsize-(elemc);\
+  startend_elemc = overflow_elemc/2;\
+  (ob)->d_begin = (ob)->d_bucketv[0].db_elemv+startend_elemc;\
+  (ob)->d_end = (ob)->d_bucketv[0].db_elemv+((ob)->d_bucketsize-(overflow_elemc-startend_elemc));\
+  iter = (ob)->d_begin,end = (ob)->d_end;\
+  DEE_ASSERT((Dee_size_t)(end-iter) == (elemc));\
+  do Dee_INCREF(*iter++ = *src++); while (iter != end);\
+ } else {\
+  DEE_ASSERT(min_bucketc >= 2);\
+  overflow_elemc = ((ob)->d_bucketc*(ob)->d_bucketsize)-(elemc);\
+  startend_elemc = overflow_elemc/2;\
+  (ob)->d_begin = (ob)->d_bucketv[0].db_elemv+startend_elemc;\
+  (ob)->d_end = (ob)->d_bucketv[(ob)->d_bucketc-1].db_elemv+((ob)->d_bucketsize-(overflow_elemc-startend_elemc));\
+  /* Special case: First bucket */\
+  iter = (ob)->d_begin,end = (ob)->d_bucketv[0].db_elemv+(ob)->d_bucketsize;\
+  do Dee_INCREF(*iter++ = *src++); while (iter != end);\
+  bucket_end = (bucket_iter = (ob)->d_bucketv+1)+((ob)->d_bucketc-2);\
+  while (bucket_iter != bucket_end) {\
+   end = (iter = bucket_iter->db_elemv)+(ob)->d_bucketsize;\
+   do Dee_INCREF(*iter++ = *src++); while (iter != end);\
+   ++bucket_iter;\
+  }\
+  DEE_ASSERT(bucket_iter == bucket_end);\
+  DEE_ASSERT(bucket_end == (ob)->d_bucketv+((ob)->d_bucketc-1));\
+  /* Special case: Last bucket */\
+  iter = (ob)->d_bucketv[(ob)->d_bucketc-1].db_elemv,end = (ob)->d_end;\
+  do Dee_INCREF(*iter++ = *src++); while (iter != end);\
+ }\
+ DEE_ASSERT(src == (elemv)+(elemc));\
 }while(0)
 
 #define DeeDeque_FREE_BUCKETC(ob)         ((ob)->d_bucketa-(ob)->d_bucketc)
@@ -532,16 +638,9 @@ do{\
 #define DeeDeque_SET_NZ(ob,i,v) (*DeeDeque_ELEM_NZ(ob,i)=(v))
 #define DeeDeque_ELEM_NZ        DeeDeque_ELEM_NZ
 DEE_STATIC_INLINE(DeeObject **) DeeDeque_ELEM_NZ(struct DeeDeque *self, Dee_size_t i) {
- Dee_size_t used_front,new_i;
- DEE_ASSERT(self);
- DEE_ASSERT(i < self->d_elemc);
- DEE_ASSERT(self->d_bucketc);
- used_front = DeeDeque_FRONT_USED_NZ(self);
- // Special handling for small indexes (The first bucket has a special start)
- if (i < used_front) return self->d_begin+i;
- new_i = i-used_front; // Input index, aligned to full buckets
- DEE_ASSERT(new_i/self->d_bucketsize < self->d_bucketc);
- return self->d_bucketv[new_i/self->d_bucketsize].db_elemv+(new_i%self->d_bucketsize);
+ Dee_size_t aligned_i; DeeDeque_AssertIntegrity(self);
+ aligned_i = i+DeeDeque_FRONT_UNUSED_NZ(self);
+ return self->d_bucketv[aligned_i/self->d_bucketsize].db_elemv+(aligned_i%self->d_bucketsize);
 }
 
 struct DeeDequeIterator {
@@ -636,11 +735,26 @@ do{\
  (ob)->dfi_elem_iter = (deq)->d_begin;\
  (ob)->dfi_elem_end = (deq)->d_bucketv[0].db_elemv+(deq)->d_bucketsize;\
 }while(0)
-
-#define _DeeDequeFastIterator_INIT_BASE(ob,deq,i)\
-{\
+#define _DeeDequeFastIterator_InitForward(ob,deq,i)\
+do{\
+ Dee_size_t aligned_i,bucket_offset;\
+ aligned_i = (Dee_size_t)((deq)->d_begin-(deq)->d_bucketv[0].db_elemv)+(i);\
+ DEE_LVERBOSE4("aligned_i = %Iu\n",aligned_i);\
+ if (aligned_i < (deq)->d_bucketsize) {\
+  (ob)->dfi_bucket_iter = (deq)->d_bucketv;\
+  (ob)->dfi_elem_iter = (deq)->d_begin+(i);\
+ } else {\
+  bucket_offset = aligned_i/(deq)->d_bucketsize;\
+  (ob)->dfi_bucket_iter = (deq)->d_bucketv+bucket_offset;\
+  (ob)->dfi_elem_iter = (ob)->dfi_bucket_iter->db_elemv+(aligned_i-(bucket_offset*(deq)->d_bucketsize));\
+ }\
+ (ob)->dfi_elem_end = (ob)->dfi_bucket_iter->db_elemv+(deq)->d_bucketsize;\
+}while(0)
+#define _DeeDequeFastIterator_InitReverse(ob,deq,i)\
+do{\
  Dee_size_t aligned_i,bucket_offset;\
  aligned_i = (Dee_size_t)((deq)->d_begin-(deq)->d_bucketv[0].db_elemv)+i;\
+ DEE_LVERBOSE4("aligned_i = %Iu\n",aligned_i);\
  if (aligned_i < (deq)->d_bucketsize) {\
   (ob)->dfi_bucket_iter = (deq)->d_bucketv;\
   (ob)->dfi_elem_iter = (deq)->d_begin+(i);\
@@ -650,15 +764,6 @@ do{\
   (ob)->dfi_bucket_iter = (deq)->d_bucketv+bucket_offset;\
   (ob)->dfi_elem_iter = (ob)->dfi_bucket_iter->db_elemv+(aligned_i-(bucket_offset*(deq)->d_bucketsize));\
  }\
-}
-#define _DeeDequeFastIterator_InitForward(ob,deq,i)\
-do{\
- _DeeDequeFastIterator_INIT_BASE(ob,deq,i)\
- (ob)->dfi_elem_end = (ob)->dfi_bucket_iter->db_elemv+(deq)->d_bucketsize;\
-}while(0)
-#define _DeeDequeFastIterator_InitReverse(ob,deq,i)\
-do{\
- _DeeDequeFastIterator_INIT_BASE(ob,deq,i)\
  (ob)->dfi_elem_end = (ob)->dfi_bucket_iter->db_elemv;\
 }while(0)
 #define _DeeDequeFastIterator_Next(ob,deq)\
