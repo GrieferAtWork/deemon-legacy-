@@ -201,6 +201,10 @@ extern DEE_A_RET_EXCEPT(-1) Dee_size_t DeeDeque_RemoveIf(DEE_A_INOUT struct DeeD
 extern DEE_A_RET_EXCEPT(-1) Dee_size_t DeeDeque_RemoveIfWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *pred, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeDeque_GetRange(DEE_A_INOUT struct DeeDeque const *self, DEE_A_IN Dee_ssize_t begin, DEE_A_IN Dee_ssize_t end) DEE_ATTRIBUTE_NONNULL((1));
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeDeque_GetRangeWithLock(DEE_A_INOUT struct DeeDeque const *self, DEE_A_IN Dee_ssize_t begin, DEE_A_IN Dee_ssize_t end, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,4));
+extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_At(DEE_A_INOUT struct DeeDeque const *self, DEE_A_IN Dee_size_t i) DEE_ATTRIBUTE_NONNULL((1));
+extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_AtWithLock(DEE_A_INOUT struct DeeDeque const *self, DEE_A_IN Dee_size_t i, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3));
+extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_Get(DEE_A_INOUT struct DeeDeque const *self, DEE_A_IN Dee_ssize_t i) DEE_ATTRIBUTE_NONNULL((1));
+extern DEE_A_RET_EXCEPT_REF DeeObject *DeeDeque_GetWithLock(DEE_A_INOUT struct DeeDeque const *self, DEE_A_IN Dee_ssize_t i, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,3));
 
 
 #define DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV      DEE_UINT32_C(0x00000001) /*< Free unused elemv-entries. */
@@ -724,7 +728,7 @@ do{\
 #define DeeDeque_GET_NZ(ob,i)   (*DeeDeque_ELEM_NZ(ob,i))
 #define DeeDeque_SET_NZ(ob,i,v) (*DeeDeque_ELEM_NZ(ob,i)=(v))
 #define DeeDeque_ELEM_NZ        DeeDeque_ELEM_NZ
-DEE_STATIC_INLINE(DeeObject **) DeeDeque_ELEM_NZ(struct DeeDeque *self, Dee_size_t i) {
+DEE_STATIC_INLINE(DeeObject **) DeeDeque_ELEM_NZ(struct DeeDeque const *self, Dee_size_t i) {
  Dee_size_t aligned_i; DeeDeque_AssertIntegrity(self);
  aligned_i = i+DeeDeque_FRONT_UNUSED_NZ(self);
  return self->d_bucketv[aligned_i/self->d_bucketsize].db_elemv+(aligned_i%self->d_bucketsize);

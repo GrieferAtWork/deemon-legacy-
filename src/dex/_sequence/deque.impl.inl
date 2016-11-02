@@ -1064,6 +1064,39 @@ again:
 }
 
 
+DEE_A_RET_EXCEPT_REF DeeObject *FUNC(DeeDeque_At)(
+ DEE_A_INOUT struct DeeDeque const *self,
+ DEE_A_IN Dee_size_t i LOCK_ARG(DEE_A_INOUT)) {
+ DeeObject *result;
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
+ if DEE_UNLIKELY(i >= DeeDeque_SIZE(self)) {
+  Dee_size_t size = DeeDeque_SIZE(self);
+  RELEASE;
+  _sequence_indexerror(size,i);
+  return NULL;
+ }
+ Dee_INCREF(result = DeeDeque_GET_NZ(self,i));
+ RELEASE;
+ return result;
+}
+DEE_A_RET_EXCEPT_REF DeeObject *FUNC(DeeDeque_Get)(
+ DEE_A_INOUT struct DeeDeque const *self,
+ DEE_A_IN Dee_ssize_t i LOCK_ARG(DEE_A_INOUT)) {
+ DeeObject *result; Dee_size_t size;
+ ACQUIRE;
+ if DEE_UNLIKELY((size = DeeDeque_SIZE(self)) == 0) {
+  RELEASE;
+  _sequence_emptyerror();
+  return NULL;
+ }
+ DEE_PRIVATE_CLAMP_INDEX(i,size);
+ Dee_INCREF(result = DeeDeque_GET_NZ(self,(Dee_size_t)i));
+ RELEASE;
+ return result;
+}
+
+
 #undef FUNC
 #undef AND_FUNC
 #undef LOCK_ARG

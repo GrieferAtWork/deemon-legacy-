@@ -421,18 +421,9 @@ err: result = NULL; goto end;
 }
 static DeeObject *DEE_CALL _deedeque_tp_seq_get(
  DeeDequeObject *self, DeeObject *index) {
- DeeObject *result; Dee_ssize_t i;
+ Dee_ssize_t i;
  if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,index,&i) != 0) return NULL;
- DeeDeque_ACQUIRE(self);
- if (DeeDeque_EMPTY(&self->d_deq)) {
-  DeeDeque_RELEASE(self);
-  _sequence_emptyerror();
-  return NULL;
- }
- DEE_PRIVATE_CLAMP_INDEX(i,DeeDeque_SIZE(&self->d_deq));
- Dee_INCREF(result = DeeDeque_GET_NZ(&self->d_deq,(Dee_size_t)i));
- DeeDeque_RELEASE(self);
- return result;
+ return DeeDeque_GetWithLock(&self->d_deq,i,&self->d_lock);
 }
 static int DEE_CALL _deedeque_tp_seq_del(
  DeeDequeObject *self, DeeObject *index) {
@@ -469,8 +460,8 @@ static int DEE_CALL _deedeque_tp_seq_set(
 static DeeObject *DEE_CALL _deedeque_tp_seq_range_get(
  DeeDequeObject *self, DeeObject *begino, DeeObject *endo) {
  Dee_ssize_t begin,end;
- if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,begino,&begin) != 0) return -1;
- if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,endo,&end) != 0) return -1;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,begino,&begin) != 0) return NULL;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,endo,&end) != 0) return NULL;
  return DeeDeque_GetRangeWithLock(&self->d_deq,begin,end,&self->d_lock);
 }
 static int DEE_CALL _deedeque_tp_seq_range_del(
@@ -508,6 +499,12 @@ _deedeque_tp_seq_iter_self(DeeDequeObject *self) {
  DeeDeque_RELEASE(self);
  DeeAtomicMutex_Init(&result->di_lock);
  return result;
+}
+static DeeObject *DEE_CALL _deedeque_at(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_size_t i;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu",&i) != 0) return NULL;
+ return DeeDeque_AtWithLock(&self->d_deq,i,&self->d_lock);
 }
 static DeeObject *DEE_CALL _deedeque_clear(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
