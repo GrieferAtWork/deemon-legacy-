@@ -70,13 +70,13 @@ DEE_A_RET_EXCEPT(-1) int DeeDeque_InitFromVectorEx(
  if (self->d_bucketc == 1) {
   DEE_ASSERT(elemc <= bucket_size);
   while DEE_UNLIKELY((self->d_bucketv = (struct DeeDequeBucket *)
-   malloc_nz(sizeof(struct DeeDequeBucket))) == NULL) {
+   DEE_DEQUE_DCALLOC_NZ(sizeof(struct DeeDequeBucket))) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    DeeError_NoMemory();
    return -1;
   }
   while DEE_UNLIKELY((self->d_bucketv[0].db_elemv = (DeeObject **)
-   malloc_nz(bucket_size*sizeof(DeeObject *))) == NULL) {
+   DEE_DEQUE_DCALLOC_NZ(bucket_size*sizeof(DeeObject *))) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    free_nn(self->d_bucketv);
    DeeError_NoMemory();
@@ -112,8 +112,8 @@ DEE_A_RET_EXCEPT(-1) int DeeDeque_InitFromVectorEx(
  DEE_ASSERT(used_begin_storage <= bucket_size);
  DEE_ASSERT(used_end_storage <= bucket_size);
  // Allocate the bucket-vector
- while DEE_UNLIKELY((self->d_bucketv = (struct DeeDequeBucket *)malloc_nz(
-  self->d_bucketc*sizeof(struct DeeDequeBucket))) == NULL) {
+ while DEE_UNLIKELY((self->d_bucketv = (struct DeeDequeBucket *)
+  DEE_DEQUE_DCALLOC_NZ(self->d_bucketc*sizeof(struct DeeDequeBucket))) == NULL) {
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
   return -1;
@@ -124,7 +124,7 @@ DEE_A_RET_EXCEPT(-1) int DeeDeque_InitFromVectorEx(
  DEE_ASSERT(elemv_byte_size);
  while (bucket_iter != bucket_end) {
   while DEE_UNLIKELY((bucket_iter->db_elemv = (DeeObject **)
-   malloc_nz(elemv_byte_size)) == NULL) {
+   DEE_DEQUE_DCALLOC_NZ(elemv_byte_size)) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    while (bucket_iter != self->d_bucketv) { --bucket_iter; free_nn(bucket_iter->db_elemv); }
    free_nn(self->d_bucketv);
@@ -745,8 +745,8 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
  DEE_METHODDEF_v100("bucketrepr",member(&_deedeque_tp_bucketrepr),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("erase",member(&_deedeque_erase),DEE_DOC_AUTO),
  DEE_METHODDEF_v100("append",member(&_deedeque_push_back),DEE_DOC_AUTO),
- //TODO: Broken: DEE_METHODDEF_v100("remove",member(&_deedeque_remove),DEE_DOC_AUTO),
- //TODO: Broken: DEE_METHODDEF_v100("remove_if",member(&_deedeque_remove_if),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("remove",member(&_deedeque_remove),DEE_DOC_AUTO),
+ DEE_METHODDEF_v100("remove_if",member(&_deedeque_remove_if),DEE_DOC_AUTO),
 
  //TODO: DEE_METHODDEF_v100("sorted_insert",member(&_deelist_sorted_insert),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("extend",member(&_deelist_extend),DEE_DOC_AUTO),

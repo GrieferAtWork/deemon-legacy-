@@ -45,6 +45,13 @@ DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 #undef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 #endif
 
+//////////////////////////////////////////////////////////////////////////
+// Debug helper to see uninitialized data appear as NULL (instead of undefined garbage)
+#ifdef DEE_DEBUG
+#define DEE_DEQUE_DCALLOC_NZ(s) calloc_nz(1,s)
+#else
+#define DEE_DEQUE_DCALLOC_NZ(s) malloc_nz(s)
+#endif
 
 struct DeeDequeBucket {
 #ifdef __INTELLISENSE__
@@ -369,7 +376,7 @@ do{\
  DeeObject **new_elemv;\
  DEE_ASSERTF((ob)->d_bucketelemv > (ob)->d_bucketroot,\
              "No bucketcache available; call 'DeeDeque_INCBUCKETCACHE_LEFT' first");\
- if DEE_UNLIKELY((new_elemv = (DeeObject **)malloc_nz(\
+ if DEE_UNLIKELY((new_elemv = (DeeObject **)DEE_DEQUE_DCALLOC_NZ(\
   (ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
  --(ob)->d_bucketelemv;\
  (ob)->d_bucketelemv->db_elemv = new_elemv;\
@@ -393,7 +400,7 @@ do{\
   /* Allocate 'n_req_alloc' new elemv-buckets. */\
   while (n_req_alloc--) {\
    if DEE_UNLIKELY(((ob)->d_bucketelemv[-1].db_elemv = (DeeObject **)\
-    malloc_nz((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
+    DEE_DEQUE_DCALLOC_NZ((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
    --(ob)->d_bucketelemv;\
    ++(ob)->d_bucketelema;\
   }\
@@ -407,7 +414,7 @@ do{\
  DeeObject **new_elemv;\
  DEE_ASSERTF(((ob)->d_bucketelemv+(ob)->d_bucketelema) < ((ob)->d_bucketroot+(ob)->d_bucketa),\
              "No bucketcache available; call 'DeeDeque_INCBUCKETCACHE_RIGHT' first");\
- if DEE_UNLIKELY((new_elemv = (DeeObject **)malloc_nz(\
+ if DEE_UNLIKELY((new_elemv = (DeeObject **)DEE_DEQUE_DCALLOC_NZ(\
   (ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
  (ob)->d_bucketelemv[(ob)->d_bucketelema++].db_elemv = new_elemv;\
 }while(0)
@@ -430,7 +437,7 @@ do{\
   /* Allocate 'n_req_alloc' new elemv-buckets. */\
   while (n_req_alloc--) {\
    if DEE_UNLIKELY(((ob)->d_bucketelemv[(ob)->d_bucketelema].db_elemv = (DeeObject **)\
-    malloc_nz((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
+    DEE_DEQUE_DCALLOC_NZ((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
    ++(ob)->d_bucketelema;\
   }\
  }\
@@ -541,15 +548,18 @@ do{\
   DEE_ASSERT((ob)->d_end >= (ob)->d_begin);\
  } else {\
   Dee_size_t index_back = (Dee_size_t)((ob)->d_end-(ob)->d_bucketv[(ob)->d_bucketc-1].db_elemv);\
-  if (index_back >= (n)) {\
+  if (index_back > (n)) {\
    /* Enough free slots in the last bucket. --> No overflow. */\
    (ob)->d_end -= (n);\
   } else {\
    aligned_n = (n)-index_back;\
-   DEE_LDEBUG("aligned_n = %Iu\n",aligned_n);\
-   bucket_offset = aligned_n/(ob)->d_bucketsize;\
-   if ((aligned_n%(ob)->d_bucketsize)!=0) ++bucket_offset;\
-   DEE_LDEBUG("bucket_offset = %Iu\n",bucket_offset);\
+   DEE_LVERBOSE4("aligned_n = %Iu\n",aligned_n);\
+   if (!aligned_n) bucket_offset = 1;\
+   else {\
+    bucket_offset = aligned_n/(ob)->d_bucketsize;\
+    if ((aligned_n%(ob)->d_bucketsize)!=0) ++bucket_offset;\
+   }\
+   DEE_LVERBOSE4("bucket_offset = %Iu\n",bucket_offset);\
    DEE_ASSERT((ob)->d_bucketc >= bucket_offset);\
    (ob)->d_bucketc -= bucket_offset;\
    DEE_ASSERT((ob)->d_bucketc != 0);\
@@ -570,7 +580,7 @@ do{\
  if (!(ob)->d_bucketa) {\
   /* Must actually allocate the bucket */\
   if DEE_UNLIKELY(((ob)->d_bucketroot = (struct DeeDequeBucket *)\
-   malloc_nz(sizeof(struct DeeDequeBucket))) == NULL) {__VA_ARGS__;}\
+   DEE_DEQUE_DCALLOC_NZ(sizeof(struct DeeDequeBucket))) == NULL) {__VA_ARGS__;}\
   (ob)->d_bucketa = 1;\
   DEE_ASSERT((ob)->d_bucketelema == 0);\
   DEE_ASSERT((ob)->d_bucketelemv == NULL);\
@@ -579,7 +589,7 @@ do{\
   DEE_ASSERT(!(ob)->d_bucketelemv);\
   /* Must actually allocate the bucket elements */\
   if DEE_UNLIKELY(((ob)->d_bucketroot[0].db_elemv = (DeeObject **)\
-   malloc_nz((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
+   DEE_DEQUE_DCALLOC_NZ((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
   (ob)->d_bucketelema = 1;\
   (ob)->d_bucketelemv = (ob)->d_bucketroot;\
  }\
@@ -639,7 +649,7 @@ do{\
   while (more_before--) {\
    DEE_ASSERT((ob)->d_bucketelemv > (ob)->d_bucketroot);\
    if DEE_UNLIKELY(((ob)->d_bucketelemv[-1].db_elemv = (DeeObject **)\
-    malloc_nz((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
+    DEE_DEQUE_DCALLOC_NZ((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
    --(ob)->d_bucketelemv;\
    ++(ob)->d_bucketelema;\
   }\
@@ -647,7 +657,7 @@ do{\
   while (more_after--) {\
    DEE_ASSERT((ob)->d_bucketelemv+(ob)->d_bucketelema < (ob)->d_bucketroot+(ob)->d_bucketa);\
    if DEE_UNLIKELY(((ob)->d_bucketelemv[(ob)->d_bucketelema].db_elemv = (DeeObject **)\
-    malloc_nz((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
+    DEE_DEQUE_DCALLOC_NZ((ob)->d_bucketsize*sizeof(DeeObject *))) == NULL) {__VA_ARGS__;}\
    ++(ob)->d_bucketelema;\
   }\
  }\
@@ -731,7 +741,7 @@ struct DeeDequeIterator {
 #define DeeDequeIterator_GET_NZ(ob) (*DeeDequeIterator_ELEM(ob))
 #define DeeDequeIterator_GET(ob)    (DeeDequeIterator_DONE(ob) ? NULL : DeeDequeIterator_GET_NZ(ob))
 
-#define DeeDequeIterator_INDEX_NZ(ob,deq)\
+#define DeeDequeIterator_GetIndex(ob,deq)\
  (Dee_size_t)((((ob)->di_bucket_iter-(deq)->d_bucketv)*(deq)->d_bucketsize+\
                ((ob)->di_elem_iter-(ob)->di_bucket_iter->db_elemv))-\
                 DeeDeque_FRONT_UNUSED_NZ(deq))
@@ -742,13 +752,48 @@ struct DeeDequeIterator {
  (deq)->d_bucketc == 0 ? NULL : \
  (deq)->d_bucketc == 1 ? (deq)->d_end :\
  (deq)->d_bucketv->db_elemv+(deq)->d_bucketsize))
+#define DeeDequeIterator_InitIndex(ob,deq,index)\
+do{\
+ Dee_size_t aligned_i,bucket_offset;\
+ DeeDeque_AssertIntegrity(deq);\
+ aligned_i = (Dee_size_t)((deq)->d_begin-(deq)->d_bucketv[0].db_elemv)+(index);\
+ if (aligned_i < (deq)->d_bucketsize) {\
+  (ob)->di_bucket_iter = (deq)->d_bucketv;\
+  (ob)->di_elem_iter = (deq)->d_begin+(index);\
+ } else {\
+  bucket_offset = aligned_i/(deq)->d_bucketsize;\
+  (ob)->di_bucket_iter = (deq)->d_bucketv+bucket_offset;\
+  (ob)->di_elem_iter = (ob)->di_bucket_iter->db_elemv+(aligned_i-(bucket_offset*(deq)->d_bucketsize));\
+ }\
+ (ob)->di_elem_end = (ob)->di_bucket_iter->db_elemv+(deq)->d_bucketsize;\
+ (ob)->di_bucket_end = (deq)->d_bucketv+(deq)->d_bucketc;\
+}while(0)
+
 #define DeeDequeIterator_InitEnd(ob,deq)\
 (DeeDeque_AssertIntegrity(deq),\
  (ob)->di_bucket_end = (ob)->di_bucket_iter = ((deq)->d_bucketv+(deq)->d_bucketc),\
  (ob)->di_elem_iter = (deq)->d_begin,(ob)->di_elem_end = (deq)->d_end)
 
+#define DeeDequeIterator_Get(ob) (*(ob)->di_elem_iter)
+#define DeeDequeIterator_Done(ob)\
+((ob)->di_elem_iter == (ob)->di_elem_end && \
+ ((ob)->di_bucket_iter >= (ob)->di_bucket_end-1))
+#define DeeDequeIterator_Next(ob,deq)\
+(DEE_LIKELY((ob)->di_elem_iter != (ob)->di_elem_end)\
+ ? (void)(DEE_ASSERT((ob)->di_elem_iter),++(ob)->di_elem_iter) : (void)(\
+ ++(ob)->di_bucket_iter,DEE_ASSERT((ob)->di_bucket_iter < (ob)->di_bucket_end),\
+ (ob)->di_elem_iter = (ob)->di_bucket_iter->db_elemv,\
+ (ob)->di_elem_end = ((ob)->di_bucket_iter == (ob)->di_bucket_end-1)\
+   ? (deq)->d_end : (ob)->di_elem_iter+(deq)->d_bucketsize,\
+ ++(ob)->di_elem_iter))
+#define DeeDequeIterator_Validate(ob,deq)\
+((ob)->di_bucket_end == DeeDeque_END_BUCKET(deq) && \
+ (ob)->di_bucket_iter >= (deq)->d_bucketv && \
+ (ob)->di_elem_iter >= (ob)->di_bucket_iter->db_elemv && \
+ (ob)->di_elem_end <= (ob)->di_bucket_iter->db_elemv+(deq)->d_bucketsize)
+
 #define DeeDequeIterator_Yield(ob,deq)\
-((ob)->di_elem_iter != (ob)->di_elem_end\
+(DEE_LIKELY((ob)->di_elem_iter != (ob)->di_elem_end)\
  ? (DEE_ASSERT((ob)->di_elem_iter),*(ob)->di_elem_iter++) : (\
  (++(ob)->di_bucket_iter < (ob)->di_bucket_end)\
  ? ((ob)->di_elem_iter = (ob)->di_bucket_iter->db_elemv,\
@@ -757,8 +802,6 @@ struct DeeDequeIterator {
     *(ob)->di_elem_iter++)\
  : (--(ob)->di_bucket_iter,NULL)\
 ))
-#define DeeDequeIterator_Validate(ob,deq)\
-((ob)->di_bucket_end == DeeDeque_END_BUCKET(deq))
 #define DeeDequeIterator_YieldSafe(ob,deq)\
 (DeeDequeIterator_Validate(ob,deq)\
  ? DeeDequeIterator_Yield(ob,deq) : NULL)
@@ -774,8 +817,8 @@ struct DeeDequeIterator {
 #define DeeDeque_TRAVERSE_SAFE(elem,deq)\
  if((DeeDequeIterator_InitBegin(&_di_iter,deq),0));else\
  while (((elem) = DeeDequeIterator_YieldSafe(&_di_iter,deq)) != NULL)
-#define DeeDeque_TRAVERSE_INDEX(deq)         (DeeDequeIterator_INDEX_NZ(&_di_iter,deq)-1)
-#define DeeDeque_TRAVERSE_SAFE_INDEX(deq)    (DeeDequeIterator_INDEX_NZ(&_di_iter,deq)-1)
+#define DeeDeque_TRAVERSE_INDEX(deq)         (DeeDequeIterator_GetIndex(&_di_iter,deq)-1)
+#define DeeDeque_TRAVERSE_SAFE_INDEX(deq)    (DeeDequeIterator_GetIndex(&_di_iter,deq)-1)
 #define DeeDeque_TRAVERSE_SAFE_VALIDATE(deq) DeeDequeIterator_Validate(&_di_iter,deq)
 
 
@@ -864,7 +907,7 @@ do{\
 #define _DeeDequeFastIterator_Prev(ob,deq)\
 (((ob)->dfi_elem_iter-- == (ob)->dfi_elem_begin) ? (void)(\
  (ob)->dfi_elem_iter = ((ob)->dfi_elem_begin = \
-  (--(ob)->dfi_bucket_iter)->db_elemv)-((deq)->d_bucketsize-1)\
+  (--(ob)->dfi_bucket_iter)->db_elemv)+((deq)->d_bucketsize-1)\
 ) : (void)0)
 
 
