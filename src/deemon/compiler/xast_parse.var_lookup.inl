@@ -498,7 +498,7 @@ default_case:
 
      case DEE_XAST_VARDECL_MODE_LOCAL: {
 /*search_local:*/
-      if ((found_entry = _DeeScope_GetNameEx(scope,token.tk_id,&deprecated_reason)) != NULL)
+      if ((found_entry = _DeeScope_GetNameEx(scope,name,&deprecated_reason)) != NULL)
        goto return_found_entry; // Found it!
       if ((vardecl_mode&DEE_XAST_VARDECL_FLAG_ENABLED) != 0) {
 create_local: // Create a new local variable
@@ -557,12 +557,12 @@ err_r_ast_token: Dee_DECREF(ast_result); goto err_ast_token;
         Dee_DECREF(ast_token);
         return ast_result;
        } else {
-        if DEE_UNLIKELY((found_entry = DeeLocalVar_New(token.tk_id,(DeeObject *)scope)) == NULL) return NULL;
+        if DEE_UNLIKELY((found_entry = DeeLocalVar_New(name,(DeeObject *)scope)) == NULL) return NULL;
         // Set the static flag when creating variables in a static context
         if ((vardecl_mode&DEE_XAST_VARDECL_FLAG_STACK) != 0) ((DeeLocalVarObject *)found_entry)->lv_flags = DEE_LOCALVAR_KIND_STACK;
         else if ((vardecl_mode&DEE_XAST_VARDECL_FLAG_STATIC) != 0) ((DeeLocalVarObject *)found_entry)->lv_flags = DEE_LOCALVAR_KIND_STATIC;
         if DEE_UNLIKELY((vardecl_mode&DEE_XAST_VARDECL_FLAG_VOLATILE)!=0) ((DeeLocalVarObject *)found_entry)->lv_flags |= DEE_LOCALVAR_FLAG_VOLATILE;
-        if DEE_UNLIKELY(_DeeScope_AddDeprecatedName(scope,token.tk_id,
+        if DEE_UNLIKELY(_DeeScope_AddDeprecatedName(scope,name,
          found_entry,attr ? (DeeObject *)attr->a_depr : NULL) != 0) {
 /*err_found_entry:*/ Dee_DECREF(found_entry); return NULL;
         }
@@ -589,7 +589,7 @@ err_r_ast_token: Dee_DECREF(ast_result); goto err_ast_token;
      case DEE_XAST_VARDECL_MODE_GLOBAL: {
 /*search_global:*/
       scope_iter = (DeeScopeObject *)DeeScope_Global((DeeObject *)scope);
-      if ((found_entry = _DeeScope_GetNameEx(scope_iter,token.tk_id,&deprecated_reason)) != NULL)
+      if ((found_entry = _DeeScope_GetNameEx(scope_iter,name,&deprecated_reason)) != NULL)
        goto return_found_entry; // Found it!
       if DEE_LIKELY((vardecl_mode&DEE_XAST_VARDECL_FLAG_ENABLED) != 0 && scope_iter == scope) goto create_local;
       // Unknown global variable

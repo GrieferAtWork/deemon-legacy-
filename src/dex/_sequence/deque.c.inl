@@ -810,7 +810,6 @@ static struct DeeMethodDef const _deedeque_tp_methods[] = {
 
  //TODO: DEE_METHODDEF_v100("sorted_insert",member(&_deelist_sorted_insert),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("extend",member(&_deelist_extend),DEE_DOC_AUTO),
- //TODO: DEE_METHODDEF_v100("erase",member(&_deelist_erase),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("pop",member(&_deelist_pop),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("resize",member(&_deelist_resize),DEE_DOC_AUTO),
  //TODO: DEE_METHODDEF_v100("reserve",member(&_deelist_reserve),DEE_DOC_AUTO),

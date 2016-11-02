@@ -80,7 +80,7 @@ DEE_DATA_DECL(DeeFileTypeObject) DeePipeWriter_Type;
 #define DeePipeWriter_CheckExact(ob) DeeObject_InstanceOfExact(ob,(DeeTypeObject *)&DeePipeWriter_Type)
 
 //////////////////////////////////////////////////////////////////////////
-// Create a new pipe and return the read/write portion in 'read' and 'write'
+// Create a new pipe and return the read/write portion in 'reader' and 'writer'
 DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1) int) DeePipe_New(
  DEE_A_REF DEE_A_OUT_OBJECT(DeePipeObject) **reader,
  DEE_A_REF DEE_A_OUT_OBJECT(DeePipeObject) **writer,

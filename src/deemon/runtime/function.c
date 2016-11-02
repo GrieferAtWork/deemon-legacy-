@@ -441,7 +441,7 @@ exec_error:
 #endif
 
  self->yi_frame.f_localv = (DeeObject **)self->yi_frame.f_wbuf;
- DEE_ASSERT(self->yi_frame.f_stackv_end == self->yi_frame.f_stackv);
+ //DEE_ASSERT(self->yi_frame.f_stackv_end == self->yi_frame.f_stackv);
  old_this = self->yi_frame.f_this;
  self->yi_frame.f_this = NULL;
  old_result = self->yi_frame.f_result;
@@ -453,13 +453,12 @@ exec_error:
 #endif
 
  // Clear the stack
- if (self->yi_frame.f_stackv_end != self->yi_frame.f_stackv) {
-  self->yi_frame.f_stackv_end = self->yi_frame.f_stackv;
+ if DEE_UNLIKELY(self->yi_frame.f_stackv_end != self->yi_frame.f_stackv) {
   DEE_ASSERTF(_DeeStackFrame_StackSize(&self->yi_frame) <= old_code->co_stacksize,
               "Frame exceeds maximum stack size specified in code (%Iu > %Iu)",
               _DeeStackFrame_StackSize(&self->yi_frame),old_code->co_stacksize);
-  iter = self->yi_frame.f_stackv;
-  end = self->yi_frame.f_stackv_end;
+  iter = self->yi_frame.f_stackv,end = self->yi_frame.f_stackv_end;
+  self->yi_frame.f_stackv_end = self->yi_frame.f_stackv;
   // NOTE: Since we've already overwritten the code, anything using
   //       this stackframe (except for us) will think that there isn't a stack
   DeeAtomicMutex_Release(&self->yi_frame.f_lock);

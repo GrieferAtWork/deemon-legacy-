@@ -230,7 +230,6 @@ DEF(KWD___builtin_alloca,"__builtin_alloca")
 DEF(KWD___builtin_bound,"__builtin_bound")
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_BOUND */
 
-
 // Variable access modifiers
 #define DEE_PARSE_TOKENID_CASE_GLOBAL   case KWD_global: case TPP_TOK_COLLON_COLLON:
 KWD(global)  // force variable references from global scope (but can't create new vars)
@@ -783,7 +782,11 @@ TPP_DEF_FEATURE("elif_else_if_alias")
 #if DEE_CONFIG_LANGUAGE_HAVE_ENUM_TYPES
 TPP_DEF_FEATURE("enum_types")
 #endif
-#if DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
+#if DEE_CONFIG_RUNTIME_HAVE_EXCEPTIONS && DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
+DEF_TRAIT("exceptions",TPPKeywordFlag_HAS_EXTENSION|TPPKeywordFlag_HAS_FEATURE)
+#elif DEE_CONFIG_RUNTIME_HAVE_EXCEPTIONS
+TPP_DEF_EXTENSION("exceptions")
+#elif DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
 TPP_DEF_FEATURE("exceptions")
 #endif
 #if DEE_CONFIG_LANGUAGE_HAVE_EXPR_STATEMENTS
