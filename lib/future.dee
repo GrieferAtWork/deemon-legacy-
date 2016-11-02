@@ -38,6 +38,11 @@ c.add_lang("my_lang",[](comp) {
 func = c.compile("print __lang(\"my_lang\") foo;");
 func(); // prints 42
 
+#define __pascal __lang("pascal")
+
+__pascal procedure foo(x: Integer);
+__pascal function bar(y: Integer): Float;
+
 __lang("pascal") begin
 	procedure foo(x: Integer);
 	function bar(y: Integer): Float;

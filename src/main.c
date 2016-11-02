@@ -95,6 +95,8 @@
 // TODO: Syntax for addressing intrinsic operator functions:
 //  >> local l = [20,10,30];
 //  >> l.sort(operator <);
+//  NOTE: Later optimizations (namely assumptions) might optimize
+//        the sort call, as its argument is just the default (s.a.: another idea below).
 //  'operator <' is parsed as a reference to the constant function '__lo__'
 //  -> When the 'operator' keyword token is encountered in a unary expression,
 //     begin parsing an operator name, because returning the associated
@@ -134,7 +136,6 @@
 
 #include <deemon/error.h>
 #include <deemon/deemonrun.h>
-#include <deemon/class.h>
 
 int main(int argc, char *argv[]) {
 
