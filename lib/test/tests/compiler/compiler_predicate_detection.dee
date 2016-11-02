@@ -23,7 +23,7 @@
 
 #include <intrin>
 #include <cell>
-#include "__utils.dee"
+#include <testutil>
 
 assert [](x) { return str x; } == __str__;
 assert [](x) { return repr x; } == __repr__;

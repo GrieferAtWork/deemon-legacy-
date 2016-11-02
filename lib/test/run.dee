@@ -25,6 +25,7 @@
 #include <sys>
 #include <pipe>
 #include <file>
+#include <util>
 #include <process>
 
 
@@ -55,28 +56,35 @@ while (args && args.front().startswith("-")) {
 			break;
 	}
 }
-
-// Collect tests
-if (#args) {
-	for (local arg: args) {
-		for (local f: fs::query("tests/"+arg)) {
-			if (!f.startswith("__"))
-				tests.append(fs::path::abs(fs::path::join("tests",f)));
+function dirtree(path) {
+	for (local f: fs::dir(path)) {
+		local jpath = fs::path::join(path,f);
+		if (fs::isdir(jpath)) {
+			for (local next: dirtree(jpath)) {
+				yield fs::path::join(f,next);
+			}
+		} else {
+			yield f;
 		}
-	}
-} else {
-	for (local f: fs::dir("tests")) {
-		if (!f.startswith("__"))
-			tests.append(fs::path::abs(fs::path::join("tests",f)));
 	}
 }
 
+// Collect tests
+if (!args) args = ["*"];
+for (local f: dirtree("tests")) {
+	if (!f.startswith("__") && util::any(for (local x: args) f.wmatch(x))) {
+		tests.append(fs::path::abs(fs::path::join("tests",f)));
+	}
+}
+
+
 deemon_exe = fs::readlink("/proc/self/exe");
+args = ["-I "+fs::path::join(fs::getcwd(),"include")];
 
 for (local x: tests) {
 	local test,error,r,w,output_data;
 	print "Testing:",x;
-	test = process(deemon_exe,["-Omax",x]);
+	test = process(deemon_exe,[args...,"-Omax",x]);
 	test.start();
 	error = test.join();
 	if (error != 0) {
@@ -89,7 +97,7 @@ test_error:
 		// NOTE: We stream the data through a pipe as
 		//       to not have to create a temporary file.
 		r,w = pipe.new()...;
-		test = process(deemon_exe,["-Omax","-c","-o /dev/stdout",x]);
+		test = process(deemon_exe,[args...,"-Omax","-c","-o /dev/stdout",x]);
 		test.stdout = w;
 		test.start();
 		w.close();

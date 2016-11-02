@@ -705,36 +705,18 @@ no_exc:
 //////////////////////////////////////////////////////////////////////////
 // Misc utility functions
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_min) {
- // TODO: Optimization
- DeeObject *result,**argv; Dee_size_t argc;
- if ((argc = DeeTuple_SIZE(args)) == 0) DeeReturn_None;
- argv = DeeTuple_ELEM(args); result = *argv++;
- if (!--argc) DeeReturn_NEWREF(result);
- while (argc--) {
-  int temp = DeeObject_CompareLo(*argv,result);
-  if (temp < 0) { if (DeeError_Catch(&DeeErrorType_NotImplemented)) temp = 0; else return NULL; }
-  if (temp) result = *argv;
-  ++argv;
- }
- DeeReturn_NEWREF(result);
+ return DeeSequence_Min(DeeTuple_SIZE(args) == 1 ? DeeTuple_GET(args,0) : args);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_max) {
- // TODO: Optimization
- DeeObject *result,**argv; Dee_size_t argc;
- if DEE_UNLIKELY((argc = DeeTuple_SIZE(args)) == 0) DeeReturn_None;
- argv = DeeTuple_ELEM(args); result = *argv++;
- if (!--argc) DeeReturn_NEWREF(result);
- while (argc--) {
-  int temp = DeeObject_CompareGr(*argv,result);
-  if (temp < 0) { if (!DeeError_Catch(&DeeErrorType_NotImplemented)) return NULL; }
-  else if (temp) result = *argv;
-  ++argv;
- }
- DeeReturn_NEWREF(result);
+ return DeeSequence_Max(DeeTuple_SIZE(args) == 1 ? DeeTuple_GET(args,0) : args);
+}
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_sum) {
+ return DeeSequence_Sum(DeeTuple_SIZE(args) == 1 ? DeeTuple_GET(args,0) : args);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_avg) {
  double temp,total; Dee_size_t count;
  DeeObject **begin,**end;
+ // TODO: Sequence overload
  if DEE_UNLIKELY((count = DeeTuple_SIZE(args)) == 0) {
   DeeError_SET_STRING(&DeeErrorType_ValueError,"__builtin_avg(): No arguments given");
   return NULL;
@@ -750,27 +732,16 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_avg) {
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_all) {
  int result;
- if DEE_UNLIKELY((result = DeeSequence_All(args)) < 0) return NULL;
+ if DEE_UNLIKELY((result = DeeSequence_All(
+  DeeTuple_SIZE(args) == 1 ? DeeTuple_GET(args,0) : args)) < 0) return NULL;
  DeeReturn_Bool(result);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_any) {
  int result;
- if DEE_UNLIKELY((result = DeeSequence_Any(args)) < 0) return NULL;
+ if DEE_UNLIKELY((result = DeeSequence_Any(
+  DeeTuple_SIZE(args) == 1 ? DeeTuple_GET(args,0) : args)) < 0) return NULL;
  DeeReturn_Bool(result);
 }
-#ifdef DeeSequence_Sum
-static DeeObject *DeeSequence_Sum_impl(DeeObject *seq) { return DeeSequence_Sum(seq); }
-#else
-#define DeeSequence_Sum_impl DeeSequence_Sum
-#endif
-
-#ifdef DEE_DEBUG
-DeeCFunctionObject DeeBuiltinFunction___builtin_sum =
- DeeCFunction_INIT("__builtin_sum",NULL,&DeeSequence_Sum_impl);
-#else
-DeeCFunctionObject DeeBuiltinFunction___builtin_sum =
- DeeCFunction_INIT(NULL,NULL,&DeeSequence_Sum_impl);
-#endif
 
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_ord) {
  DeeObject *ob;

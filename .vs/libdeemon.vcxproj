@@ -552,6 +552,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\runtime\_execute.inl" />
     <None Include="..\src\deemon\runtime\_execute_targets.inl" />
     <None Include="..\src\deemon\runtime\__sum_strings.inl" />
+    <None Include="..\src\deemon\sequence.minmax.inl" />
     <None Include="..\src\deemon\sequence.sum_integrals.inl" />
     <None Include="..\src\deemon\sequence.sum_strings.inl" />
     <None Include="..\src\deemon\set.impl.hashset.inl" />

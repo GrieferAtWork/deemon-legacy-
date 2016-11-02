@@ -1252,6 +1252,12 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeSequence_TSum(
 }
 
 
+#ifndef __INTELLISENSE__
+#define DO_MIN
+#include "sequence.minmax.inl"
+#include "sequence.minmax.inl"
+#endif
+
 
 DEE_DECL_END
 

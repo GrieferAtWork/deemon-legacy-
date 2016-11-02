@@ -20,7 +20,7 @@
  * SOFTWARE.                                                                      *
  */
 
-#include "__utils.dee"
+#include <testutil>
 #include <__builtin_gcc.dee>
 
 // Internally, there are a lot of no-op being removed in here.

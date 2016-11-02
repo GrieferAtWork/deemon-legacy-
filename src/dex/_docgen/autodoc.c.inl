@@ -734,19 +734,27 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
  if (name) *name = NULL;
  switch (builtin_id) {
 #define DOC(id,name_,text) case id: if (name) *name = name_; return text
-  DOC(0x0102,"__builtin_min","(object args...) -> object\n"
+  DOC(0x0102,"__builtin_min",
+      "(iterable seq) -> object\n"
+      "(object args...) -> object\n"
       "@throws object: Same as #(operator <) performed on the given arguments\n"
       "@return: The lowers element of @args\n"
       "\tObjects are always compared with the current winner as lhs operand.");
-  DOC(0x0103,"__builtin_max","(object args...) -> object\n"
+  DOC(0x0103,"__builtin_max",
+      "(iterable seq) -> object\n"
+      "(object args...) -> object\n"
       "@throws object: Same as #(operator <) performed on the given arguments\n"
       "@return: The greatest element of @args\n"
       "\tObjects are always compared with the current winner as lhs operand.");
-  DOC(0x0104,"__builtin_avg","(object args...) -> double\n"
+  DOC(0x0104,"__builtin_avg",
+      //TODO: "(iterable seq) -> object\n"
+      "(object args...) -> double\n"
       "@throws object: Same as #(operator double) performed on the given arguments\n"
       "@return: The average of all elements in @args\n"
       "\tAll elements are casted to double, added and devided by #(#args).");
-  DOC(0x0105,"__builtin_all","(object args...) -> bool\n"
+  DOC(0x0105,"__builtin_all",
+      "(iterable seq) -> object\n"
+      "(object args...) -> bool\n"
       "@return: #true if all elements in @args evaluate to #true\n"
       "\t>> constexpr function all(args...) {\n"
       "\t>>\t for (local x: args) {\n"
@@ -754,7 +762,9 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
       "\t>>\t }\n"
       "\t>>\t return true;\n"
       "\t>> }");
-  DOC(0x0106,"__builtin_any","(object args...) -> bool\n"
+  DOC(0x0106,"__builtin_any",
+      "(iterable seq) -> object\n"
+      "(object args...) -> bool\n"
       "\tReturns #true if any element in @args evaluates to #true\n"
       "\t>> constexpr function any(args...) {\n"
       "\t>>\t for (local x: args) {\n"
@@ -762,7 +772,9 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
       "\t>>\t }\n"
       "\t>>\t return false;\n"
       "\t>> }");
-  DOC(0x0107,"__builtin_sum","(object args...) -> object\n"
+  DOC(0x0107,"__builtin_sum",
+      "(iterable seq) -> object\n"
+      "(object args...) -> object\n"
       "@return: The sum of all arguments by adding them together using #(operator +)\n"
       "\tThe result is always replaced with the addition of #(result+next).\n"
       "\tReturns #none if no arguments are given.\n"

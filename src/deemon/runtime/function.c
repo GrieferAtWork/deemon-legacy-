@@ -459,8 +459,8 @@ exec_error:
               _DeeStackFrame_StackSize(&self->yi_frame),old_code->co_stacksize);
   iter = self->yi_frame.f_stackv,end = self->yi_frame.f_stackv_end;
   self->yi_frame.f_stackv_end = self->yi_frame.f_stackv;
-  // NOTE: Since we've already overwritten the code, anything using
-  //       this stackframe (except for us) will think that there isn't a stack
+  // NOTE: Since we've already overwritten the code, anything using this
+  //       stackframe (except for us) will think that there isn't a stack
   DeeAtomicMutex_Release(&self->yi_frame.f_lock);
   DeeAtomicMutex_Release(&self->yi_lock);
   // Cleanup in reverse order

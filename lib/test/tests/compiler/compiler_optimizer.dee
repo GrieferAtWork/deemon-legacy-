@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "__utils.dee"
+#include <testutil>
 
 // Sanity checks
 same_code(42,42);
