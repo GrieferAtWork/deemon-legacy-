@@ -93,6 +93,14 @@ DEE_A_RET_EXCEPT(-1) int DeeXAst_Optimize(
      //       ... would otherwise be broken.
      //       The todo in this is to track how a variable is used more in-depth.
      //       Mainly tracking whether or not it's being used in an inplace-operation.
+     // TODO: What we'd really need here is some way of tracking how often a variable
+     //       is used as the left-hand-side operand of a binary inplace-expression.
+     //       And only if it's never used in such a place, and if its type is immutable,
+     //       as indicated by 'DeeType_IsImmutable', then we can allow for constant
+     //       replacement during optimization more than once.
+     //      (NOTE: This effects: ++<x>,<x>++,--<x>,<x>--,+=,-=,*=,/=,%=,**=,<<=,>>=,&=,|=,^=)
+     //       REMINDER: The compiler is allowed to substitute '++x' with
+     //                 'x += 1', before replacing that with 'x = x+1'.
      if (/*DeeType_IsImmutable(initializer_type) ||*/
          DeeLocalVar_GET_USES(self->ast_vardecl.vd_var) == 1) {
       error = DeeOptimizerAssumptions_AddAssumeInit(

@@ -108,9 +108,9 @@ DEE_A_RET_EXCEPT(-1) int DeeSAst_Optimize(
   case DEE_SASTKIND_EXPRESSION: {
    if (DeeXAst_Optimize(self->ast_expression.x_ast,DEE_OPTIMIZE_ARGS) != 0) return -1;
    if ((optimize_flags&(DEE_OPTIMIZE_FLAG_DEL_NOEFFECT|
-       DEE_OPTIMIZE_FLAG_USED))==DEE_OPTIMIZE_FLAG_DEL_NOEFFECT &&
-       self->ast_expression.x_ast->ast_kind != DEE_XASTKIND_CONST &&
-       DeeXAst_IsNoEffect(self->ast_expression.x_ast)) {
+       DEE_OPTIMIZE_FLAG_USED))==DEE_OPTIMIZE_FLAG_DEL_NOEFFECT && (
+       self->ast_expression.x_ast->ast_kind == DEE_XASTKIND_CONST ||
+       DeeXAst_IsNoEffect(self->ast_expression.x_ast))) {
     // Optimize away single expressions without side-effects
     VLOG_OPTIMIZE(self->ast_expression.x_ast->ast_common.ast_token,
                   "Transforming expression without side-effects into empty statement\n");

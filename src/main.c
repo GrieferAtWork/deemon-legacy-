@@ -92,6 +92,40 @@
 
 // TODO: Syntax for util::min: >> print get_seq() < ...;
 // TODO: Syntax for util::max: >> print get_seq() > ...;
+// TODO: Syntax for addressing intrinsic operator functions:
+//  >> local l = [20,10,30];
+//  >> l.sort(operator <);
+//  'operator <' is parsed as a reference to the constant function '__lo__'
+//  -> When the 'operator' keyword token is encountered in a unary expression,
+//     begin parsing an operator name, because returning the associated
+//     intrinsic operator function.
+//  -> Optimization into direct operators, possibly based on argument count,
+//     optimizing code like 'print operator + (a,b)' is performed later.
+//  -> This way, a user no longer has to #include <intrin>, can instead
+//     directly address the function, even naming previously hidden/internal
+//     functions, such as the __dual_*__ group of operator functions:
+//     >> print operator +;       // prints '__dual_posoradd__'
+//     >> print operator + (x);   // compiled as '__dual_posoradd__(x)' --> '__pos__(x)' --> '+(x)'
+//     >> print operator + (a,b); // compiled as '__dual_posoradd__(a,b)' --> '__add__(a,b)' --> '(a)+(b)'
+
+// TODO: Optimizations:
+// Remove default parameter from explicit function call:
+// 'file.io(fname,"r")' --> 'file.io(fname)' (Because "r" is the default mode)
+// --> Reduce binary size
+// --> Can only be added for intrinsic / predictable function calls
+
+// -O4 optimizations:
+//   >> local x = file.io(f).read();
+//   >> local pat = get_pattern();
+//   >> parse(for (local line: x.splitlines()) if (line.lower().wmatch(pat.lower())) line);
+// Optimized:
+//   >> local x = file.io(f).read();
+//   >> local pat = get_pattern();
+//   >> {
+//   >> 	__stack local __hidden_x = x.splitlines();
+//   >> 	__stack local __hidden_pat = pat.lower();
+//   >> 	parse(for (local line: __hidden_x) if (line.lower().wmatch(__hidden_pat)) line);
+//   >> }
 
 
 #ifdef _MSC_VER

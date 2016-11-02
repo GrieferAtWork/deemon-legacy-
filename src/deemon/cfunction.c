@@ -76,10 +76,6 @@ static DeeObject *_deecfunction_tp_str(DeeCFunctionObject *self) {
  if (self->cf_name) return DeeString_New(self->cf_name);
  return DeeString_Newf("<cfunction: %#p>",(void *)self->cf_func);
 }
-static DeeObject *_deecfunction_tp_repr(DeeCFunctionObject *self) {
- if (self->cf_name) return DeeString_Newf("<%s(...): %#p>",self->cf_name,(void *)self->cf_func);
- return DeeString_Newf("<cfunction: %#p>",(void *)self->cf_func);
-}
 DEE_COMPILER_MSVC_WARNING_POP
 static int _deecfunction_tp_copy_ctor(DeeTypeObject *DEE_UNUSED(tp_self), DeeCFunctionObject *self, DeeObject *right) { self->cf_func = DeeCFunction_FUNC(right); return 0; }
 static DeeObject *_deecfunction_tp_cmp_lo(DeeCFunctionObject *lhs, DeeCFunctionObject *rhs) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,&DeeCFunction_Type) != 0) return NULL; DeeReturn_Bool(lhs->cf_func <  DeeCFunction_FUNC(rhs)); }
@@ -138,7 +134,7 @@ DeeTypeObject DeeCFunction_Type = {
  DEE_TYPE_OBJECT_ASSIGN_v100(null,null,null),
  DEE_TYPE_OBJECT_CAST_v101(
   member(&_deecfunction_tp_str),
-  member(&_deecfunction_tp_repr),null,null,null),
+  member(&_deecfunction_tp_str),null,null,null),
  DEE_TYPE_OBJECT_OBJECT_v100(
   member(&DeeCFunction_Call),null),
  DEE_TYPE_OBJECT_MATH_v101(
