@@ -466,6 +466,13 @@ static int DEE_CALL _deedeque_tp_seq_set(
  Dee_DECREF(old_elem);
  return 0;
 }
+static DeeObject *DEE_CALL _deedeque_tp_seq_range_get(
+ DeeDequeObject *self, DeeObject *begino, DeeObject *endo) {
+ Dee_ssize_t begin,end;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,begino,&begin) != 0) return -1;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,endo,&end) != 0) return -1;
+ return DeeDeque_GetRangeWithLock(&self->d_deq,begin,end,&self->d_lock);
+}
 static int DEE_CALL _deedeque_tp_seq_range_del(
  DeeDequeObject *self, DeeObject *begino, DeeObject *endo) {
  Dee_ssize_t begin,end;
@@ -810,7 +817,8 @@ DeeTypeObject DeeDeque_Type = {
   member(&_deedeque_tp_seq_set),
   member(&_deedeque_tp_seq_size),
   member(&_deedeque_tp_seq_contains),
-  null,member(&_deedeque_tp_seq_range_del),null,
+  member(&_deedeque_tp_seq_range_get),
+  member(&_deedeque_tp_seq_range_del),null,
   member(&_deedeque_tp_seq_iter_self),null),
  DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,
   null,null,member(_deedeque_tp_methods),

@@ -107,14 +107,14 @@ DEE_DATA_DECL(DeeTypeObject) DeeListIterator_Type;
 struct DeeTupleObject;
 
 
-#ifdef DEE_LIMITED_API
+#ifdef DEE_LIMITED_DEX
 //////////////////////////////////////////////////////////////////////////
 // Unsafe List API
 // >> Careful with these functions, as they break the guaranty of list elements never being NULL.
 //    They are only meant for custom list initializers where the size of the list is already known.
-extern DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *_DeeList_NewUnsafe(DEE_A_IN Dee_size_t size);
-extern DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeListObject) *_DeeList_TryWeakNewUnsafe(DEE_A_IN Dee_size_t size);
-extern DEE_A_RET_EXCEPT(-1) int _DeeList_ResizeUnsafe(DEE_A_INOUT_OBJECT(DeeListObject) *self, DEE_A_IN Dee_size_t new_size) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *) _DeeList_NewUnsafe(DEE_A_IN Dee_size_t size);
+DEE_FUNC_DECL(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeListObject) *) _DeeList_TryWeakNewUnsafe(DEE_A_IN Dee_size_t size);
+DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) _DeeList_ResizeUnsafe(DEE_A_INOUT_OBJECT(DeeListObject) *self, DEE_A_IN Dee_size_t new_size) DEE_ATTRIBUTE_NONNULL((1));
 #define _DeeList_FreeUnsafe(ob)\
 do{\
  DEE_ASSERT(DeeObject_Check(ob) && DeeList_Check(ob));\

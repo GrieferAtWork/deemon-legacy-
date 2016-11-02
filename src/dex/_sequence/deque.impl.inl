@@ -1032,6 +1032,37 @@ unlock_and_end:
  return result;
 }
 
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *FUNC(DeeDeque_GetRange)(
+ DEE_A_INOUT struct DeeDeque const *self, DEE_A_IN Dee_ssize_t begin,
+ DEE_A_IN Dee_ssize_t end LOCK_ARG(DEE_A_INOUT)) {
+ DeeObject *result,**dst,**result_end;
+ Dee_size_t used_begin,used_end,used_size;
+ struct _DeeDequeFastIterator iter;
+again:
+ ACQUIRE;
+ DeeDeque_AssertIntegrity(self);
+ used_begin = DEE_UNLIKELY(begin < 0) ? (Dee_size_t)0 : (Dee_size_t)begin;
+ used_end = DEE_UNLIKELY(end < 0) ? (Dee_size_t)0 : (Dee_size_t)end;
+ if DEE_UNLIKELY(used_begin > DeeDeque_SIZE(self)) used_begin = DeeDeque_SIZE(self);
+ if DEE_UNLIKELY(used_end > DeeDeque_SIZE(self)) used_end = DeeDeque_SIZE(self);
+ if DEE_UNLIKELY(used_begin >= used_end) { RELEASE; return DeeList_NewEmpty(); }
+ used_size = used_end-used_begin;
+ if DEE_UNLIKELY((result = _DeeList_TryWeakNewUnsafe(used_size)) == NULL) {
+  RELEASE;
+  if DEE_LIKELY(Dee_CollectMemory()) goto again;
+  DeeError_NoMemory();
+  return NULL;
+ }
+ _DeeDequeFastIterator_InitForward(&iter,self,used_begin);
+ result_end = (dst = DeeList_ELEM(result))+used_size;
+ do {
+  Dee_INCREF(*dst = *_DeeDequeFastIterator_ELEM(&iter));
+  _DeeDequeFastIterator_Next(&iter,self);
+ } while (++dst != result_end);
+ RELEASE;
+ return result;
+}
+
 
 #undef FUNC
 #undef AND_FUNC

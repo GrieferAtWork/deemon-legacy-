@@ -199,6 +199,8 @@ extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeDeque_RemovePred(DEE_A_INOUT struct De
 extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeDeque_RemovePredWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *elem, DEE_A_INOUT DeeObject *pred, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
 extern DEE_A_RET_EXCEPT(-1) Dee_size_t DeeDeque_RemoveIf(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *pred) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) Dee_size_t DeeDeque_RemoveIfWithLock(DEE_A_INOUT struct DeeDeque *self, DEE_A_INOUT DeeObject *pred, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,2,3));
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeDeque_GetRange(DEE_A_INOUT struct DeeDeque const *self, DEE_A_IN Dee_ssize_t begin, DEE_A_IN Dee_ssize_t end) DEE_ATTRIBUTE_NONNULL((1));
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeDeque_GetRangeWithLock(DEE_A_INOUT struct DeeDeque const *self, DEE_A_IN Dee_ssize_t begin, DEE_A_IN Dee_ssize_t end, DEE_A_INOUT struct DeeAtomicMutex *lock) DEE_ATTRIBUTE_NONNULL((1,4));
 
 
 #define DEE_DEQUE_SHRINKTOFIT_FLAG_ELEMV      DEE_UINT32_C(0x00000001) /*< Free unused elemv-entries. */
