@@ -503,8 +503,64 @@ _deedeque_tp_seq_iter_self(DeeDequeObject *self) {
 static DeeObject *DEE_CALL _deedeque_at(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t i;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu",&i) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu:at",&i) != 0) return NULL;
  return DeeDeque_AtWithLock(&self->d_deq,i,&self->d_lock);
+}
+static DeeObject *DEE_CALL _deedeque_front(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":front") != 0) return NULL;
+ DeeAtomicMutex_AcquireRelaxed(&self->d_lock);
+ if DEE_UNLIKELY(DeeDeque_EMPTY(&self->d_deq)) {
+  DeeAtomicMutex_Release(&self->d_lock);
+  _sequence_emptyerror();
+  return NULL;
+ }
+ Dee_INCREF(result = DeeDeque_FRONT_NZ(&self->d_deq));
+ DeeAtomicMutex_Release(&self->d_lock);
+ return result;
+}
+static DeeObject *DEE_CALL _deedeque_back(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":back") != 0) return NULL;
+ DeeAtomicMutex_AcquireRelaxed(&self->d_lock);
+ if DEE_UNLIKELY(DeeDeque_EMPTY(&self->d_deq)) {
+  DeeAtomicMutex_Release(&self->d_lock);
+  _sequence_emptyerror();
+  return NULL;
+ }
+ Dee_INCREF(result = DeeDeque_BACK_NZ(&self->d_deq));
+ DeeAtomicMutex_Release(&self->d_lock);
+ return result;
+}
+static DeeObject *DEE_CALL _deedeque_contains(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int result; DeeObject *elem,*pred = Dee_None;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:contains",&elem,&pred) != 0) return NULL;
+ if DEE_UNLIKELY((result = ((DeeNone_Check(pred) || pred == (DeeObject *)&DeeBuiltinFunction___eq__)
+  ? DeeDeque_ContainsWithLock(&self->d_deq,elem,&self->d_lock)
+  : DeeDeque_ContainsPredWithLock(&self->d_deq,elem,pred,&self->d_lock)
+  )) < 0) return NULL;
+ DeeReturn_Bool(result);
+}
+static DeeObject *DEE_CALL _deedeque_empty(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":empty") != 0) return NULL;
+ DeeAtomicMutex_AcquireRelaxed(&self->d_lock);
+ result = DeeDeque_EMPTY(&self->d_deq);
+ DeeAtomicMutex_Release(&self->d_lock);
+ DeeReturn_Bool(result);
+}
+static DeeObject *DEE_CALL _deedeque_non_empty(
+ DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":non_empty") != 0) return NULL;
+ DeeAtomicMutex_AcquireRelaxed(&self->d_lock);
+ result = !DeeDeque_EMPTY(&self->d_deq);
+ DeeAtomicMutex_Release(&self->d_lock);
+ DeeReturn_Bool(result);
 }
 static DeeObject *DEE_CALL _deedeque_clear(
  DeeDequeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
@@ -718,17 +774,17 @@ static DeeObject *DEE_CALL _deedequeiterator_tp_repr(DeeDequeIteratorObject *sel
 
 static struct DeeMethodDef const _deedeque_tp_methods[] = {
  // TODO: Intrinsic versions of all functions below
- DEE_METHODDEF_CONST_v100("at",member(&_deegenericiterable_at),DEE_DOC_AUTO),
- DEE_METHODDEF_CONST_v100("back",member(&_deegenericiterable_back),DEE_DOC_AUTO),
- DEE_METHODDEF_CONST_v100("contains",member(&_deegenericiterable_contains),DEE_DOC_AUTO),
+ DEE_METHODDEF_CONST_v100("at",member(&_deedeque_at),DEE_DOC_AUTO),
+ DEE_METHODDEF_CONST_v100("back",member(&_deedeque_back),DEE_DOC_AUTO),
+ DEE_METHODDEF_CONST_v100("contains",member(&_deedeque_contains),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("count",member(&_deegenericiterable_count),DEE_DOC_AUTO),
- DEE_METHODDEF_CONST_v100("empty",member(&_deegenericiterable_empty),DEE_DOC_AUTO),
+ DEE_METHODDEF_CONST_v100("empty",member(&_deedeque_empty),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("find",member(&_deegenericiterable_find),DEE_DOC_AUTO),
- DEE_METHODDEF_CONST_v100("front",member(&_deegenericiterable_front),DEE_DOC_AUTO),
+ DEE_METHODDEF_CONST_v100("front",member(&_deedeque_front),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("index",member(&_deegenericiterable_index),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("locate",member(&_deegenericiterable_locate),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("locate_all",member(&_deegenericiterable_locate_all),DEE_DOC_AUTO),
- DEE_METHODDEF_CONST_v100("non_empty",member(&_deegenericiterable_non_empty),DEE_DOC_AUTO),
+ DEE_METHODDEF_CONST_v100("non_empty",member(&_deedeque_non_empty),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("rfind",member(&_deegenericiterable_rfind),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("rindex",member(&_deegenericiterable_rindex),DEE_DOC_AUTO),
  DEE_METHODDEF_CONST_v100("rlocate",member(&_deegenericiterable_rlocate),DEE_DOC_AUTO),
