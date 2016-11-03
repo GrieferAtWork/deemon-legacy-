@@ -130,11 +130,11 @@ block_err: result = NULL; goto block_end;
       if (DeeStringWriter_Writef(&writer,"catch (%K...)",
        DeeVarDeclStorage_Repr(&iter->th_local)) != 0) goto try_err; break;
      case DeeExceptionHandleKind_TYPED:
-      if (DeeStringWriter_Writef(&writer,"catch (%k)",
-       iter->th_type ? iter->th_type : &DeeObject_Type) != 0) goto try_err; break;
+      if (DeeStringWriter_Writef(&writer,"catch (%r)",
+       iter->th_type ? (DeeObject *)iter->th_type : (DeeObject *)&DeeObject_Type) != 0) goto try_err; break;
      case DeeExceptionHandleKind_TYPED_VAR:
-      if (DeeStringWriter_Writef(&writer,"catch (%k %K)",
-       iter->th_type ? iter->th_type : &DeeObject_Type,
+      if (DeeStringWriter_Writef(&writer,"catch (%r %K)",
+       iter->th_type ? (DeeObject *)iter->th_type : (DeeObject *)&DeeObject_Type,
        DeeVarDeclStorage_Repr(&iter->th_local)) != 0) goto try_err; break;
      default: if (DeeStringWriter_WRITE_STRING(&writer,"finally") != 0) goto try_err; break;
     }

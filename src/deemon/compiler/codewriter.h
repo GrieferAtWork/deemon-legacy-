@@ -34,6 +34,18 @@
 
 DEE_DECL_BEGIN
 
+#define DeeExceptionHandlerEntry_InitEx(ob,writer,kind,inherited_mask_ref)\
+((ob)->e_store = 0,(ob)->e_type = (inherited_mask_ref),\
+ (ob)->e_kind = (kind),\
+ (ob)->e_stack = (writer)->cw_stack_size,\
+ (ob)->e_handler = DeeCodeWriter_ADDR(writer))
+#define DeeExceptionHandlerEntry_InitFinally(ob,writer)\
+ DeeExceptionHandlerEntry_InitEx(ob,writer,DeeExceptionHandleKind_FINALLY,NULL)
+#define DeeExceptionHandlerEntry_InitCatchAll(ob,writer)\
+ DeeExceptionHandlerEntry_InitEx(ob,writer,DeeExceptionHandleKind_ALL,NULL)
+
+
+
 struct DeeScopeObject;
 struct DeeLocalVarObject;
 struct DeeLexerObject;

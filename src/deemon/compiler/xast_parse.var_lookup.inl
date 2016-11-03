@@ -454,12 +454,13 @@ err_alias_value: Dee_XDECREF(alias_value); return NULL;
     else if (scope->sc_prev) scope = scope->sc_prev;
     else break;
    }
-   if DEE_UNLIKELY(!TPPTokenID_IS_KEYWORD(token.tk_id) && token.tk_id != TPP_TOK_DOTS) {
+   name = token.tk_id;
+   if DEE_UNLIKELY(!TPPTokenID_IS_KEYWORD(name) && name != TPP_TOK_DOTS) {
     if DEE_UNLIKELY(DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_KEYWORD_AFTER_SCOPE,
      (DeeObject *)lexer,(DeeObject *)token_ob,
      "Expected keyword after '__scope(-%Iu)'",scope_uprefs) != 0) return NULL;
    } else {
-    if ((found_entry = _DeeScope_GetNameEx(scope,token.tk_id,
+    if ((found_entry = _DeeScope_GetNameEx(scope,name,
      &deprecated_reason)) != NULL) goto return_found_entry;
     if DEE_LIKELY((vardecl_mode&DEE_XAST_VARDECL_FLAG_ENABLED) != 0 && scope_uprefs == 0) goto create_local;
     if DEE_UNLIKELY(DeeError_CompilerErrorf(DEE_WARNING_UNKNOWN_SCOPE_VARIABLE,

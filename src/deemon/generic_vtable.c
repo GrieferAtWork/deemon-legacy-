@@ -351,8 +351,8 @@ DEE_A_RET_EXCEPT(-1) int _DeeGeneric_MergeSort(
   case 1: *out_v = *in_v; break;
   case 2: // if (b < a)
    temp = (*pred_lo)(in_v[1],in_v[0],closure);
-   if (temp < 0) {
-    if (!DeeError_Catch(&DeeErrorType_NotImplemented)) return -1;
+   if DEE_UNLIKELY(temp < 0) {
+    if DEE_UNLIKELY(!DeeError_Catch(&DeeErrorType_NotImplemented)) return -1;
 #if 1
     goto dont_swap;
 #else
@@ -397,8 +397,8 @@ no_mem: DeeError_NoMemory();
    iter1 = buf1,iter2 = buf2;
    while (s1 && s2) {
     temp = (*pred_lo)(*iter2,*iter1,closure);
-    if (temp < 0) {
-     if (DeeError_Catch(&DeeErrorType_NotImplemented)) temp = 0;
+    if DEE_UNLIKELY(temp < 0) {
+     if DEE_UNLIKELY(DeeError_Catch(&DeeErrorType_NotImplemented)) temp = 0;
      else {
       memcpy(out_v,iter1,s1*sizeof(DeeObject *));
       memcpy(out_v+s1,iter2,s2*sizeof(DeeObject *));
@@ -439,10 +439,10 @@ DEE_A_RET_EXCEPT(-1) int _DeeGeneric_SortPredUserFunc(
  DEE_ASSERT(DeeObject_Check(a));
  DEE_ASSERT(DeeObject_Check(b));
  DEE_ASSERT(DeeObject_Check(closure));
- if ((args = DeeTuple_Pack(2,a,b)) == NULL) return -1;
+ if DEE_UNLIKELY((args = DeeTuple_Pack(2,a,b)) == NULL) return -1;
  result_ob = DeeObject_Call((DeeObject *)closure,args);
  Dee_DECREF(args);
- if (!result_ob) return -1;
+ if DEE_UNLIKELY(!result_ob) return -1;
  result = DeeObject_Bool(result_ob);
  Dee_DECREF(result_ob);
  return result;
@@ -475,12 +475,12 @@ int _deegenericmemcmp_tp_hash(DeeObject *self, Dee_hash_t start, Dee_hash_t *res
   Dee_TYPE(self),tp_instance_size)-sizeof(struct DeeObject),start);
  return 0;
 }
-DeeObject *_deegenericmemcmp_tp_cmp_lo(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY((rhs = DeeObject_GetInstance(rhs,Dee_TYPE(lhs))) == NULL) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) <  0); }
-DeeObject *_deegenericmemcmp_tp_cmp_le(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY((rhs = DeeObject_GetInstance(rhs,Dee_TYPE(lhs))) == NULL) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) <= 0); }
-DeeObject *_deegenericmemcmp_tp_cmp_eq(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY((rhs = DeeObject_GetInstance(rhs,Dee_TYPE(lhs))) == NULL) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) == 0); }
-DeeObject *_deegenericmemcmp_tp_cmp_ne(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY((rhs = DeeObject_GetInstance(rhs,Dee_TYPE(lhs))) == NULL) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) != 0); }
-DeeObject *_deegenericmemcmp_tp_cmp_gr(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY((rhs = DeeObject_GetInstance(rhs,Dee_TYPE(lhs))) == NULL) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) >  0); }
-DeeObject *_deegenericmemcmp_tp_cmp_ge(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY((rhs = DeeObject_GetInstance(rhs,Dee_TYPE(lhs))) == NULL) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) >= 0); }
+DeeObject *_deegenericmemcmp_tp_cmp_lo(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,Dee_TYPE(lhs)) != 0) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) <  0); }
+DeeObject *_deegenericmemcmp_tp_cmp_le(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,Dee_TYPE(lhs)) != 0) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) <= 0); }
+DeeObject *_deegenericmemcmp_tp_cmp_eq(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,Dee_TYPE(lhs)) != 0) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) == 0); }
+DeeObject *_deegenericmemcmp_tp_cmp_ne(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,Dee_TYPE(lhs)) != 0) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) != 0); }
+DeeObject *_deegenericmemcmp_tp_cmp_gr(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,Dee_TYPE(lhs)) != 0) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) >  0); }
+DeeObject *_deegenericmemcmp_tp_cmp_ge(DeeObject *lhs, DeeObject *rhs) { DEE_ASSERT(!DeeObject_IS_VAR(lhs)); if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,Dee_TYPE(lhs)) != 0) return NULL; DeeReturn_Bool(memcmp(((DeeObject *)lhs)+1,((DeeObject *)rhs)+1,DeeType_GET_SLOT(Dee_TYPE(lhs),tp_instance_size)-sizeof(DeeObject)) >= 0); }
 
 DEE_STATIC_INLINE(int) _deegenericiterable_cmp_lo(DeeObject *lhs, DeeObject *rhs) {
  DeeObject *lhs_iterator,*rhs_iterator; int result;

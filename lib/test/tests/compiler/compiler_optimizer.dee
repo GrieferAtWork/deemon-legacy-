@@ -71,8 +71,8 @@ same_code(
 
 // noexcept try block
 same_code(
-	({ try { 42; } catch (...) { print "Oh no!"; } }),
-	({ 42; }));
+	({ try { none; } catch (...) { print "Oh no!"; } }),
+	({ }));
 same_code(
 	({ try { 42; } finally { print "done"; } }),
 	({ 42; print "done"; }));

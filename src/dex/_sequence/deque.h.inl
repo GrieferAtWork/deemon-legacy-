@@ -738,7 +738,7 @@ struct DeeDequeIterator {
  struct DeeDequeBucket *di_bucket_iter; /*< [0..1] Current bucket. */
  struct DeeDequeBucket *di_bucket_end;  /*< [0..1] First invalid bucket. */
  DeeObject            **di_elem_iter;   /*< [1..1][0..1] Position in current bucket. */
- DeeObject            **di_elem_end;    /*< [1..1][0..1] End of the current bucket. */
+ DeeObject            **di_elem_end;    /*< [?..?][0..1] End of the current bucket. */
 };
 #define DeeDequeIterator_DONE(ob)\
  ((ob)->di_bucket_iter == (ob)->di_bucket_end && \

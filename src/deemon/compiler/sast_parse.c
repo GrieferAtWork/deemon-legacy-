@@ -727,9 +727,10 @@ DEE_A_RET_EXCEPT(-1) int _DeeSAst_ParseTryHandler(
  int result;
  DeeExceptionHandlerKind handler_kind;
  DeeXAstObject *exception_storage; /*< [0..1]. */
- DeeTypeObject *type_mask;         /*< [0..1]. */
+ DeeXAstObject *type_mask;         /*< [0..1]. */
  DeeScopeObject *handler_scope;    /*< [1..1]. */
  DeeSAstObject *handler_block;     /*< [1..1]. */
+ DeeTypeObject const *typemask_type;
  DEE_ASSERT(token.tk_id == KWD_finally || token.tk_id == KWD_catch);
  if ((handler_scope = (DeeScopeObject *)DeeScope_New((DeeObject *)scope,1)) == NULL) return -1;
  switch (token.tk_id) {
@@ -774,54 +775,25 @@ DEE_A_RET_EXCEPT(-1) int _DeeSAst_ParseTryHandler(
     goto catch_end;
    }
    // Exception storage is actually the type!: "catch (int x)"
-   if (exception_storage->ast_kind != DEE_XASTKIND_CONST) {
-    // TODO: We should allow and compile runtime evaluation of exception types like this:
-    // >> Terror = string;     // >> Terror = string;
-    // >> try {                // >> try {
-    // >>   throw "NOPE!";     // >>   throw "NOPE!";
-    // >> } catch (Terror e) { // >> } catch (e...) {
-    // >>   print "Caught:",e; // >>   if (e !is Terror) throw;
-    // >> }                    // >>   print "Caught:",e;
-    // >>                      // >> }
-    // NOTE: It's not that easy, as the rethrow must be allowed to be
-    //       forwarded to other handlers within the same catch block:
-    // >> try {
-    // >>   throw "Nope!";
-    // >> } catch (e...) {
-    // >>   if (e is string) throw; // This would be forwarded to the catch below...
-    // >> } catch (e...) {
-    // >>   print e;
-    // >> }
-    // >> try {
-    // >>   try {
-    // >>     throw "Nope!";
-    // >>   } catch (e...) {
-    // >>     if (e is string) throw; // But it would be here
-    // >>   }
-    // >> } catch (e...) {
-    // >>   print e;
-    // >> }
-    if ((result = DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_CONSTANT_EXPRESSION_AFTER_CATCH,
-     (DeeObject *)lexer,(DeeObject *)token_ob,"Expected constant after 'catch(', but got %r",
-     exception_storage)) != 0) goto err_catch_1;
-    Dee_INCREF(type_mask = &DeeObject_Type);
+   type_mask = exception_storage; // Inherit reference
+#ifdef DEE_DEBUG
+   exception_storage = NULL;
+#endif
+   typemask_type = DeeXAst_PredictType(type_mask);
+   if (typemask_type && DEE_UNLIKELY(!DeeType_IsSameOrDerived(typemask_type,&DeeType_Type))) {
+    if DEE_UNLIKELY((result = DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_TYPE_EXPRESSION_AFTER_CATCH,
+     (DeeObject *)lexer,(DeeObject *)token_ob,"Expected type after 'catch(', but got instance of %s",
+     DeeType_NAME(typemask_type))) != 0) goto err_catch_1;
+    Dee_CLEAR(type_mask);
+    handler_kind = DeeExceptionHandleKind_ALL;
    } else {
-    Dee_INCREF(type_mask = (DeeTypeObject *)exception_storage->ast_const.c_const);
-    if (!DeeType_Check(type_mask)) {
-     Dee_DECREF(type_mask);
-     if ((result = DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_TYPE_EXPRESSION_AFTER_CATCH,
-      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected type after 'catch(', but got instance of %s",
-      DeeType_NAME(Dee_TYPE(exception_storage->ast_const.c_const)))) != 0) goto err_catch_1;
-     Dee_INCREF(type_mask = Dee_TYPE(exception_storage->ast_const.c_const));
-    }
+    handler_kind = DeeExceptionHandleKind_TYPED;
    }
-   Dee_CLEAR(exception_storage);
-   handler_kind = DeeExceptionHandleKind_TYPED;
    // Check for storage for the caught expression
-   if (token.tk_id != ')') {
+   if DEE_UNLIKELY(token.tk_id != ')') {
     // Must parse an additional storage expression
     // TODO: Parse this as a named type suffix
-    if ((exception_storage = DeeXAst_ParseUnaryEx(
+    if DEE_UNLIKELY((exception_storage = DeeXAst_ParseUnaryEx(
      DEE_XAST_UNARAYSUFFIX_FLAG_NOEXPAND,DEE_XAST_VARDECL_FLAG_ENABLED,
      NULL,DEE_PARSER_ARGS_SCOPE(handler_scope))) == NULL) {
 /*err_catch_2:*/ Dee_DECREF(type_mask); goto err_handler_scope;

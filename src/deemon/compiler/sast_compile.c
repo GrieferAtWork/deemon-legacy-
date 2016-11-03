@@ -737,11 +737,23 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
    DEE_ASSERT(begin != end);
    while (1) {
     // Initialize the exception headers + compile the handler code
-    int is_finally; Dee_size_t n_other_handlers;
+    int is_finally,runtime_exctype; Dee_size_t n_other_handlers;
     struct DeeExceptionHandlerEntry *rt_entry;
     rt_entry = writer->cw_exceptv+begin->th_runtime_id;
-    rt_entry->e_kind = begin->th_kind;
-    Dee_XINCREF(rt_entry->e_type = begin->th_type);
+    if (begin->th_type && begin->th_type->ast_kind == DEE_XASTKIND_CONST) {
+     Dee_XINCREF(rt_entry->e_type = (DeeTypeObject *)begin->th_type->ast_const.c_const);
+     rt_entry->e_kind = begin->th_kind;
+     runtime_exctype = 0;
+    } else if (begin->th_type) {
+     rt_entry->e_kind = (begin->th_kind&~(
+      DeeExceptionHandleKind_FLAG_TYPED))|DeeExceptionHandleKind_FLAG_ALL;
+     rt_entry->e_type = NULL;
+     runtime_exctype = 1;
+    } else {
+     rt_entry->e_kind = begin->th_kind;
+     rt_entry->e_type = NULL;
+     runtime_exctype = 0;
+    }
     switch (begin->th_local.vds_kind) {
      case DEE_VARDECLSTORAGEKIND_NONE:
       DEE_ASSERTF((rt_entry->e_kind&DeeExceptionHandleKind_FLAG_VAR)==0,
@@ -777,6 +789,14 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
      // TODO: DEE_VARDECLSTORAGEKIND_ASSIGN
      default: rt_entry->e_kind &= ~DeeExceptionHandleKind_FLAG_VAR; break; 
     }
+    if (runtime_exctype &&
+       (rt_entry->e_kind&DeeExceptionHandleKind_FLAG_VAR)==0) {
+     // Must create a hidden local variable for the exception storage
+     // >> Required to compare the actual exception against
+     if ((rt_entry->e_store = DeeCodeWriter_AllocLocal(writer,NULL)) == (Dee_size_t)-1) return -1;
+     rt_entry->e_kind |= DeeExceptionHandleKind_FLAG_VAR;
+    }
+
     // Align the stack to the current stack size
     rt_entry->e_stack = writer->cw_stack_size;
     rt_entry->e_handler = DeeCodeWriter_ADDR(writer);
@@ -786,16 +806,79 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
     // >> Compile the actual handler code
     if (is_finally && writer->cw_finally_size++ == writer->cw_finally_size_min)
      writer->cw_finally_size_min = writer->cw_finally_size;
+
+    if (runtime_exctype) {
+     // Check that the thrown exception matches what was specified
+     // >> try {
+     // >>   ...
+     // >> } catch (get_error()) {
+     // >>   print "Error!";
+     // >> }
+     //Compile as:
+     // >> try {
+     // >>   ...
+     // >> } catch (__hidden...) {
+     // >>   if (__hidden !is get_error()) throw;
+     // >>   print "Error!";
+     // >> }
+//#define MASK_NOEXCEPT
+     Dee_size_t rethrow_jmpaddr,rethrow_jmparg;
+#ifndef MASK_NOEXCEPT
+     Dee_size_t rethrow_catch_id,rethrow_finally_id;
+     if (DeeCodeWriter_TryBegin(writer,&rethrow_catch_id) != 0) return -1;;
+#endif
+
+     rt_entry = writer->cw_exceptv+begin->th_runtime_id;
+     DEE_ASSERT(!is_finally);
+     DEE_ASSERT((rt_entry->e_kind&DeeExceptionHandleKind_FLAG_VAR)!=0);
+     if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(writer,OP_LOAD_LOC,rt_entry->e_store) != 0) return -1;
+     DeeCodeWriter_INCSTACK(writer);
+     if DEE_UNLIKELY(DeeXAst_Compile(begin->th_type,DEE_COMPILER_ARGS_EX(
+      compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
+     if DEE_UNLIKELY(DeeCodeWriter_BinaryOp(writer,OP_IS) != 0) return -1;
+     rethrow_jmpaddr = DeeCodeWriter_ADDR(writer);
+     if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithFutureSizeArg(
+      writer,OP_JUMP_IF_TT_POP,&rethrow_jmparg) != 0) return -1;
+     DeeCodeWriter_DECSTACK(writer);
+     // TODO: Optimize: This can be a non-checking opcode
+     if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(
+      writer,OP_LOAD_LOC,rt_entry->e_store) != 0) return -1;
+     //DeeCodeWriter_INCSTACK(writer); // Not really required...
+     if DEE_UNLIKELY(DeeCodeWriter_WriteOp(writer,OP_EXCEPT_END) != 0) return -1;
+     // todo: Maybe rethrow the original error from 'rt_entry->e_store' as well?
+     if DEE_UNLIKELY(DeeCodeWriter_WriteOp(writer,OP_THROW) != 0) return -1;
+     //DeeCodeWriter_DECSTACK(writer);
+#ifndef MASK_NOEXCEPT
+     rt_entry = writer->cw_exceptv+rethrow_catch_id;
+     DeeExceptionHandlerEntry_InitCatchAll(rt_entry,writer);
+     rt_entry->e_handler = DeeCodeWriter_ADDR(writer);
+     if (writer->cw_finally_size++ == writer->cw_finally_size_min)
+      writer->cw_finally_size_min = writer->cw_finally_size;
+     if (DeeCodeWriter_TryBegin(writer,&rethrow_finally_id) != 0) return -1;;
+     if (DeeCodeWriter_WriteOp(writer,OP_RETHROW) != 0) return -1;;
+     if (DeeCodeWriter_TryEnd(writer) != 0) return -1;
+     rt_entry = writer->cw_exceptv+rethrow_finally_id;
+     DeeExceptionHandlerEntry_InitFinally(rt_entry,writer);
+     if (DeeCodeWriter_WriteOp(writer,OP_EXCEPT_END) != 0) return -1;
+     if (DeeCodeWriter_WriteOp(writer,OP_FINALLY_END) != 0) return -1;
+     --writer->cw_finally_size;
+#endif
+     if DEE_UNLIKELY(DeeCodeWriter_SetFutureSizeArg(writer,rethrow_jmparg,
+      DeeCodeWriter_ADDR(writer)-rethrow_jmpaddr) != 0) return -1;
+     if (DeeCodeWriter_TryEnd(writer) != 0) return -1;
+    }
+
     // Drop all other exception handlers, so they're not active while out's is being executed
     n_other_handlers = (Dee_size_t)((end-begin)-1);
     while (n_other_handlers--) if (DeeCodeWriter_WriteOp(writer,OP_TRY_END) != 0) return -1;
+
     // Optimization for skipping the additional try...finally block in the exception handler
     // NOTE: We can only ever do this, if the code __ALWAYS__ returns normally!
     if (DEE_AST_ATTRIBUTE_IS_ALWAYSRETURN(DeeSAst_Attr(begin->th_block,(Dee_uint32_t)(
-     DEE_AST_ATTRIBUTE_FLAG_NORETURN_REQUIRE_NOEXCEPT|
-     DEE_AST_ATTRIBUTE_FLAG_ALL_EXCEPTIONS|( // We need to known for sure!
-     (compiler_flags&DEE_COMPILER_FLAG_ALLOW_BREAK_CONTINUE)!=0
-     ?DEE_AST_ATTRIBUTE_FLAG_NORETURN_ALLOW_BREAK:DEE_AST_ATTRIBUTE_FLAG_NONE))))) {
+        DEE_AST_ATTRIBUTE_FLAG_NORETURN_REQUIRE_NOEXCEPT|
+        DEE_AST_ATTRIBUTE_FLAG_ALL_EXCEPTIONS|( // We need to known for sure!
+        (compiler_flags&DEE_COMPILER_FLAG_ALLOW_BREAK_CONTINUE)!=0
+        ? DEE_AST_ATTRIBUTE_FLAG_NORETURN_ALLOW_BREAK : DEE_AST_ATTRIBUTE_FLAG_NONE))))) {
      // If the handler is noexcept and always returns, we can skip the additional finally-block protecting it
      if (DeeSAst_Compile(begin->th_block,DEE_COMPILER_ARGS_SCOPE_EX(
       begin->th_scope,compiler_flags&~(DEE_COMPILER_FLAG_USED))) != 0) return -1;
@@ -819,11 +902,7 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
      // Skip the finally block once try_end returned
      if (DeeCodeWriter_WriteOpWithFutureSizeArg(writer,OP_JUMP,&handler_finally_jmp) != 0) return -1;
      rt_entry = writer->cw_exceptv+handler_finally_id;
-     rt_entry->e_store = 0;
-     rt_entry->e_type = NULL;
-     rt_entry->e_kind = DeeExceptionHandleKind_FINALLY;
-     rt_entry->e_stack = writer->cw_stack_size;
-     rt_entry->e_handler = DeeCodeWriter_ADDR(writer);
+     DeeExceptionHandlerEntry_InitFinally(rt_entry,writer);
      if (is_finally) {
       if (DeeCodeWriter_WriteOp(writer,OP_FINALLY_END) != 0) return -1;
       if (DeeCodeWriter_SetFutureSizeArg(writer,handler_finally_jmp,(Dee_size_t)(

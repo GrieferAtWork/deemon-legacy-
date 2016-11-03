@@ -1045,13 +1045,14 @@ static int DEE_CALL _DeeSAst_VisitReplaceThrowVarWithRethrow(
 DEE_A_RET_EXCEPT(-1) int DeeSAst_AddTryHandler(
  DEE_A_INOUT DeeSAstObject *self, DEE_A_IN DeeExceptionHandlerKind kind,
  DEE_A_INOUT DeeLexerObject *lexer, DEE_A_IN Dee_uint32_t parser_flags,
- DEE_A_INOUT_OPT DeeXAstObject *exception_storage, DEE_A_INOUT_OPT DeeTypeObject *type_mask,
+ DEE_A_INOUT_OPT DeeXAstObject *exception_storage, DEE_A_INOUT_OPT DeeXAstObject *type_mask,
  DEE_A_INOUT DeeScopeObject *handler_scope, DEE_A_INOUT DeeSAstObject *handler_block) {
  Dee_size_t new_entryc; struct DeeSAstTryHandler *new_entryv;
  DEE_ASSERT(DeeObject_Check(self) && DeeSAst_Check(self));
  DEE_ASSERT(DeeObject_Check(lexer) && DeeLexer_Check(lexer));
  DEE_ASSERT(!exception_storage || (DeeObject_Check(exception_storage) && DeeXAst_Check(exception_storage)));
- DEE_ASSERT(!type_mask || (DeeObject_Check(type_mask) && DeeType_Check(type_mask)));
+ DEE_ASSERT((kind&DeeExceptionHandleKind_FLAG_TYPED)==0 || type_mask);
+ DEE_ASSERT(!type_mask || (DeeObject_Check(type_mask) && DeeXAst_Check(type_mask)));
  DEE_ASSERT(DeeObject_Check(handler_scope) && DeeScope_Check(handler_scope));
  DEE_ASSERT(DeeObject_Check(handler_block) && DeeSAst_Check(handler_block));
  DEE_ASSERT(DeeScope_IsWeakParent((DeeObject *)self->ast_try.t_rootscope,(DeeObject *)handler_scope));
@@ -1064,7 +1065,9 @@ DEE_A_RET_EXCEPT(-1) int DeeSAst_AddTryHandler(
    (DeeObject *)lexer,(DeeObject *)handler_block->ast_common.ast_token,
    "Did not expect 'catch' block after 'finally'") != 0) return -1;
  }
- if ((kind&DeeExceptionHandleKind_FLAG_TYPED) != 0 && type_mask == &DeeObject_Type) {
+ if ((kind&DeeExceptionHandleKind_FLAG_TYPED) != 0 &&
+     type_mask->ast_kind == DEE_XASTKIND_CONST &&
+     (DeeTypeObject *)type_mask->ast_const.c_const == &DeeObject_Type) {
   // This is actually a catch-all
   kind &= ~DeeExceptionHandleKind_FLAG_TYPED;
   kind |= DeeExceptionHandleKind_FLAG_ALL;

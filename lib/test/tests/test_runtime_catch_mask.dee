@@ -1,0 +1,85 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+
+// Starting in v102, deemon allows the type mask
+// of a catch-block to be evaluated at runtime.
+// This test defines, and checks the order of evaluation
+// in such a context
+
+
+(({
+
+	// Prevent any possible compiler optimizations
+	volatile local error_type = string;
+
+	local geterr_called = 0;
+	function get_error() {
+		++geterr_called;
+		return error_type;
+	}
+
+	function protected_run(f) {
+		assert geterr_called == 0;
+		try {
+			f();
+		} catch (get_error() e) {
+			assert geterr_called == 1;
+			geterr_called := 0;
+			return e;
+		} catch (int e) {
+			assert geterr_called == 1;
+			geterr_called := 0;
+			return e*2;
+		}
+		assert geterr_called == 0;
+		return none;
+	}
+
+	// Sanity test: Without a throw, the function should terminate normally
+	assert protected_run([] { return 42; }) is none;
+
+	// The actual test: Make sure that this call returns "Error".
+	// Since 'protected_run' can only return something other than
+	// 'none' if it managed to catch something, we can safely
+	// assume that an exception was caught.
+	assert protected_run([] { throw "Error"; }) == "Error";
+	assert protected_run([] { throw 21; }) == 42;
+
+}));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

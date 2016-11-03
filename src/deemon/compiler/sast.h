@@ -93,7 +93,7 @@ DEE_PRIVATE_DECL_DEE_EXCEPTION_HANDLER_KIND
 struct DeeSAstTryHandler {
  DeeExceptionHandlerKind            th_kind;  /*< The kind of exception handler this is. */
  DEE_A_REF struct DeeVarDeclStorage th_local; /*< The local variable we use to store the exception (only if a variable is used). */
- DEE_A_REF struct DeeTypeObject    *th_type;  /*< [0..1] The type of exception handled (only used by typed catch). */
+ DEE_A_REF struct DeeXAstObject    *th_type;  /*< [0..1] The type of exception handled (only used by typed catch). */
  DEE_A_REF struct DeeScopeObject   *th_scope; /*< [1..1] Scope of the handler code. */
  DEE_A_REF struct DeeSAstObject    *th_block; /*< [1..1] Handler code block. */
  /* The following are only used during compilation
@@ -521,7 +521,7 @@ extern DEE_A_RET_EXCEPT_REF DeeSAstObject *DeeSAst_NewTry(
 extern DEE_A_RET_EXCEPT(-1) int DeeSAst_AddTryHandler(
  DEE_A_INOUT DeeSAstObject *self, DEE_A_IN DeeExceptionHandlerKind kind,
  DEE_A_INOUT DeeLexerObject *lexer, DEE_A_IN Dee_uint32_t parser_flags,
- DEE_A_INOUT_OPT DeeXAstObject *exception_storage, DEE_A_INOUT_OPT DeeTypeObject *type_mask,
+ DEE_A_INOUT_OPT DeeXAstObject *exception_storage, DEE_A_INOUT_OPT DeeXAstObject *type_mask,
  DEE_A_INOUT DeeScopeObject *handler_scope, DEE_A_INOUT DeeSAstObject *handler_block);
 extern DEE_A_RET_EXCEPT(-1) int DeeSAst_FinalizeTry(
  DEE_A_INOUT DeeSAstObject *self, DEE_A_INOUT DeeLexerObject *lexer,
