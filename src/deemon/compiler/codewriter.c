@@ -1514,6 +1514,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeCodeWriter_MakeSequence(
   switch (op) {
    case OP_SET: op_ext = OPEXT_EMPTY_SET; break;
    case OP_LIST: op_ext = OPEXT_EMPTY_LIST; break;
+// case OP_CELL: op_ext = OPEXT_EMPTY_CELL; break;
    case OP_TUPLE: op_ext = OPEXT_EMPTY_TUPLE; break;
    default: DEE_ASSERT(0 && "Invalid sequence op"); DEE_BUILTIN_UNREACHABLE();
   }

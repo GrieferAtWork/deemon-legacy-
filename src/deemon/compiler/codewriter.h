@@ -538,6 +538,9 @@ extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_YieldExit(
 extern DEE_A_RET_EXCEPT(-1) int _DeeCodeWriter_MakeSequence(
  DEE_A_INOUT struct DeeCodeWriter *self,
  DEE_A_IN Dee_uint8_t op, DEE_A_IN Dee_size_t s) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeCodeWriter_MakeTuple(ob,s) _DeeCodeWriter_MakeSequence(ob,OP_TUPLE,s)
+#define DeeCodeWriter_MakeList(ob,s)  _DeeCodeWriter_MakeSequence(ob,OP_LIST,s)
+#define DeeCodeWriter_MakeSet(ob,s)   _DeeCodeWriter_MakeSequence(ob,OP_SET,s)
 
 
 //////////////////////////////////////////////////////////////////////////
