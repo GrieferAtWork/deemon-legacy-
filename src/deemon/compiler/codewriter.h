@@ -491,6 +491,17 @@ extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_TryBegin(
  DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_OUT Dee_size_t *entry) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_TryEnd(
  DEE_A_INOUT struct DeeCodeWriter *self) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeCodeWriter_TryBeginFinally(ob,entry) \
+ (DeeCodeWriter_INC_FINALLYSIZE(ob),DeeCodeWriter_TryBegin(ob,entry))
+#define DeeCodeWriter_INC_FINALLYSIZE(ob)\
+ ((ob)->cw_finally_size++ == (ob)->cw_finally_size_min\
+  ? (void)((ob)->cw_finally_size_min = (ob)->cw_finally_size) : (void)0)
+#define DeeCodeWriter_DEC_FINALLYSIZE(ob)     (void)(DEE_ASSERT((ob)->cw_finally_size),--(ob)->cw_finally_size)
+#define DeeCodeWriter_INC_FINALLYSIZE_N(ob,n)\
+ (((ob)->cw_finally_size += (n)) >= (ob)->cw_finally_size_min\
+  ? (void)((ob)->cw_finally_size_min = (ob)->cw_finally_size) : (void)0)
+#define DeeCodeWriter_DEC_FINALLYSIZE_N(ob,n) (void)(DEE_ASSERT((ob)->cw_finally_size >= (n)),(ob)->cw_finally_size -= (n))
+
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS */
 
 //////////////////////////////////////////////////////////////////////////
@@ -701,6 +712,96 @@ extern DEE_A_RET_EXCEPT(-1) int DeeCodeReachableAddrList_Insert(
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeReachableAddrList_CollectFromCodewriter(
  DEE_A_INOUT struct DeeCodeReachableAddrList *self,
  DEE_A_IN struct DeeCodeWriter const *writer);
+
+
+//////////////////////////////////////////////////////////////////////////
+// Generate code for wrapping a try-finally block, where
+// the try-block if noreturn, and the finally block is noexcept:
+// >> DeeCodeWriter_FINALLY_NORETURNTRY_NOEXCEPTFLN_TRY(writer,goto err) {
+// >>   compile_try_block();
+// >> } DeeCodeWriter_FINALLY_NORETURNTRY_NOEXCEPTFLN_FLN(writer,goto err) {
+// >>   compile_finally_block();
+// >> } DeeCodeWriter_FINALLY_NORETURNTRY_NOEXCEPTFLN_END(writer,goto err);
+#define DeeCodeWriter_FINALLY_NORETURNTRY_NOEXCEPTFLN_TRY(writer,...)\
+do{ Dee_size_t _cw_block_id;\
+ if (DeeCodeWriter_TryBeginFinally(writer,&_cw_block_id) != 0) {__VA_ARGS__;}\
+ do
+#define DeeCodeWriter_FINALLY_NORETURNTRY_NOEXCEPTFLN_FLN(writer,...)\
+while(0);\
+ if (DeeCodeWriter_TryEnd(writer) != 0) return -1;\
+do{\
+ struct DeeExceptionHandlerEntry *_entry = (writer)->cw_exceptv+_cw_block_id;\
+ DeeExceptionHandlerEntry_InitFinally(_entry,writer);\
+}while(0);\
+ do
+#define DeeCodeWriter_FINALLY_NORETURNTRY_NOEXCEPTFLN_END(writer,...)\
+while(0); if (DeeCodeWriter_WriteOp(writer,OP_FINALLY_END) != 0) {__VA_ARGS__;} }while(0)
+
+
+//////////////////////////////////////////////////////////////////////////
+// Generate code for wrapping a try-finally block, where the try-block if noreturn:
+// >> DeeCodeWriter_FINALLY_NORETURNTRY_TRY(writer,goto err) {
+// >>   compile_try_block();
+// >> } DeeCodeWriter_FINALLY_NORETURNTRY_FLN(writer,goto err) {
+// >>   compile_finally_block();
+// >> } DeeCodeWriter_FINALLY_NORETURNTRY_END(writer,goto err);
+#define DeeCodeWriter_FINALLY_NORETURNTRY_TRY(writer,...)\
+do{ Dee_size_t _cw_block_id,_cw_finally_id;\
+ if (DeeCodeWriter_TryBeginFinally(writer,&_cw_block_id) != 0) {__VA_ARGS__;}\
+ do
+#define DeeCodeWriter_FINALLY_NORETURNTRY_FLN(writer,...)\
+while(0);\
+ if (DeeCodeWriter_TryEnd(writer) != 0) {__VA_ARGS__;}\
+do{\
+ struct DeeExceptionHandlerEntry *_entry = (writer)->cw_exceptv+_cw_block_id;\
+ DeeExceptionHandlerEntry_InitFinally(_entry,writer);\
+}while(0);\
+ if (DeeCodeWriter_TryBeginFinally(writer,&_cw_finally_id) != 0) {__VA_ARGS__;}\
+ do
+#define DeeCodeWriter_FINALLY_NORETURNTRY_END(writer,...)\
+while(0); do{\
+ struct DeeExceptionHandlerEntry *_entry = (writer)->cw_exceptv+_cw_finally_id;\
+ DeeExceptionHandlerEntry_InitFinally(_entry,writer);\
+}while(0);\
+ if (DeeCodeWriter_TryEnd(writer) != 0 ||\
+     DeeCodeWriter_WriteOp(writer,OP_FINALLY_END) != 0 ||\
+     DeeCodeWriter_WriteOp(writer,OP_FINALLY_END) != 0) {__VA_ARGS__;}\
+ DeeCodeWriter_DEC_FINALLYSIZE_N(writer,2);\
+}while(0)
+
+//////////////////////////////////////////////////////////////////////////
+// Generate code for wrapping a try-finally block:
+// >> DeeCodeWriter_FINALLY_TRY(writer,goto err) {
+// >>   compile_try_block();
+// >> } DeeCodeWriter_FINALLY_FLN(writer,goto err) {
+// >>   compile_finally_block();
+// >> } DeeCodeWriter_DEC_FINALLYSIZE(writer,goto err);
+#define DeeCodeWriter_FINALLY_TRY(writer,...)\
+do{ Dee_size_t _cw_block_id,_cw_finally_id,_cw_finally_jmp;\
+ if (DeeCodeWriter_TryBeginFinally(writer,&_cw_block_id) != 0) {__VA_ARGS__;}\
+ do
+#define DeeCodeWriter_FINALLY_FLN(writer,...)\
+while(0);\
+ if (DeeCodeWriter_TryEnd(writer) != 0) {__VA_ARGS__;}\
+do{\
+ struct DeeExceptionHandlerEntry *_entry = (writer)->cw_exceptv+_cw_block_id;\
+ DeeExceptionHandlerEntry_InitFinally(_entry,writer);\
+}while(0);\
+ if (DeeCodeWriter_WriteOpWithFutureSizeArg(writer,OP_JUMP,&_cw_finally_jmp) != 0) {__VA_ARGS__;}\
+ if (DeeCodeWriter_TryBeginFinally(writer,&_cw_finally_id) != 0) {__VA_ARGS__;}\
+ do
+#define DeeCodeWriter_FINALLY_END(writer,...)\
+while(0); do{\
+ struct DeeExceptionHandlerEntry *_entry = (writer)->cw_exceptv+_cw_finally_id;\
+ DeeExceptionHandlerEntry_InitFinally(_entry,writer);\
+}while(0);\
+ if (DeeCodeWriter_TryEnd(writer) != 0 ||\
+     DeeCodeWriter_WriteOp(writer,OP_FINALLY_END) != 0 ||\
+     DeeCodeWriter_SetFutureSizeArg(writer,_cw_finally_jmp,\
+      DeeCodeWriter_ADDR(writer)-(_cw_finally_jmp-sizeof(Dee_uint8_t))) != 0 || \
+     DeeCodeWriter_WriteOp(writer,OP_FINALLY_END) != 0) {__VA_ARGS__;}\
+ DeeCodeWriter_DEC_FINALLYSIZE_N(writer,2);\
+}while(0)
 
 
 DEE_DECL_END
