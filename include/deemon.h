@@ -386,6 +386,7 @@
 //             Though the new ones allow more control and keep additional exceptions intact.
 //     - Fixed a bug that prevent successful execution of a structured member function called through an lvalue
 //     - Fixed calls to foreign_functions where the called function throws a deemon error
+//     - Fixed an incorrect assertion error that could have occurred when generating a set
 //     
 //   Optimized:
 //     - Generating an iterator with util::range is now faster

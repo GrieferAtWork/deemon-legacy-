@@ -1512,6 +1512,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeCodeWriter_MakeSequence(
  } else {
   Dee_uint16_t op_ext;
   switch (op) {
+   case OP_SET: op_ext = OPEXT_EMPTY_SET; break;
    case OP_LIST: op_ext = OPEXT_EMPTY_LIST; break;
    case OP_TUPLE: op_ext = OPEXT_EMPTY_TUPLE; break;
    default: DEE_ASSERT(0 && "Invalid sequence op"); DEE_BUILTIN_UNREACHABLE();
@@ -1704,9 +1705,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_AtomicOnceEnd(
   handler->e_store = 0;
   handler->e_stack = (Dee_size_t)self->cw_stack_size;
 
-  if (self->cw_finally_size++ == self->cw_finally_size_min)
-   self->cw_finally_size_min = self->cw_finally_size;
-  if DEE_UNLIKELY(DeeCodeWriter_TryBegin(self,&handler_finally_id) != 0) return -1;;
+  if DEE_UNLIKELY(DeeCodeWriter_TryBeginFinally(self,&handler_finally_id) != 0) return -1;;
 
   // Load the block-executed static variable
   if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(
@@ -1741,7 +1740,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_AtomicOnceEnd(
   // Pop the exception handler in the finally block
   if DEE_UNLIKELY(DeeCodeWriter_WriteOp(self,OP_EXCEPT_END) != 0) return -1;
   if DEE_UNLIKELY(DeeCodeWriter_WriteOp(self,OP_FINALLY_END) != 0) return -1;
-  --self->cw_finally_size;
+  DeeCodeWriter_DEC_FINALLYSIZE(self);
 
   // Setup the jump across the catch handler
   if DEE_UNLIKELY(DeeCodeWriter_SetFutureSizeArg(self,handler_block_jmparg,(Dee_size_t)(
