@@ -253,7 +253,7 @@ do{\
   if ((new_bucketc = (ob)->d_bucketa/2) == 0) new_bucketc = 1;\
   new_bucket_cachesize = (ob)->d_bucketa+new_bucketc;\
   if DEE_UNLIKELY((new_buckets = (struct DeeDequeBucket *)realloc_nnz(\
-   self->d_bucketroot,new_bucket_cachesize*sizeof(struct DeeDequeBucket)\
+   (ob)->d_bucketroot,new_bucket_cachesize*sizeof(struct DeeDequeBucket)\
    )) == NULL) {__VA_ARGS__;}\
   DEE_ASSERTF((ob)->d_bucketv == (ob)->d_bucketroot,"All buckets are used, but start of usage isn't root?");\
   DEE_ASSERTF((ob)->d_bucketelemv == (ob)->d_bucketroot,"Bucket-elemv isn't full, but all buckets are used?");\
@@ -286,7 +286,7 @@ do{\
   new_bucket_cachesize = (ob)->d_bucketa+((min_freelhs)-free_bucketc);\
   DEE_ASSERT(new_bucket_cachesize != 0);\
   if DEE_UNLIKELY((new_buckets = (struct DeeDequeBucket *)realloc_nnz(\
-   self->d_bucketroot,new_bucket_cachesize*sizeof(struct DeeDequeBucket)\
+   (ob)->d_bucketroot,new_bucket_cachesize*sizeof(struct DeeDequeBucket)\
    )) == NULL) {__VA_ARGS__;}\
   /* Relocate the offsets of the elemv-start and buckets-start. */\
   /* Shift the elemv-buffers to make space on the left */\
@@ -320,7 +320,7 @@ do{\
   if ((new_bucketc = (ob)->d_bucketa/2) == 0) new_bucketc = 1;\
   new_bucket_cachesize = (ob)->d_bucketa+new_bucketc;\
   if DEE_UNLIKELY((new_buckets = (struct DeeDequeBucket *)realloc_nnz(\
-   self->d_bucketroot,new_bucket_cachesize*sizeof(struct DeeDequeBucket)\
+   (ob)->d_bucketroot,new_bucket_cachesize*sizeof(struct DeeDequeBucket)\
    )) == NULL) {__VA_ARGS__;}\
   DEE_ASSERTF((ob)->d_bucketv == (ob)->d_bucketroot,"All buckets are used, but start of usage isn't root?");\
   DEE_ASSERTF((ob)->d_bucketelemv == (ob)->d_bucketroot,"Bucket-elemv isn't full, but all buckets are used?");\
@@ -353,7 +353,7 @@ do{\
   new_bucket_cachesize = (ob)->d_bucketa+((min_freerhs)-free_bucketc);\
   DEE_ASSERT(new_bucket_cachesize != 0);\
   if DEE_UNLIKELY((new_buckets = (struct DeeDequeBucket *)realloc_nnz(\
-   self->d_bucketroot,new_bucket_cachesize*sizeof(struct DeeDequeBucket)\
+   (ob)->d_bucketroot,new_bucket_cachesize*sizeof(struct DeeDequeBucket)\
    )) == NULL) {__VA_ARGS__;}\
   /* Relocate the offsets of the elemv-start and buckets-start. */\
   /* Shift the elemv-buffers to make space on the left */\
@@ -744,8 +744,8 @@ struct DeeDequeIterator {
  ((ob)->di_bucket_iter == (ob)->di_bucket_end && \
   (ob)->di_elem_iter == (ob)->di_elem_end)
 #define DeeDequeIterator_ELEM(ob)   ((DeeObject **)(ob)->di_elem_iter)
-#define DeeDequeIterator_GET_NZ(ob) (*DeeDequeIterator_ELEM(ob))
-#define DeeDequeIterator_GET(ob)    (DeeDequeIterator_DONE(ob) ? NULL : DeeDequeIterator_GET_NZ(ob))
+#define DeeDequeIterator_Get(ob)    (*(ob)->di_elem_iter)
+#define DeeDequeIterator_TryGet(ob) (DeeDequeIterator_DONE(ob) ? NULL : DeeDequeIterator_Get(ob))
 
 #define DeeDequeIterator_GetIndex(ob,deq)\
  (Dee_size_t)((((ob)->di_bucket_iter-(deq)->d_bucketv)*(deq)->d_bucketsize+\
@@ -762,6 +762,7 @@ struct DeeDequeIterator {
 do{\
  Dee_size_t aligned_i,bucket_offset;\
  DeeDeque_AssertIntegrity(deq);\
+ DEE_ASSERT((index) < DeeDeque_SIZE(deq));\
  aligned_i = (Dee_size_t)((deq)->d_begin-(deq)->d_bucketv[0].db_elemv)+(index);\
  if (aligned_i < (deq)->d_bucketsize) {\
   (ob)->di_bucket_iter = (deq)->d_bucketv;\
@@ -773,6 +774,8 @@ do{\
  }\
  (ob)->di_elem_end = (ob)->di_bucket_iter->db_elemv+(deq)->d_bucketsize;\
  (ob)->di_bucket_end = (deq)->d_bucketv+(deq)->d_bucketc;\
+ DEE_ASSERT(DeeDequeIterator_DONE(&iter) ||\
+            DeeObject_Check(DeeDequeIterator_Get(ob)));\
 }while(0)
 
 #define DeeDequeIterator_InitEnd(ob,deq)\
@@ -780,18 +783,18 @@ do{\
  (ob)->di_bucket_end = (ob)->di_bucket_iter = ((deq)->d_bucketv+(deq)->d_bucketc),\
  (ob)->di_elem_iter = (deq)->d_begin,(ob)->di_elem_end = (deq)->d_end)
 
-#define DeeDequeIterator_Get(ob) (*(ob)->di_elem_iter)
 #define DeeDequeIterator_Done(ob)\
 ((ob)->di_elem_iter == (ob)->di_elem_end && \
- ((ob)->di_bucket_iter >= (ob)->di_bucket_end-1))
+ (ob)->di_bucket_iter == (ob)->di_bucket_end)
 #define DeeDequeIterator_Next(ob,deq)\
-(DEE_LIKELY((ob)->di_elem_iter != (ob)->di_elem_end)\
- ? (void)(DEE_ASSERT((ob)->di_elem_iter),++(ob)->di_elem_iter) : (void)(\
- ++(ob)->di_bucket_iter,DEE_ASSERT((ob)->di_bucket_iter < (ob)->di_bucket_end),\
- (ob)->di_elem_iter = (ob)->di_bucket_iter->db_elemv,\
- (ob)->di_elem_end = ((ob)->di_bucket_iter == (ob)->di_bucket_end-1)\
-   ? (deq)->d_end : (ob)->di_elem_iter+(deq)->d_bucketsize,\
- ++(ob)->di_elem_iter))
+(DEE_UNLIKELY(++(ob)->di_elem_iter == (ob)->di_elem_end) ? (void)(\
+   DEE_LIKELY(++(ob)->di_bucket_iter != (ob)->di_bucket_end)\
+   ? (void)(DEE_ASSERTF((ob)->di_bucket_iter < (ob)->di_bucket_end,"Can't advance iterator that is done"),\
+            (ob)->di_elem_iter = (ob)->di_bucket_iter->db_elemv,\
+            (ob)->di_elem_end = ((ob)->di_bucket_iter == (ob)->di_bucket_end-1)\
+                ? (deq)->d_end : (ob)->di_elem_iter+(deq)->d_bucketsize)\
+   : (void)0\
+) : (void)0)
 #define DeeDequeIterator_Validate(ob,deq)\
 ((ob)->di_bucket_end == DeeDeque_END_BUCKET(deq) && \
  (ob)->di_bucket_iter >= (deq)->d_bucketv && \

@@ -954,7 +954,7 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
       "\t>>\t\t\t result = index;\n"
       "\t>>\t\t ++index;\n"
       "\t>>\t }\n"
-      "\t>>\t if (!__builtin_bound(result));\n"
+      "\t>>\t if (!__builtin_bound(result))\n"
       "\t>>\t\t throw Error.ValueError(\"...\");\n"
       "\t>>\t return result;\n"
       "\t>> }");
@@ -1258,7 +1258,7 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
       "\t>> \"<path>/<prefix><XXXX>.tmp\"\n"
       "\tWhere XXXX is a four-digit hex-code used to ensure that the filename is unique.");
   DOC(0x01A3,"__builtin_fs_wtmpname",
-      "(string path, string prefix = L\"unnamed\") -> string\n"
+      "(string path, string prefix = \"unnamed\") -> string\n"
       "(string.wide path = fs::wtmp(), string.wide prefix = L\"unnamed\") -> string.wide\n"
       "@throws Error.SystemError: Too many temporary files created\n"
       "@return: A filename that can be used for a temporary file\n"
@@ -1376,10 +1376,10 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
       "@return: The path without a trailing slash included\n"
       "\tReturns the given path without a trailing slash/backspace attached:\n"
       "\t>> #include <fs>\n"
-      "\t>> print fs::path::inctrail(\"/foo/bar/\");\n"
+      "\t>> print fs::path::exctrail(\"/foo/bar/\");\n"
       "\t-> /foo/bar\n"
       "\t>> #include <fs>\n"
-      "\t>> print fs::path::inctrail(\"/foo/bar\");\n"
+      "\t>> print fs::path::exctrail(\"/foo/bar\");\n"
       "\t-> /foo/bar");
   DOC(0x00A9,"__builtin_fs_path_abs","(string path, string cwd = \".\") -> string\n"
       "(string.wide path, string.wide cwd = L\".\") -> string.wide\n"
@@ -1408,10 +1408,10 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
       "\tAn implementation would look like this:\n"
       "\t>> constexpr function fs::path::join(paths...) {\n"
       "\t>> #ifdef __WINDOWS__\n"
-      "\t>>\t result = \"\\\\\".join(paths...).replace(\"/\",\"\\\\\");\n"
+      "\t>>\t result = \"\\\\\".join(paths).replace(\"/\",\"\\\\\");\n"
       "\t>>\t while (\"\\\\\\\\\" in result) result = result.replace(\"\\\\\\\\\",\"\\\\\");\n"
       "\t>> #else\n"
-      "\t>>\t result = \"/\".join(paths...).replace(\"\\\\\",\"/\");\n"
+      "\t>>\t result = \"/\".join(paths).replace(\"\\\\\",\"/\");\n"
       "\t>>\t while (\"//\" in result) result = result.replace(\"//\",\"/\");\n"
       "\t>> #endif\n"
       "\t>>\t return result;\n"
@@ -1435,9 +1435,10 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
       "@throws Error.SystemError: Failed to retrieve an env variable\n"
       "\tExpand environmental vars in a string\n"
       "\tAccepted var formats are (on all platforms):\n"
-      "\t>> \"%VAR%\";  // Windows style\n"
-      "\t>> \"$VAR\";   // Posix style #1\n"
-      "\t>> \"${VAR}\"; // Posix style #2");
+      "\t>> #include <fs>\n"
+      "\t>> fs::path::expandvars(\"%VAR%\");  // Windows style\n"
+      "\t>> fs::path::expandvars(\"$VAR\");   // Posix style #1\n"
+      "\t>> fs::path::expandvars(\"${VAR}\"); // Posix style #2");
 
   DOC(0x00AE,"__builtin_fs_getatime",
       "(string path) -> time\n"
@@ -1804,7 +1805,7 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
       "\t>> #include <fs>\n"
       "\t>> function ls(path) {\n"
       "\t>>\t for (local name: fs::dir(path)) {\n"
-      "\t>>\t\t print fs::path::join(path,name);\n"
+      "\t>>\t\t print name;\n"
       "\t>>\t }\n"
       "\t>> }\n"
       "\t>> ls(\"~\");\n"

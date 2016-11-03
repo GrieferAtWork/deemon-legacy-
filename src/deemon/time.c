@@ -53,6 +53,8 @@ DEE_COMPILER_MSVC_WARNING_POP
 #endif
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 
+// */ (nano...)
+
 DEE_DECL_BEGIN
 DEE_COMPILER_MSVC_WARNING_PUSH(4061)
 DEE_STATIC_ASSERT(sizeof(Dee_time_t) == DEE_TYPES_SIZEOF_TIME_T);
@@ -285,8 +287,7 @@ static void _DeeTime_InplaceDefault(DeeTimeObject *self) {
 
 
 #define DeeTime_NEW(mseconds) _DeeTime_Alloc(DeeTimeKind_DEFAULT,mseconds)
-DEE_STATIC_INLINE(DeeObject *) _DeeTime_Alloc(
- Dee_uint16_t kind, Dee_uint64_t data) {
+DEE_STATIC_INLINE(DeeObject *) _DeeTime_Alloc(Dee_uint16_t kind, Dee_uint64_t data) {
  DeeTimeObject *result;
  if DEE_LIKELY((result = DeeObject_MALLOCF(
   DeeTimeObject,"time object %d",kind)) != NULL) {
@@ -491,7 +492,7 @@ DEE_A_RET_WUNUSED unsigned int DeeTime_GetMonth(
  unsigned int year = DeeTime_GetYear(self);
  unsigned int const *day_total = year_day_total[is_leap_year(year)];
  //DEE_ASSERT(yday < day_total[11]);
- // Search for the first month that has includes yday
+ // Search for the first month that includes yday
  while (yday >= day_total[result]) ++result;
  return result;
 }
@@ -503,8 +504,9 @@ DEE_A_RET_WUNUSED Dee_uint64_t DeeTime_GetTotalMSeconds(
  switch (((DeeTimeObject *)self)->tm_diff_kind) {
   case DeeTimeKind_MONTHS: return _DeeTime_MonthsToMseconds(((DeeTimeObject *)self)->tm_months);
   case DeeTimeKind_YEARS: return _DeeTime_YearsToMseconds(((DeeTimeObject *)self)->tm_years);
-  default: return ((DeeTimeObject *)self)->tm_msecs;
+  default: break;
  }
+ return ((DeeTimeObject *)self)->tm_msecs;
 }
 
 
@@ -557,9 +559,8 @@ void DeeTime_SetMonth(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..11*
  if (v) DeeTime_SetYear(self,year+(v/12));
 }
 void DeeTime_SetYear(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..~584542046*/unsigned int v) {
- Dee_uint64_t ysecs = 
-  ((Dee_uint64_t)DeeTime_GetYDay(self)*DEE_UINT64_C(86400000))+
-  (msecs%DEE_UINT64_C(86400000));
+ Dee_uint64_t ysecs = ((Dee_uint64_t)DeeTime_GetYDay(self)*DEE_UINT64_C(86400000))+
+                       (msecs%DEE_UINT64_C(86400000));
  msecs = (years2days(v)*DEE_UINT64_C(86400000))+ysecs;
 }
 
@@ -715,23 +716,23 @@ DEE_A_RET_WUNUSED Dee_uint64_t DeeTime_GetClockFreq(void) {
 
 
 
-static int _deetime_tp_ctor(
+static int DEE_CALL _deetime_tp_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTimeObject *self) {
  self->tm_diff_kind = DeeTimeKind_DEFAULT;
  return DeeTimeTick_Now(&self->tm_msecs);
 }
-static int _deetime_tp_copy_ctor(
+static int DEE_CALL _deetime_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTimeObject *self, DeeTimeObject *right) {
  self->tm_diff_kind = right->tm_diff_kind;
  self->tm_msecs = right->tm_msecs;
  return 0;
 }
-static int _deetime_tp_copy_assign(DeeTimeObject *self, DeeTimeObject *right) {
+static int DEE_CALL _deetime_tp_copy_assign(DeeTimeObject *self, DeeTimeObject *right) {
  self->tm_diff_kind = right->tm_diff_kind;
  self->tm_msecs = right->tm_msecs;
  return 0;
 }
-static int _deetime_tp_any_ctor(
+static int DEE_CALL _deetime_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTimeObject *self, DeeTupleObject *args) {
  unsigned int year,month = 0,mday = 0,hour = 0,minute = 0,second = 0,msecond = 0;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
@@ -753,20 +754,20 @@ static int _deetime_tp_any_ctor(
  DeeTime_SetTick(self,DeeTimeTick_FromData(year,month,mday,hour,minute,second,msecond));
  return 0;
 }
-static DeeObject *_deetime_tp_str(DeeTimeObject *self) {
+static DeeObject *DEE_CALL _deetime_tp_str(DeeTimeObject *self) {
  return DeeTime_FORMAT((DeeObject *)self,"%d.%m.%Y %H:%M:%S");
 }
-static DeeObject *_deetime_tp_repr(DeeTimeObject *self) {
+static DeeObject *DEE_CALL _deetime_tp_repr(DeeTimeObject *self) {
  // TODO: Extended format (e.g.: 'Saturday, the 13th of August 2016, 20:51:18')
  return DeeTime_FORMAT((DeeObject *)self,"%d.%m.%Y %H:%M:%S");
 }
-static int _deetime_tp_bool(DeeTimeObject *self) { return DeeTime_GetTotalMSeconds((DeeObject *)self) != 0; }
-static DeeObject *_deetime_tp_not(DeeTimeObject *self) { DeeReturn_Bool(DeeTime_GetTotalMSeconds((DeeObject *)self) == 0); }
-static DeeObject *_deetime_tp_inc(DeeTimeObject *self) { _DeeTime_InplaceDefault(self); ++self->tm_msecs; DeeReturn_NEWREF(self); }
-static DeeObject *_deetime_tp_dec(DeeTimeObject *self) { _DeeTime_InplaceDefault(self); --self->tm_msecs; DeeReturn_NEWREF(self); }
-static DeeObject *_deetime_tp_incpost(DeeTimeObject *self) { _DeeTime_InplaceDefault(self); return DeeTime_NEW(self->tm_msecs++); }
-static DeeObject *_deetime_tp_decpost(DeeTimeObject *self) { _DeeTime_InplaceDefault(self); return DeeTime_NEW(self->tm_msecs--); }
-static DeeObject *_deetime_tp_add(DeeTimeObject *self, DeeTimeObject *right) {
+static int DEE_CALL _deetime_tp_bool(DeeTimeObject *self) { return DeeTime_GetTotalMSeconds((DeeObject *)self) != 0; }
+static DeeObject *DEE_CALL _deetime_tp_not(DeeTimeObject *self) { DeeReturn_Bool(DeeTime_GetTotalMSeconds((DeeObject *)self) == 0); }
+static DeeObject *DEE_CALL _deetime_tp_inc(DeeTimeObject *self) { _DeeTime_InplaceDefault(self); ++self->tm_msecs; DeeReturn_NEWREF(self); }
+static DeeObject *DEE_CALL _deetime_tp_dec(DeeTimeObject *self) { _DeeTime_InplaceDefault(self); --self->tm_msecs; DeeReturn_NEWREF(self); }
+static DeeObject *DEE_CALL _deetime_tp_incpost(DeeTimeObject *self) { _DeeTime_InplaceDefault(self); return DeeTime_NEW(self->tm_msecs++); }
+static DeeObject *DEE_CALL _deetime_tp_decpost(DeeTimeObject *self) { _DeeTime_InplaceDefault(self); return DeeTime_NEW(self->tm_msecs--); }
+static DeeObject *DEE_CALL _deetime_tp_add(DeeTimeObject *self, DeeTimeObject *right) {
  DeeObject *result;
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL;
  if DEE_LIKELY((result = DeeTime_Copy((DeeObject *)self)) != NULL) switch (right->tm_diff_kind) {
@@ -776,7 +777,7 @@ static DeeObject *_deetime_tp_add(DeeTimeObject *self, DeeTimeObject *right) {
  }
  return result;
 }
-static DeeObject *_deetime_tp_iadd(DeeTimeObject *self, DeeTimeObject *right) {
+static DeeObject *DEE_CALL _deetime_tp_iadd(DeeTimeObject *self, DeeTimeObject *right) {
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL;
  switch (right->tm_diff_kind) {
   case DeeTimeKind_YEARS: DeeTime_InplaceAddYears((DeeObject *)self,(Dee_int64_t)right->tm_years); break;
@@ -785,7 +786,7 @@ static DeeObject *_deetime_tp_iadd(DeeTimeObject *self, DeeTimeObject *right) {
  }
  DeeReturn_NEWREF(self);
 }
-static DeeObject *_deetime_tp_sub(DeeTimeObject *self, DeeTimeObject *right) {
+static DeeObject *DEE_CALL _deetime_tp_sub(DeeTimeObject *self, DeeTimeObject *right) {
  DeeObject *result;
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL;
  if DEE_LIKELY((result = DeeTime_Copy((DeeObject *)self)) != NULL) switch (right->tm_diff_kind) {
@@ -795,7 +796,7 @@ static DeeObject *_deetime_tp_sub(DeeTimeObject *self, DeeTimeObject *right) {
  }
  return result;
 }
-static DeeObject *_deetime_tp_isub(DeeTimeObject *self, DeeTimeObject *right) {
+static DeeObject *DEE_CALL _deetime_tp_isub(DeeTimeObject *self, DeeTimeObject *right) {
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL;
  switch (right->tm_diff_kind) {
   case DeeTimeKind_YEARS: DeeTime_InplaceAddYears((DeeObject *)self,-(Dee_int64_t)right->tm_years); break;
@@ -804,35 +805,35 @@ static DeeObject *_deetime_tp_isub(DeeTimeObject *self, DeeTimeObject *right) {
  }
  DeeReturn_NEWREF(self);
 }
-static DeeObject *_deetime_tp_mod(DeeTimeObject *self, DeeTimeObject *right) {
+static DeeObject *DEE_CALL _deetime_tp_mod(DeeTimeObject *self, DeeTimeObject *right) {
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL;
  return DeeTime_NEW(DeeTime_GetTotalMSeconds((DeeObject *)self) %
                     DeeTime_GetTotalMSeconds((DeeObject *)right));
 }
-static DeeObject *_deetime_tp_imod(DeeTimeObject *self, DeeTimeObject *right) {
+static DeeObject *DEE_CALL _deetime_tp_imod(DeeTimeObject *self, DeeTimeObject *right) {
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL;
  _DeeTime_InplaceDefault(self);
  self->tm_msecs %= DeeTime_GetTotalMSeconds((DeeObject *)right);
  DeeReturn_NEWREF(self);
 }
-static DeeObject *_deetime_tp_mul(DeeTimeObject *self, DeeObject *right) {
+static DeeObject *DEE_CALL _deetime_tp_mul(DeeTimeObject *self, DeeObject *right) {
  Dee_uint64_t n;
  if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,right,&n) != 0) return NULL;
  return DeeTime_NEW(DeeTime_GetTotalMSeconds((DeeObject *)self)*n);
 }
-static DeeObject *_deetime_tp_imul(DeeTimeObject *self, DeeObject *right) {
+static DeeObject *DEE_CALL _deetime_tp_imul(DeeTimeObject *self, DeeObject *right) {
  Dee_uint64_t n;
  if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,right,&n) != 0) return NULL;
  _DeeTime_InplaceDefault(self);
  self->tm_msecs *= n;
  DeeReturn_NEWREF(self);
 }
-static DeeObject *_deetime_tp_div(DeeTimeObject *self, DeeObject *right) {
+static DeeObject *DEE_CALL _deetime_tp_div(DeeTimeObject *self, DeeObject *right) {
  Dee_uint64_t n;
  if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,right,&n) != 0) return NULL;
  return DeeTime_NEW(DeeTime_GetTotalMSeconds((DeeObject *)self)/n);
 }
-static DeeObject *_deetime_tp_idiv(DeeTimeObject *self, DeeObject *right) {
+static DeeObject *DEE_CALL _deetime_tp_idiv(DeeTimeObject *self, DeeObject *right) {
  Dee_uint64_t n;
  if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,right,&n) != 0) return NULL;
  _DeeTime_InplaceDefault(self);
@@ -840,14 +841,14 @@ static DeeObject *_deetime_tp_idiv(DeeTimeObject *self, DeeObject *right) {
  DeeReturn_NEWREF(self);
 }
 
-static DeeObject *_deetime_tp_cmp_lo(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareLo((DeeObject *)self,(DeeObject *)right)); }
-static DeeObject *_deetime_tp_cmp_le(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareLe((DeeObject *)self,(DeeObject *)right)); }
-static DeeObject *_deetime_tp_cmp_eq(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareEq((DeeObject *)self,(DeeObject *)right)); }
-static DeeObject *_deetime_tp_cmp_ne(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareNe((DeeObject *)self,(DeeObject *)right)); }
-static DeeObject *_deetime_tp_cmp_gr(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareGr((DeeObject *)self,(DeeObject *)right)); }
-static DeeObject *_deetime_tp_cmp_ge(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareGe((DeeObject *)self,(DeeObject *)right)); }
+static DeeObject *DEE_CALL _deetime_tp_cmp_lo(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareLo((DeeObject *)self,(DeeObject *)right)); }
+static DeeObject *DEE_CALL _deetime_tp_cmp_le(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareLe((DeeObject *)self,(DeeObject *)right)); }
+static DeeObject *DEE_CALL _deetime_tp_cmp_eq(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareEq((DeeObject *)self,(DeeObject *)right)); }
+static DeeObject *DEE_CALL _deetime_tp_cmp_ne(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareNe((DeeObject *)self,(DeeObject *)right)); }
+static DeeObject *DEE_CALL _deetime_tp_cmp_gr(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareGr((DeeObject *)self,(DeeObject *)right)); }
+static DeeObject *DEE_CALL _deetime_tp_cmp_ge(DeeTimeObject *self, DeeTimeObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeTime_Type) != 0) return NULL; DeeReturn_Bool(DeeTime_CompareGe((DeeObject *)self,(DeeObject *)right)); }
 
-static DeeObject *_deetime_format(DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deetime_format(DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *fmt,*result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:format",&fmt) != 0) return NULL;
  if DEE_UNLIKELY((fmt = DeeString_Cast(fmt)) == NULL) return NULL;
@@ -856,78 +857,78 @@ static DeeObject *_deetime_format(DeeObject *self, DeeObject *args, void *DEE_UN
  return result;
 }
 
-static DeeObject *_deetime_time_t_get(DeeObject *self, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deetime_time_t_get(DeeObject *self, void *DEE_UNUSED(closure)) {
  Dee_time_t result;
  return DeeTime_AsTimeT(self,&result) != 0 ? NULL : DeeObject_New(Dee_time_t,result);
 }
-static int _deetime_int32(DeeObject *self, Dee_int32_t *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (Dee_int32_t)resval; return 0; }
-static int _deetime_int64(DeeObject *self, Dee_int64_t *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (Dee_int64_t)resval; return 0; }
-static int _deetime_double(DeeObject *self, double *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (double)resval; return 0; }
-static int _deetime_time_t_del(DeeObject *self, void *DEE_UNUSED(closure)) { DeeTime_SetTick(self,0); return 0; }
-static int _deetime_time_t_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+static int DEE_CALL _deetime_int32(DeeObject *self, Dee_int32_t *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (Dee_int32_t)resval; return 0; }
+static int DEE_CALL _deetime_int64(DeeObject *self, Dee_int64_t *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (Dee_int64_t)resval; return 0; }
+static int DEE_CALL _deetime_double(DeeObject *self, double *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (double)resval; return 0; }
+static int DEE_CALL _deetime_time_t_del(DeeObject *self, void *DEE_UNUSED(closure)) { DeeTime_SetTick(self,0); return 0; }
+static int DEE_CALL _deetime_time_t_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
  Dee_uint64_t ticks; Dee_time_t iv;
  if DEE_UNLIKELY(DeeObject_Cast(Dee_time_t,v,&iv) != 0) return -1;
  if DEE_UNLIKELY(DeeTimeTick_FromTimeT(iv,&ticks) != 0) return -1;
  DeeTime_SetTick(self,ticks);
  return 0;
 }
-static DeeObject *_deetime_year_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetYear(self)); }
-static int _deetime_year_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { unsigned int iv; if DEE_UNLIKELY(DeeObject_Cast(uint,v,&iv) != 0) return -1; DeeTime_SetYear(self,iv); return 0; }
-static int _deetime_year_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetYear(self,0),0; }
-static DeeObject *_deetime_years_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalYears(self)); }
-static DeeObject *_deetime_month_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMonth(self)); }
-static DeeObject *_deetime_months_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalMonths(self)); }
-static int _deetime_month_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMonth(self,iv); return 0; }
-static int _deetime_months_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalMonths(self,iv); return 0; }
-static int _deetime_month_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMonth(self,0),0; }
-static DeeObject *_deetime_mweek_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMWeek(self)); }
-static DeeObject *_deetime_yweek_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetYWeek(self)); }
-static DeeObject *_deetime_weeks_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalWeeks(self)); }
-static int _deetime_mweek_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMWeek(self,iv); return 0; }
-static int _deetime_yweek_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetYWeek(self,iv); return 0; }
-static int _deetime_weeks_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalWeeks(self,iv); return 0; }
-static int _deetime_mweek_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMWeek(self,0),0; }
-static int _deetime_yweek_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetYWeek(self,0),0; }
-static DeeObject *_deetime_wday_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetWDay(self)); }
-static DeeObject *_deetime_mday_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMDay(self)); }
-static DeeObject *_deetime_yday_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetYDay(self)); }
-static DeeObject *_deetime_days_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalDays(self)); }
-static int _deetime_wday_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetWDay(self,iv); return 0; }
-static int _deetime_mday_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMDay(self,iv); return 0; }
-static int _deetime_yday_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetYDay(self,iv); return 0; }
-static int _deetime_days_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalDays(self,iv); return 0; }
-static int _deetime_wday_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetWDay(self,0),0; }
-static int _deetime_mday_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMDay(self,0),0; }
-static int _deetime_yday_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetYDay(self,0),0; }
-static DeeObject *_deetime_hour_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetHour(self)); }
-static DeeObject *_deetime_hours_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalHours(self)); }
-static int _deetime_hour_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetHour(self,0),0; }
-static int _deetime_hour_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetHour(self,iv); return 0; }
-static int _deetime_hours_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalHours(self,iv); return 0; }
-static DeeObject *_deetime_minute_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMinute(self)); }
-static DeeObject *_deetime_minutes_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalMinutes(self)); }
-static int _deetime_minute_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMinute(self,0),0; }
-static int _deetime_minute_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMinute(self,iv); return 0; }
-static int _deetime_minutes_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalMinutes(self,iv); return 0; }
-static DeeObject *_deetime_second_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetSecond(self)); }
-static DeeObject *_deetime_seconds_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalSeconds(self)); }
-static int _deetime_second_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetSecond(self,0),0; }
-static int _deetime_second_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetSecond(self,iv); return 0; }
-static int _deetime_seconds_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalSeconds(self,iv); return 0; }
-static DeeObject *_deetime_msecond_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMSecond(self)); }
-static DeeObject *_deetime_mseconds_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalMSeconds(self)); }
-static int _deetime_msecond_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMSecond(self,0),0; }
-static int _deetime_msecond_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMSecond(self,iv); return 0; }
-static int _deetime_mseconds_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalMSeconds(self,iv); return 0; }
-static DeeObject *_deetime_time_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_GetTime(self); }
-static DeeObject *_deetime_date_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_GetDate(self); }
-static int _deetime_time_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deetime_year_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetYear(self)); }
+static int DEE_CALL _deetime_year_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { unsigned int iv; if DEE_UNLIKELY(DeeObject_Cast(uint,v,&iv) != 0) return -1; DeeTime_SetYear(self,iv); return 0; }
+static int DEE_CALL _deetime_year_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetYear(self,0),0; }
+static DeeObject *DEE_CALL _deetime_years_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalYears(self)); }
+static DeeObject *DEE_CALL _deetime_month_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMonth(self)); }
+static DeeObject *DEE_CALL _deetime_months_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalMonths(self)); }
+static int DEE_CALL _deetime_month_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMonth(self,iv); return 0; }
+static int DEE_CALL _deetime_months_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalMonths(self,iv); return 0; }
+static int DEE_CALL _deetime_month_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMonth(self,0),0; }
+static DeeObject *DEE_CALL _deetime_mweek_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMWeek(self)); }
+static DeeObject *DEE_CALL _deetime_yweek_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetYWeek(self)); }
+static DeeObject *DEE_CALL _deetime_weeks_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalWeeks(self)); }
+static int DEE_CALL _deetime_mweek_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMWeek(self,iv); return 0; }
+static int DEE_CALL _deetime_yweek_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetYWeek(self,iv); return 0; }
+static int DEE_CALL _deetime_weeks_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalWeeks(self,iv); return 0; }
+static int DEE_CALL _deetime_mweek_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMWeek(self,0),0; }
+static int DEE_CALL _deetime_yweek_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetYWeek(self,0),0; }
+static DeeObject *DEE_CALL _deetime_wday_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetWDay(self)); }
+static DeeObject *DEE_CALL _deetime_mday_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMDay(self)); }
+static DeeObject *DEE_CALL _deetime_yday_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetYDay(self)); }
+static DeeObject *DEE_CALL _deetime_days_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalDays(self)); }
+static int DEE_CALL _deetime_wday_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetWDay(self,iv); return 0; }
+static int DEE_CALL _deetime_mday_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMDay(self,iv); return 0; }
+static int DEE_CALL _deetime_yday_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetYDay(self,iv); return 0; }
+static int DEE_CALL _deetime_days_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalDays(self,iv); return 0; }
+static int DEE_CALL _deetime_wday_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetWDay(self,0),0; }
+static int DEE_CALL _deetime_mday_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMDay(self,0),0; }
+static int DEE_CALL _deetime_yday_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetYDay(self,0),0; }
+static DeeObject *DEE_CALL _deetime_hour_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetHour(self)); }
+static DeeObject *DEE_CALL _deetime_hours_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalHours(self)); }
+static int DEE_CALL _deetime_hour_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetHour(self,0),0; }
+static int DEE_CALL _deetime_hour_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetHour(self,iv); return 0; }
+static int DEE_CALL _deetime_hours_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalHours(self,iv); return 0; }
+static DeeObject *DEE_CALL _deetime_minute_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMinute(self)); }
+static DeeObject *DEE_CALL _deetime_minutes_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalMinutes(self)); }
+static int DEE_CALL _deetime_minute_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMinute(self,0),0; }
+static int DEE_CALL _deetime_minute_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMinute(self,iv); return 0; }
+static int DEE_CALL _deetime_minutes_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalMinutes(self,iv); return 0; }
+static DeeObject *DEE_CALL _deetime_second_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetSecond(self)); }
+static DeeObject *DEE_CALL _deetime_seconds_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalSeconds(self)); }
+static int DEE_CALL _deetime_second_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetSecond(self,0),0; }
+static int DEE_CALL _deetime_second_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetSecond(self,iv); return 0; }
+static int DEE_CALL _deetime_seconds_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalSeconds(self,iv); return 0; }
+static DeeObject *DEE_CALL _deetime_msecond_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeObject_New(uint,DeeTime_GetMSecond(self)); }
+static DeeObject *DEE_CALL _deetime_mseconds_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeUInt64_New(DeeTime_GetTotalMSeconds(self)); }
+static int DEE_CALL _deetime_msecond_del(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_SetMSecond(self,0),0; }
+static int DEE_CALL _deetime_msecond_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { int iv; if DEE_UNLIKELY(DeeObject_Cast(int,v,&iv) != 0) return -1; DeeTime_SetMSecond(self,iv); return 0; }
+static int DEE_CALL _deetime_mseconds_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { Dee_uint64_t iv; if DEE_UNLIKELY(DeeObject_Cast(Dee_uint64_t,v,&iv) != 0) return -1; DeeTime_SetTotalMSeconds(self,iv); return 0; }
+static DeeObject *DEE_CALL _deetime_time_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_GetTime(self); }
+static DeeObject *DEE_CALL _deetime_date_get(DeeObject *self, void *DEE_UNUSED(closure)) { return DeeTime_GetDate(self); }
+static int DEE_CALL _deetime_time_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&v,&DeeTime_Type) != 0) return -1;
  return DeeTime_SetTimeObject(self,v),0;
 }
-static int _deetime_date_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&v,&DeeTime_Type) != 0) return -1; DeeTime_SetDateObject(self,v); return 0; }
-static int _deetime_time_del(DeeObject *self, void *DEE_UNUSED(closure)) { return _DeeTime_SetTimeMSeconds(self,0),0; }
-static int _deetime_date_del(DeeObject *self, void *DEE_UNUSED(closure)) { return _DeeTime_SetDateMSeconds(self,0),0; }
+static int DEE_CALL _deetime_date_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&v,&DeeTime_Type) != 0) return -1; DeeTime_SetDateObject(self,v); return 0; }
+static int DEE_CALL _deetime_time_del(DeeObject *self, void *DEE_UNUSED(closure)) { return _DeeTime_SetTimeMSeconds(self,0),0; }
+static int DEE_CALL _deetime_date_del(DeeObject *self, void *DEE_UNUSED(closure)) { return _DeeTime_SetDateMSeconds(self,0),0; }
 
 static struct DeeMethodDef const _deetime_tp_methods[] = {
  DEE_METHODDEF_v100("format",member(&_deetime_format),"(string fmt) -> string\n"
@@ -966,17 +967,17 @@ static struct DeeGetSetDef const _deetime_tp_getsets[] = {
 };
 
 
-static DeeObject *_deetimeclass_tick(
+static DeeObject *DEE_CALL _deetimeclass_tick(
  DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":tick") != 0) return NULL;
  return DeeUInt64_New(DeeTime_GetClockTick());
 }
-static DeeObject *_deetimeclass_freq(
+static DeeObject *DEE_CALL _deetimeclass_freq(
  DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":freq") != 0) return NULL;
  return DeeUInt64_New(DeeTime_GetClockFreq());
 }
-static DeeObject *_deetimeclass_from_time_t(
+static DeeObject *DEE_CALL _deetimeclass_from_time_t(
  DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *arg0; Dee_time_t v;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:from_time_t",&arg0) != 0) return NULL;
@@ -984,57 +985,57 @@ static DeeObject *_deetimeclass_from_time_t(
  if DEE_UNLIKELY(DeeObject_Cast(Dee_time_t,arg0,&v) != 0) return NULL;
  return DeeTime_NewFromTimeT(v);
 }
-static DeeObject *_deetimeclass_now(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deetimeclass_now(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":now") != 0) return NULL;
  return DeeTime_Now();
 }
-static DeeObject *_deetimeclass_time(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deetimeclass_time(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  unsigned int hour = 0,minute = 0,second = 0,msecond = 0;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|uuuu:time",&hour,&minute,&second,&msecond) != 0) return NULL;
  return DeeTime_NewFromData(0,0,0,hour,minute,second,msecond);
 }
-static DeeObject *_deetimeclass_date(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deetimeclass_date(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  unsigned int year = 0,month = 0,mday = 0;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|uuu:date",&year,&month,&mday) != 0) return NULL;
  return DeeTime_NewFromData(year,month,mday,0,0,0,0);
 }
-static DeeObject *_deetimeclass_years(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t year; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:years",&year) != 0) return NULL; return DeeTime_NewFromYears(year); }
-static DeeObject *_deetimeclass_months(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t months; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:months",&months) != 0) return NULL; return DeeTime_NewFromMonths(months); }
-static DeeObject *_deetimeclass_weeks(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t weeks; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:weeks",&weeks) != 0) return NULL; return DeeTime_NewFromWeeks(weeks); }
-static DeeObject *_deetimeclass_days(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t days; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:days",&days) != 0) return NULL; return DeeTime_NewFromDays(days); }
-static DeeObject *_deetimeclass_hours(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t hours; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:hours",&hours) != 0) return NULL; return DeeTime_NewFromHours(hours); }
-static DeeObject *_deetimeclass_minutes(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t minutes; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:minutes",&minutes) != 0) return NULL; return DeeTime_NewFromMinutes(minutes); }
-static DeeObject *_deetimeclass_seconds(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t seconds; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:seconds",&seconds) != 0) return NULL; return DeeTime_NewFromSeconds(seconds); }
-static DeeObject *_deetimeclass_mseconds(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t mseconds; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:mseconds",&mseconds) != 0) return NULL; return DeeTime_NEW(mseconds); }
+static DeeObject *DEE_CALL _deetimeclass_years(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t year; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:years",&year) != 0) return NULL; return DeeTime_NewFromYears(year); }
+static DeeObject *DEE_CALL _deetimeclass_months(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t months; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:months",&months) != 0) return NULL; return DeeTime_NewFromMonths(months); }
+static DeeObject *DEE_CALL _deetimeclass_weeks(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t weeks; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:weeks",&weeks) != 0) return NULL; return DeeTime_NewFromWeeks(weeks); }
+static DeeObject *DEE_CALL _deetimeclass_days(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t days; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:days",&days) != 0) return NULL; return DeeTime_NewFromDays(days); }
+static DeeObject *DEE_CALL _deetimeclass_hours(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t hours; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:hours",&hours) != 0) return NULL; return DeeTime_NewFromHours(hours); }
+static DeeObject *DEE_CALL _deetimeclass_minutes(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t minutes; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:minutes",&minutes) != 0) return NULL; return DeeTime_NewFromMinutes(minutes); }
+static DeeObject *DEE_CALL _deetimeclass_seconds(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t seconds; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:seconds",&seconds) != 0) return NULL; return DeeTime_NewFromSeconds(seconds); }
+static DeeObject *DEE_CALL _deetimeclass_mseconds(DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) { Dee_uint64_t mseconds; if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:mseconds",&mseconds) != 0) return NULL; return DeeTime_NEW(mseconds); }
 static struct DeeMethodDef const _deetime_tp_class_methods[] = {
  DEE_METHODDEF_v100("now",member(&_deetimeclass_now),"() -> time\n"
   "@return: The current time"),
  DEE_METHODDEF_v100("tick",member(&_deetimeclass_tick),"() -> uint64_t\n"
-  "@return: The time since the process started in time.freq() / secs"),
+  "@return: The time since some platform-specific, undefined event in #time.freq / second"),
  DEE_METHODDEF_v100("freq",member(&_deetimeclass_freq),"() -> uint64_t\n"
-  "@return: The amount of ticks passing per second in time.tick()"),
+  "@return: The amount of ticks passing per second in #time.tick"),
  DEE_METHODDEF_v100("from_time_t",member(&_deetimeclass_from_time_t),"(time_t tmt) -> time\n"
-  "@return: A time object initialized from a time_t integral value"),
+  "@return: A time object initialized from a #time_t integral value"),
  DEE_METHODDEF_CONST_v100("time",member(&_deetimeclass_time),"(unsigned int hour = 0, unsigned int minute = 0, unsigned int second = 0, unsigned int msecond = 0) -> time\n"
   "@return: A time object with it's time filled in"),
  DEE_METHODDEF_CONST_v100("date",member(&_deetimeclass_date),"(unsigned int year = 0, unsigned int month = 0, unsigned int day = 0) -> time\n"
   "@return: A time object with it's date filled in"),
  DEE_METHODDEF_CONST_v100("years",member(&_deetimeclass_years),"(uint64_t n_years) -> time\n"
-  "@return: A time difference of 'n_years' years"),
+  "@return: A time difference of @n_years years"),
  DEE_METHODDEF_CONST_v100("months",member(&_deetimeclass_months),"(uint64_t n_months) -> time\n"
-  "@return: A time difference of 'n_months' months"),
+  "@return: A time difference of @n_months months"),
  DEE_METHODDEF_CONST_v100("weeks",member(&_deetimeclass_weeks),"(uint64_t n_weeks) -> time\n"
-  "@return: A time difference of 'n_weeks' weeks"),
+  "@return: A time difference of @n_weeks weeks"),
  DEE_METHODDEF_CONST_v100("days",member(&_deetimeclass_days),"(uint64_t n_days) -> time\n"
-  "@return: A time difference of 'n_days' days"),
+  "@return: A time difference of @n_days days"),
  DEE_METHODDEF_CONST_v100("hours",member(&_deetimeclass_hours),"(uint64_t n_hours) -> time\n"
-  "@return: A time difference of 'n_hours' hours"),
+  "@return: A time difference of @n_hours hours"),
  DEE_METHODDEF_CONST_v100("minutes",member(&_deetimeclass_minutes),"(uint64_t n_minutes) -> time\n"
-  "@return: A time difference of 'n_minutes' minutes"),
+  "@return: A time difference of @n_minutes minutes"),
  DEE_METHODDEF_CONST_v100("seconds",member(&_deetimeclass_seconds),"(uint64_t n_seconds) -> time\n"
-  "@return: A time difference of 'n_seconds' seconds"),
+  "@return: A time difference of @n_seconds seconds"),
  DEE_METHODDEF_CONST_v100("mseconds",member(&_deetimeclass_mseconds),"(uint64_t n_mseconds) -> time\n"
-  "@return: A time difference of 'n_mseconds' milli-seconds"),
+  "@return: A time difference of @n_mseconds milli-seconds"),
  DEE_METHODDEF_END_v100
 };
 
@@ -1058,7 +1059,9 @@ static struct DeeTypeMarshal _deetime_tp_marshal = DEE_TYPE_MARSHAL_v100(
  member(&_deetime_tp_marshal_ctor),member(&_deetime_tp_marshal_put));
 
 DeeTypeObject DeeTime_Type = {
- DEE_TYPE_OBJECT_HEAD_v100(member("time"),null,member(
+ DEE_TYPE_OBJECT_HEAD_v100(member("time"),member(
+  "(unsigned int year = 0, unsigned int month = 0, unsigned int day = 0, unsigned int hour = 0, unsigned int minute = 0, unsigned int second = 0, unsigned int msecond = 0)\n"
+  "@return: A new time object\n"),member(
   DEE_TYPE_FLAG_NO_LIFETIME_EFFECT|DEE_TYPE_FLAG_CONST_CTOR|
   DEE_TYPE_FLAG_MUST_COPY|DEE_TYPE_FLAG_FUNDAMENTAL),null),
  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeTimeObject),null,

@@ -755,7 +755,7 @@ static int DEE_CALL _deedequeiterator_tp_seq_iter_next(
 static DeeObject *DEE_CALL _deedequeiterator_tp_str(DeeDequeIteratorObject *self) {
  DeeObject *elem;
  DeeAtomicMutex_AcquireRelaxed(&self->di_lock);
- Dee_XINCREF(elem = DeeDequeIterator_GET(&self->di_iter));
+ Dee_XINCREF(elem = DeeDequeIterator_TryGet(&self->di_iter));
  DeeAtomicMutex_Release(&self->di_lock);
  if (!elem) DeeReturn_STATIC_STRING("<deque.iterator>");
  return DeeString_Newf("<deque.iterator -> %K>",elem);
@@ -763,7 +763,7 @@ static DeeObject *DEE_CALL _deedequeiterator_tp_str(DeeDequeIteratorObject *self
 static DeeObject *DEE_CALL _deedequeiterator_tp_repr(DeeDequeIteratorObject *self) {
  DeeObject *elem;
  DeeAtomicMutex_AcquireRelaxed(&self->di_lock);
- Dee_XINCREF(elem = DeeDequeIterator_GET(&self->di_iter));
+ Dee_XINCREF(elem = DeeDequeIterator_TryGet(&self->di_iter));
  DeeAtomicMutex_Release(&self->di_lock);
  if (!elem) DeeReturn_STATIC_STRING("<deque.iterator>");
  return DeeString_Newf("<deque.iterator -> %R>",elem);

@@ -900,7 +900,7 @@ again_locked:
  DeeDeque_AssertIntegrity(self);
  DeeDequeIterator_InitBegin(&iter,self);
  while (!DeeDequeIterator_DONE(&iter)) {
-  Dee_INCREF(deq_elem = DeeDequeIterator_GET_NZ(&iter));
+  Dee_INCREF(deq_elem = DeeDequeIterator_Get(&iter));
   RELEASE;
   temp = DeeObject_CompareEq(deq_elem,elem);
   Dee_DECREF(deq_elem);
@@ -912,7 +912,7 @@ again_locked:
     // Make sure the deque hasn't changed in the meantime
     ACQUIRE;
     if DEE_UNLIKELY(!DeeDequeIterator_Validate(&iter,self)) break;
-    if DEE_UNLIKELY(deq_elem != DeeDequeIterator_GET_NZ(&iter)) goto again_locked;
+    if DEE_UNLIKELY(deq_elem != DeeDequeIterator_Get(&iter)) goto again_locked;
 #ifdef WITH_LOCK
     if DEE_UNLIKELY(DeeDeque_EraseReleaseLock(self,
      DeeDequeIterator_GetIndex(&iter,self),1,lock) < 0) return -1;
@@ -942,25 +942,26 @@ again_locked:
  DeeDeque_AssertIntegrity(self);
  DeeDequeIterator_InitBegin(&iter,self);
  while (!DeeDequeIterator_DONE(&iter)) {
-  Dee_INCREF(deq_elem = DeeDequeIterator_GET_NZ(&iter));
+  Dee_INCREF(deq_elem = DeeDequeIterator_Get(&iter));
   RELEASE;
   pred_args = DeeTuple_Pack(2,deq_elem,elem);
   Dee_DECREF(deq_elem);
   if DEE_UNLIKELY(!pred_args) return -1;
   pred_result = DeeObject_Call(pred,pred_args);
   Dee_DECREF(pred_args);
-  if DEE_UNLIKELY(!pred_result) return -1;
+  if DEE_UNLIKELY(!pred_result) goto check_ni;
   temp = DeeObject_Bool(pred_result);
   Dee_DECREF(pred_result);
   if DEE_UNLIKELY(temp != 0) {
    if DEE_UNLIKELY(temp < 0) {
-    if DEE_UNLIKELY(!DeeError_Catch(&DeeErrorType_NotImplemented)) return temp; // Error
+check_ni:
+    if DEE_UNLIKELY(!DeeError_Catch(&DeeErrorType_NotImplemented)) return -1; // Error
    } else {
     DEE_ASSERT(temp > 0); // Found it
     // Make sure the deque hasn't changed in the meantime
     ACQUIRE;
     if DEE_UNLIKELY(!DeeDequeIterator_Validate(&iter,self)) break;
-    if DEE_UNLIKELY(deq_elem != DeeDequeIterator_GET_NZ(&iter)) goto again_locked;
+    if DEE_UNLIKELY(deq_elem != DeeDequeIterator_Get(&iter)) goto again_locked;
 #ifdef WITH_LOCK
     if DEE_UNLIKELY(DeeDeque_EraseReleaseLock(self,
      DeeDequeIterator_GetIndex(&iter,self),1,lock) < 0) return -1;
@@ -989,18 +990,20 @@ DEE_A_RET_EXCEPT(-1) Dee_size_t FUNC(DeeDeque_RemoveIf)(
  DeeDequeIterator_InitBegin(&iter,self);
  while (!DeeDequeIterator_DONE(&iter)) {
 iternext:
-  Dee_INCREF(deq_elem = DeeDequeIterator_GET_NZ(&iter));
+  DEE_ASSERT(!DeeDequeIterator_Done(&iter));
+  Dee_INCREF(deq_elem = DeeDequeIterator_Get(&iter));
   RELEASE;
   pred_args = DeeTuple_Pack(1,deq_elem);
   Dee_DECREF(deq_elem);
   if DEE_UNLIKELY(!pred_args) return (Dee_size_t)-1;
   pred_result = DeeObject_Call(pred,pred_args);
   Dee_DECREF(pred_args);
-  if DEE_UNLIKELY(!pred_result) return (Dee_size_t)-1;
+  if DEE_UNLIKELY(!pred_result) goto check_ni;
   temp = DeeObject_Bool(pred_result);
   Dee_DECREF(pred_result);
   if DEE_UNLIKELY(temp != 0) {
    if DEE_UNLIKELY(temp < 0) {
+check_ni:
     if DEE_UNLIKELY(!DeeError_Catch(&DeeErrorType_NotImplemented))
      return (Dee_size_t)-1; // Error
    } else {
@@ -1008,7 +1011,7 @@ iternext:
     // Make sure the deque hasn't changed in the meantime
     ACQUIRE;
     if DEE_UNLIKELY(!DeeDequeIterator_Validate(&iter,self)) break;
-    if DEE_UNLIKELY(deq_elem != DeeDequeIterator_GET_NZ(&iter)) goto unlock_and_end;
+    if DEE_UNLIKELY(deq_elem != DeeDequeIterator_Get(&iter)) goto unlock_and_end;
     delindex = DeeDequeIterator_GetIndex(&iter,self);
 #ifdef WITH_LOCK
     if DEE_UNLIKELY(DeeDeque_EraseReleaseLock(self,delindex,1,lock) < 0) return (Dee_size_t)-1;
@@ -1025,6 +1028,13 @@ iternext:
   }
   ACQUIRE;
   if DEE_UNLIKELY(!DeeDequeIterator_Validate(&iter,self)) break;
+  DEE_ASSERT(iter.di_bucket_iter >= self->d_bucketv);
+  DEE_ASSERT(iter.di_bucket_iter < iter.di_bucket_end);
+  DEE_ASSERT(iter.di_bucket_end == self->d_bucketv+self->d_bucketc);
+  DEE_ASSERT(iter.di_elem_iter >= iter.di_bucket_iter->db_elemv);
+  DEE_ASSERT(iter.di_elem_end > iter.di_elem_iter);
+  DEE_ASSERT(iter.di_elem_end == iter.di_bucket_iter->db_elemv+self->d_bucketsize ||
+             iter.di_elem_end == self->d_end);
   DeeDequeIterator_Next(&iter,self);
  }
 unlock_and_end:

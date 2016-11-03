@@ -36,28 +36,30 @@
 #include <deemon/optional/type_decl.h>
 #include <deemon/marshal_data.h>
 
+// */ (nano...)
+
 DEE_DECL_BEGIN
 
 DeeString_NEW_STATIC(dee_none_str,"none");
-static int _deenone_tp_int32(DeeObject *DEE_UNUSED(self), Dee_int32_t *result) { *result = (Dee_int32_t)0; return 0; }
-static int _deenone_tp_int64(DeeObject *DEE_UNUSED(self), Dee_int64_t *result) { *result = (Dee_int64_t)0; return 0; }
-static int _deenone_tp_double(DeeObject *DEE_UNUSED(self), double *result) { *result = (double)0.0; return 0; }
-static DEE_A_REF DeeObject *_deenone_tp_not(DeeObject *DEE_UNUSED(self)) { DeeReturn_True; }
-static int _deenone_tp_bool(DeeObject *DEE_UNUSED(self)) { return 0; }
-static int _deenone_tp_hash(DeeObject *DEE_UNUSED(self), Dee_hash_t start, Dee_hash_t *result) { *result = start; return 0; }
-//static int _deenone_unary(DeeObject *DEE_UNUSED(self)) { return 0; }
-static int _deenone_binary(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a)) { return 0; }
-static int _deenone_trinary(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a), DeeObject *DEE_UNUSED(b)) { return 0; }
-static int _deenone_quadary(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a), DeeObject *DEE_UNUSED(b), DeeObject *DEE_UNUSED(c)) { return 0; }
-static DeeObject *_deenone_tp_seq_len(DeeObject *DEE_UNUSED(self)) { DeeReturn_False; }
-static DeeObject *_deenone_tp_seq_contains(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(ob)) { DeeReturn_False; }
-static DeeObject *_deenone_unary_ret(DeeObject *DEE_UNUSED(self)) { DeeReturn_None; }
-static DeeObject *_deenone_binary_ret(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a)) { DeeReturn_None; }
-static DeeObject *_deenone_trinary_ret(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a), DeeObject *DEE_UNUSED(b)) { DeeReturn_None; }
-static DeeObject *_deenone_tp_str(DeeObject *DEE_UNUSED(self)) { DeeReturn_NEWREF(&dee_none_str); }
-static int _deenone_tp_seq_iter_next(DeeObject *DEE_UNUSED(self), DeeObject **DEE_UNUSED(result)) { return 1; }
-static DeeObject *_deenone_tp_cmp_lo(DeeObject *DEE_UNUSED(lhs), DeeObject *rhs) { DeeReturn_Bool(!DeeNone_Check(rhs)); }
-static DeeObject *_deenone_tp_cmp_le(DeeObject *DEE_UNUSED(lhs), DeeObject *DEE_UNUSED(rhs)) { DeeReturn_True; }
+static int DEE_CALL _deenone_tp_int32(DeeObject *DEE_UNUSED(self), Dee_int32_t *result) { *result = (Dee_int32_t)0; return 0; }
+static int DEE_CALL _deenone_tp_int64(DeeObject *DEE_UNUSED(self), Dee_int64_t *result) { *result = (Dee_int64_t)0; return 0; }
+static int DEE_CALL _deenone_tp_double(DeeObject *DEE_UNUSED(self), double *result) { *result = (double)0.0; return 0; }
+static DEE_A_REF DeeObject *DEE_CALL _deenone_tp_not(DeeObject *DEE_UNUSED(self)) { DeeReturn_True; }
+static int DEE_CALL _deenone_tp_bool(DeeObject *DEE_UNUSED(self)) { return 0; }
+static int DEE_CALL _deenone_tp_hash(DeeObject *DEE_UNUSED(self), Dee_hash_t start, Dee_hash_t *result) { *result = start; return 0; }
+//static int DEE_CALL _deenone_unary(DeeObject *DEE_UNUSED(self)) { return 0; }
+static int DEE_CALL _deenone_binary(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a)) { return 0; }
+static int DEE_CALL _deenone_trinary(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a), DeeObject *DEE_UNUSED(b)) { return 0; }
+static int DEE_CALL _deenone_quadary(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a), DeeObject *DEE_UNUSED(b), DeeObject *DEE_UNUSED(c)) { return 0; }
+static DeeObject *DEE_CALL _deenone_tp_seq_len(DeeObject *DEE_UNUSED(self)) { DeeReturn_False; }
+static DeeObject *DEE_CALL _deenone_tp_seq_contains(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(ob)) { DeeReturn_False; }
+static DeeObject *DEE_CALL _deenone_unary_ret(DeeObject *DEE_UNUSED(self)) { DeeReturn_None; }
+static DeeObject *DEE_CALL _deenone_binary_ret(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a)) { DeeReturn_None; }
+static DeeObject *DEE_CALL _deenone_trinary_ret(DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(a), DeeObject *DEE_UNUSED(b)) { DeeReturn_None; }
+static DeeObject *DEE_CALL _deenone_tp_str(DeeObject *DEE_UNUSED(self)) { DeeReturn_NEWREF(&dee_none_str); }
+static int DEE_CALL _deenone_tp_seq_iter_next(DeeObject *DEE_UNUSED(self), DeeObject **DEE_UNUSED(result)) { return 1; }
+static DeeObject *DEE_CALL _deenone_tp_cmp_lo(DeeObject *DEE_UNUSED(lhs), DeeObject *rhs) { DeeReturn_Bool(!DeeNone_Check(rhs)); }
+static DeeObject *DEE_CALL _deenone_tp_cmp_le(DeeObject *DEE_UNUSED(lhs), DeeObject *DEE_UNUSED(rhs)) { DeeReturn_True; }
 static DeeObject *_deenone_tp_cmp_eq(DeeObject *DEE_UNUSED(lhs), DeeObject *rhs) { DeeReturn_Bool(DeeNone_Check(rhs)); }
 static DeeObject *_deenone_tp_cmp_ne(DeeObject *DEE_UNUSED(lhs), DeeObject *rhs) { DeeReturn_Bool(!DeeNone_Check(rhs)); }
 static DeeObject *_deenone_tp_cmp_gr(DeeObject *DEE_UNUSED(lhs), DeeObject *DEE_UNUSED(rhs)) { DeeReturn_False; }

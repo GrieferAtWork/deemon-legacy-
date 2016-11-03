@@ -71,9 +71,9 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeNativeSemaphore_AcquireTimed_Noi
  return -1;
 #elif DEE_HAVE_SEM_TIMEDWAIT
  struct timespec wait_time = {msecs,0};
- if (sem_timedwait(&self->s_handle,&wait_time) != 0) {
+ if DEE_UNLIKELY(sem_timedwait(&self->s_handle,&wait_time) != 0) {
   int error = DeeSystemError_Consume();
-  if (error == EAGAIN) return 1;
+  if DEE_LIKELY(error == EAGAIN) return 1;
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "sem_timedwait(%u) : %K",msecs,
                       DeeSystemError_ToString(error));
@@ -84,7 +84,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeNativeSemaphore_AcquireTimed_Noi
  int result; Dee_uint64_t end_time = DeeTime_GetClock1000()+(Dee_uint64_t)msecs;
  while ((result = DeeNativeSemaphore_TryAcquire(self)) == 1 &&
         DeeTime_GetClock1000() < end_time
-        ) if ((result = DeeThread_Sleep(1)) != 0) break;
+        ) if DEE_UNLIKELY((result = DeeThread_Sleep(1)) != 0) break;
  return result;
 #endif
 }
@@ -93,8 +93,8 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeSemaphore_Init(
  DEE_A_OUT struct DeeNativeSemaphore *self, DEE_A_IN DeeSempahoreCount initial) {
  DEE_ASSERT(self);
 #ifdef DEE_PLATFORM_WINDOWS
- if (DeeThread_CheckInterrupt() != 0) return -1;
- if ((self->s_handle = CreateSemaphoreW(NULL,(
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY((self->s_handle = CreateSemaphoreW(NULL,(
   LONG)initial,(LONG)0x00008000l,NULL)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "CreateSemaphoreW(%lu) : %K",(unsigned long)initial,
@@ -102,8 +102,8 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeSemaphore_Init(
   return -1;
  }
 #else
- if (DeeThread_CheckInterrupt() != 0) return -1;
- if (sem_init(&self->s_handle,0,initial) != 0) {
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(sem_init(&self->s_handle,0,initial) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "sem_init(%lu) : %K",(unsigned long)initial,
                       DeeSystemError_ToString(DeeSystemError_Consume()));
@@ -115,9 +115,9 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeSemaphore_Init(
 void DeeNativeSemaphore_Quit(DEE_A_IN struct DeeNativeSemaphore *self) {
  DEE_ASSERT(self);
 #ifdef DEE_PLATFORM_WINDOWS
- if (!CloseHandle(self->s_handle)) SetLastError(0);
+ if DEE_UNLIKELY(!CloseHandle(self->s_handle)) SetLastError(0);
 #else
- if (sem_destroy(&self->s_handle) != 0) errno = 0;
+ if DEE_UNLIKELY(sem_destroy(&self->s_handle) != 0) errno = 0;
 #endif
 }
 void DeeNativeSemaphore_AcquireNoexcept(DEE_A_INOUT struct DeeNativeSemaphore *self) {
@@ -125,15 +125,15 @@ void DeeNativeSemaphore_AcquireNoexcept(DEE_A_INOUT struct DeeNativeSemaphore *s
  WaitForSingleObject(self->s_handle,INFINITE);
 #else
  DEE_ASSERT(self);
- if (sem_wait(&self->s_handle) != 0) errno = 0;
+ if DEE_UNLIKELY(sem_wait(&self->s_handle) != 0) errno = 0;
 #endif
 }
 void DeeNativeSemaphore_ReleaseNoexcept(DEE_A_INOUT struct DeeNativeSemaphore *self) {
 #ifdef DEE_PLATFORM_WINDOWS
- if (!ReleaseSemaphore((HANDLE)self->s_handle,(LONG)1,NULL)) SetLastError(0);
+ if DEE_UNLIKELY(!ReleaseSemaphore((HANDLE)self->s_handle,(LONG)1,NULL)) SetLastError(0);
 #else
  DEE_ASSERT(self);
- if (sem_post(&self->s_handle) != 0) errno = 0;
+ if DEE_UNLIKELY(sem_post(&self->s_handle) != 0) errno = 0;
 #endif
 }
 
@@ -141,12 +141,12 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1)
 int DeeNativeSemaphore_Acquire(DEE_A_INOUT struct DeeNativeSemaphore *self) {
 #ifdef DEE_PLATFORM_WINDOWS
  DEE_ASSERT(self);
- if (DeeThread_CheckInterrupt() != 0)  return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0)  return -1;
  return _DeeNativeSemaphore_AcquireTimed_Nointerrupt(self,INFINITE);
 #else
  DEE_ASSERT(self);
- if (DeeThread_CheckInterrupt() != 0)  return -1;
- if (sem_wait(&self->s_handle) != 0) {
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0)  return -1;
+ if DEE_UNLIKELY(sem_wait(&self->s_handle) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "sem_wait() : %K",
                       DeeSystemError_ToString(DeeSystemError_Consume()));
@@ -158,7 +158,7 @@ int DeeNativeSemaphore_Acquire(DEE_A_INOUT struct DeeNativeSemaphore *self) {
 DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeNativeSemaphore_AcquireTimed(
  DEE_A_INOUT struct DeeNativeSemaphore *self, DEE_A_IN unsigned int msecs) {
  DEE_ASSERT(self);
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  return _DeeNativeSemaphore_AcquireTimed_Nointerrupt(self,msecs);
 }
 DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeNativeSemaphore_TryAcquire(
@@ -167,9 +167,9 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeNativeSemaphore_TryAcquire(
 #ifdef DEE_PLATFORM_WINDOWS
  return _DeeNativeSemaphore_AcquireTimed_Nointerrupt(self,0);
 #else
- if (sem_trywait(&self->s_handle) != 0) {
+ if DEE_UNLIKELY(sem_trywait(&self->s_handle) != 0) {
   int error = DeeSystemError_Consume();
-  if (error == EAGAIN) return 1;
+  if DEE_LIKELY(error == EAGAIN) return 1;
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "sem_trywait() : %K",
                       DeeSystemError_ToString(error));
@@ -191,7 +191,7 @@ DEE_A_RET_NOEXCEPT(1) int DeeNativeSemaphore_TryAcquireNoExcept(
  SetLastError(0);
  return 1;
 #else
- if (sem_trywait(&self->s_handle) != 0) {
+ if DEE_UNLIKELY(sem_trywait(&self->s_handle) != 0) {
   errno = 0;
   return 1;
  }
@@ -204,7 +204,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeSemaphore_Release(DEE_A_INOUT struct DeeNative
  return DeeNativeSemaphore_ReleaseMultiple(self,1);
 #else
  DEE_ASSERT(self);
- if (sem_post(&self->s_handle) != 0) {
+ if DEE_UNLIKELY(sem_post(&self->s_handle) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "sem_post(%p) : %K",self->s_handle,
                       DeeSystemError_ToString(DeeSystemError_Consume()));
@@ -217,14 +217,14 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeSemaphore_ReleaseMultiple(
  DEE_A_INOUT struct DeeNativeSemaphore *self, DEE_A_IN DeeSempahoreCount count) {
  DEE_ASSERT(self);
 #ifdef DEE_PLATFORM_WINDOWS
- if (!ReleaseSemaphore((HANDLE)self->s_handle,(LONG)count,NULL)) {
+ if DEE_UNLIKELY(!ReleaseSemaphore((HANDLE)self->s_handle,(LONG)count,NULL)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "ReleaseSemaphore(%p,%lu) : %K",self->s_handle,count,
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return -1;
  }
 #else
- while (count--) if (DeeNativeSemaphore_Release(self) != 0) return -1;
+ while (count--) if DEE_UNLIKELY(DeeNativeSemaphore_Release(self) != 0) return -1;
 #endif
  return 0;
 }
@@ -236,7 +236,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeSemaphore_GetValue(
  switch (WaitForSingleObject(self->s_handle,0)) {
   case WAIT_OBJECT_0:
    // Restore the ticket we just grabbed (and while doing this, we can figure out the value)
-   if (!ReleaseSemaphore(self->s_handle,1,(PLONG)&prev_value)) {
+   if DEE_UNLIKELY(!ReleaseSemaphore(self->s_handle,1,(PLONG)&prev_value)) {
     DeeError_SetStringf(&DeeErrorType_SystemError,
                         "ReleaseSemaphore(%p,1) : %K",self,
                         DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
@@ -257,7 +257,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeSemaphore_GetValue(
  return 0;
 #else
  DEE_ASSERT(self);
- if (sem_getvalue(&self->s_handle,(int *)value) < 0) {
+ if DEE_UNLIKELY(sem_getvalue(&self->s_handle,(int *)value) < 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "sem_getvalue(%p) : %K",self->s_handle,
                       DeeSystemError_ToString(DeeSystemError_Consume()));
@@ -275,14 +275,14 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeSemaphore_GetValue(
 DEE_A_RET_EXCEPT(-1) int DeeNativeMutex_Init(DEE_A_OUT struct DeeNativeMutex *self) {
  DEE_ASSERT(self);
 #ifdef DEE_PLATFORM_WINDOWS
- if ((self->m_semaphore.s_handle = CreateSemaphoreW(NULL,0,1,NULL)) == NULL) {
+ if DEE_UNLIKELY((self->m_semaphore.s_handle = CreateSemaphoreW(NULL,0,1,NULL)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "CreateSemaphoreW(1) : %K",
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return -1;
  }
 #else
- if (DeeNativeSemaphore_Init(&self->m_semaphore,0) != 0) return -1;
+ if DEE_UNLIKELY(DeeNativeSemaphore_Init(&self->m_semaphore,0) != 0) return -1;
 #endif
  self->m_counter = 0;
  self->m_owner = 0;
@@ -341,7 +341,7 @@ int DeeNativeMutex_Acquire(DEE_A_INOUT struct DeeNativeMutex *self) {
  tid = DeeThread_SelfID();
  if (DeeAtomicInt_IncFetch(self->m_counter,memory_order_acquire) > 1) {
   if (tid != self->m_owner) {
-   if (DeeNativeSemaphore_Acquire(&self->m_semaphore) != 0) {
+   if DEE_UNLIKELY(DeeNativeSemaphore_Acquire(&self->m_semaphore) != 0) {
     DeeAtomicInt_FetchDec(self->m_counter,memory_order_release);
     return -1;
    }
@@ -359,12 +359,12 @@ int DeeNativeMutex_AcquireTimed(DEE_A_INOUT struct DeeNativeMutex *self, DEE_A_I
  tid = DeeThread_SelfID();
  if (DeeAtomicInt_IncFetch(self->m_counter,memory_order_acquire) > 1) {
   if (tid != self->m_owner) {
-   if (DeeThread_CheckInterrupt() != 0) {
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
     // Interrupt received
     DeeAtomicInt_FetchDec(self->m_counter,memory_order_release);
     return -1;
    }
-   if ((error = _DeeNativeSemaphore_AcquireTimed_Nointerrupt(&self->m_semaphore,msecs)) != 0) {
+   if DEE_UNLIKELY((error = _DeeNativeSemaphore_AcquireTimed_Nointerrupt(&self->m_semaphore,msecs)) != 0) {
     DeeAtomicInt_FetchDec(self->m_counter,memory_order_release);
     return error;
    }
@@ -383,7 +383,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeMutex_Release(DEE_A_INOUT struct DeeNativeMute
  if (recur == 0) self->m_owner = 0;
  if (DeeAtomicInt_DecFetch(self->m_counter,memory_order_release) > 0) {
   if (recur == 0) {
-   if (DeeNativeSemaphore_Release(&self->m_semaphore) != 0) {
+   if DEE_UNLIKELY(DeeNativeSemaphore_Release(&self->m_semaphore) != 0) {
     DeeAtomicInt_FetchInc(self->m_counter,memory_order_acquire);
     self->m_owner = DeeThread_SelfID();
     self->m_recursion = 1;
@@ -406,7 +406,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeMutex_ReleaseWithError(DEE_A_INOUT struct DeeN
  if (recur == 0) self->m_owner = 0;
  if (DeeAtomicInt_DecFetch(self->m_counter,memory_order_release) > 0) {
   if (recur == 0) {
-   if (DeeNativeSemaphore_Release(&self->m_semaphore) != 0) {
+   if DEE_UNLIKELY(DeeNativeSemaphore_Release(&self->m_semaphore) != 0) {
     DeeAtomicInt_FetchInc(self->m_counter,memory_order_acquire);
     self->m_owner = tid;
     self->m_recursion = 1;
@@ -426,10 +426,10 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeMutex_ReleaseWithError(DEE_A_INOUT struct DeeN
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeSemaphoreObject) *
 DeeSemaphore_New(DEE_A_IN DeeSempahoreCount initial) {
  DeeSemaphoreObject *result;
- if ((result = DeeObject_MALLOCF(DeeSemaphoreObject,
+ if DEE_LIKELY((result = DeeObject_MALLOCF(DeeSemaphoreObject,
   "Semaphore (%d initial)",(int)initial)) != NULL) {
   DeeObject_INIT(result,&DeeSemaphore_Type);
-  if (DeeNativeSemaphore_Init(&result->s_semaphore,initial) != 0) {
+  if DEE_UNLIKELY(DeeNativeSemaphore_Init(&result->s_semaphore,initial) != 0) {
    _DeeObject_DELETE(&DeeSemaphore_Type,result);
    result = NULL;
   }
@@ -447,9 +447,9 @@ DeeSemaphore_Semaphore(DEE_A_IN_OBJECT(DeeSemaphoreObject) *self) {
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeMutexObject) *DeeMutex_New(void) {
  DeeMutexObject *result;
- if ((result = DeeObject_MALLOCF(DeeMutexObject,"Mutex")) != NULL) {
+ if DEE_LIKELY((result = DeeObject_MALLOCF(DeeMutexObject,"Mutex")) != NULL) {
   DeeObject_INIT(result,&DeeMutex_Type);
-  if (DeeNativeMutex_Init(&result->m_mutex) != 0) {
+  if DEE_UNLIKELY(DeeNativeMutex_Init(&result->m_mutex) != 0) {
    _DeeObject_DELETE(&DeeMutex_Type,result);
    result = NULL;
   }
@@ -487,7 +487,7 @@ DEE_A_RET_EXCEPT(-1) int DeeMutex_Release(DEE_A_INOUT_OBJECT(DeeMutexObject) *se
 
 
 
-int _deesemaphore_tp_any_ctor(
+int DEE_CALL _deesemaphore_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeSemaphoreObject *self, DeeTupleObject *args) {
  DeeSempahoreCount initial;
@@ -497,28 +497,28 @@ int _deesemaphore_tp_any_ctor(
   ":semaphore",&initial) != 0) return -1;
  return DeeNativeSemaphore_Init(&self->s_semaphore,initial);
 }
-void _deesemaphore_tp_dtor(DeeSemaphoreObject *self) {
+void DEE_CALL _deesemaphore_tp_dtor(DeeSemaphoreObject *self) {
  DeeNativeSemaphore_Quit(&self->s_semaphore);
 }
 
 
 
-int _deemutex_tp_ctor(DeeTypeObject *DEE_UNUSED(tp_self), DeeMutexObject *self) {
+int DEE_CALL _deemutex_tp_ctor(DeeTypeObject *DEE_UNUSED(tp_self), DeeMutexObject *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeMutex_Check(self));
  return DeeNativeMutex_Init(&self->m_mutex);
 }
-void _deemutex_tp_dtor(DeeMutexObject *self) {
+void DEE_CALL _deemutex_tp_dtor(DeeMutexObject *self) {
  DeeNativeMutex_Quit(&self->m_mutex);
 }
 
-static DEE_A_REF DeeObject *_deesemaphore_acquire(
+static DEE_A_REF DeeObject *DEE_CALL _deesemaphore_acquire(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DEE_ASSERT(DeeObject_Check(self) && DeeSemaphore_Check(self));
  if (DeeTuple_Unpack(args,":acquire") != 0 ||
      DeeSemaphore_Acquire(self) != 0) return NULL;
  DeeReturn_None;
 }
-static DEE_A_REF DeeObject *_deesemaphore_acquire_timed(
+static DEE_A_REF DeeObject *DEE_CALL _deesemaphore_acquire_timed(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  unsigned int msecs; int result;
  DEE_ASSERT(DeeObject_Check(self) && DeeSemaphore_Check(self));
@@ -526,7 +526,7 @@ static DEE_A_REF DeeObject *_deesemaphore_acquire_timed(
     (result = DeeSemaphore_AcquireTimed(self,msecs)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DEE_A_REF DeeObject *_deesemaphore_try_acquire(
+static DEE_A_REF DeeObject *DEE_CALL _deesemaphore_try_acquire(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int result;
  DEE_ASSERT(DeeObject_Check(self) && DeeSemaphore_Check(self));
@@ -534,7 +534,7 @@ static DEE_A_REF DeeObject *_deesemaphore_try_acquire(
     (result = DeeSemaphore_TryAcquire(self)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DEE_A_REF DeeObject *_deesemaphore_release(
+static DEE_A_REF DeeObject *DEE_CALL _deesemaphore_release(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeSempahoreCount count = 1;
  DEE_ASSERT(DeeObject_Check(self) && DeeSemaphore_Check(self));
@@ -545,7 +545,7 @@ static DEE_A_REF DeeObject *_deesemaphore_release(
   ) return NULL;
  DeeReturn_None;
 }
-static DEE_A_REF DeeObject *_deesemaphore_value_get(
+static DEE_A_REF DeeObject *DEE_CALL _deesemaphore_value_get(
  DeeSemaphoreObject *self, void *DEE_UNUSED(closure)) {
  DeeSempahoreCount result;
  DEE_ASSERT(DeeObject_Check(self) && DeeSemaphore_Check(self));
@@ -579,8 +579,7 @@ static struct DeeMethodDef _deesemaphore_tp_methods[] = {
  DEE_METHODDEF_v100("try_acquire",member(&_deesemaphore_try_acquire),"() -> bool\n"
   "@return: True/false indicating a successfully acquired ticket\n"
   "\tTries to acquire a ticket to #this semaphore, similar to #(this.acquire).\n"
-  "\tIf the ticket could not immediatly be acquired, return #false without acquiring a ticket.\n"
-  "\tIf the calling thread was already holding a ticket, return #false immediatly."),
+  "\tIf the ticket could not immediatly be acquired, return #false without acquiring a ticket."),
  DEE_METHODDEF_v100("release",member(&_deesemaphore_release),"(semaphore_count n = 1) -> none\n"
   "@param n: The amount of tickets to be released\n"
   "@throws Error.ValueError: The calling thread isn't holding a ticket to #this mutex\n"
@@ -627,14 +626,14 @@ DeeTypeObject DeeSemaphore_Type = {
  DEE_TYPE_OBJECT_FOOTER_v100
 };
 
-static DEE_A_REF DeeObject *_deemutex_acquire(
+static DEE_A_REF DeeObject *DEE_CALL _deemutex_acquire(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DEE_ASSERT(DeeObject_Check(self) && DeeMutex_Check(self));
  if (DeeTuple_Unpack(args,":acquire") != 0 ||
      DeeMutex_ACQUIRE(self) != 0) return NULL;
  DeeReturn_None;
 }
-static DEE_A_REF DeeObject *_deemutex_acquire_timed(
+static DEE_A_REF DeeObject *DEE_CALL _deemutex_acquire_timed(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  unsigned int msecs; int result;
  DEE_ASSERT(DeeObject_Check(self) && DeeMutex_Check(self));
@@ -642,7 +641,7 @@ static DEE_A_REF DeeObject *_deemutex_acquire_timed(
     (result = DeeMutex_ACQUIRE_TIMED(self,msecs)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DEE_A_REF DeeObject *_deemutex_try_acquire(
+static DEE_A_REF DeeObject *DEE_CALL _deemutex_try_acquire(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int result;
  DEE_ASSERT(DeeObject_Check(self) && DeeMutex_Check(self));
@@ -650,7 +649,7 @@ static DEE_A_REF DeeObject *_deemutex_try_acquire(
     (result = DeeMutex_TRY_ACQUIRE(self)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DEE_A_REF DeeObject *_deemutex_release(
+static DEE_A_REF DeeObject *DEE_CALL _deemutex_release(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DEE_ASSERT(DeeObject_Check(self) && DeeMutex_Check(self));
  if (DeeTuple_Unpack(args,":release") != 0 ||
