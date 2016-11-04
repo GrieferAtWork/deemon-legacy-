@@ -1841,6 +1841,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_AtomicOnceEnd(
 DEE_DECL_END
 
 #ifndef __INTELLISENSE__
+#include "codewriter.protected.inl"
 #include "codewriter.delnoop.inl"
 #include "codewriter.peephole.inl"
 #endif

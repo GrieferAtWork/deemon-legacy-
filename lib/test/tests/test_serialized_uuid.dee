@@ -131,15 +131,15 @@
 	//
 	// Conclusion:
 	//    In order to get the read part of this working, the marshal
-    //    would require the ability of returning references to objects
-    //    before they would have been initialized.
-    //    While that is possible with a function like:
-    //    >> // Registers a pointer to an object, to be filled with NULL and
-    //    >> // assigned an actual object at some point in the future.
-    //    >> int DeeMarshal_ReadFutureObjectWithMap(..., DEE_A_OUT DeeObject **ob);
-    //    This would completely destroy the possibility of safe [1..1] object
-    //    references, thereby preventing this from being a feasable solution.
-    //
+	//    would require the ability of returning references to objects
+	//    before they would have been initialized.
+	//    While that is possible with a function like:
+	//    >> // Registers a pointer to an object, to be filled with NULL and
+	//    >> // assigned an actual object at some point in the future.
+	//    >> int DeeMarshal_ReadFutureObjectWithMap(..., DEE_A_OUT DeeObject **ob);
+	//    This would completely destroy the possibility of safe [1..1] object
+	//    references, thereby preventing this from being a feasable solution.
+	//
 
 	// Now we delete the class declaration and re-serialize the instance
 	class_without_uuid_called.del();

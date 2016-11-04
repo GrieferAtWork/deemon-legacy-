@@ -1,0 +1,241 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, output any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), output deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * output use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and output permit persons output whom the Software is          *
+ * furnished output do so, subject output the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#include <fs>
+#include <file>
+#include <util>
+#include <error>
+fs::chdir(fs::path::head(__FILE__));
+
+
+file.io.stdout = file.io("codewriter.peephole.generated.inl","w");
+
+const indent = " ";
+local dict opcode2name,name2opcode;
+local dict opext2name,name2opext;
+
+for (local line: file.io("__opcode.inl")) {
+	local name,value;
+	try name,value = line.scanf(" # define %[A-Za-z0-9_] %[A-Za-z0-9_()| ]")...;
+	catch (...) continue;
+	name = name.strip();
+	value = value.strip();
+	if (name.wmatch("v*_OP*")) {
+		// Deprecated opcodes
+		continue;
+	} else if (name.startswith("DEE_")) {
+		continue;
+	}
+	
+	try value = (int)value;
+	catch (...) {
+		try {
+			value = value.scanf(" ( Dee_uint8_t ) ( OPFLAG_ARG | %[XxA-Fa-f0-9] )")...;
+			value = int(value)|0x80;
+		} catch (...) {
+			print repr name,repr value;
+			if (value in name2opcode) continue;
+			throw;
+		}
+	}
+	if (name.startswith("OP_")) {
+		opcode2name[value] = name;
+		name2opcode[name] = value;
+	} else if (name.startswith("OPEXT_")) {
+		opext2name[value] = name;
+		name2opext[name] = value;
+	} else if (!name.startswith("OPFLAG") && !name.startswith("GUARD")) {
+		print file.io.stderr: "Unknown opcode group:",repr name,"=",repr value;
+	}
+}
+
+local list rules;
+function get_effective_size(l): result {
+	result = 0;
+	for (local part: l) {
+		result += part.startswith("$") ? 2 : 1;
+	}
+}
+
+function parse_oplist(text) {
+	text = text.strip()
+		.replace("(","")
+		.replace(")","");
+	while (1) {
+		local newtext = text
+			.replace(" |","|")
+			.replace("| ","|")
+		;
+		if (newtext == text) break;
+		text = newtext;
+	}
+	result = text.split(",");
+	result = result.transform([](x) -> x.strip());
+	result = result.locate_all([](x) -> x);
+	return result;
+}
+
+class oprule {
+	this(file,line,text) {
+		this.file = file;
+		this.line = line;
+		local input,output = text.scanf("{%[^}]} --> {%[^}]}")...;
+		this.input = parse_oplist(input);
+		this.output = parse_oplist(output);
+		this.opcode_name = this.input.front();
+		this.opcode_id = name2opcode[this.opcode_name];
+		this.effective_fromsize = get_effective_size(this.input);
+		this.effective_tosize = get_effective_size(this.output);
+		if (this.effective_tosize > this.effective_fromsize) {
+			throw Error(file+"("+line+") : Error : Rule output is greater than the input");
+		}
+		while (this.effective_tosize < this.effective_fromsize) {
+			this.output.append("OP_NOOP");
+			++this.effective_tosize;
+		}
+	}
+	function input_desc() -> ",".join(this.input);
+	function output_desc() -> ",".join(this.output);
+};
+
+
+#define __RULE(...) rules.append(oprule(__FILE__,__LINE__,#__VA_ARGS__))
+#define RULE(...) __RULE(__VA_ARGS__)
+#include "codewriter.peephole.rules.inl"
+#undef __RULE
+#undef RULE
+
+local main_switch = [list()]*256;
+for (local rule: rules) {
+	main_switch[rule.opcode_id].append(rule);
+}
+
+for (local i,oprules: util::enumerate(main_switch)) {
+	if (!oprules) continue;
+	local i_name = opcode2name[i];
+	print "#ifdef",i_name;
+	print indent+"TARGET("+opcode2name[i]+") {";
+	for (local r: oprules) {
+		print indent+indent+"RULE("+repr r.input_desc()+",";
+		print indent+indent+"     "+repr r.output_desc()+") {";
+		local dict total_arg_name_uses;
+		for (local arg: r.input) {
+			if (arg.startswith("$")) {
+				arg = arg[1:];
+				if (arg in total_arg_name_uses) ++total_arg_name_uses[arg];
+				else total_arg_name_uses[arg] = 1;
+			}
+		}
+		for (local arg: r.output) {
+			if (arg.startswith("$")) {
+				arg = arg[1:];
+				if (arg in total_arg_name_uses) ++total_arg_name_uses[arg];
+				else throw Error("Output uses argument "+repr arg+" not specified by input");
+			}
+		}
+		local used_args = [(for (local name,uses: total_arg_name_uses) if (uses > 1) name)...];
+		if (used_args) print indent+indent+indent+"Dee_uint16_t",",".join(used_args)+";";
+		local list used_arg_names;
+		local input_copy = copy r.input;
+		input_copy.pop_front();
+		while (input_copy) {
+			local opname = input_copy.pop_front();
+			if (opname.startswith("$")) {
+				opname = opname[1:];
+				if (total_arg_name_uses[opname] <= 1) {
+					// Placeholder argument (skip)
+					print indent+indent+indent+"RT_SKIP_ARG(); //",opname;
+				} else if (opname !in used_arg_names) {
+					// First use (initialize input oparg)
+					print indent+indent+indent+opname,"= RT_READ_ARG();";
+					used_arg_names.append(opname);
+				} else {
+					// Additional use (check if the argument matches)
+					print indent+indent+indent+"if ("+opname+" != RT_READ_ARG()) RULE_BREAK();";
+				}
+			} else {
+				print indent+indent+indent+"if (RT_PROTECTED() || ("+
+					" && ".join(for (local a: opname.split("|")) "RT_GET_OP() != "+a)+
+					")) RULE_BREAK();",;
+				if (input_copy) print " RT_NEXT_OP();",;
+				print;
+			}
+		}
+		// All rules match!
+		if (r.output) {
+			print indent+indent+indent+"RT_WRITE_BEGIN();";
+			local input_copy = copy r.input;
+			local cur_input = none;
+			for (local o: r.output) {
+				if (cur_input is none) cur_input = input_copy.pop_front();
+				if (o.startswith("$")) {
+					if (cur_input == o) {
+						print indent+indent+indent+"RT_WRITE_SKIPARG();";
+					} else {
+						print indent+indent+indent+"RT_WRITE_ARG("+o[1:]+");";
+					}
+					if (!cur_input.startswith("$")) input_copy.pop_front(); // Skip one input
+					cur_input = none;
+				} else if (o == "*") {
+					print indent+indent+indent+"RT_WRITE_SKIPOP();";
+					if (cur_input.startswith("$")) cur_input = cur_input[1:];
+					else cur_input = none;
+				} else {
+					if (cur_input == o) {
+						print indent+indent+indent+"RT_WRITE_SKIPOP();";
+					} else {
+						print indent+indent+indent+"RT_WRITE_OP("+o+");";
+					}
+					if (cur_input.startswith("$")) cur_input = cur_input[1:];
+					else cur_input = none;
+				}
+			}
+		}
+		print indent+indent+indent+"DISPATCH_OPTIMIZED();";
+		print indent+indent+"}";
+	}
+	print indent+indent+"DISPATCH();";
+	print indent+"}";
+	print "#endif /*",i_name,"*/";
+	print;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

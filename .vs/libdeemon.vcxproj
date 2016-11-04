@@ -441,6 +441,8 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\compiler\code.marshal_read.inl" />
     <None Include="..\src\deemon\compiler\codewriter.delnoop.inl" />
     <None Include="..\src\deemon\compiler\codewriter.peephole.inl" />
+    <None Include="..\src\deemon\compiler\codewriter.peephole.rules.inl" />
+    <None Include="..\src\deemon\compiler\codewriter.protected.inl" />
     <None Include="..\src\deemon\compiler\sast.assign.inl" />
     <None Include="..\src\deemon\compiler\sast.attributes.inl" />
     <None Include="..\src\deemon\compiler\sast.collect_top_scope_children.inl" />
