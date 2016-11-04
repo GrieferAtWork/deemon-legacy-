@@ -32,10 +32,10 @@
 "api_math_exports\0"
 #endif
 #if DEE_CONFIG_LANGUAGE_HAVE_ALIAS
-"language_alias_types\0"
+"language_alias\0"
 #endif
 #if DEE_CONFIG_LANGUAGE_HAVE_ARRAYS
-"language_array\0"
+"language_arrays\0"
 #endif
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_ALLOCA
 "language_builtin_alloca\0"
@@ -142,8 +142,11 @@
 #if DEE_CONFIG_LANGUAGE_HAVE_NEWDELETE
 "language_newdelete\0"
 #endif
+#if DEE_CONFIG_LANGUAGE_HAVE_OPERATOR_FUNCTIONS
+"language_operator_functions\0"
+#endif
 #if DEE_CONFIG_LANGUAGE_HAVE_POINTERS
-"language_pointer\0"
+"language_pointers\0"
 #endif
 #if DEE_CONFIG_LANGUAGE_HAVE_RELAXED_COMMA_LIST
 "language_relaxed_comma_list\0"
@@ -161,7 +164,7 @@
 "language_switch_expression\0"
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
-"runtime_array\0"
+"runtime_arrays\0"
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
 "runtime_auto_unc\0"
@@ -187,6 +190,9 @@
 #if DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS
 "runtime_docstrings\0"
 #endif
+#if DEE_CONFIG_RUNTIME_HAVE_EXCEPTIONS
+"runtime_exceptions\0"
+#endif
 #if DEE_CONFIG_RUNTIME_HAVE_EXIT
 "runtime_exit\0"
 #endif
@@ -206,7 +212,7 @@
 "runtime_newdelete\0"
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
-"runtime_pointer\0"
+"runtime_pointers\0"
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_PROCESS
 "runtime_process\0"
