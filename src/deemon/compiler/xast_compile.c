@@ -1041,7 +1041,7 @@ binary_operator_retnone:
                DeeToken_LINE(self->ast_unary_var.uiv_tok)+1,
                self->ast_unary_var.uiv_tok);
    if (!DeeCodeWriter_IsVarLocal(writer,local_var)) goto inplace_default;
-   if (!DeeLocalVar_IS_COMPILERINIT(local_var)) {
+   if DEE_UNLIKELY(!DeeLocalVar_IS_COMPILERINIT(local_var)) {
     if DEE_UNLIKELY(DeeError_CompilerError(DEE_WARNING_UNINITIALIZED_VARIABLE_IN_LOAD,
      (DeeObject *)lexer,(DeeObject *)self->ast_unary_var.uiv_tok,
      "Cannot load uninitialized variable in inplace-var operation") != 0) return -1;
@@ -1099,7 +1099,7 @@ binary_operator_retnone:
     case DEE_XASTKIND_VAR: {
      local_var = op_a->ast_var.vs_var;
      if (!DeeCodeWriter_IsVarLocal(writer,local_var)) goto inplace_default;
-     if (!DeeLocalVar_IS_COMPILERINIT(local_var)) { self = op_a; goto var_uninit; } // psht... we're not supposed to overwrite 'self'
+     if DEE_UNLIKELY(!DeeLocalVar_IS_COMPILERINIT(local_var)) { self = op_a; goto var_uninit; } // psht... we're not supposed to overwrite 'self'
      if (DeeLocalVar_KIND(local_var) == DEE_LOCALVAR_KIND_THIS) goto inplace_default;
      // Load the stack entry
      if DEE_UNLIKELY(DeeCodeWriter_LoadVar(writer,local_var,have_local_names ? lexer : NULL) != 0) return -1;
@@ -1138,7 +1138,7 @@ binary_operator_retnone:
       if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,inplace_try_opcode) != 0) return -1; // now: arw
       DeeCodeWriter_INCSTACK(writer); // align for -1 +2
      }
-     // Remined: stack: 'arw' (a: object, r: result, w: new_attribute_value)
+     // Reminder: stack: 'arw' (a: object, r: result, w: new_attribute_value)
      // Rotate the stack from 'arw' --> 'raw'
      if DEE_UNLIKELY(DeeCodeWriter_LRot(writer,3) != 0) return -1; // now: rwa
      if DEE_UNLIKELY(DeeCodeWriter_LRot(writer,2) != 0) return -1; // now: raw
@@ -1178,7 +1178,7 @@ binary_operator_retnone:
       if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,inplace_try_opcode) != 0) return -1; // now: abcrw
       DeeCodeWriter_INCSTACK(writer); // align for -1 +2
      }
-     // Remined: stack: 'abcrw' (a: seq, b: lower_bound, c: upper_bound, r: result, w: new_range_value)
+     // Reminder: stack: 'abcrw' (a: seq, b: lower_bound, c: upper_bound, r: result, w: new_range_value)
      if DEE_UNLIKELY(DeeCodeWriter_RRot(writer,2) != 0) return -1; // Now: abcwr
      if DEE_UNLIKELY(DeeCodeWriter_RRot(writer,5) != 0) return -1; // Now: rabcw
      if DEE_UNLIKELY(DeeCodeWriter_QuadaryOp(writer,OP_SEQ_RANGE_SET) != 0) return -1; // Now: rw
@@ -1208,7 +1208,7 @@ binary_operator_retnone:
       if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,inplace_try_opcode) != 0) return -1; // now: abrw
       DeeCodeWriter_INCSTACK(writer); // align for -1 +2
      }
-     // Remined: stack: 'abrw' (a: seq, b: index/key, r: result, w: new_value)
+     // Reminder: stack: 'abrw' (a: seq, b: index/key, r: result, w: new_value)
      if DEE_UNLIKELY(DeeCodeWriter_RRot(writer,2) != 0) return -1; // Now: abwr
      if DEE_UNLIKELY(DeeCodeWriter_RRot(writer,4) != 0) return -1; // Now: rabw
      if DEE_UNLIKELY(DeeCodeWriter_TrinaryOp(writer,(Dee_uint8_t)(
@@ -1494,10 +1494,11 @@ trinary_operator:
    DEE_ASSERT(self->ast_switch.s_entryc != 0);
    DEE_ASSERT(self->ast_switch.s_entryv != 0);
    end = (iter = self->ast_switch.s_entryv)+self->ast_switch.s_entryc;
+   // TODO: Generate a jump table for all cases known at compile-time
    do {
     Dee_size_t switchval_jmparg;
     if DEE_UNLIKELY(DeeCodeWriter_Dup(writer) != 0) return -1;
-    if DEE_UNLIKELY(DeeCodeWriter_PushConst(writer,iter->se_key,compiler_flags) != 0) return -1;
+    if DEE_UNLIKELY(DeeXAst_Compile(iter->se_key,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
     if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,OPEXT_TRY_CMP_EQ) != 0) return -1;
     DeeCodeWriter_DECSTACK(writer); // Removed by 'OPEXT_TRY_CMP_EQ'
     if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithFutureSizeArg(writer,OP_JUMP_IF_FF_POP,&switchval_jmparg) != 0) return -1;

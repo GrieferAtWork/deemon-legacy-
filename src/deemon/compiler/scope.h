@@ -54,13 +54,13 @@ DEE_OBJECT_DEF(DeeLocalVarObject);
 
 
 
-
+struct DeeXAstObject;
 struct DeeParserCaseLabelCase {
- DEE_A_REF DeeObject *clc_case; /*< [1..1] The case constant of this label. */
+ DEE_A_REF struct DeeXAstObject *clc_case; /*< [1..1] The case constant of this label. */
 };
 struct DeeParserCaseLabelRange {
- DEE_A_REF DeeObject *clr_begin; /*< [1..1] The lower bound of this label. */
- DEE_A_REF DeeObject *clr_end;   /*< [1..1] The upper bound of this label. */
+ DEE_A_REF struct DeeXAstObject *clr_begin; /*< [1..1] The lower bound of this label. */
+ DEE_A_REF struct DeeXAstObject *clr_end;   /*< [1..1] The upper bound of this label. */
 };
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeParserLabel {
@@ -159,10 +159,10 @@ extern DEE_A_RET_MAYBE_NULL struct DeeParserLabel *DeeParserLabelList_GetLabel(
 //////////////////////////////////////////////////////////////////////////
 // Returns the first label that covers the given case range (NULL if the range isn't covered)
 extern DEE_A_RET_MAYBE_NULL struct DeeParserLabel *DeeParserLabelList_GetCase(
- DEE_A_IN struct DeeParserLabelList const *self, DEE_A_IN DeeObject *case_value) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_IN struct DeeParserLabelList const *self, DEE_A_IN struct DeeXAstObject *case_value) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_MAYBE_NULL struct DeeParserLabel *DeeParserLabelList_GetCaseRange(
- DEE_A_IN struct DeeParserLabelList const *self, DEE_A_IN DeeObject *case_begin,
- DEE_A_IN DeeObject *case_end) DEE_ATTRIBUTE_NONNULL((1,2,3));
+ DEE_A_IN struct DeeParserLabelList const *self, DEE_A_IN struct DeeXAstObject *case_begin,
+ DEE_A_IN struct DeeXAstObject *case_end) DEE_ATTRIBUTE_NONNULL((1,2,3));
 
 //////////////////////////////////////////////////////////////////////////
 // Returns the default case label
@@ -178,10 +178,11 @@ extern DEE_A_RET_EXCEPT(NULL) struct DeeParserLabel *DeeParserLabelList_AddLabel
  DEE_A_IN TPPTokenID name) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(NULL) struct DeeParserLabel *DeeParserLabelList_AddCase(
  DEE_A_INOUT struct DeeParserLabelList *self, DEE_A_INOUT DeeTokenObject *dest_token, 
- DEE_A_INOUT DeeObject *case_value) DEE_ATTRIBUTE_NONNULL((1,2,3));
+ DEE_A_INOUT struct DeeXAstObject *case_value) DEE_ATTRIBUTE_NONNULL((1,2,3));
 extern DEE_A_RET_EXCEPT(NULL) struct DeeParserLabel *DeeParserLabelList_AddCaseRange(
  DEE_A_INOUT struct DeeParserLabelList *self, DEE_A_INOUT DeeTokenObject *dest_token,
- DEE_A_INOUT DeeObject *case_begin, DEE_A_INOUT DeeObject *case_end) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
+ DEE_A_INOUT struct DeeXAstObject *case_begin,
+ DEE_A_INOUT struct DeeXAstObject *case_end) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
 extern DEE_A_RET_EXCEPT(NULL) struct DeeParserLabel *DeeParserLabelList_AddDefaultCase(
  DEE_A_INOUT struct DeeParserLabelList *self, DEE_A_INOUT DeeTokenObject *dest_token) DEE_ATTRIBUTE_NONNULL((1,2));
 

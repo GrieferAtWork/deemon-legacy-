@@ -128,8 +128,8 @@
 #define OP_UNREACHABLE            0x55 // __builtin_unreachable();
 #define OP_LOAD_THIS              0x56 // function [[__thiscall__]] { push(this); }
 #define OP_DUP                    0x57 // push(top)
-//UNUSED:                         0x58
-//UNUSED:                         0x59
+#define OP_JUMP_DYN_REL           0x58 // jump ssize_t(pop(0)) bytes, starting at the address of this opcode
+#define OP_JUMP_DYN_ABS           0x59 // jump to size_t(pop(0)), starting at the co_code address of the associated code
 //UNUSED:                         0x5A
 //UNUSED:                         0x5B
 #define OP_PRINT_ONE              0x5C // print pop(0),;

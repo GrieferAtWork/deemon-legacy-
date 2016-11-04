@@ -1018,6 +1018,7 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
    default_label = NULL;
    case_iter = self->ast_switch.sw_cases.ll_front;
    // Go through all the labels and compile the forward jumps into the switch block
+   // TODO: Generate a jump table for all cases known at compile-time
    while (case_iter) {
     DEE_ASSERTF(case_iter->pl_kind != DEE_PARSERLABEL_KIND_LABEL,
                 "Regular label in switch label list (how did this happen?)");
@@ -1027,14 +1028,17 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
       default_label = &case_iter->pl_code_label;
       break;
      case DEE_PARSERLABEL_KIND_C_CASE:
-      if DEE_UNLIKELY(DeeCodeWriter_PushConst(writer,case_iter->pl_c_case.clc_case,compiler_flags) != 0) return -1;
+      if DEE_UNLIKELY(DeeXAst_Compile(case_iter->pl_c_case.clc_case,
+       DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
       DeeCodeWriter_DECSTACK(writer); // Consumed by OP_JUMP_IF_CASE_COMPARE
       if DEE_UNLIKELY(_DeeCodeWriter_GotoForwardLabelEx(writer,&case_iter->pl_code_label,
        OP_JUMP_IF_CASE_COMPARE,self->ast_common.ast_token) != 0) return -1;
       break;
      case DEE_PARSERLABEL_KIND_C_RANGE:
-      if DEE_UNLIKELY(DeeCodeWriter_PushConst(writer,case_iter->pl_c_range.clr_begin,compiler_flags) != 0) return -1;
-      if DEE_UNLIKELY(DeeCodeWriter_PushConst(writer,case_iter->pl_c_range.clr_end,compiler_flags) != 0) return -1;
+      if DEE_UNLIKELY(DeeXAst_Compile(case_iter->pl_c_range.clr_begin,
+       DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
+      if DEE_UNLIKELY(DeeXAst_Compile(case_iter->pl_c_range.clr_end,
+       DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
       DeeCodeWriter_DECSTACK_N(writer,2); // Consumed by OP_JUMP_IF_RCASE_COMPARE
       if DEE_UNLIKELY(_DeeCodeWriter_GotoForwardLabelEx(writer,&case_iter->pl_code_label,
        OP_JUMP_IF_RCASE_COMPARE,self->ast_common.ast_token) != 0) return -1;

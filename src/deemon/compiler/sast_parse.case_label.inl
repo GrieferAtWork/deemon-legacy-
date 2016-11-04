@@ -62,40 +62,18 @@ DEE_A_RET_EXCEPT(-1) int DeeSAst_ParseCaseLabel(
  DEE_A_INOUT DeeTokenObject *case_token,
  DEE_A_INOUT struct DeeParserLabelRefList *labels_,
  DEE_PARSER_PARAMS) {
- DeeObject *case_lo,*case_hi;
- DeeXAstObject *case_ast;
+ DeeXAstObject *case_lo,*case_hi;
  DeeScopeObject *weak_root;
- if ((case_ast = DeeXAst_ParseUnaryEx(
+ if ((case_lo = DeeXAst_ParseUnaryEx(
   DEE_XAST_UNARAYSUFFIX_FLAG_NOEXPAND,
   DEE_XAST_VARDECL_MODE_DEFAULT,NULL,DEE_PARSER_ARGS)) == NULL) return -1;
- if (case_ast->ast_kind != DEE_XASTKIND_CONST) {
-/*err_case_not_const:*/
-  if (DeeError_CompilerError(DEE_WARNING_EXPECTED_CONSTANT_EXPRESSION_AFTER_CASE,
-   (DeeObject *)lexer,(DeeObject *)case_ast->ast_common.ast_token,
-   "Expected constant expression after 'case'") != 0) {
-err_case_ast: Dee_DECREF(case_ast); return -1;
-  }
-  Dee_INCREF(case_lo = Dee_None);
- } else Dee_INCREF(case_lo = case_ast->ast_const.c_const);
- Dee_DECREF(case_ast);
 
  if (token.tk_id == TPP_TOK_DOTS) {
   // Case range
   if DEE_UNLIKELY(!yield()) {err_case_lo: Dee_DECREF(case_lo); return -1; }
-  if ((case_ast = DeeXAst_ParseUnaryEx(
+  if ((case_hi = DeeXAst_ParseUnaryEx(
    DEE_XAST_UNARAYSUFFIX_FLAG_NOEXPAND,
    DEE_XAST_VARDECL_MODE_DEFAULT,NULL,DEE_PARSER_ARGS)) == NULL) goto err_case_lo;
-  if (case_ast->ast_kind != DEE_XASTKIND_CONST) {
-   if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_CONSTANT_EXPRESSION_AFTER_CASE,
-    (DeeObject *)lexer,(DeeObject *)case_ast->ast_common.ast_token,
-    "Expected constant expression after 'case %r ...'",case_lo) != 0) {
-/*err_case_lo_case_ast:*/ Dee_DECREF(case_lo); goto err_case_ast;
-   }
-   Dee_INCREF(case_hi = Dee_None);
-  } else {
-   Dee_INCREF(case_hi = case_ast->ast_const.c_const);
-  }
-  Dee_DECREF(case_ast);
  } else case_hi = NULL;
 
  // Done parsing case / case range

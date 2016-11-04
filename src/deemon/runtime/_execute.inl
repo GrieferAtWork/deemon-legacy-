@@ -181,7 +181,7 @@ static int _intellisense_rt_execute(
 
 #define RT_DEBUG_CHECK_STACK(n) \
  DEE_ASSERTF((Dee_size_t)(stack_end-stack)>=(Dee_size_t)(n),\
-             "%O(%I64u) : +%.4Ix Stack is too small",\
+             "%O(%I64d) : +%.4Ix Stack is too small",\
              _DeeStackFrame_File(&frame),\
              _DeeStackFrame_Line(&frame)+1,\
              (Dee_size_t)((code-1)-frame.f_code->co_code))
@@ -260,7 +260,7 @@ do{if(!_DeeRefCounter_DecFetch(ob->__ob_refcnt)){\
  Dee_uint16_t rt_arg;
 next_op:
 #if 0 /*< For those REALLY hard to find bugs... */
- DEE_LDEBUG("%O(%I64u) : %O : +%.4Ix : HERE\n",
+ DEE_LDEBUG("%O(%I64d) : %O : +%.4Ix : HERE\n",
             _DeeStackFrame_File(&frame),
             _DeeStackFrame_Line(&frame)+1,
             _DeeStackFrame_Func(&frame),
@@ -1406,6 +1406,50 @@ EXTERN_END;
     Dee_DECREF(RT_TOP); RT_POP_1();
    } while (--rt_arg);
    RT_PUSH_INHERIT(rt_temp);
+   DISPATCH();
+  }
+#endif
+
+#ifdef OP_JUMP_DYN_REL
+  TARGET(OP_JUMP_DYN_REL) {
+   Dee_ssize_t addroff;
+   RT_DEBUG_CHECK_STACK(1);
+EXTERN_BEGIN;
+   rt_itemp = DeeObject_Cast(Dee_ssize_t,RT_TOP,&addroff);
+EXTERN_END;
+   if DEE_UNLIKELY(rt_itemp != 0) RT_HANDLE_EXCEPTION;
+   RT_POP_1();
+   RT_CODE_ADDR() += (addroff-sizeof(Dee_uint8_t));
+   DEE_ASSERTF(RT_CODE_ADDR() >= frame.f_code->co_code &&
+               RT_CODE_ADDR() < frame.f_code->co_code+frame.f_code->co_size,
+               "%s(%I64d) : %k : Code pointer is out-of-bounds after OP_JUMP_DYN_REL:\n"
+               "\tbegin: %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n"
+               "\tend:   %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n"
+               "\taddr:  %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n",
+               _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1,_DeeStackFrame_Func(&frame),
+               frame.f_code->co_code,frame.f_code->co_code+frame.f_code->co_size,RT_CODE_ADDR());
+   DISPATCH();
+  }
+#endif
+
+#ifdef OP_JUMP_DYN_ABS
+  TARGET(OP_JUMP_DYN_ABS) {
+   Dee_size_t newaddr;
+   RT_DEBUG_CHECK_STACK(1);
+EXTERN_BEGIN;
+   rt_itemp = DeeObject_Cast(Dee_size_t,RT_TOP,&newaddr);
+EXTERN_END;
+   if DEE_UNLIKELY(rt_itemp != 0) RT_HANDLE_EXCEPTION;
+   RT_POP_1();
+   RT_CODE_ADDR() = frame.f_code->co_code+newaddr;
+   DEE_ASSERTF(RT_CODE_ADDR() >= frame.f_code->co_code &&
+               RT_CODE_ADDR() < frame.f_code->co_code+frame.f_code->co_size,
+               "%s(%I64d) : %k : Code pointer is out-of-bounds after OP_JUMP_DYN_ABS:\n"
+               "\tbegin: %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n"
+               "\tend:   %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n"
+               "\taddr:  %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n",
+               _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1,_DeeStackFrame_Func(&frame),
+               frame.f_code->co_code,frame.f_code->co_code+frame.f_code->co_size,RT_CODE_ADDR());
    DISPATCH();
   }
 #endif

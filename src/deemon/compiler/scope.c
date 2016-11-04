@@ -52,21 +52,25 @@ DEE_A_RET_MAYBE_NULL struct DeeParserLabel *DeeParserLabelList_GetLabel(
  return iter;
 }
 DEE_A_RET_MAYBE_NULL struct DeeParserLabel *DeeParserLabelList_GetCase(
- DEE_A_IN struct DeeParserLabelList const *self, DEE_A_IN DeeObject *case_value) {
+ DEE_A_IN struct DeeParserLabelList const *self,
+ DEE_A_IN struct DeeXAstObject *case_value) {
  struct DeeParserLabel *iter; int temp;
  DEE_ASSERT(self);
- DEE_ASSERT(DeeObject_Check(case_value));
+ DEE_ASSERT(DeeObject_Check(case_value) && DeeXAst_Check(case_value));
  iter = self->ll_front;
  while (iter) {
   switch (iter->pl_kind) {
    {
     if (0) { case DEE_PARSERLABEL_KIND_C_CASE:
-     temp = DeeObject_DeepEquals(iter->pl_c_case.clc_case,case_value);
-     if (temp == DEE_OBJECT_DEEPEQUALS_LIKELY) temp = 0;
+     temp = DeeXAst_Equals(iter->pl_c_case.clc_case,case_value);
     }
     if (0) { case DEE_PARSERLABEL_KIND_C_RANGE:
-     temp = DeeObject_CompareLe(iter->pl_c_range.clr_begin,case_value);
-     if (temp == 1) temp = DeeObject_CompareGe(iter->pl_c_range.clr_end,case_value);
+     if (case_value->ast_kind == DEE_XASTKIND_CONST &&
+         iter->pl_c_range.clr_begin->ast_kind == DEE_XASTKIND_CONST &&
+         iter->pl_c_range.clr_end->ast_kind == DEE_XASTKIND_CONST) {
+      temp = DeeObject_CompareLe(iter->pl_c_range.clr_begin->ast_const.c_const,case_value->ast_const.c_const);
+      if (temp == 1) temp = DeeObject_CompareGe(iter->pl_c_range.clr_end->ast_const.c_const,case_value->ast_const.c_const);
+     } else break;
     }
     if (temp < 0) DeeError_Handled(); // No equal
     else if (temp) return iter;
@@ -78,26 +82,38 @@ DEE_A_RET_MAYBE_NULL struct DeeParserLabel *DeeParserLabelList_GetCase(
  return iter;
 }
 DEE_A_RET_MAYBE_NULL struct DeeParserLabel *DeeParserLabelList_GetCaseRange(
- DEE_A_IN struct DeeParserLabelList const *self, DEE_A_IN DeeObject *case_begin,
- DEE_A_IN DeeObject *case_end) {
+ DEE_A_IN struct DeeParserLabelList const *self,
+ DEE_A_IN DeeXAstObject *case_begin, DEE_A_IN DeeXAstObject *case_end) {
  struct DeeParserLabel *iter; int temp;
  DEE_ASSERT(self);
- DEE_ASSERT(DeeObject_Check(case_begin));
- DEE_ASSERT(DeeObject_Check(case_end));
+ DEE_ASSERT(DeeObject_Check(case_begin) && DeeXAst_Check(case_begin));
+ DEE_ASSERT(DeeObject_Check(case_end) && DeeXAst_Check(case_end));
  iter = self->ll_front;
  while (iter) {
   switch (iter->pl_kind) {
    {
     if (0) { case DEE_PARSERLABEL_KIND_C_CASE:
-     temp = DeeObject_CompareLe(case_begin,iter->pl_c_case.clc_case);
-     if (temp == 1) temp = DeeObject_CompareGe(case_end,iter->pl_c_case.clc_case);
+     if (case_begin->ast_kind == DEE_XASTKIND_CONST &&
+         case_end->ast_kind == DEE_XASTKIND_CONST &&
+         iter->pl_c_case.clc_case->ast_kind == DEE_XASTKIND_CONST) {
+      temp = DeeObject_CompareLe(case_begin->ast_const.c_const,iter->pl_c_case.clc_case->ast_const.c_const);
+      if (temp == 1) temp = DeeObject_CompareGe(case_end->ast_const.c_const,iter->pl_c_case.clc_case->ast_const.c_const);
+     } else break;
     }
     if (0) { case DEE_PARSERLABEL_KIND_C_RANGE:
-     temp = DeeObject_CompareGe(case_begin,iter->pl_c_range.clr_begin);
-     if (temp == 1) temp = DeeObject_CompareLe(case_begin,iter->pl_c_range.clr_end);
-     if (temp == 0) {
-      temp = DeeObject_CompareLe(case_begin,iter->pl_c_range.clr_begin);
-      if (temp == 1) temp = DeeObject_CompareGe(case_end,iter->pl_c_range.clr_begin);
+     if (case_begin->ast_kind == DEE_XASTKIND_CONST &&
+         case_end->ast_kind == DEE_XASTKIND_CONST &&
+         iter->pl_c_range.clr_begin->ast_kind == DEE_XASTKIND_CONST &&
+         iter->pl_c_range.clr_end->ast_kind == DEE_XASTKIND_CONST) {
+      temp = DeeObject_CompareGe(case_begin->ast_const.c_const,iter->pl_c_range.clr_begin->ast_const.c_const);
+      if (temp == 1) temp = DeeObject_CompareLe(case_begin->ast_const.c_const,iter->pl_c_range.clr_end->ast_const.c_const);
+      if (temp == 0) {
+       temp = DeeObject_CompareLe(case_begin->ast_const.c_const,iter->pl_c_range.clr_begin->ast_const.c_const);
+       if (temp == 1) temp = DeeObject_CompareGe(case_end->ast_const.c_const,iter->pl_c_range.clr_begin->ast_const.c_const);
+      }
+     } else {
+      temp = DeeXAst_Equals(case_begin,iter->pl_c_range.clr_begin);
+      if (temp == 1) temp = DeeXAst_Equals(case_end,iter->pl_c_range.clr_end);
      }
     }
     if (temp < 0) DeeError_Handled(); // No equal
@@ -150,11 +166,11 @@ DEE_A_RET_EXCEPT(NULL) struct DeeParserLabel *DeeParserLabelList_AddLabel(
 }
 DEE_A_RET_EXCEPT(NULL) struct DeeParserLabel *DeeParserLabelList_AddCase(
  DEE_A_INOUT struct DeeParserLabelList *self,
- DEE_A_INOUT DeeTokenObject *dest_token, DEE_A_INOUT DeeObject *case_value) {
+ DEE_A_INOUT DeeTokenObject *dest_token, DEE_A_INOUT DeeXAstObject *case_value) {
  struct DeeParserLabel *result;
  DEE_ASSERT(self);
  DEE_ASSERT(DeeObject_Check(dest_token) && DeeToken_Check(dest_token));
- DEE_ASSERT(DeeObject_Check(case_value));
+ DEE_ASSERT(DeeObject_Check(case_value) && DeeXAst_Check(case_value));
  DEE_ASSERTF(!DeeParserLabelList_GetCase(self,case_value),"Label already exists");
  if ((result = _DeeParserLabelList_AllocLabel(self)) == NULL) return NULL;
  result->pl_name = 0;
@@ -166,13 +182,13 @@ DEE_A_RET_EXCEPT(NULL) struct DeeParserLabel *DeeParserLabelList_AddCase(
 }
 DEE_A_RET_EXCEPT(NULL) struct DeeParserLabel *DeeParserLabelList_AddCaseRange(
  DEE_A_INOUT struct DeeParserLabelList *self,
- DEE_A_INOUT DeeTokenObject *dest_token, DEE_A_INOUT DeeObject *case_begin,
- DEE_A_INOUT DeeObject *case_end) {
+ DEE_A_INOUT DeeTokenObject *dest_token, DEE_A_INOUT DeeXAstObject *case_begin,
+ DEE_A_INOUT DeeXAstObject *case_end) {
  struct DeeParserLabel *result;
  DEE_ASSERT(self);
  DEE_ASSERT(DeeObject_Check(dest_token) && DeeToken_Check(dest_token));
- DEE_ASSERT(DeeObject_Check(case_begin));
- DEE_ASSERT(DeeObject_Check(case_end));
+ DEE_ASSERT(DeeObject_Check(case_begin) && DeeXAst_Check(case_begin));
+ DEE_ASSERT(DeeObject_Check(case_end) && DeeXAst_Check(case_end));
  DEE_ASSERTF(!DeeParserLabelList_GetCaseRange(self,case_begin,case_end),"Label already exists");
  if ((result = _DeeParserLabelList_AllocLabel(self)) == NULL) return NULL;
  result->pl_name = 0;

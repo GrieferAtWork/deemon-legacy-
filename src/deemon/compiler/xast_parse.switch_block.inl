@@ -34,26 +34,17 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_ParseSwitchBlock(
  entry_c = 0; entry_a = 0; entry_v = 0;
  default_switch = NULL;
  while (1) {
-  DeeObject *case_key;
+  DeeXAstObject *case_key;
   DeeXAstObject *case_expr;
   while (token.tk_id == ';') if DEE_UNLIKELY(!yield()) goto err;
   switch (token.tk_id) {
    case KWD_case: {
-    DeeXAstObject *case_key_ast;
     if DEE_UNLIKELY(!yield()) goto err;
 parse_case:
-    if ((case_key_ast = DeeXAst_ParseSingle(DEE_PARSER_ARGS_EX(
+    if DEE_UNLIKELY((case_key = DeeXAst_ParseSingle(DEE_PARSER_ARGS_EX(
      parser_flags|DEE_PARSER_FLAG_GENERATE_CONSTANT))) == NULL) goto err;
-    if (case_key_ast->ast_kind != DEE_XASTKIND_CONST) {
-     if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_CONST_AFTER_CASE_IN_EXPR_SWITCH,
-      (DeeObject *)lexer,(DeeObject *)token_ob,
-      "Expected constant in case expression switch after 'case', but got:\n"
-      "\t&>r",case_key_ast) != 0) { Dee_DECREF(case_key_ast); goto err; }
-     case_key = DeeNone_New();
-    } else Dee_INCREF(case_key = case_key_ast->ast_const.c_const);
-    Dee_DECREF(case_key_ast);
-    if (token.tk_id != ':') {
-     if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_COLLON_AFTER_CASE_IN_EXPR_SWITCH,
+    if DEE_UNLIKELY(token.tk_id != ':') {
+     if DEE_UNLIKELY(DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_COLLON_AFTER_CASE_IN_EXPR_SWITCH,
       (DeeObject *)lexer,(DeeObject *)token_ob,
       "Expected ':' in case expression after 'case %r'",case_key) != 0) goto err_case_key;
     } else if DEE_UNLIKELY(!yield()) goto err_case_key;
@@ -62,14 +53,14 @@ parse_case:
 
    case KWD_default:
     if DEE_UNLIKELY(!yield()) goto err;
-    if (token.tk_id != ':') {
-     if (DeeError_CompilerError(DEE_WARNING_EXPECTED_COLLON_AFTER_DEFAULT_IN_EXPR_SWITCH,
+    if DEE_UNLIKELY(token.tk_id != ':') {
+     if DEE_UNLIKELY(DeeError_CompilerError(DEE_WARNING_EXPECTED_COLLON_AFTER_DEFAULT_IN_EXPR_SWITCH,
       (DeeObject *)lexer,(DeeObject *)token_ob,
       "Expected ':' in case expression after 'default'") != 0) goto err;
     } else if DEE_UNLIKELY(!yield()) goto err;
     case_key = NULL;
 parse_case_expr:
-    if ((case_expr = DeeXAst_ParseSingle(DEE_PARSER_ARGS)) == NULL) {
+    if DEE_UNLIKELY((case_expr = DeeXAst_ParseSingle(DEE_PARSER_ARGS)) == NULL) {
 err_case_key: Dee_XDECREF(case_key); goto err;
     }
     break;
@@ -81,7 +72,7 @@ err_case_key: Dee_XDECREF(case_key); goto err;
   if (case_key) {
    if (entry_c == entry_a) {
     if (!entry_a) entry_a = 2; else entry_a *= 2;
-    while ((new_entryv = (struct DeeXAstSwitchEntry *)realloc_nz(
+    while DEE_UNLIKELY((new_entryv = (struct DeeXAstSwitchEntry *)realloc_nz(
      entry_v,entry_a*sizeof(struct DeeXAstSwitchEntry))) == NULL) {
      if DEE_LIKELY(Dee_CollectMemory()) continue;
      Dee_DECREF(case_expr);
@@ -95,8 +86,9 @@ err_case_key: Dee_XDECREF(case_key); goto err;
    Dee_INHERIT_REF(entry_v[entry_c].se_value,case_expr);
    ++entry_c;
   } else {
-   if (default_switch) {
-    if (DeeError_CompilerErrorf(DEE_WARNING_DEFAULT_CASE_ALREADY_DECLARED_IN_EXPR_SWITCH,
+   if DEE_UNLIKELY(default_switch) {
+    if DEE_UNLIKELY(DeeError_CompilerErrorf(
+     DEE_WARNING_DEFAULT_CASE_ALREADY_DECLARED_IN_EXPR_SWITCH,
      (DeeObject *)lexer,(DeeObject *)case_expr->ast_common.ast_token,
      "The default switch was already declared\n"
      "%s(%d) : %k : See reference to previous declaration",
@@ -105,7 +97,9 @@ err_case_key: Dee_XDECREF(case_key); goto err;
      default_switch->ast_common.ast_token) != 0)
     { Dee_DECREF(case_expr); goto err; }
     Dee_DECREF(case_expr);
-   } else Dee_INHERIT_REF(default_switch,case_expr);
+   } else {
+    Dee_INHERIT_REF(default_switch,case_expr);
+   }
   }
   if (token.tk_id != ';' && token.tk_id != ',') break;
   if DEE_UNLIKELY(!yield()) goto err;

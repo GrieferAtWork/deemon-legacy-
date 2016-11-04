@@ -343,7 +343,7 @@ do{\
 }while(0)
 
 struct DeeXAstSwitchEntry {
- DEE_A_REF DeeObject     *se_key;    /*< [1..1] The switch key. */
+ DEE_A_REF DeeXAstObject *se_key;    /*< [1..1] The switch key. */
  DEE_A_REF DeeXAstObject *se_value;  /*< [1..1] The value that the key will map to. */
  Dee_size_t               se_jmparg; /*< Used during compilation to store the address of the jmp-to-end argument */
 };
@@ -455,8 +455,8 @@ do{\
 
 
 #define DEE_XAST_AST_HEAD \
-           DeeXAstKind     ast_kind;  /*< The kind of AST. */\
- DEE_A_REF DeeTokenObject *ast_token; /*< [1..1] token of this AST (used in debug/error output) */
+                  DeeXAstKind     ast_kind;  /*< The kind of AST. */\
+ DEE_A_REF struct DeeTokenObject *ast_token; /*< [1..1] token of this AST (used in debug/error output) */
 
 struct DeeXAstCommonAst { DEE_XAST_AST_HEAD };
 
@@ -2744,8 +2744,8 @@ do{ _DeeOptimizerAssumptions_Quit(&name); }while(0)
 #ifndef DEE_OPTIMIZE_PARAMS
 #define DEE_OPTIMIZE_PARAMS \
  DEE_A_INOUT Dee_size_t *performed_optimizations,\
- DEE_A_INOUT DeeLexerObject *lexer, DEE_A_INOUT DeeScopeObject *scope,\
- DEE_A_IN DeeCompilerConfig const *config, DEE_A_IN Dee_uint32_t optimize_flags,\
+ DEE_A_INOUT struct DeeLexerObject *lexer, DEE_A_INOUT struct DeeScopeObject *scope,\
+ DEE_A_IN struct DeeCompilerConfig const *config, DEE_A_IN Dee_uint32_t optimize_flags,\
  DEE_A_IN struct DeeOptimizerAssumptions *assumptions
 #define DEE_OPTIMIZE_ARGS                                            performed_optimizations,lexer,scope,config,optimize_flags,assumptions
 #define DEE_OPTIMIZE_ARGS_SCOPE(scope,assumptions)                   performed_optimizations,lexer,scope,config,optimize_flags,assumptions

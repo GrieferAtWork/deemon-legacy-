@@ -208,8 +208,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeXAst_Equals(
    end = (iter = self->ast_switch.s_entryv)+self->ast_switch.s_entryc;
    rhs_iter = right->ast_switch.s_entryv;
    while (iter != end) {
-    if ((temp = DeeObject_DeepEquals(iter->se_key,rhs_iter->se_key)
-     ) != DEE_OBJECT_DEEPEQUALS_TRUE) return DEE_UNLIKELY(temp < 0) ? temp : 0;
+    if ((temp = DeeXAst_Equals(iter->se_key,rhs_iter->se_key)) <= 0) return temp;
     if ((temp = DeeXAst_Equals(iter->se_value,rhs_iter->se_value)) <= 0) return temp;
     ++iter,++rhs_iter;
    }
