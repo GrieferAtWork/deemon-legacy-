@@ -226,30 +226,29 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewOperatorCall(
   return DeeXAst_NewBinary(DEE_XASTKIND_CALL,operator_token,lexer,
                            parser_flags,ast_this,ast_args);
  }
- if ((argc = DeeXAst_TupleSize(ast_args)) == (Dee_size_t)-1) {
+ if DEE_UNLIKELY((argc = DeeXAst_TupleSize(ast_args)) == (Dee_size_t)-1) {
   DeeObject *operator_function;
   DeeXAstObject *expanded_args[2],*merged_args;
 deduce_runtime:
   // Cannot deduce argument count --> Must use intrinsic functions to determine at runtime
-  operator_function = DeeBuiltin_GetIntrinsicFunctionOfTypeSlot(typeslot);
-  if (!operator_function) {
+  if DEE_UNLIKELY((operator_function = DeeBuiltin_GetIntrinsicFunctionOfTypeSlot(typeslot)) == NULL) {
    // Can this even happen?
-   if (DeeError_CompilerErrorf(DEE_WARNING_NO_RUNTIME_SUPPORT_FOR_UNPREDICTABLE_TYPESLOT,
+   if DEE_UNLIKELY(DeeError_CompilerErrorf(DEE_WARNING_NO_RUNTIME_SUPPORT_FOR_TYPESLOT,
     (DeeObject *)lexer,(DeeObject *)operator_token,
-    "No runtime support for 'operator %s' with an unpredictable argument count",
+    "No runtime support for 'operator %s'",
     _DeeType_ClassOperatorName(typeslot)) != 0) return NULL;
 call_none:
    operator_function = Dee_None; // *shrugs*
   }
-  if ((ast_operator_function = DeeXAst_NewConst(operator_token,operator_function)) == NULL) return NULL;
+  if DEE_UNLIKELY((ast_operator_function = DeeXAst_NewConst(operator_token,operator_function)) == NULL) return NULL;
   expanded_args[1] = DeeXAst_NewExpand(ast_args->ast_common.ast_token,
                                        lexer,parser_flags,ast_args);
-  if (!expanded_args[1]) {err_ast_operator_function: ast_result = NULL; goto end_ast_operator_function; }
+  if DEE_UNLIKELY(!expanded_args[1]) {err_ast_operator_function: ast_result = NULL; goto end_ast_operator_function; }
   expanded_args[0] = ast_this;
   merged_args = DeeXAst_NewTuple(ast_this->ast_common.ast_token,
                                  lexer,parser_flags,2,expanded_args);
   Dee_DECREF(expanded_args[1]);
-  if (!merged_args) goto err_ast_operator_function;
+  if DEE_UNLIKELY(!merged_args) goto err_ast_operator_function;
   ast_result = DeeXAst_NewBinary(DEE_XASTKIND_CALL,operator_token,lexer,
                                  parser_flags,ast_operator_function,merged_args);
   Dee_DECREF(merged_args);
@@ -258,7 +257,7 @@ end_ast_operator_function:
   return ast_result;
  }
  // Optimize operator calls into real operator ASTs
- if ((error = DeeXAst_FixOperatorWithArgcount(lexer,operator_token,&typeslot,argc)) < 0) return NULL;
+ if DEE_UNLIKELY((error = DeeXAst_FixOperatorWithArgcount(lexer,operator_token,&typeslot,argc)) < 0) return NULL;
  if (error != 0) goto deduce_runtime;
  switch (typeslot) {
   case DEE_XAST_TYPESLOT_NONE: goto deduce_runtime;

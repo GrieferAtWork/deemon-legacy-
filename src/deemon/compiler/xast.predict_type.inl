@@ -27,7 +27,7 @@ DEE_DECL_BEGIN
 
 DEE_A_RET_WUNUSED DEE_A_RET_MAYBE_NULL DeeTypeObject const *
 DeeXAst_PredictType(DEE_A_IN DeeXAstObject const *self) {
- DeeTypeObject const *result,*ta,*tb,*tc;
+ DeeTypeObject const *result,*ta,*tb;
  DEE_ASSERT(DeeObject_Check(self) && DeeXAst_Check(self));
  switch (self->ast_kind) {
   case DEE_XASTKIND_ATTR_DEL:
@@ -242,9 +242,10 @@ DeeXAst_PredictType(DEE_A_IN DeeXAstObject const *self) {
 
   case DEE_XASTKIND_SEQ_RANGE_GET: {
    if ((ta = DeeXAst_PredictType(self->ast_seq_range_get.sr_seq)) == NULL) return NULL;
-   tb = self->ast_seq_range_get.sr_begin ? DeeXAst_PredictType(self->ast_seq_range_get.sr_begin) : (DeeTypeObject *)&DeeNone_Type;
-   tc = self->ast_seq_range_get.sr_end ? DeeXAst_PredictType(self->ast_seq_range_get.sr_end) : (DeeTypeObject *)&DeeNone_Type;
-   DeeType_GetRangeAstAttr(ta,DEE_AST_ATTRIBUTE_FLAG_NONE,tb,tc,&result);
+   DeeType_GetRangeAstAttr(ta,DEE_AST_ATTRIBUTE_FLAG_NONE,
+                           self->ast_seq_range_get.sr_begin ? DeeXAst_PredictType(self->ast_seq_range_get.sr_begin) : (DeeTypeObject *)&DeeNone_Type,
+                           self->ast_seq_range_get.sr_end ? DeeXAst_PredictType(self->ast_seq_range_get.sr_end) : (DeeTypeObject *)&DeeNone_Type,
+                           &result);
    return result;
   } break;
 
@@ -253,9 +254,8 @@ DeeXAst_PredictType(DEE_A_IN DeeXAstObject const *self) {
 
   case DEE_XASTKIND_IN:
    if ((ta = DeeXAst_PredictType(self->ast_operator.op_b)) != NULL) {
-    tb = DeeXAst_PredictType(self->ast_operator.op_a);
-    DeeType_BinaryAstAttr(ta,DeeType_SLOT_ID(tp_seq_contains),
-                          DEE_AST_ATTRIBUTE_FLAG_NONE,tb,&result);
+    DeeType_BinaryAstAttr(ta,DeeType_SLOT_ID(tp_seq_contains),DEE_AST_ATTRIBUTE_FLAG_NONE,
+                          DeeXAst_PredictType(self->ast_operator.op_a),&result);
     return result;
    }
    break;
@@ -380,23 +380,50 @@ DeeXAst_PredictType(DEE_A_IN DeeXAstObject const *self) {
    goto default_predict;
   } break;
 
+  DEE_XASTKIND_CASE_INPLACE_VAR_UNARY {
+#if 0
+   // TODO: Predict type of variable using assumptions
+   if ((ta = DeeXAst_PredictType(self->ast_unary_var.uiv_var)) != NULL) {
+    DeeType_UnaryAstAttr(ta,DeeType_SlotIdFromXAstKind(self->ast_kind),
+                         DEE_AST_ATTRIBUTE_FLAG_NONE,&result);
+    return result;
+   } else
+#endif
+   {
+    return NULL;
+   }
+  } break;
+
+  DEE_XASTKIND_CASE_INPLACE_VAR_BINARY {
+#if 0
+   // TODO: Predict type of variable using assumptions
+   if ((ta = DeeXAst_PredictType(self->ast_binary_var.biv_var)) != NULL) {
+    DeeType_BinaryAstAttr(ta,DeeType_SlotIdFromXAstKind(self->ast_kind),DEE_AST_ATTRIBUTE_FLAG_NONE,
+                          DeeXAst_PredictType(self->ast_binary_var.biv_arg),&result);
+    return result;
+   } else
+#endif
+   {
+    return NULL;
+   }
+  } break;
+
+
   default:default_predict:
    if (DEE_XASTKIND_ISOPERATOR(self->ast_kind)) {
    switch (DEE_XASTKIND_OPCOUNT(self->ast_kind)) {
     case 3:
      if ((ta = DeeXAst_PredictType(self->ast_operator.op_a)) != NULL) {
-      tb = DeeXAst_PredictType(self->ast_operator.op_b);
-      tc = DeeXAst_PredictType(self->ast_operator.op_c);
-      DeeType_TrinaryAstAttr(ta,DeeType_SlotIdFromXAstKind(self->ast_kind),
-                             DEE_AST_ATTRIBUTE_FLAG_NONE,tb,tc,&result);
+      DeeType_TrinaryAstAttr(ta,DeeType_SlotIdFromXAstKind(self->ast_kind),DEE_AST_ATTRIBUTE_FLAG_NONE,
+                             DeeXAst_PredictType(self->ast_operator.op_b),
+                             DeeXAst_PredictType(self->ast_operator.op_c),&result);
       return result;
      }
      break;
     case 2:
      if ((ta = DeeXAst_PredictType(self->ast_operator.op_a)) != NULL) {
-      tb = DeeXAst_PredictType(self->ast_operator.op_b);
-      DeeType_BinaryAstAttr(ta,DeeType_SlotIdFromXAstKind(self->ast_kind),
-                            DEE_AST_ATTRIBUTE_FLAG_NONE,tb,&result);
+      DeeType_BinaryAstAttr(ta,DeeType_SlotIdFromXAstKind(self->ast_kind),DEE_AST_ATTRIBUTE_FLAG_NONE,
+                            DeeXAst_PredictType(self->ast_operator.op_b),&result);
       return result;
      }
      break;

@@ -83,7 +83,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXAst_Optimize(
      // >> local i = 10;
      // >> i += 20; // Without this precaution, we would 
      // >> print i; // Must be 30
-     // TODO: We can't even put immutable types just like that.
+     // NOTE: We can't even put immutable types just like that.
      //       Strings are immutable, but due to the work-around used
      //       to get inplace operators working with traceable slots,
      //       code like this...:
@@ -91,18 +91,18 @@ DEE_A_RET_EXCEPT(-1) int DeeXAst_Optimize(
      //       >> x += "bar"; // Can't inline '"foo"' even though it's immutable
      //       >> print x;
      //       ... would otherwise be broken.
-     //       The todo in this is to track how a variable is used more in-depth.
-     //       Mainly tracking whether or not it's being used in an inplace-operation.
-     // TODO: What we'd really need here is some way of tracking how often a variable
-     //       is used as the left-hand-side operand of a binary inplace-expression.
-     //       And only if it's never used in such a place, and if its type is immutable,
+     // NOTE: What deemon is currently doing, is to track how often a variable
+     //       is used as the left-hand-side operand of a binary inplace-expression,
+     //       by simply following existing rules and counting such a such as an initialization.
+     //       Only if the variable is never used in such a place, and if its type is immutable,
      //       as indicated by 'DeeType_IsImmutable', then we can allow for constant
-     //       replacement during optimization more than once.
+     //       replacement during optimization, even if it's used more than once
      //      (NOTE: This effects: ++<x>,<x>++,--<x>,<x>--,+=,-=,*=,/=,%=,**=,<<=,>>=,&=,|=,^=)
      //       REMINDER: The compiler is allowed to substitute '++x' with
      //                 'x += 1', before replacing that with 'x = x+1'.
-     if (/*DeeType_IsImmutable(initializer_type) ||*/
-         DeeLocalVar_GET_USES(self->ast_vardecl.vd_var) == 1) {
+     //                 >> So that's why this case is now tracked as a store
+     if (DeeLocalVar_GET_USES(self->ast_vardecl.vd_var) == 1 ||
+        (DeeType_IsImmutable(initializer_type) && DeeLocalVar_GET_INIT(self->ast_vardecl.vd_var) == 1)) {
       error = DeeOptimizerAssumptions_AddAssumeInit(
        assumptions,self->ast_vardecl.vd_var,constant_initializer);
       if DEE_UNLIKELY(error == DEE_OPTIMIZER_ASSUMPTION_ADDVARASSUMPTION_ERROR) return -1;
@@ -171,12 +171,12 @@ DEE_A_RET_EXCEPT(-1) int DeeXAst_Optimize(
       case DEE_XASTKIND_CELL: {
        // Subtract self-references
 #ifdef DEE_DEBUG
-       Dee_size_t self_refs = DeeXAst_CountVariableUses(self->ast_vardecl.vd_init,self->ast_vardecl.vd_var);
+       Dee_size_t self_refs = DeeXAst_CountVariableLoads(self->ast_vardecl.vd_init,self->ast_vardecl.vd_var);
        DEE_ASSERTF(actual_uses >= self_refs,"Initializer accounts for too many self-references "
                    "(%Iu exceeds maximum of %Iu)",self_refs,actual_uses);
        actual_uses -= self_refs;
 #else
-       actual_uses -= DeeXAst_CountVariableUses(self->ast_vardecl.vd_init,self->ast_vardecl.vd_var);
+       actual_uses -= DeeXAst_CountVariableLoads(self->ast_vardecl.vd_init,self->ast_vardecl.vd_var);
 #endif
       } break;
       default: break;
@@ -215,7 +215,7 @@ vardecl_assign_none_or_init_branch:
       //          depend on the side-effects of its initializer.
       //          And don't rely on the fact that an [[unused]] variable
       //          will be optimized away if it is really never used.
-      DeeXAst_AssignConst(self,Dee_None);
+      DeeXAst_AssignEmpty(self);
      } else {
 vardecl_assign_init_branch:
       Dee_INCREF(unused_var = self->ast_vardecl.vd_var);
@@ -263,7 +263,7 @@ vardecl_assign_init_branch:
        // Optimize empty statement --> none constant
        VLOG_OPTIMIZE(statement->ast_common.ast_token,
                      "Transforming empty statement into none-constant\n");
-       DeeXAst_AssignConst(self,Dee_None);
+       DeeXAst_AssignEmpty(self);
        ++*performed_optimizations;
       } break;
 
@@ -458,12 +458,12 @@ vardecl_assign_init_branch:
       if (is_key_noeffect) {
        VLOG_OPTIMIZE(iter->de_key->ast_common.ast_token,
                      "Removing key without side-effects from unused dict\n");
-       DeeXAst_AssignConst(iter->de_key,Dee_None);
+       DeeXAst_AssignEmpty(iter->de_key);
        ++*performed_optimizations;
       } else if (is_item_noeffect) {
        VLOG_OPTIMIZE(iter->de_item->ast_common.ast_token,
                      "Removing item without side-effects from unused dict\n");
-       DeeXAst_AssignConst(iter->de_item,Dee_None);
+       DeeXAst_AssignEmpty(iter->de_item);
        ++*performed_optimizations;
       }
       ++iter;
@@ -506,7 +506,7 @@ vardecl_assign_init_branch:
        !self->ast_delvar.d_var->lv_init) {
     VLOG_OPTIMIZE(self->ast_common.ast_token,
                   "Removing uninitialized variable from del\n");
-    DeeXAst_AssignConst(self,Dee_None);
+    DeeXAst_AssignEmpty(self);
     ++*performed_optimizations;
    }
    break;
@@ -640,7 +640,7 @@ assign_ifc_succ_branch:
    if (!self->ast_iffalse.ic_succ) {
     if (!self->ast_iffalse.ic_fail) {
 assign_empty:
-     DeeXAst_AssignConst(self,Dee_None);
+     DeeXAst_AssignEmpty(self);
     } else {
 assign_ifc_fail_branch:
      DeeXAst_AssignMove(self,self->ast_iffalse.ic_fail);

@@ -109,9 +109,9 @@ DEE_A_RET_EXCEPT(-1) int DeeOptimizerAssumptions_AddVarAssumption(
          Dee_DECREF(iter->oa_varinit.ovia_init);
          iter->oa_varinit.ovia_init = arg;
         } else {
+         // Create a new (more dominant) assumption
          if (result == DEE_OPTIMIZER_ASSUMPTION_ADDVARASSUMPTION_NOOP)
           result = DEE_OPTIMIZER_ASSUMPTION_ADDVARASSUMPTION_ADDED;
-         // Create a new (more dominant) assumption
          // NOTE: Also need to degrade all previously made assumptions
          if (Dee_TYPE(iter->oa_varinit.ovia_var) == Dee_TYPE(arg)) {
           // Must degrade old assumption
@@ -157,6 +157,7 @@ degrade_old:
           Dee_INHERIT_REF(iter->oa_vartype.ovta_type,old_type);
           iter->oa_kind = DEE_OPTIMIZER_ASSUMPTION_KIND_VARTYPE;
          } else {
+do_delete_old_setres:
           if (result == DEE_OPTIMIZER_ASSUMPTION_ADDVARASSUMPTION_NOOP)
            result = DEE_OPTIMIZER_ASSUMPTION_ADDVARASSUMPTION_ADDED;
 do_delete_old:
@@ -176,12 +177,10 @@ do_delete_old:
                  DeeType_Check(iter->oa_vartype.ovta_type));
       if (iter->oa_vartype.ovta_var == local_var) {
        if (kind == DEE_OPTIMIZER_ASSUMPTION_KIND_VARINIT) {
-        if (result == DEE_OPTIMIZER_ASSUMPTION_ADDVARASSUMPTION_NOOP)
-         result = DEE_OPTIMIZER_ASSUMPTION_ADDVARASSUMPTION_ADDED;
         // Existing type assumption
         if (Dee_TYPE(arg) != iter->oa_vartype.ovta_type) {
          // Types didn't match, so we need to delete this assumption and create a new one
-         goto do_delete_old;
+         goto do_delete_old_setres;
         } else if (assumptions_iter == self) {
          // With the types matching, we need to override
          // the assumption if it was made in our scope.
@@ -212,9 +211,7 @@ do_delete_old:
           DEE_ASSERT(iter->oa_kind == DEE_OPTIMIZER_ASSUMPTION_KIND_VARTYPE);
          } else {
           // Delete it, but add a new one later
-          if (result == DEE_OPTIMIZER_ASSUMPTION_ADDVARASSUMPTION_NOOP)
-           result = DEE_OPTIMIZER_ASSUMPTION_ADDVARASSUMPTION_ADDED;
-          goto do_delete_old;
+          goto do_delete_old_setres;
          }
         }
        }

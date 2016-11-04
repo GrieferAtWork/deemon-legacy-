@@ -925,6 +925,15 @@ DeeObject *const _DeeBuiltin_ConstantFunctions[] = {
  (DeeObject *)&DeeBuiltinFunction___builtin_lvalue_add,
  (DeeObject *)&DeeBuiltinFunction___builtin_lvalue_rem,
 #endif
+ (DeeObject *)&DeeBuiltinFunction___dual_posoradd__,
+ (DeeObject *)&DeeBuiltinFunction___dual_negorsub__,
+#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
+ (DeeObject *)&DeeBuiltinFunction___dual_dereformul__,
+ (DeeObject *)&DeeBuiltinFunction___dual_reforand__,
+#endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+ (DeeObject *)&DeeBuiltinFunction___dual_getitemorgetrange__,
+ (DeeObject *)&DeeBuiltinFunction___dual_delitemordelrange__,
+ (DeeObject *)&DeeBuiltinFunction___dual_setitemorsetrange__,
  (DeeObject *)&DeeBuiltinFunction___builtin_fs_path_head,
  (DeeObject *)&DeeBuiltinFunction___builtin_fs_path_tail,
  (DeeObject *)&DeeBuiltinFunction___builtin_fs_path_file,

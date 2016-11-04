@@ -109,9 +109,9 @@
 #define OP_ATTR_SET               0x45 // push(__setattr__(pop(2),pop(0),pop(1)))
 #define OP_ROT_2                  0x46 // push(pop(1))              // rotate top 2 stack entries
 #define OP_LROT_3                 0x47 // rotate top 3 stack entries: 'abc' -> 'cab'
-#define OP_TRY_END                0x48 // Pop the last exception hander from the list of active handlers (NOTE: If it's a finally handler, it is executed)
-#define OP_EXCEPT_END             0x49 // Written at the end of exception handling code (cleans up the exception chain)
-#define OP_FINALLY_END            0x4A // Written at the end of finally handling code (rethrows finally exceptions)
+#define OP_TRY_END                0x48 // Pop the last exception hander from the stack of active handlers (NOTE: If it's a finally handler, it is executed before returning to the opcode following this one, unless an error occurred in the finally-block)
+#define OP_EXCEPT_END             0x49 // Written at the end of exception handling code (cleans up the exception chain by dropping the exception currently being handled)
+#define OP_FINALLY_END            0x4A // Written at the end of finally handling code (rethrows finally exceptions and returns to the address this finally block was executed from)
 #define OP_THROW                  0x4B // throw pop(0)
 #define OP_RETHROW                0x4C // throw
 #define OP_CONCAT_TUPLE           0x4D // push(pop(1)+pop(0))
@@ -214,7 +214,7 @@
 //UNUSED:                         (Dee_uint8_t)(OPFLAG_ARG|0x27)
 //UNUSED:                         (Dee_uint8_t)(OPFLAG_ARG|0x28)
 //UNUSED:                         (Dee_uint8_t)(OPFLAG_ARG|0x29)
-#define OP_TRY_BEGIN              (Dee_uint8_t)(OPFLAG_ARG|0x2A) // Add the exception handler in unsigned(ARG) to the front of the list of active handlers
+#define OP_TRY_BEGIN              (Dee_uint8_t)(OPFLAG_ARG|0x2A) // Add the exception handler in unsigned(ARG) ontop of the stack of active handlers
 //UNUSED:                         (Dee_uint8_t)(OPFLAG_ARG|0x2B) // Formerly: OP_EXTERN_DECL
 // generate a module using pop(0) as code, pop(1) as refs and const slot unsigned(ARG) as local names
 #define OP_CALL_MEMBER_C          (Dee_uint8_t)(OPFLAG_ARG|0x2C) // push(__getattr__(pop(1),const(unsigned(ARG)))(pop(0)...))

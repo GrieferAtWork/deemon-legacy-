@@ -668,6 +668,23 @@ err_switch_writer: result = NULL; goto end_switch_writer;
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT */
   case DEE_XASTKIND_SUPER_AT:
    return DeeString_Newf("__super(%r,%r)",self->ast_operator.op_a,self->ast_operator.op_b);
+
+  case DEE_XASTKIND_VAR_INC:     return DeeString_Newf("/* inplace-var */++%K",_DeeLocalVar_ReprWithToken(self->ast_unary_var.uiv_var,self->ast_unary_var.uiv_tok));
+  case DEE_XASTKIND_VAR_DEC:     return DeeString_Newf("/* inplace-var */--%K",_DeeLocalVar_ReprWithToken(self->ast_unary_var.uiv_var,self->ast_unary_var.uiv_tok));
+  case DEE_XASTKIND_VAR_INCPOST: return DeeString_Newf("/* inplace-var */%K++",_DeeLocalVar_ReprWithToken(self->ast_unary_var.uiv_var,self->ast_unary_var.uiv_tok));
+  case DEE_XASTKIND_VAR_DECPOST: return DeeString_Newf("/* inplace-var */%K--",_DeeLocalVar_ReprWithToken(self->ast_unary_var.uiv_var,self->ast_unary_var.uiv_tok));
+  case DEE_XASTKIND_VAR_IADD:    return DeeString_Newf("/* inplace-var */%K += (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_ISUB:    return DeeString_Newf("/* inplace-var */%K -= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_IMUL:    return DeeString_Newf("/* inplace-var */%K *= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_IDIV:    return DeeString_Newf("/* inplace-var */%K /= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_IMOD:    return DeeString_Newf("/* inplace-var */%K %= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_ISHL:    return DeeString_Newf("/* inplace-var */%K <<= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_ISHR:    return DeeString_Newf("/* inplace-var */%K >>= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_IAND:    return DeeString_Newf("/* inplace-var */%K &= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_IOR:     return DeeString_Newf("/* inplace-var */%K |= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_IXOR:    return DeeString_Newf("/* inplace-var */%K ^= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+  case DEE_XASTKIND_VAR_IPOW:    return DeeString_Newf("/* inplace-var */%K **= (%r)",_DeeLocalVar_ReprWithToken(self->ast_binary_var.biv_var,self->ast_binary_var.biv_tok),self->ast_binary_var.biv_arg);
+
   default:
    switch (DEE_XASTKIND_OPCOUNT(self->ast_kind)) {
     case 1: return DeeXAst_UnaryDescrStr(self->ast_kind,self->ast_operator.op_a);

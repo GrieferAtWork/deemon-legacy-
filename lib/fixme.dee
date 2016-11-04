@@ -18,71 +18,26 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
- */
+*/
 
+#include <__builtin_code.dee>
 
-// Starting in v102, deemon allows the type mask
-// of a catch-block to be evaluated at runtime.
-// This test defines, and checks the order of evaluation
-// in such a context
-
-
-(({
-
-	// Prevent any possible compiler optimizations
-	volatile local error_type = string;
-
-	local geterr_called = 0;
-	function get_error() {
-		++geterr_called;
-		return error_type;
+function foo(x) {{
+	print __builtin_code().asmrepr();
+	volatile __stack local result = x;
+	try {
+		return result;
+	} finally {
+		// This finally handler requires the stack entry
+		// brought forth by the __stack variable.
+		// Yet when being executed after return is
+		// encountered, the stack will already be cleared,
+		// causing an internal assertion fault at runtime.
+		print "In finally";
 	}
+}}
 
-	function protected_run(f) {
-		assert geterr_called == 0;
-		try {
-			f();
-		} catch (get_error() e) {
-			assert geterr_called == 1;
-			geterr_called := 0;
-			return e;
-		} catch (int e) {
-			assert geterr_called == 1;
-			geterr_called := 0;
-			return e*2;
-		}
-		assert geterr_called == 0;
-		return none;
-	}
-
-	// Sanity test: Without a throw, the function should terminate normally
-	assert protected_run([] { return 42; }) is none;
-
-	// The actual test: Make sure that this call returns "Error".
-	// Since 'protected_run' can only return something other than
-	// 'none' if it managed to catch something, we can safely
-	// assume that an exception was caught.
-	assert protected_run([] { throw "Error"; }) == "Error";
-	
-	// Make sure a second exception handler in the same block is considered as well
-	// (Other handlers must still be considerable while the runtime type-mask is being checked)
-	assert protected_run([] { throw 21; }) == 42;
-
-}));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+print foo(42);
 
 
 

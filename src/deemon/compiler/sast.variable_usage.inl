@@ -24,19 +24,77 @@
 #endif
 
 #ifdef DO_COUNT
-#define CHECK_XAST(x) result+=DeeXAst_CountVariableUses(x,variable)
-#define CHECK_SAST(x) result+=DeeSAst_CountVariableUses(x,variable)
+#ifdef DO_STORE
+#define CHECK_VAR(v)    do{}while(0)
+#define CHECK_VAR_L(v)  do{}while(0)
+#define CHECK_VAR_S(v)  do if((v)==variable)++result;while(0)
+#define CHECK_VAR_LS(v) do if((v)==variable)++result;while(0)
+#define CHECK_XAST(x)   result+=DeeXAst_CountVariableStores(x,variable)
+#define CHECK_SAST(x)   result+=DeeSAst_CountVariableStores(x,variable)
+#define CHECK_VSTO(x)   result+=DeeVarDeclStorage_CountVariableStores(x,variable)
+#elif defined(DO_LOAD)
+#define CHECK_VAR(v)    do{}while(0)
+#define CHECK_VAR_L(v)  do if((v)==variable)++result;while(0)
+#define CHECK_VAR_S(v)  do{}while(0)
+#define CHECK_VAR_LS(v) do if((v)==variable)++result;while(0)
+#define CHECK_XAST(x)   result+=DeeXAst_CountVariableLoads(x,variable)
+#define CHECK_SAST(x)   result+=DeeSAst_CountVariableLoads(x,variable)
+#define CHECK_VSTO(x)   result+=DeeVarDeclStorage_CountVariableLoads(x,variable)
 #else
-#define CHECK_XAST(x) if(DeeXAst_UsesVariable(x,variable))return 1;else;
-#define CHECK_SAST(x) if(DeeSAst_UsesVariable(x,variable))return 1;else;
+#define CHECK_VAR(v)    do if((v)==variable)++result;while(0)
+#define CHECK_VAR_L(v)  do if((v)==variable)++result;while(0)
+#define CHECK_VAR_S(v)  do if((v)==variable)++result;while(0)
+#define CHECK_VAR_LS(v) do if((v)==variable)++result;while(0)
+#define CHECK_XAST(x)   result+=DeeXAst_CountVariableUses(x,variable)
+#define CHECK_SAST(x)   result+=DeeSAst_CountVariableUses(x,variable)
+#define CHECK_VSTO(x)   result+=DeeVarDeclStorage_CountVariableUses(x,variable)
+#endif
+#else
+#ifdef DO_STORE
+#define CHECK_VAR(v)    do{}while(0)
+#define CHECK_VAR_L(v)  do{}while(0)
+#define CHECK_VAR_S(v)  do if((v)==variable)return 1;while(0)
+#define CHECK_VAR_LS(v) do if((v)==variable)return 1;while(0)
+#define CHECK_XAST(x)   do if(DeeXAst_StoresVariable(x,variable))return 1;while(0)
+#define CHECK_SAST(x)   do if(DeeSAst_StoresVariable(x,variable))return 1;while(0)
+#define CHECK_VSTO(x)   do if(DeeVarDeclStorage_StoresVariable(x,variable))return 1;while(0)
+#elif defined(DO_LOAD)
+#define CHECK_VAR(v)    do{}while(0)
+#define CHECK_VAR_L(v)  do if((v)==variable)return 1;while(0)
+#define CHECK_VAR_S(v)  do{}while(0)
+#define CHECK_VAR_LS(v) do if((v)==variable)return 1;while(0)
+#define CHECK_XAST(x)   do if(DeeXAst_LoadsVariable(x,variable))return 1;while(0)
+#define CHECK_SAST(x)   do if(DeeSAst_LoadsVariable(x,variable))return 1;while(0)
+#define CHECK_VSTO(x)   do if(DeeVarDeclStorage_LoadsVariable(x,variable))return 1;while(0)
+#else
+#define CHECK_VAR(v)    do if((v)==variable)return 1;while(0)
+#define CHECK_VAR_L(v)  do if((v)==variable)return 1;while(0)
+#define CHECK_VAR_S(v)  do if((v)==variable)return 1;while(0)
+#define CHECK_VAR_LS(v) do if((v)==variable)return 1;while(0)
+#define CHECK_XAST(x)   do if(DeeXAst_UsesVariable(x,variable))return 1;while(0)
+#define CHECK_SAST(x)   do if(DeeSAst_UsesVariable(x,variable))return 1;while(0)
+#define CHECK_VSTO(x)   do if(DeeVarDeclStorage_UsesVariable(x,variable))return 1;while(0)
+#endif
 #endif
 
 DEE_DECL_BEGIN
 
 #ifdef DO_COUNT
+#ifdef DO_STORE
+DEE_A_RET_WUNUSED Dee_size_t DeeSAst_CountVariableStores
+#elif defined(DO_LOAD)
+DEE_A_RET_WUNUSED Dee_size_t DeeSAst_CountVariableLoads
+#else
 DEE_A_RET_WUNUSED Dee_size_t DeeSAst_CountVariableUses
+#endif
+#else
+#ifdef DO_STORE
+DEE_A_RET_WUNUSED int DeeSAst_StoresVariable
+#elif defined(DO_LOAD)
+DEE_A_RET_WUNUSED int DeeSAst_LoadsVariable
 #else
 DEE_A_RET_WUNUSED int DeeSAst_UsesVariable
+#endif
 #endif
 (DEE_A_IN DeeSAstObject const *self,
  DEE_A_IN DeeLocalVarObject const *variable) {
@@ -82,11 +140,7 @@ DEE_A_RET_WUNUSED int DeeSAst_UsesVariable
    break;
   case DEE_SASTKIND_FORIN:
   case DEE_SASTKIND_FOREACH:
-#ifdef DO_COUNT
-   result += DeeVarDeclStorage_CountVariableUses(&self->ast_forin.fi_var,variable);
-#else
-   if (DeeVarDeclStorage_UsesVariable(&self->ast_forin.fi_var,variable)) return 1;
-#endif
+   CHECK_VSTO(&self->ast_forin.fi_var);
    CHECK_XAST(self->ast_forin.fi_seq);
    CHECK_SAST(self->ast_forin.fi_block);
    break;
@@ -109,11 +163,7 @@ DEE_A_RET_WUNUSED int DeeSAst_UsesVariable
    DEE_ASSERT(self->ast_try.t_handlerc != 0);
    end = (iter = self->ast_try.t_handlerv)+self->ast_try.t_handlerc;
    do {
-#ifdef DO_COUNT
-    result += DeeVarDeclStorage_CountVariableUses(&iter->th_local,variable);
-#else
-    if (DeeVarDeclStorage_UsesVariable(&iter->th_local,variable)) return 1;
-#endif
+    CHECK_VSTO(&iter->th_local);
     CHECK_SAST(iter->th_block);
    } while (++iter != end);
   } break;
@@ -140,7 +190,18 @@ DEE_A_RET_WUNUSED int DeeSAst_UsesVariable
 
 #undef CHECK_SAST
 #undef CHECK_XAST
+#undef CHECK_VAR
+#undef CHECK_VSTO
+#undef CHECK_VAR_L
+#undef CHECK_VAR_S
+#undef CHECK_VAR_LS
 
+#ifdef DO_STORE
+#undef DO_STORE
+#endif
+#ifdef DO_LOAD
+#undef DO_LOAD
+#endif
 #ifdef DO_COUNT
 #undef DO_COUNT
 #endif

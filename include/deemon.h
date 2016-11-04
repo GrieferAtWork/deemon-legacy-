@@ -195,6 +195,7 @@
 //       an argument, which can be used to delete the associated attribute.
 //     - Added a predicate overload to 'list.remove'
 //     - Added more documentation for the members of 'list'
+//     - Added a syntax for addressing operator functions from unary expressions (c++ style)
 //
 //   Changes:
 //     - On linux, deemon will now look for dex extensions

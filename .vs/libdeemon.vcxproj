@@ -448,7 +448,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\compiler\sast.equals.inl" />
     <None Include="..\src\deemon\compiler\sast.predict_type.inl" />
     <None Include="..\src\deemon\compiler\sast.repr.inl" />
-    <None Include="..\src\deemon\compiler\sast.uses_variable.inl" />
+    <None Include="..\src\deemon\compiler\sast.variable_usage.inl" />
     <None Include="..\src\deemon\compiler\sast.visit_all.inl" />
     <None Include="..\src\deemon\compiler\sast_optimize.inl" />
     <None Include="..\src\deemon\compiler\sast_parse.case_label.inl" />
@@ -479,8 +479,8 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\compiler\xast.repr.inl" />
     <None Include="..\src\deemon\compiler\xast.sequence_size.inl" />
     <None Include="..\src\deemon\compiler\xast.typeattriutes.inl" />
-    <None Include="..\src\deemon\compiler\xast.uses_variable.inl" />
     <None Include="..\src\deemon\compiler\xast.vardeclstorage_from_xast.inl" />
+    <None Include="..\src\deemon\compiler\xast.variable_usage.inl" />
     <None Include="..\src\deemon\compiler\xast.visit_all.inl" />
     <None Include="..\src\deemon\compiler\xast_optimize.inl" />
     <None Include="..\src\deemon\compiler\xast_parse.attribute.inl" />

@@ -424,6 +424,26 @@ err_super_object_token: Dee_XDECREF(super_object); goto err_super_type_token;
    return ast_result;
   } break;
 
+#if DEE_CONFIG_LANGUAGE_HAVE_OPERATOR_FUNCTIONS
+  case KWD_operator: {
+   int typeslot; DeeObject *operator_function;
+   Dee_INCREF(ast_token = token_ob);
+   if DEE_UNLIKELY(!yield()) goto err_ast_token;
+   if DEE_UNLIKELY((typeslot = DeeXAstOperatorName_Parse(DEE_PARSER_ARGS)) < 0) goto err_ast_token;
+   if DEE_UNLIKELY((operator_function = DeeBuiltin_GetIntrinsicFunctionOfTypeSlot(typeslot)) == NULL) {
+    // Can this even happen?
+    if (DeeError_CompilerErrorf(DEE_WARNING_NO_RUNTIME_SUPPORT_FOR_TYPESLOT,
+     (DeeObject *)lexer,(DeeObject *)ast_token,
+     "No runtime support for 'operator %s'",
+     _DeeType_ClassOperatorName(typeslot)) != 0) goto err_ast_token;
+    operator_function = Dee_None; // *shrugs*
+   }
+   ast_result = DeeXAst_NewConst(ast_token,operator_function);
+   Dee_DECREF(ast_token);
+   return ast_result;
+  } break;
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_OPERATOR_FUNCTIONS */
+
 
 
 

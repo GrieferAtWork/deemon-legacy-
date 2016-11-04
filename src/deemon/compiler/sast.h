@@ -358,8 +358,18 @@ extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeSAst_Equals(
 
 //////////////////////////////////////////////////////////////////////////
 // Returns true/false if 'self' uses 'variable' in some way, shape or form
-// in "sast.uses_variable.inl"
+// in "sast.variable_usage.inl"
 extern DEE_A_RET_WUNUSED int DeeSAst_UsesVariable(
+ DEE_A_IN DeeSAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED int DeeSAst_LoadsVariable(
+ DEE_A_IN DeeSAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED int DeeSAst_StoresVariable(
+ DEE_A_IN DeeSAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED Dee_size_t DeeSAst_CountVariableUses(
+ DEE_A_IN DeeSAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED Dee_size_t DeeSAst_CountVariableLoads(
+ DEE_A_IN DeeSAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED Dee_size_t DeeSAst_CountVariableStores(
  DEE_A_IN DeeSAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
 
 extern int DEE_CALL _DeeSAst_HasLabelVisit(DEE_A_IN DeeSAstObject *ast, struct DeeParserLabel *lbl);
@@ -371,12 +381,6 @@ extern int DEE_CALL _DeeSAst_HasBreakContinueVisit(DEE_A_IN DeeSAstObject *ast, 
 #define DeeXAst_HasLabels(ob) DeeXAst_VisitAll(ob,NULL,&_DeeSAst_HasLabelsVisit,NULL)
 #define DeeSAst_HasBreakOrContinue(ob) DeeSAst_VisitAll(ob,NULL,&_DeeSAst_HasBreakContinueVisit,NULL)
 #define DeeXAst_HasBreakOrContinue(ob) DeeXAst_VisitAll(ob,NULL,&_DeeSAst_HasBreakContinueVisit,NULL)
-
-//////////////////////////////////////////////////////////////////////////
-// Returns the combined effect that 'self' has on 'variable->ob_uses'
-// NOTE: Even if 'DeeSAst_UsesVariable(self,variable)' returned true, this can return false
-extern DEE_A_RET_WUNUSED Dee_size_t DeeSAst_CountVariableUses(
- DEE_A_IN DeeSAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
 
 //////////////////////////////////////////////////////////////////////////
 // Transferrs all label endpoints from 'from_' to 'to_'
@@ -804,25 +808,23 @@ do{\
 
 
 
-#define DeeAst_HasLabel(ob,label)     (DeeSAst_Check(ob) ? DeeSAst_HasLabel((DeeSAstObject *)(ob),label) : DeeXAst_HasLabel((DeeXAstObject *)(ob),label))
-#define DeeAst_HasLabels(ob)          (DeeSAst_Check(ob) ? DeeSAst_HasLabels((DeeSAstObject *)(ob)) : DeeXAst_HasLabels((DeeXAstObject *)(ob)))
-#define DeeAst_HasBreakOrContinue(ob) (DeeSAst_Check(ob) ? DeeSAst_HasBreakOrContinue((DeeSAstObject *)(ob)) : DeeXAst_HasBreakOrContinue((DeeXAstObject *)(ob)))
-
-extern DEE_A_RET_EXCEPT(-1) int DeeSAst_CollectTopScopeChildren(
- DEE_A_IN DeeSAstObject const *self, DEE_A_INOUT struct DeeScopeList *scopes);
-extern int DeeSAst_VisitAll(
- DEE_A_IN DeeSAstObject *self, DEE_A_IN_OPT DeeXAstVisitProc visit_xast,
- DEE_A_IN_OPT DeeSAstVisitProc visit_sast, void *closure);
-extern DEE_A_RET_EXCEPT_REF DeeSAstObject *DeeSAst_CopyWithScope(
- DEE_A_INOUT DeeSAstObject *self, DEE_A_INOUT DeeScopeObject *new_scope,
- DEE_A_INOUT DeeLexerObject *lexer);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeSAst_Equals(
- DEE_A_IN DeeSAstObject const *self,
- DEE_A_IN DeeSAstObject const *right);
-extern DEE_A_RET_WUNUSED int DeeSAst_UsesVariable(
- DEE_A_IN DeeSAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
-extern DEE_A_RET_WUNUSED Dee_size_t DeeSAst_CountVariableUses(
- DEE_A_IN DeeSAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
+//////////////////////////////////////////////////////////////////////////
+// Generic operations that work on any kind of AST
+#define DeeAst_HasLabel(ob,label)                         (DeeSAst_Check(ob) ? DeeSAst_HasLabel((DeeSAstObject *)(ob),label) : DeeXAst_HasLabel((DeeXAstObject *)(ob),label))
+#define DeeAst_HasLabels(ob)                              (DeeSAst_Check(ob) ? DeeSAst_HasLabels((DeeSAstObject *)(ob)) : DeeXAst_HasLabels((DeeXAstObject *)(ob)))
+#define DeeAst_HasBreakOrContinue(ob)                     (DeeSAst_Check(ob) ? DeeSAst_HasBreakOrContinue((DeeSAstObject *)(ob)) : DeeXAst_HasBreakOrContinue((DeeXAstObject *)(ob)))
+#define DeeAst_CollectTopScopeChildren(ob,scopes)         (DeeSAst_Check(ob) ? DeeSAst_CollectTopScopeChildren((DeeSAstObject *)(ob),scopes) : DeeXAst_CollectTopScopeChildren((DeeXAstObject *)(ob),scopes))
+#define DeeAst_VisitAll(ob,visit_xast,visit_sast,closure) (DeeSAst_Check(ob) ? DeeSAst_VisitAll((DeeSAstObject *)(ob),visit_xast,visit_sast,closure) : DeeXAst_VisitAll((DeeXAstObject *)(ob),visit_xast,visit_sast,closure))
+#define DeeAst_CopyWithScope(ob,new_scope,lexer)          (DeeSAst_Check(ob) ? DeeSAst_CopyWithScope((DeeSAstObject *)(ob),new_scope,lexer) : DeeXAst_CopyWithScope((DeeXAstObject *)(ob),new_scope,lexer))
+#define DeeAst_Equals(ob,right)                           (DeeSAst_Check(ob) ? DeeSAst_Equals((DeeSAstObject *)(ob),(DeeSAstObject *)Dee_REQUIRES_POINTER(right)) : DeeXAst_Equals((DeeXAstObject *)(ob),(DeeXAstObject *)(right)))
+#define DeeAst_UsesVariable(ob,variable)                  (DeeSAst_Check(ob) ? DeeSAst_UsesVariable((DeeSAstObject *)(ob),variable) : DeeXAst_UsesVariable((DeeXAstObject *)(ob),variable))
+#define DeeAst_LoadsVariable(ob,variable)                 (DeeSAst_Check(ob) ? DeeSAst_LoadsVariable((DeeSAstObject *)(ob),variable) : DeeXAst_LoadsVariable((DeeXAstObject *)(ob),variable))
+#define DeeAst_StoresVariable(ob,variable)                (DeeSAst_Check(ob) ? DeeSAst_StoresVariable((DeeSAstObject *)(ob),variable) : DeeXAst_StoresVariable((DeeXAstObject *)(ob),variable))
+#define DeeAst_CountVariableUses(ob,variable)             (DeeSAst_Check(ob) ? DeeSAst_CountVariableUses((DeeSAstObject *)(ob),variable) : DeeXAst_CountVariableUses((DeeXAstObject *)(ob),variable))
+#define DeeAst_CountVariableLoads(ob,variable)            (DeeSAst_Check(ob) ? DeeSAst_CountVariableLoads((DeeSAstObject *)(ob),variable) : DeeXAst_CountVariableLoads((DeeXAstObject *)(ob),variable))
+#define DeeAst_CountVariableStores(ob,variable)           (DeeSAst_Check(ob) ? DeeSAst_CountVariableStores((DeeSAstObject *)(ob),variable) : DeeXAst_CountVariableStores((DeeXAstObject *)(ob),variable))
+#define DeeAst_AssignEmpty(ob)                            (DeeSAst_Check(ob) ? DeeSAst_AssignEmpty((DeeSAstObject *)(ob)) : DeeXAst_AssignEmpty((DeeXAstObject *)(ob)))
+#define DeeAst_AssignMove(ob,right)                       (DeeSAst_Check(ob) ? DeeSAst_AssignMove((DeeSAstObject *)(ob),(DeeSAstObject *)Dee_REQUIRES_POINTER(right)) : DeeXAst_AssignMove((DeeXAstObject *)(ob),(DeeXAstObject *)(right)))
 
 
 DEE_DECL_END

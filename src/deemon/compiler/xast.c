@@ -212,6 +212,21 @@ do{\
   default: break;\
  }\
 }while(0)
+#define _DeeXAstUnaryInplaceVarAst_Quit(ob)\
+do{\
+ DeeLocalVar_REM_INIT((ob)->uiv_var);\
+ DeeLocalVar_REM_USE((ob)->uiv_var);\
+ Dee_DECREF((ob)->uiv_var);\
+ Dee_DECREF((ob)->uiv_tok);\
+}while(0)
+#define _DeeXAstBinaryInplaceVarAst_Quit(ob)\
+do{\
+ DeeLocalVar_REM_INIT((ob)->biv_var);\
+ DeeLocalVar_REM_USE((ob)->biv_var);\
+ Dee_DECREF((ob)->biv_var);\
+ Dee_DECREF((ob)->biv_tok);\
+ Dee_DECREF((ob)->biv_arg);\
+}while(0)
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_BOUND
 #define _DeeXAstBuiltinBoundAst_Quit(ob)\
 do{\
@@ -391,6 +406,17 @@ do{\
   case 1: Dee_VISIT((ob)->op_a);\
   default: break;\
  }\
+}while(0)
+#define _DeeXAstUnaryInplaceVarAst_Visit(ob)\
+do{\
+ Dee_VISIT((ob)->uiv_var);\
+ Dee_VISIT((ob)->uiv_tok);\
+}while(0)
+#define _DeeXAstBinaryInplaceVarAst_Visit(ob)\
+do{\
+ Dee_VISIT((ob)->biv_var);\
+ Dee_VISIT((ob)->biv_tok);\
+ Dee_VISIT((ob)->biv_arg);\
 }while(0)
 
 #define _DeeXAstSuperAtAst_Visit(ob)\
@@ -608,17 +634,20 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewConst(
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewVar(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *ast_var,
  DEE_A_INOUT DeeScopeObject *curr_scope) {
- DeeXAstObject *result;
+ DeeXAstObject *result; Dee_uint32_t flags;
  DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
  DEE_ASSERT(DeeObject_Check(ast_var) && DeeLocalVar_Check(ast_var));
  DEE_ASSERT(DeeObject_Check(curr_scope) && DeeScope_Check(curr_scope));
  curr_scope = DeeScope_WEAK_ROOT(curr_scope);
- if ((curr_scope->sc_flags&DEE_SCOPE_FLAG_FOUND_REFS)==0 &&
-     DeeScope_WEAK_ROOT(ast_var->lv_scope) != curr_scope
-     ) curr_scope->sc_flags |= DEE_SCOPE_FLAG_FOUND_REFS; // Found a reference
+ flags = DEE_XAST_VARAST_FLAG_NONE;
+ if (DeeScope_WEAK_ROOT(ast_var->lv_scope) != curr_scope) {
+  curr_scope->sc_flags |= DEE_SCOPE_FLAG_FOUND_REFS; // Found a reference
+  flags |= DEE_XAST_VARAST_FLAG_REF;
+ }
  if DEE_UNLIKELY((result = _DeeXAst_NewUnsafe(DEE_XASTKIND_VAR,tk)) != NULL) {
   Dee_INCREF(result->ast_var.vs_var = ast_var);
   DeeLocalVar_ADD_USE(ast_var); 
+  result->ast_var.vs_flags = flags;
  }
  return result;
 }
@@ -643,6 +672,7 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewLocalVar(
  if DEE_UNLIKELY((result = _DeeXAst_NewUnsafe(DEE_XASTKIND_VAR,tk)) != NULL) {
   Dee_INCREF(result->ast_var.vs_var = ast_var);
   DeeLocalVar_ADD_USE(ast_var); 
+  result->ast_var.vs_flags = DEE_XAST_VARAST_FLAG_NONE;
  }
  return result;
 }
@@ -660,6 +690,7 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewReferenceVar(
  if DEE_UNLIKELY((result = _DeeXAst_NewUnsafe(DEE_XASTKIND_VAR,tk)) != NULL) {
   Dee_INCREF(result->ast_var.vs_var = ast_var);
   DeeLocalVar_ADD_USE(ast_var); 
+  result->ast_var.vs_flags = DEE_XAST_VARAST_FLAG_REF;
  }
  return result;
 }
@@ -744,6 +775,41 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewCastC(
  return result;
 }
 
+DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewUnaryInplaceVar(
+ DEE_A_IN DeeXAstKind kind, DEE_A_INOUT DeeTokenObject *tk,
+ DEE_A_INOUT DeeTokenObject *var_tk, DEE_A_INOUT DeeLocalVarObject *local_var) {
+ DeeXAstObject *result;
+ DEE_ASSERT(DEE_XASTKIND_ISUNARYVAR(kind));
+ DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
+ DEE_ASSERT(DeeObject_Check(var_tk) && DeeToken_Check(var_tk));
+ DEE_ASSERT(DeeObject_Check(local_var) && DeeLocalVar_Check(local_var));
+ if DEE_LIKELY((result = _DeeXAst_NewUnsafe(kind,tk)) != NULL) {
+  Dee_INCREF(result->ast_unary_var.uiv_var = local_var);
+  Dee_INCREF(result->ast_unary_var.uiv_tok = var_tk);
+  DeeLocalVar_ADD_USE(local_var);
+  DeeLocalVar_ADD_INIT(local_var);
+ }
+ return result;
+}
+DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewBinaryInplaceVar(
+ DEE_A_IN DeeXAstKind kind, DEE_A_INOUT DeeTokenObject *tk,
+ DEE_A_INOUT DeeTokenObject *var_tk, DEE_A_INOUT DeeLocalVarObject *local_var,
+ DEE_A_INOUT DeeXAstObject *ast_arg) {
+ DeeXAstObject *result;
+ DEE_ASSERT(DEE_XASTKIND_ISBINARYVAR(kind));
+ DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
+ DEE_ASSERT(DeeObject_Check(var_tk) && DeeToken_Check(var_tk));
+ DEE_ASSERT(DeeObject_Check(local_var) && DeeLocalVar_Check(local_var));
+ DEE_ASSERT(DeeObject_Check(ast_arg) && DeeXAst_Check(ast_arg));
+ if DEE_LIKELY((result = _DeeXAst_NewUnsafe(kind,tk)) != NULL) {
+  Dee_INCREF(result->ast_binary_var.biv_var = local_var);
+  Dee_INCREF(result->ast_binary_var.biv_tok = var_tk);
+  Dee_INCREF(result->ast_binary_var.biv_arg = ast_arg);
+  DeeLocalVar_ADD_USE(local_var);
+  DeeLocalVar_ADD_INIT(local_var);
+ }
+ return result;
+}
 
 
 
@@ -1991,6 +2057,7 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewFunctionFromInheritedArgv(
 #define RETURN(x) do{if((ast_result=(x))==NULL)return NULL;goto return_with_unused_args;}while(0)
 #define AST_IS_ARG(ast,i) \
  ((ast)->ast_kind == DEE_XASTKIND_VAR && \
+ ((ast)->ast_var.vs_flags&DEE_XAST_VARAST_FLAG_REF)==0 && \
   (DeeLocalVar_KIND((ast)->ast_var.vs_var) == DEE_LOCALVAR_KIND_PARAM) && \
   (ast)->ast_var.vs_var->lv_loc_id == (i))
 #define XAST_IS_ARG(ast,i) ((ast)&&AST_IS_ARG(ast,i))
@@ -2075,6 +2142,39 @@ check_unary_predicate:
          : (DeeObject *)&DeeBuiltinFunction___call__)));
     }
     break;
+
+    { // Unary inplace-var
+     if (0) { case DEE_XASTKIND_VAR_INC:     known_predicate = (DeeObject *)&DeeBuiltinFunction___inc__; }
+     if (0) { case DEE_XASTKIND_VAR_DEC:     known_predicate = (DeeObject *)&DeeBuiltinFunction___dec__; }
+     if (0) { case DEE_XASTKIND_VAR_INCPOST: known_predicate = (DeeObject *)&DeeBuiltinFunction___incpost__; }
+     if (0) { case DEE_XASTKIND_VAR_DECPOST: known_predicate = (DeeObject *)&DeeBuiltinFunction___decpost__; }
+     if (argc == 1 && (flags&DEE_FUNCTION_FLAG_VARG)==0 &&
+        (DeeLocalVar_KIND(return_expression->ast_unary_var.uiv_var) == DEE_LOCALVAR_KIND_PARAM) &&
+         return_expression->ast_unary_var.uiv_var->lv_loc_id == 0
+         ) RETURN(DeeXAst_NewConst(tk,known_predicate));
+     break;
+    }
+
+    { // Binary inplace-var
+     if (0) { case DEE_XASTKIND_VAR_IADD: known_predicate = (DeeObject *)&DeeBuiltinFunction___iadd__; }
+     if (0) { case DEE_XASTKIND_VAR_ISUB: known_predicate = (DeeObject *)&DeeBuiltinFunction___isub__; }
+     if (0) { case DEE_XASTKIND_VAR_IMUL: known_predicate = (DeeObject *)&DeeBuiltinFunction___imul__; }
+     if (0) { case DEE_XASTKIND_VAR_IDIV: known_predicate = (DeeObject *)&DeeBuiltinFunction___idiv__; }
+     if (0) { case DEE_XASTKIND_VAR_IMOD: known_predicate = (DeeObject *)&DeeBuiltinFunction___imod__; }
+     if (0) { case DEE_XASTKIND_VAR_ISHL: known_predicate = (DeeObject *)&DeeBuiltinFunction___ishl__; }
+     if (0) { case DEE_XASTKIND_VAR_ISHR: known_predicate = (DeeObject *)&DeeBuiltinFunction___ishr__; }
+     if (0) { case DEE_XASTKIND_VAR_IAND: known_predicate = (DeeObject *)&DeeBuiltinFunction___iand__; }
+     if (0) { case DEE_XASTKIND_VAR_IOR:  known_predicate = (DeeObject *)&DeeBuiltinFunction___ior__;  }
+     if (0) { case DEE_XASTKIND_VAR_IXOR: known_predicate = (DeeObject *)&DeeBuiltinFunction___ixor__; }
+     if (0) { case DEE_XASTKIND_VAR_IPOW: known_predicate = (DeeObject *)&DeeBuiltinFunction___ipow__; }
+     if (argc == 2 && (flags&DEE_FUNCTION_FLAG_VARG)==0 &&
+        (DeeLocalVar_KIND(return_expression->ast_binary_var.biv_var) == DEE_LOCALVAR_KIND_PARAM) &&
+         return_expression->ast_binary_var.biv_var->lv_loc_id == 0 &&
+         AST_IS_ARG(return_expression->ast_binary_var.biv_arg,1)
+         ) RETURN(DeeXAst_NewConst(tk,known_predicate));
+     break;
+    }
+
    case DEE_XASTKIND_COMPARE_LO:  known_predicate = (DeeObject *)&DeeBuiltinFunction___lo__; goto check_binary_predicate;
    case DEE_XASTKIND_COMPARE_LE:  known_predicate = (DeeObject *)&DeeBuiltinFunction___le__; goto check_binary_predicate;
    case DEE_XASTKIND_COMPARE_EQ:  known_predicate = (DeeObject *)&DeeBuiltinFunction___eq__; goto check_binary_predicate;
@@ -2495,6 +2595,8 @@ static void _DeeXAst_DestroyUncommon(DeeXAstObject *self) {
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT
   case DEE_XASTKIND_BUILTIN_EXPECT:   _DeeXAstBuiltinExpectAst_Quit(&self->ast_builtin_expect); break;
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT */
+  DEE_XASTKIND_CASE_INPLACE_VAR_UNARY _DeeXAstUnaryInplaceVarAst_Quit(&self->ast_unary_var); break;
+  DEE_XASTKIND_CASE_INPLACE_VAR_BINARY _DeeXAstBinaryInplaceVarAst_Quit(&self->ast_binary_var); break;
   default:                            _DeeXAstOperatorAst_Quit(&self->ast_operator); break;
  }
 }
@@ -2543,6 +2645,8 @@ DEE_VISIT_PROC(_deexast_tp_visit,DeeXAstObject *self) {
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT
   case DEE_XASTKIND_BUILTIN_EXPECT:   _DeeXAstBuiltinExpectAst_Visit(&self->ast_builtin_expect); break;
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT */
+  DEE_XASTKIND_CASE_INPLACE_VAR_UNARY _DeeXAstUnaryInplaceVarAst_Visit(&self->ast_unary_var); break;
+  DEE_XASTKIND_CASE_INPLACE_VAR_BINARY _DeeXAstBinaryInplaceVarAst_Visit(&self->ast_binary_var); break;
   default:                            _DeeXAstOperatorAst_Visit(&self->ast_operator); break;
  }
 }
@@ -2672,10 +2776,10 @@ static DeeXAstObject *_deexast_copy_with_scope(
 static DeeObject *_deexast_uses_variable(
  DeeXAstObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeLocalVarObject *check_var;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:uses_variable",&check_var) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:variable_usage",&check_var) != 0) return NULL;
  if DEE_UNLIKELY((check_var = (DeeLocalVarObject *)DeeObject_GetInstance((
   DeeObject *)check_var,&DeeLocalVar_Type)) == NULL) return NULL;
- DeeReturn_Bool(DeeXAst_UsesVariable(self,check_var));
+ DeeReturn_Bool(DeeXAst_LoadsVariable(self,check_var));
 }
 static DeeObject *_deexast_count_variable_uses(
  DeeXAstObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
@@ -2683,7 +2787,7 @@ static DeeObject *_deexast_count_variable_uses(
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:count_variable_uses",&check_var) != 0) return NULL;
  if DEE_UNLIKELY((check_var = (DeeLocalVarObject *)DeeObject_GetInstance((
   DeeObject *)check_var,&DeeLocalVar_Type)) == NULL) return NULL;
- return DeeObject_New(Dee_size_t,DeeXAst_CountVariableUses(self,check_var));
+ return DeeObject_New(Dee_size_t,DeeXAst_CountVariableLoads(self,check_var));
 }
 static DeeObject *_deexast_has_labels(
  DeeXAstObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
@@ -2712,7 +2816,7 @@ static struct DeeMethodDef const _deexast_tp_methods[] = {
  DEE_METHODDEF_v100("set_size",member(&_deexast_set_size),"set_size() -> size_t"),
  DEE_METHODDEF_v100("visit_all",member(&_deexast_visit_all),"visit_all(callable visit_sast = none, callable visit_xast = none) -> none"),
  DEE_METHODDEF_v100("copy_with_scope",member(&_deexast_copy_with_scope),"copy_with_scope(scope new_scope, lexer lex) -> xast"),
- DEE_METHODDEF_v100("uses_variable",member(&_deexast_uses_variable),"uses_variable(local_var var) -> bool"),
+ DEE_METHODDEF_v100("variable_usage",member(&_deexast_uses_variable),"variable_usage(local_var var) -> bool"),
  DEE_METHODDEF_v100("count_variable_uses",member(&_deexast_count_variable_uses),"count_variable_uses(local_var var) -> size_t"),
  DEE_METHODDEF_v100("assign_const",member(&_deexast_assign_const),"assign_const(object const_value) -> none"),
  DEE_METHODDEF_END_v100
@@ -2799,7 +2903,9 @@ const max_line_length = 100;
 for (local name: file.io("xast.h")) {
   name = name.strip();
   if (name.startswith(prefix)) {
-    name = name[#prefix:].partition(" ")[0];
+    name = name[#prefix:];
+    if (name.startswith("CASE")) continue;
+    name = name.partition(" ")[0];
     if ("(" in name) continue;
     print "#ifdef DEE_XASTKIND_"+name;
     print " DEE_MEMBERDEF_CONST_v100("+repr("KIND_"+name)+",DeeXAstKind,DEE_XASTKIND_"+name+"),";
@@ -2969,6 +3075,9 @@ for (local name: file.io("xast.h")) {
 #ifdef DEE_XASTKIND_CELL
  DEE_MEMBERDEF_CONST_v100("KIND_CELL",DeeXAstKind,DEE_XASTKIND_CELL),
 #endif
+#ifdef DEE_XASTKIND_VARRAYOF
+ DEE_MEMBERDEF_CONST_v100("KIND_VARRAYOF",DeeXAstKind,DEE_XASTKIND_VARRAYOF),
+#endif
 #ifdef DEE_XASTKIND_CALL
  DEE_MEMBERDEF_CONST_v100("KIND_CALL",DeeXAstKind,DEE_XASTKIND_CALL),
 #endif
@@ -3104,6 +3213,75 @@ for (local name: file.io("xast.h")) {
 #ifdef DEE_XASTKIND_ATTR_SET
  DEE_MEMBERDEF_CONST_v100("KIND_ATTR_SET",DeeXAstKind,DEE_XASTKIND_ATTR_SET),
 #endif
+#ifdef DEE_XASTKIND_IO_READNP
+ DEE_MEMBERDEF_CONST_v100("KIND_IO_READNP",DeeXAstKind,DEE_XASTKIND_IO_READNP),
+#endif
+#ifdef DEE_XASTKIND_IO_WRITENP
+ DEE_MEMBERDEF_CONST_v100("KIND_IO_WRITENP",DeeXAstKind,DEE_XASTKIND_IO_WRITENP),
+#endif
+#ifdef DEE_XASTKIND_IO_SEEK
+ DEE_MEMBERDEF_CONST_v100("KIND_IO_SEEK",DeeXAstKind,DEE_XASTKIND_IO_SEEK),
+#endif
+#ifdef DEE_XASTKIND_IO_FLUSH
+ DEE_MEMBERDEF_CONST_v100("KIND_IO_FLUSH",DeeXAstKind,DEE_XASTKIND_IO_FLUSH),
+#endif
+#ifdef DEE_XASTKIND_IO_TRUNC
+ DEE_MEMBERDEF_CONST_v100("KIND_IO_TRUNC",DeeXAstKind,DEE_XASTKIND_IO_TRUNC),
+#endif
+#ifdef DEE_XASTKIND_IO_CLOSE
+ DEE_MEMBERDEF_CONST_v100("KIND_IO_CLOSE",DeeXAstKind,DEE_XASTKIND_IO_CLOSE),
+#endif
+#ifdef DEE_XASTKIND_IO_READP
+ DEE_MEMBERDEF_CONST_v100("KIND_IO_READP",DeeXAstKind,DEE_XASTKIND_IO_READP),
+#endif
+#ifdef DEE_XASTKIND_IO_WRITEP
+ DEE_MEMBERDEF_CONST_v100("KIND_IO_WRITEP",DeeXAstKind,DEE_XASTKIND_IO_WRITEP),
+#endif
+#ifdef DEE_XASTKIND_VAR_INC
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_INC",DeeXAstKind,DEE_XASTKIND_VAR_INC),
+#endif
+#ifdef DEE_XASTKIND_VAR_DEC
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_DEC",DeeXAstKind,DEE_XASTKIND_VAR_DEC),
+#endif
+#ifdef DEE_XASTKIND_VAR_INCPOST
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_INCPOST",DeeXAstKind,DEE_XASTKIND_VAR_INCPOST),
+#endif
+#ifdef DEE_XASTKIND_VAR_DECPOST
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_DECPOST",DeeXAstKind,DEE_XASTKIND_VAR_DECPOST),
+#endif
+#ifdef DEE_XASTKIND_VAR_IADD
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_IADD",DeeXAstKind,DEE_XASTKIND_VAR_IADD),
+#endif
+#ifdef DEE_XASTKIND_VAR_ISUB
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_ISUB",DeeXAstKind,DEE_XASTKIND_VAR_ISUB),
+#endif
+#ifdef DEE_XASTKIND_VAR_IMUL
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_IMUL",DeeXAstKind,DEE_XASTKIND_VAR_IMUL),
+#endif
+#ifdef DEE_XASTKIND_VAR_IDIV
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_IDIV",DeeXAstKind,DEE_XASTKIND_VAR_IDIV),
+#endif
+#ifdef DEE_XASTKIND_VAR_IMOD
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_IMOD",DeeXAstKind,DEE_XASTKIND_VAR_IMOD),
+#endif
+#ifdef DEE_XASTKIND_VAR_ISHL
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_ISHL",DeeXAstKind,DEE_XASTKIND_VAR_ISHL),
+#endif
+#ifdef DEE_XASTKIND_VAR_ISHR
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_ISHR",DeeXAstKind,DEE_XASTKIND_VAR_ISHR),
+#endif
+#ifdef DEE_XASTKIND_VAR_IAND
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_IAND",DeeXAstKind,DEE_XASTKIND_VAR_IAND),
+#endif
+#ifdef DEE_XASTKIND_VAR_IOR
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_IOR",DeeXAstKind,DEE_XASTKIND_VAR_IOR),
+#endif
+#ifdef DEE_XASTKIND_VAR_IXOR
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_IXOR",DeeXAstKind,DEE_XASTKIND_VAR_IXOR),
+#endif
+#ifdef DEE_XASTKIND_VAR_IPOW
+ DEE_MEMBERDEF_CONST_v100("KIND_VAR_IPOW",DeeXAstKind,DEE_XASTKIND_VAR_IPOW),
+#endif
 #ifdef DEE_XASTKIND_BUILTIN_ALLOCA
  DEE_MEMBERDEF_CONST_v100("KIND_BUILTIN_ALLOCA",DeeXAstKind,DEE_XASTKIND_BUILTIN_ALLOCA),
 #endif
@@ -3142,6 +3320,9 @@ for (local name: file.io("xast.h")) {
 #endif
 #ifdef DEE_XASTKIND_SEQ_ALL
  DEE_MEMBERDEF_CONST_v100("KIND_SEQ_ALL",DeeXAstKind,DEE_XASTKIND_SEQ_ALL),
+#endif
+#ifdef DEE_XASTKIND_SEQ_SUM
+ DEE_MEMBERDEF_CONST_v100("KIND_SEQ_SUM",DeeXAstKind,DEE_XASTKIND_SEQ_SUM),
 #endif
 //[[[end]]]
 #if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
@@ -3189,6 +3370,7 @@ static struct DeeMemberDef const _deexast_tp_members[] = {
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_common_ast_token",DeeXAstObject,ast_common.ast_token,object,"-> token"),
  DEE_MEMBERDEF_NAMED_RO_v100("__ast_const_c_const",DeeXAstObject,ast_const.c_const,object),
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_var_vs_var",DeeXAstObject,ast_var.vs_var,object,"-> local_var"),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_var_vs_flags",DeeXAstObject,ast_var.vs_flags,Dee_uint32_t),
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_vardecl_vd_token",DeeXAstObject,ast_vardecl.vd_token,object,"-> token"),
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_vardecl_vd_var",DeeXAstObject,ast_vardecl.vd_var,object,"-> local_var"),
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_vardecl_vd_init",DeeXAstObject,ast_vardecl.vd_init,object,"-> xast"),
@@ -3411,9 +3593,20 @@ DEE_DECL_END
 #include "xast.vardeclstorage_from_xast.inl"
 #include "xast.visit_all.inl"
 #include "xast_optimize.inl"
+#define DO_STORE
 #define DO_COUNT
-#include "xast.uses_variable.inl"
-#include "xast.uses_variable.inl"
+#include "xast.variable_usage.inl"
+#define DO_STORE
+#include "xast.variable_usage.inl"
+#define DO_LOAD
+#define DO_COUNT
+#include "xast.variable_usage.inl"
+#define DO_LOAD
+#include "xast.variable_usage.inl"
+#define DO_COUNT
+#include "xast.variable_usage.inl"
+#include "xast.variable_usage.inl"
+
 #define SEQ_TYPE  DEE_XASTKIND_TUPLE
 #include "xast.sequence_size.inl"
 #define SEQ_TYPE  DEE_XASTKIND_LIST

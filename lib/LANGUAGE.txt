@@ -955,6 +955,9 @@ XAst_ParseRawUnary ::= (
 	//  -> The first argument describes the type to which a view should be
 	//     created, and should be 'type arg2' or one of its base-classes.
 	| (('__super'|'__builtin_super') '(' XAst_ParseSingle [',' XAst_ParseSingle] ')')
+	
+	// Intrinsic operator function addressing
+	| ('operator' XAstOperatorName_Parse)
 
 	// Simulated statement-style if expression.
 	// >> print if (foo()) bar() else foobar();

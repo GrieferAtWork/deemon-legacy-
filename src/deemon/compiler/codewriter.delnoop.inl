@@ -36,7 +36,7 @@ static void DeeCodeWriter_DelAndRelocateCode(
  DEE_ASSERT(self);
  DEE_ASSERT(start < (Dee_size_t)(self->cw_code_pos-self->cw_code_begin));
  DEE_ASSERT(size != 0);
- DEE_LVERBOSE1R("%s(%d) : +%.4Ix : Deleting %Iu bytes of code\n",
+ DEE_LVERBOSE1R("%s(%I64u) : +%.4Ix : Deleting %Iu bytes of code\n",
                 DeeCodeWriter_Addr2File(self,start),
                 DeeCodeWriter_Addr2Line(self,start)+1,
                 start,size);

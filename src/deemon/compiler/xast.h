@@ -234,6 +234,35 @@ DEE_OBJECT_DEF(DeeSAstObject);
 #define DEE_XASTKIND_IO_WRITEP               (607|DEE_XASTFLAG_TRINARY) /*< x.operator __write__(y,z) */
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_POINTERS */
 
+#define DEE_XASTKIND_VAR_INC                  800 /*< ++x */
+#define DEE_XASTKIND_VAR_DEC                  801 /*< --x */
+#define DEE_XASTKIND_VAR_INCPOST              802 /*< x++ */
+#define DEE_XASTKIND_VAR_DECPOST              803 /*< x-- */
+#define DEE_XASTKIND_VAR_IADD                 804 /*< x += y */
+#define DEE_XASTKIND_VAR_ISUB                 805 /*< x -= y */
+#define DEE_XASTKIND_VAR_IMUL                 806 /*< x *= y */
+#define DEE_XASTKIND_VAR_IDIV                 807 /*< x /= y */
+#define DEE_XASTKIND_VAR_IMOD                 808 /*< x %= y */
+#define DEE_XASTKIND_VAR_ISHL                 809 /*< x <<= y */
+#define DEE_XASTKIND_VAR_ISHR                 810 /*< x >>= y */
+#define DEE_XASTKIND_VAR_IAND                 811 /*< x &= y */
+#define DEE_XASTKIND_VAR_IOR                  812 /*< x |= y */
+#define DEE_XASTKIND_VAR_IXOR                 813 /*< x ^= y */
+#define DEE_XASTKIND_VAR_IPOW                 814 /*< x **= y */
+#define DEE_XASTKIND_ISUNARYVAR(x)    ((x)>=800&&(x)<=803)
+#define DEE_XASTKIND_ISBINARYVAR(x)   ((x)>=804&&(x)<=814)
+#define DEE_XASTKIND_CASE_INPLACE_VAR_UNARY \
+ case DEE_XASTKIND_VAR_INC: case DEE_XASTKIND_VAR_INCPOST:\
+ case DEE_XASTKIND_VAR_DEC: case DEE_XASTKIND_VAR_DECPOST:
+#define DEE_XASTKIND_CASE_INPLACE_VAR_BINARY \
+ case DEE_XASTKIND_VAR_IADD: case DEE_XASTKIND_VAR_ISUB:\
+ case DEE_XASTKIND_VAR_IMUL: case DEE_XASTKIND_VAR_IDIV:\
+ case DEE_XASTKIND_VAR_IMOD: case DEE_XASTKIND_VAR_ISHL:\
+ case DEE_XASTKIND_VAR_ISHR: case DEE_XASTKIND_VAR_IAND:\
+ case DEE_XASTKIND_VAR_IOR: case DEE_XASTKIND_VAR_IXOR:\
+ case DEE_XASTKIND_VAR_IPOW:
+
+
 // Builtin functions mapped to operators
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_ALLOCA
 #define DEE_XASTKIND_BUILTIN_ALLOCA         (1000|DEE_XASTFLAG_UNARY)  /*< __builtin_alloca(42)      - Allocate memory on the stack. */
@@ -444,7 +473,10 @@ struct DeeXAstConstAst {
 
 struct DeeXAstVarAst {
  DEE_XAST_AST_HEAD
- DEE_A_REF DeeLocalVarObject *vs_var; /*< [1..1] Variable referenced (NOTE: This ast also owns +1 in 'ob_var->ob_uses'). */
+ DEE_A_REF DeeLocalVarObject *vs_var;   /*< [1..1] Variable referenced (NOTE: This ast also owns +1 in 'ob_var->lv_uses'). */
+#define DEE_XAST_VARAST_FLAG_NONE DEE_UINT32_C(0x00000000)
+#define DEE_XAST_VARAST_FLAG_REF  DEE_UINT32_C(0x00000001) /*< Variable is only accessible through a reference. */
+ Dee_uint32_t                 vs_flags; /*< Flags describing the access to this variable (Set of DEE_XAST_VARAST_FLAG_*). */
 };
 
 struct DeeXAstVarDeclAst {
@@ -554,12 +586,6 @@ struct DeeXAstIfConstAst {
  DEE_A_REF DeeXAstObject *ic_fail; /*< [0..1] The fail branch. */
 };
 
-struct DeeXAstOperatorAst {
- DEE_XAST_AST_HEAD
- DEE_A_REF DeeXAstObject *op_a; /*< [1..1][if(DEE_XASTKIND_OPCOUNT(ast_kind) >= 1)] First operand. */
- DEE_A_REF DeeXAstObject *op_b; /*< [1..1][if(DEE_XASTKIND_OPCOUNT(ast_kind) >= 2)] Second operand. */
- DEE_A_REF DeeXAstObject *op_c; /*< [1..1][if(DEE_XASTKIND_OPCOUNT(ast_kind) >= 3)] Third operand. */
-};
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_BOUND
 struct DeeXAstBuiltinBoundAst {
  DEE_XAST_AST_HEAD
@@ -582,12 +608,31 @@ struct DeeXAstBuiltinExpectAst {
  DEE_A_REF DeeObject     *e_expect; /*< [1..1] The expected value. */
 };
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT */
+struct DeeXAstOperatorAst {
+ DEE_XAST_AST_HEAD
+ DEE_A_REF DeeXAstObject *op_a; /*< [1..1][if(DEE_XASTKIND_OPCOUNT(ast_kind) >= 1)] First operand. */
+ DEE_A_REF DeeXAstObject *op_b; /*< [1..1][if(DEE_XASTKIND_OPCOUNT(ast_kind) >= 2)] Second operand. */
+ DEE_A_REF DeeXAstObject *op_c; /*< [1..1][if(DEE_XASTKIND_OPCOUNT(ast_kind) >= 3)] Third operand. */
+};
+struct DeeXAstUnaryInplaceVarAst {
+ DEE_XAST_AST_HEAD
+ DEE_A_REF DeeLocalVarObject *uiv_var; /*< [1..1] Scope-local variable to operate on (NOTE: This ast also owns +1 in 'uiv_var->lv_uses' and 'uiv_var->lv_init'). */
+ DEE_A_REF DeeTokenObject    *uiv_tok; /*< [1..1] Token for the variable name. */
+};
+struct DeeXAstBinaryInplaceVarAst {
+ // NOTE: This structure must have binary compatibility
+ //       with 'DeeXAstUnaryInplaceVarAst'.
+ DEE_XAST_AST_HEAD
+ DEE_A_REF DeeLocalVarObject *biv_var; /*< [1..1] Scope-local variable to operate on (NOTE: This ast also owns +1 in 'biv_var->lv_uses' and 'biv_var->lv_init'). */
+ DEE_A_REF DeeTokenObject    *biv_tok; /*< [1..1] Token for the variable name. */
+ DEE_A_REF DeeXAstObject     *biv_arg; /*< [1..1] Right-hand-side argument ast. */
+};
 #undef DEE_XAST_AST_HEAD
 
 
-#define DEE_POINTER_LIST_INIT(T)         {{0,0,NULL}}
-#define _DEE_POINTER_LIST_Init(T,ob)     ((ob)->pl_data.pl_c=0,(ob)->pl_data.pl_a=0,(ob)->pl_data.pl_a=NULL)
-#define _DEE_POINTER_LIST_Quit(T,ob)     free((ob)->pl_data.pl_v)
+#define DEE_POINTER_LIST_INIT(T)        {{0,0,NULL}}
+#define _DEE_POINTER_LIST_Init(T,ob)    ((ob)->pl_data.pl_c=0,(ob)->pl_data.pl_a=0,(ob)->pl_data.pl_a=NULL)
+#define _DEE_POINTER_LIST_Quit(T,ob)    free((ob)->pl_data.pl_v)
 #define DEE_POINTER_LIST_ELEM(T,ob)     ((T *)(ob)->pl_data.pl_v)
 #define DEE_POINTER_LIST_SIZE(T,ob)     ((ob)->pl_data.pl_c)
 #define DEE_POINTER_LIST_ALLOC(T,ob)    ((ob)->pl_data.pl_a)
@@ -642,52 +687,54 @@ struct DeeXAstObject {
  (void *)(((uintptr_t)(ob))+(sizeof(DeeObject)+sizeof(struct DeeXAstCommonAst)))
 
  union{
-  DeeXAstKind                      ast_kind;            /*< The kind of AST. */
-  struct DeeXAstCommonAst          ast_common;          /*< DEE_XASTKIND_*. */
-  struct DeeXAstConstAst           ast_const;           /*< DEE_XASTKIND_CONST. */
-  struct DeeXAstVarAst             ast_var;             /*< DEE_XASTKIND_VAR. */
-  struct DeeXAstVarDeclAst         ast_vardecl;         /*< DEE_XASTKIND_VARDECL. */
-  struct DeeXAstMultiVarDeclAst    ast_multivardecl;    /*< DEE_XASTKIND_MULTIVARDECL. */
-  struct DeeXAstStatementAst       ast_statement;       /*< DEE_XASTKIND_STATEMENT. */
-  struct DeeXAstIfAst              ast_if;              /*< DEE_XASTKIND_IF. */
-  struct DeeXAstFunctionAst        ast_function;        /*< DEE_XASTKIND_FUNCTION. */
+  DeeXAstKind                       ast_kind;            /*< The kind of AST. */
+  struct DeeXAstCommonAst           ast_common;          /*< DEE_XASTKIND_*. */
+  struct DeeXAstConstAst            ast_const;           /*< DEE_XASTKIND_CONST. */
+  struct DeeXAstVarAst              ast_var;             /*< DEE_XASTKIND_VAR. */
+  struct DeeXAstVarDeclAst          ast_vardecl;         /*< DEE_XASTKIND_VARDECL. */
+  struct DeeXAstMultiVarDeclAst     ast_multivardecl;    /*< DEE_XASTKIND_MULTIVARDECL. */
+  struct DeeXAstStatementAst        ast_statement;       /*< DEE_XASTKIND_STATEMENT. */
+  struct DeeXAstIfAst               ast_if;              /*< DEE_XASTKIND_IF. */
+  struct DeeXAstFunctionAst         ast_function;        /*< DEE_XASTKIND_FUNCTION. */
 #if DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES
-  struct DeeXAstClassAst           ast_class;           /*< DEE_XASTKIND_CLASS. */
+  struct DeeXAstClassAst            ast_class;           /*< DEE_XASTKIND_CLASS. */
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES */
-  struct DeeXAstSequenceAst        ast_sequence;        /*< DEE_XASTKIND_TUPLE, DEE_XASTKIND_LIST, DEE_XASTKIND_SET. */
-  struct DeeXAstSequenceAst        ast_tuple;           /*< DEE_XASTKIND_TUPLE. */
-  struct DeeXAstSequenceAst        ast_list;            /*< DEE_XASTKIND_LIST. */
-  struct DeeXAstSequenceAst        ast_set;             /*< DEE_XASTKIND_SET. */
-  struct DeeXAstDictAst            ast_dict;            /*< DEE_XASTKIND_DICT. */
-  struct DeeXAstSeqRangeAst        ast_seq_range;       /*< DEE_XASTKIND_SEQ_RANGE_GET, DEE_XASTKIND_SEQ_RANGE_DEL, DEE_XASTKIND_SEQ_RANGE_SET. */
-  struct DeeXAstSeqRangeAst        ast_seq_range_get;   /*< DEE_XASTKIND_SEQ_RANGE_GET. */
-  struct DeeXAstSeqRangeAst        ast_seq_range_del;   /*< DEE_XASTKIND_SEQ_RANGE_DEL. */
-  struct DeeXAstSeqRangeAst        ast_seq_range_set;   /*< DEE_XASTKIND_SEQ_RANGE_SET. */
-  struct DeeXAstAttrCAst           ast_attr_c;          /*< DEE_XASTKIND_ATTR_GET_C, DEE_XASTKIND_ATTR_HAS_C, DEE_XASTKIND_ATTR_DEL_C, DEE_XASTKIND_ATTR_SET_C. */
-  struct DeeXAstAttrCAst           ast_attr_get_c;      /*< DEE_XASTKIND_ATTR_GET_C. */
-  struct DeeXAstAttrCAst           ast_attr_has_c;      /*< DEE_XASTKIND_ATTR_HAS_C. */
-  struct DeeXAstAttrCAst           ast_attr_del_c;      /*< DEE_XASTKIND_ATTR_DEL_C. */
-  struct DeeXAstAttrCAst           ast_attr_set_c;      /*< DEE_XASTKIND_ATTR_SET_C. */
-  struct DeeXAstModuleAst          ast_module;          /*< DEE_XASTKIND_MODULE. */
-  struct DeeXAstDelVarAst          ast_delvar;          /*< DEE_XASTKIND_DEL_VAR. */
+  struct DeeXAstSequenceAst         ast_sequence;        /*< DEE_XASTKIND_TUPLE, DEE_XASTKIND_LIST, DEE_XASTKIND_SET. */
+  struct DeeXAstSequenceAst         ast_tuple;           /*< DEE_XASTKIND_TUPLE. */
+  struct DeeXAstSequenceAst         ast_list;            /*< DEE_XASTKIND_LIST. */
+  struct DeeXAstSequenceAst         ast_set;             /*< DEE_XASTKIND_SET. */
+  struct DeeXAstDictAst             ast_dict;            /*< DEE_XASTKIND_DICT. */
+  struct DeeXAstSeqRangeAst         ast_seq_range;       /*< DEE_XASTKIND_SEQ_RANGE_GET, DEE_XASTKIND_SEQ_RANGE_DEL, DEE_XASTKIND_SEQ_RANGE_SET. */
+  struct DeeXAstSeqRangeAst         ast_seq_range_get;   /*< DEE_XASTKIND_SEQ_RANGE_GET. */
+  struct DeeXAstSeqRangeAst         ast_seq_range_del;   /*< DEE_XASTKIND_SEQ_RANGE_DEL. */
+  struct DeeXAstSeqRangeAst         ast_seq_range_set;   /*< DEE_XASTKIND_SEQ_RANGE_SET. */
+  struct DeeXAstAttrCAst            ast_attr_c;          /*< DEE_XASTKIND_ATTR_GET_C, DEE_XASTKIND_ATTR_HAS_C, DEE_XASTKIND_ATTR_DEL_C, DEE_XASTKIND_ATTR_SET_C. */
+  struct DeeXAstAttrCAst            ast_attr_get_c;      /*< DEE_XASTKIND_ATTR_GET_C. */
+  struct DeeXAstAttrCAst            ast_attr_has_c;      /*< DEE_XASTKIND_ATTR_HAS_C. */
+  struct DeeXAstAttrCAst            ast_attr_del_c;      /*< DEE_XASTKIND_ATTR_DEL_C. */
+  struct DeeXAstAttrCAst            ast_attr_set_c;      /*< DEE_XASTKIND_ATTR_SET_C. */
+  struct DeeXAstModuleAst           ast_module;          /*< DEE_XASTKIND_MODULE. */
+  struct DeeXAstDelVarAst           ast_delvar;          /*< DEE_XASTKIND_DEL_VAR. */
 #if DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION
-  struct DeeXAstForeignFunctionAst ast_foreignfunction; /*< DEE_XASTKIND_FOREIGN_FUNCTION. */
+  struct DeeXAstForeignFunctionAst  ast_foreignfunction; /*< DEE_XASTKIND_FOREIGN_FUNCTION. */
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION */
-  struct DeeXAstSwitchAst          ast_switch;          /*< DEE_XASTKIND_SWITCH. */
-  struct DeeXAstIfConstAst         ast_ifconst;         /*< DEE_XASTKIND_IFTRUE, DEE_XASTKIND_IFFALSE. */
-  struct DeeXAstIfConstAst         ast_iftrue;          /*< DEE_XASTKIND_IFTRUE. */
-  struct DeeXAstIfConstAst         ast_iffalse;         /*< DEE_XASTKIND_IFFALSE. */
+  struct DeeXAstSwitchAst           ast_switch;          /*< DEE_XASTKIND_SWITCH. */
+  struct DeeXAstIfConstAst          ast_ifconst;         /*< DEE_XASTKIND_IFTRUE, DEE_XASTKIND_IFFALSE. */
+  struct DeeXAstIfConstAst          ast_iftrue;          /*< DEE_XASTKIND_IFTRUE. */
+  struct DeeXAstIfConstAst          ast_iffalse;         /*< DEE_XASTKIND_IFFALSE. */
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_BOUND
-  struct DeeXAstBuiltinBoundAst    ast_builtin_bound;   /*< DEE_XASTKIND_BUILTIN_BOUND. */
+  struct DeeXAstBuiltinBoundAst     ast_builtin_bound;   /*< DEE_XASTKIND_BUILTIN_BOUND. */
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_BOUND */
 #if DEE_CONFIG_LANGUAGE_HAVE_EXTERN
-  struct DeeXAstBuiltinExternAst   ast_builtin_extern;  /*< DEE_XASTKIND_BUILTIN_EXTERN. */
+  struct DeeXAstBuiltinExternAst    ast_builtin_extern;  /*< DEE_XASTKIND_BUILTIN_EXTERN. */
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_EXTERN */
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT
-  struct DeeXAstBuiltinExpectAst   ast_builtin_expect;  /*< DEE_XASTKIND_BUILTIN_EXPECT. */
+  struct DeeXAstBuiltinExpectAst    ast_builtin_expect;  /*< DEE_XASTKIND_BUILTIN_EXPECT. */
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT */
-  struct DeeXAstCommonAst          ast_zeroop;          /*< DEE_XASTKIND_ISZEROOP(ast_kind). */
-  struct DeeXAstOperatorAst        ast_operator;        /*< DEE_XASTKIND_ISOPERATOR(ast_kind). */
+  struct DeeXAstCommonAst           ast_zeroop;          /*< DEE_XASTKIND_ISZEROOP(ast_kind). */
+  struct DeeXAstOperatorAst         ast_operator;        /*< DEE_XASTKIND_ISOPERATOR(ast_kind). */
+  struct DeeXAstUnaryInplaceVarAst  ast_unary_var;       /*< DEE_XASTKIND_ISUNARYVAR(ast_kind). */
+  struct DeeXAstBinaryInplaceVarAst ast_binary_var;      /*< DEE_XASTKIND_ISBINARYVAR(ast_kind). */
  };
 };
 DEE_COMPILER_MSVC_WARNING_POP
@@ -759,14 +806,18 @@ extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeXAst_Equals(
 
 //////////////////////////////////////////////////////////////////////////
 // Returns true/false if 'self' uses 'variable' in some way, shape or form
-// in "xast.uses_variable.inl"
+// in "xast.variable_usage.inl"
 extern DEE_A_RET_WUNUSED int DeeXAst_UsesVariable(
  DEE_A_IN DeeXAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
-
-//////////////////////////////////////////////////////////////////////////
-// Returns the combined effect that 'self' has on 'variable->ob_uses'
-// NOTE: Even if 'DeeXAst_UsesVariable(self,variable)' returned true, this can return false
+extern DEE_A_RET_WUNUSED int DeeXAst_LoadsVariable(
+ DEE_A_IN DeeXAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED int DeeXAst_StoresVariable(
+ DEE_A_IN DeeXAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
 extern DEE_A_RET_WUNUSED Dee_size_t DeeXAst_CountVariableUses(
+ DEE_A_IN DeeXAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED Dee_size_t DeeXAst_CountVariableLoads(
+ DEE_A_IN DeeXAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED Dee_size_t DeeXAst_CountVariableStores(
  DEE_A_IN DeeXAstObject const *self, DEE_A_IN DeeLocalVarObject const *variable);
 
 //////////////////////////////////////////////////////////////////////////
@@ -776,6 +827,7 @@ extern void DeeXAst_AssignMove(DEE_A_INOUT DeeXAstObject *self, DEE_A_INOUT DeeX
 extern DEE_A_RET_EXCEPT(-1) int DeeXAst_InitCopy(DEE_A_OUT DeeXAstObject *self, DEE_A_INOUT DeeXAstObject *right);
 extern DEE_A_RET_EXCEPT(-1) int DeeXAst_AssignCopy(DEE_A_INOUT DeeXAstObject *self, DEE_A_INOUT DeeXAstObject *right);
 extern void DeeXAst_AssignConst(DEE_A_INOUT DeeXAstObject *self, DEE_A_IN DeeObject *const_value);
+#define DeeXAst_AssignEmpty(ob) DeeXAst_AssignConst(ob,Dee_None)
 
 //////////////////////////////////////////////////////////////////////////
 // Calculates the total offset and final type of an expression tree like the following:
@@ -867,6 +919,19 @@ extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewCastC(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLexerObject *lexer,
  DEE_A_IN Dee_uint32_t parser_flags, DEE_A_INOUT DeeXAstObject *cast_ob,
  DEE_A_INOUT DeeTypeObject const *result_type);
+
+//////////////////////////////////////////////////////////////////////////
+// Private functions for creating inplace-var asts (don't use these!)
+// >> They are automatically invoked when an appropriate AST is being generated
+// NOTE: If 'local_var' isn't a scope-local variable in the
+//       context of this ast, undefined behavior is invoked
+extern DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewUnaryInplaceVar(
+ DEE_A_IN DeeXAstKind kind, DEE_A_INOUT DeeTokenObject *tk,
+ DEE_A_INOUT DeeTokenObject *var_tk, DEE_A_INOUT DeeLocalVarObject *local_var);
+extern DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewBinaryInplaceVar(
+ DEE_A_IN DeeXAstKind kind, DEE_A_INOUT DeeTokenObject *tk,
+ DEE_A_INOUT DeeTokenObject *var_tk, DEE_A_INOUT DeeLocalVarObject *local_var,
+ DEE_A_INOUT DeeXAstObject *ast_arg);
 
 #define DeeXAst_NewStr(tk,lexer,parser_flags,ast_ob) DeeXAst_NewUnary(DEE_XASTKIND_STR,tk,lexer,parser_flags,ast_ob)
 #define DeeXAst_NewRepr(tk,lexer,parser_flags,ast_ob) DeeXAst_NewUnary(DEE_XASTKIND_REPR,tk,lexer,parser_flags,ast_ob)
@@ -1251,7 +1316,6 @@ typedef Dee_uint32_t DeeAstAttribute;
 #define DEE_AST_ATTRIBUTE_NORETURN                       0x00000001 /*< Given certain restrictions, the AST will not return at runtime. (making following code possibly unreachable) */
 #define DEE_AST_ATTRIBUTE_NOEXCEPT                       0x00000002 /*< The given AST will never throw an exception. */
 #define DEE_AST_ATTRIBUTE_NOEFFECT                       0x00000004 /*< Executing the given AST does not have any side-effects. */
-// v TODO: This flag isn't implemented yet
 #define DEE_AST_ATTRIBUTE_NOJUMP                         0x00000008 /*< The AST will always return somehow (because it doesn't jump outside the visible scope). */
 #define DEE_AST_ATTRIBUTE_FLAG_NONE                      0x00000000
 #define DEE_AST_ATTRIBUTE_FLAG_NORETURN_ALLOW_BREAK      0x00000001 /*< Allow 'break' and 'continue' to affect 'DEE_XAST_ATTRIBUTE_NORETURN' */
@@ -1455,8 +1519,8 @@ extern DEE_A_RET_WUNUSED int DeeXAst_CheckReservedToken(
 #ifndef DEE_COMPILER_PARAMS
 struct DeeCodeWriter;
 #define DEE_COMPILER_PARAMS \
- DEE_A_INOUT struct DeeCodeWriter *writer, DEE_A_INOUT DeeLexerObject *lexer, \
- DEE_A_INOUT DeeScopeObject *scope, DEE_A_IN DeeCompilerConfig const *config, DEE_A_IN Dee_uint32_t compiler_flags
+ DEE_A_INOUT struct DeeCodeWriter *writer, DEE_A_INOUT struct DeeLexerObject *lexer, \
+ DEE_A_INOUT struct DeeScopeObject *scope, DEE_A_IN struct DeeCompilerConfig const *config, DEE_A_IN Dee_uint32_t compiler_flags
 #define DEE_COMPILER_ARGS                                writer,lexer,scope,config,compiler_flags
 #define DEE_COMPILER_ARGS_SCOPE(scope)                   writer,lexer,scope,config,compiler_flags
 #define DEE_COMPILER_ARGS_EX(compiler_flags)             writer,lexer,scope,config,compiler_flags

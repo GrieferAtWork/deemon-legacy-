@@ -35,106 +35,82 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewBinary(
  DEE_ASSERT(DeeObject_Check(lexer) && DeeLexer_Check(lexer));
  DEE_ASSERT(DeeObject_Check(ast_a) && DeeXAst_Check(ast_a));
  DEE_ASSERT(DeeObject_Check(ast_b) && DeeXAst_Check(ast_b));
- if (kind == DEE_XASTKIND_ADD &&
-    (parser_flags&DEE_PARSER_FLAG_OPTIMIZE_MERGE_OPERATORS)!=0 &&
-     ast_a->ast_kind == DEE_XASTKIND_CONST &&
-     DeeString_Check(ast_a->ast_const.c_const) &&
-     DeeString_SIZE(ast_a->ast_const.c_const) == 0) {
-  // Optimize: '""+foobar()' --> 'str foobar()';
-  return DeeXAst_NewUnary(DEE_XASTKIND_STR,tk,lexer,parser_flags,ast_b);
- }
- if (kind == DEE_XASTKIND_SUPER_AT) {
-  DeeTypeObject const *predicted_type_type;
-  if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_MERGE_OPERATORS) != 0 &&
-      ast_a->ast_kind == DEE_XASTKIND_CONST && DeeXAst_PredictType(
-      ast_b) == (DeeTypeObject const *)ast_a->ast_const.c_const) {
-   // Optimize '__super(int,42)' --> '42'
-   Dee_INCREF(ast_b);
-   return ast_b;
-  }
-  if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_CONST_OPERATORS)!=0 &&
-      ast_a->ast_kind == DEE_XASTKIND_CONST &&
-      ast_b->ast_kind == DEE_XASTKIND_CONST) {
-   DeeObject *super_ob; // Create the 'super' proxy object at compile-time
-   if ((super_ob = DeeSuper_New((DeeTypeObject *)ast_a->ast_const.c_const,
-    ast_b->ast_const.c_const)) == NULL) return NULL;
-   result = DeeXAst_NewConst(tk,super_ob);
-   Dee_DECREF(super_ob);
-   return result;
-  }
-  predicted_type_type = DeeXAst_PredictType(ast_a);
-  if (predicted_type_type && !DeeType_IsSameOrDerived(predicted_type_type,&DeeType_Type) &&
-      predicted_type_type != (DeeTypeObject *)&DeeNone_Type) {
-   // Warn if the type argument isn't a type
-   if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_TYPE_IN___SUPER,
-    (DeeObject *)lexer,(DeeObject *)ast_b->ast_common.ast_token,
-    "Expected 'type' as argument in '__super', but got %r",ast_b) != 0) return NULL;
-  }
-  goto normal_ast;
- }
- if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_PREDICATES)!=0 &&
-     ast_a->ast_kind == DEE_XASTKIND_FUNCTION && ast_b->ast_kind == DEE_XASTKIND_CONST &&
-     ast_b->ast_const.c_const == Dee_EmptyTuple && ast_a->ast_function.f_code) {
-  // Optimize '([]{ yield x; })()' --> 'pack(x)'
-  DeeSAstObject *code = ast_a->ast_function.f_code;
-  if (code->ast_kind == DEE_SASTKIND_YIELD) {
-   Dee_INCREF(code->ast_yield.y_value);
-   return code->ast_yield.y_value;
-  }
- }
+ switch (kind) {
+  {
+   DeeXAstKind iv_kind;
+   if (0) { case DEE_XASTKIND_IADD: iv_kind = DEE_XASTKIND_VAR_IADD; }
+   if (0) { case DEE_XASTKIND_ISUB: iv_kind = DEE_XASTKIND_VAR_ISUB; }
+   if (0) { case DEE_XASTKIND_IMUL: iv_kind = DEE_XASTKIND_VAR_IMUL; }
+   if (0) { case DEE_XASTKIND_IDIV: iv_kind = DEE_XASTKIND_VAR_IDIV; }
+   if (0) { case DEE_XASTKIND_IMOD: iv_kind = DEE_XASTKIND_VAR_IMOD; }
+   if (0) { case DEE_XASTKIND_ISHL: iv_kind = DEE_XASTKIND_VAR_ISHL; }
+   if (0) { case DEE_XASTKIND_ISHR: iv_kind = DEE_XASTKIND_VAR_ISHR; }
+   if (0) { case DEE_XASTKIND_IAND: iv_kind = DEE_XASTKIND_VAR_IAND; }
+   if (0) { case DEE_XASTKIND_IOR : iv_kind = DEE_XASTKIND_VAR_IOR ; }
+   if (0) { case DEE_XASTKIND_IXOR: iv_kind = DEE_XASTKIND_VAR_IXOR; }
+   if (0) { case DEE_XASTKIND_IPOW: iv_kind = DEE_XASTKIND_VAR_IPOW; }
+   // Try to create a binary inplace-var AST
+   if (ast_a->ast_kind == DEE_XASTKIND_VAR &&
+      (ast_a->ast_var.vs_flags&DEE_XAST_VARAST_FLAG_REF)==0) {
+    return _DeeXAst_NewBinaryInplaceVar(iv_kind,tk,ast_a->ast_common.ast_token,
+                                        ast_a->ast_var.vs_var,ast_b);
+   }
+  } break;
+ 
+  case DEE_XASTKIND_ADD:
+   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_MERGE_OPERATORS)!=0 &&
+       ast_a->ast_kind == DEE_XASTKIND_CONST &&
+       DeeString_Check(ast_a->ast_const.c_const) &&
+       DeeString_SIZE(ast_a->ast_const.c_const) == 0) {
+    // Optimize: '""+foobar()' --> 'str foobar()';
+    return DeeXAst_NewUnary(DEE_XASTKIND_STR,tk,lexer,parser_flags,ast_b);
+   }
+   break;
 
- if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_INTRINSIC_CALLS)!=0) switch (kind) {
-  case DEE_XASTKIND_ATTR_GET:
-  case DEE_XASTKIND_ATTR_HAS:
-  case DEE_XASTKIND_ATTR_DEL:
-   // __builtin_getattr(x,"foobar") --> x.foobar
-   if (ast_b->ast_kind != DEE_XASTKIND_CONST) {
-    DeeTypeObject const *predicted_b = DeeXAst_PredictType(ast_b);
-    if (predicted_b && predicted_b != &DeeString_Type) {
-     // Warn is type-prediction says that 'ast_b' isn't a string
-     if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_STRING_FOR_ATTRIBUTE_OPERATOR,
-      (DeeObject *)lexer,(DeeObject *)ast_a->ast_common.ast_token,
-      "Expected string for argument to attribute operator, but got instance of %q",
-      DeeType_NAME(predicted_b)) != 0) return NULL;
-    }
-    goto normal_ast;
+  case DEE_XASTKIND_SUPER_AT: {
+   DeeTypeObject const *predicted_type_type;
+   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_MERGE_OPERATORS) != 0 &&
+       ast_a->ast_kind == DEE_XASTKIND_CONST && DeeXAst_PredictType(
+       ast_b) == (DeeTypeObject const *)ast_a->ast_const.c_const) {
+    // Optimize '__super(int,42)' --> '42'
+    VLOG_PARSER(tk,"OPTIMIZE : '__super(%r,%r)' --> '%r'",ast_a,ast_b,ast_b);
+    Dee_INCREF(ast_b);
+    return ast_b;
    }
-   if (DeeError_TypeError_CheckTypeExact(ast_b->ast_const.c_const,&DeeString_Type) != 0)
-    goto handle_binary_error; // the second argument must be a string
-   if (ast_a->ast_kind == DEE_XASTKIND_CONST) {
-    int error;
-    if ((const_copy_a = DeeObject_DeepCopy(ast_a->ast_const.c_const)) == NULL) goto err_copy;
-    switch (kind) {
-     case DEE_XASTKIND_ATTR_GET:
-      binary_result = DeeObject_GetAttr(const_copy_a,ast_b->ast_const.c_const);
-      break;
-     case DEE_XASTKIND_ATTR_HAS:
-      error = DeeObject_HasAttr(const_copy_a,ast_b->ast_const.c_const);
-      binary_result = error < 0 ? NULL : DeeBool_New(error);
-      break;
-     case DEE_XASTKIND_ATTR_DEL:
-      if (DeeXAst_WarnInplaceOnConstant(DEE_XASTKIND_ATTR_DEL,lexer,tk,Dee_TYPE(const_copy_a)) != 0) binary_result = NULL;
-      else {
-       error = DeeObject_DelAttr(const_copy_a,ast_b->ast_const.c_const);
-       binary_result = error < 0 ? NULL : DeeBool_New(error);
-      }
-      break;
-     default: DEE_BUILTIN_UNREACHABLE();
-    }
-    goto handle_binary_result_decref_a;
+   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_CONST_OPERATORS)!=0 &&
+       ast_a->ast_kind == DEE_XASTKIND_CONST &&
+       ast_b->ast_kind == DEE_XASTKIND_CONST) {
+    DeeObject *super_ob; // Create the 'super' proxy object at compile-time
+    if ((super_ob = DeeSuper_New((DeeTypeObject *)ast_a->ast_const.c_const,
+     ast_b->ast_const.c_const)) == NULL) return NULL;
+    result = DeeXAst_NewConst(tk,super_ob);
+    Dee_DECREF(super_ob);
+    return result;
    }
-   switch (kind) {
-    // Create constant attribute lookup
-    case DEE_XASTKIND_ATTR_GET: return DeeXAst_NewAttrGetC(tk,lexer,parser_flags,ast_a,ast_b->ast_const.c_const);
-    case DEE_XASTKIND_ATTR_HAS: return DeeXAst_NewAttrHasC(tk,lexer,parser_flags,ast_a,ast_b->ast_const.c_const);
-    case DEE_XASTKIND_ATTR_DEL: return DeeXAst_NewAttrDelC(tk,lexer,parser_flags,ast_a,ast_b->ast_const.c_const);
-    default: break;
+   predicted_type_type = DeeXAst_PredictType(ast_a);
+   if (predicted_type_type && !DeeType_IsSameOrDerived(predicted_type_type,&DeeType_Type) &&
+       predicted_type_type != (DeeTypeObject *)&DeeNone_Type) {
+    // Warn if the type argument isn't a type
+    if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_TYPE_IN___SUPER,
+     (DeeObject *)lexer,(DeeObject *)ast_b->ast_common.ast_token,
+     "Expected 'type' as argument in '__super', but got %r",ast_b) != 0) return NULL;
    }
-   DEE_BUILTIN_UNREACHABLE();
+   goto normal_ast;
+  } break;
 
   case DEE_XASTKIND_CALL:
-   if (ast_a->ast_kind == DEE_XASTKIND_CONST &&
-       ast_b->ast_kind != DEE_XASTKIND_CONST) {
+   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_PREDICATES)!=0 &&
+       ast_a->ast_kind == DEE_XASTKIND_FUNCTION && ast_b->ast_kind == DEE_XASTKIND_CONST &&
+       ast_b->ast_const.c_const == Dee_EmptyTuple && ast_a->ast_function.f_code) {
+    // Optimize '([]{ yield x; })()' --> 'pack(x)'
+    DeeSAstObject *code = ast_a->ast_function.f_code;
+    if (code->ast_kind == DEE_SASTKIND_YIELD) {
+     Dee_INCREF(code->ast_yield.y_value);
+     return code->ast_yield.y_value;
+    }
+   }
+   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_INTRINSIC_CALLS)!=0 &&
+       ast_a->ast_kind == DEE_XASTKIND_CONST && ast_b->ast_kind != DEE_XASTKIND_CONST) {
     // Optimize calls to intrinsic functions.
     // >> e.g.: '__inc__(x)' --> '++x'
     DeeObject *called_function;
@@ -295,93 +271,155 @@ intrin_invargc:
     } else;
     goto normal_ast;
 #undef CHECK_ARGC
-   }
+   } /* DEE_PARSER_FLAG_OPTIMIZE_INTRINSIC_CALLS */
    break;
-  default: break;
- }
- if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_DEAD_BRANCH)!=0) switch (kind) {
-  case DEE_XASTKIND_BUILTIN_UNUSED: {
-   if (DeeXAst_IsNoEffect(ast_a)) {
-    VLOG_PARSER(tk,"Ignoring noeffect eval-branch in __builtin_unused(%r,%r)\n",ast_a,ast_b);
-    Dee_INCREF(ast_b);
-    return ast_b;
-   }
-  } goto normal_ast;
-  case DEE_XASTKIND_LAND:
-   if (ast_a->ast_kind == DEE_XASTKIND_CONST) {
-    int const_value;
-    if (ast_b->ast_kind == DEE_XASTKIND_CONST) break; // this is optimized later
-    // 'true && foobar()' >> '!!foobar()'
-    // 'false && foobar()' >> '__builtin_unused(__builtin_dead(foobar()),false)'
-    if ((const_copy_a = DeeObject_DeepCopy(ast_a->ast_const.c_const)) == NULL) goto err_copy;
-    const_value = DeeObject_Bool(const_copy_a);
-    Dee_DECREF(const_copy_a);
-    if (const_value < 0) goto handle_binary_error;
-    if (!const_value) {
-     DeeXAstObject *dead_branch,*replace_branch;
-     VLOG_PARSER(tk,"Detected dead branch in 'false && %r'\n",ast_b);
-     if ((dead_branch = DeeXAst_NewBuiltinDead(tk,lexer,parser_flags,ast_b)) == NULL) return NULL;
-     if ((replace_branch = DeeXAst_NewConst(tk,Dee_False)) == NULL) { Dee_DECREF(dead_branch); return NULL; }
-     result = DeeXAst_NewBuiltinUnused(tk,lexer,parser_flags,dead_branch,replace_branch);
-     Dee_DECREF(replace_branch);
-     Dee_DECREF(dead_branch);
-     return result;
+
+  case DEE_XASTKIND_ATTR_GET:
+  case DEE_XASTKIND_ATTR_HAS:
+  case DEE_XASTKIND_ATTR_DEL:
+   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_INTRINSIC_CALLS)!=0) {
+    // x.operator __getattr__("foobar") --> x.foobar
+    if (ast_b->ast_kind != DEE_XASTKIND_CONST) {
+     DeeTypeObject const *predicted_b = DeeXAst_PredictType(ast_b);
+     if (predicted_b && predicted_b != &DeeString_Type) {
+      // Warn is type-prediction says that 'ast_b' isn't a string
+      if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_STRING_FOR_ATTRIBUTE_OPERATOR,
+       (DeeObject *)lexer,(DeeObject *)ast_a->ast_common.ast_token,
+       "Expected string for argument to attribute operator, but got instance of %q",
+       DeeType_NAME(predicted_b)) != 0) return NULL;
+     }
+     goto normal_ast;
     }
-    return DeeXAst_NewUnary(DEE_XASTKIND_BOOL,tk,lexer,parser_flags,ast_b);
-   } else if (ast_b->ast_kind == DEE_XASTKIND_CONST) {
-    int const_value; DeeXAstObject *result2;
-    // 'foobar() && true' >> '!!foobar()'
-    // 'foobar() && false' >> '__builtin_unused(!!foobar(),false)'
-    if ((const_copy_b = DeeObject_DeepCopy(ast_b->ast_const.c_const)) == NULL) goto err_copy;
-    const_value = DeeObject_Bool(const_copy_b);
-    Dee_DECREF(const_copy_b);
-    if (const_value < 0) goto handle_binary_error;
-    if (const_value) return DeeXAst_NewUnary(DEE_XASTKIND_BOOL,tk,lexer,parser_flags,ast_b);
-    if ((result2 = DeeXAst_NewConst(tk,Dee_False)) == NULL) return NULL;
-    result = DeeXAst_NewBuiltinUnused(tk,lexer,parser_flags,ast_a,result2);
-    Dee_DECREF(result2);
-    return result;
-   } else goto normal_ast;
+    if (DeeError_TypeError_CheckTypeExact(ast_b->ast_const.c_const,&DeeString_Type) != 0)
+     goto handle_binary_error; // the second argument must be a string
+    if (ast_a->ast_kind == DEE_XASTKIND_CONST) {
+     int error;
+     if ((const_copy_a = DeeObject_DeepCopy(ast_a->ast_const.c_const)) == NULL) goto err_copy;
+     switch (kind) {
+      case DEE_XASTKIND_ATTR_GET:
+       binary_result = DeeObject_GetAttr(const_copy_a,ast_b->ast_const.c_const);
+       break;
+      case DEE_XASTKIND_ATTR_HAS:
+       error = DeeObject_HasAttr(const_copy_a,ast_b->ast_const.c_const);
+       binary_result = error < 0 ? NULL : DeeBool_New(error);
+       break;
+      case DEE_XASTKIND_ATTR_DEL:
+       if (DeeXAst_WarnInplaceOnConstant(DEE_XASTKIND_ATTR_DEL,lexer,tk,Dee_TYPE(const_copy_a)) != 0) binary_result = NULL;
+       else {
+        error = DeeObject_DelAttr(const_copy_a,ast_b->ast_const.c_const);
+        binary_result = error < 0 ? NULL : DeeBool_New(error);
+       }
+       break;
+      default: DEE_BUILTIN_UNREACHABLE();
+     }
+     goto handle_binary_result_decref_a;
+    }
+    switch (kind) {
+     // Create constant attribute lookup
+     case DEE_XASTKIND_ATTR_GET: return DeeXAst_NewAttrGetC(tk,lexer,parser_flags,ast_a,ast_b->ast_const.c_const);
+     case DEE_XASTKIND_ATTR_HAS: return DeeXAst_NewAttrHasC(tk,lexer,parser_flags,ast_a,ast_b->ast_const.c_const);
+     case DEE_XASTKIND_ATTR_DEL: return DeeXAst_NewAttrDelC(tk,lexer,parser_flags,ast_a,ast_b->ast_const.c_const);
+     default: break;
+    }
+    DEE_BUILTIN_UNREACHABLE();
+   } /* DEE_PARSER_FLAG_OPTIMIZE_INTRINSIC_CALLS */
+   break;
+
+  case DEE_XASTKIND_BUILTIN_UNUSED:
+   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_DEAD_BRANCH)!=0) {
+    if (DeeXAst_IsNoEffect(ast_a)) {
+     VLOG_PARSER(tk,"Ignoring noeffect eval-branch in __builtin_unused(%r,%r)\n",ast_a,ast_b);
+     Dee_INCREF(ast_b);
+     return ast_b;
+    }
+   }
+   goto normal_ast;
+
+  case DEE_XASTKIND_LAND:
+   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_DEAD_BRANCH)!=0) {
+    if (ast_a->ast_kind == DEE_XASTKIND_CONST) {
+     int const_value;
+     if (ast_b->ast_kind == DEE_XASTKIND_CONST) break; // this is optimized later
+     // 'true && foobar()' >> '!!foobar()'
+     // 'false && foobar()' >> '__builtin_unused(__builtin_dead(foobar()),false)'
+     if ((const_copy_a = DeeObject_DeepCopy(ast_a->ast_const.c_const)) == NULL) goto err_copy;
+     const_value = DeeObject_Bool(const_copy_a);
+     Dee_DECREF(const_copy_a);
+     if (const_value < 0) goto handle_binary_error;
+     if (!const_value) {
+      DeeXAstObject *dead_branch,*replace_branch;
+      VLOG_PARSER(tk,"Detected dead branch in 'false && %r'\n",ast_b);
+      if ((dead_branch = DeeXAst_NewBuiltinDead(tk,lexer,parser_flags,ast_b)) == NULL) return NULL;
+      if ((replace_branch = DeeXAst_NewConst(tk,Dee_False)) == NULL) { Dee_DECREF(dead_branch); return NULL; }
+      result = DeeXAst_NewBuiltinUnused(tk,lexer,parser_flags,dead_branch,replace_branch);
+      Dee_DECREF(replace_branch);
+      Dee_DECREF(dead_branch);
+      return result;
+     }
+     return DeeXAst_NewUnary(DEE_XASTKIND_BOOL,tk,lexer,parser_flags,ast_b);
+    } else if (ast_b->ast_kind == DEE_XASTKIND_CONST) {
+     int const_value; DeeXAstObject *result2;
+     // 'foobar() && true' >> '!!foobar()'
+     // 'foobar() && false' >> '__builtin_unused(!!foobar(),false)'
+     if ((const_copy_b = DeeObject_DeepCopy(ast_b->ast_const.c_const)) == NULL) goto err_copy;
+     const_value = DeeObject_Bool(const_copy_b);
+     Dee_DECREF(const_copy_b);
+     if (const_value < 0) goto handle_binary_error;
+     if (const_value) return DeeXAst_NewUnary(DEE_XASTKIND_BOOL,tk,lexer,parser_flags,ast_b);
+     if ((result2 = DeeXAst_NewConst(tk,Dee_False)) == NULL) return NULL;
+     result = DeeXAst_NewBuiltinUnused(tk,lexer,parser_flags,ast_a,result2);
+     Dee_DECREF(result2);
+     return result;
+    } else {
+     goto normal_ast;
+    }
+   } /* DEE_PARSER_FLAG_OPTIMIZE_DEAD_BRANCH */
    break;
 
   case DEE_XASTKIND_LOR:
-   if (ast_a->ast_kind == DEE_XASTKIND_CONST) {
-    int const_value;
-    if (ast_b->ast_kind == DEE_XASTKIND_CONST) break; // this is optimized later
-    // 'true || foobar()' >> '__builtin_unused(__builtin_dead(foobar()),true)'
-    // 'false || foobar()' >> '!!foobar()'
-    if ((const_copy_a = DeeObject_DeepCopy(ast_a->ast_const.c_const)) == NULL) goto err_copy;
-    const_value = DeeObject_Bool(const_copy_a);
-    Dee_DECREF(const_copy_a);
-    if (const_value < 0) goto handle_binary_error;
-    if (const_value) {
-     DeeXAstObject *dead_branch,*replace_branch;
-     VLOG_PARSER(tk,"Detected dead branch in 'true || %r'\n",ast_b);
-     if ((dead_branch = DeeXAst_NewBuiltinDead(tk,lexer,parser_flags,ast_b)) == NULL) return NULL;
-     if ((replace_branch = DeeXAst_NewConst(tk,Dee_True)) == NULL) { Dee_DECREF(dead_branch); return NULL; }
-     result = DeeXAst_NewBuiltinUnused(tk,lexer,parser_flags,dead_branch,replace_branch);
-     Dee_DECREF(replace_branch);
-     Dee_DECREF(dead_branch);
+   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_DEAD_BRANCH)!=0) {
+    if (ast_a->ast_kind == DEE_XASTKIND_CONST) {
+     int const_value;
+     if (ast_b->ast_kind == DEE_XASTKIND_CONST) break; // this is optimized later
+     // 'true || foobar()' >> '__builtin_unused(__builtin_dead(foobar()),true)'
+     // 'false || foobar()' >> '!!foobar()'
+     if ((const_copy_a = DeeObject_DeepCopy(ast_a->ast_const.c_const)) == NULL) goto err_copy;
+     const_value = DeeObject_Bool(const_copy_a);
+     Dee_DECREF(const_copy_a);
+     if (const_value < 0) goto handle_binary_error;
+     if (const_value) {
+      DeeXAstObject *dead_branch,*replace_branch;
+      VLOG_PARSER(tk,"Detected dead branch in 'true || %r'\n",ast_b);
+      if ((dead_branch = DeeXAst_NewBuiltinDead(tk,lexer,parser_flags,ast_b)) == NULL) return NULL;
+      if ((replace_branch = DeeXAst_NewConst(tk,Dee_True)) == NULL) { Dee_DECREF(dead_branch); return NULL; }
+      result = DeeXAst_NewBuiltinUnused(tk,lexer,parser_flags,dead_branch,replace_branch);
+      Dee_DECREF(replace_branch);
+      Dee_DECREF(dead_branch);
+      return result;
+     }
+     return DeeXAst_NewUnary(DEE_XASTKIND_BOOL,tk,lexer,parser_flags,ast_b);
+    } else if (ast_b->ast_kind == DEE_XASTKIND_CONST) {
+     int const_value; DeeXAstObject *result2;
+     // 'foobar() || true' >> '__builtin_unused(!!foobar(),true)'
+     // 'foobar() || false' >> '!!foobar()'
+     if ((const_copy_b = DeeObject_DeepCopy(ast_b->ast_const.c_const)) == NULL) goto err_copy;
+     const_value = DeeObject_Bool(const_copy_b);
+     Dee_DECREF(const_copy_b);
+     if (const_value < 0) goto handle_binary_error;
+     if (!const_value) return DeeXAst_NewUnary(DEE_XASTKIND_BOOL,tk,lexer,parser_flags,ast_b);
+     if ((result2 = DeeXAst_NewConst(tk,Dee_False)) == NULL) return NULL;
+     result = DeeXAst_NewBuiltinUnused(tk,lexer,parser_flags,ast_a,result2);
+     Dee_DECREF(result2);
      return result;
+    } else {
+     goto normal_ast;
     }
-    return DeeXAst_NewUnary(DEE_XASTKIND_BOOL,tk,lexer,parser_flags,ast_b);
-   } else if (ast_b->ast_kind == DEE_XASTKIND_CONST) {
-    int const_value; DeeXAstObject *result2;
-    // 'foobar() || true' >> '__builtin_unused(!!foobar(),true)'
-    // 'foobar() || false' >> '!!foobar()'
-    if ((const_copy_b = DeeObject_DeepCopy(ast_b->ast_const.c_const)) == NULL) goto err_copy;
-    const_value = DeeObject_Bool(const_copy_b);
-    Dee_DECREF(const_copy_b);
-    if (const_value < 0) goto handle_binary_error;
-    if (!const_value) return DeeXAst_NewUnary(DEE_XASTKIND_BOOL,tk,lexer,parser_flags,ast_b);
-    if ((result2 = DeeXAst_NewConst(tk,Dee_False)) == NULL) return NULL;
-    result = DeeXAst_NewBuiltinUnused(tk,lexer,parser_flags,ast_a,result2);
-    Dee_DECREF(result2);
-    return result;
-   } else goto normal_ast;
+   } /* DEE_PARSER_FLAG_OPTIMIZE_DEAD_BRANCH */
    break;
+
   default: break;
  }
+
 
  if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_CONST_OPERATORS)!=0 &&
      ast_a->ast_kind == DEE_XASTKIND_CONST &&

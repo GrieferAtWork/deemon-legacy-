@@ -309,6 +309,7 @@ do{\
 #define DeeLocalVar_IS_USED(ob)          (((DeeLocalVarObject *)Dee_REQUIRES_POINTER(ob))->lv_uses!=0)
 #define DeeLocalVar_IS_COMPILERINIT(ob) ((((DeeLocalVarObject *)Dee_REQUIRES_POINTER(ob))->lv_flags&DEE_LOCALVAR_FLAG_INITIALIZED)!=0)
 #define DeeLocalVar_GET_USES(ob)         ((unsigned int)((DeeLocalVarObject *)Dee_REQUIRES_POINTER(ob))->lv_uses)
+#define DeeLocalVar_GET_INIT(ob)         ((unsigned int)((DeeLocalVarObject *)Dee_REQUIRES_POINTER(ob))->lv_init)
 
 #define DEE_TOKENID_IS_VARNAME(id) ((id)==TPP_TOK_DOTS||TPPTokenID_IS_KEYWORD(id))
 
@@ -591,11 +592,21 @@ extern void DeeVarDeclStorage_Visit(
 
 //////////////////////////////////////////////////////////////////////////
 // Returns true/false if 'self' uses 'variable' in some way, shape or form
-// in "xast.uses_variable.inl"
+// in "xast.variable_usage.inl"
 extern DEE_A_RET_WUNUSED int DeeVarDeclStorage_UsesVariable(
+ DEE_A_IN struct DeeVarDeclStorage const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED int DeeVarDeclStorage_LoadsVariable(
+ DEE_A_IN struct DeeVarDeclStorage const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED int DeeVarDeclStorage_StoresVariable(
  DEE_A_IN struct DeeVarDeclStorage const *self, DEE_A_IN DeeLocalVarObject const *variable);
 extern DEE_A_RET_WUNUSED Dee_size_t DeeVarDeclStorage_CountVariableUses(
  DEE_A_IN struct DeeVarDeclStorage const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED Dee_size_t DeeVarDeclStorage_CountVariableLoads(
+ DEE_A_IN struct DeeVarDeclStorage const *self, DEE_A_IN DeeLocalVarObject const *variable);
+extern DEE_A_RET_WUNUSED Dee_size_t DeeVarDeclStorage_CountVariableStores(
+ DEE_A_IN struct DeeVarDeclStorage const *self, DEE_A_IN DeeLocalVarObject const *variable);
+
+
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) * // in "xast.repr.inl"
  DeeVarDeclStorage_Repr(DEE_A_IN struct DeeVarDeclStorage const *self);
 

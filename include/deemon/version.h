@@ -246,6 +246,12 @@
 #endif
 
 //////////////////////////////////////////////////////////////////////////
+// Enable the operator function syntax
+#ifndef DEE_CONFIG_LANGUAGE_HAVE_OPERATOR_FUNCTIONS
+#define DEE_CONFIG_LANGUAGE_HAVE_OPERATOR_FUNCTIONS     1
+#endif
+
+//////////////////////////////////////////////////////////////////////////
 // Enable generator expression as short forms for yield-functions:
 // >> print (for (x: util::range(5)) x*2)...; // 0 2 4 6 8
 // >> // Internally transformed into:

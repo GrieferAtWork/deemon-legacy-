@@ -1025,7 +1025,8 @@ static int DEE_CALL _DeeSAst_VisitReplaceThrowVarWithRethrow(
  if (self->ast_kind == DEE_SASTKIND_THROW &&
      self->ast_throw.t_object &&
      self->ast_throw.t_object->ast_kind == DEE_XASTKIND_VAR &&
-     self->ast_throw.t_object->ast_var.vs_var == var) {
+     self->ast_throw.t_object->ast_var.vs_var == var &&
+    (self->ast_throw.t_object->ast_var.vs_flags&DEE_XAST_VARAST_FLAG_REF)==0) {
   DEE_LVERBOSE1R("%s(%d) : %k : OPTIMIZE : throw --> rethrow\n",
                  DeeToken_FILE(self->ast_common.ast_token),
                  DeeToken_LINE(self->ast_common.ast_token)+1,
@@ -1540,9 +1541,20 @@ DEE_DECL_END
 #include "sast.repr.inl"
 #include "sast.visit_all.inl"
 #include "sast_optimize.inl"
+#define DO_STORE
 #define DO_COUNT
-#include "sast.uses_variable.inl"
-#include "sast.uses_variable.inl"
+#include "sast.variable_usage.inl"
+#define DO_STORE
+#include "sast.variable_usage.inl"
+#define DO_LOAD
+#define DO_COUNT
+#include "sast.variable_usage.inl"
+#define DO_LOAD
+#include "sast.variable_usage.inl"
+#define DO_COUNT
+#include "sast.variable_usage.inl"
+#include "sast.variable_usage.inl"
+
 #endif
 
 #endif /* !GUARD_DEEMON_SAST_C */

@@ -43,6 +43,20 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewUnary(
  // TODO: '"" + a + b + c + d' --> ("",a,b,c,d) + ... // Allows use for a much faster StringWriter at runtime
 
  switch (kind) {
+  {
+   DeeXAstKind iv_kind;
+   if (0) { case DEE_XASTKIND_INC:     iv_kind = DEE_XASTKIND_VAR_INC; }
+   if (0) { case DEE_XASTKIND_DEC:     iv_kind = DEE_XASTKIND_VAR_DEC; }
+   if (0) { case DEE_XASTKIND_INCPOST: iv_kind = DEE_XASTKIND_VAR_INCPOST; }
+   if (0) { case DEE_XASTKIND_DECPOST: iv_kind = DEE_XASTKIND_VAR_DECPOST; }
+   // Try to create a unary inplace-var AST
+   if (ast_a->ast_kind == DEE_XASTKIND_VAR &&
+      (ast_a->ast_var.vs_flags&DEE_XAST_VARAST_FLAG_REF)==0) {
+    return _DeeXAst_NewUnaryInplaceVar(iv_kind,tk,ast_a->ast_common.ast_token,
+                                       ast_a->ast_var.vs_var);
+   }
+  } break;
+
   case DEE_XASTKIND_CELL: {
    if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_CONST_SEQUENCE)!=0 &&
        ast_a->ast_kind == DEE_XASTKIND_EXPAND) {

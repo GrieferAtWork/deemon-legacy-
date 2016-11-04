@@ -443,7 +443,6 @@ no_debug:
    if (!ret_used) return 0;
   {
    if DEE_UNLIKELY(!DeeLocalVar_IS_COMPILERINIT(self->ast_var.vs_var)) {
-var_uninit:
     if DEE_UNLIKELY(DeeError_CompilerError(DEE_WARNING_UNINITIALIZED_VARIABLE_IN_LOAD,
      (DeeObject *)lexer,(DeeObject *)self->ast_common.ast_token,
      "Cannot load uninitialized variable") != 0) return -1;
@@ -489,7 +488,7 @@ push_none: // Must recheck because of the label
       if DEE_UNLIKELY(DeeXAst_CompileClassEntry(iter,DEE_COMPILER_ARGS) != 0) return -1;
       ++iter;
      }
-     if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
+     goto pop_if_unused_and_end;
     } break;
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES */
 
@@ -518,8 +517,8 @@ push_none: // Must recheck because of the label
      // v assign the newly generated function to its variable
      if DEE_UNLIKELY(DeeCodeWriter_BinaryOp(writer,OP_COPY_ASSIGN) != 0) return -1;
      // v Pop the function variable if it isn't used
+pop_if_unused_and_end:
      if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-     break;
     } break;
 
     // Note how 'tuple' isn't in here. (That is because a
@@ -564,7 +563,7 @@ push_none: // Must recheck because of the label
      // Note how this is actually a situation where 'move:=' has purpose (yay!)
      if DEE_UNLIKELY(DeeCodeWriter_BinaryOp(writer,OP_MOVE_ASSIGN) != 0) return -1;
      // todo: We could optimize this by adding static OPEXT_ASSIGN_SET, OPEXT_ASSIGN_CELL, ... opcodes
-     if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
+     goto pop_if_unused_and_end;
     } break;
 
     default:
@@ -779,8 +778,7 @@ err_function_1: DeeCodeWriter_Quit(&fun_writer);
       DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED))
     : DeeCodeWriter_PushNone(writer)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_TrinaryOp(writer,OP_SEQ_RANGE_GET) != 0) return -1;
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-   break;
+   goto pop_if_unused_and_end;
 
   case DEE_XASTKIND_SEQ_RANGE_DEL:
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_seq_range_get.sr_seq,
@@ -811,8 +809,7 @@ err_function_1: DeeCodeWriter_Quit(&fun_writer);
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_seq_range_get.sr_value,
     DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_QuadaryOp(writer,OP_SEQ_RANGE_SET) != 0) return -1;
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-   break;
+   goto pop_if_unused_and_end;
 
   case DEE_XASTKIND_ATTR_GET_C: opcode = OP_ATTR_GET_C; goto writer_attr_operator;
   case DEE_XASTKIND_ATTR_HAS_C: opcode = OP_ATTR_HAS_C; goto writer_attr_operator;
@@ -827,7 +824,9 @@ writer_attr_operator: {
    if (opcode == OP_ATTR_DEL_C) {
     DeeCodeWriter_DECSTACK(writer); // Consumed
     if (ret_used && DEE_UNLIKELY(DeeCodeWriter_PushNone(writer) != 0)) return -1;
-   } else if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
+   } else {
+    goto pop_if_unused_and_end;
+   }
   } break;
   case DEE_XASTKIND_ATTR_SET_C: {
    Dee_size_t attr_id;
@@ -839,7 +838,7 @@ writer_attr_operator: {
     compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(writer,OP_ATTR_SET_C,attr_id) != 0) return -1;
    DeeCodeWriter_DECSTACK(writer); // from OP_ATTR_SET_C: -2 +1
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
+   goto pop_if_unused_and_end;
   } break;
 
   case DEE_XASTKIND_EXPAND: {
@@ -858,7 +857,7 @@ writer_attr_operator: {
      unpack_type == &DeeTuple_Type ? OP_UNPACK_TUPLE :
      unpack_type == &DeeList_Type ? OP_UNPACK_LIST :
      OP_UNPACK_SEQUENCE),1) != 0) return -1;
-    if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
+    goto pop_if_unused_and_end;
    }
   } break;
 
@@ -901,12 +900,11 @@ writer_attr_operator: {
   case DEE_XASTKIND_SEQ_SIZE: opcode = OP_SEQ_SIZE; goto unary_operator;
   case DEE_XASTKIND_ITERSELF: opcode = OP_SEQ_ITER_SELF; goto unary_operator;
   case DEE_XASTKIND_CELL: opcode = OP_CELL;
-unary_operator: {
+unary_operator:
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_a,DEE_COMPILER_ARGS_EX(
     compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_UnaryOp(writer,opcode) != 0) return -1;
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-  } break;
+   goto pop_if_unused_and_end;
 
   // TODO
   //case DEE_XASTKIND_NEW: oparg = ...; goto unary_operator_ext;
@@ -919,12 +917,12 @@ unary_operator: {
   case DEE_XASTKIND_SEQ_ALL: oparg = OPEXT_SEQ_ALL; goto unary_operator_ext;
   case DEE_XASTKIND_SEQ_SUM: oparg = OPEXT_SEQ_SUM; goto unary_operator_ext;
   case DEE_XASTKIND_SUPEROF: oparg = OPEXT_SUPEROF; goto unary_operator_ext;
-  case DEE_XASTKIND_CLASSOF: oparg = OPEXT_CLASSOF; unary_operator_ext: {
+  case DEE_XASTKIND_CLASSOF: oparg = OPEXT_CLASSOF;
+unary_operator_ext:
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_a,DEE_COMPILER_ARGS_EX(
     compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,oparg) != 0) return -1;
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-  } break;
+   goto pop_if_unused_and_end;
 
 
   case DEE_XASTKIND_LAND:
@@ -1013,12 +1011,72 @@ binary_operator_retnone:
    goto push_none;
   } break;
 #endif
-                
+   
   {
-   Dee_uint8_t inplace_opcode;
-   Dee_uint16_t inplace_try_opcode;
+   Dee_uint8_t inplace_opcode; Dee_uint16_t inplace_try_opcode;
    DeeLocalVarObject *local_var; DeeXAstObject *op_a;
+   DEE_STATIC_ASSERT(Dee_OFFSETOF(struct DeeXAstUnaryInplaceVarAst,uiv_var) == Dee_OFFSETOF(struct DeeXAstBinaryInplaceVarAst,biv_var));
+   DEE_STATIC_ASSERT(Dee_OFFSETOF(struct DeeXAstUnaryInplaceVarAst,uiv_tok) == Dee_OFFSETOF(struct DeeXAstBinaryInplaceVarAst,biv_tok));
 #define INPLACE_OP_DATA(iop,try_iop) (inplace_opcode=(iop),inplace_try_opcode=(try_iop))
+   // Inplace-var unary/binary asts
+   if (0) { case DEE_XASTKIND_VAR_INC:     INPLACE_OP_DATA(OP_INC,OPEXT_TRY_INPLACE_INC); }
+   if (0) { case DEE_XASTKIND_VAR_DEC:     INPLACE_OP_DATA(OP_DEC,OPEXT_TRY_INPLACE_DEC); }
+   if (0) { case DEE_XASTKIND_VAR_INCPOST: INPLACE_OP_DATA(OP_INC_POST,OPEXT_TRY_INPLACE_INC_POST); }
+   if (0) { case DEE_XASTKIND_VAR_DECPOST: INPLACE_OP_DATA(OP_DEC_POST,OPEXT_TRY_INPLACE_DEC_POST); }
+   if (0) { case DEE_XASTKIND_VAR_IADD:    INPLACE_OP_DATA(OP_INPLACE_ADD,OPEXT_TRY_INPLACE_ADD); }
+   if (0) { case DEE_XASTKIND_VAR_ISUB:    INPLACE_OP_DATA(OP_INPLACE_SUB,OPEXT_TRY_INPLACE_SUB); }
+   if (0) { case DEE_XASTKIND_VAR_IMUL:    INPLACE_OP_DATA(OP_INPLACE_MUL,OPEXT_TRY_INPLACE_MUL); }
+   if (0) { case DEE_XASTKIND_VAR_IDIV:    INPLACE_OP_DATA(OP_INPLACE_DIV,OPEXT_TRY_INPLACE_DIV); }
+   if (0) { case DEE_XASTKIND_VAR_IMOD:    INPLACE_OP_DATA(OP_INPLACE_MOD,OPEXT_TRY_INPLACE_MOD); }
+   if (0) { case DEE_XASTKIND_VAR_ISHL:    INPLACE_OP_DATA(OP_INPLACE_SHL,OPEXT_TRY_INPLACE_SHL); }
+   if (0) { case DEE_XASTKIND_VAR_ISHR:    INPLACE_OP_DATA(OP_INPLACE_SHR,OPEXT_TRY_INPLACE_SHR); }
+   if (0) { case DEE_XASTKIND_VAR_IAND:    INPLACE_OP_DATA(OP_INPLACE_AND,OPEXT_TRY_INPLACE_AND); }
+   if (0) { case DEE_XASTKIND_VAR_IOR:     INPLACE_OP_DATA(OP_INPLACE_OR, OPEXT_TRY_INPLACE_OR);  }
+   if (0) { case DEE_XASTKIND_VAR_IXOR:    INPLACE_OP_DATA(OP_INPLACE_XOR,OPEXT_TRY_INPLACE_XOR); }
+   if (0) { case DEE_XASTKIND_VAR_IPOW:    INPLACE_OP_DATA(OP_INPLACE_POW,OPEXT_TRY_INPLACE_POW); }
+   local_var = self->ast_unary_var.uiv_var;
+   DEE_ASSERTF(DeeCodeWriter_IsVarLocal(writer,local_var),
+               "%s(%d) : %k : Unary inplace-var ast doesn't reference scope-local variable",
+               DeeToken_FILE(self->ast_unary_var.uiv_tok),
+               DeeToken_LINE(self->ast_unary_var.uiv_tok)+1,
+               self->ast_unary_var.uiv_tok);
+   if (!DeeCodeWriter_IsVarLocal(writer,local_var)) goto inplace_default;
+   if (!DeeLocalVar_IS_COMPILERINIT(local_var)) {
+    if DEE_UNLIKELY(DeeError_CompilerError(DEE_WARNING_UNINITIALIZED_VARIABLE_IN_LOAD,
+     (DeeObject *)lexer,(DeeObject *)self->ast_unary_var.uiv_tok,
+     "Cannot load uninitialized variable in inplace-var operation") != 0) return -1;
+    goto push_none;
+   }
+   if (DeeLocalVar_KIND(local_var) == DEE_LOCALVAR_KIND_THIS) {
+    if (DeeCodeWriter_LoadThis(writer) != 0) return -1;
+    if (DEE_XASTKIND_ISBINARYVAR(self->ast_kind)) {
+     if DEE_UNLIKELY(DeeXAst_Compile(self->ast_binary_var.biv_arg,
+      DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
+     if DEE_UNLIKELY(DeeCodeWriter_BinaryOp(writer,inplace_opcode) != 0) return -1;
+    } else {
+     DEE_ASSERT(DEE_XASTKIND_ISUNARYVAR(self->ast_kind));
+     if DEE_UNLIKELY(DeeCodeWriter_UnaryOp(writer,inplace_opcode) != 0) return -1;
+    }
+   } else {
+    // Load the stack entry
+    if DEE_UNLIKELY(DeeCodeWriter_LoadVar(writer,local_var,have_local_names ? lexer : NULL) != 0) return -1;
+    if (DEE_XASTKIND_ISBINARYVAR(self->ast_kind)) {
+     // Compile the right operand
+     if DEE_UNLIKELY(DeeXAst_Compile(self->ast_binary_var.biv_arg,
+      DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
+     if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,inplace_try_opcode) != 0) return -1;
+     // No alignment required for -2 +2
+    } else {
+     DEE_ASSERT(DEE_XASTKIND_ISUNARYVAR(self->ast_kind));
+     if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,inplace_try_opcode) != 0) return -1;
+     DeeCodeWriter_INCSTACK(writer); // align for -1 +2
+    }
+    // Now store the result back into the stack variable
+    if DEE_UNLIKELY(DeeCodeWriter_StoreVarPop(writer,local_var,have_local_names ? lexer : NULL) != 0) return -1;
+   }
+   goto pop_if_unused_and_end;
+
+   // Inplace asts
    if (0) { case DEE_XASTKIND_IADD: INPLACE_OP_DATA(OP_INPLACE_ADD,OPEXT_TRY_INPLACE_ADD); }
    if (0) { case DEE_XASTKIND_ISUB: INPLACE_OP_DATA(OP_INPLACE_SUB,OPEXT_TRY_INPLACE_SUB); }
    if (0) { case DEE_XASTKIND_IMUL: INPLACE_OP_DATA(OP_INPLACE_MUL,OPEXT_TRY_INPLACE_MUL); }
@@ -1037,6 +1095,7 @@ binary_operator_retnone:
 #undef INPLACE_OP_DATA
    op_a = self->ast_operator.op_a;
    switch (op_a->ast_kind) {
+#if 0
     case DEE_XASTKIND_VAR: {
      local_var = op_a->ast_var.vs_var;
      if (!DeeCodeWriter_IsVarLocal(writer,local_var)) goto inplace_default;
@@ -1058,6 +1117,7 @@ binary_operator_retnone:
      // Now store the result back into the stack variable
      if DEE_UNLIKELY(DeeCodeWriter_StoreVarPop(writer,local_var,have_local_names ? lexer : NULL) != 0) return -1;
     } break;
+#endif
     case DEE_XASTKIND_ATTR_GET_C: {
      Dee_size_t name_id;
      // Compile 'a.b += d' --> 'a.b = a.b += d'
@@ -1167,7 +1227,7 @@ inplace_default:
      }
      break;
    }
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
+   goto pop_if_unused_and_end;
 #undef inplace_cst_opcode
   } break;
 
@@ -1185,8 +1245,7 @@ inplace_default:
      DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
     if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(writer,OP_CALL_MEMBER_C,attr_id) != 0) return -1;
     DeeCodeWriter_DECSTACK(writer); // -2 +1
-    if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-    break;
+    goto pop_if_unused_and_end;
    }
    if ((compiler_flags&DEE_COMPILER_FLAG_OPTIMIZE_CONSTRUCTOR_CALLS)!=0) {
     // Using type prediction, optimize constructor calls
@@ -1220,22 +1279,20 @@ inplace_default:
   case DEE_XASTKIND_IN: opcode = OP_IN; goto binary_operator;
   case DEE_XASTKIND_MOVE_ASSIGN: opcode = OP_MOVE_ASSIGN; goto binary_operator;
   case DEE_XASTKIND_COPY_ASSIGN: opcode = OP_COPY_ASSIGN;
-binary_operator: {
+binary_operator:
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_a,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_b,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_BinaryOp(writer,opcode) != 0) return -1;
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-  } break;
+   goto pop_if_unused_and_end;
 
   case DEE_XASTKIND_SEQ_SET: opcode = OP_SEQ_SET; goto trinary_operator;
   case DEE_XASTKIND_ATTR_SET: opcode = OP_ATTR_SET;
-trinary_operator: {
+trinary_operator:
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_a,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_b,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_c,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_TrinaryOp(writer,opcode) != 0) return -1;
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-  } break;
+   goto pop_if_unused_and_end;
 
 #if DEE_CONFIG_LANGUAGE_HAVE_EXTERN
   case DEE_XASTKIND_BUILTIN_EXTERN: {
@@ -1392,13 +1449,12 @@ trinary_operator: {
    return DeeXAst_Compile(self->ast_builtin_expect.e_value,DEE_COMPILER_ARGS);
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT */
 
-  case DEE_XASTKIND_SUPER_AT: {
+  case DEE_XASTKIND_SUPER_AT:
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_a,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_b,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,OPEXT_SUPER_AT) != 0) return -1;
    DeeCodeWriter_DECSTACK(writer);
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-  } break;
+   goto pop_if_unused_and_end;
 
   case DEE_XASTKIND_DEL_VAR: {
    DEE_ASSERT(DeeObject_Check(self->ast_delvar.d_var) && DeeLocalVar_Check(self->ast_delvar.d_var));
@@ -1496,8 +1552,8 @@ trinary_operator: {
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_b,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,oparg) != 0) return -1;
    DeeCodeWriter_DECSTACK(writer); // -2 +1
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-  } break;
+   goto pop_if_unused_and_end;
+  }
 
   case DEE_XASTKIND_IO_SEEK: {
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_a,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
@@ -1519,8 +1575,8 @@ trinary_operator: {
     DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,oparg) != 0) return -1;
    DeeCodeWriter_DECSTACK(writer); // -1
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-  } break;
+   goto pop_if_unused_and_end;
+  }
 
 #if DEE_CONFIG_LANGUAGE_HAVE_POINTERS
   {
@@ -1531,8 +1587,8 @@ trinary_operator: {
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_c,DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithArg(writer,OP_EXTENDED,oparg) != 0) return -1;
    DeeCodeWriter_DECSTACK_N(writer,2); // -3 +1
-   if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
-  } break;
+   goto pop_if_unused_and_end;
+  }
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_POINTERS */
 
   //case DEE_XASTKIND_MODULE: // unsupported

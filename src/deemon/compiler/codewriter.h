@@ -450,6 +450,7 @@ extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DelVar(DEE_A_INOUT struct DeeCodeW
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_LoadVar(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN_OPT struct DeeLexerObject const *lexer) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVar(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN_OPT struct DeeLexerObject const *lexer) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVarPop(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN_OPT struct DeeLexerObject const *lexer) DEE_ATTRIBUTE_NONNULL((1,2));
+#define DeeCodeWriter_LoadThis(ob) (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOp(ob,OP_LOAD_THIS))
 
 //////////////////////////////////////////////////////////////////////////
 // 1. Pop stack(stack_id) from the tack

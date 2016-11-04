@@ -1565,19 +1565,19 @@ public:
 
 #ifndef DEE_STATIC_ASSERT
 #if DEE_COMPILER_HAVE_CXX11_STATIC_ASSERT
-#define DEE_STATIC_ASSERT(x) static_assert((x),#x)
+# define DEE_STATIC_ASSERT(x) static_assert((x),#x)
 #elif DEE_COMPILER_HAVE_MSVC_COUNTER
-#define DEE_STATIC_ASSERT(x) typedef int DEE_PP_CAT_2(_dee_static_assert_,__COUNTER__)[!!(x)?1:0]
+# define DEE_STATIC_ASSERT(x) typedef int DEE_PP_CAT_2(_dee_static_assert_,__COUNTER__)[!!(x)?1:0]
 #else
-#define DEE_STATIC_ASSERT(x) typedef int DEE_PP_CAT_2(_dee_static_assert_,__LINE__)[!!(x)?1:0]
+# define DEE_STATIC_ASSERT(x) typedef int DEE_PP_CAT_2(_dee_static_assert_,__LINE__)[!!(x)?1:0]
 #endif
 #endif /* !DEE_STATIC_ASSERT */
 
 #ifndef DEE_STRUCT_DEF
 #if DEE_COMPILER_HAVE_C_STRUCT_NAMESPACE
-#define DEE_STRUCT_DEF(T) struct T; typedef struct T T
+# define DEE_STRUCT_DEF(T) struct T; typedef struct T T
 #else
-#define DEE_STRUCT_DEF(T) struct T
+# define DEE_STRUCT_DEF(T) struct T
 #endif
 #endif
 
@@ -1596,128 +1596,130 @@ public:
 #ifndef DEE_PLATFORM_VA_LIST_IS_ARRAY
 // formerly: DEE_COMPILER_HAVE_VA_LIST_IS_ARRAY
 #if defined(DEE_PLATFORM_UNIX) && defined(DEE_PLATFORM_64_BIT)
-#define DEE_PLATFORM_VA_LIST_IS_ARRAY 1
+# define DEE_PLATFORM_VA_LIST_IS_ARRAY 1
 #else
-#define DEE_PLATFORM_VA_LIST_IS_ARRAY 0
+# define DEE_PLATFORM_VA_LIST_IS_ARRAY 0
 #endif
 #endif
 
 
 #ifndef DEE_INT8_C
 #if defined(__INT8_C)
-#define DEE_INT8_C    __INT8_C
+# define DEE_INT8_C    __INT8_C
 #elif defined(INT8_C)
-#define DEE_INT8_C    INT8_C
+# define DEE_INT8_C    INT8_C
 #elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
-#define DEE_INT8_C(x) x##i8
+# define DEE_INT8_C(x) x##i8
 #else
-#define DEE_INT8_C(x) x
+# define DEE_INT8_C(x) x
 #endif
 #endif
 
 #ifndef DEE_UINT8_C
 #if defined(__UINT8_C)
-#define DEE_UINT8_C    __UINT8_C
+# define DEE_UINT8_C    __UINT8_C
 #elif defined(UINT8_C)
-#define DEE_UINT8_C    UINT8_C
+# define DEE_UINT8_C    UINT8_C
 #elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
-#define DEE_UINT8_C(x) x##ui8
+# define DEE_UINT8_C(x) x##ui8
 #else
-#define DEE_UINT8_C(x) x
+# define DEE_UINT8_C(x) x
 #endif
 #endif
 
 #ifndef DEE_INT16_C
 #if defined(__INT16_C)
-#define DEE_INT16_C    __INT16_C
+# define DEE_INT16_C    __INT16_C
 #elif defined(INT16_C)
-#define DEE_INT16_C    INT16_C
+# define DEE_INT16_C    INT16_C
 #elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
-#define DEE_INT16_C(x) x##i16
+# define DEE_INT16_C(x) x##i16
 #else
-#define DEE_INT16_C(x) x
+# define DEE_INT16_C(x) x
 #endif
 #endif
 
 #ifndef DEE_UINT16_C
 #if defined(__UINT16_C)
-#define DEE_UINT16_C    __UINT16_C
+# define DEE_UINT16_C    __UINT16_C
 #elif defined(UINT16_C)
-#define DEE_UINT16_C    UINT16_C
+# define DEE_UINT16_C    UINT16_C
 #elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
-#define DEE_UINT16_C(x) x##ui16
+# define DEE_UINT16_C(x) x##ui16
 #else
-#define DEE_UINT16_C(x) x
+# define DEE_UINT16_C(x) x
 #endif
 #endif
 
 #ifndef DEE_INT32_C
 #if defined(__INT32_C)
-#define DEE_INT32_C    __INT32_C
+# define DEE_INT32_C    __INT32_C
 #elif defined(INT32_C)
-#define DEE_INT32_C    INT32_C
+# define DEE_INT32_C    INT32_C
+#elif DEE_TYPES_SIZEOF_INT == 4
+# define DEE_INT32_C(x) x
+#elif DEE_TYPES_SIZEOF_LONG == 4
+# define DEE_INT32_C(x) x##l
 #elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
-#define DEE_INT32_C(x) x##i32
-#elif DEE_TYPES_SIZEOF_INT != 4 && DEE_TYPES_SIZEOF_LONG == 4
-#define DEE_INT32_C(x) x##l
+# define DEE_INT32_C(x) x##i32
 #else
-#define DEE_INT32_C(x) x
+# define DEE_INT32_C(x) x
 #endif
 #endif
 
 #ifndef DEE_UINT32_C
 #if defined(__UINT32_C)
-#define DEE_UINT32_C    __UINT32_C
+# define DEE_UINT32_C    __UINT32_C
 #elif defined(UINT32_C)
-#define DEE_UINT32_C    UINT32_C
-#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
-#define DEE_UINT32_C(x) x##ui32
+# define DEE_UINT32_C    UINT32_C
 #elif DEE_TYPES_SIZEOF_INT == 4
-#define DEE_UINT32_C(x) x##u
+# define DEE_UINT32_C(x) x##u
 #elif DEE_TYPES_SIZEOF_LONG == 4
-#define DEE_UINT32_C(x) x##ul
+# define DEE_UINT32_C(x) x##ul
+#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
+# define DEE_UINT32_C(x) x##ui32
 #else
-#define DEE_UINT32_C(x) x
+# define DEE_UINT32_C(x) x
 #endif
 #endif
 
 #ifndef DEE_INT64_C
 #if defined(__INT64_C)
-#define DEE_INT64_C    __INT64_C
+# define DEE_INT64_C    __INT64_C
 #elif defined(INT64_C)
-#define DEE_INT64_C    INT64_C
-#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
-#define DEE_INT64_C(x) x##i64
-#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
-#define DEE_INT64_C(x) x##ll
+# define DEE_INT64_C    INT64_C
 #elif DEE_TYPES_SIZEOF_LONG == 8
-#define DEE_INT64_C(x) x##l
+# define DEE_INT64_C(x) x##l
+#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
+# define DEE_INT64_C(x) x##ll
+#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
+# define DEE_INT64_C(x) x##i64
 #else
-#define DEE_INT64_C(x) x
+# define DEE_INT64_C(x) x
 #endif
 #endif
 
 #ifndef DEE_UINT64_C
 #if defined(__UINT64_C)
-#define DEE_UINT64_C    __UINT64_C
+# define DEE_UINT64_C    __UINT64_C
 #elif defined(UINT64_C)
-#define DEE_UINT64_C    UINT64_C
-#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
-#define DEE_UINT64_C(x) x##ui64
-#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
-#define DEE_UINT64_C(x) x##ull
+# define DEE_UINT64_C    UINT64_C
 #elif DEE_TYPES_SIZEOF_LONG == 8
-#define DEE_UINT64_C(x) x##ul
+# define DEE_UINT64_C(x) x##ul
+#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
+# define DEE_UINT64_C(x) x##ull
+#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
+# define DEE_UINT64_C(x) x##ui64
 #else
-#define DEE_UINT64_C(x) x
+# define DEE_UINT64_C(x) x
 #endif
 #endif
 
 #ifndef Dee_MIN
-#define Dee_MIN(a,b) ((a)<(b)?(a):(b))
+# define Dee_MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 #ifndef Dee_MAX
-#define Dee_MAX(a,b) ((a)<(b)?(b):(a))
+# define Dee_MAX(a,b) ((a)<(b)?(b):(a))
 #endif
 
 #ifndef DEE_BUILTIN_BREAKPOINT

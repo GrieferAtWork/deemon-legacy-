@@ -47,6 +47,7 @@ do{\
 do{\
  Dee_INCREF((ob)->vs_var = (right)->vs_var);\
  DeeLocalVar_ADD_USE((ob)->vs_var);\
+ (ob)->vs_flags = (right)->vs_flags;\
 }while(0)
 
 #define _DeeXAstVarDeclAst_InitCopy(ob,right,...)\
@@ -95,6 +96,21 @@ do{\
    default: break;\
   }\
  }\
+}while(0)
+#define _DeeXAstUnaryInplaceVarAst_InitCopy(ob,right,...)\
+do{\
+ Dee_INCREF((ob)->uiv_var = (right)->uiv_var);\
+ Dee_INCREF((ob)->uiv_tok = (right)->uiv_tok);\
+ DeeLocalVar_ADD_INIT((ob)->uiv_var);\
+ DeeLocalVar_ADD_USE((ob)->uiv_var);\
+}while(0)
+#define _DeeXAstBinaryInplaceVarAst_InitCopy(ob,right,...)\
+do{\
+ Dee_INCREF((ob)->biv_var = (right)->biv_var);\
+ Dee_INCREF((ob)->biv_tok = (right)->biv_tok);\
+ Dee_INCREF((ob)->biv_arg = (right)->biv_arg);\
+ DeeLocalVar_ADD_INIT((ob)->biv_var);\
+ DeeLocalVar_ADD_USE((ob)->biv_var);\
 }while(0)
 
 #define _DeeXAstStatementAst_InitCopy(ob,right,...)\
@@ -343,6 +359,8 @@ do{\
 
 DEE_A_RET_EXCEPT(-1) int DeeXAst_InitCopy(
  DEE_A_OUT DeeXAstObject *self, DEE_A_INOUT DeeXAstObject *right) {
+ DEE_ASSERT(self);
+ DEE_ASSERT(DeeObject_Check(right) && DeeXAst_Check(right));
 #ifdef DEE_DEBUG
  memset(self,0,sizeof(*self));
 #endif
@@ -383,13 +401,18 @@ DEE_A_RET_EXCEPT(-1) int DeeXAst_InitCopy(
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT
   case DEE_XASTKIND_BUILTIN_EXPECT:   _DeeXAstBuiltinExpectAst_InitCopy(&self->ast_builtin_expect,&right->ast_builtin_expect,{return -1;}); break;
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT */
+  DEE_XASTKIND_CASE_INPLACE_VAR_UNARY _DeeXAstUnaryInplaceVarAst_InitCopy(&self->ast_unary_var,&right->ast_unary_var,{return -1;}); break;
+  DEE_XASTKIND_CASE_INPLACE_VAR_BINARY _DeeXAstBinaryInplaceVarAst_InitCopy(&self->ast_binary_var,&right->ast_binary_var,{return -1;}); break;
   default:                            _DeeXAstOperatorAst_InitCopy(&self->ast_operator,&right->ast_operator,{return -1;}); break;
  }
  _DeeXAstCommonAst_InitCopy(&self->ast_common,&right->ast_common);
  return 0;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXAst_AssignCopy(DEE_A_INOUT DeeXAstObject *self, DEE_A_INOUT DeeXAstObject *right) {
+DEE_A_RET_EXCEPT(-1) int DeeXAst_AssignCopy(
+ DEE_A_INOUT DeeXAstObject *self, DEE_A_INOUT DeeXAstObject *right) {
  DeeXAstObject temp;
+ DEE_ASSERT(DeeObject_Check(self) && DeeXAst_Check(self));
+ DEE_ASSERT(DeeObject_Check(right) && DeeXAst_Check(right));
  if (self == right) return 0;
  if (DeeXAst_InitCopy(&temp,right) != 0) return -1;
  _deexast_tp_dtor(self);
@@ -399,6 +422,8 @@ DEE_A_RET_EXCEPT(-1) int DeeXAst_AssignCopy(DEE_A_INOUT DeeXAstObject *self, DEE
 
 void DeeXAst_InitMove(
  DEE_A_OUT DeeXAstObject *self, DEE_A_INOUT DeeXAstObject *right) {
+ DEE_ASSERT(self);
+ DEE_ASSERT(DeeObject_Check(right) && DeeXAst_Check(right));
  _DeeXAstCommonAst_InitCopy(&self->ast_common,&right->ast_common);
  memcpy(DeeXAst_UNCOMMON_DATA(self),DeeXAst_UNCOMMON_DATA(right),DeeXAst_UNCOMMON_SIZE);
 #ifdef DEE_DEBUG
@@ -407,9 +432,9 @@ void DeeXAst_InitMove(
  right->ast_kind = DEE_XASTKIND_NONE;
 }
 
-void DeeXAst_AssignMove(
- DEE_A_INOUT DeeXAstObject *self,
- DEE_A_INOUT DeeXAstObject *right) {
+void DeeXAst_AssignMove(DEE_A_INOUT DeeXAstObject *self, DEE_A_INOUT DeeXAstObject *right) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeXAst_Check(self));
+ DEE_ASSERT(DeeObject_Check(right) && DeeXAst_Check(right));
  if (self == right) return;
  Dee_INCREF(right); // If 'right' is part of the sub-set of 'self'
  _deexast_tp_dtor(self);
@@ -417,9 +442,9 @@ void DeeXAst_AssignMove(
  Dee_DECREF(right);
 }
 
-void DeeXAst_AssignConst(
- DEE_A_INOUT DeeXAstObject *self,
- DEE_A_IN DeeObject *const_value) {
+void DeeXAst_AssignConst(DEE_A_INOUT DeeXAstObject *self, DEE_A_IN DeeObject *const_value) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeXAst_Check(self));
+ DEE_ASSERT(DeeObject_Check(const_value));
  Dee_INCREF(const_value); // in case 'right' is used by 'self' (inherited later)
  _DeeXAst_DestroyUncommon(self);
  self->ast_kind = DEE_XASTKIND_CONST;

@@ -79,6 +79,7 @@ err_ast_a: Dee_DECREF(ast_a); return NULL;
     if DEE_UNLIKELY((ast_b = _DeeXAst_NewUnsafe(DEE_XASTKIND_VAR,self->ast_common.ast_token)) == NULL) goto err_ast_a;
     DeeScope_WEAK_ROOT(new_scope)->sc_flags |= DEE_SCOPE_FLAG_FOUND_REFS;
     Dee_INCREF(ast_b->ast_var.vs_var = self->ast_vardecl.vd_var);
+    ast_b->ast_var.vs_flags = DEE_XAST_VARAST_FLAG_REF;
     DeeLocalVar_ADD_USE(ast_b->ast_var.vs_var);
     if DEE_UNLIKELY((ast_result = _DeeXAst_NewUnsafe(
      DEE_XASTKIND_COPY_ASSIGN,self->ast_common.ast_token)) == NULL) {

@@ -29,7 +29,7 @@ DEE_A_RET_WUNUSED DeeAstAttribute DeeXAst_AttrEx(
  DEE_A_IN DeeXAstObject const *self, DEE_A_IN Dee_uint32_t flags,
  DEE_A_IN DeeObject const *root_ast) {
  DeeAstAttribute result;
- DeeTypeObject const *ta,*tb,*tc;
+ DeeTypeObject const *ta,*tb;
  DEE_ASSERT(DeeObject_Check(self) && DeeXAst_Check(self));
  DEE_ASSERT(DeeObject_Check(root_ast) && (DeeXAst_Check(root_ast) || DeeSAst_Check(root_ast)));
  switch (self->ast_kind) {
@@ -480,6 +480,43 @@ DEE_A_RET_WUNUSED DeeAstAttribute DeeXAst_AttrEx(
     : DEE_AST_ATTRIBUTE_NONE,flags);
   } break;
 
+  DEE_XASTKIND_CASE_INPLACE_VAR_UNARY {
+#if 0
+   // TODO: Predict type of variable using assumptions
+   if ((ta = DeeXAst_PredictType(self->ast_unary_var.uiv_var)) != NULL) {
+    // TODO: Using assumptions, we can predict if the variable will be assigned
+    result = (DeeAstAttribute)((flags&DEE_AST_ATTRIBUTE_FLAG_ALL_EXCEPTIONS)!=0
+     ? (DEE_AST_ATTRIBUTE_NOEFFECT|DEE_AST_ATTRIBUTE_NOJUMP) // Could possibly throw an unbound local error
+     : (DEE_AST_ATTRIBUTE_NOEFFECT|DEE_AST_ATTRIBUTE_NOEXCEPT|DEE_AST_ATTRIBUTE_NOJUMP));
+    result = DeeAstAttribute_MergeSequential(result,DeeType_UnaryAstAttr(
+     ta,DeeType_SlotIdFromXAstKind(self->ast_kind),flags,NULL),flags);
+    return result;
+   } else
+#endif
+   {
+    return DEE_AST_ATTRIBUTE_NONE;
+   }
+  } break;
+
+  DEE_XASTKIND_CASE_INPLACE_VAR_BINARY {
+#if 0
+   // TODO: Predict type of variable using assumptions
+   if ((ta = DeeXAst_PredictType(self->ast_binary_var.biv_var)) != NULL) {
+    // TODO: Using assumptions, we can predict if the variable will be assigned
+    result = (DeeAstAttribute)((flags&DEE_AST_ATTRIBUTE_FLAG_ALL_EXCEPTIONS)!=0
+     ? (DEE_AST_ATTRIBUTE_NOEFFECT|DEE_AST_ATTRIBUTE_NOJUMP) // Could possibly throw an unbound local error
+     : (DEE_AST_ATTRIBUTE_NOEFFECT|DEE_AST_ATTRIBUTE_NOEXCEPT|DEE_AST_ATTRIBUTE_NOJUMP));
+    result = DeeAstAttribute_MergeSequential(result,DeeType_BinaryAstAttr(
+     ta,DeeType_SlotIdFromXAstKind(self->ast_kind),flags,
+     DeeXAst_PredictType(self->ast_binary_var.biv_arg),NULL),flags);
+    return result;
+   } else
+#endif
+   {
+    return DEE_AST_ATTRIBUTE_NONE;
+   }
+  } break;
+
   default:default_attr: if (DEE_XASTKIND_ISOPERATOR(self->ast_kind)) {
    switch (DEE_XASTKIND_OPCOUNT(self->ast_kind)) {
     case 3: {
@@ -488,10 +525,10 @@ DEE_A_RET_WUNUSED DeeAstAttribute DeeXAst_AttrEx(
       DeeXAst_AttrEx(self->ast_operator.op_b,flags,root_ast),
       DeeXAst_AttrEx(self->ast_operator.op_c,flags,root_ast),flags),flags);
      if ((ta = DeeXAst_PredictType(self->ast_operator.op_a)) != NULL) {
-      tb = DeeXAst_PredictType(self->ast_operator.op_b);
-      tc = DeeXAst_PredictType(self->ast_operator.op_c);
       result = DeeAstAttribute_MergeSequential(result,DeeType_TrinaryAstAttr(
-       ta,DeeType_SlotIdFromXAstKind(self->ast_kind),flags,tb,tc,NULL),flags);
+       ta,DeeType_SlotIdFromXAstKind(self->ast_kind),flags,
+       DeeXAst_PredictType(self->ast_operator.op_b),
+       DeeXAst_PredictType(self->ast_operator.op_c),NULL),flags);
      } else result &= ~(DEE_AST_ATTRIBUTE_NOEXCEPT|DEE_AST_ATTRIBUTE_NOEFFECT);
     } return result;
     case 2: {
@@ -499,9 +536,9 @@ DEE_A_RET_WUNUSED DeeAstAttribute DeeXAst_AttrEx(
       DeeXAst_AttrEx(self->ast_operator.op_a,flags,root_ast),
       DeeXAst_AttrEx(self->ast_operator.op_b,flags,root_ast),flags);
      if ((ta = DeeXAst_PredictType(self->ast_operator.op_a)) != NULL) {
-      tb = DeeXAst_PredictType(self->ast_operator.op_b);
       result = DeeAstAttribute_MergeSequential(result,DeeType_BinaryAstAttr(
-       ta,DeeType_SlotIdFromXAstKind(self->ast_kind),flags,tb,NULL),flags);
+       ta,DeeType_SlotIdFromXAstKind(self->ast_kind),flags,
+       DeeXAst_PredictType(self->ast_operator.op_b),NULL),flags);
      } else result &= ~(DEE_AST_ATTRIBUTE_NOEXCEPT|DEE_AST_ATTRIBUTE_NOEFFECT);
     } return result;
     case 1: {

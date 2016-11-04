@@ -1,6 +1,7 @@
 *.dee
 *.out
 !future.dee
+!fixme.dee
 !*/*.dee
 !*/*/*.dee
 !*/*/*/*.dee
