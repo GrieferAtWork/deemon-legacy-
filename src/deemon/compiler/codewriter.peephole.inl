@@ -38,6 +38,15 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimization(
  DeeCodeReachableAddrList_Quit(&pro_addr);
  return result;
 }
+// This doesn't really have to descrive no-op,
+// nor is this macro used to determine which code should be deleted.
+// A more appropriate name would be IS_M0P0,
+// implying -0+0 stackeffect opcodes that don't perform any jumps
+#define IS_NOOP(x) ((x)==OP_NOOP||(x)==OP_PRINT_END)
+DEE_STATIC_INLINE(Dee_uint8_t *) _dee_after_noop(Dee_uint8_t *start) {
+ while (IS_NOOP(*start)) ++start;
+ return start;
+}
 
 DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrList(
  DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_INOUT Dee_uint32_t *performed_optimizations,
@@ -58,7 +67,6 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
   if (!DeeCodeReachableAddrList_Contains(protected_addr,(Dee_size_t)(code-code_begin))) {
    before_opcode = *code;
    switch (before_opcode) {
-#define IS_NOOP(x) ((x)==OP_NOOP)
 #define TARGET(x) case x:
 #define RT_DO_READ_BEGIN()  (readpos=code+1)
 #define RT_DO_WRITE_BEGIN() (writepos=code)
@@ -71,8 +79,9 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
 #else
 #define RT_WRITE_BEGIN       RT_DO_WRITE_BEGIN
 #endif
-#define RT_PROTECTED()       DeeCodeReachableAddrList_Contains(protected_addr,(Dee_size_t)(readpos-code_begin))
+#define RT_PROTECTED()       (readpos == code_end || DeeCodeReachableAddrList_Contains(protected_addr,(Dee_size_t)(readpos-code_begin)))
 #define RT_WRITE_OP(x)       do{ while(IS_NOOP(*writepos)) ++writepos; *writepos++ = (x); }while(0)
+#define RT_WRITE_GETOP()     (*_dee_after_noop(writepos))
 #define RT_WRITE_SKIPOP()    do{ while(IS_NOOP(*writepos)) ++writepos; ++writepos; }while(0)
 #define RT_WRITE_ARG(x)      do{ *(Dee_uint16_t *)writepos=(x); writepos += 2; }while(0)
 #define RT_WRITE_SKIPARG()   do{ writepos += 2; }while(0)
@@ -97,7 +106,9 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
      Dee_uint8_t *jmp_dst;
     case OP_JUMP_IF_TT: case OP_JUMP_IF_TT_POP:
     case OP_JUMP_IF_FF: case OP_JUMP_IF_FF_POP:
-    case OP_JUMP:
+    case OP_JUMP: case OP_SEQ_ITER_WALK:
+    case OP_JUMP_IF_CASE_COMPARE:
+    case OP_JUMP_IF_RCASE_COMPARE:
      RT_DO_READ_BEGIN();
      jmp_off = RT_READ_SARG();
      if (before_opcode == OP_JUMP && jmp_off == sizeof(Dee_int16_t)) {
@@ -136,12 +147,12 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
      }
      DISPATCH();
     }
-#undef IS_NOOP
 #undef TARGET
 #undef RT_DO_READ_BEGIN
 #undef RT_DO_WRITE_BEGIN
 #undef RT_WRITE_BEGIN
 #undef RT_WRITE_OP
+#undef RT_WRITE_GETOP
 #undef RT_WRITE_SKIPOP
 #undef RT_WRITE_ARG
 #undef RT_WRITE_SKIPARG

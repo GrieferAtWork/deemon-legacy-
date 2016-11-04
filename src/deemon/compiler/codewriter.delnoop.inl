@@ -46,7 +46,10 @@ static void DeeCodeWriter_DelAndRelocateCode(
 
  // Relocate jumps 
  while (iter != end) {
-  if DEE_UNLIKELY(iter == del_start) iter = del_end;
+  if DEE_UNLIKELY(iter == del_start) {
+   if DEE_UNLIKELY((iter = del_end) == end) break;
+  }
+  DEE_ASSERT(iter < end);
   op = *iter++;
   switch (op) {
    DEE_OPCODE_CASE_HAS_JMPARG {

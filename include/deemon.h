@@ -388,6 +388,7 @@
 //     - Fixed a bug that prevent successful execution of a structured member function called through an lvalue
 //     - Fixed calls to foreign_functions where the called function throws a deemon error
 //     - Fixed an incorrect assertion error that could have occurred when generating a set
+//     - Fixed a bug that could have caused an assertion when trying to delete noop bytecode.
 //     
 //   Optimized:
 //     - Generating an iterator with util::range is now faster

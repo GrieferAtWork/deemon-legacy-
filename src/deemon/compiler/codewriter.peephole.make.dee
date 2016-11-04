@@ -75,7 +75,11 @@ local list rules;
 function get_effective_size(l): result {
 	result = 0;
 	for (local part: l) {
-		result += part.startswith("$") ? 2 : 1;
+		if (part.startswith("$")) {
+			result += 2;
+		} else if (!part.endswith("...")) {
+			result += 1;
+		}
 	}
 }
 
@@ -127,9 +131,16 @@ class oprule {
 #undef __RULE
 #undef RULE
 
-local main_switch = [list()]*256;
+local main_switch = [none]*256;
 for (local rule: rules) {
+	if (main_switch[rule.opcode_id] is none)
+		main_switch[rule.opcode_id] = list();
 	main_switch[rule.opcode_id].append(rule);
+}
+
+local label_count = 0;
+function get_label_name() {
+	return "local_label_"+label_count++;
 }
 
 print copyright;
@@ -176,6 +187,15 @@ for (local i,oprules: util::enumerate(main_switch)) {
 					// Additional use (check if the argument matches)
 					print indent+indent+indent+"if ("+opname+" != RT_READ_ARG()) RULE_BREAK();";
 				}
+			} else if (opname.endswith("...")) {
+				local loop_label = get_label_name();
+				print indent+indent+indent+"{";
+				print loop_label+":";
+				print indent+indent+indent+indent+"if (RT_PROTECTED()) RULE_BREAK();";
+				print indent+indent+indent+indent+"if ("+" || ".join(
+					for (local a: opname[:#opname-3].split("|"))
+						"RT_GET_OP() == "+a)+") { RT_NEXT_OP(); goto",loop_label+"; }";
+				print indent+indent+indent+"}";
 			} else {
 				print indent+indent+indent+"if (RT_PROTECTED() || ("+
 					" && ".join(for (local a: opname.split("|")) "RT_GET_OP() != "+a)+
@@ -187,7 +207,7 @@ for (local i,oprules: util::enumerate(main_switch)) {
 		// All rules match!
 		if (r.output) {
 			print indent+indent+indent+"RT_WRITE_BEGIN();";
-			local input_copy = copy r.input;
+			local input_copy = copy(r.input).locate_all([](x) -> !x.endswith("..."));
 			local cur_input = none;
 			for (local o: r.output) {
 				if (cur_input is none) cur_input = input_copy.pop_front();
@@ -203,6 +223,11 @@ for (local i,oprules: util::enumerate(main_switch)) {
 						cur_input = input_copy.pop_front(); // Skip one input
 						if (!cur_input.startswith("$")) cur_input = none;
 					}
+				} else if (o.endswith("...")) {
+					print indent+indent+indent+"while ("+
+						" || ".join(for (local x: o[:#o-3].split("|"))
+							"RT_WRITE_GETOP() == "+x
+						)+") { RT_WRITE_SKIPOP(); }";
 				} else if (o == "*") {
 					print indent+indent+indent+"RT_WRITE_SKIPOP();";
 					if (cur_input.startswith("$")) cur_input = cur_input[1:];

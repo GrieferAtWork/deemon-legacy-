@@ -107,8 +107,8 @@
 #define OP_ATTR_GET               0x43 // push(__getattr__(pop(1),pop(0)))
 #define OP_ATTR_DEL               0x44 // __delattr__(pop(1),pop(0))
 #define OP_ATTR_SET               0x45 // push(__setattr__(pop(2),pop(0),pop(1)))
-#define OP_ROT_2                  0x46 // push(pop(1))              // rotate top 2 stack entries
-#define OP_LROT_3                 0x47 // rotate top 3 stack entries: 'abc' -> 'cab'
+#define OP_ROT_2                  0x46 // rotate top 2 stack entries: 'ab' -> 'ba'
+#define OP_LROT_3                 0x47 // rotate top 3 stack entries: 'abc' -> 'bca'
 #define OP_TRY_END                0x48 // Pop the last exception hander from the stack of active handlers (NOTE: If it's a finally handler, it is executed before returning to the opcode following this one, unless an error occurred in the finally-block)
 #define OP_EXCEPT_END             0x49 // Written at the end of exception handling code (cleans up the exception chain by dropping the exception currently being handled)
 #define OP_FINALLY_END            0x4A // Written at the end of finally handling code (rethrows finally exceptions and returns to the address this finally block was executed from)
@@ -124,7 +124,7 @@
 #define OP_STORE_RET_POP          0x54 // function: result { result = pop(0); }
 // Throws an error if reached (this op-code is only generated in debug mode by default)
 // NOTE: Finally blocks from the stack frame that encountered this opcode will not be executed
-//       (It's barely possible to recover from this without having to execute user code...)
+//      (It's barely possible to recover from this without having to execute user code...)
 #define OP_UNREACHABLE            0x55 // __builtin_unreachable();
 #define OP_LOAD_THIS              0x56 // function [[__thiscall__]] { push(this); }
 #define OP_DUP                    0x57 // push(top)
