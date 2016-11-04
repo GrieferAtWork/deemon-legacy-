@@ -49,7 +49,7 @@ DEE_DECL_BEGIN
 
 #ifdef DEE_DEBUG
 #define DEE_BUILDVAL_INVALID_FORMAT() \
- do{DEE_LDEBUG("%s(%u) : Invalid build_value format : %s (near %.5q)\n",__FILE__,__LINE__,*fmt_begin,fmt-2);DEE_ABNORMAL_TERMINATION();}while(0)
+ do{DEE_LDEBUG("%s(%d) : Invalid build_value format : %s (near %.5q)\n",__FILE__,__LINE__,*fmt_begin,fmt-2);DEE_ABNORMAL_TERMINATION();}while(0)
 #else /* DEE_DEBUG */
 #define DEE_BUILDVAL_INVALID_FORMAT   DEE_BUILTIN_UNREACHABLE
 #endif /* !DEE_DEBUG */

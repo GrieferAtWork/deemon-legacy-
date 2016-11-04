@@ -381,11 +381,11 @@ pack_next: if (DEE_UNLIKELY(TPPLexer_Next(self,token) != 0)) return -1;
 DEE_STATIC_INLINE(int) TPP_CALLBACK_FATAL_ERROR(
  TPPLexerObject const *self, int code, TPPTokenObject const *token, char const *message) {
  DeeObject *error;
- error = DeeType_NewInstancef(&DeeErrorType_CompilerError,
-                              "%s(%d) : %c%.4d : %K : %s",
+ error = DeeType_NewInstancef(&DeeErrorType_CompilerError,"%K",
+                              DeeString_Newf("%s(%d) : %c%.4d : %K : %s",
                               TPPToken_File(token),TPPToken_Line(token)+1,
                               code >= TPPWarnings_COUNT_WITH_RESERVED ? 'C' : 'P',code,
-                              DeeToken_StrTPPToken(token),message);
+                              DeeToken_StrTPPToken(token),message));
  if DEE_UNLIKELY(!error) return -1;
  Dee_XDECREF(_lexer->l_error_last);
  _lexer->l_error_last = error;
