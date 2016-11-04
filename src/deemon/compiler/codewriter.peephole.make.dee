@@ -197,8 +197,12 @@ for (local i,oprules: util::enumerate(main_switch)) {
 					} else {
 						print indent+indent+indent+"RT_WRITE_ARG("+o[1:]+");";
 					}
-					if (!cur_input.startswith("$")) input_copy.pop_front(); // Skip one input
-					cur_input = none;
+					if (cur_input.startswith("$")) {
+						cur_input = none;
+					} else {
+						cur_input = input_copy.pop_front(); // Skip one input
+						if (!cur_input.startswith("$")) cur_input = none;
+					}
 				} else if (o == "*") {
 					print indent+indent+indent+"RT_WRITE_SKIPOP();";
 					if (cur_input.startswith("$")) cur_input = cur_input[1:];

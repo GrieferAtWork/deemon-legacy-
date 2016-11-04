@@ -25,6 +25,35 @@
 #endif
 
 RULE({OP_LOAD_NONE,OP_RET} --> {OP_RETNONE});
+RULE({OP_LOAD_THIS,OP_POP} --> {});
+
+//////////////////////////////////////////////////////////////////////////
+// Drop unnecessary tostring op-calls
+// >> OP_STR and OP_REPR must always return a string,
+//    meaning that calling OP_STR on their result has no effect
+RULE({OP_STR,OP_STR} --> {OP_STR});
+RULE({OP_REPR,OP_STR} --> {OP_REPR});
+
+//////////////////////////////////////////////////////////////////////////
+// Drop unnecessary OP_BOOL op-calls
+// >> OP_BOOL always returns a boolean, meaning that calling OP_BOOL
+//    again has no effect
+RULE({OP_BOOL,OP_BOOL} --> {OP_BOOL});
+RULE({OP_BOOL,OP_NOT,OP_NOT} --> {OP_BOOL});
+
+//////////////////////////////////////////////////////////////////////////
+// The conditional jump opcodes already perform their own to-bool cast
+RULE({OP_BOOL,OP_JUMP_IF_TT,$off} --> {OP_JUMP_IF_TT,$off});
+RULE({OP_BOOL,OP_JUMP_IF_FF,$off} --> {OP_JUMP_IF_FF,$off});
+RULE({OP_BOOL,OP_JUMP_IF_TT_POP,$off} --> {OP_JUMP_IF_TT_POP,$off});
+RULE({OP_BOOL,OP_JUMP_IF_FF_POP,$off} --> {OP_JUMP_IF_FF_POP,$off});
+
+//////////////////////////////////////////////////////////////////////////
+// Invert the condition of the jump opcode (and remove the OP_BOOL)
+RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_TT,$off} --> {OP_JUMP_IF_FF,$off});
+RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_FF,$off} --> {OP_JUMP_IF_TT,$off});
+RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_TT_POP,$off} --> {OP_JUMP_IF_FF_POP,$off});
+RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_FF_POP,$off} --> {OP_JUMP_IF_TT_POP,$off});
 
 #define DEFINE_LOAD_RULES(op) \
  RULE({op,$arg,OP_POP} --> {});\

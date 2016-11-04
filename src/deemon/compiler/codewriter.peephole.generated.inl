@@ -33,6 +33,154 @@
  }
 #endif /* OP_LOAD_NONE */
 
+#ifdef OP_BOOL
+ TARGET(OP_BOOL) {
+  RULE("OP_BOOL,OP_BOOL",
+       "OP_BOOL,OP_NOOP") {
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_BOOL)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_SKIPOP();
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_BOOL,OP_NOT,OP_NOT",
+       "OP_BOOL,OP_NOOP,OP_NOOP") {
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_SKIPOP();
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_BOOL,OP_JUMP_IF_TT,$off",
+       "OP_JUMP_IF_TT,$off,OP_NOOP") {
+   Dee_uint16_t off;
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_TT)) RULE_BREAK(); RT_NEXT_OP();
+   off = RT_READ_ARG();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_JUMP_IF_TT);
+   RT_WRITE_ARG(off);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_BOOL,OP_JUMP_IF_FF,$off",
+       "OP_JUMP_IF_FF,$off,OP_NOOP") {
+   Dee_uint16_t off;
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_FF)) RULE_BREAK(); RT_NEXT_OP();
+   off = RT_READ_ARG();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_JUMP_IF_FF);
+   RT_WRITE_ARG(off);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_BOOL,OP_JUMP_IF_TT_POP,$off",
+       "OP_JUMP_IF_TT_POP,$off,OP_NOOP") {
+   Dee_uint16_t off;
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_TT_POP)) RULE_BREAK(); RT_NEXT_OP();
+   off = RT_READ_ARG();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_JUMP_IF_TT_POP);
+   RT_WRITE_ARG(off);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_BOOL,OP_JUMP_IF_FF_POP,$off",
+       "OP_JUMP_IF_FF_POP,$off,OP_NOOP") {
+   Dee_uint16_t off;
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_FF_POP)) RULE_BREAK(); RT_NEXT_OP();
+   off = RT_READ_ARG();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_JUMP_IF_FF_POP);
+   RT_WRITE_ARG(off);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_BOOL,OP_NOT,OP_JUMP_IF_TT,$off",
+       "OP_JUMP_IF_FF,$off,OP_NOOP,OP_NOOP") {
+   Dee_uint16_t off;
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_TT)) RULE_BREAK(); RT_NEXT_OP();
+   off = RT_READ_ARG();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_JUMP_IF_FF);
+   RT_WRITE_ARG(off);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_BOOL,OP_NOT,OP_JUMP_IF_FF,$off",
+       "OP_JUMP_IF_TT,$off,OP_NOOP,OP_NOOP") {
+   Dee_uint16_t off;
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_FF)) RULE_BREAK(); RT_NEXT_OP();
+   off = RT_READ_ARG();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_JUMP_IF_TT);
+   RT_WRITE_ARG(off);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_BOOL,OP_NOT,OP_JUMP_IF_TT_POP,$off",
+       "OP_JUMP_IF_FF_POP,$off,OP_NOOP,OP_NOOP") {
+   Dee_uint16_t off;
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_TT_POP)) RULE_BREAK(); RT_NEXT_OP();
+   off = RT_READ_ARG();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_JUMP_IF_FF_POP);
+   RT_WRITE_ARG(off);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_BOOL,OP_NOT,OP_JUMP_IF_FF_POP,$off",
+       "OP_JUMP_IF_TT_POP,$off,OP_NOOP,OP_NOOP") {
+   Dee_uint16_t off;
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_FF_POP)) RULE_BREAK(); RT_NEXT_OP();
+   off = RT_READ_ARG();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_JUMP_IF_TT_POP);
+   RT_WRITE_ARG(off);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  DISPATCH();
+ }
+#endif /* OP_BOOL */
+
+#ifdef OP_STR
+ TARGET(OP_STR) {
+  RULE("OP_STR,OP_STR",
+       "OP_STR,OP_NOOP") {
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_STR)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_SKIPOP();
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  DISPATCH();
+ }
+#endif /* OP_STR */
+
+#ifdef OP_REPR
+ TARGET(OP_REPR) {
+  RULE("OP_REPR,OP_STR",
+       "OP_REPR,OP_NOOP") {
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_STR)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_SKIPOP();
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  DISPATCH();
+ }
+#endif /* OP_REPR */
+
 #ifdef OP_ROT_2
  TARGET(OP_ROT_2) {
   RULE("OP_ROT_2,OP_ROT_2",
@@ -101,6 +249,20 @@
   DISPATCH();
  }
 #endif /* OP_STORE_RET_POP */
+
+#ifdef OP_LOAD_THIS
+ TARGET(OP_LOAD_THIS) {
+  RULE("OP_LOAD_THIS,OP_POP",
+       "OP_NOOP,OP_NOOP") {
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  DISPATCH();
+ }
+#endif /* OP_LOAD_THIS */
 
 #ifdef OP_DUP
  TARGET(OP_DUP) {
