@@ -24,7 +24,6 @@
 
 DEE_DECL_BEGIN
 
-// TODO: pop_store x + load y + load x  --> store x + load y + rot 2
 // TODO: if *1: jmp x; *2 ... x: *2 ... --> *2; if *1: jmp x; ... x: ...
 //       (Move duplicate code out from inside of a jump)
 
