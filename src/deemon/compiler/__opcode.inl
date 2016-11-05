@@ -322,11 +322,9 @@
 // NOTE: Deemon will simulate the behavior of alloca if the native library doesn't support it.
 //       So this is something you can always enable if you dare.
 #define OPEXT_ALLOCA              0x000D // push(__builtin_alloc(pop(0)))
-// Currently a no-op (unless runtime is being debugged)
-// But someday this'll be similar to what gcode had
 #define OPEXT_BREAKPOINT          0x000E // __builtin_breakpoint();
 #define OPEXT_DOC                 0x000F // push(__builtin_help(pop(0)))
-#define OPEXT_DOC_ATTR            0x0010 // push(__builtin_help(pop(1).pop(0)))
+#define OPEXT_DOC_ATTR            0x0010 // push(__builtin_help(pop(1).operator . (pop(0))))
 #define OPEXT_EMPTY_TUPLE         0x0011 // push(pack())
 #define OPEXT_EMPTY_LIST          0x0012 // push([])
 #define OPEXT_EMPTY_DICT          0x0013 // push(dict {})
@@ -340,7 +338,8 @@
 #define OPEXT_SUPER_AT            0x001B // push(__super(pop(1),pop(0)))
 #define OPEXT_EMPTY_CELL          0x001C // push(<>)
 #define OPEXT_BOUND_LOCAL         0x001D // push(__builtin_bound(...)) (w/ OP_PREFIX)
-#define OPEXT_BOUND_RESULT        0x001E // push(__builtin_bound(...)) (w/o OP_PREFIX)
+#define OPEXT_BOUND_RESULT        0x001D // push(__builtin_bound(...)) (w/o OP_PREFIX)
+//UNUSED:                         0x001E
 #define OPEXT_DEL_RESULT          0x001F // function foo: result { del result; }
 #define OPEXT_SUPEROF             0x0020 // push(pop(0).super)
 #define OPEXT_CLASSOF             0x0021 // push(pop(0).class)
@@ -353,7 +352,7 @@
 #define OPEXT_SEQ_SUM             0x0025 // push(pop(0)&&...)
 #define OPEXT_TYPEFLAGS_LO        0x0026 // w/prefix or the argument to the type flags in top (low word: 0x0000FFFF)
 #define OPEXT_TYPEFLAGS_HI        0x0027 // w/prefix or the argument to the type flags in top (high word: 0xFFFF0000)
-#define OPEXT_SEQ_ITER_NEXT       0x0028 // Simple operator __iternext__ w/o a conditional jump
+#define OPEXT_SEQ_ITER_NEXT       0x0028 // Simple operator __iternext__ w/o a conditional jump (throws a Signal.StopIteration if the iterator is done)
 #define OPEXT_TRY_CMP_EQ          0x0029 // try { push(pop(1) == pop(0)); } catch (Error.RuntimeError.NotImplemented) { push(false); }
 #define OPEXT_VARRAYOF            0x002A // push(pop(0)[])
 // File Operators

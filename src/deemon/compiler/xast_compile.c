@@ -1404,8 +1404,8 @@ trinary_operator:
 
 #if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_UNREACHABLE
   case DEE_XASTKIND_BUILTIN_UNREACHABLE:
-   if DEE_UNLIKELY((compiler_flags&DEE_COMPILER_FLAG_GEN_UNREACHABLE)!=0 &&
-                   DeeCodeWriter_WriteOp(writer,OP_UNREACHABLE) != 0) return -1;
+   if ((compiler_flags&DEE_COMPILER_FLAG_GEN_UNREACHABLE)!=0 &&
+       DEE_UNLIKELY(DeeCodeWriter_Unreachable(writer) != 0)) return -1;
    //if (ret_used && DeeCodeWriter_PushNone(writer) != 0) return -1;
    if (ret_used) DeeCodeWriter_INCSTACK(writer); // psht...
    break;

@@ -40,7 +40,7 @@
 // === SYNTAX ===
 //   - The general syntax of a rule definition is:
 //     >> opcode_names = '|' ~~ keyword...;
-//     >> opname ::= ('*' | opcode_names | '$' ## keyword | opcode_names '...');
+//     >> opname ::= ('*' | opcode_names | keyword '[' * ']' | '$' ## keyword | opcode_names '...');
 //     >> oplist ::= '{' [',' ~~ opname...] '}';
 //     >> @rule_def ::= 'RULE' '(' oplist  '-->' oplist ')' ';';
 //   - The pattern described by the left oplist (from now on referred to as 'input')
@@ -61,6 +61,8 @@
 //     with the initial value read during parsing of the input. e.g.:
 //     >> // Optimize 2x load local --> load once, then dup.
 //     >> RULE({OP_LOAD_LOC,$locid,OP_LOAD_LOC,$locid} --> {OP_LOAD_LOC,$locid,OP_DUP});
+//   - Using a '[' suffix after a keyword instructs the runtime to
+//     match the argument following the opcode against the given value.
 //   - More than one runtime value may be used, but different names must be chosen.
 //   - The total byte count described by the output can not exceed that of the input.
 //     If it does, the rule table cannot be generated and 'codewriter.peephole.make.dee'
@@ -203,3 +205,21 @@ RULE({OP_STORE_RET_POP,OPGROUP_SE_P1_ARG,$searg1,OP_LOAD_RET} --> {OP_STORE_RET,
 //////////////////////////////////////////////////////////////////////////
 // Optimize return form a retvar function
 RULE({OP_STORE_RET_POP,OP_RETVAREXIT} --> {OP_RET});
+
+
+//////////////////////////////////////////////////////////////////////////
+// Optimize away empty sequences / Unnecessary / no-op opcodes
+RULE({OP_EXTENDED[OPEXT_EMPTY_TUPLE],OP_POP} --> {});
+RULE({OP_EXTENDED[OPEXT_EMPTY_LIST],OP_POP} --> {});
+RULE({OP_EXTENDED[OPEXT_EMPTY_DICT],OP_POP} --> {});
+RULE({OP_EXTENDED[OPEXT_EMPTY_SET],OP_POP} --> {});
+RULE({OP_EXTENDED[OPEXT_EMPTY_CELL],OP_POP} --> {});
+RULE({OP_EXTENDED[OPEXT_BOUND_LOCAL],OP_POP} --> {});
+RULE({OP_EXTENDED[OPEXT_VARRAYOF],OP_POP} --> {OP_POP});
+RULE({OP_EXTENDED[OPEXT_SUPEROF],OP_POP} --> {OP_POP});
+RULE({OP_EXTENDED[OPEXT_CLASSOF],OP_POP} --> {OP_POP});
+RULE({OP_EXTENDED[OPEXT_SUPER_AT],OP_POP} --> {OP_POP,OP_POP});
+RULE({OP_EXTENDED[OPEXT_CLASS_NEW],OP_POP} --> {OP_POP,OP_POP});
+RULE({OP_EXTENDED[OPEXT_CLASS_NEW_UUID],OP_POP} --> {OP_POP,OP_POP,OP_POP});
+RULE({OP_EXTENDED[OPEXT_ALLOCA],OP_POP} --> {OP_POP,OP_POP});
+

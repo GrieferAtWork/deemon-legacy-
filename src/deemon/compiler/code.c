@@ -1325,6 +1325,9 @@ static DeeObject *_deecode_name_get(DeeCodeObject *self, void *DEE_UNUSED(closur
  if (DeeCode_NAME(self)) DeeReturn_NEWREF(DeeCode_NAME(self));
  DeeReturn_EmptyString;
 }
+static DeeObject *_deecode_code_get(DeeCodeObject *self, void *DEE_UNUSED(closure)) {
+ return DeeString_NewWithLength(self->co_size,(char *)self->co_code);
+}
 static DeeObject *_deecode_asmrepr(
  DeeCodeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":asmrepr") != 0) return NULL;
@@ -1372,6 +1375,8 @@ static struct DeeMemberDef const _deecode_tp_members[] = {
 static struct DeeGetSetDef const _deecode_tp_getsets[] = {
  DEE_GETSETDEF_v100("name",member(&_deecode_name_get),null,null,"-> string\n"
   "@return: Name of the code, or an empty string if unknown."),
+ DEE_GETSETDEF_v100("code",member(&_deecode_code_get),null,null,"-> iterable\n"
+  "@return: An iterable object enumerating all opcodes of this code object"),
  DEE_GETSETDEF_END_v100
 };
 static struct DeeMethodDef const _deecode_tp_methods[] = {

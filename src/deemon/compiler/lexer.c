@@ -1914,30 +1914,31 @@ DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeFunctionObject) *DeeLexer_ParseAndCompile(
   DeeString_Check(config->main_name))) && "main_name is neither NULL, nor a string");
  old_func_name = ((DeeLexerObject *)self)->l_func_name;
  if (config->main_name) {
-  if (DeeLexer_SetFunctionNameStringWithLength(
-   self,DeeString_SIZE(config->main_name),
-   DeeString_STR(config->main_name)) != 0) goto err_0;
- } else ((DeeLexerObject *)self)->l_func_name = KWD___main__;
- if ((root_scope = (DeeScopeObject *)DeeScope_NewRoot()) == NULL) goto err_0;
+  if DEE_UNLIKELY(DeeLexer_SetFunctionNameStringWithLength(
+   self,DeeString_SIZE(config->main_name),DeeString_STR(config->main_name)) != 0) goto err_0;
+ } else {
+  ((DeeLexerObject *)self)->l_func_name = KWD___main__;
+ }
+ if DEE_UNLIKELY((root_scope = (DeeScopeObject *)DeeScope_NewRoot()) == NULL) goto err_0;
  {
   DeeLocalVarObject *vararg_var; int temp;
-  if ((vararg_var = (DeeLocalVarObject *)DeeLocalVar_New(TPP_TOK_DOTS,(DeeObject *)root_scope)) == NULL) goto err_1;
+  if DEE_UNLIKELY((vararg_var = (DeeLocalVarObject *)DeeLocalVar_New(
+   TPP_TOK_DOTS,(DeeObject *)root_scope)) == NULL) goto err_1;
   vararg_var->lv_loc_id = 0;
   vararg_var->lv_flags = (DEE_LOCALVAR_FLAG_INITIALIZED|DEE_LOCALVAR_KIND_PARAM);
   temp = _DeeScope_AddName(root_scope,TPP_TOK_DOTS,(DeeObject *)vararg_var);
   Dee_DECREF(vararg_var);
-  if (temp != 0) goto err_1;
+  if DEE_UNLIKELY(temp != 0) goto err_1;
  }
  {
   DeeTokenObject *first_token;
   Dee_INCREF(first_token = (DeeTokenObject *)DeeLexer_TOKEN(self));
-  root_ast = DeeSAst_ParseAllInOldScopeUntil(
-   first_token,TPP_TOK_EOF,DeeParserLabelRefList_Empty,(DeeLexerObject *)self,
-   root_scope,config,config->parser_flags);
+  root_ast = DeeSAst_ParseAllInOldScopeUntil(first_token,TPP_TOK_EOF,DeeParserLabelRefList_Empty,
+                                            (DeeLexerObject *)self,root_scope,config,config->parser_flags);
   Dee_DECREF(first_token);
-  if (!root_ast) goto err_1;
+  if DEE_UNLIKELY(!root_ast) goto err_1;
  }
- if (DeeLexer_FAILED(self)) { DeeError_Throw(((DeeLexerObject *)self)->l_error_last); goto err_2; }
+ if DEE_UNLIKELY(DeeLexer_FAILED(self)) { DeeError_Throw(((DeeLexerObject *)self)->l_error_last); goto err_2; }
  if ((root_scope->sc_flags&(DEE_SCOPE_FLAG_FOUND_RETURN|
   DEE_SCOPE_FLAG_FOUND_YIELD|DEE_SCOPE_FLAG_FOUND_RETVAR))!=0) {
   // Don't return the last statement if there are any explicit yield/return statements
@@ -1960,43 +1961,42 @@ DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeFunctionObject) *DeeLexer_ParseAndCompile(
                             (DeeScopeObject *)root_scope,config,
                             used_optimize_flags,&assumptions);
    _DeeOptimizerAssumptions_Quit(&assumptions);
-   if (error != 0) goto err_2;
+   if DEE_UNLIKELY(error != 0) goto err_2;
   } while (n_performed);
  }
  {
   struct DeeCodeWriter writer = DeeCodeWriter_INIT();
   writer.cw_root_scope = root_scope;
-  if (DeeSAst_CompileStrongScopeRoot(root_ast,&writer,(
+  if DEE_UNLIKELY(DeeSAst_CompileStrongScopeRoot(root_ast,&writer,(
    DeeLexerObject *)self,root_scope,config,used_compiler_flags) != 0) goto err_3;
   DEE_ASSERTF(writer.cw_refc == 0,"How can the absolute root/global scope have references?");
   if (DeeLexer_FAILED(self)) { DeeError_Throw(((DeeLexerObject *)self)->l_error_last); goto err_3; }
   if (!DeeSAst_IsNoReturn(root_ast,DEE_AST_ATTRIBUTE_FLAG_NONE)) {
    // Generate the return value code
    if ((root_scope->sc_flags&DEE_SCOPE_FLAG_FOUND_YIELD)!=0) {
-    if (DeeCodeWriter_YieldExit(&writer) != 0) goto err_3; // YIELD_EXIT
+    if DEE_UNLIKELY(DeeCodeWriter_YieldExit(&writer) != 0) goto err_3; // YIELD_EXIT
    } else if ((used_compiler_flags&DEE_COMPILER_FLAG_USED)!=0) {
-    if (DeeCodeWriter_Ret(&writer) != 0) goto err_3; // RET_POP
+    if DEE_UNLIKELY(DeeCodeWriter_Ret(&writer) != 0) goto err_3; // RET_POP
    } else {
-    if (DeeCodeWriter_RetNone(&writer) != 0) goto err_3; // RET_NONE
+    if DEE_UNLIKELY(DeeCodeWriter_RetNone(&writer) != 0) goto err_3; // RET_NONE
    }
   } else {
    // Satisfy the writer, if the ast left behind an unreachable value
    if ((used_compiler_flags&DEE_COMPILER_FLAG_USED)!=0)
     DeeCodeWriter_DECSTACK(&writer);
-   if ((used_compiler_flags&DEE_COMPILER_FLAG_GEN_UNREACHABLE)!=0) {
-    // End the code with an unreachable opcode (for safety)
-    if (DeeCodeWriter_WriteOp(&writer,OP_UNREACHABLE) != 0) goto err_3;
-   }
+   // End the code with an unreachable opcode (for safety)
+   if ((used_compiler_flags&DEE_COMPILER_FLAG_GEN_UNREACHABLE)!=0 &&
+       DEE_UNLIKELY(DeeCodeWriter_Unreachable(&writer) != 0)) goto err_3;
   }
   // Do some final optimizations (peephole & such...)
-  if (DeeCodeWriter_Optimize(&writer,used_compiler_flags) != 0) goto err_3;
+  if DEE_UNLIKELY(DeeCodeWriter_Optimize(&writer,used_compiler_flags) != 0) goto err_3;
   // All code is now generated --> Time to back everything together!
-  if ((code = (DeeCodeObject *)DeeCodeWriter_Pack(&writer,
+  if DEE_UNLIKELY((code = (DeeCodeObject *)DeeCodeWriter_Pack(&writer,
    config->main_name ? config->main_name : (DeeObject *)&_dee_main_name)) == NULL) goto err_3;
   function_flags = DEE_FUNCTION_FLAG_VARG;
   if ((root_scope->sc_flags&DEE_SCOPE_FLAG_FOUND_YIELD)!=0) function_flags |= DEE_FUNCTION_FLAG_YILD;
   if ((root_scope->sc_flags&DEE_SCOPE_FLAG_FOUND_THIS)!=0)  function_flags |= DEE_FUNCTION_FLAG_THIS;
-  if ((result = (DeeFunctionObject *)DeeFunction_New(
+  if DEE_UNLIKELY((result = (DeeFunctionObject *)DeeFunction_New(
    (DeeObject *)code,Dee_EmptyTuple,1,function_flags)) == NULL) goto err_4;
 
   // Cleanup time!
@@ -2079,11 +2079,11 @@ next:
     last_token_end_file = _token.tk_str_file;
     TPPFile_INCREF(last_token_end_file);
 #if REDUCE_LINE_FEEDS
-    if (DeeFile_Printf(config->output_file,"\n#line %d %q\n",
+    if DEE_UNLIKELY(DeeFile_Printf(config->output_file,"\n#line %d %q\n",
      TPPToken_LineAfter(&_token)+1,current_file_name) != 0) goto err;
     if (token.tk_id == '\n') goto next;
 #else /* REDUCE_LINE_FEEDS */
-    if (DeeFile_Printf(config->output_file,"\n#line %d %q\n",
+    if DEE_UNLIKELY(DeeFile_Printf(config->output_file,"\n#line %d %q\n",
      TPPToken_Line(&_token)+1,current_file_name) != 0) goto err;
 #endif /* !REDUCE_LINE_FEEDS */
    } else if (current_line_offset != _token.tk_file->f_line_offset) {
@@ -2106,11 +2106,11 @@ next:
      if (*iter++ == '\n') {
 emitl:
 #if REDUCE_LINE_FEEDS
-      if (DeeFile_Printf(config->output_file,
+      if DEE_UNLIKELY(DeeFile_Printf(config->output_file,
        "\n#line %d\n",TPPToken_LineAfter(&_token)+1) != 0) goto err;
       if (token.tk_id == '\n') goto next;
 #else /* REDUCE_LINE_FEEDS */
-      if (DeeFile_Printf(config->output_file,
+      if DEE_UNLIKELY(DeeFile_Printf(config->output_file,
        "\n#line %d\n",TPPToken_Line(&_token)+1) != 0) goto err;
 #endif /* !REDUCE_LINE_FEEDS */
       goto put;
@@ -2122,22 +2122,22 @@ put:
   // Convert the token into a string
   // >> prefer, to use a static buffer, but fall back to a dynamic
   //    one, if the static one isn't big enough
-  if (config->output_tok_brackets && DeeFile_PRINT(config->output_file,"[") != 0) goto err;
+  if (config->output_tok_brackets && DEE_UNLIKELY(DeeFile_PRINT(config->output_file,"[") != 0)) goto err;
   tok_size = TPPToken_Str(&_token,tok_buf,sizeof(tok_buf));
   if (tok_size > sizeof(tok_buf)) {
    char *tok_buf2;
-   while ((tok_buf2 = (char *)malloc_nz(tok_size*sizeof(char))) == NULL) {
+   while DEE_UNLIKELY((tok_buf2 = (char *)malloc_nz(tok_size*sizeof(char))) == NULL) {
     if DEE_LIKELY(Dee_CollectMemory()) continue;
     DeeError_NoMemory();
     goto err;
    }
    TPPToken_Str(&_token,tok_buf2,tok_size);
-   if (DeeFile_WriteAll(config->output_file,tok_buf2,tok_size*sizeof(char)) != 0) goto err;
+   if DEE_UNLIKELY(DeeFile_WriteAll(config->output_file,tok_buf2,tok_size*sizeof(char)) != 0) goto err;
    free_nn(tok_buf2);
   } else {
-   if (DeeFile_WriteAll(config->output_file,tok_buf,tok_size*sizeof(char)) != 0) goto err;
+   if DEE_UNLIKELY(DeeFile_WriteAll(config->output_file,tok_buf,tok_size*sizeof(char)) != 0) goto err;
   }
-  if (config->output_tok_brackets && DeeFile_PRINT(config->output_file,"]") != 0) goto err;
+  if (config->output_tok_brackets && DEE_UNLIKELY(DeeFile_PRINT(config->output_file,"]") != 0)) goto err;
   if (config->output_line_directives) {
    if (_token.tk_id == '\n') {
     if (_token.tk_str_file != _token.tk_file) {
@@ -2156,7 +2156,7 @@ put:
      // >> //      //       come after #line @L+3. But there is no may, to express that, since
      // >> //      //       directives must start at the beginning of a line!
      // >> // >> #line @L+3
-     if (DeeFile_Printf(config->output_file,
+     if DEE_UNLIKELY(DeeFile_Printf(config->output_file,
       "#line %d\n",TPPToken_Line(&_token)+1) != 0) goto err;
     }
    } else {
@@ -2167,8 +2167,11 @@ put:
     while (tok_iter != tok_end) {
      if (*tok_iter++ == '\n') {
       int n_line_feeds = 1;
-      while (tok_iter != tok_end) if (*tok_iter++ == '\n') ++n_line_feeds;
-      if (DeeFile_Printf(config->output_file,
+      while (tok_iter != tok_end) {
+       if (*tok_iter == '\n') ++n_line_feeds;
+       ++tok_iter;
+      }
+      if DEE_UNLIKELY(DeeFile_Printf(config->output_file,
        "\n#line %d\n",1+TPPToken_Line(&_token)+n_line_feeds) != 0) goto err;
       break;
      }
@@ -2176,7 +2179,7 @@ put:
    }
   }
   // Read 1 token
-  if (!DeeLexer_Yield(self)) goto err;
+  if DEE_UNLIKELY(!DeeLexer_Yield(self)) goto err;
  }
  // Cleanup
  TPPFile_XDECREF(last_token_end_file);
@@ -2192,7 +2195,7 @@ err:
 DEE_A_RET_EXCEPT(-1) int DeeLexer_Utf8FormatFilename(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_Z Dee_Utf8Char const *filename) {
  DeeObject *filename_ob; int result;
- if ((filename_ob = DeeUtf8String_New(filename)) == NULL) return -1;
+ if DEE_UNLIKELY((filename_ob = DeeUtf8String_New(filename)) == NULL) return -1;
  result = DeeLexer_FormatFilenameObject(self,filename_ob);
  Dee_DECREF(filename_ob);
  return result;
@@ -2201,7 +2204,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_Utf8FormatFilenameEx(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_Z Dee_Utf8Char const *filename,
  DEE_A_IN struct DeeDeemonFormatConfig const *config) {
  DeeObject *filename_ob; int result;
- if ((filename_ob = DeeUtf8String_New(filename)) == NULL) return -1;
+ if DEE_UNLIKELY((filename_ob = DeeUtf8String_New(filename)) == NULL) return -1;
  result = DeeLexer_FormatFilenameObjectEx(self,filename_ob,config);
  Dee_DECREF(filename_ob);
  return result;
@@ -2209,7 +2212,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_Utf8FormatFilenameEx(
 DEE_A_RET_EXCEPT(-1) int DeeLexer_WideFormatFilename(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_Z Dee_WideChar const *filename) {
  DeeObject *filename_ob; int result;
- if ((filename_ob = DeeWideString_New(filename)) == NULL) return -1;
+ if DEE_UNLIKELY((filename_ob = DeeWideString_New(filename)) == NULL) return -1;
  result = DeeLexer_FormatFilenameObject(self,filename_ob);
  Dee_DECREF(filename_ob);
  return result;
@@ -2218,7 +2221,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_WideFormatFilenameEx(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_Z Dee_WideChar const *filename,
  DEE_A_IN struct DeeDeemonFormatConfig const *config) {
  DeeObject *filename_ob; int result;
- if ((filename_ob = DeeWideString_New(filename)) == NULL) return -1;
+ if DEE_UNLIKELY((filename_ob = DeeWideString_New(filename)) == NULL) return -1;
  result = DeeLexer_FormatFilenameObjectEx(self,filename_ob,config);
  Dee_DECREF(filename_ob);
  return result;
@@ -2226,7 +2229,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_WideFormatFilenameEx(
 DEE_A_RET_EXCEPT(-1) int DeeLexer_FormatFilenameObject(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *filename) {
  DeeObject *filestream; int result; // Must open in read/update mode
- if ((filestream = DeeFileIO_NewObject(filename,"r+")) == NULL) return -1;
+ if DEE_UNLIKELY((filestream = DeeFileIO_NewObject(filename,"r+")) == NULL) return -1;
  result = DeeLexer_FormatFileStream(self,filestream,filestream);
  Dee_DECREF(filestream);
  return result;
@@ -2235,7 +2238,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_FormatFilenameObjectEx(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *filename,
  DEE_A_IN struct DeeDeemonFormatConfig const *config) {
  DeeObject *filestream; int result; // Must open in read/update mode
- if ((filestream = DeeFileIO_NewObject(filename,"r+")) == NULL) return -1;
+ if DEE_UNLIKELY((filestream = DeeFileIO_NewObject(filename,"r+")) == NULL) return -1;
  result = DeeLexer_FormatFileStreamEx(self,filestream,filestream,config);
  Dee_DECREF(filestream);
  return result;
@@ -2291,13 +2294,13 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF DeeObject *) _DeeLexer_CompileString(
  TPPFileObject *code_file,*old_files; TPPLexerFlags old_flags;
  DeeObject *result; DeeTokenObject *old_token,*kick_token;
  unsigned int old_one_file_rec;
- if ((kick_token = (DeeTokenObject *)DeeToken_New()) == NULL) return NULL;
- if ((code_file = TPPFile_NewFromStringEx(
+ if DEE_UNLIKELY((kick_token = (DeeTokenObject *)DeeToken_New()) == NULL) return NULL;
+ if DEE_UNLIKELY((code_file = TPPFile_NewFromStringEx(
   TPPFileFormatFlag_ENABLED,code_begin,(Dee_size_t)(code_end-code_begin)
   )) == NULL) {err_ktok: Dee_DECREF(kick_token); return NULL; }
 #if 1
- if (_TPPFile_SetName(code_file,ref_file->f_name) != 0 ||
-    (ref_file->f_new_name && TPPFile_SetNewName(code_file,ref_file->f_new_name) != 0)
+ if (DEE_UNLIKELY(_TPPFile_SetName(code_file,ref_file->f_name) != 0) ||
+    (ref_file->f_new_name && DEE_UNLIKELY(TPPFile_SetNewName(code_file,ref_file->f_new_name) != 0))
     ) { TPPFile_DECREF(code_file); goto err_ktok; }
  code_file->f_line_offset = TPPFile_LineAt(ref_file,ref_file_offset);
 #else
@@ -2316,9 +2319,8 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF DeeObject *) _DeeLexer_CompileString(
  self->l_lexer.l_files = code_file;
  DEE_ASSERT(code_file->f_prev == NULL);
  // Parse the code
- if (_DeeLexer_KickStart(self) != 0) result = NULL; else {
-  result = DeeLexer_ParseAndCompile((DeeObject *)self,NULL);
- }
+ if DEE_UNLIKELY(_DeeLexer_KickStart(self) != 0) result = NULL;
+ else result = DeeLexer_ParseAndCompile((DeeObject *)self,NULL);
  // Restore old configuration
  TPPFile_XDECREF(self->l_lexer.l_files);
  self->l_lexer.l_files = old_files;
@@ -2334,9 +2336,9 @@ _DeeLexer_ExecStringAndCaptureStdout(
  DEE_A_IN DeeLexerObject *self, char const *code_begin, char const *code_end,
  TPPFileObject *ref_file, Dee_size_t ref_file_offset) {
  DeeObject *temp,*callable_code,*old_stdout,*new_stdout,*result;
- if ((callable_code = _DeeLexer_CompileString(
+ if DEE_UNLIKELY((callable_code = _DeeLexer_CompileString(
   self,code_begin,code_end,ref_file,ref_file_offset)) == NULL) return NULL;
- if ((new_stdout = DeeFileWriter_New()) == NULL) { Dee_DECREF(callable_code); return NULL; }
+ if DEE_UNLIKELY((new_stdout = DeeFileWriter_New()) == NULL) { Dee_DECREF(callable_code); return NULL; }
  // Backup the old stdout and override it with our stringwriter
  old_stdout = DeeFile_Std(DEE_STDOUT);
  DeeFile_SetStd(DEE_STDOUT,new_stdout);
@@ -2346,7 +2348,7 @@ _DeeLexer_ExecStringAndCaptureStdout(
  DeeFile_SetStd(DEE_STDOUT,old_stdout);
  Dee_DECREF(old_stdout);
  Dee_DECREF(callable_code);
- if (!temp) { Dee_DECREF(new_stdout); return NULL; }
+ if DEE_UNLIKELY(!temp) { Dee_DECREF(new_stdout); return NULL; }
  Dee_DECREF(temp);
  // Pack the generated output into a string object
  result = DeeFileWriter_Pack(new_stdout);
@@ -2369,27 +2371,30 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoFormatFileStreamEx(
  Dee_uint64_t old_out_pos;
  (void)config;
  if (in == out) {
-  if (DeeFile_Tell(out,&old_out_pos) != 0) return -1;
-  if ((in_data = DeeFile_ReadData(in,(Dee_size_t)-1)) == NULL) return -1;
-  if (DeeFile_SetPos(out,old_out_pos) != 0) { Dee_DECREF(in_data); return -1; }
+  if DEE_UNLIKELY(DeeFile_Tell(out,&old_out_pos) != 0) return -1;
+  if DEE_UNLIKELY((in_data = DeeFile_ReadData(in,(Dee_size_t)-1)) == NULL) return -1;
+  if DEE_UNLIKELY(DeeFile_SetPos(out,old_out_pos) != 0) { Dee_DECREF(in_data); return -1; }
  } else {
-  if ((in_data = DeeFile_ReadData(in,(Dee_size_t)-1)) == NULL) return -1;
+  if DEE_UNLIKELY((in_data = DeeFile_ReadData(in,(Dee_size_t)-1)) == NULL) return -1;
  }
- root_file = TPPFile_NewFromStringEx(
-  TPPFileFormatFlag_NONE,DeeString_STR(in_data),DeeString_SIZE(in_data));
+ root_file = TPPFile_NewFromStringEx(TPPFileFormatFlag_NONE,
+                                     DeeString_STR(in_data),
+                                     DeeString_SIZE(in_data));
  Dee_DECREF(in_data);
- if (!root_file) goto err;
+ if DEE_UNLIKELY(!root_file) goto err;
  if (DeeFileIO_Check(in)) {
   DeeObject *temp_ob;
-  if ((temp_ob = DeeUtf8String_Cast(DeeFileIO_FILE(in))) == NULL) goto err2_;
+  if DEE_UNLIKELY((temp_ob = DeeUtf8String_Cast(DeeFileIO_FILE(in))) == NULL) goto err2_;
   result = _TPPFile_SetName(root_file,DeeUtf8String_STR(temp_ob));
   Dee_DECREF(temp_ob);
-  if (result != 0) goto err2_;
- } else if (_TPPFile_SetName(root_file,"format_input_file") != 0) goto err2_;
+  if DEE_UNLIKELY(result != 0) goto err2_;
+ } else {
+  if DEE_UNLIKELY(_TPPFile_SetName(root_file,"format_input_file") != 0) goto err2_;
+ }
  TPPLexer_PushFile(lexer,root_file);
  copy_start = root_file->f_data;
  while (1) {
-  if (TPPLexer_Next(lexer,&token) != 0) goto err2;
+  if DEE_UNLIKELY(TPPLexer_Next(lexer,&token) != 0) goto err2;
   switch (token.tk_id) {
 
    case 0: goto done; // EOF
@@ -2399,7 +2404,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoFormatFileStreamEx(
      DeeLexerObject *lexer_copy;
      DeeObject *comment_output; Dee_size_t code_offset;
      char const *code_begin,*code_end,*file_pos;
-     if (DeeFile_WriteAll(out,copy_start,(
+     if DEE_UNLIKELY(DeeFile_WriteAll(out,copy_start,(
       Dee_size_t)(token.tk_str_end-copy_start)) != 0) goto err2;
      copy_start = token.tk_str_end;
      _DeeToken_GetCommentText(&token,&code_offset,&code_begin,&code_end);
@@ -2416,18 +2421,18 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoFormatFileStreamEx(
       root_file->f_iter = token.tk_str_begin;
       // Execute the code in a copy of the current lexer (that way macros don't leak back into the real lexer)
       // NOTE: Don't be fooled. - This line has a heck of a lot to do...
-      if ((lexer_copy = (DeeLexerObject *)DeeObject_Copy((DeeObject *)self)) == NULL) goto err2;
+      if DEE_UNLIKELY((lexer_copy = (DeeLexerObject *)DeeObject_Copy((DeeObject *)self)) == NULL) goto err2;
       comment_output = _DeeLexer_ExecStringAndCaptureStdout(
        lexer_copy,code_begin+9,code_end-3,root_file,code_offset);
       Dee_DECREF(lexer_copy);
-      if (!comment_output) goto err2;
+      if DEE_UNLIKELY(!comment_output) goto err2;
       root_file->f_iter = file_pos;
       //DEE_LDEBUG("Output: %k\n",comment_output);
       // skip old generated code
       // NOTE: We parse this code without macros or directives, since it is considered dead
       // TODO: This one could be performed more efficiently (similar to how pp blocks are skipped in tpp)
       while (1) {
-       if (TPPLexer_NextNoMacro(lexer,&token2) != 0) {
+       if DEE_UNLIKELY(TPPLexer_NextNoMacro(lexer,&token2) != 0) {
 err_ins: Dee_DECREF(comment_output); TPPToken_Quit(&token2); goto err2;
        }
        if (token2.tk_id == 0) break;
@@ -2447,21 +2452,21 @@ err_ins: Dee_DECREF(comment_output); TPPToken_Quit(&token2); goto err2;
         DeeString_STR(comment_output)[0] == '\r' ||
         DeeString_STR(comment_output)[0] == '\n'));
        if (TPPToken_Line(&token) != TPPToken_Line(&token2) && !has_prefixed_linefeed) {
-        if (DeeFile_PRINT(out,"\n") != 0) goto err_ins;
+        if DEE_UNLIKELY(DeeFile_PRINT(out,"\n") != 0) goto err_ins;
         has_prefixed_linefeed = 1;
        }
-       if (DeeFile_WriteAll(out,DeeString_STR(comment_output),
+       if DEE_UNLIKELY(DeeFile_WriteAll(out,DeeString_STR(comment_output),
         DeeString_SIZE(comment_output)) != 0) goto err_ins;
        if (has_prefixed_linefeed && (!DeeString_SIZE(comment_output) || (
         DeeString_STR(comment_output)[DeeString_SIZE(comment_output)-1] != '\r' &&
         DeeString_STR(comment_output)[DeeString_SIZE(comment_output)-1] != '\n'))) {
         // If the output doesn't end with a linefeed, append one
         // NOTE: Don't do this if we didn't prepend one either
-        if (DeeFile_PRINT(out,"\n") != 0) goto err_ins;
+        if DEE_UNLIKELY(DeeFile_PRINT(out,"\n") != 0) goto err_ins;
        }
        copy_start = token2.tk_str_begin; // Skip all old data
       } else {
-       if (DeeFile_StdPrintf(DEE_STDERR,
+       if DEE_UNLIKELY(DeeFile_StdPrintf(DEE_STDERR,
         "%s(%d) : Format block is missing its [[[end]]] marker\n",
         TPPToken_File(&token),TPPToken_Line(&token)+1) != 0) goto err_ins;
       }
@@ -2476,7 +2481,8 @@ err_ins: Dee_DECREF(comment_output); TPPToken_Quit(&token2); goto err2;
  }
 done:
  result = 0;
- if (DeeFile_WriteAll(out,copy_start,(Dee_size_t)(root_file->f_end-copy_start)) != 0) goto err2;
+ if DEE_UNLIKELY(DeeFile_WriteAll(out,copy_start,(
+  Dee_size_t)(root_file->f_end-copy_start)) != 0) goto err2;
  // Flush All remaining data to the output
  copy_start = token.tk_str_end;
 end2: TPPFile_DECREF(root_file);
@@ -2485,11 +2491,11 @@ end: TPPToken_Quit(&token);
 err2:
  // Try to restore the original file
  if (in == out) {
-  if (DeeFile_SetPos(out,old_out_pos) != 0) {
+  if DEE_UNLIKELY(DeeFile_SetPos(out,old_out_pos) != 0) {
 restore_fail: DeeError_Print("Failed to restore original input\n",1); goto err2_;
   }
-  if (DeeFile_WriteAll(out,TPPFile_DATA(root_file),TPPFile_SIZE(root_file)) != 0) goto restore_fail;
-  if (DeeFile_Trunc(out) != 0) DeeError_Handled(); // Ignore errors in here
+  if DEE_UNLIKELY(DeeFile_WriteAll(out,TPPFile_DATA(root_file),TPPFile_SIZE(root_file)) != 0) goto restore_fail;
+  if DEE_UNLIKELY(DeeFile_Trunc(out) != 0) DeeError_Handled(); // Ignore errors in here
  }
 err2_:
  result = -1;
@@ -2503,10 +2509,10 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoSafeFormatFileStreamEx(
  DEE_A_INOUT_OBJECT(DeeFileObject) *out, DEE_A_IN struct DeeDeemonFormatConfig const *config) {
  if (DeeFileIO_Check(out)) {
   DeeObject *out_mode,*temp_fp,*out_filename,*temp_filename; int temp;
-  if ((temp_fp = DeeFileIO_NewTemporary(DEE_FILEIO_NEWTEMPORARY_FLAG_NONE)) == NULL) return -1;
-  if ((_DeeLexer_DoFormatFileStreamEx(self,in,temp_fp,config)) != 0) {
+  if DEE_UNLIKELY((temp_fp = DeeFileIO_NewTemporary(DEE_FILEIO_NEWTEMPORARY_FLAG_NONE)) == NULL) return -1;
+  if DEE_UNLIKELY((_DeeLexer_DoFormatFileStreamEx(self,in,temp_fp,config)) != 0) {
    DeeFile_Close(temp_fp);
-   if (_DeeFS_RmFileObject(DeeFileIO_FILE(temp_fp)) != 0) DeeError_Handled();
+   if DEE_UNLIKELY(_DeeFS_RmFileObject(DeeFileIO_FILE(temp_fp)) != 0) DeeError_Handled();
    Dee_DECREF(temp_fp);
    return -1;
   }
@@ -2517,10 +2523,10 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoSafeFormatFileStreamEx(
   DeeFile_Close(out);
   // Even if we crash after the rmfile, the user
   // could still recover his data from '/tmp/'
-  if (_DeeFS_RmFileObject(out_filename) != 0
-   || _DeeFS_MoveObject(temp_filename,out_filename) != 0
+  if (DEE_UNLIKELY(_DeeFS_RmFileObject(out_filename) != 0)
+   || DEE_UNLIKELY(_DeeFS_MoveObject(temp_filename,out_filename) != 0)
   // v better not re-open the file. What if it was opened with "w"
-// || DeeFileIO_ReOpenObject(out,out_filename,DeeString_STR(out_mode)) != 0
+// || DEE_UNLIKELY(DeeFileIO_ReOpenObject(out,out_filename,DeeString_STR(out_mode)) != 0)
    ) temp = -1; else temp = 0;
   Dee_DECREF(temp_filename);
   Dee_DECREF(temp_fp);
@@ -2565,67 +2571,59 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_FormatFileStreamEx(
 
 
 
-static void _deetoken_tp_dtor(DeeTokenObject *self) {
+static void DEE_CALL _deetoken_tp_dtor(DeeTokenObject *self) {
  TPPToken_Quit(&self->tk_token);
 }
-static int _deetoken_tp_ctor(
+static int DEE_CALL _deetoken_tp_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTokenObject *self) {
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
  TPPToken_Init(&self->tk_token);
  return 0;
 }
-static int _deetoken_tp_copy_ctor(
+static int DEE_CALL _deetoken_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTokenObject *self, DeeTokenObject *right) {
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
- DEE_ASSERT(DeeObject_Check(right) && DeeToken_Check(right));
  TPPToken_InitCopy(&self->tk_token,&right->tk_token);
  return 0;
 }
-static int _deetoken_tp_move_ctor(
+static int DEE_CALL _deetoken_tp_move_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTokenObject *self, DeeTokenObject *right) {
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
- DEE_ASSERT(DeeObject_Check(right) && DeeToken_Check(right));
  TPPToken_InitMove(&self->tk_token,&right->tk_token);
  return 0;
 }
-static int _deetoken_tp_copy_assign(DeeTokenObject *self, DeeTokenObject *right) {
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
- DEE_ASSERT(DeeObject_Check(right) && DeeToken_Check(right));
+static int DEE_CALL _deetoken_tp_copy_assign(DeeTokenObject *self, DeeTokenObject *right) {
  if (self != right) {
   _deetoken_tp_dtor(self);
   _deetoken_tp_copy_ctor(Dee_TYPE(self),self,right);
  }
  return 0;
 }
-static int _deetoken_tp_move_assign(
+static int DEE_CALL _deetoken_tp_move_assign(
  DeeTokenObject *self, DeeTokenObject *right) {
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
- DEE_ASSERT(DeeObject_Check(right) && DeeToken_Check(right));
  if (self != right) {
   _deetoken_tp_dtor(self);
   _deetoken_tp_move_ctor(Dee_TYPE(self),self,right);
  }
  return 0;
 }
-static int _deelexer_tp_ctor(DeeTypeObject *DEE_UNUSED(tp_self), DeeLexerObject *self) {
+static int DEE_CALL _deelexer_tp_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeeLexerObject *self) {
  return DeeLexer_Init(self);
 }
-static int _deelexer_tp_copy_ctor(
+static int DEE_CALL _deelexer_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeLexerObject *self, DeeLexerObject *right) {
- if (TPPLexer_InitCopy(&self->l_lexer,&right->l_lexer,
+ if DEE_UNLIKELY(TPPLexer_InitCopy(&self->l_lexer,&right->l_lexer,
   TPP_LEXER_COPY_FLAG_MACROS|TPP_LEXER_COPY_FLAG_INCLUDES|
   TPP_LEXER_COPY_FLAG_SYSINCLUDES|TPP_LEXER_COPY_FLAG_WARNINGS) != 0) return -1;
- if ((self->l_token = (DeeTokenObject *)DeeObject_Copy((DeeObject *)right->l_token)) == NULL) {
+ if DEE_UNLIKELY((self->l_token = (DeeTokenObject *)DeeObject_Copy((DeeObject *)right->l_token)) == NULL) {
 err_0: TPPLexer_Quit(&self->l_lexer); return -1;
  }
- if (DeeFutureTokensList_InitCopy(&self->l_future,&right->l_future) != 0) {
+ if DEE_UNLIKELY(DeeFutureTokensList_InitCopy(&self->l_future,&right->l_future) != 0) {
 err_1: Dee_DECREF(self->l_token); goto err_0;
  }
- if (DeeStaticIfStack_InitCopy(&self->l_static_if_stack,&right->l_static_if_stack) != 0) {
+ if DEE_UNLIKELY(DeeStaticIfStack_InitCopy(&self->l_static_if_stack,&right->l_static_if_stack) != 0) {
 err_2: DeeFutureTokensList_Quit(&self->l_future); goto err_1;
  }
- if (DeeStructPackingStack_InitCopy(&self->l_pack,&right->l_pack) != 0) {
+ if DEE_UNLIKELY(DeeStructPackingStack_InitCopy(&self->l_pack,&right->l_pack) != 0) {
 /*err_3:*/ DeeStaticIfStack_Quit(&self->l_static_if_stack); goto err_2;
  }
  Dee_INCREF(self->l_error_out = right->l_error_out);
@@ -2642,10 +2640,10 @@ err_2: DeeFutureTokensList_Quit(&self->l_future); goto err_1;
  self->l_max_syntax_recursion = right->l_max_syntax_recursion;
  return 0;
 }
-static int _deelexer_tp_move_ctor(
+static int DEE_CALL _deelexer_tp_move_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeLexerObject *self, DeeLexerObject *right) {
- if (TPPLexer_InitMove(&self->l_lexer,&right->l_lexer) != 0) return -1;
+ if DEE_UNLIKELY(TPPLexer_InitMove(&self->l_lexer,&right->l_lexer) != 0) return -1;
  Dee_INCREF(self->l_token = right->l_token);
  DeeFutureTokensList_InitMove(&self->l_future,&right->l_future);
  _DeeStaticIfStack_InitMove(&self->l_static_if_stack,&right->l_static_if_stack);
@@ -2665,7 +2663,7 @@ static int _deelexer_tp_move_ctor(
  self->l_max_syntax_recursion = right->l_max_syntax_recursion;
  return 0;
 }
-static void _deelexer_tp_dtor(DeeLexerObject *self) {
+static void DEE_CALL _deelexer_tp_dtor(DeeLexerObject *self) {
  Dee_XDECREF(self->l_error_last);
  Dee_DECREF(self->l_token);
  Dee_DECREF(self->l_message_out);
@@ -2679,7 +2677,6 @@ static void _deelexer_tp_dtor(DeeLexerObject *self) {
 }
 DEE_VISIT_PROC(_deelexer_tp_visit,DeeLexerObject *self) {
  DeeTokenObject **future_begin,**future_end;
- DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
  Dee_VISIT(self->l_token);
  future_end = (future_begin = self->l_future.ftl_tokenv)+self->l_future.ftl_tokenc;
  while (future_begin != future_end) Dee_VISIT(*future_begin++);
@@ -2689,31 +2686,26 @@ DEE_VISIT_PROC(_deelexer_tp_visit,DeeLexerObject *self) {
 
 
 
-static DeeObject *_deetoken_get_file(DeeObject *self, void *DEE_UNUSED(closure)) {
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
+static DeeObject *DEE_CALL _deetoken_file_get(DeeObject *self, void *DEE_UNUSED(closure)) {
  return DeeString_New(DeeToken_FILE(self));
 }
-static DeeObject *_deetoken_get_line(DeeObject *self, void *DEE_UNUSED(closure)) {
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
+static DeeObject *DEE_CALL _deetoken_line_get(DeeObject *self, void *DEE_UNUSED(closure)) {
  return DeeObject_New(int,DeeToken_LINE(self));
 }
-static DeeObject *_deetoken_eval_int(DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deetoken_eval_int(DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *lexer;
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
- if (DeeTuple_Unpack(args,"o:eval_int",&lexer) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:eval_int",&lexer) != 0) return NULL;
  if DEE_UNLIKELY((lexer = DeeObject_GetInstance(lexer,&DeeLexer_Type)) == NULL) return NULL;
  return DeeToken_EvalInt(self,lexer);
 }
-static DeeObject *_deetoken_eval_float(DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deetoken_eval_float(DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *lexer;
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
- if (DeeTuple_Unpack(args,"o:eval_float",&lexer) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:eval_float",&lexer) != 0) return NULL;
  if DEE_UNLIKELY((lexer = DeeObject_GetInstance(lexer,&DeeLexer_Type)) == NULL) return NULL;
  return DeeToken_EvalFloat(self,lexer);
 }
-static DeeObject *_deetoken_eval_str(DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DEE_ASSERT(DeeObject_Check(self) && DeeToken_Check(self));
- if (DeeTuple_Unpack(args,":eval_str") != 0) return NULL;
+static DeeObject *DEE_CALL _deetoken_eval_str(DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":eval_str") != 0) return NULL;
  return DeeToken_EvalString(self);
 }
 
@@ -2721,30 +2713,30 @@ static DeeObject *_deetoken_eval_str(DeeObject *self, DeeObject *args, void *DEE
 
 static DeeObject *_deelexer_yield(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- if (DeeTuple_Unpack(args,":yield") != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":yield") != 0) return NULL;
  return DeeLexer_Yield(self);
 }
 static DeeObject *_deelexer_return(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *tok;
- if (DeeTuple_Unpack(args,"o:return",&tok) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:return",&tok) != 0) return NULL;
  if DEE_UNLIKELY((tok = DeeObject_GetInstance(tok,&DeeToken_Type)) == NULL) return NULL;
- if (DeeLexer_Return(self,tok) != 0) return NULL;
+ if DEE_UNLIKELY(DeeLexer_Return(self,tok) != 0) return NULL;
  DeeReturn_None;
 }
 static DeeObject *_deelexer_include(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *include_ob; char const *disp_filename = NULL;
- if (DeeTuple_Unpack(args,"o|s:include",&include_ob,&disp_filename) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|s:include",&include_ob,&disp_filename) != 0) return NULL;
  if (DeeFile_Check(include_ob)) {
-  if (DeeLexer_IncludeFileStreamEx(
+  if DEE_UNLIKELY(DeeLexer_IncludeFileStreamEx(
    self,include_ob,disp_filename ? disp_filename
    : DeeFileIO_Check(include_ob)
    ? DeeString_STR(DeeFileIO_FILE(include_ob))
    : "<file>") != 0) return NULL;
  } else {
-  if (DeeError_TypeError_CheckTypeExact(include_ob,&DeeString_Type) != 0) return NULL;
-  if (DeeLexer_IncludeFilenameObjectEx(self,include_ob,disp_filename
+  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(include_ob,&DeeString_Type) != 0) return NULL;
+  if DEE_UNLIKELY(DeeLexer_IncludeFilenameObjectEx(self,include_ob,disp_filename
    ? disp_filename : DeeString_STR(include_ob)) != 0) return NULL;
  }
  DeeReturn_None;
@@ -2752,41 +2744,40 @@ static DeeObject *_deelexer_include(
 static DeeObject *_deelexer_include_string(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *include_str; char const *disp_filename = NULL;
- if (DeeTuple_Unpack(args,"o|s:include_string",&include_str,&disp_filename) != 0) return NULL;
- if (DeeError_TypeError_CheckTypeExact(include_str,&DeeString_Type) != 0) return NULL;
- if (DeeLexer_IncludeStringObjectEx(self,include_str,disp_filename
-  ? disp_filename : "<string>") != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|s:include_string",&include_str,&disp_filename) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(include_str,&DeeString_Type) != 0) return NULL;
+ if DEE_UNLIKELY(DeeLexer_IncludeStringObjectEx(self,include_str,disp_filename ? disp_filename : "<string>") != 0) return NULL;
  DeeReturn_None;
 }
 static DeeObject *_deelexer_include_path(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *include_path;
- if (DeeTuple_Unpack(args,"o:include_path",&include_path) != 0) return NULL;
- if (DeeError_TypeError_CheckTypeExact(include_path,&DeeString_Type) != 0) return NULL;
- if (DeeLexer_AddSysIncludePathObject(self,include_path) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:include_path",&include_path) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(include_path,&DeeString_Type) != 0) return NULL;
+ if DEE_UNLIKELY(DeeLexer_AddSysIncludePathObject(self,include_path) != 0) return NULL;
  DeeReturn_None;
 }
 static DeeObject *_deelexer_pack_push(
  DeeLexerObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- if (DeeTuple_Unpack(args,":pack_push") != 0) return NULL;
- if (DeeStructPackingStack_Push(&self->l_pack) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":pack_push") != 0) return NULL;
+ if DEE_UNLIKELY(DeeStructPackingStack_Push(&self->l_pack) != 0) return NULL;
  DeeReturn_None;
 }
 static DeeObject *_deelexer_pack_pop(
  DeeLexerObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- if (DeeTuple_Unpack(args,":pack_pop") != 0) return NULL;
- if (DeeStructPackingStack_Pop(&self->l_pack) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":pack_pop") != 0) return NULL;
+ if DEE_UNLIKELY(DeeStructPackingStack_Pop(&self->l_pack) != 0) return NULL;
  DeeReturn_None;
 }
 static DeeObject *_deelexer_parse_and_compile(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  struct DeeCompilerConfig *config = NULL;
- if (DeeTuple_Unpack(args,"|p:parse_and_compile",&config) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"|p:parse_and_compile",&config) != 0) return NULL;
  return DeeLexer_ParseAndCompile(self,config);
 }
 static DeeObject *_deelexer_parse_str(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- if (DeeTuple_Unpack(args,":parse_str") != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":parse_str") != 0) return NULL;
  return DeeLexer_ParseString(self);
 }
 
@@ -2803,8 +2794,8 @@ static struct DeeMemberDef _deetoken_tp_members[] = {
  DEE_MEMBERDEF_END_v100
 };
 static struct DeeGetSetDef _deetoken_tp_getsets[] = {
- DEE_GETSETDEF_CONST_v100("file",member(&_deetoken_get_file),null,null,"-> string\n\tThe __FILE__ value of this token"),
- DEE_GETSETDEF_CONST_v100("line",member(&_deetoken_get_line),null,null,"-> int\n\tThe __LINE__ value of this token"),
+ DEE_GETSETDEF_CONST_v100("file",member(&_deetoken_file_get),null,null,"-> string\n\tThe __FILE__ value of this token"),
+ DEE_GETSETDEF_CONST_v100("line",member(&_deetoken_line_get),null,null,"-> int\n\tThe __LINE__ value of this token"),
  DEE_GETSETDEF_END_v100
 };
 static struct DeeMethodDef _deetoken_tp_methods[] = {
@@ -2876,37 +2867,37 @@ static struct DeeMemberDef _deelexer_tp_class_members[] = {
 };
 
 
-static int _deelexeriterator_tp_any_ctor(
+static int DEE_CALL _deelexeriterator_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeLexerIteratorObject *self, DeeObject *args) {
  DeeLexerObject *lexer;
- if (DeeTuple_Unpack(args,"o:lexer.iterator",&lexer) != 0) return -1;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:lexer.iterator",&lexer) != 0) return -1;
  if DEE_UNLIKELY((lexer = (DeeLexerObject *)DeeObject_GetInstance((
   DeeObject *)lexer,&DeeLexer_Type)) == NULL) return -1;
  Dee_INCREF(self->li_lexer = lexer);
  return 0;
 }
-static int _deelexeriterator_tp_copy_ctor(
+static int DEE_CALL _deelexeriterator_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeLexerIteratorObject *self, DeeLexerIteratorObject *right) {
  Dee_INCREF(self->li_lexer = right->li_lexer);
  return 0;
 }
-static void _deelexeriterator_tp_dtor(DeeLexerIteratorObject *self) {
+static void DEE_CALL _deelexeriterator_tp_dtor(DeeLexerIteratorObject *self) {
  Dee_DECREF(self->li_lexer);
 }
-static DeeObject *_deelexer_tp_seq_iter_self(DeeLexerObject *self) {
+static DeeObject *DEE_CALL _deelexer_tp_seq_iter_self(DeeLexerObject *self) {
  DeeLexerIteratorObject *result;
- if ((result = DeeObject_MALLOC(DeeLexerIteratorObject)) != NULL) {
+ if DEE_LIKELY((result = DeeObject_MALLOC(DeeLexerIteratorObject)) != NULL) {
   DeeObject_INIT(result,&DeeLexerIterator_Type);
   Dee_INCREF(result->li_lexer = self);
  }
  return (DeeObject *)result;
 }
-static int _deelexeriterator_tp_seq_iter_next(
+static int DEE_CALL _deelexeriterator_tp_seq_iter_next(
  DeeLexerIteratorObject *self, DeeTokenObject **result) {
  DeeTokenObject *result_ob;
- if (!self->li_lexer->l_token->tk_token.tk_id) return 1;
+ if DEE_UNLIKELY(!self->li_lexer->l_token->tk_token.tk_id) return 1;
  Dee_INCREF(result_ob = self->li_lexer->l_token);
- if (!DeeLexer_Yield((DeeObject *)self->li_lexer)) { Dee_DECREF(result_ob); return -1; }
+ if DEE_UNLIKELY(!DeeLexer_Yield((DeeObject *)self->li_lexer)) { Dee_DECREF(result_ob); return -1; }
  Dee_INHERIT_REF(*result,result_ob);
  return 0;
 }
@@ -2915,12 +2906,12 @@ DEE_VISIT_PROC(_deelexeriterator_tp_visit,DeeLexerIteratorObject *self) {
 }
 
 
-static DeeTokenObject *_deetoken_tp_alloc(DeeTypeObject *tp_self) {
+static DeeTokenObject *DEE_CALL _deetoken_tp_alloc(DeeTypeObject *tp_self) {
  DeeTokenObject *result = DEE_OBJECTPOOL_ALLOC(token_pool);
- if (result) DeeObject_INIT(result,tp_self);
+ if DEE_LIKELY(result) DeeObject_INIT(result,tp_self);
  return result;
 }
-static void _deetoken_tp_free(
+static void DEE_CALL _deetoken_tp_free(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTokenObject *ob) {
  DEE_OBJECTPOOL_FREE(token_pool,ob);
 }

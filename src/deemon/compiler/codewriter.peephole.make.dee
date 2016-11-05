@@ -75,7 +75,9 @@ local list rules;
 function get_effective_size(l): result {
 	result = 0;
 	for (local part: l) {
-		if (part.startswith("$")) {
+		if ("[" in part) {
+			result += 3;
+		} else if (part.startswith("$")) {
 			result += 2;
 		} else if (!part.endswith("...")) {
 			result += 1;
@@ -109,6 +111,7 @@ class oprule {
 		this.input = parse_oplist(input);
 		this.output = parse_oplist(output);
 		this.opcode_name = this.input.front();
+		if ("[" in this.opcode_name) this.opcode_name = this.opcode_name.partition("[")[0].strip();
 		this.opcode_id = name2opcode[this.opcode_name];
 		this.effective_fromsize = get_effective_size(this.input);
 		this.effective_tosize = get_effective_size(this.output);
@@ -171,7 +174,13 @@ for (local i,oprules: util::enumerate(main_switch)) {
 		if (used_args) print indent+indent+indent+"Dee_uint16_t",",".join(used_args)+";";
 		local list used_arg_names;
 		local input_copy = copy r.input;
+		if ("[" in input_copy.front()) {
+			local none,none,arg = input_copy.front().partition("[")...;
+			arg = arg.replace("]","").strip();
+			print indent+indent+indent+"if (RT_READ_ARG() != "+arg+") RULE_BREAK();";
+		}
 		input_copy.pop_front();
+		local has_seek_first_op = false;
 		while (input_copy) {
 			local opname = input_copy.pop_front();
 			if (opname.startswith("$")) {
@@ -189,6 +198,10 @@ for (local i,oprules: util::enumerate(main_switch)) {
 				}
 			} else if (opname.endswith("...")) {
 				local loop_label = get_label_name();
+				if (!has_seek_first_op) {
+					print indent+indent+indent+"RT_SEEK_FIRST_OP();";
+					has_seek_first_op = true;
+				}
 				print indent+indent+indent+"{";
 				print loop_label+":";
 				print indent+indent+indent+indent+"if (RT_PROTECTED()) RULE_BREAK();";
@@ -196,7 +209,22 @@ for (local i,oprules: util::enumerate(main_switch)) {
 					for (local a: opname[:#opname-3].split("|"))
 						"RT_GET_OP() == "+a)+") { RT_NEXT_OP(); goto",loop_label+"; }";
 				print indent+indent+indent+"}";
+			} else if ("[" in opname) {
+				local opcode,none,arg = opname.partition("[")...;
+				arg = arg.replace("]","").strip();
+				if (!has_seek_first_op) {
+					print indent+indent+indent+"RT_SEEK_FIRST_OP();";
+					has_seek_first_op = true;
+				}
+				print indent+indent+indent+"if (RT_PROTECTED() || RT_GET_OP() != "+opcode+" || "
+				                               "RT_GET_OPARG() != "+arg+") RULE_BREAK();",;
+				if (input_copy) print " RT_NEXT_OP_ARG();",;
+				print;
 			} else {
+				if (!has_seek_first_op) {
+					print indent+indent+indent+"RT_SEEK_FIRST_OP();";
+					has_seek_first_op = true;
+				}
 				print indent+indent+indent+"if (RT_PROTECTED() || ("+
 					" && ".join(for (local a: opname.split("|")) "RT_GET_OP() != "+a)+
 					")) RULE_BREAK();",;
@@ -207,7 +235,14 @@ for (local i,oprules: util::enumerate(main_switch)) {
 		// All rules match!
 		if (r.output) {
 			print indent+indent+indent+"RT_WRITE_BEGIN();";
-			local input_copy = copy(r.input).locate_all([](x) -> !x.endswith("..."));
+			local input_copy = copy(r.input);
+			//local input_copy = copy(r.input).locate_all([](x) -> !x.endswith("..."));
+			function input_consume(ipt) {
+				if (ipt is none) return input_copy.pop_front();
+				if (ipt.startswith("$")) return ipt[1:];
+				if ("[" in ipt) return "$"+ipt.partition("[")[2].replace("]","").strip();
+				return none;
+			}
 			local cur_input = none;
 			for (local o: r.output) {
 				if (cur_input is none) cur_input = input_copy.pop_front();
@@ -217,29 +252,39 @@ for (local i,oprules: util::enumerate(main_switch)) {
 					} else {
 						print indent+indent+indent+"RT_WRITE_ARG("+o[1:]+");";
 					}
-					if (cur_input.startswith("$")) {
-						cur_input = none;
-					} else {
-						cur_input = input_copy.pop_front(); // Skip one input
-						if (!cur_input.startswith("$")) cur_input = none;
-					}
+					cur_input = input_consume(cur_input);
+					cur_input = input_consume(cur_input);
 				} else if (o.endswith("...")) {
 					print indent+indent+indent+"while ("+
 						" || ".join(for (local x: o[:#o-3].split("|"))
 							"RT_WRITE_GETOP() == "+x
 						)+") { RT_WRITE_SKIPOP(); }";
+					if (!cur_input.endswith("...")) {
+						throw Error("Expected *... input for *... output, but got "+repr cur_input);
+					}
+					cur_input = none;
 				} else if (o == "*") {
 					print indent+indent+indent+"RT_WRITE_SKIPOP();";
-					if (cur_input.startswith("$")) cur_input = cur_input[1:];
-					else cur_input = none;
+					cur_input = input_consume(cur_input);
+				} else if ("[" in o) {
+					if (cur_input == o) {
+						print indent+indent+indent+"RT_WRITE_SKIPOPARG();";
+					} else {
+						local opcode,none,arg = o.partition("[")...;
+						arg = arg.replace("]","").strip();
+						print indent+indent+indent+"RT_WRITE_OP("+opcode+");";
+						print indent+indent+indent+"RT_WRITE_ARG("+arg+");";
+					}
+					cur_input = input_consume(cur_input);
+					cur_input = input_consume(cur_input);
+					cur_input = input_consume(cur_input);
 				} else {
 					if (cur_input == o) {
 						print indent+indent+indent+"RT_WRITE_SKIPOP();";
 					} else {
 						print indent+indent+indent+"RT_WRITE_OP("+o+");";
 					}
-					if (cur_input.startswith("$")) cur_input = cur_input[1:];
-					else cur_input = none;
+					cur_input = input_consume(cur_input);
 				}
 			}
 		}

@@ -23,6 +23,7 @@
  TARGET(OP_LOAD_NONE) {
   RULE("OP_LOAD_NONE,OP_RET",
        "OP_RETNONE,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_RET)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_RETNONE);
@@ -31,6 +32,7 @@
   }
   RULE("OP_LOAD_NONE,OP_POP",
        "OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -45,6 +47,7 @@
  TARGET(OP_BOOL) {
   RULE("OP_BOOL,OP_BOOL",
        "OP_BOOL,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_BOOL)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_SKIPOP();
@@ -53,6 +56,7 @@
   }
   RULE("OP_BOOL,OP_NOT,OP_NOT",
        "OP_BOOL,OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK();
    RT_WRITE_BEGIN();
@@ -64,6 +68,7 @@
   RULE("OP_BOOL,OP_JUMP_IF_TT,$off",
        "OP_JUMP_IF_TT,$off,OP_NOOP") {
    Dee_uint16_t off;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_TT)) RULE_BREAK(); RT_NEXT_OP();
    off = RT_READ_ARG();
    RT_WRITE_BEGIN();
@@ -75,6 +80,7 @@
   RULE("OP_BOOL,OP_JUMP_IF_FF,$off",
        "OP_JUMP_IF_FF,$off,OP_NOOP") {
    Dee_uint16_t off;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_FF)) RULE_BREAK(); RT_NEXT_OP();
    off = RT_READ_ARG();
    RT_WRITE_BEGIN();
@@ -86,6 +92,7 @@
   RULE("OP_BOOL,OP_JUMP_IF_TT_POP,$off",
        "OP_JUMP_IF_TT_POP,$off,OP_NOOP") {
    Dee_uint16_t off;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_TT_POP)) RULE_BREAK(); RT_NEXT_OP();
    off = RT_READ_ARG();
    RT_WRITE_BEGIN();
@@ -97,6 +104,7 @@
   RULE("OP_BOOL,OP_JUMP_IF_FF_POP,$off",
        "OP_JUMP_IF_FF_POP,$off,OP_NOOP") {
    Dee_uint16_t off;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_FF_POP)) RULE_BREAK(); RT_NEXT_OP();
    off = RT_READ_ARG();
    RT_WRITE_BEGIN();
@@ -108,6 +116,7 @@
   RULE("OP_BOOL,OP_NOT,OP_JUMP_IF_TT,$off",
        "OP_JUMP_IF_FF,$off,OP_NOOP,OP_NOOP") {
    Dee_uint16_t off;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_TT)) RULE_BREAK(); RT_NEXT_OP();
    off = RT_READ_ARG();
@@ -121,6 +130,7 @@
   RULE("OP_BOOL,OP_NOT,OP_JUMP_IF_FF,$off",
        "OP_JUMP_IF_TT,$off,OP_NOOP,OP_NOOP") {
    Dee_uint16_t off;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_FF)) RULE_BREAK(); RT_NEXT_OP();
    off = RT_READ_ARG();
@@ -134,6 +144,7 @@
   RULE("OP_BOOL,OP_NOT,OP_JUMP_IF_TT_POP,$off",
        "OP_JUMP_IF_FF_POP,$off,OP_NOOP,OP_NOOP") {
    Dee_uint16_t off;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_TT_POP)) RULE_BREAK(); RT_NEXT_OP();
    off = RT_READ_ARG();
@@ -147,6 +158,7 @@
   RULE("OP_BOOL,OP_NOT,OP_JUMP_IF_FF_POP,$off",
        "OP_JUMP_IF_TT_POP,$off,OP_NOOP,OP_NOOP") {
    Dee_uint16_t off;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_NOT)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_JUMP_IF_FF_POP)) RULE_BREAK(); RT_NEXT_OP();
    off = RT_READ_ARG();
@@ -165,6 +177,7 @@
  TARGET(OP_STR) {
   RULE("OP_STR,OP_STR",
        "OP_STR,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_STR)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_SKIPOP();
@@ -179,6 +192,7 @@
  TARGET(OP_REPR) {
   RULE("OP_REPR,OP_STR",
        "OP_REPR,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_STR)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_SKIPOP();
@@ -193,6 +207,7 @@
  TARGET(OP_ROT_2) {
   RULE("OP_ROT_2,OP_ROT_2",
        "OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_ROT_2)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -207,6 +222,7 @@
  TARGET(OP_LROT_3) {
   RULE("OP_LROT_3,OP_RROT_3",
        "OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_RROT_3)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -221,6 +237,7 @@
  TARGET(OP_LOAD_RET) {
   RULE("OP_LOAD_RET,OP_POP",
        "OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -229,6 +246,7 @@
   }
   RULE("OP_LOAD_RET,OP_DUP...,OP_LOAD_RET",
        "OP_LOAD_RET,OP_DUP...,OP_DUP") {
+   RT_SEEK_FIRST_OP();
    {
 local_label_0:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -249,6 +267,7 @@ local_label_0:
  TARGET(OP_STORE_RET) {
   RULE("OP_STORE_RET,OP_POP",
        "OP_STORE_RET_POP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_STORE_RET_POP);
@@ -263,6 +282,7 @@ local_label_0:
  TARGET(OP_STORE_RET_POP) {
   RULE("OP_STORE_RET_POP,OP_LOAD_RET",
        "OP_STORE_RET,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_RET)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_STORE_RET);
@@ -271,6 +291,7 @@ local_label_0:
   }
   RULE("OP_STORE_RET_POP,OP_LOAD_THIS|OP_LOAD_RET,OP_LOAD_RET",
        "OP_STORE_RET,*,OP_ROT_2") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_THIS && RT_GET_OP() != OP_LOAD_RET)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_RET)) RULE_BREAK();
    RT_WRITE_BEGIN();
@@ -282,6 +303,7 @@ local_label_0:
   RULE("OP_STORE_RET_POP,OP_LOAD_CST|OP_LOAD_CST_COPY|OP_LOAD_CST_DCOPY|OP_LOAD_CST_LOCKED|OP_LOAD_LOC|OP_LOAD_ARG|OP_LOAD_BLTIN,$searg1,OP_LOAD_RET",
        "OP_STORE_RET,*,$searg1,OP_ROT_2") {
    Dee_uint16_t searg1;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_CST && RT_GET_OP() != OP_LOAD_CST_COPY && RT_GET_OP() != OP_LOAD_CST_DCOPY && RT_GET_OP() != OP_LOAD_CST_LOCKED && RT_GET_OP() != OP_LOAD_LOC && RT_GET_OP() != OP_LOAD_ARG && RT_GET_OP() != OP_LOAD_BLTIN)) RULE_BREAK(); RT_NEXT_OP();
    searg1 = RT_READ_ARG();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_RET)) RULE_BREAK();
@@ -294,6 +316,7 @@ local_label_0:
   }
   RULE("OP_STORE_RET_POP,OP_RETVAREXIT",
        "OP_RET,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_RETVAREXIT)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_RET);
@@ -308,6 +331,7 @@ local_label_0:
  TARGET(OP_LOAD_THIS) {
   RULE("OP_LOAD_THIS,OP_POP",
        "OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -316,6 +340,7 @@ local_label_0:
   }
   RULE("OP_LOAD_THIS,OP_DUP...,OP_LOAD_THIS",
        "OP_LOAD_THIS,OP_DUP...,OP_DUP") {
+   RT_SEEK_FIRST_OP();
    {
 local_label_1:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -336,6 +361,7 @@ local_label_1:
  TARGET(OP_DUP) {
   RULE("OP_DUP,OP_POP",
        "OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -344,6 +370,7 @@ local_label_1:
   }
   RULE("OP_DUP,OP_ROT_2",
        "OP_DUP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_ROT_2)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_SKIPOP();
@@ -352,6 +379,7 @@ local_label_1:
   }
   RULE("OP_DUP,OP_POP|OP_STORE_RET_POP|OP_YIELD|OP_PRINT_ONE|OP_PRINT_ONE_SEP|OP_PRINT_ONE_END|OP_PRINT_ALL|OP_PRINT_ALL_SEP|OP_PRINT_ALL_END|OP_PRINT_END_F,OP_POP",
        "OP_NOOP,*,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP && RT_GET_OP() != OP_STORE_RET_POP && RT_GET_OP() != OP_YIELD && RT_GET_OP() != OP_PRINT_ONE && RT_GET_OP() != OP_PRINT_ONE_SEP && RT_GET_OP() != OP_PRINT_ONE_END && RT_GET_OP() != OP_PRINT_ALL && RT_GET_OP() != OP_PRINT_ALL_SEP && RT_GET_OP() != OP_PRINT_ALL_END && RT_GET_OP() != OP_PRINT_END_F)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
@@ -363,6 +391,7 @@ local_label_1:
   RULE("OP_DUP,OP_STORE_LOC_POP|OP_STORE_ARG_POP|OP_STORE_CST_POP,$searg1,OP_POP",
        "OP_NOOP,*,$searg1,OP_NOOP") {
    Dee_uint16_t searg1;
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_STORE_LOC_POP && RT_GET_OP() != OP_STORE_ARG_POP && RT_GET_OP() != OP_STORE_CST_POP)) RULE_BREAK(); RT_NEXT_OP();
    searg1 = RT_READ_ARG();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
@@ -381,6 +410,7 @@ local_label_1:
  TARGET(OP_LROT_4) {
   RULE("OP_LROT_4,OP_RROT_4",
        "OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_RROT_4)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -395,6 +425,7 @@ local_label_1:
  TARGET(OP_RROT_3) {
   RULE("OP_RROT_3,OP_LROT_3",
        "OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LROT_3)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -409,6 +440,7 @@ local_label_1:
  TARGET(OP_RROT_4) {
   RULE("OP_RROT_4,OP_LROT_4",
        "OP_NOOP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LROT_4)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -424,6 +456,7 @@ local_label_1:
   RULE("OP_LOAD_LOC,$arg,OP_POP",
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    RT_SKIP_ARG(); // arg
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -436,6 +469,7 @@ local_label_1:
        "OP_LOAD_LOC,$arg,OP_DUP...,OP_DUP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t arg;
    arg = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    {
 local_label_2:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -461,6 +495,7 @@ local_label_2:
   RULE("OP_LOAD_REF,$arg,OP_POP",
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    RT_SKIP_ARG(); // arg
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -473,6 +508,7 @@ local_label_2:
        "OP_LOAD_REF,$arg,OP_DUP...,OP_DUP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t arg;
    arg = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    {
 local_label_3:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -498,6 +534,7 @@ local_label_3:
   RULE("OP_LOAD_CST,$arg,OP_POP",
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    RT_SKIP_ARG(); // arg
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -510,6 +547,7 @@ local_label_3:
        "OP_LOAD_CST,$arg,OP_DUP...,OP_DUP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t arg;
    arg = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    {
 local_label_4:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -535,6 +573,7 @@ local_label_4:
   RULE("OP_LOAD_CST_COPY,$arg,OP_POP",
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    RT_SKIP_ARG(); // arg
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -547,6 +586,7 @@ local_label_4:
        "OP_LOAD_CST_COPY,$arg,OP_DUP...,OP_DUP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t arg;
    arg = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    {
 local_label_5:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -572,6 +612,7 @@ local_label_5:
   RULE("OP_LOAD_CST_DCOPY,$arg,OP_POP",
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    RT_SKIP_ARG(); // arg
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -584,6 +625,7 @@ local_label_5:
        "OP_LOAD_CST_DCOPY,$arg,OP_DUP...,OP_DUP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t arg;
    arg = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    {
 local_label_6:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -609,6 +651,7 @@ local_label_6:
   RULE("OP_LOAD_BLTIN,$arg,OP_POP",
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    RT_SKIP_ARG(); // arg
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -621,6 +664,7 @@ local_label_6:
        "OP_LOAD_BLTIN,$arg,OP_DUP...,OP_DUP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t arg;
    arg = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    {
 local_label_7:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -646,6 +690,7 @@ local_label_7:
   RULE("OP_LOAD_ARG,$arg,OP_POP",
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    RT_SKIP_ARG(); // arg
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -658,6 +703,7 @@ local_label_7:
        "OP_LOAD_ARG,$arg,OP_DUP...,OP_DUP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t arg;
    arg = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    {
 local_label_8:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -684,6 +730,7 @@ local_label_8:
        "OP_STORE_LOC_POP,$locid,OP_NOOP") {
    Dee_uint16_t locid;
    locid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_STORE_LOC_POP);
@@ -701,6 +748,7 @@ local_label_8:
        "OP_STORE_LOC,$locid,OP_NOOP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t locid;
    locid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_LOC)) RULE_BREAK(); RT_NEXT_OP();
    if (locid != RT_READ_ARG()) RULE_BREAK();
    RT_WRITE_BEGIN();
@@ -715,6 +763,7 @@ local_label_8:
        "OP_STORE_LOC,$locid,*,OP_ROT_2,OP_NOOP,OP_NOOP") {
    Dee_uint16_t locid;
    locid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_THIS && RT_GET_OP() != OP_LOAD_RET)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_LOC)) RULE_BREAK(); RT_NEXT_OP();
    if (locid != RT_READ_ARG()) RULE_BREAK();
@@ -731,6 +780,7 @@ local_label_8:
        "OP_STORE_LOC,$locid,*,$searg1,OP_ROT_2,OP_NOOP,OP_NOOP") {
    Dee_uint16_t locid,searg1;
    locid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_CST && RT_GET_OP() != OP_LOAD_CST_COPY && RT_GET_OP() != OP_LOAD_CST_DCOPY && RT_GET_OP() != OP_LOAD_CST_LOCKED && RT_GET_OP() != OP_LOAD_LOC && RT_GET_OP() != OP_LOAD_ARG && RT_GET_OP() != OP_LOAD_BLTIN)) RULE_BREAK(); RT_NEXT_OP();
    searg1 = RT_READ_ARG();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_LOC)) RULE_BREAK(); RT_NEXT_OP();
@@ -755,6 +805,7 @@ local_label_8:
        "OP_STORE_ARG_POP,$argid,OP_NOOP") {
    Dee_uint16_t argid;
    argid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_STORE_ARG_POP);
@@ -772,6 +823,7 @@ local_label_8:
        "OP_STORE_ARG,$argid,OP_NOOP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t argid;
    argid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_ARG)) RULE_BREAK(); RT_NEXT_OP();
    if (argid != RT_READ_ARG()) RULE_BREAK();
    RT_WRITE_BEGIN();
@@ -786,6 +838,7 @@ local_label_8:
        "OP_STORE_ARG,$locid,*,OP_ROT_2,OP_NOOP,OP_NOOP") {
    Dee_uint16_t locid;
    locid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_THIS && RT_GET_OP() != OP_LOAD_RET)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_ARG)) RULE_BREAK(); RT_NEXT_OP();
    if (locid != RT_READ_ARG()) RULE_BREAK();
@@ -802,6 +855,7 @@ local_label_8:
        "OP_STORE_ARG,$locid,*,$searg1,OP_ROT_2,OP_NOOP,OP_NOOP") {
    Dee_uint16_t locid,searg1;
    locid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_CST && RT_GET_OP() != OP_LOAD_CST_COPY && RT_GET_OP() != OP_LOAD_CST_DCOPY && RT_GET_OP() != OP_LOAD_CST_LOCKED && RT_GET_OP() != OP_LOAD_LOC && RT_GET_OP() != OP_LOAD_ARG && RT_GET_OP() != OP_LOAD_BLTIN)) RULE_BREAK(); RT_NEXT_OP();
    searg1 = RT_READ_ARG();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_ARG)) RULE_BREAK(); RT_NEXT_OP();
@@ -826,6 +880,7 @@ local_label_8:
        "OP_STORE_CST_POP,$cstid,OP_NOOP") {
    Dee_uint16_t cstid;
    cstid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_STORE_CST_POP);
@@ -843,6 +898,7 @@ local_label_8:
        "OP_STORE_CST,$cstid,OP_NOOP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t cstid;
    cstid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_CST && RT_GET_OP() != OP_LOAD_CST_COPY && RT_GET_OP() != OP_LOAD_CST_DCOPY && RT_GET_OP() != OP_LOAD_CST_LOCKED)) RULE_BREAK(); RT_NEXT_OP();
    if (cstid != RT_READ_ARG()) RULE_BREAK();
    RT_WRITE_BEGIN();
@@ -857,6 +913,7 @@ local_label_8:
        "OP_STORE_CST,$locid,*,OP_ROT_2,OP_NOOP,OP_NOOP") {
    Dee_uint16_t locid;
    locid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_THIS && RT_GET_OP() != OP_LOAD_RET)) RULE_BREAK(); RT_NEXT_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_CST && RT_GET_OP() != OP_LOAD_CST_COPY && RT_GET_OP() != OP_LOAD_CST_DCOPY && RT_GET_OP() != OP_LOAD_CST_LOCKED)) RULE_BREAK(); RT_NEXT_OP();
    if (locid != RT_READ_ARG()) RULE_BREAK();
@@ -873,6 +930,7 @@ local_label_8:
        "OP_STORE_CST,$locid,*,$searg1,OP_ROT_2,OP_NOOP,OP_NOOP") {
    Dee_uint16_t locid,searg1;
    locid = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_CST && RT_GET_OP() != OP_LOAD_CST_COPY && RT_GET_OP() != OP_LOAD_CST_DCOPY && RT_GET_OP() != OP_LOAD_CST_LOCKED && RT_GET_OP() != OP_LOAD_LOC && RT_GET_OP() != OP_LOAD_ARG && RT_GET_OP() != OP_LOAD_BLTIN)) RULE_BREAK(); RT_NEXT_OP();
    searg1 = RT_READ_ARG();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LOAD_CST && RT_GET_OP() != OP_LOAD_CST_COPY && RT_GET_OP() != OP_LOAD_CST_DCOPY && RT_GET_OP() != OP_LOAD_CST_LOCKED)) RULE_BREAK(); RT_NEXT_OP();
@@ -897,6 +955,7 @@ local_label_8:
        "OP_TUPLE,$size,OP_NOOP") {
    Dee_uint16_t size;
    size = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_CAST_TUPLE)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_SKIPOP();
@@ -908,6 +967,7 @@ local_label_8:
        "OP_LIST,$size,OP_NOOP") {
    Dee_uint16_t size;
    size = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_CAST_LIST)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_LIST);
@@ -919,6 +979,7 @@ local_label_8:
        "OP_SET,$size,OP_NOOP") {
    Dee_uint16_t size;
    size = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_CAST_SET)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_SET);
@@ -936,6 +997,7 @@ local_label_8:
        "OP_TUPLE,$size,OP_NOOP") {
    Dee_uint16_t size;
    size = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_CAST_TUPLE)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_TUPLE);
@@ -947,6 +1009,7 @@ local_label_8:
        "OP_LIST,$size,OP_NOOP") {
    Dee_uint16_t size;
    size = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_CAST_LIST)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_SKIPOP();
@@ -958,6 +1021,7 @@ local_label_8:
        "OP_SET,$size,OP_NOOP") {
    Dee_uint16_t size;
    size = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_CAST_SET)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_SET);
@@ -974,6 +1038,7 @@ local_label_8:
   RULE("OP_LOAD_CST_LOCKED,$arg,OP_POP",
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    RT_SKIP_ARG(); // arg
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
@@ -986,6 +1051,7 @@ local_label_8:
        "OP_LOAD_CST_LOCKED,$arg,OP_DUP...,OP_DUP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t arg;
    arg = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    {
 local_label_9:
     if (RT_PROTECTED()) RULE_BREAK();
@@ -1012,6 +1078,7 @@ local_label_9:
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t shift;
    shift = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_RROT_N)) RULE_BREAK(); RT_NEXT_OP();
    if (shift != RT_READ_ARG()) RULE_BREAK();
    RT_WRITE_BEGIN();
@@ -1033,6 +1100,7 @@ local_label_9:
        "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
    Dee_uint16_t shift;
    shift = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LROT_N)) RULE_BREAK(); RT_NEXT_OP();
    if (shift != RT_READ_ARG()) RULE_BREAK();
    RT_WRITE_BEGIN();
@@ -1054,6 +1122,7 @@ local_label_9:
        "OP_TUPLE,$size,OP_NOOP") {
    Dee_uint16_t size;
    size = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_CAST_TUPLE)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_TUPLE);
@@ -1065,6 +1134,7 @@ local_label_9:
        "OP_LIST,$size,OP_NOOP") {
    Dee_uint16_t size;
    size = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_CAST_LIST)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_LIST);
@@ -1076,6 +1146,7 @@ local_label_9:
        "OP_SET,$size,OP_NOOP") {
    Dee_uint16_t size;
    size = RT_READ_ARG();
+   RT_SEEK_FIRST_OP();
    if (RT_PROTECTED() || (RT_GET_OP() != OP_CAST_SET)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_SKIPOP();
@@ -1086,4 +1157,166 @@ local_label_9:
   DISPATCH();
  }
 #endif /* OP_SET */
+
+#ifdef OP_EXTENDED
+ TARGET(OP_EXTENDED) {
+  RULE("OP_EXTENDED[OPEXT_EMPTY_TUPLE],OP_POP",
+       "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_EMPTY_TUPLE) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_EMPTY_LIST],OP_POP",
+       "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_EMPTY_LIST) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_EMPTY_DICT],OP_POP",
+       "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_EMPTY_DICT) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_EMPTY_SET],OP_POP",
+       "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_EMPTY_SET) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_EMPTY_CELL],OP_POP",
+       "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_EMPTY_CELL) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_BOUND_LOCAL],OP_POP",
+       "OP_NOOP,OP_NOOP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_BOUND_LOCAL) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_VARRAYOF],OP_POP",
+       "OP_POP,OP_NOOP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_VARRAYOF) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_SUPEROF],OP_POP",
+       "OP_POP,OP_NOOP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_SUPEROF) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_CLASSOF],OP_POP",
+       "OP_POP,OP_NOOP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_CLASSOF) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_SUPER_AT],OP_POP",
+       "OP_POP,OP_POP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_SUPER_AT) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_CLASS_NEW],OP_POP",
+       "OP_POP,OP_POP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_CLASS_NEW) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_CLASS_NEW_UUID],OP_POP",
+       "OP_POP,OP_POP,OP_POP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_CLASS_NEW_UUID) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_EXTENDED[OPEXT_ALLOCA],OP_POP",
+       "OP_POP,OP_POP,OP_NOOP,OP_NOOP") {
+   if (RT_READ_ARG() != OPEXT_ALLOCA) RULE_BREAK();
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  DISPATCH();
+ }
+#endif /* OP_EXTENDED */
 

@@ -79,17 +79,21 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
 #else
 #define RT_WRITE_BEGIN       RT_DO_WRITE_BEGIN
 #endif
-#define RT_PROTECTED()       (readpos == code_end || DeeCodeReachableAddrList_Contains(protected_addr,(Dee_size_t)(readpos-code_begin)))
+#define RT_PROTECTED()       (DEE_UNLIKELY(readpos == code_end) || DeeCodeReachableAddrList_Contains(protected_addr,(Dee_size_t)(readpos-code_begin)))
 #define RT_WRITE_OP(x)       do{ while(IS_NOOP(*writepos)) ++writepos; *writepos++ = (x); }while(0)
 #define RT_WRITE_GETOP()     (*_dee_after_noop(writepos))
 #define RT_WRITE_SKIPOP()    do{ while(IS_NOOP(*writepos)) ++writepos; ++writepos; }while(0)
+//#define RT_WRITE_SKIPOPARG() do{ while(IS_NOOP(*writepos)) ++writepos; writepos += 3; }while(0)
 #define RT_WRITE_ARG(x)      do{ *(Dee_uint16_t *)writepos=(x); writepos += 2; }while(0)
 #define RT_WRITE_SKIPARG()   do{ writepos += 2; }while(0)
 #define RT_SKIP_ARG()        (void)(readpos += 2)
 #define RT_READ_ARG()        (*(*(Dee_uint16_t **)&readpos)++)
 #define RT_READ_SARG()       (*(*(Dee_int16_t **)&readpos)++)
-#define RT_NEXT_OP()         do{ ++readpos; while(IS_NOOP(*readpos)) { if (RT_PROTECTED()) RULE_BREAK(); ++readpos; } }while(0)
+#define RT_SEEK_FIRST_OP()   do{ while (IS_NOOP(*readpos) && !RT_PROTECTED()) ++readpos; }while(0)
+#define RT_NEXT_OP()         do{ ++readpos; while(IS_NOOP(*readpos) && !RT_PROTECTED()) ++readpos; }while(0)
+#define RT_NEXT_OP_ARG()     do{ readpos += 3; }while(0)
 #define RT_GET_OP()          (*readpos)
+#define RT_GET_OPARG()       (*(Dee_uint16_t *)(readpos+1))
 #ifdef DEE_DEBUG
 #define RULE(input,output)   for (RT_DO_READ_BEGIN(),cur_input=(input),cur_output=(output);;)
 #else
@@ -125,6 +129,23 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
      }
      jmp_dst = code+jmp_off;
      DEE_ASSERT(jmp_dst >= code_begin && jmp_dst < code_end);
+     if (before_opcode == OP_JUMP && (*jmp_dst == OP_RET || *jmp_dst == OP_RETNONE)) {
+      // Jump to return --> Replace with return immediatly
+      // -> Replace a jump to an OP_RET/OP_RETNONE with the return opcode
+      DEE_LVERBOSE1R("%s(%I64d) : PEEPHOLE : +%.4Ix : %#.2I8x : Forwarding jump to %s at +%.4Ix\n"
+                     "%s(%I64d) : PEEPHOLE : +%.4Ix : %#.2I8x : See reference to return opcode destination\n",
+                     DeeCodeWriter_Addr2File(self,(Dee_size_t)(code-code_begin)),
+                     DeeCodeWriter_Addr2Line(self,(Dee_size_t)(code-code_begin))+1,
+                     (Dee_size_t)(code-code_begin),*code,(Dee_size_t)((code-code_begin)+(jmp_dst-code)),
+                     *jmp_dst == OP_RET ? "OP_RET" : "OP_RETNONE",
+                     DeeCodeWriter_Addr2File(self,(Dee_size_t)((code-code_begin)+(jmp_dst-code))),
+                     DeeCodeWriter_Addr2Line(self,(Dee_size_t)((code-code_begin)+(jmp_dst-code)))+1,
+                     (Dee_size_t)((code-code_begin)+(jmp_dst-code)),*jmp_dst);
+      code[0] = *jmp_dst;
+      code[1] = OP_NOOP;
+      code[2] = OP_NOOP;
+      DISPATCH_OPTIMIZED();
+     }
      if (*jmp_dst == OP_JUMP) {
       Dee_ssize_t jmp_offset;
       // Jump points to another jump (forward to the destination of that jump)
@@ -159,6 +180,8 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
 #undef RT_SKIP_ARG
 #undef RT_READ_ARG
 #undef RT_READ_SARG
+#undef RT_NEXT_OP
+#undef RT_NEXT_OP_ARG
 #undef RT_PROTECTED
 #undef RT_GET_OP
 #undef RULE
