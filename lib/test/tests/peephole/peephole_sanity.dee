@@ -38,15 +38,24 @@
 		_b.asmrepr();\
 })
 
+#pragma warning(disable: 679)
 
+
+// NOTE: The 'print' in some of these is
+//       required to prevent other optimizations
 assert_same_code([]{},[]{});
 assert_same_code(
 	[]: result { result = 42; },
-	[] { return 42; });
-// NOTE: The 'print' is required to prevent other optimizations
+	[] { return 42; }
+);
 assert_same_code(
-	[] {{ print; volatile __stack local result = none; return result; }},
-	[] { print; return; });
+	[] { print; volatile __stack local result = none; return result; },
+	[] { print; return; }
+);
+assert_same_code(
+	[](x) { if (!!x) print; },
+	[](x) { if (x) print; }
+);
 
 
 

@@ -111,17 +111,21 @@ RULE({OP_BOOL,OP_NOT,OP_NOT} --> {OP_BOOL});
 
 //////////////////////////////////////////////////////////////////////////
 // The conditional jump opcodes already perform their own to-bool cast
-RULE({OP_BOOL,OP_JUMP_IF_TT,$off} --> {OP_JUMP_IF_TT,$off});
-RULE({OP_BOOL,OP_JUMP_IF_FF,$off} --> {OP_JUMP_IF_FF,$off});
-RULE({OP_BOOL,OP_JUMP_IF_TT_POP,$off} --> {OP_JUMP_IF_TT_POP,$off});
-RULE({OP_BOOL,OP_JUMP_IF_FF_POP,$off} --> {OP_JUMP_IF_FF_POP,$off});
+// NOTE: The prefixed OP_NOOP are required to keep the jump offsets aligned
+//       Though they are optimized away later, when all other no-ops are removed
+RULE({OP_BOOL,OP_JUMP_IF_TT,$off} --> {OP_NOOP,OP_JUMP_IF_TT,$off});
+RULE({OP_BOOL,OP_JUMP_IF_FF,$off} --> {OP_NOOP,OP_JUMP_IF_FF,$off});
+RULE({OP_BOOL,OP_JUMP_IF_TT_POP,$off} --> {OP_NOOP,OP_JUMP_IF_TT_POP,$off});
+RULE({OP_BOOL,OP_JUMP_IF_FF_POP,$off} --> {OP_NOOP,OP_JUMP_IF_FF_POP,$off});
 
 //////////////////////////////////////////////////////////////////////////
 // Invert the condition of the jump opcode (and remove the OP_BOOL)
-RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_TT,$off} --> {OP_JUMP_IF_FF,$off});
-RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_FF,$off} --> {OP_JUMP_IF_TT,$off});
-RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_TT_POP,$off} --> {OP_JUMP_IF_FF_POP,$off});
-RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_FF_POP,$off} --> {OP_JUMP_IF_TT_POP,$off});
+// NOTE: The prefixed OP_NOOP are required to keep the jump offsets aligned
+//       Though they are optimized away later, when all other no-ops are removed
+RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_TT,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_FF,$off});
+RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_FF,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_TT,$off});
+RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_TT_POP,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_FF_POP,$off});
+RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_FF_POP,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_TT_POP,$off});
 
 #define DEFINE_LOAD_RULES(op) \
  RULE({op,$arg,OP_POP} --> {});\
