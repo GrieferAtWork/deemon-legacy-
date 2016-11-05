@@ -6,52 +6,79 @@
 Extract all files to a temporary path '/path/to/deemon_root'
 
 === Linux ===
-	me@me-AwesomePC:/path/to/deemon_root$ sudo ./make.sh install
 
-	# Requirements
-	me@me-AwesomePC:~$ sudo apt-get install gcc
+	# >> Installing
+	# WARNING: Deemon is designed to live in '/usr/bin/deemon' and '/usr/lib/',
+	#          just as linux intended for programs like it to be.
+	#          If you aren't a fan of something like that, or simply
+	#          don't want to run some random shell-script with sudo-privileges,
+	#          look at the 'Make without installing/sudo rights' or
+	#          'Create a portable executable' section below.
+	# NOTE:    Sudo privileges are required to add files to '/usr/bin' and '/usr/lib'
+	#          If your machine is designed to grant access to those folders without
+	#          the need for sudo permissions, you can run ./make.sh install without sudo.
+	$ sudo ./make.sh install
+	$ deemon --version
 
-	# Optional Requirements
-	me@me-AwesomePC:~$ 'sudo apt-get install libbluetooth-dev' # Required for bluetooth sockets
-	me@me-AwesomePC:~$ 'sudo apt-get install libncurses5-dev' # Required for the '_curses' and '_debugger' dex
+	# >> Requirements
+	$ sudo apt-get install gcc
+	[optional] $ 'sudo apt-get install libbluetooth-dev' # Required for bluetooth sockets
+	[optional] $ 'sudo apt-get install libncurses5-dev' # Required for the '_curses' and '_debugger' dex
 	
-	# Cleanup
-	me@me-AwesomePC:/path/to/deemon_root$ rm -r *
+	# >> Automatic uninstall
+	# NOTE: Used to uninstall deemon from the host system (removes everything put there by './make.sh install')
+	$ sudo ./make.sh purge
 
-	# Paths
-	me@me-AwesomePC:~$ which deemon
+	# >> Make without installing/sudo rights
+	# NOTE: To invoke deemon after this finishes, you must use
+	#       './make.sh run $*', where $* are the arguments
+	#       passed to the deemon commandline.
+	$ ./make.sh make
+	$ ./make.sh run --version
+
+	# >> Create a portable executable
+	# NOTE: One huge, executable binary, combining the front-end and library into one file.
+	#       The generated binary can be used portably and search paths for include and dex
+	#       files always include '$(dirname $(readlink /proc/self/exe))/lib' as root folder.
+	#       So any static version can be used portably if the executable's directory
+	#       contains the lib folder.
+	# NOTE: Only the 'lib/dex', 'lib/dex.<api_version>' and 'lib/include' folders are required
+	#       +
+	#       |-- deemon
+	#       |
+	#       |-- lib +
+	#       |       |
+	#       |       |-- include +
+	#       |       |           |
+	#       |       |           | -- ...
+	#       |       |
+	#       |       |-- dex --- +
+	#       |       |           |
+	#       |       |           | -- ...
+	#       |       |
+	#       |       |-- ...
+	#       |
+	#       |-- ...
+	# NOTE: This same directory layout is also used under windows
+	$ ./make.sh --static make
+	$ ./deemon.<compiler_version>.<api_version> --version
+
+
+	# >> Paths
+	# NOTE: Assuming './make.sh install' was executed
+	$ which deemon
 	>> /usr/bin/deemon # By default
 	Starting with v101, deemon uses update-alternatives to manage its versions,
 	meaning that parallel installations of future releases can be easily managed.
     
-	Deemon can be installed anywhere, as long as the entire 'lib' folder
-	is located in the same directory as the 'deemon' executable or
-	in '/usr/lib/deemon'.
-	path/to/deemon/ +
-	                |-- deemon
-	                |
-	                |-- lib +
-	                |       |
-	                |       |-- include +
-	                |       |           |
-	                |       |           | -- ...
-	                |       |
-	                |       |-- dex --- +
-	                |       |           |
-	                |       |           | -- ...
-	                |       |
-	                |       |-- ...
-	                |
-	                |-- ...
-
 	Troubleshoothing:
 		Since my main machine is running windows, you'll probably run into
 		permission problems, where compiler scripts aren't executable.
 		So make sure that 'make.sh' has execute permission:
-		me@me-AwesomePC:/path/to/deemon_root$ chmod +x make.sh
-
-	Tipps:
-		- You can create a static version of deemon by adding '--static' when calling 'make.sh'
+		$ chmod +x make.sh
+		$ ./make.sh --version
+		Or just run it with bash immediatly
+		$ bash make.sh --version
 
 === Windows ===
 	Visual Studio:

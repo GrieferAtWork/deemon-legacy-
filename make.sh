@@ -39,7 +39,7 @@ update_alternatives_binname="deemon"
 full_libname="$basic_libname.102"
 full_binname="$basic_binname.102"
 lib_outputfile="$root_path/$full_libname"
-bin_outputfile="$root_path/$basic_binname"
+bin_outputfile="$root_path/$full_binname"
 # v This is hardcoded in deemon (to change you must modify 'src/deemon/lexer.c')
 include_libpath="/usr/lib/deemon"
 
@@ -276,140 +276,140 @@ update_object_file() {
 compile_deemon() {
 	# Create object files for all sources
 	update_object_file "$source_path/debug_new/debug_new.c"
-	update_object_file "$source_path/deemon/sequence.c"
-	update_object_file "$source_path/deemon/class/class.c"
-	update_object_file "$source_path/deemon/thread.c"
-	update_object_file "$source_path/deemon/runtime/builtin_functions.c"
-	update_object_file "$source_path/deemon/runtime/execute.c"
-	update_object_file "$source_path/deemon/runtime/sandbox.c"
-	update_object_file "$source_path/deemon/runtime/extern.c"
-	update_object_file "$source_path/deemon/runtime/builtins.c"
-	update_object_file "$source_path/deemon/runtime/function.c"
-	update_object_file "$source_path/deemon/none.c"
-	update_object_file "$source_path/deemon/marshal_data.c"
-	update_object_file "$source_path/deemon/tuple.c"
-	update_object_file "$source_path/deemon/foreign_function.c"
-	update_object_file "$source_path/deemon/deemonrun.c"
-	update_object_file "$source_path/deemon/float.c"
-	update_object_file "$source_path/deemon/compiler/scope.c"
-	update_object_file "$source_path/deemon/compiler/sast_compile.c"
-	update_object_file "$source_path/deemon/compiler/code.c"
-	update_object_file "$source_path/deemon/compiler/sast_parse.c"
-	update_object_file "$source_path/deemon/compiler/sast.c"
-	update_object_file "$source_path/deemon/compiler/xast_compile.c"
-	update_object_file "$source_path/deemon/compiler/codewriter.c"
-	update_object_file "$source_path/deemon/compiler/xast_parse.c"
-	update_object_file "$source_path/deemon/compiler/lexer.c"
-	update_object_file "$source_path/deemon/compiler/xast.c"
-	update_object_file "$source_path/deemon/math.c"
-	update_object_file "$source_path/deemon/list.c"
-	update_object_file "$source_path/deemon/iterator.c"
-	update_object_file "$source_path/deemon/random.c"
-	update_object_file "$source_path/deemon/dex.c"
-	update_object_file "$source_path/deemon/memberfunction.c"
-	update_object_file "$source_path/deemon/error.c"
-	update_object_file "$source_path/deemon/type.c"
-	update_object_file "$source_path/deemon/socket.c"
-	update_object_file "$source_path/deemon/dict.c"
-	update_object_file "$source_path/deemon/marshal.c"
-	update_object_file "$source_path/deemon/mutex.c"
-	update_object_file "$source_path/deemon/array.c"
-	update_object_file "$source_path/deemon/integer.c"
-	update_object_file "$source_path/deemon/cfunction.c"
-	update_object_file "$source_path/deemon/weakref.c"
-	update_object_file "$source_path/deemon/cell.c"
-	update_object_file "$source_path/deemon/signalhandler.c"
-	update_object_file "$source_path/deemon/uuid.c"
-	update_object_file "$source_path/deemon/set.c"
-	update_object_file "$source_path/deemon/traceback.c"
-	update_object_file "$source_path/deemon/generic_vtable.c"
-	update_object_file "$source_path/deemon/memberdef.c"
-	update_object_file "$source_path/deemon/tls.c"
 	update_object_file "$source_path/deemon/_deprecated.c"
-	update_object_file "$source_path/deemon/fs_api.c"
-	update_object_file "$source_path/deemon/file.c"
-	update_object_file "$source_path/deemon/time.c"
-	update_object_file "$source_path/deemon/gc.c"
-	update_object_file "$source_path/deemon/super.c"
-	update_object_file "$source_path/deemon/pipe.c"
-	update_object_file "$source_path/deemon/unicode/string.c"
-	update_object_file "$source_path/deemon/structured.c"
+	update_object_file "$source_path/deemon/array.c"
+	update_object_file "$source_path/deemon/cell.c"
+	update_object_file "$source_path/deemon/cfunction.c"
+	update_object_file "$source_path/deemon/class/class.c"
+	update_object_file "$source_path/deemon/compiler/code.c"
+	update_object_file "$source_path/deemon/compiler/codewriter.c"
+	update_object_file "$source_path/deemon/compiler/lexer.c"
+	update_object_file "$source_path/deemon/compiler/sast.c"
+	update_object_file "$source_path/deemon/compiler/sast_compile.c"
+	update_object_file "$source_path/deemon/compiler/sast_parse.c"
+	update_object_file "$source_path/deemon/compiler/scope.c"
+	update_object_file "$source_path/deemon/compiler/xast.c"
+	update_object_file "$source_path/deemon/compiler/xast_compile.c"
+	update_object_file "$source_path/deemon/compiler/xast_parse.c"
+	update_object_file "$source_path/deemon/deemonrun.c"
+	update_object_file "$source_path/deemon/dex.c"
+	update_object_file "$source_path/deemon/dict.c"
 	update_object_file "$source_path/deemon/enum_attributes.c"
-	update_object_file "$source_path/deemon/value.c"
-	update_object_file "$source_path/deemon/struct.c"
-	update_object_file "$source_path/deemon/process.c"
+	update_object_file "$source_path/deemon/error.c"
+	update_object_file "$source_path/deemon/file.c"
+	update_object_file "$source_path/deemon/float.c"
+	update_object_file "$source_path/deemon/foreign_function.c"
+	update_object_file "$source_path/deemon/fs_api.c"
+	update_object_file "$source_path/deemon/gc.c"
+	update_object_file "$source_path/deemon/generic_vtable.c"
+	update_object_file "$source_path/deemon/integer.c"
 	update_object_file "$source_path/deemon/io_buffer.c"
+	update_object_file "$source_path/deemon/iterator.c"
+	update_object_file "$source_path/deemon/list.c"
+	update_object_file "$source_path/deemon/marshal.c"
+	update_object_file "$source_path/deemon/marshal_data.c"
+	update_object_file "$source_path/deemon/math.c"
+	update_object_file "$source_path/deemon/memberdef.c"
+	update_object_file "$source_path/deemon/memberfunction.c"
+	update_object_file "$source_path/deemon/mutex.c"
+	update_object_file "$source_path/deemon/none.c"
 	update_object_file "$source_path/deemon/object.c"
+	update_object_file "$source_path/deemon/pipe.c"
+	update_object_file "$source_path/deemon/process.c"
+	update_object_file "$source_path/deemon/random.c"
+	update_object_file "$source_path/deemon/runtime/builtin_functions.c"
+	update_object_file "$source_path/deemon/runtime/builtins.c"
+	update_object_file "$source_path/deemon/runtime/execute.c"
+	update_object_file "$source_path/deemon/runtime/extern.c"
+	update_object_file "$source_path/deemon/runtime/function.c"
+	update_object_file "$source_path/deemon/runtime/sandbox.c"
+	update_object_file "$source_path/deemon/sequence.c"
+	update_object_file "$source_path/deemon/set.c"
+	update_object_file "$source_path/deemon/signalhandler.c"
+	update_object_file "$source_path/deemon/socket.c"
+	update_object_file "$source_path/deemon/struct.c"
+	update_object_file "$source_path/deemon/structured.c"
+	update_object_file "$source_path/deemon/super.c"
+	update_object_file "$source_path/deemon/thread.c"
+	update_object_file "$source_path/deemon/time.c"
+	update_object_file "$source_path/deemon/tls.c"
+	update_object_file "$source_path/deemon/traceback.c"
+	update_object_file "$source_path/deemon/tuple.c"
+	update_object_file "$source_path/deemon/type.c"
+	update_object_file "$source_path/deemon/unicode/string.c"
+	update_object_file "$source_path/deemon/uuid.c"
+	update_object_file "$source_path/deemon/value.c"
+	update_object_file "$source_path/deemon/weakref.c"
 }
 
 link_deemon() {
 	echo "Create shared object (library): $lib_outputfile"
 	$compiler $source_link_libpaths $source_link_flags $additional_flags \
 		"$build_path/debug_new.c.o" \
-		"$build_path/sequence.c.o" \
-		"$build_path/class.c.o" \
-		"$build_path/thread.c.o" \
-		"$build_path/builtin_functions.c.o" \
-		"$build_path/execute.c.o" \
-		"$build_path/sandbox.c.o" \
-		"$build_path/extern.c.o" \
-		"$build_path/builtins.c.o" \
-		"$build_path/function.c.o" \
-		"$build_path/none.c.o" \
-		"$build_path/marshal_data.c.o" \
-		"$build_path/tuple.c.o" \
-		"$build_path/foreign_function.c.o" \
-		"$build_path/deemonrun.c.o" \
-		"$build_path/float.c.o" \
-		"$build_path/scope.c.o" \
-		"$build_path/sast_compile.c.o" \
-		"$build_path/code.c.o" \
-		"$build_path/sast_parse.c.o" \
-		"$build_path/sast.c.o" \
-		"$build_path/xast_compile.c.o" \
-		"$build_path/codewriter.c.o" \
-		"$build_path/xast_parse.c.o" \
-		"$build_path/lexer.c.o" \
-		"$build_path/xast.c.o" \
-		"$build_path/math.c.o" \
-		"$build_path/list.c.o" \
-		"$build_path/iterator.c.o" \
-		"$build_path/random.c.o" \
-		"$build_path/dex.c.o" \
-		"$build_path/memberfunction.c.o" \
-		"$build_path/error.c.o" \
-		"$build_path/type.c.o" \
-		"$build_path/socket.c.o" \
-		"$build_path/dict.c.o" \
-		"$build_path/marshal.c.o" \
-		"$build_path/mutex.c.o" \
-		"$build_path/array.c.o" \
-		"$build_path/integer.c.o" \
-		"$build_path/cfunction.c.o" \
-		"$build_path/weakref.c.o" \
-		"$build_path/cell.c.o" \
-		"$build_path/signalhandler.c.o" \
-		"$build_path/uuid.c.o" \
-		"$build_path/set.c.o" \
-		"$build_path/traceback.c.o" \
-		"$build_path/generic_vtable.c.o" \
-		"$build_path/memberdef.c.o" \
-		"$build_path/tls.c.o" \
 		"$build_path/_deprecated.c.o" \
-		"$build_path/fs_api.c.o" \
-		"$build_path/file.c.o" \
-		"$build_path/time.c.o" \
-		"$build_path/gc.c.o" \
-		"$build_path/super.c.o" \
-		"$build_path/pipe.c.o" \
-		"$build_path/string.c.o" \
-		"$build_path/structured.c.o" \
+		"$build_path/array.c.o" \
+		"$build_path/cell.c.o" \
+		"$build_path/cfunction.c.o" \
+		"$build_path/class.c.o" \
+		"$build_path/code.c.o" \
+		"$build_path/codewriter.c.o" \
+		"$build_path/lexer.c.o" \
+		"$build_path/sast.c.o" \
+		"$build_path/sast_compile.c.o" \
+		"$build_path/sast_parse.c.o" \
+		"$build_path/scope.c.o" \
+		"$build_path/xast.c.o" \
+		"$build_path/xast_compile.c.o" \
+		"$build_path/xast_parse.c.o" \
+		"$build_path/deemonrun.c.o" \
+		"$build_path/dex.c.o" \
+		"$build_path/dict.c.o" \
 		"$build_path/enum_attributes.c.o" \
-		"$build_path/value.c.o" \
-		"$build_path/struct.c.o" \
-		"$build_path/process.c.o" \
+		"$build_path/error.c.o" \
+		"$build_path/file.c.o" \
+		"$build_path/float.c.o" \
+		"$build_path/foreign_function.c.o" \
+		"$build_path/fs_api.c.o" \
+		"$build_path/gc.c.o" \
+		"$build_path/generic_vtable.c.o" \
+		"$build_path/integer.c.o" \
 		"$build_path/io_buffer.c.o" \
+		"$build_path/iterator.c.o" \
+		"$build_path/list.c.o" \
+		"$build_path/marshal.c.o" \
+		"$build_path/marshal_data.c.o" \
+		"$build_path/math.c.o" \
+		"$build_path/memberdef.c.o" \
+		"$build_path/memberfunction.c.o" \
+		"$build_path/mutex.c.o" \
+		"$build_path/none.c.o" \
 		"$build_path/object.c.o" \
+		"$build_path/pipe.c.o" \
+		"$build_path/process.c.o" \
+		"$build_path/random.c.o" \
+		"$build_path/builtin_functions.c.o" \
+		"$build_path/builtins.c.o" \
+		"$build_path/execute.c.o" \
+		"$build_path/extern.c.o" \
+		"$build_path/function.c.o" \
+		"$build_path/sandbox.c.o" \
+		"$build_path/sequence.c.o" \
+		"$build_path/set.c.o" \
+		"$build_path/signalhandler.c.o" \
+		"$build_path/socket.c.o" \
+		"$build_path/struct.c.o" \
+		"$build_path/structured.c.o" \
+		"$build_path/super.c.o" \
+		"$build_path/thread.c.o" \
+		"$build_path/time.c.o" \
+		"$build_path/tls.c.o" \
+		"$build_path/traceback.c.o" \
+		"$build_path/tuple.c.o" \
+		"$build_path/type.c.o" \
+		"$build_path/string.c.o" \
+		"$build_path/uuid.c.o" \
+		"$build_path/value.c.o" \
+		"$build_path/weakref.c.o" \
 	-shared -Wl,-soname,$basic_libname -o "$lib_outputfile" $source_link_libs
 }
 link_deemon_static() {
@@ -417,70 +417,70 @@ link_deemon_static() {
 	$compiler $source_link_libpaths $source_link_flags $additional_flags -o $bin_outputfile \
 		"$build_path/main.c.o" \
 		"$build_path/debug_new.c.o" \
-		"$build_path/sequence.c.o" \
-		"$build_path/class.c.o" \
-		"$build_path/thread.c.o" \
-		"$build_path/builtin_functions.c.o" \
-		"$build_path/execute.c.o" \
-		"$build_path/sandbox.c.o" \
-		"$build_path/extern.c.o" \
-		"$build_path/builtins.c.o" \
-		"$build_path/function.c.o" \
-		"$build_path/none.c.o" \
-		"$build_path/marshal_data.c.o" \
-		"$build_path/tuple.c.o" \
-		"$build_path/foreign_function.c.o" \
-		"$build_path/deemonrun.c.o" \
-		"$build_path/float.c.o" \
-		"$build_path/scope.c.o" \
-		"$build_path/sast_compile.c.o" \
-		"$build_path/code.c.o" \
-		"$build_path/sast_parse.c.o" \
-		"$build_path/sast.c.o" \
-		"$build_path/xast_compile.c.o" \
-		"$build_path/codewriter.c.o" \
-		"$build_path/xast_parse.c.o" \
-		"$build_path/lexer.c.o" \
-		"$build_path/xast.c.o" \
-		"$build_path/math.c.o" \
-		"$build_path/list.c.o" \
-		"$build_path/iterator.c.o" \
-		"$build_path/random.c.o" \
-		"$build_path/dex.c.o" \
-		"$build_path/memberfunction.c.o" \
-		"$build_path/error.c.o" \
-		"$build_path/type.c.o" \
-		"$build_path/socket.c.o" \
-		"$build_path/dict.c.o" \
-		"$build_path/marshal.c.o" \
-		"$build_path/mutex.c.o" \
-		"$build_path/array.c.o" \
-		"$build_path/integer.c.o" \
-		"$build_path/cfunction.c.o" \
-		"$build_path/weakref.c.o" \
-		"$build_path/cell.c.o" \
-		"$build_path/signalhandler.c.o" \
-		"$build_path/uuid.c.o" \
-		"$build_path/set.c.o" \
-		"$build_path/traceback.c.o" \
-		"$build_path/generic_vtable.c.o" \
-		"$build_path/memberdef.c.o" \
-		"$build_path/tls.c.o" \
 		"$build_path/_deprecated.c.o" \
-		"$build_path/fs_api.c.o" \
-		"$build_path/file.c.o" \
-		"$build_path/time.c.o" \
-		"$build_path/gc.c.o" \
-		"$build_path/super.c.o" \
-		"$build_path/pipe.c.o" \
-		"$build_path/string.c.o" \
-		"$build_path/structured.c.o" \
+		"$build_path/array.c.o" \
+		"$build_path/cell.c.o" \
+		"$build_path/cfunction.c.o" \
+		"$build_path/class.c.o" \
+		"$build_path/code.c.o" \
+		"$build_path/codewriter.c.o" \
+		"$build_path/lexer.c.o" \
+		"$build_path/sast.c.o" \
+		"$build_path/sast_compile.c.o" \
+		"$build_path/sast_parse.c.o" \
+		"$build_path/scope.c.o" \
+		"$build_path/xast.c.o" \
+		"$build_path/xast_compile.c.o" \
+		"$build_path/xast_parse.c.o" \
+		"$build_path/deemonrun.c.o" \
+		"$build_path/dex.c.o" \
+		"$build_path/dict.c.o" \
 		"$build_path/enum_attributes.c.o" \
-		"$build_path/value.c.o" \
-		"$build_path/struct.c.o" \
-		"$build_path/process.c.o" \
+		"$build_path/error.c.o" \
+		"$build_path/file.c.o" \
+		"$build_path/float.c.o" \
+		"$build_path/foreign_function.c.o" \
+		"$build_path/fs_api.c.o" \
+		"$build_path/gc.c.o" \
+		"$build_path/generic_vtable.c.o" \
+		"$build_path/integer.c.o" \
 		"$build_path/io_buffer.c.o" \
+		"$build_path/iterator.c.o" \
+		"$build_path/list.c.o" \
+		"$build_path/marshal.c.o" \
+		"$build_path/marshal_data.c.o" \
+		"$build_path/math.c.o" \
+		"$build_path/memberdef.c.o" \
+		"$build_path/memberfunction.c.o" \
+		"$build_path/mutex.c.o" \
+		"$build_path/none.c.o" \
 		"$build_path/object.c.o" \
+		"$build_path/pipe.c.o" \
+		"$build_path/process.c.o" \
+		"$build_path/random.c.o" \
+		"$build_path/builtin_functions.c.o" \
+		"$build_path/builtins.c.o" \
+		"$build_path/execute.c.o" \
+		"$build_path/extern.c.o" \
+		"$build_path/function.c.o" \
+		"$build_path/sandbox.c.o" \
+		"$build_path/sequence.c.o" \
+		"$build_path/set.c.o" \
+		"$build_path/signalhandler.c.o" \
+		"$build_path/socket.c.o" \
+		"$build_path/struct.c.o" \
+		"$build_path/structured.c.o" \
+		"$build_path/super.c.o" \
+		"$build_path/thread.c.o" \
+		"$build_path/time.c.o" \
+		"$build_path/tls.c.o" \
+		"$build_path/traceback.c.o" \
+		"$build_path/tuple.c.o" \
+		"$build_path/type.c.o" \
+		"$build_path/string.c.o" \
+		"$build_path/uuid.c.o" \
+		"$build_path/value.c.o" \
+		"$build_path/weakref.c.o" \
 	$source_link_libs
 }
 make_deemon() {
@@ -490,6 +490,9 @@ make_deemon() {
 		echo "No changes (not relinking $lib_outputfile)"
 	else
 		link_deemon
+		# Relink the local lib-file so that the correct library name can be found
+		rm "$root_path/$basic_libname" > /dev/null 2>&1
+		ln -s "$full_libname" "$root_path/$basic_libname"
 	fi
 }
 
@@ -563,6 +566,10 @@ exec_make() {
 		make_deemon || return $?
 		make_frontend || return $?
 	fi
+
+	echo "Compiling extensions"
+	bash "$root_path/make.sh" run "$source_path/makedex.dee"
+
 	return 0
 }
 exec_link() {
@@ -618,10 +625,7 @@ exec_install() {
 	#rm -r "$include_libpath/include" # Keep old headers (only overwrite with new)
 	mkdir "$include_libpath" > /dev/null 2>&1
 	cp -R "$root_path/lib/include" "$include_libpath"
-	
-	echo "Compiling extensions"
-	deemon "$source_path/makedex.dee"
-	
+
 	# Make sure everything in the libpath has the correct permissions
 	chmod -R 0775 "$include_libpath"
 }
@@ -647,6 +651,7 @@ exec_clean() {
 	rm .vs/_project.opensdf > /dev/null 2>&1
 	rm .vs/_project.suo > /dev/null 2>&1
 	rm .vs/_project.v12.suo > /dev/null 2>&1
+	rm "$root_path/$basic_libname" > /dev/null 2>&1
 	return 0
 }
 
@@ -699,7 +704,7 @@ exec_status() {
 }
 
 usage() {
-	echo "Usage: $0 [Flags...] {make|install|remove|...}"
+	echo "Usage: $0 [Flags...] {make|run|install|remove|...}"
 	echo "Flags:"
 	echo "       -h|--help           Display this help"
 	echo "       -version|--version  Display information about the deemon version"
@@ -718,6 +723,7 @@ usage() {
 	echo "       compile             Compile sources files"
 	echo "       link                Link source files"
 	echo "       make                Compile sources files and link them"
+	echo "       run                 Run the locally generated version of deemon after 'make.sh make'"
 	echo "       install             Compile sources files, link them and install"
 	echo "       clean               Remove temporary & build files"
 	echo "       remove              Uninstall deemon, but keep library headers"
@@ -752,7 +758,7 @@ else
 				exit 0
 				;;
 			-version|--version)
-				echo "deemon version 102/102:0"
+				echo "Make script for deemon version 102/102:0"
 				exit 0
 				;;
 			-v|--verbose)
@@ -783,15 +789,32 @@ else
 				exec_compile
 				exit $?
 				;;
+			link)
+				check_compiler || exit $?
+				exec_link
+				exit $?
+				;;
 			make)
 				check_compiler || exit $?
 				exec_make
 				exit $?
 				;;
-			link)
-				check_compiler || exit $?
-				exec_link
-				exit $?
+			run)
+				# Shift the 'run' argument to not be included when invoking deemon
+				shift
+				if [ -f "$root_path/.last_build_was_static" ]; then
+					# Simple case: No need to fix the libpath for a static binary
+					"$bin_outputfile" $*
+					exit "$?"
+				else
+					# Export the current directory to be included in the library search path
+					old_libpath="$LD_LIBRARY_PATH"
+					export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$root_path"
+					"$bin_outputfile" $*
+					result="$?"
+					export LD_LIBRARY_PATH="$old_libpath"
+					exit "$result"
+				fi
 				;;
 			install)
 				check_compiler || exit $?
