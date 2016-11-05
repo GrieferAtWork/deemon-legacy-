@@ -365,6 +365,8 @@
 #define OPEXT_IO_TRUNC            0x0031 //      pop(0).operator __trunc__()
 #define OPEXT_IO_FLUSH            0x0032 //      pop(0).operator __flush__()
 #define OPEXT_IO_CLOSE            0x0033 //      pop(0).operator __close__()
+#define OPEXT_SEQ_MIN             0x0034 // push(pop(0)<...)
+#define OPEXT_SEQ_MAX             0x0035 // push(pop(0)>...)
 
 
 #ifdef DEE_OUTDATED_OPCODES

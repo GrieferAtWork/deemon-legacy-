@@ -216,15 +216,21 @@ again: switch (token.tk_id) {
   case TPP_TOK_CMP_GE: kind = DEE_XASTKIND_COMPARE_GE; normal_binary:
    Dee_INCREF(operator_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_a_token;
-//normal_binary_token:
-   if DEE_UNLIKELY((ast_b = DeeXAst_ParseShift(DEE_PARSER_ARGS)) == NULL) {
+   if (token.tk_id == TPP_TOK_DOTS && (
+    kind == DEE_XASTKIND_COMPARE_LO || kind == DEE_XASTKIND_COMPARE_GR)) {
+    if DEE_UNLIKELY(!yield()) goto err_a_token;
+    ast_result = DeeXAst_NewUnary((DeeXAstKind)(kind == DEE_XASTKIND_COMPARE_LO
+     ? DEE_XASTKIND_SEQ_MIN : DEE_XASTKIND_SEQ_MAX),operator_token,lexer,parser_flags,ast_a);
+   } else {
+    if DEE_UNLIKELY((ast_b = DeeXAst_ParseShift(DEE_PARSER_ARGS)) == NULL) {
 err_a_token: Dee_DECREF(operator_token);
-    Dee_DECREF(ast_a);
-    return NULL;
+     Dee_DECREF(ast_a);
+     return NULL;
+    }
+    ast_result = DeeXAst_NewBinary(kind,operator_token,lexer,parser_flags,ast_a,ast_b);
+    Dee_DECREF(ast_b);
    }
-   ast_result = DeeXAst_NewBinary(kind,operator_token,lexer,parser_flags,ast_a,ast_b);
    Dee_DECREF(operator_token);
-   Dee_DECREF(ast_b);
    Dee_DECREF(ast_a);
    if DEE_UNLIKELY(!ast_result) return NULL;
    Dee_INHERIT_REF(ast_a,ast_result);

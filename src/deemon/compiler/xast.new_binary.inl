@@ -121,6 +121,8 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewBinary(
     if (called_function == (DeeObject *)&DeeBuiltinFunction___builtin_all) return DeeXAst_NewUnary(DEE_XASTKIND_SEQ_ALL,tk,lexer,parser_flags,ast_b);
     if (called_function == (DeeObject *)&DeeBuiltinFunction___builtin_any) return DeeXAst_NewUnary(DEE_XASTKIND_SEQ_ANY,tk,lexer,parser_flags,ast_b);
     if (called_function == (DeeObject *)&DeeBuiltinFunction___builtin_sum) return DeeXAst_NewUnary(DEE_XASTKIND_SEQ_SUM,tk,lexer,parser_flags,ast_b);
+    if (called_function == (DeeObject *)&DeeBuiltinFunction___builtin_min) return DeeXAst_NewUnary(DEE_XASTKIND_SEQ_MIN,tk,lexer,parser_flags,ast_b);
+    if (called_function == (DeeObject *)&DeeBuiltinFunction___builtin_max) return DeeXAst_NewUnary(DEE_XASTKIND_SEQ_MAX,tk,lexer,parser_flags,ast_b);
     argc = ast_b->ast_tuple.s_elemc;
     argv = ast_b->ast_tuple.s_elemv;
     DEE_ASSERT(argc != 0);

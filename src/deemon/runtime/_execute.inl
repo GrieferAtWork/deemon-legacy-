@@ -3624,6 +3624,30 @@ EXTERN_END;
     } break;
 #endif
 
+#ifdef OPEXT_SEQ_MIN
+    case OPEXT_SEQ_MIN: {
+     RT_DEBUG_CHECK_STACK(1);
+EXTERN_BEGIN;
+     rt_temp = DeeSequence_Min(RT_TOP);
+EXTERN_END;
+     if DEE_UNLIKELY(!rt_temp) RT_HANDLE_EXCEPTION;
+     Dee_DECREF(RT_TOP);
+     Dee_INHERIT_REF(RT_TOP,rt_temp);
+    } break;
+#endif
+
+#ifdef OPEXT_SEQ_MAX
+    case OPEXT_SEQ_MAX: {
+     RT_DEBUG_CHECK_STACK(1);
+EXTERN_BEGIN;
+     rt_temp = DeeSequence_Max(RT_TOP);
+EXTERN_END;
+     if DEE_UNLIKELY(!rt_temp) RT_HANDLE_EXCEPTION;
+     Dee_DECREF(RT_TOP);
+     Dee_INHERIT_REF(RT_TOP,rt_temp);
+    } break;
+#endif
+
 #ifdef OPEXT_SEQ_ITER_NEXT
     case OPEXT_SEQ_ITER_NEXT: {
      RT_DEBUG_CHECK_STACK(1);

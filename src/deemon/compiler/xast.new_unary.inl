@@ -271,6 +271,8 @@ handle_unary_error_const_copy:
    case DEE_XASTKIND_SEQ_SIZE: unary_result = DeeObject_SizeObject(const_copy); break;
    case DEE_XASTKIND_ITERSELF: unary_result = DeeObject_IterSelf(const_copy); break;
    case DEE_XASTKIND_SEQ_SUM: unary_result = DeeSequence_Sum(const_copy); break;
+   case DEE_XASTKIND_SEQ_MIN: unary_result = DeeSequence_Min(const_copy); break;
+   case DEE_XASTKIND_SEQ_MAX: unary_result = DeeSequence_Max(const_copy); break;
    case DEE_XASTKIND_ITERNEXT: {
     int error;
     if ((error = DeeObject_IterNextEx(const_copy,&unary_result)) < 0)

@@ -243,6 +243,8 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeXAst_UnaryDescrStr(
   case DEE_XASTKIND_SEQ_ANY: return DeeString_Newf("(%r)||...",ast_a);
   case DEE_XASTKIND_SEQ_ALL: return DeeString_Newf("(%r)&&...",ast_a);
   case DEE_XASTKIND_SEQ_SUM: return DeeString_Newf("(%r)+...",ast_a);
+  case DEE_XASTKIND_SEQ_MIN: return DeeString_Newf("(%r)<...",ast_a);
+  case DEE_XASTKIND_SEQ_MAX: return DeeString_Newf("(%r)>...",ast_a);
   default: break;
  }
  return DeeString_Newf("(%r).operator ? ()",ast_a);

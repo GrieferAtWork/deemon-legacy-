@@ -1358,11 +1358,11 @@ XAst_ParseSum ::= (
 	// >> a = foo() + ...;
 	// >> // Same as:
 	// >> #include <util>
-	// >> a = util::sum(foo()...);
+	// >> a = util::sum(foo());
 	// NOTE: If the right-hand-side operand is supposed to referr
 	//       to the unnamed varargs argument '...', the dots
 	//       should be written with parenthesis:
-	// >> a = foo() + ...; // Compiled as 'util::sum(foo()...)'
+	// >> a = foo() + ...; // Compiled as 'util::sum(foo())'
 	// >> a = foo() + (...); // Compiled as 'foo() + (...)'
 	| (XAst_ParseProd '+' ('...' | XAst_ParseProd))
 	| (XAst_ParseProd '-' XAst_ParseProd)
@@ -1374,8 +1374,31 @@ XAst_ParseShift ::= (
 );
 XAst_ParseCmp ::= (
 	  (XAst_ParseShift)
+	// If the right-hand-side argument are dots ('...'),
+	// the expression will be compiled as __builtin_min(lhs):
+	// >> a = foo() < ...;
+	// >> // Same as:
+	// >> #include <util>
+	// >> a = util::min(foo());
+	// NOTE: If the right-hand-side operand is supposed to referr
+	//       to the unnamed varargs argument '...', the dots
+	//       should be written with parenthesis:
+	// >> a = foo() < ...; // Compiled as 'util::min(foo())'
+	// >> a = foo() < (...); // Compiled as 'foo() < (...)'
 	| (XAst_ParseShift '<'  XAst_ParseShift)
 	| (XAst_ParseShift '<=' XAst_ParseShift)
+
+	// If the right-hand-side argument are dots ('...'),
+	// the expression will be compiled as __builtin_max(lhs):
+	// >> a = foo() > ...;
+	// >> // Same as:
+	// >> #include <util>
+	// >> a = util::max(foo());
+	// NOTE: If the right-hand-side operand is supposed to referr
+	//       to the unnamed varargs argument '...', the dots
+	//       should be written with parenthesis:
+	// >> a = foo() > ...; // Compiled as 'util::max(foo())'
+	// >> a = foo() > (...); // Compiled as 'foo() > (...)'
 	| (XAst_ParseShift '>'  XAst_ParseShift)
 	| (XAst_ParseShift '>=' XAst_ParseShift)
 );
@@ -1418,11 +1441,11 @@ XAst_ParseLand ::= (
 	// >> a = foo() && ...;
 	// >> // Same as:
 	// >> #include <util>
-	// >> a = util::all(foo()...);
+	// >> a = util::all(foo());
 	// NOTE: If the right-hand-side operand is supposed to referr
 	//       to the unnamed varargs argument '...', the dots
 	//       should be written with parenthesis:
-	// >> a = foo() && ...; // Compiled as 'util::all(foo()...)'
+	// >> a = foo() && ...; // Compiled as 'util::all(foo())'
 	// >> a = foo() && (...); // Compiled as 'foo() && (...)'
 	| (XAst_ParseOr '||' ('...' | XAst_ParseOr))
 );
@@ -1437,11 +1460,11 @@ XAst_ParseLor ::= (
 	// >> a = foo() || ...;
 	// >> // Same as:
 	// >> #include <util>
-	// >> a = util::any(foo()...);
+	// >> a = util::any(foo());
 	// NOTE: If the right-hand-side operand is supposed to referr
 	//       to the unnamed varargs argument '...', the dots
 	//       should be written with parenthesis:
-	// >> a = foo() || ...; // Compiled as 'util::any(foo()...)'
+	// >> a = foo() || ...; // Compiled as 'util::any(foo())'
 	// >> a = foo() || (...); // Compiled as 'foo() || (...)'
 	| (XAst_ParseLxor '||' ('...' | XAst_ParseLxor))
 );

@@ -916,6 +916,8 @@ unary_operator:
   case DEE_XASTKIND_SEQ_ANY: oparg = OPEXT_SEQ_ANY; goto unary_operator_ext;
   case DEE_XASTKIND_SEQ_ALL: oparg = OPEXT_SEQ_ALL; goto unary_operator_ext;
   case DEE_XASTKIND_SEQ_SUM: oparg = OPEXT_SEQ_SUM; goto unary_operator_ext;
+  case DEE_XASTKIND_SEQ_MIN: oparg = OPEXT_SEQ_MIN; goto unary_operator_ext;
+  case DEE_XASTKIND_SEQ_MAX: oparg = OPEXT_SEQ_MAX; goto unary_operator_ext;
   case DEE_XASTKIND_SUPEROF: oparg = OPEXT_SUPEROF; goto unary_operator_ext;
   case DEE_XASTKIND_CLASSOF: oparg = OPEXT_CLASSOF;
 unary_operator_ext:

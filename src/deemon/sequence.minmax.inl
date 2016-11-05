@@ -63,7 +63,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *MM_FUNC(_DeeList)(DeeListObject *self) {
  if DEE_UNLIKELY(DeeList_EMPTY(self)) { DeeList_RELEASE(self); DeeReturn_None; }
  Dee_INCREF(result = DeeList_GET(self,0));
  for (i = 1; i < DeeList_SIZE(self); ++i) {
-  elem = DeeList_GET(self,i);
+  Dee_INCREF(elem = DeeList_GET(self,i));
   DeeList_RELEASE(self);
 #ifdef DO_MIN
   error = DeeObject_CompareLo(elem,result);

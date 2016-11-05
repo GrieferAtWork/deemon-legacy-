@@ -296,6 +296,8 @@ DEE_OBJECT_DEF(DeeSAstObject);
 #define DEE_XASTKIND_SEQ_ANY                (1023|DEE_XASTFLAG_UNARY)  /*< seq||...                  - Returns true if any element of 'seq' is true. */
 #define DEE_XASTKIND_SEQ_ALL                (1024|DEE_XASTFLAG_UNARY)  /*< seq&&...                  - Returns true if all elements of 'seq' are true. */
 #define DEE_XASTKIND_SEQ_SUM                (1025|DEE_XASTFLAG_UNARY)  /*< seq+...                   - Returns the sum of all elements. */
+#define DEE_XASTKIND_SEQ_MIN                (1026|DEE_XASTFLAG_UNARY)  /*< seq<...                   - Returns the lowest of all elements. */
+#define DEE_XASTKIND_SEQ_MAX                (1027|DEE_XASTFLAG_UNARY)  /*< seq>...                   - Returns the greatest of all elements. */
 
 typedef Dee_uint32_t DeeXAstKind;
 typedef Dee_uint32_t DeeSAstKind;
@@ -1023,6 +1025,8 @@ extern DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewBinaryInplaceVar(
 #define DeeXAst_NewSeqAny(tk,lexer,parser_flags,seq) DeeXAst_NewUnary(DEE_XASTKIND_SEQ_ANY,tk,lexer,parser_flags,seq)
 #define DeeXAst_NewSeqAll(tk,lexer,parser_flags,seq) DeeXAst_NewUnary(DEE_XASTKIND_SEQ_ALL,tk,lexer,parser_flags,seq)
 #define DeeXAst_NewSeqSum(tk,lexer,parser_flags,seq) DeeXAst_NewUnary(DEE_XASTKIND_SEQ_SUM,tk,lexer,parser_flags,seq)
+#define DeeXAst_NewSeqMin(tk,lexer,parser_flags,seq) DeeXAst_NewUnary(DEE_XASTKIND_SEQ_MIN,tk,lexer,parser_flags,seq)
+#define DeeXAst_NewSeqMax(tk,lexer,parser_flags,seq) DeeXAst_NewUnary(DEE_XASTKIND_SEQ_MAX,tk,lexer,parser_flags,seq)
 
 #define DeeXAst_NewIOReadnp(tk,lexer,parser_flags,file,size)     DeeXAst_NewBinary(DEE_XASTKIND_IO_READNP,tk,lexer,parser_flags,file,size)
 #define DeeXAst_NewIOWritenp(tk,lexer,parser_flags,file,data)    DeeXAst_NewBinary(DEE_XASTKIND_IO_WRITENP,tk,lexer,parser_flags,file,data)

@@ -1102,6 +1102,8 @@ begin_const_optimization:
      case DEE_XASTKIND_SEQ_ANY : { int temp = DeeSequence_Any(arg_a); op_result = temp >= 0 ? DeeBool_New(temp) : NULL; } break;
      case DEE_XASTKIND_SEQ_ALL : { int temp = DeeSequence_All(arg_a); op_result = temp >= 0 ? DeeBool_New(temp) : NULL; } break;
      case DEE_XASTKIND_SEQ_SUM : op_result = DeeSequence_Sum(arg_a); break;
+     case DEE_XASTKIND_SEQ_MIN : op_result = DeeSequence_Min(arg_a); break;
+     case DEE_XASTKIND_SEQ_MAX : op_result = DeeSequence_Max(arg_a); break;
      case DEE_XASTKIND_EXPAND: {
       DeeObject *expand_iterator; int error;
       if ((expand_iterator = DeeObject_IterSelf(arg_a)) == NULL) goto err_const;
