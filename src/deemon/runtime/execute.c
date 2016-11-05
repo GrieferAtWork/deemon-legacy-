@@ -877,7 +877,6 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,1) int) _DeeStackFrame_NameToIDNoMiss
   *uid = DEE_STACKFRAME_VARUID_MAKE(valid_types,id);
   return 0;
  }
- DeeError_Handled();
  return -1;
 }
 
@@ -1171,7 +1170,7 @@ DEE_COMPILER_MSVC_WARNING_POP
   Dee_DECREF(debugger_dex);
   return error;
  }
- DeeError_Handled();
+ DeeError_HandledOne();
  // So far, so bad... (This might be a custom debugger that doesn't implement the native run function)
  // >> Lets try again by calling the deemon-style version that should also be present
  result = DeeObject_CallAttrStringf(debugger_dex,"breakpoint","");

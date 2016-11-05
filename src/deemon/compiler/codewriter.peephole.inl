@@ -38,10 +38,10 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimization(
  DeeCodeReachableAddrList_Quit(&pro_addr);
  return result;
 }
-// This doesn't really have to descrive no-op,
+// This doesn't really have to describe no-ops,
 // nor is this macro used to determine which code should be deleted.
-// A more appropriate name would be IS_M0P0,
-// implying -0+0 stackeffect opcodes that don't perform any jumps
+// A more appropriate name would be IS_M0P0, implying
+// a -0+0 stackeffect opcodes that don't perform any jumps
 #define IS_NOOP(x) ((x)==OP_NOOP||(x)==OP_PRINT_END)
 DEE_STATIC_INLINE(Dee_uint8_t *) _dee_after_noop(Dee_uint8_t *start) {
  while (IS_NOOP(*start)) ++start;
@@ -168,9 +168,9 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
       }
       del_begin = code+3; // Must start at the next opcode for OP_JUMP
       if (0) {case OP_RET: case OP_RETNONE: del_begin = code+1; }
-      // Delete code until the next protected opcode, or the end
       while (del_begin != code_end && *del_begin == OP_NOOP) ++del_begin;
       del_end = del_begin;
+      // Scan code until the next protected opcode, or end is reached
       while (del_end != code_end && !DeeCodeReachableAddrList_Contains(
        protected_addr,(Dee_size_t)(del_end-code_begin))) {
        DEE_ASSERT(del_end < code_end);

@@ -1479,6 +1479,11 @@ extern DEE_A_RET_WUNUSED DEE_A_RET_Z char const *_DeeType_ClassOperatorName(DEE_
 extern DEE_A_RET_WUNUSED DEE_A_RET_MAYBE_NULL DeeTypeObject const *
  _DeeType_IteratorType(DEE_A_IN DeeTypeObject const *seq_type);
 
+//////////////////////////////////////////////////////////////////////////
+// Returns true if 'ob' can be called at compile-time
+// In: "xast.new_binary.inl"
+extern DEE_A_RET_WUNUSED int _DeeObject_IsConstexprCallable(
+ DEE_A_IN DeeObject const *ob, DEE_A_IN_OBJECT(DeeTypeObject) const *args);
 
 //////////////////////////////////////////////////////////////////////////
 // Returns the intrinsic function of a given typeslot operator.

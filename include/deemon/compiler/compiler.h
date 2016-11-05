@@ -94,7 +94,7 @@ DEE_STRUCT_DEF(DeeCompilerConfig);
 |DEE_PARSER_FLAG_OPTIMIZE_PREDICATES\
 |DEE_PARSER_FLAG_OPTIMIZE_INTRINSIC_CALLS)
 
-// Parser flags used for highest level of optimization
+// Parser flags used for highest safe level of optimization
 #define DEE_PARSER_FLAG_OPTIMIZE_ALL(debug)\
 (DEE_PARSER_FLAG_OPTIMIZE(debug)\
 |DEE_PARSER_FLAG_OPTIMIZE_PRINT_STDOUT\
@@ -120,9 +120,10 @@ DEE_STRUCT_DEF(DeeCompilerConfig);
 #define DEE_OPTIMIZE_FLAG_DEL_NOEFFECT    0x00000002 /*< Delete ASTs and AST parts that don't have any side-effects. */
 #define DEE_OPTIMIZE_FLAG_DEL_UNREACHABLE 0x00000004 /*< Delete ASTs that are unreachable. */
 #define DEE_OPTIMIZE_FLAG_UNINIT_BOUND    0x00000008 /*< Optimize away __builtin_bound calls on uninitialized variables. */
-#define DEE_OPTIMIZE_FLAG_MERGE_CONSTS    0x00000010 /*< Merge constant ASTs (again). */
-#define DEE_OPTIMIZE_FLAG_ASSUMPTIONS     0x00000020 /*< Generate assumptions about variable and use them to optimize code. */
-#define DEE_OPTIMIZE_FLAG_CONST_FUNCTION  0x00000040 /*< Optimize functions into constant (required for inline optimizations). */
+#define DEE_OPTIMIZE_FLAG_MERGE_OPERATORS 0x00000010 /*< Merge/move operator calls to reduce code size. */
+#define DEE_OPTIMIZE_FLAG_MERGE_CONSTS    0x00000020 /*< Merge constant ASTs (again). */
+#define DEE_OPTIMIZE_FLAG_ASSUMPTIONS     0x00000040 /*< Generate assumptions about variable and use them to optimize code. */
+#define DEE_OPTIMIZE_FLAG_CONST_FUNCTION  0x00000080 /*< Optimize functions into constant (required for inline optimizations). */
 #ifdef DEE_LIMITED_API
 #define DEE_OPTIMIZE_FLAG_USED            0x10000000 /*< [internal] Set if the optimization result is used. */
 #endif
@@ -148,10 +149,11 @@ DEE_STRUCT_DEF(DeeCompilerConfig);
 |DEE_OPTIMIZE_FLAG_DEL_UNREACHABLE\
 |DEE_OPTIMIZE_FLAG_CONST_FUNCTION)
 
-// Optimizer flags used for highest level of optimization
+// Optimizer flags used for highest safe level of optimization
 #define DEE_OPTIMIZE_FLAG_OPTIMIZE_ALL(debug)\
 (DEE_OPTIMIZE_FLAG_OPTIMIZE(debug)\
 |DEE_OPTIMIZE_FLAG_UNINIT_BOUND\
+|DEE_OPTIMIZE_FLAG_MERGE_OPERATORS\
 |DEE_OPTIMIZE_FLAG_MERGE_CONSTS\
 |DEE_OPTIMIZE_FLAG_ASSUMPTIONS)
 
@@ -228,6 +230,7 @@ DEE_STRUCT_DEF(DeeCompilerConfig);
 |DEE_COMPILER_FLAG_OPTIMIZE_CONSTRUCTOR_CALLS\
 |DEE_COMPILER_FLAG_OPTIMIZE_REUSE_CONSTS)
 
+// Compiler flags used for highest safe level of optimization
 #define DEE_COMPILER_FLAG_OPTIMIZE_ALL(debug)\
 (DEE_COMPILER_FLAG_OPTIMIZE(debug)\
 |DEE_COMPILER_FLAG_OPTIMIZE_REUSE_LOCALS\

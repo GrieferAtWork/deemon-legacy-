@@ -44,8 +44,7 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewTrinary(
   return DeeXAst_NewAttrSetC(tk,lexer,parser_flags,ast_a,ast_b->ast_const.c_const,ast_c);
  }
  if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_CONST_OPERATORS)!=0 &&
-     ast_a->ast_kind == DEE_XASTKIND_CONST &&
-     ast_b->ast_kind == DEE_XASTKIND_CONST &&
+     ast_a->ast_kind == DEE_XASTKIND_CONST && ast_b->ast_kind == DEE_XASTKIND_CONST &&
      ast_c->ast_kind == DEE_XASTKIND_CONST) {
   if ((const_copy_a = DeeObject_DeepCopy(ast_a->ast_const.c_const)) == NULL) {
 err_copy: // Ignore errors in copy, as the copy-operation wouldn't be performed at runtime
@@ -63,13 +62,6 @@ err_copy_2: Dee_DECREF(const_copy_a); goto err_copy;
     if (DeeXAst_WarnInplaceOnConstant(DEE_XASTKIND_SEQ_SET,lexer,tk,Dee_TYPE(const_copy_a)) != 0) trinary_result = NULL;
     else if (DeeObject_SetItem(const_copy_a,const_copy_b,const_copy_c) == 0) Dee_INCREF(trinary_result = const_copy_c);
     else trinary_result = NULL;
-    break;
-   case DEE_XASTKIND_ATTR_SET:
-    if (DeeXAst_WarnInplaceOnConstant(DEE_XASTKIND_ATTR_SET,lexer,tk,Dee_TYPE(const_copy_a)) != 0) trinary_result = NULL;
-    else if (DeeError_TypeError_CheckTypeExact(const_copy_b,&DeeString_Type) != 0 ||
-             DeeObject_SetAttr(const_copy_a,const_copy_b,const_copy_c) != 0)
-             trinary_result = NULL;
-    else Dee_INCREF(trinary_result = const_copy_c);
     break;
    default:
     Dee_DECREF(const_copy_b);

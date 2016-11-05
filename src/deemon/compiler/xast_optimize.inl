@@ -24,12 +24,26 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/bool.h>
+#include <deemon/cell.h>
 #include <deemon/compiler/compiler.h>
 #include <deemon/compiler/lexer.h>
 #include <deemon/compiler/sast.h>
 #include <deemon/compiler/scope.h>
 #include <deemon/compiler/xast.h>
 #include <deemon/none.h>
+#include <deemon/optional/object_attr.h>
+#include <deemon/optional/object_call.h>
+#include <deemon/optional/object_cast.h>
+#include <deemon/optional/object_compare.h>
+#include <deemon/optional/object_copy.h>
+#include <deemon/optional/object_io.h>
+#include <deemon/optional/object_math.h>
+#include <deemon/optional/object_sequence.h>
+#include <deemon/optional/object_str.h>
+#include <deemon/sequence.h>
+#include <deemon/structured.h>
+#include <deemon/super.h>
+#include <deemon/weakref.h>
 
 #define VLOG_OPTIMIZE(tk,...) (\
  DEE_LVERBOSE1R("%s(%d) : %k : OPTIMIZE : ",\
@@ -492,11 +506,39 @@ vardecl_assign_init_branch:
    break;
   case DEE_XASTKIND_ATTR_SET_C:
    if DEE_UNLIKELY(DeeXAst_Optimize(self->ast_attr_set_c.ac_value,DEE_OPTIMIZE_ARGS_EX(optimize_flags|DEE_OPTIMIZE_FLAG_USED)) != 0) return -1;
-   DEE_ATTRIBUTE_FALLTHROUGH
+   if DEE_UNLIKELY(DeeXAst_Optimize(self->ast_attr_set_c.ac_object,DEE_OPTIMIZE_ARGS_EX(optimize_flags|DEE_OPTIMIZE_FLAG_USED)) != 0) return -1;
+   break;
   case DEE_XASTKIND_ATTR_GET_C:
   case DEE_XASTKIND_ATTR_HAS_C:
   case DEE_XASTKIND_ATTR_DEL_C:
-   return DeeXAst_Optimize(self->ast_attr_c.ac_object,DEE_OPTIMIZE_ARGS_EX(optimize_flags|DEE_OPTIMIZE_FLAG_USED));
+   if DEE_UNLIKELY(DeeXAst_Optimize(self->ast_attr_c.ac_object,DEE_OPTIMIZE_ARGS_EX(optimize_flags|DEE_OPTIMIZE_FLAG_USED)) != 0) return -1;
+   if (self->ast_attr_c.ac_object->ast_kind == DEE_XASTKIND_CONST &&
+      (optimize_flags&DEE_OPTIMIZE_FLAG_MERGE_CONSTS)!=0) {
+    DeeObject *attr_ob,*cresult; int temp;
+    // Constant attribute operation
+    if DEE_UNLIKELY((attr_ob = DeeObject_DeepCopy(
+     self->ast_attr_c.ac_object->ast_const.c_const)) == NULL) DeeError_Handled();
+    else {
+     switch (self->ast_kind) {
+      case DEE_XASTKIND_ATTR_GET_C: cresult = DeeObject_GetAttrConst(attr_ob,(DeeObject *)self->ast_attr_get_c.ac_name); break;
+      case DEE_XASTKIND_ATTR_HAS_C: cresult = (temp = DeeObject_HasAttr(attr_ob,(DeeObject *)self->ast_attr_get_c.ac_name)) >= 0 ? DeeBool_New(temp) : NULL; break;
+      case DEE_XASTKIND_ATTR_DEL_C: cresult = DeeObject_DelAttr(attr_ob,(DeeObject *)self->ast_attr_get_c.ac_name) != 0 ? DeeNone_New() : NULL; break;
+      default: DEE_BUILTIN_UNREACHABLE();
+     }
+     Dee_DECREF(attr_ob);
+     if (!cresult) DeeError_Handled();
+     else {
+      VLOG_OPTIMIZE(self->ast_common.ast_token,
+                    "Optimizing constant attribute operation '%#q.%#q' --> %r\n",
+                    DeeType_NAME(Dee_TYPE(self->ast_attr_c.ac_object->ast_const.c_const)),
+                    DeeString_STR(self->ast_attr_c.ac_name),cresult);
+      ++*performed_optimizations;
+      DeeXAst_AssignConst(self,cresult);
+      Dee_DECREF(cresult);
+     }
+    }
+   }
+   break;
   case DEE_XASTKIND_DEL_VAR:
    // Must delete all assumptions about the variable
    if DEE_UNLIKELY((optimize_flags&DEE_OPTIMIZE_FLAG_ASSUMPTIONS)!=0 &&
@@ -697,7 +739,7 @@ assign_ifc_fail_branch:
     case 1: if DEE_UNLIKELY(DeeXAst_Optimize(self->ast_operator.op_a,DEE_OPTIMIZE_ARGS_EX(optimize_flags|DEE_OPTIMIZE_FLAG_USED)) != 0) return -1; DEE_ATTRIBUTE_FALLTHROUGH
     default: break;
    }
-   if ((optimize_flags&DEE_OPTIMIZE_FLAG_MERGE_CONSTS)!=0) {
+   if ((optimize_flags&DEE_OPTIMIZE_FLAG_MERGE_OPERATORS)!=0) {
 #define inlined_ast inlined_succ
     DeeXAstObject *if_ast,*temp_ast,*inlined_succ,*inlined_fail;
     switch (DEE_XASTKIND_OPCOUNT(self->ast_kind)) {
@@ -908,8 +950,245 @@ assign_if_ast:
      default: break;
     }
 #undef inlined_ast
-   }
-  } break;
+   } /* DEE_OPTIMIZE_FLAG_MERGE_OPERATORS */
+
+   // Repeat the folding of constants
+   if ((optimize_flags&DEE_OPTIMIZE_FLAG_MERGE_CONSTS)!=0) {
+    DeeObject *op_result,*arg_a,*arg_b,*arg_c;
+    arg_a = NULL,arg_b = NULL,arg_c = NULL;
+    // Try to merge constants (again)
+    // NOTE: This time around, don't warn if an operation fails
+    switch (DEE_XASTKIND_OPCOUNT(self->ast_kind)) {
+     // NOTE: It's unlikely that we actually get a fully non-constant branch.
+     //       There are only two cases where one can still occur here:
+     //        #1: Executing the operator resulted/will result in an error
+     //        #2: Some other optimization lead to the late inlining of a constant
+     case 3: if DEE_LIKELY(self->ast_operator.op_c->ast_kind != DEE_XASTKIND_CONST) goto after_const_optimization; DEE_ATTRIBUTE_FALLTHROUGH
+     case 2: if DEE_LIKELY(self->ast_operator.op_b->ast_kind != DEE_XASTKIND_CONST) goto after_const_optimization; DEE_ATTRIBUTE_FALLTHROUGH
+     case 1: if DEE_LIKELY(self->ast_operator.op_a->ast_kind != DEE_XASTKIND_CONST) goto after_const_optimization; DEE_ATTRIBUTE_FALLTHROUGH
+     default: break;
+    }
+    switch (self->ast_kind) {
+     // Operators that don't get optimized
+     case DEE_XASTKIND_ATTR_SET:
+     case DEE_XASTKIND_IO_READNP:
+     case DEE_XASTKIND_IO_WRITENP:
+     case DEE_XASTKIND_IO_SEEK:
+     case DEE_XASTKIND_IO_FLUSH:
+     case DEE_XASTKIND_IO_TRUNC:
+     case DEE_XASTKIND_IO_CLOSE:
+#if DEE_CONFIG_LANGUAGE_HAVE_POINTERS
+     case DEE_XASTKIND_IO_READP:
+     case DEE_XASTKIND_IO_WRITEP:
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_POINTERS */
+     case DEE_XASTKIND_BUILTIN_ALLOCA:
+     case DEE_XASTKIND_BUILTIN_HELP:
+     case DEE_XASTKIND_BUILTIN_BREAKPOINT:
+     case DEE_XASTKIND_BUILTIN_DEX:
+     case DEE_XASTKIND_BUILTIN_FF_CLOSURE:
+      goto after_const_optimization;
+     case DEE_XASTKIND_CLASSOF:  Dee_INCREF(op_result = (DeeObject *)DeeObject_ClassOf(arg_a)); break;
+#if DEE_CONFIG_LANGUAGE_HAVE_POINTERS
+     case DEE_XASTKIND_PTROF:    Dee_XINCREF(op_result = (DeeObject *)DeeType_Pointer((DeeTypeObject *)arg_a)); break;
+     case DEE_XASTKIND_LVALOF:   Dee_XINCREF(op_result = (DeeObject *)DeeType_LValue((DeeTypeObject *)arg_a)); break;
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_POINTERS */
+#if DEE_CONFIG_LANGUAGE_HAVE_ARRAYS
+     case DEE_XASTKIND_VARRAYOF: Dee_XINCREF(op_result = (DeeObject *)DeeType_VArray((DeeTypeObject *)arg_a)); break;
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_ARRAYS */
+     case DEE_XASTKIND_SUPER_AT:
+      if (!DeeType_Check(self->ast_operator.op_a->ast_const.c_const) ||
+          !DeeObject_InstanceOf(self->ast_operator.op_b->ast_const.c_const,
+               (DeeTypeObject *)self->ast_operator.op_a->ast_const.c_const)
+          ) goto after_const_optimization;
+      if DEE_UNLIKELY((arg_b = DeeObject_DeepCopy(self->ast_operator.op_b->ast_const.c_const)) == NULL) goto err_basic_const;
+      op_result = DeeSuper_New((DeeTypeObject *)self->ast_operator.op_a->ast_const.c_const,arg_b);
+      Dee_DECREF(arg_b);
+      break;
+     case DEE_XASTKIND_CALL:
+      // Fold calls to constexpr functions
+      if (!DeeTuple_Check(self->ast_operator.op_b->ast_const.c_const) ||
+          !_DeeObject_IsConstexprCallable(self->ast_operator.op_a->ast_const.c_const,
+                                          self->ast_operator.op_b->ast_const.c_const)
+          ) goto after_const_optimization;
+      if DEE_UNLIKELY((arg_b = DeeTuple_DeepCopy(self->ast_operator.op_b->ast_const.c_const)) == NULL) goto err_basic_const;
+      op_result = DeeObject_Call(self->ast_operator.op_a->ast_const.c_const,arg_b);
+      Dee_DECREF(arg_b);
+      break;
+     {
+      int temp; // Attribute operators
+     case DEE_XASTKIND_ATTR_GET:
+     case DEE_XASTKIND_ATTR_HAS:
+     case DEE_XASTKIND_ATTR_DEL:
+      if (!DeeString_Check(self->ast_operator.op_b->ast_const.c_const)) goto after_const_optimization;
+      if DEE_UNLIKELY((arg_a = DeeObject_DeepCopy(self->ast_operator.op_a->ast_const.c_const)) == NULL) goto err_basic_const;
+      switch (self->ast_kind) {
+       case DEE_XASTKIND_ATTR_GET: op_result = DeeObject_GetAttrConst(arg_a,self->ast_operator.op_b->ast_const.c_const); break;
+       case DEE_XASTKIND_ATTR_HAS: temp = DeeObject_HasAttr(arg_a,self->ast_operator.op_b->ast_const.c_const); op_result = temp < 0 ? NULL : DeeBool_New(temp); break;
+       case DEE_XASTKIND_ATTR_DEL: op_result = DeeObject_DelAttr(arg_a,self->ast_operator.op_b->ast_const.c_const) != 0 ? NULL : DeeNone_New(); break;
+       default: DEE_BUILTIN_UNREACHABLE();
+      }
+      Dee_DECREF(arg_a);
+     } break;
+     case DEE_XASTKIND_IS:
+      op_result = DeeBool_New(DeeObject_Is(self->ast_operator.op_a->ast_const.c_const,
+                          (DeeTypeObject *)self->ast_operator.op_b->ast_const.c_const));
+      break;
+     case DEE_XASTKIND_NOT_IS:
+      op_result = DeeBool_New(!DeeObject_Is(self->ast_operator.op_a->ast_const.c_const,
+                           (DeeTypeObject *)self->ast_operator.op_b->ast_const.c_const));
+      break;
+     {
+      int temp; // Logical and/or
+      if (0) {
+     case DEE_XASTKIND_LAND:
+       if ((arg_a = DeeObject_DeepCopy(self->ast_operator.op_a->ast_const.c_const)) == NULL) goto err_basic_const;
+       temp = DeeObject_Bool(arg_a);
+       Dee_DECREF(arg_a);
+       if (temp < 0) goto err_basic_const;
+       if (!temp) { op_result = DeeBool_NewFalse(); break; }
+      }
+      if (0) {
+     case DEE_XASTKIND_LOR:
+       if ((arg_a = DeeObject_DeepCopy(self->ast_operator.op_a->ast_const.c_const)) == NULL) goto err_basic_const;
+       temp = DeeObject_Bool(arg_a);
+       Dee_DECREF(arg_a);
+       if (temp < 0) goto err_basic_const;
+       if (temp) { op_result = DeeBool_NewTrue(); break; }
+      }
+      if ((arg_b = DeeObject_DeepCopy(self->ast_operator.op_b->ast_const.c_const)) == NULL) goto err_basic_const;
+      temp = DeeObject_Bool(arg_b);
+      Dee_DECREF(arg_b);
+      if (temp < 0) goto err_basic_const;
+      op_result = DeeBool_New(temp);
+      break;
+     }
+      break;
+     default: goto begin_const_optimization;
+    }
+    if DEE_UNLIKELY(!op_result) {err_basic_const: DeeError_Handled(); }
+    else {
+     VLOG_OPTIMIZE(self->ast_common.ast_token,
+                   "Optimizing constant operation %r --> %r\n",
+                   self,op_result);
+     ++*performed_optimizations;
+     DeeXAst_AssignConst(self,op_result);
+     Dee_DECREF(op_result);
+    }
+    goto after_const_optimization;
+begin_const_optimization:
+    switch (DEE_XASTKIND_OPCOUNT(self->ast_kind)) {
+     case 3: if DEE_UNLIKELY((arg_c = DeeObject_DeepCopy(self->ast_operator.op_c->ast_const.c_const)) == NULL) goto err_const; DEE_ATTRIBUTE_FALLTHROUGH
+     case 2: if DEE_UNLIKELY((arg_b = DeeObject_DeepCopy(self->ast_operator.op_b->ast_const.c_const)) == NULL) goto err_const; DEE_ATTRIBUTE_FALLTHROUGH
+     case 1: if DEE_UNLIKELY((arg_a = DeeObject_DeepCopy(self->ast_operator.op_a->ast_const.c_const)) == NULL) goto err_const; DEE_ATTRIBUTE_FALLTHROUGH
+     default: break;
+    }
+    switch (self->ast_kind) {
+     case DEE_XASTKIND_STR     : op_result = DeeObject_Str(arg_a); break;
+     case DEE_XASTKIND_REPR    : op_result = DeeObject_Repr(arg_a); break;
+     case DEE_XASTKIND_COPY    : op_result = DeeObject_Copy(arg_a); break;
+     case DEE_XASTKIND_MOVE    : op_result = DeeObject_Move(arg_a); break;
+     case DEE_XASTKIND_TYPE    : Dee_INCREF(op_result = (DeeObject *)Dee_TYPE(arg_a)); break;
+     case DEE_XASTKIND_WEAK    : op_result = DeeWeakref_New(arg_a); break;
+     case DEE_XASTKIND_BOOL    : { int temp = DeeObject_Bool(arg_a); op_result = temp >= 0 ? DeeBool_New(temp) : NULL; } break;
+     case DEE_XASTKIND_SUPEROF : op_result = DeeSuper_Of(arg_a); break;
+     case DEE_XASTKIND_NOT     : op_result = DeeObject_Not(arg_a); break;
+     case DEE_XASTKIND_NEG     : op_result = DeeObject_Neg(arg_a); break;
+     case DEE_XASTKIND_POS     : op_result = DeeObject_Pos(arg_a); break;
+     case DEE_XASTKIND_INV     : op_result = DeeObject_Inv(arg_a); break;
+     case DEE_XASTKIND_INC     : op_result = DeeObject_Inc(arg_a); break;
+     case DEE_XASTKIND_DEC     : op_result = DeeObject_Dec(arg_a); break;
+     case DEE_XASTKIND_INCPOST : op_result = DeeObject_IncPost(arg_a); break;
+     case DEE_XASTKIND_DECPOST : op_result = DeeObject_DecPost(arg_a); break;
+     case DEE_XASTKIND_SEQ_ANY : { int temp = DeeSequence_Any(arg_a); op_result = temp >= 0 ? DeeBool_New(temp) : NULL; } break;
+     case DEE_XASTKIND_SEQ_ALL : { int temp = DeeSequence_All(arg_a); op_result = temp >= 0 ? DeeBool_New(temp) : NULL; } break;
+     case DEE_XASTKIND_SEQ_SUM : op_result = DeeSequence_Sum(arg_a); break;
+     case DEE_XASTKIND_EXPAND: {
+      DeeObject *expand_iterator; int error;
+      if ((expand_iterator = DeeObject_IterSelf(arg_a)) == NULL) goto err_const;
+      error = DeeObject_IterNextEx(expand_iterator,&op_result);
+      Dee_DECREF(expand_iterator);
+      if (error < 0) goto err_const; // Error while iterating
+      if (error != 0) goto end_const_optimization; // Empty sequence
+     } break;
+     case DEE_XASTKIND_SEQ_SIZE: op_result = DeeObject_SizeObject(arg_a); break;
+     case DEE_XASTKIND_ITERSELF: op_result = DeeObject_IterSelf(arg_a); break;
+     case DEE_XASTKIND_ITERNEXT: {
+      int error = DeeObject_IterNextEx(arg_a,&op_result);
+      if (error < 0) goto err_const; // Error while iterating
+      if (error != 0) goto end_const_optimization; // No element to be yielded
+     } break;
+     case DEE_XASTKIND_CELL    : op_result = DeeCell_New(arg_a); break;
+     case DEE_XASTKIND_COMPARE_LO : op_result = DeeObject_CompareLoObject(arg_a,arg_b); break;
+     case DEE_XASTKIND_COMPARE_LE : op_result = DeeObject_CompareLeObject(arg_a,arg_b); break;
+     case DEE_XASTKIND_COMPARE_EQ : op_result = DeeObject_CompareEqObject(arg_a,arg_b); break;
+     case DEE_XASTKIND_COMPARE_NE : op_result = DeeObject_CompareNeObject(arg_a,arg_b); break;
+     case DEE_XASTKIND_COMPARE_GR : op_result = DeeObject_CompareGrObject(arg_a,arg_b); break;
+     case DEE_XASTKIND_COMPARE_GE : op_result = DeeObject_CompareGeObject(arg_a,arg_b); break;
+     case DEE_XASTKIND_ADD        : op_result = DeeObject_Add(arg_a,arg_b); break;
+     case DEE_XASTKIND_SUB        : op_result = DeeObject_Sub(arg_a,arg_b); break;
+     case DEE_XASTKIND_MUL        : op_result = DeeObject_Mul(arg_a,arg_b); break;
+     case DEE_XASTKIND_DIV        : op_result = DeeObject_Div(arg_a,arg_b); break;
+     case DEE_XASTKIND_MOD        : op_result = DeeObject_Mod(arg_a,arg_b); break;
+     case DEE_XASTKIND_SHL        : op_result = DeeObject_Shl(arg_a,arg_b); break;
+     case DEE_XASTKIND_SHR        : op_result = DeeObject_Shr(arg_a,arg_b); break;
+     case DEE_XASTKIND_AND        : op_result = DeeObject_And(arg_a,arg_b); break;
+     case DEE_XASTKIND_OR         : op_result = DeeObject_Or(arg_a,arg_b); break;
+     case DEE_XASTKIND_XOR        : op_result = DeeObject_Xor(arg_a,arg_b); break;
+     case DEE_XASTKIND_POW        : op_result = DeeObject_Pow(arg_a,arg_b); break;
+     case DEE_XASTKIND_IADD       : op_result = DeeObject_InplaceAdd(arg_a,arg_b); break;
+     case DEE_XASTKIND_ISUB       : op_result = DeeObject_InplaceSub(arg_a,arg_b); break;
+     case DEE_XASTKIND_IMUL       : op_result = DeeObject_InplaceMul(arg_a,arg_b); break;
+     case DEE_XASTKIND_IDIV       : op_result = DeeObject_InplaceDiv(arg_a,arg_b); break;
+     case DEE_XASTKIND_IMOD       : op_result = DeeObject_InplaceMod(arg_a,arg_b); break;
+     case DEE_XASTKIND_ISHL       : op_result = DeeObject_InplaceShl(arg_a,arg_b); break;
+     case DEE_XASTKIND_ISHR       : op_result = DeeObject_InplaceShr(arg_a,arg_b); break;
+     case DEE_XASTKIND_IAND       : op_result = DeeObject_InplaceAnd(arg_a,arg_b); break;
+     case DEE_XASTKIND_IOR        : op_result = DeeObject_InplaceOr(arg_a,arg_b); break;
+     case DEE_XASTKIND_IXOR       : op_result = DeeObject_InplaceXor(arg_a,arg_b); break;
+     case DEE_XASTKIND_IPOW       : op_result = DeeObject_InplacePow(arg_a,arg_b); break;
+     case DEE_XASTKIND_SEQ_GET    : op_result = DeeObject_GetItem(arg_a,arg_b); break;
+     case DEE_XASTKIND_SEQ_DEL    : op_result = DeeObject_DelItem(arg_a,arg_b) != 0 ? NULL : DeeNone_New(); break;
+     case DEE_XASTKIND_IN         : op_result = DeeObject_ContainsObject(arg_b,arg_a); break;
+     case DEE_XASTKIND_NOT_IN     : op_result = DeeObject_ContainsObject(arg_b,arg_a);
+                                    if (op_result) {
+                                     DeeObject *temp = DeeObject_Not(op_result);
+                                     Dee_DECREF(op_result);
+                                     Dee_INHERIT_REF(op_result,temp);
+                                    }
+                                    break;
+     case DEE_XASTKIND_LXOR: {
+      int ba,bb;
+      if ((ba = DeeObject_Bool(arg_a)) < 0) goto err_const;
+      if ((bb = DeeObject_Bool(arg_b)) < 0) goto err_const;
+      op_result = DeeBool_New(!!ba ^ !!bb);
+     } break;
+     case DEE_XASTKIND_MOVE_ASSIGN: if (DeeObject_MoveAssign(arg_a,arg_b) != 0) op_result = NULL; else Dee_INCREF(op_result = arg_a); break;
+     case DEE_XASTKIND_COPY_ASSIGN: if (DeeObject_CopyAssign(arg_a,arg_b) != 0) op_result = NULL; else Dee_INCREF(op_result = arg_a); break;
+     case DEE_XASTKIND_SEQ_SET: if (DeeObject_SetItem(arg_a,arg_b,arg_c) == 0) Dee_INCREF(op_result = arg_c); else op_result = NULL; break;
+     default: goto end_const_optimization; break;
+    }
+    if (!op_result) goto err_const;
+    VLOG_OPTIMIZE(self->ast_common.ast_token,
+                  "Optimizing constant operation %r --> %r\n",
+                  self,op_result);
+    ++*performed_optimizations;
+    DeeXAst_AssignConst(self,op_result);
+    Dee_DECREF(op_result);
+    if (0) {err_const: DeeError_Handled(); }
+end_const_optimization:
+    Dee_XDECREF(arg_b);
+    Dee_XDECREF(arg_c);
+    Dee_XDECREF(arg_a);
+   } /* DEE_OPTIMIZE_FLAG_MERGE_CONSTS */
+after_const_optimization:;
+  } /* DEE_XASTKIND_ISOPERATOR(self->ast_kind) */
+
+  if (self->ast_kind == DEE_XASTKIND_CALL &&
+      self->ast_operator.op_a->ast_kind == DEE_XASTKIND_CONST &&
+     (optimize_flags&DEE_OPTIMIZE_FLAG_MERGE_OPERATORS)!= 0) {
+   // TODO: Optimize calls to intrinsic functions
+  }
+  break;
  }
  return 0;
 }

@@ -1575,6 +1575,7 @@ static struct dee_compiler_flag_def const dee_compiler_flags[] = {
  {"o-DEL_NOEFFECT",               "Remove statements without side-effects",DEE_CFLAG_OPTIMIZER,DEE_OPTIMIZE_FLAG_DEL_NOEFFECT},
  {"o-DEL_UNREACHABLE",            "Remove unreachable code",DEE_CFLAG_OPTIMIZER,DEE_OPTIMIZE_FLAG_DEL_UNREACHABLE},
  {"o-UNINIT_BOUND",               "Optimize __builtin_bound queries on uninitialized variables",DEE_CFLAG_OPTIMIZER,DEE_OPTIMIZE_FLAG_UNINIT_BOUND},
+ {"o-MERGE_OPERATORS",            "Move/Merge operators",DEE_CFLAG_OPTIMIZER,DEE_OPTIMIZE_FLAG_MERGE_OPERATORS},
  {"o-MERGE_CONSTS",               "Merge constants",DEE_CFLAG_OPTIMIZER,DEE_OPTIMIZE_FLAG_MERGE_CONSTS},
  {"o-ASSUMPTIONS",                "Do assumptions about the value of local variables",DEE_CFLAG_OPTIMIZER,DEE_OPTIMIZE_FLAG_ASSUMPTIONS},
  {"o-CONST_FUNCTION",             "Optimize functions without references into constants",DEE_CFLAG_OPTIMIZER,DEE_OPTIMIZE_FLAG_CONST_FUNCTION},

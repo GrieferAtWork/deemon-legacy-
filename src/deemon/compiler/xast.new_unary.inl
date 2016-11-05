@@ -171,30 +171,6 @@ handle_error_and_return_normal: DeeError_Handled(); goto normal_ast;
    break;
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_POINTERS */
 
-#if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_HELP
-  case DEE_XASTKIND_BUILTIN_HELP:
-   if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_CONST_OPERATORS)!=0) {
-    switch (ast_a->ast_kind) {
-     case DEE_XASTKIND_CONST:
-      // Doc of a constant object
-      unary_result = DeeObject_Doc(ast_a->ast_const.c_const);
-      break;
-     case DEE_XASTKIND_ATTR_GET_C:
-      // Doc of the attribute of a constant object
-      if (ast_a->ast_attr_get_c.ac_object->ast_kind == DEE_XASTKIND_CONST) {
-       unary_result = DeeObject_DocAttr(
-        ast_a->ast_attr_get_c.ac_object->ast_const.c_const,
-        (DeeObject *)ast_a->ast_attr_get_c.ac_name);
-       break;
-      }
-      goto normal_ast;
-     default: goto normal_ast;
-    }
-    goto handle_unary_result;
-   }
-   goto normal_ast;
-#endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_HELP */
-
   default: break;
  }
 
@@ -227,9 +203,6 @@ handle_error_and_return_normal: DeeError_Handled(); goto normal_ast;
      ast_a->ast_kind == DEE_XASTKIND_CONST) {
   // Fast-track for asts that we don't need to copy the constant for
   switch (kind) {
-   case DEE_XASTKIND_SUPEROF:
-    unary_result = DeeSuper_Of(ast_a->ast_const.c_const);
-    goto handle_unary_result;
    case DEE_XASTKIND_CLASSOF:
     Dee_INCREF(unary_result = (DeeObject *)DeeObject_ClassOf(ast_a->ast_const.c_const));
     goto return_unary_result;
@@ -237,6 +210,7 @@ handle_error_and_return_normal: DeeError_Handled(); goto normal_ast;
     Dee_INCREF(unary_result = (DeeObject *)Dee_TYPE(ast_a->ast_const.c_const));
     goto return_unary_result;
 #if DEE_CONFIG_LANGUAGE_HAVE_POINTERS
+#if 0
    case DEE_XASTKIND_REF:
     unary_result = DeeObject_Ref(ast_a->ast_const.c_const);
     goto handle_unary_result;
@@ -244,6 +218,7 @@ handle_error_and_return_normal: DeeError_Handled(); goto normal_ast;
     // todo: Should we really allow this at compile-time?
     unary_result = DeeObject_Deref(ast_a->ast_const.c_const);
     goto handle_unary_result;
+#endif
    case DEE_XASTKIND_PTROF:
     unary_result = (DeeObject *)DeeType_Pointer((DeeTypeObject *)ast_a->ast_const.c_const);
     if (!unary_result) goto handle_unary_error;
@@ -270,6 +245,7 @@ handle_error_and_return_normal: DeeError_Handled(); goto normal_ast;
    goto normal_ast;
   }
   switch (kind) {
+   case DEE_XASTKIND_SUPEROF: unary_result = DeeSuper_Of(const_copy); break;
    case DEE_XASTKIND_STR: unary_result = DeeObject_Str(const_copy); break;
    case DEE_XASTKIND_REPR: unary_result = DeeObject_Repr(const_copy); break;
    case DEE_XASTKIND_COPY: unary_result = DeeObject_Copy(const_copy); break;
@@ -328,17 +304,9 @@ handle_unary_error_const_copy:
     // Yes! Sequence has one element (now stored in 'unary_result')
    } break;
    {
-    int temp;
-   case DEE_XASTKIND_SEQ_ANY:
-    if ((temp = DeeSequence_Any(const_copy)) < 0)
-     unary_result = NULL;
-    else unary_result = DeeBool_New(temp);
-    break;
-   case DEE_XASTKIND_SEQ_ALL:
-    if ((temp = DeeSequence_All(const_copy)) < 0)
-     unary_result = NULL;
-    else unary_result = DeeBool_New(temp);
-    break;
+    int temp; // Sequence operators
+   case DEE_XASTKIND_SEQ_ANY: unary_result = (temp = DeeSequence_Any(const_copy)) >= 0 ? DeeBool_New(temp) : NULL; break;
+   case DEE_XASTKIND_SEQ_ALL: unary_result = (temp = DeeSequence_All(const_copy)) >= 0 ? DeeBool_New(temp) : NULL; break;
    }
 
    default:normal_ast_const_copy:
@@ -346,7 +314,7 @@ handle_unary_error_const_copy:
     goto normal_ast;
   }
   Dee_DECREF(const_copy);
-handle_unary_result:
+//handle_unary_result:
   if (!unary_result) {
    DeeTypeObject *rt_error;
 handle_unary_error:

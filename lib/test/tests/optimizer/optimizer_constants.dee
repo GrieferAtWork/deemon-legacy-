@@ -1,4 +1,4 @@
-#!/usr/bin/deemon -O3 -Cno-c-GEN_UNREACHABLE
+#!/usr/bin/deemon -O3
 /* Copyright (c) 2016 - deemon by Griefer@Work                                    *
  *                                                                                *
  * Permission is hereby granted, free of charge, to any person obtaining a copy   *
@@ -19,60 +19,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
+#pragma once
 
-// v102 received an overhaul of its peephole optimizer
-//      Many new situations are now being optimized,
-//      with this test attempting to trigger as many
-//      as possible.
+#include <testutil>
 
-#define assert_same_code(...) __assert_same_code{__VA_ARGS__}
-#define __assert_same_code{a,b}\
-({\
-	__stack local _a = (a).code;\
-	__stack local _b = (b).code;\
-	assert _a.code == _b.code :\
-		"Non-equal code:\n"\
-		"\ta: " #a "\n"\
-		"\tb: " #b "\n"+\
-		_a.asmrepr()+"\n"+\
-		_b.asmrepr();\
-})
-
-#pragma warning(disable: 679)
-
-
-// NOTE: The 'print' in some of these is
-//       required to prevent other optimizations
-assert_same_code([]{},[]{});
-assert_same_code(
-	[]: result { result = 42; },
-	[] { return 42; }
-);
-assert_same_code(
-	[] { print; volatile __stack local result = none; return result; },
-	[] { print; return; }
-);
-assert_same_code(
-	[](x) { if (!!x) print; },
-	[](x) { if (x) print; }
-);
-assert_same_code(
-	[](x) { if (!!(!x)) print; },
-	[](x) { if (!x) print; }
-);
-assert_same_code(
-	[](x) { print !!(!!x); },
-	[](x) { print !!x; }
-);
-assert_same_code(
-	[](x) { print !(!(!!x)); },
-	[](x) { print !!x; }
-);
-
-
-
-
-
+// Inlining of local variables known to be constant
+same_code(
+	({ local s = "foobar"; print s.upper(); }),
+	({ local s = "foobar"; print "FOOBAR"; }));
+// Can be prevented with volatile
+diff_code(
+	({ volatile local s = "foobar"; print s.upper(); }),
+	({ print "FOOBAR"; }));
+diff_code(
+	({ local x; local s = x ?: "foobar"; print s.upper(); }),
+	({ local x; local s = x ?: "foobar"; print "FOOBAR"; }));
+same_code(
+	({ local s = "foo"; s = "bar"; print s.upper(); }),
+	({ local s = "foo"; s = "bar"; print "BAR"; }));
+diff_code(
+	({ local x; local s = "foo"; if (x) s = "bar"; print s.upper(); }),
+	({ local x; local s = "foo"; if (x) s = "bar"; print "BAR"; }));
 
 
 

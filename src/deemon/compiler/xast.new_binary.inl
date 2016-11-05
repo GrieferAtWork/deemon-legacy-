@@ -78,8 +78,9 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewBinary(
     return ast_b;
    }
    if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_CONST_OPERATORS)!=0 &&
-       ast_a->ast_kind == DEE_XASTKIND_CONST &&
-       ast_b->ast_kind == DEE_XASTKIND_CONST) {
+       ast_a->ast_kind == DEE_XASTKIND_CONST && ast_b->ast_kind == DEE_XASTKIND_CONST &&
+       DeeType_Check(ast_a->ast_const.c_const) && DeeObject_InstanceOf(
+       ast_a->ast_const.c_const,(DeeTypeObject *)ast_b->ast_const.c_const)) {
     DeeObject *super_ob; // Create the 'super' proxy object at compile-time
     if ((super_ob = DeeSuper_New((DeeTypeObject *)ast_a->ast_const.c_const,
      ast_b->ast_const.c_const)) == NULL) return NULL;
@@ -297,7 +298,7 @@ intrin_invargc:
      if ((const_copy_a = DeeObject_DeepCopy(ast_a->ast_const.c_const)) == NULL) goto err_copy;
      switch (kind) {
       case DEE_XASTKIND_ATTR_GET:
-       binary_result = DeeObject_GetAttr(const_copy_a,ast_b->ast_const.c_const);
+       binary_result = DeeObject_GetAttrConst(const_copy_a,ast_b->ast_const.c_const);
        break;
       case DEE_XASTKIND_ATTR_HAS:
        error = DeeObject_HasAttr(const_copy_a,ast_b->ast_const.c_const);
@@ -306,8 +307,7 @@ intrin_invargc:
       case DEE_XASTKIND_ATTR_DEL:
        if (DeeXAst_WarnInplaceOnConstant(DEE_XASTKIND_ATTR_DEL,lexer,tk,Dee_TYPE(const_copy_a)) != 0) binary_result = NULL;
        else {
-        error = DeeObject_DelAttr(const_copy_a,ast_b->ast_const.c_const);
-        binary_result = error < 0 ? NULL : DeeBool_New(error);
+        binary_result = DeeObject_DelAttr(const_copy_a,ast_b->ast_const.c_const) < 0 ? NULL : DeeNone_New();
        }
        break;
       default: DEE_BUILTIN_UNREACHABLE();
@@ -427,52 +427,10 @@ intrin_invargc:
   // Fast-track for asts that we don't need to copy the constant for
   switch (kind) {
    case DEE_XASTKIND_CALL: {
-    DeeObject *const_function = ast_a->ast_const.c_const;
-    if (!_DeeBuiltin_AllowConstantCall(const_function) &&
-        !DeeNone_Check(const_function) &&
-        // v memberfunctions can only be retrieved if they are allowed at compile-time
-        !DeeMemberFunction_Check(const_function)) {
-     if (!DeeType_Check(const_function)) goto normal_ast; // This type isn't constexpr
-     if ((DeeType_FLAGS(const_function)&DEE_TYPE_FLAG_CONST_CTOR) == 0
-         ) goto normal_ast; // This function/type isn't constexpr
-     // Pointer casts can only be evaluated at compile-time,
-     // if the argument is an integral:
-     // >> x = (char *)0;     // OK: Evaluate at compile-time
-     // >> x = (char *)"foo"; // NOPE: Evaluate at runtime
-     // This is required, because "foo" must exist as a constant
-     // at runtime, so as to still be alive when working with the pointer.
-     if (DeePointerType_Check(const_function)) {
-      DEE_ASSERT(ast_b->ast_kind == DEE_XASTKIND_CONST);
-      if (!DeeTuple_Check(ast_b->ast_const.c_const)) goto normal_ast;
-      if (DeeTuple_SIZE(ast_b->ast_const.c_const) == 1) {
-       struct DeeTypeMarshal *marshal;
-       DeeTypeObject *single_elem_type = Dee_TYPE(DeeTuple_GET(ast_b->ast_const.c_const,0));
-       marshal = DeeType_GET_SLOT(single_elem_type,tp_marshal);
-       if (marshal == DeeType_DEFAULT_SLOT(tp_marshal)) goto normal_ast;
-       DEE_ASSERT(marshal);
-       if (!DeeUUID_CHECK_INTERNAL(&marshal->tp_uuid)) goto normal_ast;
-       switch (DeeUUID_GET_INTERNAL(&marshal->tp_uuid)) {
-        case DEE_MARSHALID_NONE:
-        case DEE_MARSHALTYPEID_int8:   case DEE_MARSHALTYPEID_atomic_int8:
-        case DEE_MARSHALTYPEID_int16:  case DEE_MARSHALTYPEID_atomic_int16:
-        case DEE_MARSHALTYPEID_int32:  case DEE_MARSHALTYPEID_atomic_int32:
-        case DEE_MARSHALTYPEID_int64:  case DEE_MARSHALTYPEID_atomic_int64:
-        case DEE_MARSHALTYPEID_uint8:  case DEE_MARSHALTYPEID_atomic_uint8:
-        case DEE_MARSHALTYPEID_uint16: case DEE_MARSHALTYPEID_atomic_uint16:
-        case DEE_MARSHALTYPEID_uint32: case DEE_MARSHALTYPEID_atomic_uint32:
-        case DEE_MARSHALTYPEID_uint64: case DEE_MARSHALTYPEID_atomic_uint64:
-         // v these don't really make much sense, but no harm's done by allowing this...
-        case DEE_MARSHALTYPEID_float4: case DEE_MARSHALTYPEID_float8:
-        case DEE_MARSHALTYPEID_float12: case DEE_MARSHALTYPEID_float16:
-         break;
-        default:
-         // We'll try to cast this one to an integer later.
-         if (DeeType_IsSameOrDerived(single_elem_type,&DeeStructuredType_Type)) break;
-         goto normal_ast;
-       }
-      }
-     }
-    }
+    DeeObject *const_function;
+    if (!DeeTuple_Check(ast_b->ast_const.c_const)) goto normal_ast;
+    const_function = ast_a->ast_const.c_const;
+    if (!_DeeObject_IsConstexprCallable(const_function,ast_b->ast_const.c_const)) goto normal_ast;
    } break;
    case DEE_XASTKIND_IS:
     binary_result = DeeBool_New(DeeObject_Is(
@@ -574,6 +532,8 @@ err_copy:
     else if (DeeObject_CopyAssign(const_copy_a,const_copy_b) != 0) binary_result = NULL;
     else Dee_INCREF(binary_result = ast_a->ast_const.c_const);
     break;
+   case DEE_XASTKIND_SEQ_SET:
+   case DEE_XASTKIND_ATTR_SET:
    default://normal_ast_const_copy:
     Dee_DECREF(const_copy_b);
     Dee_DECREF(const_copy_a);
@@ -604,6 +564,54 @@ normal_ast:
   Dee_INCREF(result->ast_operator.op_b = ast_b);
  }
  return result;
+}
+
+DEE_A_RET_WUNUSED int _DeeObject_IsConstexprCallable(
+ DEE_A_IN DeeObject const *ob, DEE_A_IN_OBJECT(DeeTypeObject) const *args) {
+ DEE_ASSERT(DeeObject_Check(ob));
+ DEE_ASSERT(DeeObject_Check(args) && DeeTuple_Check(args));
+ if (_DeeBuiltin_AllowConstantCall(ob)) return 1;
+ if (DeeNone_Check(ob)) return 1;
+ // v memberfunctions can only be retrieved if they are allowed at compile-time
+ if (DeeMemberFunction_Check(ob)) return 1;
+ if (!DeeType_Check(ob)) return 0; // This type isn't constexpr
+ if ((DeeType_FLAGS(ob)&DEE_TYPE_FLAG_CONST_CTOR) == 0) return 0; // This function/type isn't constexpr
+ // Pointer casts can only be evaluated at compile-time,
+ // if the argument is an integral:
+ // >> x = (char *)0;     // OK: Evaluate at compile-time
+ // >> x = (char *)"foo"; // NOPE: Evaluate at runtime
+ // This is required, because "foo" must exist as a constant
+ // at runtime, so as to still be alive when working with the pointer.
+ if (DeePointerType_Check(ob)) {
+  if (DeeTuple_SIZE(args) == 1) {
+   struct DeeTypeMarshal *marshal;
+   DeeTypeObject *single_elem_type = Dee_TYPE(DeeTuple_GET(args,0));
+   marshal = DeeType_GET_SLOT(single_elem_type,tp_marshal);
+   if (marshal == DeeType_DEFAULT_SLOT(tp_marshal)) return 0;
+   DEE_ASSERT(marshal);
+   if (!DeeUUID_CHECK_INTERNAL(&marshal->tp_uuid)) return 0;
+   switch (DeeUUID_GET_INTERNAL(&marshal->tp_uuid)) {
+    case DEE_MARSHALID_NONE:
+    case DEE_MARSHALTYPEID_int8:   case DEE_MARSHALTYPEID_atomic_int8:
+    case DEE_MARSHALTYPEID_int16:  case DEE_MARSHALTYPEID_atomic_int16:
+    case DEE_MARSHALTYPEID_int32:  case DEE_MARSHALTYPEID_atomic_int32:
+    case DEE_MARSHALTYPEID_int64:  case DEE_MARSHALTYPEID_atomic_int64:
+    case DEE_MARSHALTYPEID_uint8:  case DEE_MARSHALTYPEID_atomic_uint8:
+    case DEE_MARSHALTYPEID_uint16: case DEE_MARSHALTYPEID_atomic_uint16:
+    case DEE_MARSHALTYPEID_uint32: case DEE_MARSHALTYPEID_atomic_uint32:
+    case DEE_MARSHALTYPEID_uint64: case DEE_MARSHALTYPEID_atomic_uint64:
+     // v these don't really make much sense, but no harm's done by allowing this...
+    case DEE_MARSHALTYPEID_float4: case DEE_MARSHALTYPEID_float8:
+    case DEE_MARSHALTYPEID_float12: case DEE_MARSHALTYPEID_float16:
+     break;
+    default:
+     // We'll try to cast this one to an integer later.
+     if (DeeType_IsSameOrDerived(single_elem_type,&DeeStructuredType_Type)) break;
+     return 0;
+   }
+  }
+ }
+ return 1;
 }
 
 DEE_DECL_END
