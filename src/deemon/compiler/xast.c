@@ -2071,8 +2071,10 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewFunctionFromInheritedArgv(
   if (inner_block->ast_kind == DEE_SASTKIND_BLOCK &&
       inner_block->ast_block.b_astc == 1
       ) inner_block = inner_block->ast_block.b_astv[0];
+  if (inner_block->ast_kind == DEE_SASTKIND_EMPTY) goto ret_none;
   if (inner_block->ast_kind != DEE_SASTKIND_RETURN) goto after_pred_optimization;
   return_expression = inner_block->ast_return.r_value;
+  if DEE_UNLIKELY(!return_expression) {ret_none: RETURN(DeeXAst_NewConst(tk,Dee_None)); }
   DEE_ASSERT(DeeObject_Check(return_expression) && DeeXAst_Check(return_expression));
   switch (return_expression->ast_kind) {
    case DEE_XASTKIND_STR:      known_predicate = (DeeObject *)&DeeString_Type; goto check_unary_predicate;

@@ -40,9 +40,13 @@
 
 
 assert_same_code([]{},[]{});
+//assert_same_code(
+//	[]: result { result = 42; },
+//	[] { return 42; });
+// NOTE: The 'print' is required to prevent other optimizations
 assert_same_code(
-	[]: result { result = 42; },
-	[] { return 42; });
+	[] {{ print; volatile __stack local result = none; return result; }},
+	[] { print; return; });
 
 
 

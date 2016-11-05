@@ -147,6 +147,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
       DISPATCH_OPTIMIZED();
      }
      if (*jmp_dst == OP_JUMP) {
+      Dee_uint8_t *del_begin,*del_end;
       Dee_ssize_t jmp_offset;
       // Jump points to another jump (forward to the destination of that jump)
       jmp_dst += *(Dee_int16_t *)(jmp_dst+1);
@@ -163,8 +164,33 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
                       DeeCodeWriter_Addr2Line(self,(Dee_size_t)((code-code_begin)+jmp_offset))+1,
                       (Dee_size_t)((code-code_begin)+jmp_offset),code[jmp_offset]);
        *(Dee_int16_t *)(code+1) = (Dee_int16_t)jmp_offset;
-       DISPATCH_OPTIMIZED();
+       ++*performed_optimizations;
       }
+     case OP_RET: case OP_RETNONE:
+      // Delete code until the next protected opcode, or the end
+      del_begin = code+1;
+      while (del_begin != code_end && *del_begin == OP_NOOP) ++del_begin;
+      del_end = del_begin;
+      while (del_end != code_end && !DeeCodeReachableAddrList_Contains(
+       protected_addr,(Dee_size_t)(del_end-code_begin))) {
+       DEE_ASSERT(del_end < code_end);
+       if ((*del_end&OPFLAG_ARG)!=0) del_end += 3;
+       else ++del_end;
+      }
+      if (del_begin != del_end) {
+       DEE_LVERBOSE1R("%s(%I64d) : PEEPHOLE : +%.4Ix : %#.2I8x : Removing unprotected code after OP_RET/OP_RETNONE/OP_JUMP\n"
+                      "%s(%I64d) : PEEPHOLE : +%.4Ix : %#.2I8x : See reference to end of removed code\n",
+                      DeeCodeWriter_Addr2File(self,(Dee_size_t)(del_begin-code_begin)),
+                      DeeCodeWriter_Addr2Line(self,(Dee_size_t)(del_begin-code_begin))+1,
+                      (Dee_size_t)(del_begin-code_begin),*del_begin,
+                      DeeCodeWriter_Addr2File(self,(Dee_size_t)(del_end-code_begin)),
+                      DeeCodeWriter_Addr2Line(self,(Dee_size_t)(del_end-code_begin))+1,
+                      (Dee_size_t)(del_end-code_begin),*del_end);
+       writepos = del_begin; // Fill with no-ops
+       while (writepos != del_end) *writepos++ = OP_NOOP;
+       ++*performed_optimizations;
+      }
+      goto next;
      }
      DISPATCH();
     }
