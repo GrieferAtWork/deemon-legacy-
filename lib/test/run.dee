@@ -84,7 +84,18 @@ args = ["-I "+fs::path::join(fs::getcwd(),"include")];
 for (local x: tests) {
 	local test,error,r,w,output_data;
 	print "Testing:",x;
-	test = process(deemon_exe,[args...,"-Omax",x]);
+	local used_args = copy args;
+	local first_line = file.io(x,"r").readline();
+	if (first_line.startswith("#!")) {
+		first_line = first_line[2:].strip().replace("\\ ","\t");
+		local additional_args = first_line.partition(" ")[2];
+		for (local arg: additional_args.split(" ")) {
+			arg = arg.replace("\t"," ").strip();
+			if (arg) used_args.append(arg);
+		}
+	}
+	
+	test = process(deemon_exe,[used_args...,x]);
 	test.start();
 	error = test.join();
 	if (error != 0) {
@@ -97,7 +108,7 @@ test_error:
 		// NOTE: We stream the data through a pipe as
 		//       to not have to create a temporary file.
 		r,w = pipe.new()...;
-		test = process(deemon_exe,[args...,"-Omax","-c","-o /dev/stdout",x]);
+		test = process(deemon_exe,[used_args...,"-c","-o /dev/stdout",x]);
 		test.stdout = w;
 		test.start();
 		w.close();

@@ -1,4 +1,4 @@
-#!/usr/bin/deemon
+#!/usr/bin/deemon -O3 -Cno-c-GEN_UNREACHABLE
 /* Copyright (c) 2016 - deemon by Griefer@Work                                    *
  *                                                                                *
  * Permission is hereby granted, free of charge, to any person obtaining a copy   *
@@ -39,11 +39,10 @@
 })
 
 
-//assert_same_code([]{},[]{});
-//assert_same_code(
-//	[]: result { result = 42; },
-//	[] { return 42; }
-//);
+assert_same_code([]{},[]{});
+assert_same_code(
+	[]: result { result = 42; },
+	[] { return 42; });
 
 
 
