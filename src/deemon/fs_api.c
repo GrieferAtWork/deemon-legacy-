@@ -124,8 +124,6 @@ DEE_DECL_BEGIN
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
 int DeeFlag_NoVFS = 0;
-#define _DeeVFS_Utf8IsVirtualPath(path) (DeeVFS_Utf8IsVirtualPath(path)&&!DeeFlag_NoVFS)
-#define _DeeVFS_WideIsVirtualPath(path) (DeeVFS_WideIsVirtualPath(path)&&!DeeFlag_NoVFS)
 
 extern void _DeeFlag_SetNoVFSString(char const *value);
 void _DeeFlag_SetNoVFSString(char const *value) {

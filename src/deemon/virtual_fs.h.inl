@@ -87,6 +87,11 @@ static DEE_A_RET_EXCEPT(-1) int _vfsdir_enum(DEE_A_IN struct DeeVFSFile const *s
 #define DeeVFS_WideIsVirtualPath(path) DEE_FS_ISSEP((path)[0])
 #endif
 
+extern int DeeFlag_NoVFS;
+#define _DeeVFS_Utf8IsVirtualPath(path) (DeeVFS_Utf8IsVirtualPath(path)&&!DeeFlag_NoVFS)
+#define _DeeVFS_WideIsVirtualPath(path) (DeeVFS_WideIsVirtualPath(path)&&!DeeFlag_NoVFS)
+
+
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8Exists(DEE_A_IN_Z Dee_Utf8Char const *path);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsFile(DEE_A_IN_Z Dee_Utf8Char const *path);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsDir(DEE_A_IN_Z Dee_Utf8Char const *path);

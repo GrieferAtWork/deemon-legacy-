@@ -23,6 +23,7 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
+#include <deemon/virtual_fs.h.inl>
 
 //////////////////////////////////////////////////////////////////////////
 // === Win32 ===
@@ -31,7 +32,7 @@ DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 #include <Windows.h>
 DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
-#include <deemon/fs_api.h>
+#include DEE_INCLUDE_MEMORY_API()
 
 // TODO: VFS Support
 
@@ -45,10 +46,6 @@ struct DeeWin32SysDynlib  { HMODULE sd_lib; };
 #define DeeWin32SysDynlib_CompareGr(a,b) ((a)->sd_lib > (b)->sd_lib)
 #define DeeWin32SysDynlib_CompareGe(a,b) ((a)->sd_lib >= (b)->sd_lib)
 #define DeeWin32SysDynlib_Quit(ob)                             do{ if DEE_UNLIKELY(!FreeLibrary((ob)->sd_lib)) SetLastError(0); }while(0)
-// TODO: msdn says you shouldn't use '/' with LoadLibrary
-// s.a.: https://msdn.microsoft.com/en-us/library/windows/desktop/ms684175(v=vs.85).aspx
-//    >> If the syscall fails, search the given path for '/', replace them with '\\' and retry
-// TODO: Auto UNC formatting
 #if 1
 #define DeeWin32SysDynlib_TryInitFromSelf(ob)                  ((ob)->sd_lib = GetModuleHandleW(NULL),1)
 #define DeeWin32SysDynlib_InitFromSelf(ob,...)                 do{ DeeWin32SysDynlib_TryInitFromSelf(ob); }while(0)
@@ -64,8 +61,63 @@ do{\
 }while(0)
 #endif
 
-#define DeeWin32SysDynlib_Utf8TryInitFromFilename(ob,filename) (((ob)->sd_lib = LoadLibraryA(filename)) != NULL)
-#define DeeWin32SysDynlib_WideTryInitFromFilename(ob,filename) (((ob)->sd_lib = LoadLibraryW(filename)) != NULL)
+// msdn says you shouldn't use '/' with LoadLibrary
+// s.a.: https://msdn.microsoft.com/en-us/library/windows/desktop/ms684175(v=vs.85).aspx
+//    >> If the syscall fails, search the given path for '/', replace them with '\\' and retry
+// TODO: Auto UNC formatting
+DEE_STATIC_INLINE(HMODULE) _fixed_LoadLibraryA(char const *filename) {
+ HMODULE result; char *fixed_filename,*iter;
+ Dee_size_t filename_size; DWORD saved_error;
+ if ((result = LoadLibraryA(filename)) != NULL) return result;
+ iter = (char *)filename;
+ while (*iter && *iter != '/') ++iter;
+ if (!*iter) return NULL;
+ // Path contains '/' --> Replace them with '\\'
+ saved_error = GetLastError();
+ filename_size = strlen(filename);
+ if ((fixed_filename = (char *)malloc_nz((
+  filename_size+1)*sizeof(char))) == NULL) {
+  SetLastError(saved_error);
+  return NULL;
+ }
+ memcpy(fixed_filename,filename,filename_size*sizeof(char));
+ fixed_filename[filename_size] = 0;
+ iter = fixed_filename;
+ while (*iter) { if (*iter == '/') *iter = '\\'; ++iter; }
+ result = LoadLibraryA(fixed_filename);
+ saved_error = GetLastError();
+ free_nn(fixed_filename);
+ SetLastError(saved_error);
+ return result;
+}
+DEE_STATIC_INLINE(HMODULE) _fixed_LoadLibraryW(Dee_WideChar const *filename) {
+ HMODULE result; Dee_WideChar *fixed_filename,*iter;
+ Dee_size_t filename_size; DWORD saved_error;
+ if ((result = LoadLibraryW(filename)) != NULL) return result;
+ iter = (Dee_WideChar *)filename;
+ while (*iter && *iter != '/') ++iter;
+ if (!*iter) return NULL;
+ // Path contains '/' --> Replace them with '\\'
+ saved_error = GetLastError();
+ filename_size = Dee_WideStrLen(filename);
+ if ((fixed_filename = (Dee_WideChar *)malloc_nz((
+  filename_size+1)*sizeof(Dee_WideChar))) == NULL) {
+  SetLastError(saved_error);
+  return NULL;
+ }
+ memcpy(fixed_filename,filename,filename_size*sizeof(Dee_WideChar));
+ fixed_filename[filename_size] = 0;
+ iter = fixed_filename;
+ while (*iter) { if (*iter == '/') *iter = '\\'; ++iter; }
+ result = LoadLibraryW(fixed_filename);
+ saved_error = GetLastError();
+ free_nn(fixed_filename);
+ SetLastError(saved_error);
+ return result;
+}
+
+#define DeeWin32SysDynlib_Utf8TryInitFromFilename(ob,filename) (((ob)->sd_lib = _fixed_LoadLibraryA(filename)) != NULL)
+#define DeeWin32SysDynlib_WideTryInitFromFilename(ob,filename) (((ob)->sd_lib = _fixed_LoadLibraryW(filename)) != NULL)
 #define DeeWin32SysDynlib_Utf8InitFromFilename(ob,filename,...)\
 do{\
  if DEE_UNLIKELY(!DeeWin32SysDynlib_Utf8TryInitFromFilename(ob,filename)) {\
