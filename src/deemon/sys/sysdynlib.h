@@ -75,9 +75,9 @@
 #elif defined(__HAIKU__)
 # include <deemon/sys/_haiku.sysdynlib.h>
 #elif 1
-# include <deemon/sys/_notimplemented.sysdynlib.h>
+# include <deemon/sys/_stub.sysdynlib.h>
 #else
-# error "Not dynlib implementation for this platform"
+# error "No dynlib implementation for this platform"
 #endif
 
 

@@ -72,13 +72,13 @@ DEE_A_RET_EXCEPT(-1) int DeeIOBuffer_InitEx(
  DEE_A_IN Dee_size_t size_hint, DEE_A_IN Dee_uint32_t flags) {
  DEE_ASSERT(self);
  // v Initialize the semaphore to 0, as no data is available by default
- if (DeeNativeSemaphore_Init(&self->iob_sem,0) != 0) return -1;
+ if DEE_UNLIKELY(DeeNativeSemaphore_Init(&self->iob_sem,0) != 0) return -1;
  DeeAtomicMutex_Init(&self->iob_lock);
  self->iob_rpos = NULL;
  self->iob_wpos = NULL;
  if (size_hint) {
   // Allocate an initial buffer according to the given hint
-  while ((self->iob_buf = (Dee_uint8_t *)malloc_nz(size_hint)) == NULL) {
+  while DEE_UNLIKELY((self->iob_buf = (Dee_uint8_t *)malloc_nz(size_hint)) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    goto no_buffer; // Silently ignore the failed allocation
   }
@@ -128,7 +128,7 @@ DEE_A_RET_EXCEPT(-1) int DeeIOBuffer_Read(
  DEE_ASSERT(p);
 wait_for_data:
  DeeAtomicMutex_AcquireRelaxed(&self->iob_lock);
- if ((self->iob_flags&DEE_IOBUFFER_FLAG_CLOSED)!=0) goto unlock_after_closed;
+ if DEE_UNLIKELY((self->iob_flags&DEE_IOBUFFER_FLAG_CLOSED)!=0) goto unlock_after_closed;
  ++self->iob_uses;
  DeeAtomicMutex_Release(&self->iob_lock);
  if (DeeNativeSemaphore_Acquire(&self->iob_sem) != 0) return -1;
@@ -218,7 +218,7 @@ startover:
     new_buffer_size = (new_buffer_size<<1)|0x1;
    ++new_buffer_size;
   }
-  if ((new_buffer = (Dee_uint8_t *)realloc_nz(
+  if DEE_UNLIKELY((new_buffer = (Dee_uint8_t *)realloc_nz(
    self->iob_buf,new_buffer_size)) == NULL) {
    DeeAtomicMutex_Release(&self->iob_lock);
    // Must collect memory while not locking the buffer!
@@ -251,12 +251,12 @@ startover:
  // Signal other threads that data is available
  if ((self->iob_flags&DEE_IOBUFFER_FLAG_NOEXCEPT_WRITE)!=0) {
 #ifdef DEE_PLATFORM_WINDOWS
-  if (!ReleaseSemaphore((HANDLE)self->iob_sem.s_handle,(LONG)1,NULL)) {
+  if DEE_UNLIKELY(!ReleaseSemaphore((HANDLE)self->iob_sem.s_handle,(LONG)1,NULL)) {
    result = -1;
    SetLastError(0);
   } else result = 0;
 #else
-  if (sem_post(&self->iob_sem.s_handle) != 0) {
+  if DEE_UNLIKELY(sem_post(&self->iob_sem.s_handle) != 0) {
    result = -1;
    errno = 0;
   } else result = 0;
@@ -323,7 +323,7 @@ unlock_after_closed:
  if (max_read > do_read) {
   DeeAtomicMutex_Release(&self->iob_lock);
   // More data is available, so signal the semaphore again
-  if (DeeNativeSemaphore_Release(&self->iob_sem) != 0) {
+  if DEE_UNLIKELY(DeeNativeSemaphore_Release(&self->iob_sem) != 0) {
    DeeAtomicMutex_AcquireRelaxed(&self->iob_lock);
    --self->iob_uses;
    DeeAtomicMutex_Release(&self->iob_lock);

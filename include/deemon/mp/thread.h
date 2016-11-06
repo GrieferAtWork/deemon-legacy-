@@ -506,7 +506,10 @@ DEE_DECL_END
 
 #ifdef DEE_LIMITED_API
 #ifndef DEE_WITHOUT_THREADS
+DEE_DECL_BEGIN
+
 extern /*atomic*/Dee_uint16_t _deethread_itrpcounter;
+#define DEE_THREADITRP_CHECK()      (DeeAtomic16_Load(_deethread_itrpcounter,memory_order_seq_cst)!=0)
 #ifdef DEE_DEBUG
 #define DEE_THREADITRP_COUNTER_INC() (DeeAtomic16_FetchInc(_deethread_itrpcounter,memory_order_seq_cst)==0?DEE_LVERBOSE2("[Thread][+] Enable interrupt checks\n"):(void)0)
 #define DEE_THREADITRP_COUNTER_DEC() (DeeAtomic16_DecFetch(_deethread_itrpcounter,memory_order_seq_cst)==0?DEE_LVERBOSE2("[Thread][-] Disable interrupt checks\n"):(void)0)
@@ -514,6 +517,15 @@ extern /*atomic*/Dee_uint16_t _deethread_itrpcounter;
 #define DEE_THREADITRP_COUNTER_INC() (void)DeeAtomic16_IncFetch(_deethread_itrpcounter,memory_order_seq_cst)
 #define DEE_THREADITRP_COUNTER_DEC() (void)DeeAtomic16_DecFetch(_deethread_itrpcounter,memory_order_seq_cst)
 #endif /* !DEE_DEBUG */
+
+// Inline-optimize interrupt checks (this way, we don't even need to enter a function most of the time)
+#define DeeThread_CHECKINTERRUPT() (DEE_THREADITRP_CHECK()?_DeeThread_DoCheckInterrupt():0)
+extern DEE_A_RET_EXCEPT(-1) int _DeeThread_DoCheckInterrupt(void);
+#ifndef __INTELLISENSE__
+#define DeeThread_CheckInterrupt  DeeThread_CHECKINTERRUPT
+#endif
+
+DEE_DECL_END
 #endif /* !DEE_WITHOUT_THREADS */
 #endif /* DEE_LIMITED_API */
 

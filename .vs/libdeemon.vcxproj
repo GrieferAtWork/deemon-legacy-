@@ -360,10 +360,16 @@
     <ClInclude Include="..\src\deemon\runtime\libffi_msvc\ffitarget.h" />
     <ClInclude Include="..\src\deemon\signalhandler.h" />
     <ClInclude Include="..\src\deemon\sys\sysdynlib.h" />
+    <ClInclude Include="..\src\deemon\sys\systls.h" />
+    <ClInclude Include="..\src\deemon\sys\_emulated.systls.h" />
     <ClInclude Include="..\src\deemon\sys\_haiku.sysdynlib.h" />
-    <ClInclude Include="..\src\deemon\sys\_notimplemented.sysdynlib.h" />
+    <ClInclude Include="..\src\deemon\sys\_nothread.systls.h" />
     <ClInclude Include="..\src\deemon\sys\_posix.sysdynlib.h" />
+    <ClInclude Include="..\src\deemon\sys\_pthread.systls.h" />
+    <ClInclude Include="..\src\deemon\sys\_stub.sysdynlib.h" />
+    <ClInclude Include="..\src\deemon\sys\_stub.systls.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.sysdynlib.h" />
+    <ClInclude Include="..\src\deemon\sys\_win32.systls.h" />
     <ClInclude Include="..\src\deemon\uuid_list.h" />
     <ClInclude Include="..\src\tpp\tpp.h" />
   </ItemGroup>
@@ -567,7 +573,6 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\socket.impl.sockopt.inl" />
     <None Include="..\src\deemon\structured.get_pointer_impl.inl" />
     <None Include="..\src\deemon\structured.typef.inl" />
-    <None Include="..\src\deemon\thread.systls.inl" />
     <None Include="..\src\deemon\tuple.unpack.inl" />
     <None Include="..\src\deemon\unicode\string.cast.escapecode.inl" />
     <None Include="..\src\deemon\unicode\string.cast.escapecode.previewsize.impl.inl" />

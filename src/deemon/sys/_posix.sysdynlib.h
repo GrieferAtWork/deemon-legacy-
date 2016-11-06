@@ -95,59 +95,59 @@ DEE_STATIC_INLINE(void *) _dlsym_with_underscore(void *lib, char const *name) {
 #endif
 
 #define DEE_SYSDYNLIB_USES_DLFCN
-struct DeeSysDynlib  { void *sd_lib; };
-#define DeeSysDynlib_CompareLo(a,b) ((a)->sd_lib < (b)->sd_lib)
-#define DeeSysDynlib_CompareLe(a,b) ((a)->sd_lib <= (b)->sd_lib)
-#define DeeSysDynlib_CompareEq(a,b) ((a)->sd_lib == (b)->sd_lib)
-#define DeeSysDynlib_CompareNe(a,b) ((a)->sd_lib != (b)->sd_lib)
-#define DeeSysDynlib_CompareGr(a,b) ((a)->sd_lib > (b)->sd_lib)
-#define DeeSysDynlib_CompareGe(a,b) ((a)->sd_lib >= (b)->sd_lib)
-#define DeeSysDynlib_Quit(ob)  do{ dlclose((ob)->sd_lib); }while(0)
-#define DeeSysDynlib_TryInitFromSelf(ob) \
+struct DeePosixSysDynlib  { void *sd_lib; };
+#define DeePosixSysDynlib_CompareLo(a,b) ((a)->sd_lib < (b)->sd_lib)
+#define DeePosixSysDynlib_CompareLe(a,b) ((a)->sd_lib <= (b)->sd_lib)
+#define DeePosixSysDynlib_CompareEq(a,b) ((a)->sd_lib == (b)->sd_lib)
+#define DeePosixSysDynlib_CompareNe(a,b) ((a)->sd_lib != (b)->sd_lib)
+#define DeePosixSysDynlib_CompareGr(a,b) ((a)->sd_lib > (b)->sd_lib)
+#define DeePosixSysDynlib_CompareGe(a,b) ((a)->sd_lib >= (b)->sd_lib)
+#define DeePosixSysDynlib_Quit(ob)  do{ dlclose((ob)->sd_lib); }while(0)
+#define DeePosixSysDynlib_TryInitFromSelf(ob) \
  (((ob)->sd_lib = dlopen(NULL,RTLD_LAZY)) != NULL)
-#define DeeSysDynlib_Utf8TryInitFromFilename(ob,filename) \
+#define DeePosixSysDynlib_Utf8TryInitFromFilename(ob,filename) \
  (((ob)->sd_lib = dlopen(filename,RTLD_NOW|RTLD_GLOBAL)) != NULL)
 #if DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS
-#define DeeSysDynlib_WideTryInitFromFilename(ob,filename) \
+#define DeePosixSysDynlib_WideTryInitFromFilename(ob,filename) \
 ({ int _result; DeeObject *_utf8_filename = DeeUtf8String_FromWideString(filename);\
    if DEE_UNLIKELY(!_utf8_filename) { DeeError_HandledOne(); _result = 0; } else {\
-    _result = DeeSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR(_utf8_filename));\
+    _result = DeePosixSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR(_utf8_filename));\
     Dee_DECREF(_utf8_filename);\
    }\
    _result;\
 })
 #else /* DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
-#define DeeSysDynlib_WideTryInitFromFilename DeeSysDynlib_WideTryInitFromFilename
-DEE_STATIC_INLINE(DEE_A_RET_WUNUSED int) DeeSysDynlib_WideTryInitFromFilename(
- struct DeeSysDynlib *lib, Dee_WideChar const *filename) {
+#define DeePosixSysDynlib_WideTryInitFromFilename DeePosixSysDynlib_WideTryInitFromFilename
+DEE_STATIC_INLINE(DEE_A_RET_WUNUSED int) DeePosixSysDynlib_WideTryInitFromFilename(
+ struct DeePosixSysDynlib *lib, Dee_WideChar const *filename) {
  int result; DeeObject *utf8_filename = DeeString_FromWideString(filename);
  if DEE_UNLIKELY(!utf8_filename) { DeeError_HandledOne(); result = 0; } else {
-  result = DeeSysDynlib_Utf8TryInitFromFilename(lib,DeeString_STR(utf8_filename));
+  result = DeePosixSysDynlib_Utf8TryInitFromFilename(lib,DeeString_STR(utf8_filename));
   Dee_DECREF(utf8_filename);
  }
  return result;
 }
 #endif /* !DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
-#define DeeSysDynlib_InitFromSelf(ob,...)\
+#define DeePosixSysDynlib_InitFromSelf(ob,...)\
 do{\
- if DEE_UNLIKELY(!DeeSysDynlib_TryInitFromSelf(ob)) {\
+ if DEE_UNLIKELY(!DeePosixSysDynlib_TryInitFromSelf(ob)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,"dlopen(NULL,RTLD_LAZY) : %s",dlerror());\
   {__VA_ARGS__;}\
  }\
 }while(0)
-#define DeeSysDynlib_Utf8InitFromFilename(ob,filename,...)\
+#define DeePosixSysDynlib_Utf8InitFromFilename(ob,filename,...)\
 do{\
- if DEE_UNLIKELY(!DeeSysDynlib_Utf8TryInitFromFilename(ob,filename)) {\
+ if DEE_UNLIKELY(!DeePosixSysDynlib_Utf8TryInitFromFilename(ob,filename)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,"dlopen(%q,RTLD_NOW|RTLD_GLOBAL) : %s",\
                      (filename),dlerror());\
   {__VA_ARGS__;}\
  }\
 }while(0)
-#define DeeSysDynlib_WideInitFromFilename(ob,filename,...)\
+#define DeePosixSysDynlib_WideInitFromFilename(ob,filename,...)\
 do{\
  DeeObject *u8filename;\
  if DEE_UNLIKELY((u8filename = DeeString_FromWideString(filename)) == NULL) {__VA_ARGS__;}\
- if DEE_UNLIKELY(!DeeSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR(u8filename))) {\
+ if DEE_UNLIKELY(!DeePosixSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR(u8filename))) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,"dlopen(%q,RTLD_NOW|RTLD_GLOBAL) : %s",\
                       DeeString_STR(u8filename),dlerror());\
   Dee_DECREF(u8filename);\
@@ -156,13 +156,13 @@ do{\
  Dee_DECREF(u8filename);\
 }while(0)
 
-#define DeeSysDynlib_TryImport(ob,import_name,result) \
+#define DeePosixSysDynlib_TryImport(ob,import_name,result) \
  ((*(void **)&(result) = (void *)dlsym((ob)->sd_lib,import_name)) == NULL\
 ? (*(void **)&(result) = _dlsym_with_underscore((ob)->sd_lib,import_name)) != NULL : 1)
 
-#define DeeSysDynlib_Import(ob,import_name,result,...) \
+#define DeePosixSysDynlib_Import(ob,import_name,result,...) \
 do{\
- if DEE_UNLIKELY(!DeeSysDynlib_TryImport(ob,import_name,result)) {\
+ if DEE_UNLIKELY(!DeePosixSysDynlib_TryImport(ob,import_name,result)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,"dlsym(%p,%q) : %s",\
                       (ob)->sd_lib,import_name,dlerror());\
   {__VA_ARGS__;}\
@@ -173,34 +173,34 @@ do{\
 
 //////////////////////////////////////////////////////////////////////////
 // Dynlib w/ filename
-struct DeeSysDynlibN {
+struct DeePosixSysDynlibN {
  void                      *sd_lib;
  DEE_A_REF DeeStringObject *sd_name; /*< [1..1] The dynlib filename. */
 };
-#define DeeSysDynlibN_Quit(ob) do{ DeeSysDynlib_Quit(ob); Dee_DECREF((ob)->sd_name); }while(0)
-#define DeeSysDynlibN_TryInitFromSelf(ob) \
- (DeeSysDynlib_TryInitFromSelf(ob) ? ((ob)->sd_name = (DeeStringObject *)DeeString_NewEmpty(),1) : 0)
-#define DeeSysDynlibN_InitFromSelf(ob,...) \
- do{ DeeSysDynlib_InitFromSelf(ob,__VA_ARGS__); (ob)->sd_name = (DeeStringObject *)DeeString_NewEmpty(); }while(0)
-#define DeeSysDynlibN_Utf8TryInitFromFilename(ob,filename)\
-  (DEE_LIKELY(DeeSysDynlib_Utf8TryInitFromFilename(ob,filename)) ? (\
+#define DeePosixSysDynlibN_Quit(ob) do{ DeePosixSysDynlib_Quit(ob); Dee_DECREF((ob)->sd_name); }while(0)
+#define DeePosixSysDynlibN_TryInitFromSelf(ob) \
+ (DeePosixSysDynlib_TryInitFromSelf(ob) ? ((ob)->sd_name = (DeeStringObject *)DeeString_NewEmpty(),1) : 0)
+#define DeePosixSysDynlibN_InitFromSelf(ob,...) \
+ do{ DeePosixSysDynlib_InitFromSelf(ob,__VA_ARGS__); (ob)->sd_name = (DeeStringObject *)DeeString_NewEmpty(); }while(0)
+#define DeePosixSysDynlibN_Utf8TryInitFromFilename(ob,filename)\
+  (DEE_LIKELY(DeePosixSysDynlib_Utf8TryInitFromFilename(ob,filename)) ? (\
  DEE_UNLIKELY(((ob)->sd_name = (DeeStringObject *)DeeString_FromUtf8String(filename)) == NULL)\
  ? (DeeError_HandledOne(),dlclose((ob)->sd_lib),0) : 1)) : 0)
-#define DeeSysDynlibN_WideTryInitFromFilename(ob,filename)\
+#define DeePosixSysDynlibN_WideTryInitFromFilename(ob,filename)\
 (DEE_UNLIKELY(((ob)->sd_name = (DeeStringObject *)DeeString_FromWideString(filename)) == NULL)\
- ? (DeeError_HandledOne(),0) : (DeeSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))\
+ ? (DeeError_HandledOne(),0) : (DeePosixSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))\
  ? 1 : (Dee_DecRef((ob)->sd_name),0)))
-#define DeeSysDynlibN_Utf8TryInitFromFilenameObject(ob,filename)\
- (DeeSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR(filename))\
+#define DeePosixSysDynlibN_Utf8TryInitFromFilenameObject(ob,filename)\
+ (DeePosixSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR(filename))\
  ? ((ob)->sd_name = (DeeStringObject *)(filename),_DeeObject_INCREF((ob)->sd_name),1) : 0)
-#define DeeSysDynlibN_WideTryInitFromFilenameObject(ob,filename)\
+#define DeePosixSysDynlibN_WideTryInitFromFilenameObject(ob,filename)\
 (DEE_UNLIKELY(((ob)->sd_name = (DeeStringObject *)DeeString_FromWideStringWithLength(DeeWideString_SIZE(filename),DeeWideString_STR(filename))) == NULL)\
- ? (DeeError_HandledOne(),0) : (DeeSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))\
+ ? (DeeError_HandledOne(),0) : (DeePosixSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))\
  ? 1 : (Dee_DecRef((ob)->sd_name),0)))
-#define DeeSysDynlibN_Utf8InitFromFilename(ob,filename,...)\
+#define DeePosixSysDynlibN_Utf8InitFromFilename(ob,filename,...)\
 do{\
  if DEE_UNLIKELY(((ob)->sd_name = (DeeStringObject *)DeeString_FromUtf8String(filename)) == NULL) {__VA_ARGS__;}\
- if DEE_UNLIKELY(!DeeSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))) {\
+ if DEE_UNLIKELY(!DeePosixSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,"dlopen(%r,RTLD_NOW|RTLD_GLOBAL) : %s",\
                      (ob)->sd_name,dlerror());\
   Dee_DECREF((ob)->sd_name);\
@@ -208,10 +208,10 @@ do{\
  }\
  Dee_DECREF((ob)->sd_name);\
 }while(0)
-#define DeeSysDynlibN_WideInitFromFilename(ob,filename,...)\
+#define DeePosixSysDynlibN_WideInitFromFilename(ob,filename,...)\
 do{\
  if DEE_UNLIKELY(((ob)->sd_name = (DeeStringObject *)DeeString_FromWideString(filename)) == NULL) {__VA_ARGS__;}\
- if DEE_UNLIKELY(!DeeSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))) {\
+ if DEE_UNLIKELY(!DeePosixSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,"dlopen(%r,RTLD_NOW|RTLD_GLOBAL) : %s",\
                      (ob)->sd_name,dlerror());\
   Dee_DECREF((ob)->sd_name);\
@@ -219,20 +219,20 @@ do{\
  }\
  Dee_DECREF((ob)->sd_name);\
 }while(0)
-#define DeeSysDynlibN_Utf8InitFromFilenameObject(ob,filename,...)\
+#define DeePosixSysDynlibN_Utf8InitFromFilenameObject(ob,filename,...)\
 do{\
- if DEE_UNLIKELY(!DeeSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR(filename))) {\
+ if DEE_UNLIKELY(!DeePosixSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR(filename))) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,"dlopen(%r,RTLD_NOW|RTLD_GLOBAL) : %s",\
                      filename,dlerror());\
   {__VA_ARGS__;}\
  }\
  Dee_INCREF((ob)->sd_name = (DeeStringObject *)(filename));\
 }while(0)
-#define DeeSysDynlibN_WideInitFromFilenameObject(ob,filename,...)\
+#define DeePosixSysDynlibN_WideInitFromFilenameObject(ob,filename,...)\
 do{\
  if DEE_UNLIKELY(((ob)->sd_name = (DeeStringObject *)DeeString_FromWideStringWithLength(\
   DeeWideString_SIZE(filename),DeeWideString_STR(filename))) == NULL) {__VA_ARGS__;}\
- if DEE_UNLIKELY(!DeeSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))) {\
+ if DEE_UNLIKELY(!DeePosixSysDynlib_Utf8TryInitFromFilename(ob,DeeString_STR((ob)->sd_name))) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,"dlopen(%r,RTLD_NOW|RTLD_GLOBAL) : %s",\
                      (ob)->sd_name,dlerror());\
   Dee_DECREF((ob)->sd_name);\
@@ -240,9 +240,43 @@ do{\
  }\
  Dee_DECREF((ob)->sd_name);\
 }while(0)
-#define DeeSysDynlibN_Name(ob)     (Dee_IncRef((DeeStringObject *)(ob)->sd_name),(DeeObject *)(ob)->sd_name)
-#define DeeSysDynlibN_Utf8Name(ob) (Dee_IncRef((DeeStringObject *)(ob)->sd_name),(DeeObject *)(ob)->sd_name)
-#define DeeSysDynlibN_WideName(ob) DeeWideString_Cast((DeeObject *)(ob)->sd_name)
+#define DeePosixSysDynlibN_Name(ob)     (Dee_IncRef((DeeStringObject *)(ob)->sd_name),(DeeObject *)(ob)->sd_name)
+#define DeePosixSysDynlibN_Utf8Name(ob) (Dee_IncRef((DeeStringObject *)(ob)->sd_name),(DeeObject *)(ob)->sd_name)
+#define DeePosixSysDynlibN_WideName(ob) DeeWideString_Cast((DeeObject *)(ob)->sd_name)
+
+
+
+#define DeeSysDynlib                                DeePosixSysDynlib
+#define DeeSysDynlibN                               DeePosixSysDynlibN 
+#define DeeSysDynlib_CompareLo                      DeePosixSysDynlib_CompareLo
+#define DeeSysDynlib_CompareLe                      DeePosixSysDynlib_CompareLe
+#define DeeSysDynlib_CompareEq                      DeePosixSysDynlib_CompareEq
+#define DeeSysDynlib_CompareNe                      DeePosixSysDynlib_CompareNe
+#define DeeSysDynlib_CompareGr                      DeePosixSysDynlib_CompareGr
+#define DeeSysDynlib_CompareGe                      DeePosixSysDynlib_CompareGe
+#define DeeSysDynlib_TryInitFromSelf                DeePosixSysDynlib_TryInitFromSelf
+#define DeeSysDynlib_InitFromSelf                   DeePosixSysDynlib_InitFromSelf
+#define DeeSysDynlib_Utf8TryInitFromFilename        DeePosixSysDynlib_Utf8TryInitFromFilename
+#define DeeSysDynlib_WideTryInitFromFilename        DeePosixSysDynlib_WideTryInitFromFilename
+#define DeeSysDynlib_Utf8InitFromFilename           DeePosixSysDynlib_Utf8InitFromFilename
+#define DeeSysDynlib_WideInitFromFilename           DeePosixSysDynlib_WideInitFromFilename
+#define DeeSysDynlib_TryImport                      DeePosixSysDynlib_TryImport
+#define DeeSysDynlib_Import                         DeePosixSysDynlib_Import
+#define DeeSysDynlib_Quit                           DeePosixSysDynlib_Quit
+#define DeeSysDynlibN_TryInitFromSelf               DeePosixSysDynlibN_TryInitFromSelf
+#define DeeSysDynlibN_InitFromSelf                  DeePosixSysDynlibN_InitFromSelf
+#define DeeSysDynlibN_Utf8TryInitFromFilename       DeePosixSysDynlibN_Utf8TryInitFromFilename
+#define DeeSysDynlibN_WideTryInitFromFilename       DeePosixSysDynlibN_WideTryInitFromFilename
+#define DeeSysDynlibN_Utf8TryInitFromFilenameObject DeePosixSysDynlibN_Utf8TryInitFromFilenameObject
+#define DeeSysDynlibN_WideTryInitFromFilenameObject DeePosixSysDynlibN_WideTryInitFromFilenameObject
+#define DeeSysDynlibN_Utf8InitFromFilename          DeePosixSysDynlibN_Utf8InitFromFilename
+#define DeeSysDynlibN_WideInitFromFilename          DeePosixSysDynlibN_WideInitFromFilename
+#define DeeSysDynlibN_Utf8InitFromFilenameObject    DeePosixSysDynlibN_Utf8InitFromFilenameObject
+#define DeeSysDynlibN_WideInitFromFilenameObject    DeePosixSysDynlibN_WideInitFromFilenameObject
+#define DeeSysDynlibN_Name                          DeePosixSysDynlibN_Name
+#define DeeSysDynlibN_Utf8Name                      DeePosixSysDynlibN_Utf8Name
+#define DeeSysDynlibN_WideName                      DeePosixSysDynlibN_WideName
+#define DeeSysDynlibN_Quit                          DeePosixSysDynlibN_Quit
 
 DEE_DECL_END
 

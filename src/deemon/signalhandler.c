@@ -31,7 +31,7 @@
 #include <deemon/error.h>
 #ifdef DEE_PLATFORM_UNIX
 #if DEE_XCONFIG_SIGNALHANDLER_ALLOW_POSIX_SIGNALS
-#include <deemon/thread.systls.inl>
+#include <deemon/sys/systls.h>
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_SIGNAL_H
 #include <signal.h>
@@ -132,7 +132,7 @@ LONG WINAPI DeeSignalHandler_Win32SEH(
 }
 
 #ifdef DEE_PRIVATE_SIGNALHANDLER_HAVE_WIN32_EXCEPTION_ROUTER
-EXCEPTION_DISPOSITION _DeeSignalHandler_Win32ExceptionRouter(
+EXCEPTION_DISPOSITION WINAPI _DeeSignalHandler_Win32ExceptionRouter(
  LPEXCEPTION_RECORD pRecord, DEE_SEH_EXCEPTION_REGISTRATION *pReg,
  LPCONTEXT pContext, LPEXCEPTION_RECORD pRecord2) {
  EXCEPTION_DISPOSITION result;
@@ -157,11 +157,9 @@ typedef void (*_deesigh_handler_t)(int signo);
 #endif
 
 static int _deesigh_posix_installed = 0;
-static struct DeeSYSTls _deesigh_posix_regs;
-#define DeeSignalHandler_PosixGetRegs() \
- ((struct DeeSignalHandler_PosixRegData *)DeeSYSTls_Get(&_deesigh_posix_regs))
-#define DeeSignalHandler_PosixSetRegs(v) \
- DeeSYSTls_Set(&_deesigh_posix_regs,(void *)(v))
+static struct DeeSysTLS _deesigh_posix_regs;
+#define DeeSignalHandler_PosixGetRegs(result) DeeSysTLS_TryGetNofail(&_deesigh_posix_regs,result)
+#define DeeSignalHandler_PosixSetRegs(value)  DeeSysTLS_TrySet(&_deesigh_posix_regs,value)\
 
 static struct {
  struct sigaction old_SIGSEGV;
@@ -187,7 +185,8 @@ static void _deesigh_posix_handler(int signo) {
  struct DeeSignalHandler_PosixRegData *reg;
  // Yes, doing a lookup to a thread-local does cause undefined behavior...
  // That's why you can always disable signal handlers with "$DEEMON_NOSIGHANDLERS"
- if ((reg = DeeSignalHandler_PosixGetRegs()) != NULL) {
+ DeeSignalHandler_PosixGetRegs(reg);
+ if (reg != NULL) {
   reg->foundsig = signo;
   longjmp(reg->context,1);
   //DEE_LDEBUG("longjmp() returned?\n");
@@ -219,9 +218,9 @@ void DeeSignalHandler_PosixThrowSignal(int signo) {
 
 void DeeSignalHandler_PosixInstall(void) {
  if (!_deesigh_posix_installed) {
-  if (DeeSYSTls_Init(&_deesigh_posix_regs) != 0) return;
+  DeeSysTLS_Init(&_deesigh_posix_regs,return);
   if (!register_signal(SIGSEGV,&_deesigh_posix_handler,&_deesign_old_handlers.old_SIGSEGV)) {
-   DeeSYSTls_Quit(&_deesigh_posix_regs);
+   DeeSysTLS_Quit(&_deesigh_posix_regs);
   }
   _deesigh_posix_installed = 1;
  }
@@ -230,7 +229,7 @@ void DeeSignalHandler_PosixUninstall(void) {
  if (_deesigh_posix_installed) {
   _deesigh_posix_installed = 0;
   unregister_signal(SIGSEGV,&_deesign_old_handlers.old_SIGSEGV);
-  DeeSYSTls_Quit(&_deesigh_posix_regs);
+  DeeSysTLS_Quit(&_deesigh_posix_regs);
  }
 }
 
@@ -239,7 +238,7 @@ void DeeSignalHandler_PosixBegin(
  DEE_A_IN struct DeeSignalHandler_PosixRegData *reg) {
  struct DeeSignalHandler_PosixRegData *old_reg;
  if (_deesigh_posix_installed && !DeeFlag_NoSignalHandlers) {
-  old_reg = DeeSignalHandler_PosixGetRegs();
+  DeeSignalHandler_PosixGetRegs(old_reg);
   reg->prev = old_reg;
   DeeSignalHandler_PosixSetRegs(reg);
  }
@@ -247,9 +246,8 @@ void DeeSignalHandler_PosixBegin(
 void DeeSignalHandler_PosixEnd(void) {
  struct DeeSignalHandler_PosixRegData *old_reg;
  if (_deesigh_posix_installed && !DeeFlag_NoSignalHandlers) {
-  old_reg = DeeSignalHandler_PosixGetRegs();
-  DEE_ASSERT(old_reg);
-  DeeSignalHandler_PosixSetRegs(old_reg->prev);
+  DeeSignalHandler_PosixGetRegs(old_reg);
+  if (old_reg) DeeSignalHandler_PosixSetRegs(old_reg->prev);
  }
 }
 #endif /* DEE_XCONFIG_SIGNALHANDLER_ALLOW_POSIX_SIGNALS */

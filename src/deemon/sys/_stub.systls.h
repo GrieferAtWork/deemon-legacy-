@@ -18,57 +18,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_THREAD_SYSTLS_INL
-#define GUARD_DEEMON_THREAD_SYSTLS_INL 1
-#define DEE_LIMITED_API 1
+#ifndef GUARD_DEEMON_SYS__STUB_SYSTLS_H
+#define GUARD_DEEMON_SYS__STUB_SYSTLS_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/error.h>
 
-#ifndef DEE_WITHOUT_THREADS
-#include DEE_INCLUDE_MEMORY_API_DISABLE()
-#ifdef DEE_PLATFORM_WINDOWS
-DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
-#include <Windows.h>
-DEE_COMPILER_MSVC_WARNING_POP
-#else
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_PTHREAD_H
-#include <pthread.h>
-#endif
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H
-#include <errno.h>
-#endif
-#endif
-#include DEE_INCLUDE_MEMORY_API_ENABLE()
-
+//////////////////////////////////////////////////////////////////////////
+// === NOT-IMPLEMENTED ===
 DEE_DECL_BEGIN
 
-#ifdef DEE_PLATFORM_WINDOWS
-struct DeeSYSTls { DWORD tls_id; };
-#define DeeSYSTls_Init(tls) \
- ((((tls)->tls_id = TlsAlloc()) == TLS_OUT_OF_INDEXES)?-1:0)
-#define DeeSYSTls_Quit(tls)  (TlsFree((tls)->tls_id)?(void)0:SetLastError(0))
-#define DeeSYSTls_Get(tls)    TlsGetValue((tls)->tls_id)
-#define DeeSYSTls_Set(tls,v) (TlsSetValue((tls)->tls_id,v)?0:-1)
-#else
-struct DeeSYSTls { pthread_key_t tls_id; };
-#define DeeSYSTls_Init(tls)   pthread_key_create(&(tls)->tls_id,0)
-#define DeeSYSTls_Quit(tls)   \
- (pthread_key_delete((tls)->tls_id)!=0?(void)(errno=0):(void)0)
-#define DeeSYSTls_Get(tls)    pthread_getspecific((tls)->tls_id)
-#define DeeSYSTls_Set(tls,v)  pthread_setspecific((tls)->tls_id,v)
-#endif
+struct DeeStubSysTLS { int ss_unused; };
+#define DeeStubSysTLS_TryInit(ob)             1
+#define DeeStubSysTLS_Init(ob,...)            do{}while(0)
+#define DeeStubSysTLS_Quit(ob)                (void)(ob)
+#define DeeStubSysTLS_TryGetNofail(ob,result) (void)(*(void **)&(result)=NULL)
+#define DeeStubSysTLS_TryGet(ob,result)       0
+#define DeeStubSysTLS_TrySet(ob,value)        0
+#define DeeStubSysTLS_Get(ob,result,...)      do{ DeeError_NotImplemented_str("systls"); {__VA_ARGS__;} }while(0)
+#define DeeStubSysTLS_Set(ob,value,...)       do{ DeeError_NotImplemented_str("systls"); {__VA_ARGS__;} }while(0)
+
+#define DeeSysTLS              DeeStubSysTLS
+#define DeeSysTLS_TryInit      DeeStubSysTLS_TryInit
+#define DeeSysTLS_Init         DeeStubSysTLS_Init
+#define DeeSysTLS_Quit         DeeStubSysTLS_Quit
+#define DeeSysTLS_TryGetNofail DeeStubSysTLS_TryGetNofail
+#define DeeSysTLS_TryGet       DeeStubSysTLS_TryGet
+#define DeeSysTLS_TrySet       DeeStubSysTLS_TrySet
+#define DeeSysTLS_Get          DeeStubSysTLS_Get
+#define DeeSysTLS_Set          DeeStubSysTLS_Set
 
 DEE_DECL_END
-#else /* !DEE_WITHOUT_THREADS */
-DEE_DECL_BEGIN
 
-struct DeeSYSTls { void *tls_val; };
-#define DeeSYSTls_Init(tls)  ((tls)->tls_val = NULL,0)
-#define DeeSYSTls_Quit(tls)  (void)0
-#define DeeSYSTls_Get(tls)    (tls)->tls_val
-#define DeeSYSTls_Set(tls,v) ((tls)->tls_val=(v),0)
-
-DEE_DECL_END
-#endif /* DEE_WITHOUT_THREADS */
-
-#endif /* !GUARD_DEEMON_THREAD_SYSTLS_INL */
+#endif /* !GUARD_DEEMON_SYS__STUB_SYSTLS_H */

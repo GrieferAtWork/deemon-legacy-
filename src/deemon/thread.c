@@ -81,7 +81,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 // /src/*
 #include <deemon/__xconf.inl>
 #include <deemon/posix_features.inl>
-#include <deemon/thread.systls.inl>
+#include <deemon/sys/systls.h>
 
 
 // */ (nano...)
@@ -230,7 +230,7 @@ DEE_STATIC_INLINE(void) _dee_thread_set_name(LPCSTR name) {
 
 
 // v The TLS that owns a reference to the thread-local thread control object (aka. thread.self())
-static struct DeeSYSTls _dee_thread_threadself_tls;
+static struct DeeSysTLS _dee_thread_threadself_tls;
 
 
 #if DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
@@ -369,7 +369,8 @@ void *DeeThreadMain(DeeThreadObject *self)
  __try {
 #endif
   // Setup the current thread TLS value
-  DeeSYSTls_Set(&_dee_thread_threadself_tls,self);
+  // NOTE: Ignore errors in this call
+  DeeSysTLS_TrySet(&_dee_thread_threadself_tls,self);
   DeeAtomicMutex_Acquire(&self->t_lock);
 #ifdef _dee_thread_set_name
   Dee_XINCREF(name = self->t_name);
@@ -460,7 +461,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 
 DEE_A_RET_NOEXCEPT(-1) int DeeThread_Initialize(void) {
- if DEE_UNLIKELY(DeeSYSTls_Init(&_dee_thread_threadself_tls) != 0) return -1;
+ DeeSysTLS_Init(&_dee_thread_threadself_tls,{return -1;});
  return 0;
 }
 void DeeThread_PrepareFinalize(void) {
@@ -472,14 +473,14 @@ void DeeThread_PrepareFinalize(void) {
 void DeeThread_Finalize(void) {
  DeeThread_PrepareFinalize();
  // Destroy the tls we used to implement 'DeeThread_Self()'
- DeeSYSTls_Quit(&_dee_thread_threadself_tls);
+ DeeSysTLS_Quit(&_dee_thread_threadself_tls);
 }
 
 int DeeThread_Shutdown(void) {
  DeeThreadObject *thread;
- if DEE_LIKELY((thread = (DeeThreadObject *)
-  DeeSYSTls_Get(&_dee_thread_threadself_tls)) != NULL) {
-  DeeSYSTls_Set(&_dee_thread_threadself_tls,NULL);
+ DeeSysTLS_TryGetNofail(&_dee_thread_threadself_tls,thread);
+ if DEE_LIKELY(thread != NULL) {
+  DeeSysTLS_TrySet(&_dee_thread_threadself_tls,NULL);
   _DeeThread_ClearRuntime(thread,NULL);
   Dee_DECREF(thread);
   return 1;
@@ -493,7 +494,8 @@ DEE_A_RET_OBJECT_MAYBE(DeeThreadObject) *DeeThread_Self(void) {
  // NOTE: This function can't raise any exceptions, because
  //       the exception system requires a working DeeThread_Self()
  DeeThreadObject *result;
- if DEE_UNLIKELY((result = (DeeThreadObject *)DeeSYSTls_Get(&_dee_thread_threadself_tls)) == NULL) {
+ DeeSysTLS_TryGetNofail(&_dee_thread_threadself_tls,result);
+ if DEE_UNLIKELY(result == NULL) {
   if DEE_LIKELY((result = (DeeThreadObject *)DeeObject_TryWeakMalloc(sizeof(DeeThreadObject))) != NULL) {
    DeeObject_INIT(result,&DeeThread_Type);
    // Detached, because we don't have control over this thread
@@ -507,9 +509,7 @@ DEE_A_RET_OBJECT_MAYBE(DeeThreadObject) *DeeThread_Self(void) {
    result->t_callback_func = NULL;
    result->t_callback_args = NULL;
    _DeeThread_INIT_COMMON(result);
-   if DEE_UNLIKELY(DeeSYSTls_Set(&_dee_thread_threadself_tls,result) != 0) {
-    Dee_CLEAR(result);
-   }
+   if DEE_UNLIKELY(!DeeSysTLS_TrySet(&_dee_thread_threadself_tls,result)) Dee_CLEAR(result);
   }
  }
  return (DeeObject *)result;
@@ -585,7 +585,7 @@ cleanup_handle:
     return -1;
    }
   }
-  if DEE_UNLIKELY(!ResumeThread(new_handle)) {
+  if DEE_UNLIKELY(ResumeThread(new_handle) == (DWORD)-1) {
    COMMON_ERROR_CLEANUP();
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "ResumeThread(%p) : %K",new_handle,
@@ -1050,15 +1050,10 @@ DEE_A_RET_EXCEPT(-1) int DeeThread_SetName(
 }
 
 
-
-DEE_A_RET_EXCEPT(-1) int DeeThread_CheckInterrupt(void) {
+DEE_A_RET_EXCEPT(-1) int _DeeThread_DoCheckInterrupt(void) {
  DeeThreadObject *thread; DeeObject *interrupt_signal;
- // Optimization: No need to load and check our TLS block,
- // if there aren't even any interrupted threads to begin with.
- if DEE_LIKELY(!DEE_THREADITRP_CHECK()) return 0;
- // At this point we know that at least something was interrupted.
- if DEE_LIKELY((thread = (DeeThreadObject *)
-  DeeSYSTls_Get(&_dee_thread_threadself_tls)) != NULL) {
+ DeeSysTLS_TryGetNofail(&_dee_thread_threadself_tls,thread);
+ if DEE_LIKELY(thread != NULL) {
   DeeThreadState state;
   do {
    state = DeeThread_STATE_A(thread);
@@ -1085,6 +1080,21 @@ DEE_A_RET_EXCEPT(-1) int DeeThread_CheckInterrupt(void) {
   return -1;
  }
  return 0;
+}
+
+#ifndef __INTELLISENSE__
+#undef DeeThread_CheckInterrupt
+#endif
+DEE_A_RET_EXCEPT(-1) int DeeThread_CheckInterrupt(void)
+#ifndef __INTELLISENSE__
+#define DeeThread_CheckInterrupt  DeeThread_CHECKINTERRUPT
+#endif
+{
+ // Optimization: No need to load and check our TLS block,
+ // if there aren't even any interrupted threads to begin with.
+ if DEE_LIKELY(!DEE_THREADITRP_CHECK()) return 0;
+ // At this point we know that at least something was interrupted.
+ return _DeeThread_DoCheckInterrupt();
 }
 
 void DeeThread_NoInterruptBegin(void) {
