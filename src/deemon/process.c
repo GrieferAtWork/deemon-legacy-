@@ -1793,8 +1793,8 @@ err_1: while (dst != DeeList_ELEM(result)) Dee_DECREF(*--dst);
    _DeeList_FreeUnsafe(result);
    goto err_0;
   }
-  if ((proc = _DeeProcess_NewFromHandle(process_handle)) == NULL) {
-   if (!CloseHandle(process_handle)) SetLastError(0);
+  if DEE_UNLIKELY((proc = _DeeProcess_NewFromHandle(process_handle)) == NULL) {
+   if DEE_UNLIKELY(!CloseHandle(process_handle)) SetLastError(0);
    goto err_1;
   }
   Dee_INHERIT_REF(*dst,proc);
@@ -1804,8 +1804,8 @@ ignore:
  }
  free_nn(ids);
  // Remove entires for processes that we couldn't access
- if (noaccess && _DeeList_ResizeUnsafe(
-  result,DeeList_SIZE(result)-noaccess) != 0) goto err_1;
+ if (noaccess && DEE_UNLIKELY(_DeeList_ResizeUnsafe(
+  result,DeeList_SIZE(result)-noaccess) != 0)) goto err_1;
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
  // >> #include <fs>
@@ -1821,7 +1821,7 @@ ignore:
                       DeeSystemError_ToString(DeeSystemError_Consume()));
   return NULL;
  }
- if ((result = DeeList_New()) == NULL) goto end;
+ if DEE_UNLIKELY((result = DeeList_New()) == NULL) goto end;
  while ((iter = readdir(dir)) != NULL) {
   char const *name = iter->d_name;
   DeeProcessHandle handle;
@@ -1943,7 +1943,7 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1) int DeeProcess_Win32SetPriorityBoost(
 
 
 
-static DeeObject *_deeprocess_tp_any_new(
+static DeeObject *DEE_CALL _deeprocess_tp_any_new(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeObject *args) {
  DeeObject *exe,*cmdargs = Dee_None;
  if (DeeTuple_Unpack(args,"o|o:process",&exe,&cmdargs) != 0) return NULL;
@@ -1962,7 +1962,7 @@ static DeeObject *_deeprocess_tp_any_new(
  }
  return DeeProcess_NewExObject(exe,cmdargs);
 }
-static void _deeprocess_tp_dtor(DeeProcessObject *self) {
+static void DEE_CALL _deeprocess_tp_dtor(DeeProcessObject *self) {
  if (!DeeProcess_IS_REF(self)) {
   Dee_DECREF(self->p_exe);
   Dee_DECREF(self->p_args);
@@ -1990,42 +1990,42 @@ DEE_VISIT_PROC(_deeprocess_tp_visit,DeeProcessObject *self) {
   DeeProcess_RELEASE(self);
  }
 }
-static DeeObject *_deeprocess_tp_str(DeeProcessObject *self) {
+static DeeObject *DEE_CALL _deeprocess_tp_str(DeeProcessObject *self) {
  return DeeString_Newf("<process(%R) -> " DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_DEE_PROCESS_ID) ">",
                        DeeProcess_Cmd((DeeObject *)self),DeeProcess_ID((DeeObject *)self));
 }
-static DeeObject *_deeprocess_tp_cmp_lo(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) <  DeeProcess_ID((DeeObject *)right)); }
-static DeeObject *_deeprocess_tp_cmp_le(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) <= DeeProcess_ID((DeeObject *)right)); }
-static DeeObject *_deeprocess_tp_cmp_eq(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) == DeeProcess_ID((DeeObject *)right)); }
-static DeeObject *_deeprocess_tp_cmp_ne(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) != DeeProcess_ID((DeeObject *)right)); }
-static DeeObject *_deeprocess_tp_cmp_gr(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) >  DeeProcess_ID((DeeObject *)right)); }
-static DeeObject *_deeprocess_tp_cmp_ge(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) >= DeeProcess_ID((DeeObject *)right)); }
+static DeeObject *DEE_CALL _deeprocess_tp_cmp_lo(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) <  DeeProcess_ID((DeeObject *)right)); }
+static DeeObject *DEE_CALL _deeprocess_tp_cmp_le(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) <= DeeProcess_ID((DeeObject *)right)); }
+static DeeObject *DEE_CALL _deeprocess_tp_cmp_eq(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) == DeeProcess_ID((DeeObject *)right)); }
+static DeeObject *DEE_CALL _deeprocess_tp_cmp_ne(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) != DeeProcess_ID((DeeObject *)right)); }
+static DeeObject *DEE_CALL _deeprocess_tp_cmp_gr(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) >  DeeProcess_ID((DeeObject *)right)); }
+static DeeObject *DEE_CALL _deeprocess_tp_cmp_ge(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) >= DeeProcess_ID((DeeObject *)right)); }
 
 
 
 
-static DeeObject *_deeprocess_start(
+static DeeObject *DEE_CALL _deeprocess_start(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int result,detached = 0;
  if (DeeTuple_Unpack(args,"|b:start",&detached) != 0) return NULL;
  if ((result = DeeProcess_Start((DeeObject *)self,detached)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deeprocess_detach(
+static DeeObject *DEE_CALL _deeprocess_detach(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int result;
  if (DeeTuple_Unpack(args,":detach") != 0) return NULL;
  if ((result = DeeProcess_Detach((DeeObject *)self)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deeprocess_join(
+static DeeObject *DEE_CALL _deeprocess_join(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeProcessReturn result;
  if (DeeTuple_Unpack(args,":join") != 0) return NULL;
  if (DeeProcess_Join((DeeObject *)self,&result) != 0) return NULL;
  return DeeObject_New(DeeProcessReturn,result);
 }
-static DeeObject *_deeprocess_try_join(
+static DeeObject *DEE_CALL _deeprocess_try_join(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int success; DeeProcessReturn retval; DeeObject *retval_ob,*result;
  if (DeeTuple_Unpack(args,":try_join") != 0) return NULL;
@@ -2036,7 +2036,7 @@ static DeeObject *_deeprocess_try_join(
  if (!success) Dee_DECREF(retval_ob);
  return result;
 }
-static DeeObject *_deeprocess_join_timed(
+static DeeObject *DEE_CALL _deeprocess_join_timed(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  unsigned int msecs; int success; DeeProcessReturn retval; DeeObject *retval_ob,*result;
  if (DeeTuple_Unpack(args,"u:join_timed",&msecs) != 0) return NULL;
@@ -2047,29 +2047,29 @@ static DeeObject *_deeprocess_join_timed(
  if (!success) Dee_DECREF(retval_ob);
  return result;
 }
-static DeeObject *_deeprocess_id(
+static DeeObject *DEE_CALL _deeprocess_id(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if (DeeTuple_Unpack(args,":id") != 0) return NULL;
  return DeeObject_New(DeeProcessID,DeeProcess_ID((DeeObject *)self));
 }
-static DeeObject *_deeprocess_terminate(
+static DeeObject *DEE_CALL _deeprocess_terminate(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int result; DeeProcessReturn exit_code = 0;
  if (DeeTuple_Unpack(args,"|I32u:terminate",&exit_code) != 0) return NULL;
  if ((result = DeeProcess_Terminate((DeeObject *)self,exit_code)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deeprocess_started(
+static DeeObject *DEE_CALL _deeprocess_started(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if (DeeTuple_Unpack(args,":started") != 0) return NULL;
  DeeReturn_Bool(DeeProcess_STARTED(self));
 }
-static DeeObject *_deeprocess_detached(
+static DeeObject *DEE_CALL _deeprocess_detached(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if (DeeTuple_Unpack(args,":detached") != 0) return NULL;
  DeeReturn_Bool(DeeProcess_DETACHED(self));
 }
-static DeeObject *_deeprocess_terminated(
+static DeeObject *DEE_CALL _deeprocess_terminated(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int result;
  if (DeeTuple_Unpack(args,":terminated") != 0) return NULL;
@@ -2077,7 +2077,7 @@ static DeeObject *_deeprocess_terminated(
  DeeReturn_Bool(result);
 }
 #ifdef DEE_PLATFORM_WINDOWS
-static DeeObject *_deeprocess_win32_times(
+static DeeObject *DEE_CALL _deeprocess_win32_times(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *ct,*et,*kt,*ut,*result;
  if (DeeTuple_Unpack(args,":win32_times") != 0) return NULL;
@@ -2089,35 +2089,35 @@ static DeeObject *_deeprocess_win32_times(
  Dee_DECREF(ut);
  return result;
 }
-static DeeObject *_deeprocess_win32_creation_time(
+static DeeObject *DEE_CALL _deeprocess_win32_creation_time(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *result;
  if (DeeTuple_Unpack(args,":win32_creation_time") != 0) return NULL;
  if (DeeProcess_Win32Times(self,&result,NULL,NULL,NULL) != 0) return NULL;
  return result;
 }
-static DeeObject *_deeprocess_win32_exit_time(
+static DeeObject *DEE_CALL _deeprocess_win32_exit_time(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *result;
  if (DeeTuple_Unpack(args,":win32_exit_time") != 0) return NULL;
  if (DeeProcess_Win32Times(self,NULL,&result,NULL,NULL) != 0) return NULL;
  return result;
 }
-static DeeObject *_deeprocess_win32_kernel_time(
+static DeeObject *DEE_CALL _deeprocess_win32_kernel_time(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *result;
  if (DeeTuple_Unpack(args,":win32_kernel_time") != 0) return NULL;
  if (DeeProcess_Win32Times(self,NULL,NULL,&result,NULL) != 0) return NULL;
  return result;
 }
-static DeeObject *_deeprocess_win32_user_time(
+static DeeObject *DEE_CALL _deeprocess_win32_user_time(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *result;
  if (DeeTuple_Unpack(args,":win32_user_time") != 0) return NULL;
  if (DeeProcess_Win32Times(self,NULL,NULL,NULL,&result) != 0) return NULL;
  return result;
 }
-static DeeObject *_deeprocess_win32_is_critical(
+static DeeObject *DEE_CALL _deeprocess_win32_is_critical(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int result;
  if (DeeTuple_Unpack(args,":win32_is_critical") != 0) return NULL;
@@ -2125,33 +2125,33 @@ static DeeObject *_deeprocess_win32_is_critical(
  DeeReturn_Bool(result);
 }
 #endif
-static DeeObject *_deeprocess_exe_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Exe((DeeObject *)self); }
-static DeeObject *_deeprocess_wexe_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideExe((DeeObject *)self); }
-static DeeObject *_deeprocess_cmd_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Cmd((DeeObject *)self); }
-static DeeObject *_deeprocess_wcmd_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideCmd((DeeObject *)self); }
-static DeeObject *_deeprocess_args_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Args((DeeObject *)self); }
-static DeeObject *_deeprocess_wargs_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideArgs((DeeObject *)self); }
-static DeeObject *_deeprocess_argv_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Argv((DeeObject *)self); }
-static DeeObject *_deeprocess_wargv_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideArgv((DeeObject *)self); }
-static DeeObject *_deeprocess_cwd_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Cwd((DeeObject *)self); }
-static DeeObject *_deeprocess_wcwd_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideCwd((DeeObject *)self); }
-static int _deeprocess_cwd_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelCwd((DeeObject *)self); }
-static int _deeprocess_cwd_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { return DeeProcess_SetCwd((DeeObject *)self,v); }
-static DeeObject *_deeprocess_stdin_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_GetStdin((DeeObject *)self); }
-static DeeObject *_deeprocess_stdout_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_GetStdout((DeeObject *)self); }
-static DeeObject *_deeprocess_stderr_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_GetStderr((DeeObject *)self); }
-static int _deeprocess_stdin_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelStdin((DeeObject *)self); }
-static int _deeprocess_stdout_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelStdout((DeeObject *)self); }
-static int _deeprocess_stderr_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelStderr((DeeObject *)self); }
-static int _deeprocess_stdin_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { return DeeProcess_SetStdin((DeeObject *)self,v); }
-static int _deeprocess_stdout_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { return DeeProcess_SetStdout((DeeObject *)self,v); }
-static int _deeprocess_stderr_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { return DeeProcess_SetStderr((DeeObject *)self,v); }
-static DeeObject *_deeprocess_priority_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { double result; if ((result = DeeProcess_GetPriority((DeeObject *)self)) == -1.0) return NULL; return DeeObject_New(double,result); }
-static int _deeprocess_priority_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_SetPriority((DeeObject *)self,0.5); }
-static int _deeprocess_priority_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { double val; if (DeeObject_Cast(double,v,&val) != 0) return -1; return DeeProcess_SetPriority((DeeObject *)self,val); }
-static DeeObject *_deeprocess_env_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_GetEnviron((DeeObject *)self); }
-static int _deeprocess_env_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelEnviron((DeeObject *)self); }
-static int _deeprocess_env_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deeprocess_exe_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Exe((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_wexe_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideExe((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_cmd_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Cmd((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_wcmd_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideCmd((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_args_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Args((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_wargs_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideArgs((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_argv_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Argv((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_wargv_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideArgv((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_cwd_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_Utf8Cwd((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_wcwd_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_WideCwd((DeeObject *)self); }
+static int DEE_CALL _deeprocess_cwd_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelCwd((DeeObject *)self); }
+static int DEE_CALL _deeprocess_cwd_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { return DeeProcess_SetCwd((DeeObject *)self,v); }
+static DeeObject *DEE_CALL _deeprocess_stdin_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_GetStdin((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_stdout_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_GetStdout((DeeObject *)self); }
+static DeeObject *DEE_CALL _deeprocess_stderr_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_GetStderr((DeeObject *)self); }
+static int DEE_CALL _deeprocess_stdin_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelStdin((DeeObject *)self); }
+static int DEE_CALL _deeprocess_stdout_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelStdout((DeeObject *)self); }
+static int DEE_CALL _deeprocess_stderr_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelStderr((DeeObject *)self); }
+static int DEE_CALL _deeprocess_stdin_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { return DeeProcess_SetStdin((DeeObject *)self,v); }
+static int DEE_CALL _deeprocess_stdout_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { return DeeProcess_SetStdout((DeeObject *)self,v); }
+static int DEE_CALL _deeprocess_stderr_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { return DeeProcess_SetStderr((DeeObject *)self,v); }
+static DeeObject *DEE_CALL _deeprocess_priority_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { double result; if ((result = DeeProcess_GetPriority((DeeObject *)self)) == -1.0) return NULL; return DeeObject_New(double,result); }
+static int DEE_CALL _deeprocess_priority_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_SetPriority((DeeObject *)self,0.5); }
+static int DEE_CALL _deeprocess_priority_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) { double val; if (DeeObject_Cast(double,v,&val) != 0) return -1; return DeeProcess_SetPriority((DeeObject *)self,val); }
+static DeeObject *DEE_CALL _deeprocess_env_get(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_GetEnviron((DeeObject *)self); }
+static int DEE_CALL _deeprocess_env_del(DeeProcessObject *self, void *DEE_UNUSED(closure)) { return DeeProcess_DelEnviron((DeeObject *)self); }
+static int DEE_CALL _deeprocess_env_set(DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
  Dee_size_t i; DeeObject *elem;
  if (DeeObject_InplaceGetInstance(&v,&DeeList_Type) != 0) return -1;
  DeeList_ACQUIRE(v);
@@ -2168,17 +2168,17 @@ static int _deeprocess_env_set(DeeProcessObject *self, DeeObject *v, void *DEE_U
  return DeeProcess_SetEnviron((DeeObject *)self,v);
 }
 #ifdef DEE_PLATFORM_WINDOWS
-static DeeObject *_deeprocess_win32_priority_boost_get(
+static DeeObject *DEE_CALL _deeprocess_win32_priority_boost_get(
  DeeProcessObject *self, void *DEE_UNUSED(closure)) {
  int result;
  if ((result = DeeProcess_Win32GetPriorityBoost((DeeObject *)self)) < 0) return NULL;
  DeeReturn_Bool(result);
 }
-static int _deeprocess_win32_priority_boost_del(
+static int DEE_CALL _deeprocess_win32_priority_boost_del(
  DeeProcessObject *self, void *DEE_UNUSED(closure)) {
  return DeeProcess_Win32SetPriorityBoost((DeeObject *)self,1);
 }
-static int _deeprocess_win32_priority_boost_set(
+static int DEE_CALL _deeprocess_win32_priority_boost_set(
  DeeProcessObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
  int mode;
  if ((mode = DeeObject_Bool(v)) < 0) return -1;
@@ -2186,12 +2186,12 @@ static int _deeprocess_win32_priority_boost_set(
 }
 #endif
 
-static DeeObject *_deeprocess_self(
+static DeeObject *DEE_CALL _deeprocess_self(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  if (DeeTuple_Unpack(args,":self") != 0) return NULL;
  DeeReturn_NEWREF(DeeProcess_Self());
 }
-static DeeObject *_deeprocess_enum(
+static DeeObject *DEE_CALL _deeprocess_enum(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  if (DeeTuple_Unpack(args,":enum") != 0) return NULL;
  return DeeProcess_Enumerate();

@@ -851,18 +851,18 @@ DeeSet_IterSelf(DEE_A_INOUT_OBJECT(DeeSetObject) *self) {
 
 
 
-static int _deeset_tp_ctor(
+static int DEE_CALL _deeset_tp_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeSetObject *self) {
  DeeAtomicMutex_Init(&self->s_lock);
  DeeHashSet_Init(&self->s_set);
  return 0;
 }
-static int _deeset_tp_copy_ctor(
+static int DEE_CALL _deeset_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeSetObject *self, DeeSetObject *right) {
  DeeAtomicMutex_Init(&self->s_lock);
  return DeeHashSet_InitCopyWithLock(&self->s_set,&right->s_set,DeeSet_LOCK(right));
 }
-static int _deeset_tp_move_ctor(
+static int DEE_CALL _deeset_tp_move_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeSetObject *self, DeeSetObject *right) {
  DeeAtomicMutex_Init(&self->s_lock);
  DeeSet_ACQUIRE(right);
@@ -870,14 +870,14 @@ static int _deeset_tp_move_ctor(
  DeeSet_RELEASE(right);
  return 0;
 }
-static int _deeset_tp_any_ctor(
+static int DEE_CALL _deeset_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeSetObject *self, DeeObject *args) {
  DeeObject *sequence;
  if (DeeTuple_Unpack(args,"o:set",&sequence) != 0) return -1;
  DeeAtomicMutex_Init(&self->s_lock);
  return DeeHashSet_InitFromSequence(&self->s_set,sequence);
 }
-static void _deeset_tp_dtor(DeeSetObject *self) {
+static void DEE_CALL _deeset_tp_dtor(DeeSetObject *self) {
  DeeHashSet_Quit(&self->s_set);
 }
 DEE_VISIT_PROC(_deeset_tp_visit,DeeSetObject *self) {
@@ -889,34 +889,34 @@ DEE_VISIT_PROC(_deeset_tp_visit,DeeSetObject *self) {
  }
  DeeSet_RELEASE(self);
 }
-static int _deeset_tp_bool(DeeSetObject *self) {
+static int DEE_CALL _deeset_tp_bool(DeeSetObject *self) {
  int result;
  DeeSet_ACQUIRE(self);
  result = DeeSet_SIZE(self) != 0;
  DeeSet_RELEASE(self);
  return result;
 }
-static DeeObject *_deeset_tp_not(DeeSetObject *self) {
+static DeeObject *DEE_CALL _deeset_tp_not(DeeSetObject *self) {
  int result;
  DeeSet_ACQUIRE(self);
  result = DeeSet_SIZE(self) == 0;
  DeeSet_RELEASE(self);
  DeeReturn_Bool(result);
 }
-static DeeObject *_deeset_tp_add(DeeSetObject *self, DeeObject *sequence) {
+static DeeObject *DEE_CALL _deeset_tp_add(DeeSetObject *self, DeeObject *sequence) {
  DeeObject *result;
  if ((result = DeeSet_Copy((DeeObject *)self)) == NULL) return NULL;
  if (DeeSet_InsertSequence(result,sequence) != 0) Dee_CLEAR(result);
  return result;
 }
-static DeeObject *_deeset_tp_inplace_add(DeeSetObject *self, DeeObject *sequence) {
+static DeeObject *DEE_CALL _deeset_tp_inplace_add(DeeSetObject *self, DeeObject *sequence) {
  if (DeeSet_InsertSequence((DeeObject *)self,sequence) != 0) return NULL;
  DeeReturn_NEWREF(self);
 }
-static int _deeset_tp_hash(DeeSetObject *self, Dee_hash_t start, Dee_hash_t *result) {
+static int DEE_CALL _deeset_tp_hash(DeeSetObject *self, Dee_hash_t start, Dee_hash_t *result) {
  return DeeHashSet_HashWithLock(DeeSet_SET(self),start,result,DeeSet_LOCK(self));
 }
-static int _deeset_tp_move_assign(DeeSetObject *self, DeeSetObject *right) {
+static int DEE_CALL _deeset_tp_move_assign(DeeSetObject *self, DeeSetObject *right) {
  if (self != right) {
   struct _DeeHashSetBucket *old_buckets,*begin,*end;
   struct DeeHashSet temp_set;
@@ -939,7 +939,7 @@ static int _deeset_tp_move_assign(DeeSetObject *self, DeeSetObject *right) {
  }
  return 0;
 }
-static int _deeset_tp_copy_assign(DeeSetObject *self, DeeSetObject *right) {
+static int DEE_CALL _deeset_tp_copy_assign(DeeSetObject *self, DeeSetObject *right) {
  if (self != right) {
   struct _DeeHashSetBucket *old_buckets,*begin,*end;
   struct DeeHashSet temp_set;
@@ -957,7 +957,7 @@ static int _deeset_tp_copy_assign(DeeSetObject *self, DeeSetObject *right) {
  }
  return 0;
 }
-static int _deeset_tp_any_assign(DeeSetObject *self, DeeObject *sequence) {
+static int DEE_CALL _deeset_tp_any_assign(DeeSetObject *self, DeeObject *sequence) {
  struct _DeeHashSetBucket *old_buckets,*begin,*end;
  struct DeeHashSet temp_set;
  if (DeeHashSet_InitFromSequence(&temp_set,sequence) != 0) return -1;
@@ -972,7 +972,7 @@ static int _deeset_tp_any_assign(DeeSetObject *self, DeeObject *sequence) {
  return 0;
 }
 
-static DeeObject *_deeset_tp_str(DeeSetObject const *self) {
+static DeeObject *DEE_CALL _deeset_tp_str(DeeSetObject const *self) {
  DeeObject *result,*entry_key; int temp,first = 1;
  DeeHashSet_TRAVERSE_SAFE_VARS;
  struct _DeeHashSetBucketEntry *entry;
@@ -998,7 +998,7 @@ end: DeeStringWriter_Quit(&writer);
 err: result = NULL; goto end;
 }
 
-static DeeObject *_deeset_tp_repr(DeeSetObject const *self) {
+static DeeObject *DEE_CALL _deeset_tp_repr(DeeSetObject const *self) {
  DeeObject *result,*entry_key; int temp,first = 1;
  DeeHashSet_TRAVERSE_SAFE_VARS;
  struct _DeeHashSetBucketEntry *entry;
@@ -1024,58 +1024,58 @@ end: DeeStringWriter_Quit(&writer);
 err: result = NULL; goto end;
 }
 
-static DeeObject *_deeset_tp_seq_get(DeeSetObject *self, DeeObject *i) {
+static DeeObject *DEE_CALL _deeset_tp_seq_get(DeeSetObject *self, DeeObject *i) {
  Dee_ssize_t ii;
  if (DeeObject_Cast(Dee_ssize_t,i,&ii) != 0) return NULL;
  return DeeSet_GetKeyIndex((DeeObject *)self,ii);
 }
-static DeeObject *_deeset_tp_seq_range_get(DeeSetObject *self, DeeObject *lo, DeeObject *hi) {
+static DeeObject *DEE_CALL _deeset_tp_seq_range_get(DeeSetObject *self, DeeObject *lo, DeeObject *hi) {
  Dee_size_t loi,hii;
  if (DeeNone_Check(lo)) loi = 0; else if (DeeObject_Cast(Dee_size_t,lo,&loi) != 0) return NULL;
  if (DeeNone_Check(hi)) hii = (Dee_size_t)-1; else if (DeeObject_Cast(Dee_size_t,hi,&hii) != 0) return NULL;
  return DeeSet_GetKeyRangeIndex((DeeObject *)self,loi,hii);
 }
-static DeeObject *_deeset_tp_seq_size(DeeSetObject *self) {
+static DeeObject *DEE_CALL _deeset_tp_seq_size(DeeSetObject *self) {
  Dee_size_t result;
  DeeSet_ACQUIRE(self);
  result = DeeSet_SIZE(self);
  DeeSet_RELEASE(self);
  return DeeObject_New(Dee_size_t,result);
 }
-static DeeObject *_deeset_tp_seq_contains(DeeSetObject *self, DeeObject *ob) {
+static DeeObject *DEE_CALL _deeset_tp_seq_contains(DeeSetObject *self, DeeObject *ob) {
  int temp;
  if DEE_UNLIKELY((temp = DeeSet_Contains((DeeObject *)self,ob)) < 0) return NULL;
  DeeReturn_Bool(temp);
 }
 
-static DeeObject *_deeset_clear(
+static DeeObject *DEE_CALL _deeset_clear(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":clear") != 0) return NULL;
  DeeSet_Clear((DeeObject *)self);
  DeeReturn_None;
 }
-static DeeObject *_deeset_insert(
+static DeeObject *DEE_CALL _deeset_insert(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *ob; int result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:insert",&ob) != 0) return NULL;
  if DEE_UNLIKELY((result = DeeSet_Insert((DeeObject *)self,ob)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deeset_insert_all(
+static DeeObject *DEE_CALL _deeset_insert_all(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *sequence;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:insert_all",&sequence) != 0) return NULL;
  if DEE_UNLIKELY(DeeSet_InsertSequence((DeeObject *)self,sequence) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deeset_remove(
+static DeeObject *DEE_CALL _deeset_remove(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *ob; int result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:remove",&ob) != 0) return NULL;
  if DEE_UNLIKELY((result = DeeSet_Remove((DeeObject *)self,ob)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deeset_contains(
+static DeeObject *DEE_CALL _deeset_contains(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem,*pred = Dee_None; int result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:contains",&elem,&pred) != 0) return NULL;
@@ -1085,19 +1085,19 @@ static DeeObject *_deeset_contains(
   )) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deeset_popitem(
+static DeeObject *DEE_CALL _deeset_popitem(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":popitem") != 0) return NULL;
  return DeeSet_PopSomething((DeeObject *)self);
 }
-static DeeObject *_deeset_find(
+static DeeObject *DEE_CALL _deeset_find(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *find_ob; Dee_ssize_t index;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:find",&find_ob) != 0) return NULL;
  if DEE_UNLIKELY((index = DeeSet_FindKeyIndex((DeeObject *)self,find_ob)) == -2) return NULL;
  return DeeObject_New(Dee_ssize_t,index);
 }
-static DeeObject *_deeset_index(
+static DeeObject *DEE_CALL _deeset_index(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *find_ob; Dee_ssize_t index;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:index",&find_ob) != 0) return NULL;
@@ -1108,23 +1108,23 @@ static DeeObject *_deeset_index(
  }
  return DeeObject_New(Dee_size_t,(Dee_size_t)index);
 }
-static DeeObject *_deeset_empty(
+static DeeObject *DEE_CALL _deeset_empty(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":empty") != 0) return NULL;
  DeeReturn_Bool(DeeSet_EMPTY(self));
 }
-static DeeObject *_deeset_non_empty(
+static DeeObject *DEE_CALL _deeset_non_empty(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":non_empty") != 0) return NULL;
  DeeReturn_Bool(!DeeSet_EMPTY(self));
 }
-static DeeObject *_deeset_at(
+static DeeObject *DEE_CALL _deeset_at(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t index;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu:at",&index) != 0) return NULL;
  return DeeSet_GetKeyIndexAt((DeeObject *)self,index);
 }
-static DeeObject *_deeset_front(
+static DeeObject *DEE_CALL _deeset_front(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  struct _DeeHashSetBucketEntry *entry; DeeObject *result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":front") != 0) return NULL;
@@ -1139,7 +1139,7 @@ static DeeObject *_deeset_front(
  DeeSet_RELEASE(self);
  return result;
 }
-static DeeObject *_deeset_back(
+static DeeObject *DEE_CALL _deeset_back(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  struct _DeeHashSetBucketEntry *entry; DeeObject *result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":back") != 0) return NULL;
@@ -1154,7 +1154,7 @@ static DeeObject *_deeset_back(
  DeeSet_RELEASE(self);
  return result;
 }
-static DeeObject *_deeset_count(
+static DeeObject *DEE_CALL _deeset_count(
  DeeSetObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *count_ob; int temp;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:count",&count_ob) != 0) return NULL;
@@ -1214,7 +1214,7 @@ static struct DeeMemberDef const _deeset_tp_class_members[] = {
 
 
 
-static int _deesetiterator_tp_any_ctor(
+static int DEE_CALL _deesetiterator_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeSetIteratorObject *self, DeeObject *args) {
  DeeSetObject *set;
  if (DeeTuple_Unpack(args,"o:set.iterator",&set) != 0) return -1;
@@ -1225,19 +1225,19 @@ static int _deesetiterator_tp_any_ctor(
  DeeSet_RELEASE(set);
  return 0;
 }
-static void _deesetiterator_tp_dtor(DeeSetIteratorObject *self) {
+static void DEE_CALL _deesetiterator_tp_dtor(DeeSetIteratorObject *self) {
  Dee_DECREF(self->si_set);
 }
 DEE_VISIT_PROC(_deesetiterator_tp_visit,DeeSetIteratorObject *self) {
  Dee_VISIT(self->si_set);
 }
-static int _deesetiterator_tp_copy_ctor(
+static int DEE_CALL _deesetiterator_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeSetIteratorObject *self, DeeSetIteratorObject *right) {
  Dee_INCREF(self->si_set = right->si_set);
  self->si_iter = right->si_iter;
  return 0;
 }
-static int _deesetiterator_tp_copy_assign(
+static int DEE_CALL _deesetiterator_tp_copy_assign(
  DeeSetIteratorObject *self, DeeSetIteratorObject *right) {
  if (self != right) {
   Dee_DECREF(self->si_set);
@@ -1246,7 +1246,7 @@ static int _deesetiterator_tp_copy_assign(
  }
  return 0;
 }
-static int _deesetiterator_tp_seq_iter_next(
+static int DEE_CALL _deesetiterator_tp_seq_iter_next(
  DeeSetIteratorObject *self, DeeObject **result) {
  struct _DeeHashSetBucketEntry *entry;
  DeeSet_ACQUIRE(self->si_set);
@@ -1257,12 +1257,12 @@ static int _deesetiterator_tp_seq_iter_next(
  DeeSet_RELEASE(self->si_set);
  return *result ? 0 : 1;
 }
-static DeeObject *_deesetiterator_tp_cmp_lo(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareLo(&self->si_iter,&right->si_iter)); }
-static DeeObject *_deesetiterator_tp_cmp_le(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareLe(&self->si_iter,&right->si_iter)); }
-static DeeObject *_deesetiterator_tp_cmp_eq(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareEq(&self->si_iter,&right->si_iter)); }
-static DeeObject *_deesetiterator_tp_cmp_ne(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareNe(&self->si_iter,&right->si_iter)); }
-static DeeObject *_deesetiterator_tp_cmp_gr(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareGr(&self->si_iter,&right->si_iter)); }
-static DeeObject *_deesetiterator_tp_cmp_ge(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareGe(&self->si_iter,&right->si_iter)); }
+static DeeObject *DEE_CALL _deesetiterator_tp_cmp_lo(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareLo(&self->si_iter,&right->si_iter)); }
+static DeeObject *DEE_CALL _deesetiterator_tp_cmp_le(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareLe(&self->si_iter,&right->si_iter)); }
+static DeeObject *DEE_CALL _deesetiterator_tp_cmp_eq(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareEq(&self->si_iter,&right->si_iter)); }
+static DeeObject *DEE_CALL _deesetiterator_tp_cmp_ne(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareNe(&self->si_iter,&right->si_iter)); }
+static DeeObject *DEE_CALL _deesetiterator_tp_cmp_gr(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareGr(&self->si_iter,&right->si_iter)); }
+static DeeObject *DEE_CALL _deesetiterator_tp_cmp_ge(DeeSetIteratorObject *self, DeeSetIteratorObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeSetIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeHashSetIterator_CompareGe(&self->si_iter,&right->si_iter)); }
 
 #if !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
 #define _deesetiterator_tp_members DeeType_DEFAULT_SLOT(tp_members)

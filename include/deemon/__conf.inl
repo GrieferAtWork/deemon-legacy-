@@ -203,10 +203,12 @@
 #endif /* ... */
 #endif /* !DEE_ATTRIBUTE_CDECL */
 
+#ifndef DEE_CALL
 #ifdef DEE_ATTRIBUTE_CDECL
 # define DEE_CALL DEE_ATTRIBUTE_CDECL
 #else
 # define DEE_CALL /* nothing */
+#endif
 #endif
 
 #ifndef __DEEMON__

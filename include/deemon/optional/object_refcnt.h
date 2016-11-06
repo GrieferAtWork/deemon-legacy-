@@ -250,6 +250,18 @@ DEE_FUNC_DECL(void) Dee_WeakXDecRef(DEE_A_INOUT_OPT struct DeeObject *ob);
 DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT_REF struct DeeObject *) DeeObject_LockWeakref(
  DEE_A_INOUT struct DeeObject *self) DEE_ATTRIBUTE_NONNULL((1));
 
+
+#if DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS && defined(DEE_LIMITED_DEX)
+#define Dee_IncRef(ob)      DEE_GCC_EXTENSION({ Dee_INCREF(ob); })
+#define Dee_DecRef(ob)      DEE_GCC_EXTENSION({ Dee_DECREF(ob); })
+#define Dee_XIncRef(ob)     DEE_GCC_EXTENSION({ Dee_XINCREF(ob); })
+#define Dee_XDecRef(ob)     DEE_GCC_EXTENSION({ Dee_XDECREF(ob); })
+#define Dee_WeakIncRef(ob)  DEE_GCC_EXTENSION({ Dee_WEAKINCREF(ob); })
+#define Dee_WeakDecRef(ob)  DEE_GCC_EXTENSION({ Dee_WEAKDECREF(ob); })
+#define Dee_WeakXIncRef(ob) DEE_GCC_EXTENSION({ Dee_WEAKXINCREF(ob); })
+#define Dee_WeakXDecRef(ob) DEE_GCC_EXTENSION({ Dee_WEAKXDECREF(ob); })
+#endif /* DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
+
 DEE_DECL_END
 
 #endif /* !GUARD_DEEMON_OPTIONAL_OBJECT_REFCNT_H */

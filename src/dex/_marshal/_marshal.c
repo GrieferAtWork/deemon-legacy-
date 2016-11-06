@@ -84,14 +84,14 @@ DEE_A_RET_EXCEPT(-1) int DeeMarshal_ConfirmWriteFlags(DEE_A_IN Dee_uint32_t flag
 
 //////////////////////////////////////////////////////////////////////////
 // DeeMarshalReadMapObject
-static int _deemarshalreadmap_tp_ctor(
+static int DEE_CALL _deemarshalreadmap_tp_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeMarshalReadMapObject *self) {
  DEE_ASSERT(DeeMarshal_IsSupported(DEE_MARSHAL_VERSION));
  if (DeeNativeMutex_Init(&self->mrm_lock) != 0) return -1;
  _DeeMarshalReadMap_Init(&self->mrm_map,DEE_MARSHAL_VERSION);
  return 0;
 }
-static int _deemarshalreadmap_tp_any_ctor(
+static int DEE_CALL _deemarshalreadmap_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeMarshalReadMapObject *self, DeeObject *args) {
  DeeMarshalVersion version;
@@ -102,7 +102,7 @@ static int _deemarshalreadmap_tp_any_ctor(
  _DeeMarshalReadMap_Init(&self->mrm_map,version);
  return 0;
 }
-static void _deemarshalreadmap_tp_dtor(DeeMarshalReadMapObject *self) {
+static void DEE_CALL _deemarshalreadmap_tp_dtor(DeeMarshalReadMapObject *self) {
  _DeeMarshalReadMap_Quit(&self->mrm_map);
  DeeNativeMutex_Quit(&self->mrm_lock);
 }
@@ -111,7 +111,7 @@ DEE_VISIT_PROC(_deemarshalreadmap_tp_visit,DeeMarshalReadMapObject *self) {
  _DeeMarshalReadMap_Visit(&self->mrm_map);
  DeeNativeMutex_ReleaseNoexcept(&self->mrm_lock);
 }
-static DeeObject *_deemarshalreadmap_uuid_get(
+static DeeObject *DEE_CALL _deemarshalreadmap_uuid_get(
  DeeMarshalReadMapObject *self, void *DEE_UNUSED(closure)) {
  DeeObject *result;
  if (DeeNativeMutex_Acquire(&self->mrm_lock) != 0) return NULL;
@@ -128,7 +128,7 @@ static DeeObject *_deemarshalreadmap_uuid_get(
  }
  return result;
 }
-static DeeObject *_deemarshalreadmap_version_get(
+static DeeObject *DEE_CALL _deemarshalreadmap_version_get(
  DeeMarshalReadMapObject *self, void *DEE_UNUSED(closure)) {
  DeeMarshalVersion result;
  if (DeeNativeMutex_Acquire(&self->mrm_lock) != 0) return NULL;
@@ -136,14 +136,14 @@ static DeeObject *_deemarshalreadmap_version_get(
  if (DeeNativeMutex_Release(&self->mrm_lock) != 0) return NULL;
  return DeeObject_New(DeeMarshalVersion,result);
 }
-static DeeObject *_deemarshalreadmapclass_is_supported(
+static DeeObject *DEE_CALL _deemarshalreadmapclass_is_supported(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeMarshalVersion version;
  if (DeeTuple_Unpack(args,"I16u:is_supported",&version) != 0) return NULL;
  DeeReturn_Bool(DeeMarshal_IsSupported(version));
 }
 
-static DeeObject *_deemarshalreadmap_read(
+static DeeObject *DEE_CALL _deemarshalreadmap_read(
  DeeMarshalReadMapObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *fp,*result;
  if (DeeTuple_Unpack(args,"o:read",&fp) != 0) return NULL;
@@ -194,14 +194,14 @@ static struct DeeGetSetDef const _deemarshalreadmap_tp_getsets[] = {
 
 //////////////////////////////////////////////////////////////////////////
 // DeeMarshalWriteMapObject
-static int _deemarshalwritemap_tp_ctor(
+static int DEE_CALL _deemarshalwritemap_tp_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeMarshalWriteMapObject *self) {
  DEE_ASSERT(DeeMarshal_IsSupported(DEE_MARSHAL_VERSION));
  if (DeeNativeMutex_Init(&self->mwm_lock) != 0) return -1;
  _DeeMarshalWriteMap_Init(&self->mwm_map,DEE_MARSHAL_WRITEFLAG_DEFAULT);
  return 0;
 }
-static int _deemarshalwritemap_tp_any_ctor(
+static int DEE_CALL _deemarshalwritemap_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeMarshalWriteMapObject *self, DeeObject *args) {
  Dee_uint32_t flags;
@@ -212,7 +212,7 @@ static int _deemarshalwritemap_tp_any_ctor(
  _DeeMarshalWriteMap_Init(&self->mwm_map,flags);
  return 0;
 }
-static void _deemarshalwritemap_tp_dtor(DeeMarshalWriteMapObject *self) {
+static void DEE_CALL _deemarshalwritemap_tp_dtor(DeeMarshalWriteMapObject *self) {
  _DeeMarshalWriteMap_Quit(&self->mwm_map);
  DeeNativeMutex_Quit(&self->mwm_lock);
 }
@@ -221,7 +221,7 @@ DEE_VISIT_PROC(_deemarshalwritemap_tp_visit,DeeMarshalWriteMapObject *self) {
  _DeeMarshalWriteMap_Visit(&self->mwm_map);
  DeeNativeMutex_ReleaseNoexcept(&self->mwm_lock);
 }
-static DeeObject *_deemarshalwritemap_flags_get(
+static DeeObject *DEE_CALL _deemarshalwritemap_flags_get(
  DeeMarshalWriteMapObject *self, void *DEE_UNUSED(closure)) {
  Dee_uint32_t result;
  if DEE_UNLIKELY(DeeNativeMutex_Acquire(&self->mwm_lock) != 0) return NULL;
@@ -229,14 +229,14 @@ static DeeObject *_deemarshalwritemap_flags_get(
  if DEE_UNLIKELY(DeeNativeMutex_Release(&self->mwm_lock) != 0) return NULL;
  return DeeObject_New(Dee_uint32_t,result);
 }
-static int _deemarshalwritemap_flags_del(
+static int DEE_CALL _deemarshalwritemap_flags_del(
  DeeMarshalWriteMapObject *self, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeNativeMutex_Acquire(&self->mwm_lock) != 0) return -1;
  DeeMarshalWriteMap_SET_FLAGS(&self->mwm_map,DEE_MARSHAL_WRITEFLAG_DEFAULT);
  DeeNativeMutex_ReleaseNoexcept(&self->mwm_lock);
  return 0;
 }
-static int _deemarshalwritemap_flags_set(
+static int DEE_CALL _deemarshalwritemap_flags_set(
  DeeMarshalWriteMapObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
  Dee_uint32_t new_flags;
  if DEE_UNLIKELY(DeeObject_Cast(Dee_uint32_t,v,&new_flags) != 0) return -1;
@@ -247,7 +247,7 @@ static int _deemarshalwritemap_flags_set(
  return 0;
 }
 
-static DeeObject *_deemarshalwritemap_write(
+static DeeObject *DEE_CALL _deemarshalwritemap_write(
  DeeMarshalWriteMapObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *fp,*ob; int error;
  if (DeeTuple_Unpack(args,"oo:write",&fp,&ob) != 0) return NULL;
@@ -270,7 +270,7 @@ static DeeObject *_deemarshalwritemap_write(
 #endif
 
 #if DEE_CONFIG_HAVE_ENCODING_WIDE
-static DeeObject *_deemarshalwritemap_write_widestring(
+static DeeObject *DEE_CALL _deemarshalwritemap_write_widestring(
  DeeMarshalWriteMapObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *fp,*arg; Dee_WideChar const *p;
  int error; Dee_size_t newlen,len = (Dee_size_t)-1;
@@ -297,7 +297,7 @@ static DeeObject *_deemarshalwritemap_write_widestring(
 }
 #endif /* DEE_CONFIG_HAVE_ENCODING_WIDE */
 #if DEE_CONFIG_HAVE_ENCODING_UTF8
-static DeeObject *_deemarshalwritemap_write_utf8string(
+static DeeObject *DEE_CALL _deemarshalwritemap_write_utf8string(
  DeeMarshalWriteMapObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *fp,*arg; Dee_Utf8Char const *p;
  int error; Dee_size_t newlen,len = (Dee_size_t)-1;
@@ -324,7 +324,7 @@ static DeeObject *_deemarshalwritemap_write_utf8string(
 }
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF8 */
 #if DEE_CONFIG_HAVE_ENCODING_UTF16
-static DeeObject *_deemarshalwritemap_write_utf16string(
+static DeeObject *DEE_CALL _deemarshalwritemap_write_utf16string(
  DeeMarshalWriteMapObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *fp,*arg; Dee_Utf16Char const *p;
  int error; Dee_size_t newlen,len = (Dee_size_t)-1;
@@ -351,7 +351,7 @@ static DeeObject *_deemarshalwritemap_write_utf16string(
 }
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF16 */
 #if DEE_CONFIG_HAVE_ENCODING_UTF32
-static DeeObject *_deemarshalwritemap_write_utf32string(
+static DeeObject *DEE_CALL _deemarshalwritemap_write_utf32string(
  DeeMarshalWriteMapObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *fp,*arg; Dee_Utf32Char const *p;
  int error; Dee_size_t newlen,len = (Dee_size_t)-1;
@@ -534,14 +534,14 @@ DeeTypeObject DeeMarshalWriteMap_Type = {
 };
 
 
-static DeeObject *_deemarshal_write_compiled_file_header(DeeObject *args) {
+static DeeObject *DEE_CALL _deemarshal_write_compiled_file_header(DeeObject *args) {
  DeeObject *fp;
  if (DeeTuple_Unpack(args,"o:write_compiled_file_header",&fp) != 0) return NULL;
  if (DeeObject_InplaceGetInstance(&fp,(DeeTypeObject *)&DeeFile_Type) != 0) return NULL;
  if (DeeMarshal_WriteCompiledFileHeader(fp) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deemarshal_is_compiled_file(DeeObject *args) {
+static DeeObject *DEE_CALL _deemarshal_is_compiled_file(DeeObject *args) {
  DeeObject *fp; Dee_uint32_t deemon_version; DeeMarshalVersion marshal_version; int error;
  if (DeeTuple_Unpack(args,"o:write_compiled_file_header",&fp) != 0) return NULL;
  if (DeeObject_InplaceGetInstance(&fp,(DeeTypeObject *)&DeeFile_Type) != 0) return NULL;

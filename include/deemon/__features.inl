@@ -924,29 +924,46 @@
 #ifndef DEE_ATTRIBUTE_NORETURN
 #if __has_declspec_attribute(noreturn) || \
    (defined(_MSC_VER) && _MSC_VER >= 1200)
-#define DEE_ATTRIBUTE_NORETURN  __declspec(noreturn)
+# define DEE_ATTRIBUTE_NORETURN  __declspec(noreturn)
 #elif __has_attribute(noreturn) || defined(__clang__) || \
      (defined(__GNUC__) && (__GNUC__*100+__GNUC_MINOR__) >= 205)
-#define DEE_ATTRIBUTE_NORETURN  __attribute__((__noreturn__))
+# define DEE_ATTRIBUTE_NORETURN  __attribute__((__noreturn__))
 #elif __has_cpp_attribute(noreturn) || \
      (defined(__cplusplus) && defined(_MSC_VER) && _MSC_VER >= 1900)
-#define DEE_ATTRIBUTE_NORETURN  [[noreturn]]
+# define DEE_ATTRIBUTE_NORETURN  [[noreturn]]
 #elif __has_include(<stdnoreturn.h>)
 #if DEE_USE_DEBUG_NEW || defined(GUARD_DEBUG_NEW_H)
-#include <debug_new_disable.inl>
-#endif
-#include <stdnoreturn.h>
-#if DEE_USE_DEBUG_NEW || defined(GUARD_DEBUG_NEW_H)
-#include <debug_new_enable.inl>
+# include <debug_new_disable.inl>
+# include <stdnoreturn.h>
+# include <debug_new_enable.inl>
+#else
+# include <stdnoreturn.h>
 #endif
 #ifdef noreturn
-#define DEE_ATTRIBUTE_NORETURN  noreturn
+# define DEE_ATTRIBUTE_NORETURN  noreturn
 #endif
 #endif
 #ifndef DEE_ATTRIBUTE_NORETURN
-#define DEE_ATTRIBUTE_NORETURN  /* nothing */
+# define DEE_ATTRIBUTE_NORETURN  /* nothing */
 #endif
 #endif
+
+#ifndef DEE_ATTRIBUTE_NOINLINE
+#if __has_declspec_attribute(noinline) || \
+   (defined(_MSC_VER) && _MSC_VER >= 1300)
+# define DEE_ATTRIBUTE_NOINLINE __declspec(noinline)
+#elif __has_attribute(__noinline__) ||\
+     (defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)))
+#ifdef __CUDACC__
+# define DEE_ATTRIBUTE_NOINLINE __attribute__((noinline))
+#else
+# define DEE_ATTRIBUTE_NOINLINE __attribute__((__noinline__))
+#endif
+#else
+# define DEE_ATTRIBUTE_NOINLINE /* nothing */
+#endif
+#endif
+
 
 #ifndef DEE_ATTRIBUTE_CONST
 #if __has_declspec_attribute(noalias) || \

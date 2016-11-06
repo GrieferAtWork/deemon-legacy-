@@ -114,7 +114,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeSubRangeIteratorObject) *DeeSubRangeIterator_New(
 
 //////////////////////////////////////////////////////////////////////////
 // GenericRangeIterator VTable
-static void _deegenericrangeiterator_tp_dtor(DeeGenericRangeIteratorObject *self) {
+static void DEE_CALL _deegenericrangeiterator_tp_dtor(DeeGenericRangeIteratorObject *self) {
  Dee_DECREF(self->ri_iter);
  Dee_DECREF(self->ri_end);
  Dee_XDECREF(self->ri_step);
@@ -124,7 +124,7 @@ DEE_VISIT_PROC(_deegenericrangeiterator_tp_visit,DeeGenericRangeIteratorObject *
  Dee_VISIT(self->ri_end);
  Dee_XVISIT(self->ri_step);
 }
-static int _deegenericrangeiterator_tp_copy_ctor(
+static int DEE_CALL _deegenericrangeiterator_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeGenericRangeIteratorObject *self, DeeGenericRangeIteratorObject *right) {
  if ((self->ri_iter = DeeObject_Copy(right->ri_iter)) == NULL) return -1;
@@ -132,7 +132,7 @@ static int _deegenericrangeiterator_tp_copy_ctor(
  Dee_XINCREF(self->ri_step = right->ri_step);
  return 0;
 }
-static int _deegenericrangeiterator_tp_move_ctor(
+static int DEE_CALL _deegenericrangeiterator_tp_move_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeGenericRangeIteratorObject *self, DeeGenericRangeIteratorObject *right) {
  Dee_INCREF(self->ri_iter = right->ri_iter);
@@ -141,7 +141,7 @@ static int _deegenericrangeiterator_tp_move_ctor(
  right->ri_step = NULL;
  return 0;
 }
-static int _deegenericrangeiterator_tp_any_ctor(
+static int DEE_CALL _deegenericrangeiterator_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeGenericRangeIteratorObject *self, DeeObject *args) {
  self->ri_step = NULL;
@@ -152,30 +152,37 @@ static int _deegenericrangeiterator_tp_any_ctor(
  Dee_XINCREF(self->ri_step);
  return 0;
 }
-static int _deegenericrangeiterator_tp_bool(DeeGenericRangeIteratorObject *self) {
+static int DEE_CALL _deegenericrangeiterator_tp_bool(DeeGenericRangeIteratorObject *self) {
  return DeeObject_CompareLo(self->ri_iter,self->ri_end);
 }
-static DeeObject *_deegenericrangeiterator_tp_not(DeeGenericRangeIteratorObject *self) {
+static DeeObject *DEE_CALL _deegenericrangeiterator_tp_not(DeeGenericRangeIteratorObject *self) {
  return DeeObject_CompareGeObject(self->ri_iter,self->ri_end);
 }
-static DeeObject *_deegenericrangeiterator_tp_seq_contains(
+static DeeObject *DEE_CALL _deegenericrangeiterator_tp_seq_contains(
  DeeGenericRangeIteratorObject *self, DeeObject *ob) {
  int temp;
  if DEE_UNLIKELY((temp = DeeObject_CompareGe(ob,self->ri_iter)) < 0) return NULL;
  if (!temp) DeeReturn_False;
  return DeeObject_CompareLoObject(ob,self->ri_end);
 }
-static DeeObject *_deegenericrangeiterator_tp_str(DeeGenericRangeIteratorObject *self) {
+static DeeObject *DEE_CALL _deegenericrangeiterator_tp_str(DeeGenericRangeIteratorObject *self) {
  return self->ri_step
   ? DeeString_Newf("[%k...%k]",self->ri_iter,self->ri_end)
   : DeeString_Newf("[%k...%k / %k]",self->ri_iter,self->ri_end,self->ri_step);
 }
-static DeeObject *_deegenericrangeiterator_tp_seq_size(DeeGenericRangeIteratorObject *self) {
- int temp;
+static DeeObject *DEE_CALL _deegenericrangeiterator_tp_seq_size(DeeGenericRangeIteratorObject *self) {
+ int temp; DeeObject *result,*newresult;
  if DEE_UNLIKELY((temp = DeeObject_CompareLo(self->ri_iter,self->ri_end)) < 0) return NULL;
- return DeeObject_Sub(temp ? self->ri_end : self->ri_iter,self->ri_iter);
+ if (!temp) return DeeObject_Sub(self->ri_iter,self->ri_iter);
+ result = DeeObject_Sub(self->ri_end,self->ri_iter);
+ if (result && self->ri_step) {
+  newresult = DeeObject_Div(result,self->ri_step);
+  Dee_DECREF(result);
+  Dee_INHERIT_REF(result,newresult);
+ }
+ return result;
 }
-static int _deegenericrangeiterator_tp_seq_iter_next(
+static int DEE_CALL _deegenericrangeiterator_tp_seq_iter_next(
  DeeGenericRangeIteratorObject *self, DeeObject **result) {
  DeeObject *temp2; int temp;
  if DEE_UNLIKELY((temp = DeeObject_CompareLo(self->ri_iter,self->ri_end)) < 0) return temp;
@@ -190,7 +197,7 @@ static int _deegenericrangeiterator_tp_seq_iter_next(
  Dee_DECREF(temp2);
  return 0;
 }
-static DeeObject *_deegenericrangeiterator_tp_inc(
+static DeeObject *DEE_CALL _deegenericrangeiterator_tp_inc(
  DeeGenericRangeIteratorObject *self) {
  DeeObject *ob; int temp;
  if DEE_UNLIKELY((temp = DeeObject_CompareLo(self->ri_iter,self->ri_end)) < 0) return NULL;
@@ -202,7 +209,7 @@ static DeeObject *_deegenericrangeiterator_tp_inc(
  }
  DeeReturn_NEWREF(self);
 }
-static DeeObject *_deegenericrangeiterator_tp_dec(
+static DeeObject *DEE_CALL _deegenericrangeiterator_tp_dec(
  DeeGenericRangeIteratorObject *self) {
  DeeObject *ob;
  if DEE_UNLIKELY((ob = self->ri_step
@@ -211,7 +218,7 @@ static DeeObject *_deegenericrangeiterator_tp_dec(
  Dee_DECREF(ob);
  DeeReturn_NEWREF(self);
 }
-static DeeObject *_deegenericrangeiterator_tp_inc_post(
+static DeeObject *DEE_CALL _deegenericrangeiterator_tp_inc_post(
  DeeGenericRangeIteratorObject *self) {
  DeeObject *result,*ob; int temp;
  if ((temp = DeeObject_CompareLo(self->ri_iter,self->ri_end)) < 0) return NULL;
@@ -226,7 +233,7 @@ static DeeObject *_deegenericrangeiterator_tp_inc_post(
  }
  DeeReturn_NEWREF(self);
 }
-static DeeObject *_deegenericrangeiterator_tp_dec_post(
+static DeeObject *DEE_CALL _deegenericrangeiterator_tp_dec_post(
  DeeGenericRangeIteratorObject *self) {
  DeeObject *result,*ob;
  if ((result = DeeObject_Copy((DeeObject *)self)) == NULL) return NULL;
@@ -264,7 +271,7 @@ static struct DeeTypeMarshal _deegenericrangeiterator_tp_marshal = DEE_TYPE_MARS
 
 //////////////////////////////////////////////////////////////////////////
 // GenericSequenceIterator VTable
-static int _deegenericsequenceiterator_tp_copy_ctor(
+static int DEE_CALL _deegenericsequenceiterator_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeGenericSequenceIteratorObject *self,
  DeeGenericSequenceIteratorObject *right) {
@@ -273,7 +280,7 @@ static int _deegenericsequenceiterator_tp_copy_ctor(
  self->si_size = right->si_size;
  return 0;
 }
-static int _deegenericsequenceiterator_tp_any_ctor(
+static int DEE_CALL _deegenericsequenceiterator_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeGenericSequenceIteratorObject *self, DeeObject *args) {
  self->si_pos = 0;
@@ -282,36 +289,36 @@ static int _deegenericsequenceiterator_tp_any_ctor(
  Dee_INCREF(self->si_seq);
  return 0;
 }
-void _deegenericsequenceiterator_tp_dtor(DeeGenericSequenceIteratorObject *self) {
+static void DEE_CALL _deegenericsequenceiterator_tp_dtor(DeeGenericSequenceIteratorObject *self) {
  Dee_DECREF(self->si_seq);
 }
 DEE_VISIT_PROC(_deegenericsequenceiterator_tp_visit,DeeGenericSequenceIteratorObject *self) {
  Dee_VISIT(self->si_seq);
 }
-static DeeObject *_deegenericsequenceiterator_tp_str(DeeGenericSequenceIteratorObject *self) {
+static DeeObject *DEE_CALL _deegenericsequenceiterator_tp_str(DeeGenericSequenceIteratorObject *self) {
  return DeeString_Newf("generic_sequence_iterator(%Iu..%Iu)",
                        DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->si_pos,memory_order_seq_cst),
                        self->si_size);
 }
-static DeeObject *_deegenericsequenceiterator_tp_repr(DeeGenericSequenceIteratorObject *self) {
+static DeeObject *DEE_CALL _deegenericsequenceiterator_tp_repr(DeeGenericSequenceIteratorObject *self) {
  return DeeString_Newf("generic_sequence_iterator(%Iu..%Iu,%k)",
                        DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->si_pos,memory_order_seq_cst),
                        self->si_size,self->si_seq);
 }
-static int _deegenericsequenceiterator_tp_bool(DeeGenericSequenceIteratorObject *self) {
+static int DEE_CALL _deegenericsequenceiterator_tp_bool(DeeGenericSequenceIteratorObject *self) {
  return (Dee_size_t)DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->si_pos,memory_order_seq_cst) < self->si_size;
 }
-static DeeObject *_deegenericsequenceiterator_tp_not(DeeGenericSequenceIteratorObject *self) {
+static DeeObject *DEE_CALL _deegenericsequenceiterator_tp_not(DeeGenericSequenceIteratorObject *self) {
  DeeReturn_Bool((Dee_size_t)DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->si_pos,memory_order_seq_cst) >= self->si_size);
 }
-static int _deegenericsequenceiterator_tp_seq_iter_next(
+static int DEE_CALL _deegenericsequenceiterator_tp_seq_iter_next(
  DeeGenericSequenceIteratorObject *self, DeeObject **result) {
  Dee_size_t myindex = (Dee_size_t)DeeAtomicN_FetchInc(
   DEE_TYPES_SIZEOF_SIZE_T,self->si_pos,memory_order_seq_cst);
  if (myindex >= self->si_size) return 1;
  return (*result = DeeObject_GetIndex(self->si_seq,myindex)) != NULL ? 0 : -1;
 }
-static DeeObject *_deegenericsequenceiterator_tp_cmp_lo(
+static DeeObject *DEE_CALL _deegenericsequenceiterator_tp_cmp_lo(
  DeeGenericSequenceIteratorObject *lhs, DeeGenericSequenceIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeGenericSequenceIterator_Type) != 0) return NULL;
@@ -322,7 +329,7 @@ static DeeObject *_deegenericsequenceiterator_tp_cmp_lo(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->si_pos,memory_order_seq_cst) <
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->si_pos,memory_order_seq_cst));
 }
-static DeeObject *_deegenericsequenceiterator_tp_cmp_le(
+static DeeObject *DEE_CALL _deegenericsequenceiterator_tp_cmp_le(
  DeeGenericSequenceIteratorObject *lhs, DeeGenericSequenceIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeGenericSequenceIterator_Type) != 0) return NULL;
@@ -333,7 +340,7 @@ static DeeObject *_deegenericsequenceiterator_tp_cmp_le(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->si_pos,memory_order_seq_cst) <=
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->si_pos,memory_order_seq_cst));
 }
-static DeeObject *_deegenericsequenceiterator_tp_cmp_eq(
+static DeeObject *DEE_CALL _deegenericsequenceiterator_tp_cmp_eq(
  DeeGenericSequenceIteratorObject *lhs, DeeGenericSequenceIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeGenericSequenceIterator_Type) != 0) return NULL;
@@ -342,7 +349,7 @@ static DeeObject *_deegenericsequenceiterator_tp_cmp_eq(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->si_pos,memory_order_seq_cst) ==
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->si_pos,memory_order_seq_cst));
 }
-static DeeObject *_deegenericsequenceiterator_tp_cmp_ne(
+static DeeObject *DEE_CALL _deegenericsequenceiterator_tp_cmp_ne(
  DeeGenericSequenceIteratorObject *lhs, DeeGenericSequenceIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeGenericSequenceIterator_Type) != 0) return NULL;
@@ -351,7 +358,7 @@ static DeeObject *_deegenericsequenceiterator_tp_cmp_ne(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->si_pos,memory_order_seq_cst) !=
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->si_pos,memory_order_seq_cst));
 }
-static DeeObject *_deegenericsequenceiterator_tp_cmp_gr(
+static DeeObject *DEE_CALL _deegenericsequenceiterator_tp_cmp_gr(
  DeeGenericSequenceIteratorObject *lhs, DeeGenericSequenceIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeGenericSequenceIterator_Type) != 0) return NULL;
@@ -362,7 +369,7 @@ static DeeObject *_deegenericsequenceiterator_tp_cmp_gr(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->si_pos,memory_order_seq_cst) >
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->si_pos,memory_order_seq_cst));
 }
-static DeeObject *_deegenericsequenceiterator_tp_cmp_ge(
+static DeeObject *DEE_CALL _deegenericsequenceiterator_tp_cmp_ge(
  DeeGenericSequenceIteratorObject *lhs, DeeGenericSequenceIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeGenericSequenceIterator_Type) != 0) return NULL;
@@ -415,9 +422,8 @@ static struct DeeTypeMarshal _deegenericsequenceiterator_tp_marshal = DEE_TYPE_M
 
 //////////////////////////////////////////////////////////////////////////
 // SubRangeIterator VTable
-static int _deesubrangeiterator_tp_copy_ctor(
- DeeTypeObject *DEE_UNUSED(tp_self),
- DeeSubRangeIteratorObject *self,
+static int DEE_CALL _deesubrangeiterator_tp_copy_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeeSubRangeIteratorObject *self,
  DeeSubRangeIteratorObject *right) {
  if ((self->sri_iter = DeeObject_Copy(right->sri_iter)) == NULL) return -1;
  self->sri_pos = (Dee_size_t)DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,right->sri_pos,memory_order_seq_cst);
@@ -425,7 +431,7 @@ static int _deesubrangeiterator_tp_copy_ctor(
  self->sri_end = right->sri_end;
  return 0;
 }
-static int _deesubrangeiterator_tp_any_ctor(
+static int DEE_CALL _deesubrangeiterator_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeSubRangeIteratorObject *self, DeeObject *args) {
  self->sri_begin = 0;
@@ -436,29 +442,29 @@ static int _deesubrangeiterator_tp_any_ctor(
  self->sri_pos = 0;
  return 0;
 }
-void _deesubrangeiterator_tp_dtor(DeeGenericSequenceIteratorObject *self) {
+void DEE_CALL _deesubrangeiterator_tp_dtor(DeeGenericSequenceIteratorObject *self) {
  Dee_DECREF(self->si_seq);
 }
 DEE_VISIT_PROC(_deesubrangeiterator_tp_visit,DeeGenericSequenceIteratorObject *self) {
  Dee_VISIT(self->si_seq);
 }
-static DeeObject *_deesubrangeiterator_tp_str(DeeSubRangeIteratorObject *self) {
+static DeeObject *DEE_CALL _deesubrangeiterator_tp_str(DeeSubRangeIteratorObject *self) {
  return DeeString_Newf("subrange_iterator(%Iu,%Iu..%Iu)",
                        DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->sri_pos,memory_order_seq_cst),
                        self->sri_begin,self->sri_end);
 }
-static DeeObject *_deesubrangeiterator_tp_repr(DeeSubRangeIteratorObject *self) {
+static DeeObject *DEE_CALL _deesubrangeiterator_tp_repr(DeeSubRangeIteratorObject *self) {
  return DeeString_Newf("subrange_iterator(%Iu,%Iu..%Iu,%k)",
                        DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->sri_pos,memory_order_seq_cst),
                        self->sri_begin,self->sri_end,self->sri_iter);
 }
-static int _deesubrangeiterator_tp_bool(DeeSubRangeIteratorObject *self) {
+static int DEE_CALL _deesubrangeiterator_tp_bool(DeeSubRangeIteratorObject *self) {
  return (Dee_size_t)DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->sri_pos,memory_order_seq_cst) < self->sri_end;
 }
-static DeeObject *_deesubrangeiterator_tp_not(DeeSubRangeIteratorObject *self) {
+static DeeObject *DEE_CALL _deesubrangeiterator_tp_not(DeeSubRangeIteratorObject *self) {
  DeeReturn_Bool((Dee_size_t)DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->sri_pos,memory_order_seq_cst) >= self->sri_end);
 }
-static int _deesubrangeiterator_tp_seq_iter_next(
+static int DEE_CALL _deesubrangeiterator_tp_seq_iter_next(
  DeeSubRangeIteratorObject *self, DeeObject **result) {
  int error; Dee_size_t myindex; while (1) {
   myindex = (Dee_size_t)DeeAtomicN_FetchInc(DEE_TYPES_SIZEOF_SIZE_T,self->sri_pos,memory_order_seq_cst);
@@ -470,7 +476,7 @@ static int _deesubrangeiterator_tp_seq_iter_next(
  return 0;
 }
 
-static DeeObject *_deesubrangeiterator_tp_cmp_lo(
+static DeeObject *DEE_CALL _deesubrangeiterator_tp_cmp_lo(
  DeeSubRangeIteratorObject *lhs, DeeSubRangeIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeSubRangeIterator_Type) != 0) return NULL;
@@ -481,7 +487,7 @@ static DeeObject *_deesubrangeiterator_tp_cmp_lo(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->sri_pos,memory_order_seq_cst) <
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->sri_pos,memory_order_seq_cst));
 }
-static DeeObject *_deesubrangeiterator_tp_cmp_le(
+static DeeObject *DEE_CALL _deesubrangeiterator_tp_cmp_le(
  DeeSubRangeIteratorObject *lhs, DeeSubRangeIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeSubRangeIterator_Type) != 0) return NULL;
@@ -492,7 +498,7 @@ static DeeObject *_deesubrangeiterator_tp_cmp_le(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->sri_pos,memory_order_seq_cst) <=
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->sri_pos,memory_order_seq_cst));
 }
-static DeeObject *_deesubrangeiterator_tp_cmp_eq(
+static DeeObject *DEE_CALL _deesubrangeiterator_tp_cmp_eq(
  DeeSubRangeIteratorObject *lhs, DeeSubRangeIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeSubRangeIterator_Type) != 0) return NULL;
@@ -501,7 +507,7 @@ static DeeObject *_deesubrangeiterator_tp_cmp_eq(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->sri_pos,memory_order_seq_cst) ==
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->sri_pos,memory_order_seq_cst));
 }
-static DeeObject *_deesubrangeiterator_tp_cmp_ne(
+static DeeObject *DEE_CALL _deesubrangeiterator_tp_cmp_ne(
  DeeSubRangeIteratorObject *lhs, DeeSubRangeIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeSubRangeIterator_Type) != 0) return NULL;
@@ -510,7 +516,7 @@ static DeeObject *_deesubrangeiterator_tp_cmp_ne(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->sri_pos,memory_order_seq_cst) !=
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->sri_pos,memory_order_seq_cst));
 }
-static DeeObject *_deesubrangeiterator_tp_cmp_gr(
+static DeeObject *DEE_CALL _deesubrangeiterator_tp_cmp_gr(
  DeeSubRangeIteratorObject *lhs, DeeSubRangeIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeSubRangeIterator_Type) != 0) return NULL;
@@ -521,7 +527,7 @@ static DeeObject *_deesubrangeiterator_tp_cmp_gr(
  DeeReturn_Bool(DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,lhs->sri_pos,memory_order_seq_cst) >
                 DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,rhs->sri_pos,memory_order_seq_cst));
 }
-static DeeObject *_deesubrangeiterator_tp_cmp_ge(
+static DeeObject *DEE_CALL _deesubrangeiterator_tp_cmp_ge(
  DeeSubRangeIteratorObject *lhs, DeeSubRangeIteratorObject *rhs) {
  int temp;
  if (DeeObject_InplaceGetInstance(&rhs,&DeeSubRangeIterator_Type) != 0) return NULL;
@@ -737,14 +743,14 @@ DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeEnumIteratorObject) *DeeEnumIterator_N
  return (DeeObject *)result;
 }
 
-static int _deeenumiterator_tp_copy_ctor(
+static int DEE_CALL _deeenumiterator_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeEnumIteratorObject *self,
  DeeEnumIteratorObject *right) {
  self->ei_index = (Dee_size_t)DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,right->ei_index,memory_order_seq_cst);
  Dee_INCREF(self->ei_iterator = right->ei_iterator);
  return 0;
 }
-static int _deeenumiterator_tp_any_ctor(
+static int DEE_CALL _deeenumiterator_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeEnumIteratorObject *self, DeeObject *args) {
  DeeObject *index,*iter = NULL;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:enumiterator",&index,&iter) != 0) return -1;
@@ -758,28 +764,28 @@ static int _deeenumiterator_tp_any_ctor(
  return 0;
 }
 
-static void _deeenumiterator_tp_dtor(DeeEnumIteratorObject *self) { Dee_DECREF(self->ei_iterator); }
+static void DEE_CALL _deeenumiterator_tp_dtor(DeeEnumIteratorObject *self) { Dee_DECREF(self->ei_iterator); }
 DEE_VISIT_PROC(_deeenumiterator_tp_visit,DeeEnumIteratorObject *self) { Dee_VISIT(self->ei_iterator); }
 static DeeObject *_deeenumiterator_tp_str(DeeEnumIteratorObject *self) {
  return DeeString_Newf("<enum_iterator -> %Iu,%k>",
                        (Dee_size_t)DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->ei_index,memory_order_seq_cst),
                        self->ei_iterator);
 }
-static DeeObject *_deeenumiterator_tp_repr(DeeEnumIteratorObject *self) {
+static DeeObject *DEE_CALL _deeenumiterator_tp_repr(DeeEnumIteratorObject *self) {
  return DeeString_Newf("enum_iterator(%Iu,%r)",
                        (Dee_size_t)DeeAtomicN_Load(DEE_TYPES_SIZEOF_SIZE_T,self->ei_index,memory_order_seq_cst),
                        self->ei_iterator);
 }
-static int _deeenumiterator_tp_bool(DeeEnumIteratorObject *self) { return DeeObject_Bool(self->ei_iterator); }
-static DeeObject *_deeenumiterator_tp_not(DeeEnumIteratorObject *self) { return DeeObject_Not(self->ei_iterator); }
-static DeeObject *_deeenumiterator_tp_cmp_lo(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareLoObject(self->ei_iterator,right->ei_iterator); }
-static DeeObject *_deeenumiterator_tp_cmp_le(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareLeObject(self->ei_iterator,right->ei_iterator); }
-static DeeObject *_deeenumiterator_tp_cmp_eq(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareEqObject(self->ei_iterator,right->ei_iterator); }
-static DeeObject *_deeenumiterator_tp_cmp_ne(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareNeObject(self->ei_iterator,right->ei_iterator); }
-static DeeObject *_deeenumiterator_tp_cmp_gr(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareGrObject(self->ei_iterator,right->ei_iterator); }
-static DeeObject *_deeenumiterator_tp_cmp_ge(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareGeObject(self->ei_iterator,right->ei_iterator); }
+static int DEE_CALL _deeenumiterator_tp_bool(DeeEnumIteratorObject *self) { return DeeObject_Bool(self->ei_iterator); }
+static DeeObject *DEE_CALL _deeenumiterator_tp_not(DeeEnumIteratorObject *self) { return DeeObject_Not(self->ei_iterator); }
+static DeeObject *DEE_CALL _deeenumiterator_tp_cmp_lo(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareLoObject(self->ei_iterator,right->ei_iterator); }
+static DeeObject *DEE_CALL _deeenumiterator_tp_cmp_le(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareLeObject(self->ei_iterator,right->ei_iterator); }
+static DeeObject *DEE_CALL _deeenumiterator_tp_cmp_eq(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareEqObject(self->ei_iterator,right->ei_iterator); }
+static DeeObject *DEE_CALL _deeenumiterator_tp_cmp_ne(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareNeObject(self->ei_iterator,right->ei_iterator); }
+static DeeObject *DEE_CALL _deeenumiterator_tp_cmp_gr(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareGrObject(self->ei_iterator,right->ei_iterator); }
+static DeeObject *DEE_CALL _deeenumiterator_tp_cmp_ge(DeeEnumIteratorObject *self, DeeEnumIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeEnumIterator_Type) != 0) return NULL; return DeeObject_CompareGeObject(self->ei_iterator,right->ei_iterator); }
 
-static int _deeenumiterator_tp_seq_iter_next(DeeEnumIteratorObject *self, DeeObject **result) {
+static int DEE_CALL _deeenumiterator_tp_seq_iter_next(DeeEnumIteratorObject *self, DeeObject **result) {
  Dee_size_t result_index; int error; DeeObject *index_object,*result_elem;
  result_index = (Dee_size_t)DeeAtomicN_FetchInc(DEE_TYPES_SIZEOF_SIZE_T,self->ei_index,memory_order_seq_cst);
  if DEE_UNLIKELY((error = DeeObject_IterNextEx(self->ei_iterator,&result_elem)) != 0) return error; // Error or iterator end

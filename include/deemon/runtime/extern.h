@@ -44,20 +44,6 @@ DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 DEE_OBJECT_DEF(DeeSharedLibObject);
 DEE_OBJECT_DEF(DeeExternFunctionObject);
 
-#ifdef DEE_LIMITED_API
-struct DeeSharedLibObject {
- DEE_OBJECT_HEAD
-#ifndef DEE_PLATFORM_WINDOWS
- // On windows we can use 'DeeFS_Win32GetModuleName' instead of this
- DEE_A_REF DeeAnyStringObject *sl_name;   /*< [1..1] Name of the shared library. */
-#endif
- void                         *sl_handle; /*< [?..?] System-specific shared library handle. */
-};
-#define DeeSharedLib_HANDLE(ob)   ((DeeSharedLibObject *)Dee_REQUIRES_POINTER(ob))->sl_handle
-#else
-#define DeeSharedLib_HANDLE(ob)     DeeSharedLib_Handle((DeeObject *)Dee_REQUIRES_POINTER(ob))
-#endif
-
 #define DeeSharedLib_Check(ob)      DeeObject_InstanceOf(ob,&DeeSharedLib_Type)
 #define DeeSharedLib_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeSharedLib_Type)
 DEE_DATA_DECL(DeeTypeObject) DeeSharedLib_Type;

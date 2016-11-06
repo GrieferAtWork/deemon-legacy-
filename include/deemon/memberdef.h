@@ -23,8 +23,7 @@
 
 #include <deemon/__conf.inl>
 
-#ifdef DEE_LIMITED_API
-#include <deemon/object.h>
+#ifdef DEE_LIMITED_DEX
 #include <deemon/__typecompatible.inl>
 #endif
 
@@ -43,6 +42,14 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 #ifdef DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 #undef DEE_PRIVATE_DECL_DEE_TYPEOBJECT
+#endif
+#ifdef DEE_PRIVATE_DECL_DEE_MEMBERFUNCTION
+DEE_PRIVATE_DECL_DEE_MEMBERFUNCTION
+#undef DEE_PRIVATE_DECL_DEE_MEMBERFUNCTION
+#endif
+#ifdef DEE_PRIVATE_DECL_DEE_STRUCTURED_MEMBERFUNCTION
+DEE_PRIVATE_DECL_DEE_STRUCTURED_MEMBERFUNCTION
+#undef DEE_PRIVATE_DECL_DEE_STRUCTURED_MEMBERFUNCTION
 #endif
 
 struct DeeMemberDef;
@@ -302,7 +309,7 @@ enum{
 
 //////////////////////////////////////////////////////////////////////////
 // Public v100 interface for getset defs
-#ifdef DEE_LIMITED_API
+#ifdef DEE_LIMITED_DEX
 #define DEE_GETSETDEF_v100(name,get,del,set,doc)                              {name,Dee_DOCSTRING(doc),NULL,DEE_GETSETDEF_FLAG_NONE,DEE_REQUIRE_TYPECOMPATIBLE(_DeeGetSetDef_Getter,DEE_TYPEMEMBER(get,NULL)),DEE_REQUIRE_TYPECOMPATIBLE(_DeeGetSetDef_Delter,DEE_TYPEMEMBER(del,NULL)),DEE_REQUIRE_TYPECOMPATIBLE(_DeeGetSetDef_Setter,DEE_TYPEMEMBER(set,NULL))}
 #define DEE_GETSETDEF_CONST_v100(name,get,del,set,doc)                        {name,Dee_DOCSTRING(doc),NULL,DEE_GETSETDEF_FLAG_CONST,DEE_REQUIRE_TYPECOMPATIBLE(_DeeGetSetDef_Getter,DEE_TYPEMEMBER(get,NULL)),DEE_REQUIRE_TYPECOMPATIBLE(_DeeGetSetDef_Delter,DEE_TYPEMEMBER(del,NULL)),DEE_REQUIRE_TYPECOMPATIBLE(_DeeGetSetDef_Setter,DEE_TYPEMEMBER(set,NULL))}
 #define DEE_GETSETDEF_CLOSURE_v100(name,get,del,set,closure,doc)              {name,Dee_DOCSTRING(doc),closure,DEE_GETSETDEF_FLAG_NONE,DEE_REQUIRE_TYPECOMPATIBLE(_DeeGetSetDef_Getter,DEE_TYPEMEMBER(get,NULL)),DEE_REQUIRE_TYPECOMPATIBLE(_DeeGetSetDef_Delter,DEE_TYPEMEMBER(del,NULL)),DEE_REQUIRE_TYPECOMPATIBLE(_DeeGetSetDef_Setter,DEE_TYPEMEMBER(set,NULL))}
@@ -332,7 +339,7 @@ enum{
 #define DEE_METHODDEF_CLOSURE_v100(name,func,closure,doc)              {name,Dee_DOCSTRING(doc),closure,DEE_METHODDEF_FLAG_NONE,DEE_REQUIRE_TYPECOMPATIBLE(DeeMemberFunction,DEE_TYPEMEMBER(func,NULL))}
 #define DEE_METHODDEF_CONST_CLOSURE_v100(name,func,closure,doc)        {name,Dee_DOCSTRING(doc),closure,DEE_METHODDEF_FLAG_CONST,DEE_REQUIRE_TYPECOMPATIBLE(DeeMemberFunction,DEE_TYPEMEMBER(func,NULL))}
 #define DEE_METHODDEF_FULL_v100(name,doc,closure,flags,func)           {name,Dee_DOCSTRING(doc),closure,flags,func}
-#ifdef DEE_LIMITED_API
+#ifdef DEE_LIMITED_DEX
 #define DEE_METHODDEF_STRUCT_v100(name,func,doc)                       {name,Dee_DOCSTRING(doc),NULL,DEE_METHODDEF_FLAG_STRUCT,(DeeMemberFunction)DEE_REQUIRE_TYPECOMPATIBLE(DeeStructuredMemberFunction,DEE_TYPEMEMBER(func,NULL))}
 #define DEE_METHODDEF_CONST_STRUCT_v100(name,func,doc)                 {name,Dee_DOCSTRING(doc),NULL,DEE_METHODDEF_FLAG_CONST|DEE_METHODDEF_FLAG_STRUCT,(DeeMemberFunction)DEE_REQUIRE_TYPECOMPATIBLE(DeeStructuredMemberFunction,DEE_TYPEMEMBER(func,NULL))}
 #define DEE_METHODDEF_STRUCT_CLOSURE_v100(name,func,closure,doc)       {name,Dee_DOCSTRING(doc),closure,DEE_METHODDEF_FLAG_STRUCT,(DeeMemberFunction)DEE_REQUIRE_TYPECOMPATIBLE(DeeStructuredMemberFunction,DEE_TYPEMEMBER(func,NULL))}

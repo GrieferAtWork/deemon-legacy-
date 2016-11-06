@@ -221,7 +221,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 #ifdef DEE_LIMITED_API
 extern DEE_A_RET_EXCEPT(-1) int _DeeDex_InitApi(void);
-extern void _DeeDex_CleanupApi(void);
+extern void _DeeDex_ShutdownApi(void);
 extern void _DeeDex_QuitApi(void);
 #endif
 
@@ -233,16 +233,19 @@ DEE_DATA_DECL(DeeTypeObject) DeeDexModule_Type;
 struct DeeListObject;
 //////////////////////////////////////////////////////////////////////////
 // Get/Set the search path for extension modules.
-// Note, that the path may include DEE_FS_DELIM characters to form a list of multiple paths
-DEE_DATA_DECL(struct DeeListObject) _DeeDex_SearchPath;
+// Modifications to this list are mirrored immediately and system-wide.
+//  -> With lists already doing their own synchronization, you can simply
+//     use functions like DeeList_Append to add a new search path.
+//  -> Assign the return value of 'DeeDex_GetDefaultSearchPath' to restore the default.
 #define DeeDex_SearchPath  ((DeeObject *)&_DeeDex_SearchPath)
+DEE_DATA_DECL(struct DeeListObject) _DeeDex_SearchPath;
+
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *) DeeDex_GetDefaultSearchPath(void);
 
-#define DEEDEX_SEARCHORDER_MAXSIZE 16
-#define DEEDEX_SEARCHORDER_VERPATH "V" /*< Search the version-dependent dex path ("/usr/lib/deemon/dex.%d" % DEE_VERSION_API) Ignored on windows. */
+#define DEEDEX_SEARCHORDER_VERPATH "V" /*< Search the version-dependent dex path ("/usr/lib/deemon/dex.%d" % DEE_VERSION_API). Ignored on windows. */
 #define DEEDEX_SEARCHORDER_DEXPATH "D" /*< Search the dex search path (DeeDex_SearchPath). */
-#define DEEDEX_SEARCHORDER_CWDPATH "C" /*< Search the current working directory for a dex (fs::getcwd()). */
-#define DEEDEX_SEARCHORDER_EXEPATH "X" /*< Search the exe's directory for a dex (fs::path::head(fs::readlink("/proc/self/exe"))). */
+#define DEEDEX_SEARCHORDER_CWDPATH "C" /*< Search the current working directory (fs::getcwd()). */
+#define DEEDEX_SEARCHORDER_EXEPATH "X" /*< Search the hosting exe's directory (fs::path::head(fs::readlink("/proc/self/exe"))). */
 #define DEEDEX_SEARCHORDER_SYSPATH "P" /*< Search the system's $PATH for extension files (fs::getenv("PATH").split(fs::path::DELIM)). */
 
 //////////////////////////////////////////////////////////////////////////
@@ -262,9 +265,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *) DeeDex_Ge
 // Stores the current dex search order in 'order[0..s-1]' (including the terminating \0 character)
 // Won't write more than 's' characters and always returns the of bytes
 // that would have been required/sufficient to fully store the current order.
-// NOTE: The function will never fail if the supplied buffer is at least 'DEEDEX_SEARCHORDER_MAXSIZE'
-//       bytes long, including the terminating \0 character; aka. when 's == DEEDEX_SEARCHORDER_MAXSIZE'
-//      (I know that technically 6 bytes are enough right now, but I might need more in the future)
+// - Returns an empty string if the dex isn't initialized.
 DEE_FUNC_DECL(Dee_size_t) DeeDex_GetSearchMode(DEE_A_OUT_W(s) char *order, Dee_size_t s);
 
 //////////////////////////////////////////////////////////////////////////
@@ -274,8 +275,11 @@ DEE_FUNC_DECL(Dee_size_t) DeeDex_GetSearchMode(DEE_A_OUT_W(s) char *order, Dee_s
 // - If an invalid order is encountered, or any given tag was
 //   already used, an Error.ValueError is thrown and the call fails
 //   without changing the previously configured search order.
-// - If 'order' is NULL; the default serach path is restored.
-DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeDex_SetSearchOrder(DEE_A_IN_Z_OPT char const *order);
+// - If 'order' is NULL, the default search path is restored.
+// - When the dex isn't initialized, this function is a no-op, returning
+//   1, with the internal search order always being set to an empty string.
+//  (Thus preventing new modules from being loaded when not initialized.)
+DEE_FUNC_DECL(DEE_A_RET_EXCEPT_FAIL(-1,1) int) DeeDex_SetSearchOrder(DEE_A_IN_Z_OPT char const *order);
 
 
 
@@ -283,7 +287,7 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeDex_SetSearchOrder(DEE_A_IN_Z_OPT cha
 // Lookup a given dex module
 // >> '__builtin_dex("_zlib")' -> 'DeeDex_Open("_zlib")'
 // Throws an 'Error.AttributeError' if the dex wasn't found
-// NOTE: On windows, dex names are convered to lowercase
+// NOTE: On windows, dex names are converted to lowercase
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeDexModuleObject) *)
  DeeDex_Open(DEE_A_IN_Z char const *name) DEE_ATTRIBUTE_NONNULL((1));
 
@@ -402,9 +406,9 @@ extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeDex_BroadcastEnvUpdate(
 
 
 #ifdef DEE_LIMITED_API
-extern DeeObject *_deedexmodule_tp_attr_get(DeeDexModuleObject *self, DeeObject *attr);
-extern int _deedexmodule_tp_attr_del(DeeDexModuleObject *self, DeeObject *attr);
-extern int _deedexmodule_tp_attr_set(DeeDexModuleObject *self, DeeObject *attr, DeeObject *v);
+extern DeeObject *DEE_CALL _deedexmodule_tp_attr_get(DeeDexModuleObject *self, DeeObject *attr);
+extern int DEE_CALL _deedexmodule_tp_attr_del(DeeDexModuleObject *self, DeeObject *attr);
+extern int DEE_CALL _deedexmodule_tp_attr_set(DeeDexModuleObject *self, DeeObject *attr, DeeObject *v);
 #elif defined(DEE_LIMITED_DEX)
 #define _deedexmodule_tp_attr_get  (*DeeType_GET_SLOT(&DeeDexModule_Type,tp_attr_get))
 #define _deedexmodule_tp_attr_del  (*DeeType_GET_SLOT(&DeeDexModule_Type,tp_attr_del))
@@ -439,7 +443,7 @@ struct DeeDexContext_Finalize {
  DEE_DEX_CONTEXT_HEAD
 #define DEE_DEXCONTEXT_FINALIZE_REASON_UNSPEC     DEE_UINT32_C(0x00000000)
 #define DEE_DEXCONTEXT_FINALIZE_REASON_DESTROY    DEE_UINT32_C(0x00000001)
-#define DEE_DEXCONTEXT_FINALIZE_REASON_CLEAR      DEE_UINT32_C(0x00000002)
+#define DEE_DEXCONTEXT_FINALIZE_REASON_SHUTDOWN   DEE_UINT32_C(0x00000002)
 #define DEE_DEXCONTEXT_FINALIZE_REASON_USERREQ    DEE_UINT32_C(0x00000003)
 #define DEE_DEXCONTEXT_FINALIZE_REASON_KIND_MASK  DEE_UINT32_C(0x000000FF)
 #define DEE_DEXCONTEXT_FINALIZE_REASON_FLAGS_MASK DEE_UINT32_C(0xFFFFFF00)

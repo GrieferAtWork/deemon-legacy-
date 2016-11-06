@@ -3191,7 +3191,7 @@ DeeSocket_OptNameToString(DEE_A_IN int optname) {
 
 //////////////////////////////////////////////////////////////////////////
 // Socket VTable
-static int _deesocket_tp_any_ctor(
+static int DEE_CALL _deesocket_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeSocketObject *self, DeeObject *args) {
  DeeObject *protocol = NULL;
  int sock_af,sock_type,sock_protocol;
@@ -3202,11 +3202,11 @@ static int _deesocket_tp_any_ctor(
  } else sock_protocol = 0;
  return DeeSocket_Init(self,sock_af,sock_type,sock_protocol);
 }
-static void _deesocket_tp_dtor(DeeSocketObject *self) {
+static void DEE_CALL _deesocket_tp_dtor(DeeSocketObject *self) {
  DeeSocket_Close((DeeObject *)self);
  Dee_WEAKXDECREF(self->s_file);
 }
-static int _deesocket_tp_move_ctor(
+static int DEE_CALL _deesocket_tp_move_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeSocketObject *self, DeeSocketObject *right) {
  self->s_type = right->s_type;
@@ -3226,13 +3226,13 @@ static int _deesocket_tp_move_ctor(
   DeeThread_SleepNoInterrupt(1);
  return 0;
 }
-static int _deesocket_tp_bool(DeeSocketObject *self) {
+static int DEE_CALL _deesocket_tp_bool(DeeSocketObject *self) {
  return !DeeSocket_IsClosed((DeeObject *)self);
 }
-static DeeObject *_deesocket_tp_not(DeeSocketObject *self) {
+static DeeObject *DEE_CALL _deesocket_tp_not(DeeSocketObject *self) {
  DeeReturn_Bool(DeeSocket_IsClosed((DeeObject *)self));
 }
-static DeeObject *_deesocket_tp_cmp_lo(
+static DeeObject *DEE_CALL _deesocket_tp_cmp_lo(
  DeeSocketObject *lhs, DeeSocketObject *rhs) {
  sock_t hlhs,hrhs;
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,&DeeSocket_Type) != 0) return NULL;
@@ -3240,7 +3240,7 @@ static DeeObject *_deesocket_tp_cmp_lo(
  DeeSocket_ACQUIRE(rhs); hrhs = rhs->s_socket; DeeSocket_RELEASE(rhs);
  DeeReturn_Bool(hlhs < hrhs);
 }
-static DeeObject *_deesocket_tp_cmp_le(
+static DeeObject *DEE_CALL _deesocket_tp_cmp_le(
  DeeSocketObject *lhs, DeeSocketObject *rhs) {
  sock_t hlhs,hrhs;
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,&DeeSocket_Type) != 0) return NULL;
@@ -3248,7 +3248,7 @@ static DeeObject *_deesocket_tp_cmp_le(
  DeeSocket_ACQUIRE(rhs); hrhs = rhs->s_socket; DeeSocket_RELEASE(rhs);
  DeeReturn_Bool(hlhs <= hrhs);
 }
-static DeeObject *_deesocket_tp_cmp_eq(
+static DeeObject *DEE_CALL _deesocket_tp_cmp_eq(
  DeeSocketObject *lhs, DeeSocketObject *rhs) {
  sock_t hlhs,hrhs;
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,&DeeSocket_Type) != 0) return NULL;
@@ -3256,7 +3256,7 @@ static DeeObject *_deesocket_tp_cmp_eq(
  DeeSocket_ACQUIRE(rhs); hrhs = rhs->s_socket; DeeSocket_RELEASE(rhs);
  DeeReturn_Bool(hlhs == hrhs);
 }
-static DeeObject *_deesocket_tp_cmp_ne(
+static DeeObject *DEE_CALL _deesocket_tp_cmp_ne(
  DeeSocketObject *lhs, DeeSocketObject *rhs) {
  sock_t hlhs,hrhs;
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,&DeeSocket_Type) != 0) return NULL;
@@ -3264,7 +3264,7 @@ static DeeObject *_deesocket_tp_cmp_ne(
  DeeSocket_ACQUIRE(rhs); hrhs = rhs->s_socket; DeeSocket_RELEASE(rhs);
  DeeReturn_Bool(hlhs != hrhs);
 }
-static DeeObject *_deesocket_tp_cmp_gr(
+static DeeObject *DEE_CALL _deesocket_tp_cmp_gr(
  DeeSocketObject *lhs, DeeSocketObject *rhs) {
  sock_t hlhs,hrhs;
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,&DeeSocket_Type) != 0) return NULL;
@@ -3272,7 +3272,7 @@ static DeeObject *_deesocket_tp_cmp_gr(
  DeeSocket_ACQUIRE(rhs); hrhs = rhs->s_socket; DeeSocket_RELEASE(rhs);
  DeeReturn_Bool(hlhs > hrhs);
 }
-static DeeObject *_deesocket_tp_cmp_ge(
+static DeeObject *DEE_CALL _deesocket_tp_cmp_ge(
  DeeSocketObject *lhs, DeeSocketObject *rhs) {
  sock_t hlhs,hrhs;
  if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&rhs,&DeeSocket_Type) != 0) return NULL;
@@ -3281,7 +3281,7 @@ static DeeObject *_deesocket_tp_cmp_ge(
  DeeReturn_Bool(hlhs >= hrhs);
 }
 DeeString_NEW_STATIC(_closed_socket_str,"<socket [CLOSED]>");
-static DeeObject *_deesocket_tp_str(DeeSocketObject *self) {
+static DeeObject *DEE_CALL _deesocket_tp_str(DeeSocketObject *self) {
  struct DeeSockAddr sockaddr,peeraddr;
  int hassock,haspeer; sock_t sock; Dee_uint16_t flags;
  hassock = !DeeSocket_TryGetSockAddr((DeeObject *)self,&sockaddr);
@@ -3305,7 +3305,7 @@ static DeeObject *_deesocket_tp_str(DeeSocketObject *self) {
   DeeReturn_NEWREF((DeeObject *)&_closed_socket_str);
  return DeeString_Newf("<socket " DeeSocket_PRINTF ">",sock);
 }
-static DeeObject *_deesocket_tp_repr(DeeSocketObject *self) {
+static DeeObject *DEE_CALL _deesocket_tp_repr(DeeSocketObject *self) {
  static char const _text_closed[] = "|CLOSED";
  static char const _text_bound[] = "|BOUND";
  static char const _text_binding[] = "|BINDING";
@@ -3356,76 +3356,76 @@ static DeeObject *_deesocket_tp_repr(DeeSocketObject *self) {
  return DeeString_Newf("<socket[%s] " DeeSocket_PRINTF ">",buffer+1,sock);
 }
 
-static DeeObject *_deesocket_is_bound(
+static DeeObject *DEE_CALL _deesocket_is_bound(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":is_bound") != 0) return NULL;
  DeeReturn_Bool(DeeSocket_IsBound((DeeObject *)self));
 }
-static DeeObject *_deesocket_is_binding(
+static DeeObject *DEE_CALL _deesocket_is_binding(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":is_binding") != 0) return NULL;
  DeeReturn_Bool(DeeSocket_IsBinding((DeeObject *)self));
 }
-static DeeObject *_deesocket_is_connected(
+static DeeObject *DEE_CALL _deesocket_is_connected(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":is_connected") != 0) return NULL;
  DeeReturn_Bool(DeeSocket_IsConnected((DeeObject *)self));
 }
-static DeeObject *_deesocket_is_connecting(
+static DeeObject *DEE_CALL _deesocket_is_connecting(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":is_connecting") != 0) return NULL;
  DeeReturn_Bool(DeeSocket_IsConnecting((DeeObject *)self));
 }
-static DeeObject *_deesocket_is_listening(
+static DeeObject *DEE_CALL _deesocket_is_listening(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":is_listening") != 0) return NULL;
  DeeReturn_Bool(DeeSocket_IsListening((DeeObject *)self));
 }
-static DeeObject *_deesocket_is_listenstarting(
+static DeeObject *DEE_CALL _deesocket_is_listenstarting(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":is_listenstarting") != 0) return NULL;
  DeeReturn_Bool(DeeSocket_IsListenStarting((DeeObject *)self));
 }
-static DeeObject *_deesocket_is_shutdown(
+static DeeObject *DEE_CALL _deesocket_is_shutdown(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":is_shutdown") != 0) return NULL;
  DeeReturn_Bool(DeeSocket_IsShutDown((DeeObject *)self));
 }
-static DeeObject *_deesocket_is_shuttingdown(
+static DeeObject *DEE_CALL _deesocket_is_shuttingdown(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":is_shuttingdown") != 0) return NULL;
  DeeReturn_Bool(DeeSocket_IsShuttingDown((DeeObject *)self));
 }
-static DeeObject *_deesocket_is_closed(
+static DeeObject *DEE_CALL _deesocket_is_closed(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":is_closed") != 0) return NULL;
  DeeReturn_Bool(DeeSocket_IsClosed((DeeObject *)self));
 }
-static DeeObject *_deesocket_shutdown(
+static DeeObject *DEE_CALL _deesocket_shutdown(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int result,how = SHUT_RDWR;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|d:shutdown") != 0) return NULL;
  if DEE_UNLIKELY((result = DeeSocket_Shutdown((DeeObject *)self,how)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deesocket_close(
+static DeeObject *DEE_CALL _deesocket_close(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":close") != 0) return NULL;
  DeeSocket_Close((DeeObject *)self);
  DeeReturn_None;
 }
-static DeeObject *_deesocket_flags(
+static DeeObject *DEE_CALL _deesocket_flags(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":flags") != 0) return NULL;
  return DeeObject_New(Dee_uint16_t,DeeSocket_Flags((DeeObject *)self));
 }
-static DeeObject *_deesocket_getsockopt(
+static DeeObject *DEE_CALL _deesocket_getsockopt(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int sock_level,sock_optname;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"dd:getsockopt",&sock_level,&sock_optname) != 0) return NULL;
  return DeeSocket_GetSockOpt((DeeObject *)self,sock_level,sock_optname);
 }
-static DeeObject *_deesocket_setsockopt(
+static DeeObject *DEE_CALL _deesocket_setsockopt(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int sock_level,sock_optname;
  if DEE_UNLIKELY(DeeTuple_SIZE(args) < 2) {
@@ -3439,7 +3439,7 @@ static DeeObject *_deesocket_setsockopt(
  DeeReturn_None;
 }
 
-static DeeObject *_deesocket_bind(
+static DeeObject *DEE_CALL _deesocket_bind(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  struct DeeSockAddr addr; int result;
  if DEE_UNLIKELY(DeeSockAddr_InitFromArgv(&addr,
@@ -3448,7 +3448,7 @@ static DeeObject *_deesocket_bind(
  if DEE_UNLIKELY((result = DeeSocket_Bind((DeeObject *)self,&addr)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deesocket_connect(
+static DeeObject *DEE_CALL _deesocket_connect(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  struct DeeSockAddr addr; int result;
  if DEE_UNLIKELY(DeeSockAddr_InitFromArgv(&addr,
@@ -3457,33 +3457,33 @@ static DeeObject *_deesocket_connect(
  if DEE_UNLIKELY((result = DeeSocket_Connect((DeeObject *)self,&addr)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deesocket_listen(
+static DeeObject *DEE_CALL _deesocket_listen(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int result,max_backlog = DEE_SOCKET_MAXBACKLOG_DEFAULT;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|d:listen",&max_backlog) != 0) return NULL;
  if DEE_UNLIKELY((result = DeeSocket_ListenEx((DeeObject *)self,max_backlog)) < 0) return NULL;
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deesocket_accept(
+static DeeObject *DEE_CALL _deesocket_accept(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":accept") != 0) return NULL;
  return DeeSocket_Accept((DeeObject *)self);
 }
-static DeeObject *_deesocket_try_accept(
+static DeeObject *DEE_CALL _deesocket_try_accept(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *socket; int success;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":try_accept") != 0) return NULL;
  if DEE_UNLIKELY((success = DeeSocket_TryAcceptEx((DeeObject *)self,&socket)) < 0) return NULL;
  return success == 0 ? socket : DeeNone_New();
 }
-static DeeObject *_deesocket_accept_timed(
+static DeeObject *DEE_CALL _deesocket_accept_timed(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *socket; int success; unsigned int n_msecs;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"u:accept_timed",&n_msecs) != 0) return NULL;
  if DEE_UNLIKELY((success = DeeSocket_AcceptTimedEx((DeeObject *)self,n_msecs,&socket)) < 0) return NULL;
  return success == 0 ? socket : DeeNone_New();
 }
-static DeeObject *_deesocket_recv(
+static DeeObject *DEE_CALL _deesocket_recv(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t max_read; DeeObject *data = NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
@@ -3505,7 +3505,7 @@ static DeeObject *_deesocket_recv(
  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,data,&max_read) != 0) return NULL;
  return DeeSocket_RecvData((DeeObject *)self,max_read);
 }
-static DeeObject *_deesocket_recv_ex(
+static DeeObject *DEE_CALL _deesocket_recv_ex(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t max_read; int flags;
  DeeObject *a,*b = NULL;
@@ -3533,7 +3533,7 @@ static DeeObject *_deesocket_recv_ex(
  if DEE_UNLIKELY(DeeObject_Cast(int,b,&flags) != 0) return NULL;
  return DeeSocket_RecvDataEx((DeeObject *)self,max_read,flags);
 }
-static DeeObject *_deesocket_recvall(
+static DeeObject *DEE_CALL _deesocket_recvall(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t max_read; DeeObject *data = NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
@@ -3555,7 +3555,7 @@ static DeeObject *_deesocket_recvall(
  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,data,&max_read) != 0) return NULL;
  return DeeSocket_RecvAllData((DeeObject *)self,max_read);
 }
-static DeeObject *_deesocket_recvall_ex(
+static DeeObject *DEE_CALL _deesocket_recvall_ex(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t max_read; int flags;
  DeeObject *a,*b = NULL;
@@ -3583,7 +3583,7 @@ static DeeObject *_deesocket_recvall_ex(
  if DEE_UNLIKELY(DeeObject_Cast(int,b,&flags) != 0) return NULL;
  return DeeSocket_RecvAllDataEx((DeeObject *)self,max_read,flags);
 }
-static DeeObject *_deesocket_maybe_recv(
+static DeeObject *DEE_CALL _deesocket_maybe_recv(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t max_read; DeeObject *data = NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
@@ -3605,7 +3605,7 @@ static DeeObject *_deesocket_maybe_recv(
  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,data,&max_read) != 0) return NULL;
  return DeeSocket_RecvData((DeeObject *)self,max_read);
 }
-static DeeObject *_deesocket_maybe_recv_ex(
+static DeeObject *DEE_CALL _deesocket_maybe_recv_ex(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t max_read; int flags;
  DeeObject *a,*b = NULL;
@@ -3633,7 +3633,7 @@ static DeeObject *_deesocket_maybe_recv_ex(
  if DEE_UNLIKELY(DeeObject_Cast(int,b,&flags) != 0) return NULL;
  return DeeSocket_RecvDataEx((DeeObject *)self,max_read,flags);
 }
-static DeeObject *_deesocket_send(
+static DeeObject *DEE_CALL _deesocket_send(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *data;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
@@ -3654,7 +3654,7 @@ static DeeObject *_deesocket_send(
  if DEE_UNLIKELY(DeeSocket_SendAll((DeeObject *)self,DeeString_STR(data),DeeString_SIZE(data)) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deesocket_send_ex(
+static DeeObject *DEE_CALL _deesocket_send_ex(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int flags; DeeObject *a,*b;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
@@ -3677,7 +3677,7 @@ static DeeObject *_deesocket_send_ex(
  if DEE_UNLIKELY(DeeSocket_SendAllEx((DeeObject *)self,DeeString_STR(a),DeeString_SIZE(a),flags) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deesocket_maybe_send(
+static DeeObject *DEE_CALL _deesocket_maybe_send(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t result;
  DeeObject *data;
@@ -3699,7 +3699,7 @@ static DeeObject *_deesocket_maybe_send(
  if DEE_UNLIKELY(DeeSocket_Send((DeeObject *)self,DeeString_STR(data),DeeString_SIZE(data),&result) != 0) return NULL;
  return DeeObject_New(Dee_size_t,result);
 }
-static DeeObject *_deesocket_maybe_send_ex(
+static DeeObject *DEE_CALL _deesocket_maybe_send_ex(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int flags; Dee_size_t result;
  DeeObject *a,*b;
@@ -3723,7 +3723,7 @@ static DeeObject *_deesocket_maybe_send_ex(
  if DEE_UNLIKELY(DeeSocket_SendEx((DeeObject *)self,DeeString_STR(a),DeeString_SIZE(a),&result,flags) != 0) return NULL;
  return DeeObject_New(Dee_size_t,result);
 }
-static DeeObject *_deesocket_sendto(
+static DeeObject *DEE_CALL _deesocket_sendto(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  void *p; Dee_size_t argc,s,ws; DeeObject **argv,*arg;
  struct DeeSockAddr addr;
@@ -3753,7 +3753,7 @@ static DeeObject *_deesocket_sendto(
  }
  DeeReturn_None;
 }
-static DeeObject *_deesocket_sendto_ex(
+static DeeObject *DEE_CALL _deesocket_sendto_ex(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  void *p; Dee_size_t argc,s,ws; DeeObject **argv,*arg;
  struct DeeSockAddr addr; int flags;
@@ -3784,7 +3784,7 @@ static DeeObject *_deesocket_sendto_ex(
  }
  DeeReturn_None;
 }
-static DeeObject *_deesocket_maybe_sendto(
+static DeeObject *DEE_CALL _deesocket_maybe_sendto(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  void *p; Dee_size_t argc,s,ws; DeeObject **argv,*arg;
  struct DeeSockAddr addr;
@@ -3810,7 +3810,7 @@ static DeeObject *_deesocket_maybe_sendto(
  if DEE_UNLIKELY(DeeSocket_SendTo((DeeObject *)self,p,s,&ws,&addr) != 0) return NULL;
  return DeeObject_New(Dee_size_t,ws);
 }
-static DeeObject *_deesocket_maybe_sendto_ex(
+static DeeObject *DEE_CALL _deesocket_maybe_sendto_ex(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  void *p; Dee_size_t argc,s,ws; DeeObject **argv,*arg;
  struct DeeSockAddr addr; int flags;
@@ -3838,7 +3838,7 @@ static DeeObject *_deesocket_maybe_sendto_ex(
  return DeeObject_New(Dee_size_t,ws);
 }
 
-static DeeObject *_deesocket_recvfrom(
+static DeeObject *DEE_CALL _deesocket_recvfrom(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeSockAddrObject *addr; Dee_size_t max_read;
  DeeObject *result_data,*data = NULL;
@@ -3871,7 +3871,7 @@ err_addr:
  }
  return Dee_BuildValue("(OO)",addr,result_data);
 }
-static DeeObject *_deesocket_recvfrom_ex(
+static DeeObject *DEE_CALL _deesocket_recvfrom_ex(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeSockAddrObject *addr; Dee_size_t max_read;
  int flags; DeeObject *result_data,*a,*b = NULL;
@@ -3909,44 +3909,44 @@ err_addr:
  }
  return Dee_BuildValue("(OO)",addr,result_data);
 }
-static DeeSockAddrObject *_deesocket_sockaddr_get(DeeSocketObject *self, void *DEE_UNUSED(closure)) {
+static DeeSockAddrObject *DEE_CALL _deesocket_sockaddr_get(DeeSocketObject *self, void *DEE_UNUSED(closure)) {
  DeeSockAddrObject *result;
  if DEE_UNLIKELY((result = (DeeSockAddrObject *)_DeeSockAddrObject_New()) == NULL) return NULL;
  if DEE_UNLIKELY(DeeSocket_GetSockAddr((DeeObject *)self,&result->sa_addr) != 0) Dee_CLEAR(result);
  return result;
 }
 #if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
-static int _deesocket_sockaddr_set(
+static int DEE_CALL _deesocket_sockaddr_set(
  DeeSocketObject *self, DeeSockAddrObject *value, void *DEE_UNUSED(closure)) {
  if (DeeObject_InplaceGetInstance(&value,&DeeSockAddr_Type) != 0) return -1;
  memcpy(&self->s_sock_addr,&value->sa_addr,sizeof(struct DeeSockAddr));
  return 0;
 }
 #endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
-static DeeObject *_deesocket_peeraddr_get(DeeSocketObject *self, void *DEE_UNUSED(closure)) {
+static DeeObject *DEE_CALL _deesocket_peeraddr_get(DeeSocketObject *self, void *DEE_UNUSED(closure)) {
  DeeSockAddrObject *result;
  if DEE_UNLIKELY((result = (DeeSockAddrObject *)_DeeSockAddrObject_New()) == NULL) return NULL;
  if DEE_UNLIKELY(DeeSocket_GetPeerAddr((DeeObject *)self,&result->sa_addr) != 0) Dee_CLEAR(result);
  return (DeeObject *)result;
 }
-static DeeObject *_deesocket_file_get(
+static DeeObject *DEE_CALL _deesocket_file_get(
  DeeSocketObject *self, void *DEE_UNUSED(closure)) {
  return DeeSocket_File((DeeObject *)self);
 }
-static DeeObject *_deesocketclass_tcp_server(
+static DeeObject *DEE_CALL _deesocketclass_tcp_server(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_uint16_t port; int max_backlog = -1;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"I16u|d:tcp_server",&port,&max_backlog) != 0) return NULL;
  return DeeSocket_NewTCPServerEx(port,max_backlog);
 }
-static DeeObject *_deesocketclass_tcp_client(
+static DeeObject *DEE_CALL _deesocketclass_tcp_client(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  struct DeeSockAddr addr;
  if DEE_UNLIKELY(DeeSockAddr_InitFromArgv(&addr,DEE_AF_AUTO,DEE_TCP_PROTOCOL,
   DeeTuple_SIZE(args),DeeTuple_ELEM(args)) != 0) return NULL;
  return DeeSocket_NewTCPClient(&addr);
 }
-static DeeObject *_deesocketclass_tcp(
+static DeeObject *DEE_CALL _deesocketclass_tcp(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_uint16_t port; struct DeeSockAddr addr;
  if (DeeTuple_SIZE(args) == 1 && !DeeString_Check(DeeTuple_GET(args,0))) {
@@ -3959,13 +3959,13 @@ static DeeObject *_deesocketclass_tcp(
   DEE_TCP_PROTOCOL,DeeTuple_SIZE(args),DeeTuple_ELEM(args)) != 0) return NULL;
  return DeeSocket_NewTCPClient(&addr);
 }
-static DeeObject *_deesocketclass_udp(
+static DeeObject *DEE_CALL _deesocketclass_udp(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_uint16_t port;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"I16u:udp",&port) != 0) return NULL;
  return DeeSocket_NewUDP(port);
 }
-static DeeObject *_deesocket_fileto(
+static DeeObject *DEE_CALL _deesocket_fileto(
  DeeSocketObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  struct DeeSockAddr addr;
  if DEE_UNLIKELY(DeeSockAddr_InitFromArgv(&addr,
@@ -3984,31 +3984,31 @@ static DeeObject *_deesocket_fileto(
 
 //////////////////////////////////////////////////////////////////////////
 // Socket File VTable
-static void _deesocketfile_tp_dtor(DeeSocketFileObject *self) {
+static void DEE_CALL _deesocketfile_tp_dtor(DeeSocketFileObject *self) {
  Dee_DECREF(self->sf_socket);
 }
-static int _deesocketfile_tp_io_read(
+static int DEE_CALL _deesocketfile_tp_io_read(
  DeeSocketFileObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
  return DeeSocket_Recv((DeeObject *)self->sf_socket,p,s,rs);
 }
-static int _deesocketfile_tp_io_write(
+static int DEE_CALL _deesocketfile_tp_io_write(
  DeeSocketFileObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
  return DeeSocket_Send((DeeObject *)self->sf_socket,p,s,ws);
 }
-static int _deesocketfile_tp_io_seek(
+static int DEE_CALL _deesocketfile_tp_io_seek(
  DeeSocketFileObject *DEE_UNUSED(self), Dee_int64_t DEE_UNUSED(off),
  int DEE_UNUSED(whence), Dee_uint64_t *DEE_UNUSED(pos)) {
  DeeError_NotImplemented_str("seek");
  return -1;
 }
-static int _deesocketfile_tp_io_flush(DeeSocketFileObject *DEE_UNUSED(self)) {
+static int DEE_CALL _deesocketfile_tp_io_flush(DeeSocketFileObject *DEE_UNUSED(self)) {
  return 0;
 }
-static int _deesocketfile_tp_io_trunc(DeeSocketFileObject *DEE_UNUSED(self)) {
+static int DEE_CALL _deesocketfile_tp_io_trunc(DeeSocketFileObject *DEE_UNUSED(self)) {
  DeeError_NotImplemented_str("trunc");
  return -1;
 }
-static void _deesocketfile_tp_io_close(DeeSocketFileObject *self) {
+static void DEE_CALL _deesocketfile_tp_io_close(DeeSocketFileObject *self) {
  DeeSocket_Close((DeeObject *)self->sf_socket);
 }
 #if !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
@@ -4029,10 +4029,10 @@ static struct DeeMemberDef _deesocketfile_tp_members[] = {
 
 //////////////////////////////////////////////////////////////////////////
 // UDP File VTable
-static void _deesocketfileto_tp_dtor(DeeSocketFileToObject *self) {
+static void DEE_CALL _deesocketfileto_tp_dtor(DeeSocketFileToObject *self) {
  Dee_DECREF(self->sft_socket);
 }
-static int _deesocketfileto_tp_io_read(
+static int DEE_CALL _deesocketfileto_tp_io_read(
  DeeSocketFileToObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
  struct DeeSockAddr sender; int result;
  while (1) {
@@ -4042,28 +4042,28 @@ static int _deesocketfileto_tp_io_read(
  }
  return 0;
 }
-static int _deesocketfileto_tp_io_write(
+static int DEE_CALL _deesocketfileto_tp_io_write(
  DeeSocketFileToObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
  return DeeSocket_SendTo((DeeObject *)self->sft_socket,p,s,ws,&self->sft_peer_addr);
 }
-static int _deesocketfileto_tp_io_seek(
+static int DEE_CALL _deesocketfileto_tp_io_seek(
  DeeSocketFileToObject *DEE_UNUSED(self), Dee_int64_t DEE_UNUSED(off),
  int DEE_UNUSED(whence), Dee_uint64_t *DEE_UNUSED(pos)) {
  DeeError_NotImplemented_str("seek");
  return -1;
 }
-static int _deesocketfileto_tp_io_flush(DeeSocketFileToObject *DEE_UNUSED(self)) {
+static int DEE_CALL _deesocketfileto_tp_io_flush(DeeSocketFileToObject *DEE_UNUSED(self)) {
  return 0;
 }
-static int _deesocketfileto_tp_io_trunc(DeeSocketFileToObject *DEE_UNUSED(self)) {
+static int DEE_CALL _deesocketfileto_tp_io_trunc(DeeSocketFileToObject *DEE_UNUSED(self)) {
  DeeError_NotImplemented_str("trunc");
  return -1;
 }
-static void _deesocketfileto_tp_io_close(DeeSocketFileToObject *self) {
+static void DEE_CALL _deesocketfileto_tp_io_close(DeeSocketFileToObject *self) {
  DeeSocket_Close((DeeObject *)self->sft_socket);
 }
 
-static DeeSockAddrObject *_deesocketfileto_peer_get(
+static DeeSockAddrObject *DEE_CALL _deesocketfileto_peer_get(
  DeeSocketFileToObject *self, void *DEE_UNUSED(closure)) {
  DeeSockAddrObject *result;
  if ((result = (DeeSockAddrObject *)DeeSockAddr_Alloc()) == NULL) return NULL;
@@ -4072,7 +4072,7 @@ static DeeSockAddrObject *_deesocketfileto_peer_get(
 }
 
 #if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
-static int _deesocketfileto_peer_set(
+static int DEE_CALL _deesocketfileto_peer_set(
  DeeSocketFileToObject *self, DeeSockAddrObject *value, void *DEE_UNUSED(closure)) {
  if (DeeObject_InplaceGetInstance(&value,&DeeSockAddr_Type) != 0) return -1;
  memcpy(&self->sft_peer_addr,&value->sa_addr,sizeof(struct DeeSockAddr));
@@ -4851,7 +4851,7 @@ DeeFileTypeObject DeeSocketFileTo_Type = {
 
 //////////////////////////////////////////////////////////////////////////
 // SockAddr VTable
-static int _deesockaddr_tp_any_ctor(
+static int DEE_CALL _deesockaddr_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeSockAddrObject *self, DeeObject *args) {
  int af; Dee_size_t argc;
@@ -4862,27 +4862,27 @@ static int _deesockaddr_tp_any_ctor(
  if DEE_UNLIKELY(DeeObject_Cast(int,DeeTuple_GET(args,0),&af) != 0) return -1;
  return DeeSockAddr_InitFromArgv(&self->sa_addr,af,0,argc-1,DeeTuple_ELEM(args)+1);
 }
-static int _deesockaddr_tp_copy_ctor(
+static int DEE_CALL _deesockaddr_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeSockAddrObject *self, DeeSockAddrObject *right) {
  self->sa_addr = right->sa_addr;
  return 0;
 }
-static DeeObject *_deesockaddr_tp_str(DeeSockAddrObject *self) {
+static DeeObject *DEE_CALL _deesockaddr_tp_str(DeeSockAddrObject *self) {
  return DeeSockAddr_Str(&self->sa_addr,DEE_SOCKADDR_STR_FLAG_NOFAIL);
 }
-static DeeObject *_deesockaddr_tp_repr(DeeSockAddrObject *self) {
+static DeeObject *DEE_CALL _deesockaddr_tp_repr(DeeSockAddrObject *self) {
  return DeeString_Newf("<sockaddr(%R)>",DeeSockAddr_Str(
   &self->sa_addr,DEE_SOCKADDR_STR_FLAG_NOFAIL));
 }
-static DeeObject *_deesockaddr_tp_cmd_lo(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) < 0); }
-static DeeObject *_deesockaddr_tp_cmd_le(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) <= 0); }
-static DeeObject *_deesockaddr_tp_cmd_eq(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) == 0); }
-static DeeObject *_deesockaddr_tp_cmd_ne(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) != 0); }
-static DeeObject *_deesockaddr_tp_cmd_gr(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) > 0); }
-static DeeObject *_deesockaddr_tp_cmd_ge(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) >= 0); }
+static DeeObject *DEE_CALL _deesockaddr_tp_cmd_lo(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) < 0); }
+static DeeObject *DEE_CALL _deesockaddr_tp_cmd_le(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) <= 0); }
+static DeeObject *DEE_CALL _deesockaddr_tp_cmd_eq(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) == 0); }
+static DeeObject *DEE_CALL _deesockaddr_tp_cmd_ne(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) != 0); }
+static DeeObject *DEE_CALL _deesockaddr_tp_cmd_gr(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) > 0); }
+static DeeObject *DEE_CALL _deesockaddr_tp_cmd_ge(DeeSockAddrObject *self, DeeSockAddrObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeSockAddr_Type) != 0) return NULL; DeeReturn_Bool(DeeSockAddr_Compare(&self->sa_addr,&right->sa_addr) >= 0); }
 
-static DeeObject *_deesockaddrclass_resolve_ex(
+static DeeObject *DEE_CALL _deesockaddrclass_resolve_ex(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeSockAddrObject *result; int af,protocol; Dee_size_t argc;
  if DEE_UNLIKELY((argc = DeeTuple_SIZE(args)) < 2) {
@@ -4898,7 +4898,7 @@ static DeeObject *_deesockaddrclass_resolve_ex(
   argc-2,DeeTuple_ELEM(args)+2) != 0) Dee_CLEAR(result);
  return (DeeObject *)result;
 }
-static DeeObject *_deesockaddrclass_resolve(
+static DeeObject *DEE_CALL _deesockaddrclass_resolve(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeSockAddrObject *result;
  if DEE_UNLIKELY((result = (DeeSockAddrObject *)_DeeSockAddrObject_New()) == NULL) return NULL;
@@ -4906,7 +4906,7 @@ static DeeObject *_deesockaddrclass_resolve(
   DeeTuple_SIZE(args),DeeTuple_ELEM(args)) != 0) Dee_CLEAR(result);
  return (DeeObject *)result;
 }
-static DeeObject *_deesockaddrclass_inet_hostname(
+static DeeObject *DEE_CALL _deesockaddrclass_inet_hostname(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
 #if DEE_HAVE_AF_INET
  struct DeeSockAddr addr;
@@ -4942,7 +4942,7 @@ static DeeObject *_deesockaddrclass_inet_hostname(
   DEE_SOCKET_INET_HOSTNAME_A(host),DEE_SOCKET_INET_HOSTNAME_B(host),
   DEE_SOCKET_INET_HOSTNAME_C(host),DEE_SOCKET_INET_HOSTNAME_D(host));
 }
-static DeeObject *_deesockaddrclass_inet_aton(
+static DeeObject *DEE_CALL _deesockaddrclass_inet_aton(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
 #if DEE_HAVE_AF_INET
  struct DeeSockAddr addr;
@@ -4971,7 +4971,7 @@ static DeeObject *_deesockaddrclass_inet_aton(
    return NULL;
  }
 }
-static DeeObject *_deesockaddrclass_inet_ntoa(
+static DeeObject *DEE_CALL _deesockaddrclass_inet_ntoa(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *arg0,*arg1 = NULL,*arg2 = NULL,*arg3 = NULL,*arg4 = NULL;
  struct DeeSockAddr addr; Dee_uint32_t host; Dee_uint16_t port;
@@ -5036,7 +5036,7 @@ ipstr:
  return DeeSockAddr_Str(&addr,DEE_SOCKADDR_STR_FLAG_NOFAIL);
 }
 
-static DeeObject *_deesockaddr_inet_host_get(
+static DeeObject *DEE_CALL _deesockaddr_inet_host_get(
  DeeSockAddrObject *self, void *DEE_UNUSED(closure)) {
 #ifdef AF_INET
  if DEE_UNLIKELY(DeeSockAddr_FAMILY(&self->sa_addr) != AF_INET) {
@@ -5051,7 +5051,7 @@ static DeeObject *_deesockaddr_inet_host_get(
  return NULL;
 #endif
 }
-static DeeObject *_deesockaddr_inet_port_get(
+static DeeObject *DEE_CALL _deesockaddr_inet_port_get(
  DeeSockAddrObject *self, void *DEE_UNUSED(closure)) {
 #if defined(AF_INET) || defined(AF_INET6)
  switch (DeeSockAddr_FAMILY(&self->sa_addr)) {
@@ -5080,7 +5080,7 @@ static DeeObject *_deesockaddr_inet_port_get(
  return NULL;
 #endif
 }
-static DeeObject *_deesockaddr_inet6_host_get(
+static DeeObject *DEE_CALL _deesockaddr_inet6_host_get(
  DeeSockAddrObject *self, void *DEE_UNUSED(closure)) {
 #ifdef AF_INET6
  if DEE_UNLIKELY(DeeSockAddr_FAMILY(&self->sa_addr) != AF_INET6) {
@@ -5096,7 +5096,7 @@ static DeeObject *_deesockaddr_inet6_host_get(
  return NULL;
 #endif
 }
-static DeeObject *_deesockaddr___size(
+static DeeObject *DEE_CALL _deesockaddr___size(
  DeeSockAddrObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *protocol = NULL;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o",&protocol) != 0) return NULL;

@@ -129,21 +129,21 @@ err_free_rw:
 
 //////////////////////////////////////////////////////////////////////////
 // Pipe VTable
-static void _deepipe_tp_dtor(DeePipeObject *self) {
+static void DEE_CALL _deepipe_tp_dtor(DeePipeObject *self) {
 #ifdef DEE_PLATFORM_WINDOWS
  if DEE_UNLIKELY(self->p_handle && !CloseHandle(self->p_handle)) SetLastError(0);
 #elif defined(DEE_PLATFORM_UNIX)
  if DEE_UNLIKELY(self->p_handle > 0 && close(self->p_handle) != 0) errno = 0;
 #endif
 }
-static DeeObject *_deepipe_tp_str(DeePipeObject *self) {
+static DeeObject *DEE_CALL _deepipe_tp_str(DeePipeObject *self) {
 #ifdef DEE_PLATFORM_WINDOWS
  return DeeString_Newf("<pipe: %#Ix>",self->p_handle);
 #elif defined(DEE_PLATFORM_UNIX)
  return DeeString_Newf("<pipe: %d>",self->p_handle);
 #endif
 }
-static int _deepipe_tp_move_ctor(
+static int DEE_CALL _deepipe_tp_move_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeePipeObject *self, DeePipeObject *right) {
  _DeeFile_InitMove(self,right);
@@ -155,7 +155,7 @@ static int _deepipe_tp_move_ctor(
 #endif
  return 0;
 }
-static int _deepipe_tp_move_assign(
+static int DEE_CALL _deepipe_tp_move_assign(
  DeePipeObject *self, DeePipeObject *right) {
  if DEE_LIKELY(self != right) {
   Dee_uint32_t new_flags;
@@ -177,10 +177,10 @@ static int _deepipe_tp_move_assign(
  }
  return 0;
 }
-static int _deepipe_tp_io_flush(DeePipeObject *DEE_UNUSED(self)) {
+static int DEE_CALL _deepipe_tp_io_flush(DeePipeObject *DEE_UNUSED(self)) {
  return 0;
 }
-static void _deepipe_tp_io_close(DeePipeObject *self) {
+static void DEE_CALL _deepipe_tp_io_close(DeePipeObject *self) {
  DeeFile_ACQUIRE(self);
  if DEE_LIKELY(self->p_handle) {
 #ifdef DEE_PLATFORM_WINDOWS
@@ -208,7 +208,7 @@ static void _deepipe_tp_io_close(DeePipeObject *self) {
 
 //////////////////////////////////////////////////////////////////////////
 // Pipe reader VTable
-static DeeObject *_deepipereader_tp_str(DeePipeObject *self) {
+static DeeObject *DEE_CALL _deepipereader_tp_str(DeePipeObject *self) {
  DeeIOHandle handle;
  DeeFile_ACQUIRE(self);
  handle = self->p_handle;
@@ -228,7 +228,7 @@ static DeeObject *_deepipereader_tp_str(DeePipeObject *self) {
 #endif
 #endif
 
-static int _deepipereader_tp_io_read(DeePipeObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
+static int DEE_CALL _deepipereader_tp_io_read(DeePipeObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeFile_ACQUIRE(self);
  {
@@ -291,19 +291,19 @@ static int _deepipereader_tp_io_read(DeePipeObject *self, void *p, Dee_size_t s,
   return 0;
  }
 }
-static int _deepipereader_tp_io_write(
+static int DEE_CALL _deepipereader_tp_io_write(
  DeePipeObject *DEE_UNUSED(self), void const *DEE_UNUSED(p),
  Dee_size_t DEE_UNUSED(s), Dee_size_t *DEE_UNUSED(ws)) {
  DeeError_NotImplemented_str("pipe.reader.write");
  return -1;
 }
-static int _deepipereader_tp_io_seek(
+static int DEE_CALL _deepipereader_tp_io_seek(
  DeePipeObject *DEE_UNUSED(self), Dee_int64_t DEE_UNUSED(off),
  int DEE_UNUSED(whence), Dee_uint64_t *DEE_UNUSED(pos)) {
  DeeError_NotImplemented_str("pipe.reader.seek");
  return -1;
 }
-static int _deepipereader_tp_io_trunc(DeePipeObject *DEE_UNUSED(self)) {
+static int DEE_CALL _deepipereader_tp_io_trunc(DeePipeObject *DEE_UNUSED(self)) {
  DeeError_NotImplemented_str("pipe.reader.trunc");
  return -1;
 }
@@ -311,7 +311,7 @@ static int _deepipereader_tp_io_trunc(DeePipeObject *DEE_UNUSED(self)) {
 
 //////////////////////////////////////////////////////////////////////////
 // Pipe writer VTable
-static DeeObject *_deepipewriter_tp_str(DeePipeObject *self) {
+static DeeObject *DEE_CALL _deepipewriter_tp_str(DeePipeObject *self) {
  DeeIOHandle handle;
  DeeFile_ACQUIRE(self);
  handle = self->p_handle;
@@ -322,13 +322,13 @@ static DeeObject *_deepipewriter_tp_str(DeePipeObject *self) {
  return DeeString_Newf("<pipe.writer: %d>",handle);
 #endif
 }
-static int _deepipewriter_tp_io_read(
+static int DEE_CALL _deepipewriter_tp_io_read(
  DeePipeObject *DEE_UNUSED(self), void *DEE_UNUSED(p),
  Dee_size_t DEE_UNUSED(s), Dee_size_t *DEE_UNUSED(rs)) {
  DeeError_NotImplemented_str("pipe.writer.read");
  return -1;
 }
-static int _deepipewriter_tp_io_write(
+static int DEE_CALL _deepipewriter_tp_io_write(
  DeePipeObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
  if (DeeThread_CheckInterrupt() != 0) return -1;
  DeeFile_ACQUIRE(self);
@@ -389,19 +389,19 @@ static int _deepipewriter_tp_io_write(
   return 0;
  }
 }
-static int _deepipewriter_tp_io_seek(
+static int DEE_CALL _deepipewriter_tp_io_seek(
  DeePipeObject *DEE_UNUSED(self), Dee_int64_t DEE_UNUSED(off),
  int DEE_UNUSED(whence), Dee_uint64_t *DEE_UNUSED(pos)) {
  DeeError_NotImplemented_str("pipe.writer.seek");
  return -1;
 }
-static int _deepipewriter_tp_io_trunc(DeePipeObject *DEE_UNUSED(self)) {
+static int DEE_CALL _deepipewriter_tp_io_trunc(DeePipeObject *DEE_UNUSED(self)) {
  DeeError_NotImplemented_str("pipe.writer.trunc");
  return -1;
 }
 
 
-static DeeObject *_deepipeclass_new(
+static DeeObject *DEE_CALL _deepipeclass_new(
  DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *res,*r,*w; Dee_size_t size_hint = 0;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|Iu:pipe.new",&size_hint) != 0) return NULL;
@@ -411,7 +411,7 @@ static DeeObject *_deepipeclass_new(
  Dee_DECREF(r);
  return res;
 }
-static DeeObject *_deepipe_fileno(
+static DeeObject *DEE_CALL _deepipe_fileno(
  DeePipeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeIOHandle handle;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":fileno") != 0) return NULL;

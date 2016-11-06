@@ -360,7 +360,15 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
  DeeGC_CollectNow();
  gc_cycles = 0;
  do {
-  _DeeDex_CleanupApi();
+
+  // Shutdown the dex
+  // >> This executes module finalizers, shuting down all
+  //    dex modules and thereby preventing any further
+  //    communication between any of them.
+  // >> The modules themself are unloaded later, thus allowing
+  //    gc-objects originating from them to persist a little longer
+  //    until we're done looping the garbage collector.
+  _DeeDex_ShutdownApi();
 
   // Reset std file handles
   DeeFile_ResetStd(); // Reset 
@@ -398,8 +406,7 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
  
  _DeeDex_QuitApi();
 
-
- // From this point on, no user code can be executed!
+ // From this point on, no user-level code can be executed!
 
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_TYPES
  // Clear the cache of class types
@@ -410,9 +417,12 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
 
  // Clear all structured type caches (pointer types, lvalue types, foreign_function types, ...)
  DeeStructuredType_Shutdown();
- // NOTE: Clearing all cached structured types can release some more gc objects in some cases.
- //       Those objects include c-structures that 
+
+#if 0
+ // NOTE: Clearing all cached structured types can release some more GC objects in some cases.
+ // EDIT: I don't remember why I added this. There shouldn't be any GC objects in there...
  DeeGC_CollectNow();
+#endif
 
  // De-initialize all dlls (NOTE: This can't execute user code)
  DeeSharedLib_Shutdown();
@@ -454,7 +464,7 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
 #endif
 
 #ifdef DEE_UNINSTALL_SIGNALHANDLERS
-  DEE_UNINSTALL_SIGNALHANDLERS();
+ DEE_UNINSTALL_SIGNALHANDLERS();
 #endif
 
  // Undo all the stuff we did to debug_new
@@ -1437,6 +1447,28 @@ static char const _dee_help_string[] =
                          "\t                     \tdefault: <unset>\n"
 #endif
 #endif
+#ifdef DEE_AUTOCONF_VARNAME_DEEMON_DEXPATH
+"\t$" DEE_AUTOCONF_VARNAME_DEEMON_DEXPATH "      \tDefines a set of paths to be used by the dex when searching for modules\n"
+#endif
+#ifdef DEE_AUTOCONF_VARNAME_DEEMON_DEXORDER
+"\t$" DEE_AUTOCONF_VARNAME_DEEMON_DEXORDER "     \tDefines the order of locations to search for dex modules:\n"
+#ifndef DEE_PLATFORM_WINDOWS
+                         "\t                     \t\tV: Search the version-dependent dex path (\"/usr/lib/deemon/dex." DEE_PP_STR(DEE_VERSION_API) "\")\n"
+#else
+                         "\t                     \t\tV: Ignored\n"
+#endif
+                         "\t                     \t\tD: Search a set of paths provided by $DEE_AUTOCONF_VARNAME_DEEMON_DEXPATH\n"
+                         "\t                     \t\tC: Search the current working directory $(pwd)\n"
+                         "\t                     \t\tX: Search the hosting exe's directory $(dirname $(readlink /proc/self/exe))\n"
+                         "\t                     \t\tP: Search all folders from system $PATH variable\n"
+#ifdef DEE_PLATFORM_WINDOWS
+                         "\t                     \t\tdefault: DCXP\n"
+#else
+                         "\t                     \t\tdefault: VD\n"
+#endif
+#endif
+#define DEE_AUTOCONF_VARNAME_DEEMON_DEXPATH       "DEEMON_DEXPATH"
+#define DEE_AUTOCONF_VARNAME_DEEMON_DEXORDER      "DEEMON_DEXORDER"
 #ifdef DEE_AUTOCONF_VARNAME_DEEMON_NOVFS
 "\t$" DEE_AUTOCONF_VARNAME_DEEMON_NOVFS "        \tDisable the virtual file-system used to simulate\n"
                          "\t                     \ta minimal posix-style environment under windows.\n"

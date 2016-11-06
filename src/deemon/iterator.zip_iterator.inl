@@ -104,14 +104,14 @@ DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeZipIteratorObject) *DeeZipIterator_New
  return (DeeObject *)result;
 }
 
-static DeeObject *_deezipiterator_tp_any_new(DeeTypeObject *DEE_UNUSED(tp_self), DeeObject *args) {
+static DeeObject *DEE_CALL _deezipiterator_tp_any_new(DeeTypeObject *DEE_UNUSED(tp_self), DeeObject *args) {
  return DeeZipIterator_NewFromSeqv(DeeTuple_SIZE(args),DeeTuple_ELEM(args));
 }
-static DeeObject *_deezipiterator_tp_copy_new(
+static DeeObject *DEE_CALL _deezipiterator_tp_copy_new(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeZipIteratorObject *self) {
  return DeeZipIterator_New(DeeZipIterator_SIZE(self),DeeZipIterator_ELEM(self));
 }
-static int _deezipiterator_tp_seq_iter_next(DeeObject *self, DeeObject **result) {
+static int DEE_CALL _deezipiterator_tp_seq_iter_next(DeeObject *self, DeeObject **result) {
  DeeObject **iter,**end,**dst,*iterelem; Dee_size_t iterc; int error;
  if DEE_UNLIKELY((iterc = DeeZipIterator_SIZE(self)) == 0) return 1;
  if DEE_UNLIKELY((*result = _DeeTuple_NewUnsafe(iterc)) == NULL) return -1;

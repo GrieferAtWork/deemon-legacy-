@@ -2478,55 +2478,46 @@ end:
 
 
 
-static int _deelist_tp_ctor(
+static int DEE_CALL _deelist_tp_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeListObject *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  _DeeList_InitEmpty(self);
  return 0;
 }
-static void _deelist_tp_dtor(DeeListObject *self) {
+static void DEE_CALL _deelist_tp_dtor(DeeListObject *self) {
  DeeObject **begin,**end;
  end = (begin = DeeList_ELEM(self))+DeeList_SIZE(self);
  while DEE_LIKELY(end != begin) Dee_DECREF(*--end);
  DEE_ASSERT(begin == DeeList_ELEM(self));
  free(begin);
 }
-static void _DeeList_Move(
- DeeListObject *self, DeeListObject *right) {
- DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
- DEE_ASSERT(DeeObject_Check(right) && DeeList_Check(right));
- DeeList_ACQUIRE(right);
- self->l_len = right->l_len;
- self->l_alloc = right->l_alloc;
- self->l_elem = right->l_elem;
- right->l_len = 0;
- right->l_alloc = 0;
- right->l_elem = NULL;
- DeeList_RELEASE(right);
-}
-static int _deelist_tp_copy_ctor(
+static int DEE_CALL _deelist_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeListObject *self, DeeListObject *right) {
  return DeeList_InitCopy(self,(DeeObject *)right);
 }
-static int _deelist_tp_move_ctor(
+static int DEE_CALL _deelist_tp_move_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeListObject *self, DeeListObject *right) {
  _DeeList_InitCommon(self);
- _DeeList_Move(self,right);
+ DeeList_ACQUIRE(right);
+ self->l_len   = right->l_len;   right->l_len   = 0;
+ self->l_alloc = right->l_alloc; right->l_alloc = 0;
+ self->l_elem  = right->l_elem;  right->l_elem  = NULL;
+ DeeList_RELEASE(right);
  return 0;
 }
-static int _deelist_tp_any_ctor(
+static int DEE_CALL _deelist_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeListObject *self, DeeObject *args) {
  DeeObject *arg;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:list",&arg) != 0) return -1;
  return DeeList_InitFromSequence(self,arg);
 }
-static int _deelist_tp_move_assign(
+static int DEE_CALL _deelist_tp_move_assign(
  DeeListObject *self, DeeListObject *right) {
  DeeList_MoveAssign((DeeObject *)self,(DeeObject *)right);
  return 0;
 }
 #ifdef DeeList_AssignSequence
-static int _deelist_tp_any_assign(
+static int DEE_CALL _deelist_tp_any_assign(
  DeeListObject *self, DeeObject *right) {
  return DeeList_AssignSequence((DeeObject *)self,right);
 }
@@ -2541,33 +2532,33 @@ DEE_VISIT_PROC(_deelist_tp_visit,DeeListObject *self) {
  while DEE_LIKELY(elem != end) Dee_VISIT(*elem++);
  DeeList_RELEASE(self);
 }
-static DeeObject *_deelist_tp_add(DeeListObject *lhs, DeeObject *rhs) {
+static DeeObject *DEE_CALL _deelist_tp_add(DeeListObject *lhs, DeeObject *rhs) {
  return DeeList_Concat((DeeObject *)lhs,rhs);
 }
-static DeeObject *_deelist_tp_iadd(DeeListObject *lhs, DeeObject *rhs) {
+static DeeObject *DEE_CALL _deelist_tp_iadd(DeeListObject *lhs, DeeObject *rhs) {
  if DEE_UNLIKELY(DeeList_InplaceConcat((DeeObject *)lhs,rhs) != 0) return NULL;
  DeeReturn_NEWREF(lhs);
 }
-static DeeObject *_deelist_tp_mul(DeeListObject *lhs, DeeObject *rhs) {
+static DeeObject *DEE_CALL _deelist_tp_mul(DeeListObject *lhs, DeeObject *rhs) {
  Dee_size_t n;
  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,rhs,&n) != 0) return NULL;
  return DeeList_Repeated((DeeObject *)lhs,n);
 }
-static DeeObject *_deelist_tp_imul(DeeListObject *lhs, DeeObject *rhs) {
+static DeeObject *DEE_CALL _deelist_tp_imul(DeeListObject *lhs, DeeObject *rhs) {
  Dee_size_t n;
  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,rhs,&n) != 0) return NULL;
  if DEE_UNLIKELY(DeeList_Repeat((DeeObject *)lhs,n) != 0) return NULL;
  DeeReturn_NEWREF(lhs);
 }
-static DeeObject *_deelist_tp_iand(DeeListObject *lhs, DeeObject *rhs) {
+static DeeObject *DEE_CALL _deelist_tp_iand(DeeListObject *lhs, DeeObject *rhs) {
  if DEE_UNLIKELY(DeeList_InplaceCommon((DeeObject *)lhs,rhs) != 0) return NULL;
  DeeReturn_NEWREF(lhs);
 }
-static DeeObject *_deelist_tp_ior(DeeListObject *lhs, DeeObject *rhs) {
+static DeeObject *DEE_CALL _deelist_tp_ior(DeeListObject *lhs, DeeObject *rhs) {
  if DEE_UNLIKELY(DeeList_InplaceMerge((DeeObject *)lhs,rhs) != 0) return NULL;
  DeeReturn_NEWREF(lhs);
 }
-static DeeObject *_deelist_tp_str(DeeListObject *self) {
+static DeeObject *DEE_CALL _deelist_tp_str(DeeListObject *self) {
  DeeObject *result,*elem; Dee_size_t i;
  DeeStringWriter writer = DeeStringWriter_INIT();
  if DEE_UNLIKELY(DeeStringWriter_WriteChar(&writer,'[') != 0) goto err;
@@ -2587,7 +2578,7 @@ end: DeeStringWriter_Quit(&writer);
  return result;
 err: result = NULL; goto end;
 }
-static DeeObject *_deelist_tp_repr(DeeListObject *self) {
+static DeeObject *DEE_CALL _deelist_tp_repr(DeeListObject *self) {
  DeeObject *result,*elem; Dee_size_t i;
  DeeStringWriter writer = DeeStringWriter_INIT();
  if DEE_UNLIKELY(DeeStringWriter_WriteChar(&writer,'[') != 0) goto err;
@@ -2608,21 +2599,21 @@ end: DeeStringWriter_Quit(&writer);
 err: result = NULL; goto end;
 }
 
-static int _deelist_tp_bool(DeeListObject *self) {
+static int DEE_CALL _deelist_tp_bool(DeeListObject *self) {
  int result;
  DeeList_ACQUIRE(self);
  result = DeeList_SIZE(self) != 0;
  DeeList_RELEASE(self);
  return result;
 }
-static DeeObject *_deelist_tp_not(DeeListObject *self) {
+static DeeObject *DEE_CALL _deelist_tp_not(DeeListObject *self) {
  int result;
  DeeList_ACQUIRE(self);
  result = DeeList_SIZE(self) != 0;
  DeeList_RELEASE(self);
  DeeReturn_Bool(!result);
 }
-static DeeObject *_deelist_tp_seq_size(DeeListObject *self) {
+static DeeObject *DEE_CALL _deelist_tp_seq_size(DeeListObject *self) {
  Dee_size_t result;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeList_ACQUIRE(self);
@@ -2630,25 +2621,25 @@ static DeeObject *_deelist_tp_seq_size(DeeListObject *self) {
  DeeList_RELEASE(self);
  return DeeObject_New(Dee_size_t,result);
 }
-static DeeObject *_deelist_tp_seq_contains(DeeListObject *self, DeeObject *ob) {
+static DeeObject *DEE_CALL _deelist_tp_seq_contains(DeeListObject *self, DeeObject *ob) {
  int temp;
  if DEE_UNLIKELY((temp = DeeList_Contains((DeeObject *)self,ob)) < 0) return NULL;
  DeeReturn_Bool(temp != 0);
 }
-static DeeObject *_deelist_tp_seq_get(DeeListObject *self, DeeObject *i) {
+static DeeObject *DEE_CALL _deelist_tp_seq_get(DeeListObject *self, DeeObject *i) {
  Dee_ssize_t ii;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DEE_ASSERT(DeeObject_Check(i));
  if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,i,&ii) != 0) return NULL;
  return DeeList_Get((DeeObject *)self,ii);
 }
-static int _deelist_tp_seq_del(DeeListObject *self, DeeObject *i) {
+static int DEE_CALL _deelist_tp_seq_del(DeeListObject *self, DeeObject *i) {
  Dee_ssize_t ii;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,i,&ii) != 0) return -1;
  return DeeList_Del((DeeObject *)self,ii);
 }
-static int _deelist_tp_seq_set(DeeListObject *self, DeeObject *i, DeeObject *v) {
+static int DEE_CALL _deelist_tp_seq_set(DeeListObject *self, DeeObject *i, DeeObject *v) {
  Dee_ssize_t ii;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DEE_ASSERT(DeeObject_Check(i));
@@ -2657,7 +2648,7 @@ static int _deelist_tp_seq_set(DeeListObject *self, DeeObject *i, DeeObject *v) 
  return DeeList_Set((DeeObject *)self,ii,v);
 }
 
-static DeeObject *_deelist_tp_seq_range_get(
+static DeeObject *DEE_CALL _deelist_tp_seq_range_get(
  DeeListObject *self, DeeObject *lo, DeeObject *hi) {
  Dee_ssize_t temp; Dee_size_t used_lo,used_hi;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
@@ -2671,7 +2662,7 @@ static DeeObject *_deelist_tp_seq_range_get(
  }
  return DeeList_GetRange((DeeObject *)self,used_lo,used_hi);
 }
-static int _deelist_tp_seq_range_del(
+static int DEE_CALL _deelist_tp_seq_range_del(
  DeeListObject *self, DeeObject *lo, DeeObject *hi) {
  Dee_ssize_t temp; Dee_size_t used_lo,used_hi;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
@@ -2686,7 +2677,7 @@ static int _deelist_tp_seq_range_del(
  return DEE_LIKELY(used_hi > used_lo) ? DeeList_Erase((
   DeeObject *)self,used_lo,(Dee_size_t)(used_hi-used_lo)) : 0;
 }
-static int _deelist_tp_seq_range_set(
+static int DEE_CALL _deelist_tp_seq_range_set(
  DeeListObject *self, DeeObject *lo, DeeObject *hi, DeeObject *v) {
  Dee_ssize_t temp; Dee_size_t used_lo,used_hi;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
@@ -2702,26 +2693,26 @@ static int _deelist_tp_seq_range_set(
 }
 
 
-static int _deelistiterator_tp_ctor(
+static int DEE_CALL _deelistiterator_tp_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeListIteratorObject *self) {
  if DEE_UNLIKELY((self->li_list = (DeeListObject *)DeeList_NewEmpty()) == NULL) return -1;
  self->li_pos = 0;
  return 0;
 }
-static void _deelistiterator_tp_dtor(DeeListIteratorObject *self) {
+static void DEE_CALL _deelistiterator_tp_dtor(DeeListIteratorObject *self) {
  Dee_DECREF(self->li_list);
 }
 DEE_VISIT_PROC(_deelistiterator_tp_visit,DeeListIteratorObject *self) {
  Dee_VISIT(self->li_list);
 }
-static int _deelistiterator_tp_copy_ctor(
+static int DEE_CALL _deelistiterator_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeListIteratorObject *self, DeeListIteratorObject *right) {
  Dee_INCREF(self->li_list = right->li_list);
  self->li_pos = right->li_pos;
  return 0;
 }
-static int _deelistiterator_tp_any_ctor(
+static int DEE_CALL _deelistiterator_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeListIteratorObject *self, DeeObject *args) {
  self->li_pos = 0;
@@ -2730,21 +2721,21 @@ static int _deelistiterator_tp_any_ctor(
  Dee_INCREF(self->li_list);
  return 0;
 }
-static DeeObject *_deelistiterator_tp_str(DeeListIteratorObject *self) {
+static DeeObject *DEE_CALL _deelistiterator_tp_str(DeeListIteratorObject *self) {
  return DeeString_Newf("<list.iterator %Iu/%Iu>",
                        self->li_pos,DeeList_SIZE(self->li_list));
 }
-static DeeObject *_deelistiterator_tp_repr(DeeListIteratorObject *self) {
+static DeeObject *DEE_CALL _deelistiterator_tp_repr(DeeListIteratorObject *self) {
  return DeeString_Newf("<list.iterator %Iu/%Iu | %r>",
                        self->li_pos,DeeList_SIZE(self->li_list),self->li_list);
 }
-static DeeObject *_deelistiterator_tp_cmp_lo(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) < DeeListIterator_LIST(right) || (DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) < DeeListIterator_POS(right))); }
-static DeeObject *_deelistiterator_tp_cmp_le(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) < DeeListIterator_LIST(right) || (DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) <= DeeListIterator_POS(right))); }
-static DeeObject *_deelistiterator_tp_cmp_eq(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) == DeeListIterator_POS(right)); }
-static DeeObject *_deelistiterator_tp_cmp_ne(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) != DeeListIterator_LIST(right) || DeeListIterator_POS(self) != DeeListIterator_POS(right)); }
-static DeeObject *_deelistiterator_tp_cmp_gr(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) > DeeListIterator_LIST(right) || (DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) > DeeListIterator_POS(right))); }
-static DeeObject *_deelistiterator_tp_cmp_ge(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) > DeeListIterator_LIST(right) || (DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) >= DeeListIterator_POS(right))); }
-static int _deelistiterator_tp_seq_iter_next(DeeListIteratorObject *self, DeeObject **result) {
+static DeeObject *DEE_CALL _deelistiterator_tp_cmp_lo(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) < DeeListIterator_LIST(right) || (DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) < DeeListIterator_POS(right))); }
+static DeeObject *DEE_CALL _deelistiterator_tp_cmp_le(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) < DeeListIterator_LIST(right) || (DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) <= DeeListIterator_POS(right))); }
+static DeeObject *DEE_CALL _deelistiterator_tp_cmp_eq(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) == DeeListIterator_POS(right)); }
+static DeeObject *DEE_CALL _deelistiterator_tp_cmp_ne(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) != DeeListIterator_LIST(right) || DeeListIterator_POS(self) != DeeListIterator_POS(right)); }
+static DeeObject *DEE_CALL _deelistiterator_tp_cmp_gr(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) > DeeListIterator_LIST(right) || (DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) > DeeListIterator_POS(right))); }
+static DeeObject *DEE_CALL _deelistiterator_tp_cmp_ge(DeeListIteratorObject *self, DeeListIteratorObject *right) { if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&right,&DeeListIterator_Type) != 0) return NULL; DeeReturn_Bool(DeeListIterator_LIST(self) > DeeListIterator_LIST(right) || (DeeListIterator_LIST(self) == DeeListIterator_LIST(right) && DeeListIterator_POS(self) >= DeeListIterator_POS(right))); }
+static int DEE_CALL _deelistiterator_tp_seq_iter_next(DeeListIteratorObject *self, DeeObject **result) {
  DeeList_ACQUIRE(self->li_list);
  if DEE_UNLIKELY(self->li_pos >= DeeList_SIZE(self->li_list)) { DeeList_RELEASE(self->li_list); return 1; }
  Dee_INCREF(*result = DeeList_GET(self->li_list,self->li_pos));
@@ -2761,7 +2752,7 @@ static int _deelistiterator_tp_seq_iter_next(DeeListIteratorObject *self, DeeObj
 
 //////////////////////////////////////////////////////////////////////////
 // List member functions
-static DeeObject *_deelist_sorted_insert(
+static DeeObject *DEE_CALL _deelist_sorted_insert(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem,*pred = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:sorted_insert",&elem,&pred) != 0) return NULL;
@@ -2771,7 +2762,7 @@ static DeeObject *_deelist_sorted_insert(
   ) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_remove(
+static DeeObject *DEE_CALL _deelist_remove(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem,*pred = Dee_None; int result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:remove",&elem,&pred) != 0) return NULL;
@@ -2781,7 +2772,7 @@ static DeeObject *_deelist_remove(
   )) != 0) return NULL;
  DeeReturn_Bool(result == 0);
 }
-static DeeObject *_deelist_insert(
+static DeeObject *DEE_CALL _deelist_insert(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_ssize_t i; Dee_size_t size; DeeObject *elem;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Ido:insert",&i,&elem) != 0) return NULL;
@@ -2789,101 +2780,101 @@ static DeeObject *_deelist_insert(
  if DEE_UNLIKELY(DeeList_Insert((DeeObject *)self,(Dee_size_t)i,elem) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_pop_front(
+static DeeObject *DEE_CALL _deelist_pop_front(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":pop_front") != 0) return NULL;
  return DeeList_Pop((DeeObject *)self,0);
 }
-static DeeObject *_deelist_pop_back(
+static DeeObject *DEE_CALL _deelist_pop_back(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":pop_back") != 0) return NULL;
  return DeeList_Pop((DeeObject *)self,(Dee_size_t)-1);
 }
-static DeeObject *_deelist_push_front(
+static DeeObject *DEE_CALL _deelist_push_front(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeList_InsertVector((DeeObject *)self,0,
   DeeTuple_SIZE(args),DeeTuple_ELEM(args)) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_push_back(
+static DeeObject *DEE_CALL _deelist_push_back(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeList_AppendVector((DeeObject *)self,
   DeeTuple_SIZE(args),DeeTuple_ELEM(args)) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_insert_list(
+static DeeObject *DEE_CALL _deelist_insert_list(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t i; DeeObject *seq;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iuo:insert_list",&i,&seq) != 0) return NULL;
  if DEE_UNLIKELY(DeeList_InsertSequence((DeeObject *)self,i,seq) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_insert_iter(
+static DeeObject *DEE_CALL _deelist_insert_iter(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t i; DeeObject *iter;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iuo:insert_iter",&i,&iter) != 0) return NULL;
  if DEE_UNLIKELY(DeeList_InsertIterator((DeeObject *)self,i,iter) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_append(
+static DeeObject *DEE_CALL _deelist_append(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeList_AppendVector((DeeObject *)self,
   DeeTuple_SIZE(args),DeeTuple_ELEM(args)) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_extend(
+static DeeObject *DEE_CALL _deelist_extend(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject **iter,**end;
  for (end = (iter = DeeTuple_ELEM(args))+DeeTuple_SIZE(args); DEE_UNLIKELY(iter != end); ++iter)
   if DEE_UNLIKELY(DeeList_AppendSequence((DeeObject *)self,*iter) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_erase(
+static DeeObject *DEE_CALL _deelist_erase(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t i,n = 1;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu|Iu:erase",&i,&n) != 0) return NULL;
  if DEE_UNLIKELY(DeeList_Erase((DeeObject *)self,i,n) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_pop(
+static DeeObject *DEE_CALL _deelist_pop(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t i = (Dee_size_t)-1;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|Iu:pop",&i) != 0) return NULL;
  return DeeList_Pop((DeeObject *)self,i);
 }
-static DeeObject *_deelist_clear(
+static DeeObject *DEE_CALL _deelist_clear(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":clear") != 0) return NULL;
  DeeList_Clear((DeeObject *)self);
  DeeReturn_None;
 }
-static DeeObject *_deelist_resize(
+static DeeObject *DEE_CALL _deelist_resize(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t new_size; DeeObject *filler = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu|o:resize",&new_size,&filler) != 0) return NULL;
  if DEE_UNLIKELY(DeeList_Resize((DeeObject *)self,new_size,filler) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_reserve(
+static DeeObject *DEE_CALL _deelist_reserve(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t reserved_elems;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu:reserve",&reserved_elems) != 0) return NULL;
  if DEE_UNLIKELY(DeeList_Reserve((DeeObject *)self,reserved_elems) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_shrink_to_fit(
+static DeeObject *DEE_CALL _deelist_shrink_to_fit(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":shrink_to_fit") != 0) return NULL;
  DeeList_ShrinkToFit((DeeObject *)self);
  DeeReturn_None;
 }
-static DeeObject *_deelist_reverse(
+static DeeObject *DEE_CALL _deelist_reverse(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":reverse") != 0) return NULL;
  DeeList_Reverse((DeeObject *)self);
  DeeReturn_None;
 }
-static DeeObject *_deelist_find(
+static DeeObject *DEE_CALL _deelist_find(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem,*pred = Dee_None; Dee_ssize_t result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:find",&elem,&pred) != 0) return NULL;
@@ -2892,7 +2883,7 @@ static DeeObject *_deelist_find(
   : DeeList_FindPred((DeeObject *)self,elem,pred)) == -2) return NULL;
  return DeeObject_New(Dee_ssize_t,result);
 }
-static DeeObject *_deelist_index(
+static DeeObject *DEE_CALL _deelist_index(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem,*pred = Dee_None; Dee_size_t result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:index",&elem,&pred) != 0) return NULL;
@@ -2901,7 +2892,7 @@ static DeeObject *_deelist_index(
   : DeeList_IndexPred((DeeObject *)self,elem,pred)) == (Dee_size_t)-1) return NULL;
  return DeeObject_New(Dee_size_t,result);
 }
-static DeeObject *_deelist_rfind(
+static DeeObject *DEE_CALL _deelist_rfind(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem,*pred = Dee_None; Dee_ssize_t result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:rfind",&elem,&pred) != 0) return NULL;
@@ -2910,7 +2901,7 @@ static DeeObject *_deelist_rfind(
   : DeeList_RFindPred((DeeObject *)self,elem,pred)) == -2) return NULL;
  return DeeObject_New(Dee_ssize_t,result);
 }
-static DeeObject *_deelist_rindex(
+static DeeObject *DEE_CALL _deelist_rindex(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem,*pred = Dee_None; Dee_size_t result;
  if (DeeTuple_Unpack(args,"o|o:rindex",&elem,&pred) != 0) return NULL;
@@ -2919,7 +2910,7 @@ static DeeObject *_deelist_rindex(
   : DeeList_RIndexPred((DeeObject *)self,elem,pred)) == (Dee_size_t)-1) return NULL;
  return DeeObject_New(Dee_size_t,result);
 }
-static DeeObject *_deelist_count(
+static DeeObject *DEE_CALL _deelist_count(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem,*pred = Dee_None; Dee_size_t result;
  if (DeeTuple_Unpack(args,"o|o:count",&elem,&pred) != 0) return NULL;
@@ -2928,7 +2919,7 @@ static DeeObject *_deelist_count(
   : DeeList_CountPred((DeeObject *)self,elem,pred)) == (Dee_size_t)-1) return NULL;
  return DeeObject_New(Dee_size_t,result);
 }
-static DeeObject *_deelist_sort(
+static DeeObject *DEE_CALL _deelist_sort(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *pred = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:sort",&pred) != 0) return NULL;
@@ -2937,75 +2928,75 @@ static DeeObject *_deelist_sort(
   : DeeList_SortPred((DeeObject *)self,pred)) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_sorted(
+static DeeObject *DEE_CALL _deelist_sorted(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *pred = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:sorted",&pred) != 0) return NULL;
  return DEE_LIKELY(DeeNone_Check(pred) || pred == (DeeObject *)&DeeBuiltinFunction___lo__)
   ? DeeList_Sorted((DeeObject *)self) : DeeList_SortedPred((DeeObject *)self,pred);
 }
-static DeeObject *_deelist_reversed(
+static DeeObject *DEE_CALL _deelist_reversed(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":reversed") != 0) return NULL;
  return DeeList_Reversed((DeeObject *)self);
 }
-static DeeObject *_deelist_empty(
+static DeeObject *DEE_CALL _deelist_empty(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":empty") != 0) return NULL;
  DeeReturn_Bool(DeeList_Size((DeeObject *)self) == 0);
 }
-static DeeObject *_deelist_non_empty(
+static DeeObject *DEE_CALL _deelist_non_empty(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":non_empty") != 0) return NULL;
  DeeReturn_Bool(DeeList_Size((DeeObject *)self) != 0);
 }
-static DeeObject *_deelist_front(
+static DeeObject *DEE_CALL _deelist_front(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":front") != 0) return NULL;
  return DeeList_Front((DeeObject *)self);
 }
-static DeeObject *_deelist_back(
+static DeeObject *DEE_CALL _deelist_back(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":back") != 0) return NULL;
  return DeeList_Back((DeeObject *)self);
 }
-static DeeObject *_deelist_at(
+static DeeObject *DEE_CALL _deelist_at(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t index;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu:at",&index) != 0) return NULL;
  return DeeList_At((DeeObject *)self,index);
 }
-static DeeObject *_deelist_locate(
+static DeeObject *DEE_CALL _deelist_locate(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *pred;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:locate",&pred) != 0) return NULL;
  return DeeList_Locate((DeeObject *)self,pred);
 }
-static DeeObject *_deelist_rlocate(
+static DeeObject *DEE_CALL _deelist_rlocate(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *pred;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:rlocate",&pred) != 0) return NULL;
  return DeeList_RLocate((DeeObject *)self,pred);
 }
-static DeeObject *_deelist_locate_all(
+static DeeObject *DEE_CALL _deelist_locate_all(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *pred;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:locate_all",&pred) != 0) return NULL;
  return DeeList_LocateAll((DeeObject *)self,pred);
 }
-static DeeObject *_deelist_transform(
+static DeeObject *DEE_CALL _deelist_transform(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *pred;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:transform",&pred) != 0) return NULL;
  return DeeList_Transform((DeeObject *)self,pred);
 }
-static DeeObject *_deelist_segments(
+static DeeObject *DEE_CALL _deelist_segments(
  DeeTupleObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t n;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu:segments",&n) != 0) return NULL;
  return DeeList_Segments((DeeObject *)self,n);
 }
-static DeeObject *_deelist_contains(
+static DeeObject *DEE_CALL _deelist_contains(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *elem,*pred = Dee_None; int result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:contains",&elem,&pred) != 0) return NULL;
@@ -3014,26 +3005,26 @@ static DeeObject *_deelist_contains(
   : DeeList_ContainsPred((DeeObject *)self,elem,pred)) < 0) return NULL;
  DeeReturn_Bool(result);
 }
-static DeeObject *_deelist_remove_if(
+static DeeObject *DEE_CALL _deelist_remove_if(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t result; DeeObject *pred;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:remove_if",&pred) != 0) return NULL;
  if DEE_UNLIKELY((result = DeeList_RemoveIf((DeeObject *)self,pred)) == (Dee_size_t)-1) return NULL;
  return DeeObject_New(Dee_size_t,result);
 }
-static DeeObject *_deelist_allocated(
+static DeeObject *DEE_CALL _deelist_allocated(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":allocated") != 0) return NULL;
  return DeeObject_New(Dee_size_t,DeeList_Alloc((DeeObject *)self));
 }
-static DeeObject *_deelist_fill(
+static DeeObject *DEE_CALL _deelist_fill(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *fill_ob; Dee_size_t fill_size = DeeList_SIZE(self);
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|Iu:fill",&fill_ob,&fill_size) != 0) return NULL;
  if DEE_UNLIKELY(DeeList_FillAssign((DeeObject *)self,fill_ob,fill_size) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_unique(
+static DeeObject *DEE_CALL _deelist_unique(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *pred = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:unique",&pred) != 0) return NULL;
@@ -3042,14 +3033,14 @@ static DeeObject *_deelist_unique(
   : DeeList_UniquePred((DeeObject *)self,pred)) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deelist_tounique(
+static DeeObject *DEE_CALL _deelist_tounique(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *pred = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:tounique",&pred) != 0) return NULL;
  return DEE_LIKELY(DeeNone_Check(pred) || pred == (DeeObject *)&DeeBuiltinFunction___eq__)
   ? DeeList_ToUnique((DeeObject *)self) : DeeList_ToUniquePred((DeeObject *)self,pred);
 }
-static DeeObject *_deelist_extend_unique(
+static DeeObject *DEE_CALL _deelist_extend_unique(
  DeeListObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *seq,*pred = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:extend_unique",&seq,&pred) != 0) return NULL;

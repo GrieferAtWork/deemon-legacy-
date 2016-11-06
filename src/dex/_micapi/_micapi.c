@@ -168,7 +168,7 @@ DEE_A_RET_EXCEPT(-1) int DeeMic_EndRecord(DEE_A_INOUT DeeMicObject *self) {
 }
 
 
-static void _deemic_tp_io_close(DeeMicObject *self) {
+static void DEE_CALL _deemic_tp_io_close(DeeMicObject *self) {
  HANDLE old_thread; DWORD old_threadid;
  HWAVEIN old_hwave; HMIXER old_hmixer;
  // Close the IO Buffer
@@ -197,28 +197,28 @@ post_again:
   if (!CloseHandle(old_thread)) SetLastError(0);
  }
 }
-static void _deemic_tp_dtor(DeeMicObject *self) {
+static void DEE_CALL _deemic_tp_dtor(DeeMicObject *self) {
  _deemic_tp_io_close(self);
  DeeIOBuffer_Quit(&self->m_buffer);
 }
-static int _deemic_tp_io_read(
+static int DEE_CALL _deemic_tp_io_read(
  DeeMicObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
  // Read from the buffer
  return DeeIOBuffer_Read(&self->m_buffer,p,s,rs);
 }
-static int _deemic_tp_io_seek(
+static int DEE_CALL _deemic_tp_io_seek(
  DeeMicObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) {
  // Seek inside the buffer
  return DeeIOBuffer_Seek(&self->m_buffer,off,whence,pos);
 }
 
-static DeeObject *_deemic_begin_record(
+static DeeObject *DEE_CALL _deemic_begin_record(
  DeeMicObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if (DeeTuple_Unpack(args,":begin_record") != 0) return NULL;
  if (DeeMic_BeginRecord(self) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deemic_end_record(
+static DeeObject *DEE_CALL _deemic_end_record(
  DeeMicObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if (DeeTuple_Unpack(args,":end_record") != 0) return NULL;
  if (DeeMic_EndRecord(self) != 0) return NULL;
@@ -239,7 +239,7 @@ static struct DeeMethodDef _deemic_tp_methods[] = {
 };
 
 
-static int _deemic_tp_any_ctor(
+static int DEE_CALL _deemic_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeMicObject *self, DeeObject *args) {
  unsigned int channels = DEE_MIC_DEFAULT_CHANNELS,
   samples_per_sec = DEE_MIC_DEFAULT_SAMPLES_PER_SEC,

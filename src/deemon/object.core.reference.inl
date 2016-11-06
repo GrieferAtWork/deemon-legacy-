@@ -25,6 +25,14 @@ DEE_DECL_BEGIN
 #endif
 
 
+#undef Dee_IncRef
+#undef Dee_DecRef
+#undef Dee_XIncRef
+#undef Dee_XDecRef
+#undef Dee_WeakIncRef
+#undef Dee_WeakDecRef
+#undef Dee_WeakXIncRef
+#undef Dee_WeakXDecRef
 void Dee_IncRef(DEE_A_INOUT struct DeeObject *ob) { Dee_INCREF(ob); }
 void Dee_DecRef(DEE_A_INOUT struct DeeObject *ob) { Dee_DECREF(ob); }
 void Dee_XIncRef(DEE_A_INOUT_OPT struct DeeObject *ob) { Dee_XINCREF(ob); }

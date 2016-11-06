@@ -359,6 +359,11 @@
     <ClInclude Include="..\src\deemon\runtime\libffi_msvc\ffi_common.h" />
     <ClInclude Include="..\src\deemon\runtime\libffi_msvc\ffitarget.h" />
     <ClInclude Include="..\src\deemon\signalhandler.h" />
+    <ClInclude Include="..\src\deemon\sys\sysdynlib.h" />
+    <ClInclude Include="..\src\deemon\sys\_haiku.sysdynlib.h" />
+    <ClInclude Include="..\src\deemon\sys\_notimplemented.sysdynlib.h" />
+    <ClInclude Include="..\src\deemon\sys\_posix.sysdynlib.h" />
+    <ClInclude Include="..\src\deemon\sys\_win32.sysdynlib.h" />
     <ClInclude Include="..\src\deemon\uuid_list.h" />
     <ClInclude Include="..\src\tpp\tpp.h" />
   </ItemGroup>

@@ -1209,15 +1209,14 @@ static int _crcname_equals(
 DEE_A_RET_NOEXCEPT(NULL) struct DeeCRCAlgorithm const *
 DeeCRCAlgorithm_Open(DEE_A_IN_Z char const *name) {
  struct DeeCRCAlgorithm const *const *iter,*const *end,*algo;
- char const *const *alias_iter;
- DEE_ASSERT(name);
+ char const *const *alias_iter; DEE_ASSERT(name);
  end = (iter = _crc_algorithms)+(sizeof(_crc_algorithms)/sizeof(*_crc_algorithms));
  while (iter != end) {
   algo = *iter++;
   if (_crcname_equals(algo->crc_name,name)) return algo;
-  alias_iter = algo->crc_alias;
-  if (alias_iter) while (*alias_iter) {
-   if (_crcname_equals(*alias_iter++,name)) return algo;
+  if ((alias_iter = algo->crc_alias) != NULL) while (*alias_iter) {
+   if (_crcname_equals(*alias_iter,name)) return algo;
+   ++alias_iter;
   }
  }
  return NULL;
@@ -1226,7 +1225,7 @@ DEE_A_RET_EXCEPT(NULL) struct DeeCRCAlgorithm const *
 DeeCRCAlgorithm_OpenWithError(DEE_A_IN_Z char const *name) {
  struct DeeCRCAlgorithm const *result;
  DEE_ASSERT(name);
- if ((result = DeeCRCAlgorithm_Open(name)) == NULL) {
+ if DEE_UNLIKELY((result = DeeCRCAlgorithm_Open(name)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Unknown crc algorithm: %q",name);
   return NULL;
@@ -1244,13 +1243,12 @@ DEE_A_RET_EXCEPT(-1) int DeeCRCAlgorithm_Enum(
   algo = *iter++;
   temp = (*func)(algo,DEE_CRCALGORITHM_ENUM_FLAG_NONE,
                  algo->crc_name,closure);
-  if (temp != 0) return temp;
+  if DEE_UNLIKELY(temp != 0) return temp;
   if ((flags&DEE_CRCALGORITHM_ENUM_FLAG_ALIAS)!=0) {
-   alias_iter = algo->crc_alias;
-   if (alias_iter) while (*alias_iter) {
+   if ((alias_iter = algo->crc_alias) != NULL) while (*alias_iter) {
     temp = (*func)(algo,DEE_CRCALGORITHM_ENUM_FLAG_ALIAS,
                    *alias_iter,closure);
-    if (temp != 0) return temp;
+    if DEE_UNLIKELY(temp != 0) return temp;
     ++alias_iter;
    }
   }
@@ -1263,14 +1261,14 @@ DEE_A_RET_EXCEPT(-1) int DeeCRCAlgorithm_Enum(
 DEE_A_RET_NOEXCEPT(-1) int DeeCRCHasher_InitWithName(
  DEE_A_OUT struct DeeCRCHasher *self, DEE_A_IN_Z char const *name) {
  struct DeeCRCAlgorithm const *_algo;
- if ((_algo = DeeCRCAlgorithm_Open(name)) == NULL) return -1;
+ if DEE_UNLIKELY((_algo = DeeCRCAlgorithm_Open(name)) == NULL) return -1;
  DeeCRCHasher_InitWithAlgorithm(self,_algo);
  return 0;
 }
 DEE_A_RET_EXCEPT(-1) int DeeCRCHasher_InitWithNameAndError(
  DEE_A_OUT struct DeeCRCHasher *self, DEE_A_IN_Z char const *name) {
  struct DeeCRCAlgorithm const *_algo;
- if ((_algo = DeeCRCAlgorithm_OpenWithError(name)) == NULL) return -1;
+ if DEE_UNLIKELY((_algo = DeeCRCAlgorithm_OpenWithError(name)) == NULL) return -1;
  DeeCRCHasher_InitWithAlgorithm(self,_algo);
  return 0;
 }
@@ -1302,15 +1300,15 @@ void DeeCRCHasher_AddString(
 
 
 
-static DeeObject *_hashlib_crc(DeeObject *args) {
+static DeeObject *DEE_CALL _hashlib_crc(DeeObject *args) {
  DeeObject *algo,*data,*size = NULL; void *p; Dee_size_t s;
  struct DeeCRCHasher hasher; struct DeeCRCAlgorithm const *used_algo;
- if (DeeTuple_Unpack(args,"oo|o:crc",&algo,&data,&size) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"oo|o:crc",&algo,&data,&size) != 0) return NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
  if (!DeeString_Check(data)) {
-  if (!size) { DeeError_TypeError_UnexpectedType(data,&DeeString_Type); return NULL; }
-  if (DeeObject_GetVoidPointerEx(data,&p) != 0) return NULL;
-  if (DeeObject_Cast(Dee_size_t,size,&s) != 0) return NULL;
+  if DEE_UNLIKELY(!size) { DeeError_TypeError_UnexpectedType(data,&DeeString_Type); return NULL; }
+  if DEE_UNLIKELY(DeeObject_GetVoidPointerEx(data,&p) != 0) return NULL;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,size,&s) != 0) return NULL;
  } else
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
  {
@@ -1318,16 +1316,16 @@ static DeeObject *_hashlib_crc(DeeObject *args) {
   s = DeeString_SIZE(data)*sizeof(char);
   if (size) {
    Dee_size_t s2;
-   if (DeeObject_Cast(Dee_size_t,size,&s2) != 0) return NULL;
+   if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,size,&s2) != 0) return NULL;
    if (s2 < s) s = s2;
   }
  }
  if (DeeCRCAlgorithm_Check(algo))
   used_algo = DeeCRCAlgorithm_Algo(algo);
  else {
-  if (DeeError_TypeError_CheckTypeExact(algo,&DeeString_Type) != 0) return NULL;
+  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(algo,&DeeString_Type) != 0) return NULL;
   used_algo = DeeCRCAlgorithm_OpenWithError(DeeString_STR(algo));
-  if (!used_algo) return NULL;
+  if DEE_UNLIKELY(!used_algo) return NULL;
  }
  DeeCRCHasher_InitWithAlgorithm(&hasher,used_algo);
  DeeCRCHasher_AddData(&hasher,p,s);
@@ -1351,9 +1349,9 @@ static int DEE_CALL _deecrcalgorithm_tp_copy_ctor(
 static int DEE_CALL _deecrcalgorithm_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeCRCAlgorithmObject *self, DeeObject *args) {
  DeeObject *name;
- if (DeeTuple_Unpack(args,"o:crc_algorithm",&name) != 0) return -1;
- if (DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return -1;
- if ((self->ca_algo = DeeCRCAlgorithm_OpenWithError(DeeString_STR(name))) == NULL) return -1;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:crc_algorithm",&name) != 0) return -1;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return -1;
+ if DEE_UNLIKELY((self->ca_algo = DeeCRCAlgorithm_OpenWithError(DeeString_STR(name))) == NULL) return -1;
  return 0;
 }
 
@@ -1363,24 +1361,24 @@ static int DEE_CALL _deecrcalgorithm_enum_callback(
  DEE_A_IN Dee_uint32_t DEE_UNUSED(flags),
  DEE_A_IN_Z char const *DEE_UNUSED(name), DeeObject *closure) {
  DeeCRCAlgorithmObject *algo_ob; int result;
- if ((algo_ob = DeeObject_MALLOC(DeeCRCAlgorithmObject)) == NULL) return -1;
+ if DEE_UNLIKELY((algo_ob = DeeObject_MALLOC(DeeCRCAlgorithmObject)) == NULL) return -1;
  DeeObject_INIT(algo_ob,&DeeCRCAlgorithm_Type);
  algo_ob->ca_algo = algo;
  result = DeeList_Append(closure,(DeeObject *)algo_ob);
  Dee_DECREF(algo_ob);
  return result;
 }
-static DeeObject *_deecrcalgorithmclass_enum(
+static DeeObject *DEE_CALL _deecrcalgorithmclass_enum(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *result;
- if (DeeTuple_Unpack(args,":enum") != 0) return NULL;
- if ((result = DeeList_New()) == NULL) return result;
- if (DeeCRCAlgorithm_Enum(DEE_CRCALGORITHM_ENUM_FLAG_NONE,
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":enum") != 0) return NULL;
+ if DEE_UNLIKELY((result = DeeList_New()) == NULL) return result;
+ if DEE_UNLIKELY(DeeCRCAlgorithm_Enum(DEE_CRCALGORITHM_ENUM_FLAG_NONE,
   (DeeEnumCrcAlgorithmsFunc)&_deecrcalgorithm_enum_callback,
   result) != 0) Dee_CLEAR(result);
  return result;
 }
-static DeeObject *_deecrcalgorithm_tp_str(DeeCRCAlgorithmObject *self) {
+static DeeObject *DEE_CALL _deecrcalgorithm_tp_str(DeeCRCAlgorithmObject *self) {
  return DeeString_New(self->ca_algo->crc_name);
 }
 
@@ -1391,22 +1389,22 @@ static struct DeeMethodDef const _deecrcalgorithm_tp_class_methods[] = {
  DEE_METHODDEF_END_v100
 };
 
-static DeeObject *_deecrcalgorithm_name_get(
+static DeeObject *DEE_CALL _deecrcalgorithm_name_get(
  DeeCRCAlgorithmObject *self, void *DEE_UNUSED(closure)) {
  return DeeString_New(self->ca_algo->crc_name);
 }
-static DeeObject *_deecrcalgorithm_alias_get(
+static DeeObject *DEE_CALL _deecrcalgorithm_alias_get(
  DeeCRCAlgorithmObject *self, void *DEE_UNUSED(closure)) {
  DeeObject *result,*name; char const *const *iter; int temp;
- if ((result = DeeList_New()) == NULL) return NULL;
- if ((iter = self->ca_algo->crc_alias) != NULL) {
+ if DEE_UNLIKELY((result = DeeList_New()) == NULL) return NULL;
+ if DEE_UNLIKELY((iter = self->ca_algo->crc_alias) != NULL) {
   while (*iter) {
-   if ((name = DeeString_New(*iter)) == NULL) {
+   if DEE_UNLIKELY((name = DeeString_New(*iter)) == NULL) {
 err_r: Dee_DECREF(result); return NULL;
    }
    temp = DeeList_Append(result,name);
    Dee_DECREF(name);
-   if (temp != 0) goto err_r;
+   if DEE_UNLIKELY(temp != 0) goto err_r;
    ++iter;
   }
  }
@@ -1421,29 +1419,29 @@ static struct DeeGetSetDef const _deecrcalgorithm_tp_getsets[] = {
 };
 
 
-static int _deecrchasher_tp_any_ctor(
+static int DEE_CALL _deecrchasher_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeeCRCHasherObject *self, DeeObject *args) {
  struct DeeCRCAlgorithm const *used_algo; DeeObject *algo;
- if (DeeTuple_Unpack(args,"o:crc_hasher",&algo) != 0) return -1;
- if (DeeCRCAlgorithm_Check(algo)) used_algo = DeeCRCAlgorithm_Algo(algo);
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:crc_hasher",&algo) != 0) return -1;
+ if DEE_UNLIKELY(DeeCRCAlgorithm_Check(algo)) used_algo = DeeCRCAlgorithm_Algo(algo);
  else {
-  if (DeeError_TypeError_CheckTypeExact(algo,&DeeString_Type) != 0) return -1;
-  if ((used_algo = DeeCRCAlgorithm_OpenWithError(DeeString_STR(algo))) == NULL) return -1;
+  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(algo,&DeeString_Type) != 0) return -1;
+  if DEE_UNLIKELY((used_algo = DeeCRCAlgorithm_OpenWithError(DeeString_STR(algo))) == NULL) return -1;
  }
  DeeCRCHasher_InitWithAlgorithm(&self->ch_hasher,used_algo);
  return 0;
 }
 
-static DeeObject *_deecrchasher_add(
+static DeeObject *DEE_CALL _deecrchasher_add(
  DeeCRCHasherObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *data,*size = NULL; void *p; Dee_size_t s;
- if (DeeTuple_Unpack(args,"o|o:add",&data,&size) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:add",&data,&size) != 0) return NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
  if (!DeeString_Check(data)) {
-  if (!size) { DeeError_TypeError_UnexpectedType(data,&DeeString_Type); return NULL; }
-  if (DeeObject_GetVoidPointerEx(data,&p) != 0) return NULL;
-  if (DeeObject_Cast(Dee_size_t,size,&s) != 0) return NULL;
+  if DEE_UNLIKELY(!size) { DeeError_TypeError_UnexpectedType(data,&DeeString_Type); return NULL; }
+  if DEE_UNLIKELY(DeeObject_GetVoidPointerEx(data,&p) != 0) return NULL;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,size,&s) != 0) return NULL;
  } else
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
  {
@@ -1451,14 +1449,14 @@ static DeeObject *_deecrchasher_add(
   s = DeeString_SIZE(data)*sizeof(char);
   if (size) {
    Dee_size_t s2;
-   if (DeeObject_Cast(Dee_size_t,size,&s2) != 0) return NULL;
+   if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,size,&s2) != 0) return NULL;
    if (s2 < s) s = s2;
   }
  }
  DeeCRCHasher_AddData(&self->ch_hasher,p,s);
  DeeReturn_None;
 }
-static DeeObject *_deecrchasher_result_get(
+static DeeObject *DEE_CALL _deecrchasher_result_get(
  DeeCRCHasherObject *self, void *DEE_UNUSED(closure)) {
  switch (DeeCRCHasher_Size(&self->ch_hasher)) {
   case DEE_CRCHASHER_SIZE_8:  return DeeObject_New(Dee_uint8_t, DeeCRCHasher_Result8 (&self->ch_hasher));
@@ -1468,10 +1466,10 @@ static DeeObject *_deecrchasher_result_get(
   default: DEE_BUILTIN_UNREACHABLE();
  }
 }
-static DeeCRCAlgorithmObject *_deecrchasher_algorithm_get(
+static DeeCRCAlgorithmObject *DEE_CALL _deecrchasher_algorithm_get(
  DeeCRCHasherObject *self, void *DEE_UNUSED(closure)) {
  DeeCRCAlgorithmObject *result;
- if ((result = DeeObject_MALLOC(DeeCRCAlgorithmObject)) == NULL) return NULL;
+ if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeCRCAlgorithmObject)) == NULL) return NULL;
  DeeObject_INIT(result,&DeeCRCAlgorithm_Type);
  result->ca_algo = self->ch_hasher.crc_algo;
  return result;

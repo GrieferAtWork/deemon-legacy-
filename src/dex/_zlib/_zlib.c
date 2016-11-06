@@ -141,7 +141,7 @@ DeeTypeObject DeeZLibError_Type = {
 
 
 
-static DeeObject *_zlib_compress_data(DeeObject *args) {
+static DeeObject *DEE_CALL _zlib_compress_data(DeeObject *args) {
  DeeObject *result,*data,*size_or_level = NULL,*level_ob = NULL;
  int level; void *p; size_t s;
  if (DeeTuple_Unpack(args,"o|oo:compress_data",&data,&size_or_level,&level_ob) != 0) return NULL;
@@ -189,7 +189,7 @@ static DeeObject *_zlib_compress_data(DeeObject *args) {
  }
  return result;
 }
-static DeeObject *_zlib_uncompress_data(DeeObject *args) {
+static DeeObject *DEE_CALL _zlib_uncompress_data(DeeObject *args) {
  DeeObject *result,*data,*size = NULL; void *p; size_t s;
  if (DeeTuple_Unpack(args,"o|o:uncompress_data",&data,&size) != 0) return NULL;
  if (size) {
