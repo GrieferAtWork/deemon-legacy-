@@ -64,60 +64,53 @@ do{\
 // msdn says you shouldn't use '/' with LoadLibrary
 // s.a.: https://msdn.microsoft.com/en-us/library/windows/desktop/ms684175(v=vs.85).aspx
 //    >> If the syscall fails, search the given path for '/', replace them with '\\' and retry
-// TODO: Auto UNC formatting
-DEE_STATIC_INLINE(HMODULE) _fixed_LoadLibraryA(char const *filename) {
- HMODULE result; char *fixed_filename,*iter;
- Dee_size_t filename_size; DWORD saved_error;
- if ((result = LoadLibraryA(filename)) != NULL) return result;
- iter = (char *)filename;
- while (*iter && *iter != '/') ++iter;
- if (!*iter) return NULL;
- // Path contains '/' --> Replace them with '\\'
- saved_error = GetLastError();
- filename_size = strlen(filename);
- if ((fixed_filename = (char *)malloc_nz((
-  filename_size+1)*sizeof(char))) == NULL) {
-  SetLastError(saved_error);
-  return NULL;
- }
- memcpy(fixed_filename,filename,filename_size*sizeof(char));
- fixed_filename[filename_size] = 0;
- iter = fixed_filename;
- while (*iter) { if (*iter == '/') *iter = '\\'; ++iter; }
- result = LoadLibraryA(fixed_filename);
- saved_error = GetLastError();
- free_nn(fixed_filename);
- SetLastError(saved_error);
- return result;
-}
+// NOTE: Also perform auto UNC formatting to allow for longer path names
 DEE_STATIC_INLINE(HMODULE) _fixed_LoadLibraryW(Dee_WideChar const *filename) {
  HMODULE result; Dee_WideChar *fixed_filename,*iter;
  Dee_size_t filename_size; DWORD saved_error;
- if ((result = LoadLibraryW(filename)) != NULL) return result;
- iter = (Dee_WideChar *)filename;
- while (*iter && *iter != '/') ++iter;
- if (!*iter) return NULL;
- // Path contains '/' --> Replace them with '\\'
- saved_error = GetLastError();
  filename_size = Dee_WideStrLen(filename);
- if ((fixed_filename = (Dee_WideChar *)malloc_nz((
-  filename_size+1)*sizeof(Dee_WideChar))) == NULL) {
-  SetLastError(saved_error);
-  return NULL;
+ if (filename[0] == '\\' && filename[1] == '\\' &&
+     filename[2] == '?' && filename[2] == '\\') {
+  // Already a UNC filename
+  fixed_filename = (Dee_WideChar *)malloc_nz((filename_size+1)*sizeof(Dee_WideChar));
+  if (!fixed_filename) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return NULL; }
+  memcpy(fixed_filename,filename,filename_size*sizeof(Dee_WideChar));
+  iter = (Dee_WideChar *)filename;
+  fixed_filename[filename_size] = 0;
+ } else {
+  fixed_filename = (Dee_WideChar *)malloc_nz((filename_size+5)*sizeof(Dee_WideChar));
+  fixed_filename[0] = '\\';
+  fixed_filename[1] = '\\';
+  fixed_filename[2] = '?';
+  fixed_filename[3] = '\\';
+  memcpy(fixed_filename+4,filename,filename_size*sizeof(Dee_WideChar));
+  fixed_filename[filename_size+4] = 0;
  }
- memcpy(fixed_filename,filename,filename_size*sizeof(Dee_WideChar));
- fixed_filename[filename_size] = 0;
  iter = fixed_filename;
- while (*iter) { if (*iter == '/') *iter = '\\'; ++iter; }
+ while (*iter) { if (*iter = '/') *iter = '\\'; ++iter; }
  result = LoadLibraryW(fixed_filename);
  saved_error = GetLastError();
  free_nn(fixed_filename);
  SetLastError(saved_error);
  return result;
 }
+DEE_STATIC_INLINE(HMODULE) _fixed_LoadLibraryA(Dee_Utf8Char const *filename) {
+ HMODULE result; DeeObject *widefile; DWORD saved_error;
+ if ((widefile = DeeWideString_FromUtf8String(filename)) == NULL)
+ { DeeError_HandledOne(); return LoadLibraryA(filename); }
+ result = _fixed_LoadLibraryW(DeeWideString_STR(widefile));
+ saved_error = GetLastError();
+ Dee_DECREF(widefile);
+ SetLastError(saved_error);
+ return result;
+}
 
-#define DeeWin32SysDynlib_Utf8TryInitFromFilename(ob,filename) (((ob)->sd_lib = _fixed_LoadLibraryA(filename)) != NULL)
-#define DeeWin32SysDynlib_WideTryInitFromFilename(ob,filename) (((ob)->sd_lib = _fixed_LoadLibraryW(filename)) != NULL)
+#define DeeWin32SysDynlib_Utf8TryInitFromFilename(ob,filename) \
+ (((ob)->sd_lib = LoadLibraryA(filename)) == NULL ?\
+ (((ob)->sd_lib = _fixed_LoadLibraryA(filename)) != NULL) : 1)
+#define DeeWin32SysDynlib_WideTryInitFromFilename(ob,filename) \
+ (((ob)->sd_lib = LoadLibraryW(filename)) == NULL ?\
+ (((ob)->sd_lib = _fixed_LoadLibraryW(filename)) != NULL) : 1)
 #define DeeWin32SysDynlib_Utf8InitFromFilename(ob,filename,...)\
 do{\
  if DEE_UNLIKELY(!DeeWin32SysDynlib_Utf8TryInitFromFilename(ob,filename)) {\
