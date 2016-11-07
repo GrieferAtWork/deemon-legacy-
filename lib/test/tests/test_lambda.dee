@@ -20,10 +20,11 @@
  * SOFTWARE.                                                                      *
  */
 
-#include <thread>
-
 (({
 
+	// NOTE: This example could be written much more compact,
+	//       but here we just want to test the functionality.
+	//       >> local a = [](x) { local a = x; return [] -> a+x; }
 	local a = (function(x){
 		local a = x;
 		return function() { return a+x; };

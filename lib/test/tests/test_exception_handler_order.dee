@@ -35,10 +35,10 @@
 			caught_errors.append(e);
 			// Throwing another exception won't invoke
 			// another handler from the list of handlers
-			// associated with this try-block
+			// associated with this try-block...
 			throw 42;
 		} catch (...) {
-			// aka. This shouldn't get executed!
+			// ... aka. This shouldn't get executed!
 			__builtin_unreachable();
 		}
 		// We shouldn't get here either... (sanity check)

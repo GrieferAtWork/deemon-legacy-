@@ -25,9 +25,6 @@
 
 (({
 
-	// Make sure that multi-exception silently dropped by the runtime
-	// are handled correctly.
-
 	class my_class: list {
 		find(elem) {
 			try {
@@ -40,7 +37,7 @@
 
 	x = my_class();
 	
-	// __builtin_find will see the NotImplemented error and handle it.
+	// __builtin_find will see the NotImplemented error and try to handle it.
 	// NOTE: The standard doesn't specify what happens to additional
 	//       exceptions when exceptions are handled by the runtime.
 	//       >> Thus, depending on deemon's implementation, this
@@ -48,7 +45,7 @@
 	//          #1: __builtin_find will handle all errors after
 	//              seing that the one on top is what it was looking for,
 	//              then move on to use the iterators from 'list'.
-	//          #2: Only the NotImplemented eror is handled and after
+	//          #2: Only the NotImplemented error is handled and after
 	//              handling it the function fails, thus proceeding to signal
 	//              the previous error, that is the string constant "Inner Error"
 	// NOTE: For a more detailed explanation, see the 'Handle vs. HandleOne'

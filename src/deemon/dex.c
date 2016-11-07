@@ -462,7 +462,8 @@ void _DeeDex_QuitApi(void) {
  DeeList_ClearAndShrink(DeeDex_SearchPath);
  // The following like will do the actual unloading of all dex
  // modules, actually freeing all of their library handles.
- DeeHashMap_ClearWithLock(&_dex_modules_map,&_dex_modules_lock);
+ DeeHashMap_Clear(&_dex_modules_map);
+ //DeeHashMap_ClearWithLock(&_dex_modules_map,&_dex_modules_lock);
 }
 
 #ifdef DEE_PLATFORM_WINDOWS
