@@ -1829,40 +1829,40 @@ void DeeThread_Yield(void) {
 
 DEE_A_RET_EXCEPT(-1) int DeeThread_Sleep(DEE_A_IN unsigned int msecs) {
 #ifdef DEE_PLATFORM_WINDOWS
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  Sleep(msecs);
 #elif DEE_HAVE_NANOSLEEP
  struct timespec wait_tm,rem;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  wait_tm.tv_sec = (time_t)(msecs/1000);
  wait_tm.tv_nsec = (unsigned long)(msecs%1000)*1000000ul;
  while (nanosleep(&wait_tm,&rem) != 0) {
   errno = 0;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   wait_tm = rem;
  }
 #elif DEE_HAVE_CLOCK_NANOSLEEP
  struct timespec wait_tm,rem;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  wait_tm.tv_sec = (time_t)(msecs/1000);
  wait_tm.tv_nsec = (unsigned long)(msecs%1000)*1000000ul;
  while (clock_nanosleep(CLOCK_MONOTONIC,0,&wait_tm,&rem) != 0) {
   errno = 0;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   wait_tm = rem;
  }
 #elif DEE_HAVE_USLEEP
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (usleep((useconds_t)(msecs*1000ul)) != 0) errno = 0;
 #elif DEE_HAVE_SELECT
  struct timeval wait_tm;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  wait_tm.tv_sec = msecs/1000ul;
  wait_tm.tv_usec = (msecs%1000ul)*1000ul;
  if (select(0,0,0,0,&tv) != 0) errno = 0;
 #else
  Dee_uint64_t end; if (!msecs) return;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  end = DeeTime_GetClock1000()+msecs; // *cringes*
  while (end < DeeTime_GetClock1000()) {
   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;

@@ -330,7 +330,7 @@ static int DEE_CALL _deepipewriter_tp_io_read(
 }
 static int DEE_CALL _deepipewriter_tp_io_write(
  DeePipeObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeFile_ACQUIRE(self);
  {
 #if defined(DEE_PLATFORM_WINDOWS)

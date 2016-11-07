@@ -263,10 +263,11 @@ static DeeObject *_deeobject_tp_cmp_ne(DeeObject *lhs, DeeObject *rhs) { DeeRetu
 
 static int _deeobject_tp_ctor(DeeTypeObject *DEE_UNUSED(tp), DeeObject *DEE_UNUSED(self)) { return 0; }
 static int _deeobject_tp_ctor_arg(DeeTypeObject *DEE_UNUSED(tp), DeeObject *DEE_UNUSED(self), DeeObject *DEE_UNUSED(right)) { return 0; }
-static int _deeobject_tp_ctor_args(DeeTypeObject *tp, DeeObject *DEE_UNUSED(self), DeeObject *args) {
+static int _deeobject_tp_ctor_args(
+ DeeTypeObject *DEE_UNUSED(tp), DeeObject *DEE_UNUSED(self), DeeObject *args) {
  DeeError_SetStringf(&DeeErrorType_NotImplemented,
-                     "Not implemented: %s%K",
-                     DeeType_NAME(tp),DeeTuple_Types(args));
+                     "Not implemented: object%K",
+                     DeeTuple_Types(args));
  return -1;
 }
 static int _deeobject_tp_copy_assign(DeeObject *self, DeeObject *DEE_UNUSED(right)) { NOTIMPLEMENTED_OPERATOR(self,"__copyassign__"); return -1; }

@@ -33,6 +33,10 @@ _DeeType_ClassOperatorName(DEE_A_IN int slot) {
   case DeeType_SLOT_ID(tp_any_new):
   case DeeType_SLOT_ID(tp_any_ctor):
    return "__constructor__";
+  case DEE_XAST_TYPESLOT_SUPERARGS:
+  case DEE_CLASS_SLOTID_SUPERARGS_CTOR:
+  case DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR:
+   return "__superargs__";
   case DeeType_SLOT_ID(tp_copy_new):
   case DeeType_SLOT_ID(tp_copy_ctor):
    return "__copy__";

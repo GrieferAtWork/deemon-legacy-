@@ -518,6 +518,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\compiler\xast_parse.types_compatible_p.inl" />
     <None Include="..\src\deemon\compiler\xast_parse.unary.inl" />
     <None Include="..\src\deemon\compiler\xast_parse.unary_with_suffix.inl" />
+    <None Include="..\src\deemon\compiler\xast_parse.unnamed_function.inl" />
     <None Include="..\src\deemon\compiler\xast_parse.var_lookup.inl" />
     <None Include="..\src\deemon\compiler\__keywords.inl" />
     <None Include="..\src\deemon\compiler\__opcode.inl" />

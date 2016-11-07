@@ -42,6 +42,11 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeXAst_FixOperatorWithArgcount(
     ? DeeType_SLOT_ID(tp_any_ctor)
     : DeeType_SLOT_ID(tp_ctor);
    return 0;
+  case DEE_XAST_TYPESLOT_SUPERARGS:
+   *operator_name = argc
+    ? DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR
+    : DEE_CLASS_SLOTID_SUPERARGS_CTOR;
+   return 0;
   case DeeType_SLOT_ID(tp_p_add):
    if (argc == 0) *operator_name = DeeType_SLOT_ID(tp_pos);
    else if (argc == 1) *operator_name = DeeType_SLOT_ID(tp_add);
@@ -232,8 +237,8 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewOperatorCall(
 deduce_runtime:
   // Cannot deduce argument count --> Must use intrinsic functions to determine at runtime
   if DEE_UNLIKELY((operator_function = DeeBuiltin_GetIntrinsicFunctionOfTypeSlot(typeslot)) == NULL) {
-   // Can this even happen?
-   if DEE_UNLIKELY(DeeError_CompilerErrorf(DEE_WARNING_NO_RUNTIME_SUPPORT_FOR_TYPESLOT,
+   // Can this even happen? (Yes, some technical operators get here)
+   if DEE_UNLIKELY(DeeError_CompilerErrorf(DEE_WARNING_NO_RUNTIME_SUPPORT_FOR_OPERATOR,
     (DeeObject *)lexer,(DeeObject *)operator_token,
     "No runtime support for 'operator %s'",
     _DeeType_ClassOperatorName(typeslot)) != 0) return NULL;
@@ -561,6 +566,7 @@ y1: if DEE_UNLIKELY(!yield()) return -1;
   case KWD___moveassign__: YIELD_AND_RETURN(DeeType_SLOT_ID(tp_move_assign));
   case KWD___constructor__: YIELD_AND_RETURN(DeeType_SLOT_ID(tp_p_any_ctor));
   case KWD___destructor__: YIELD_AND_RETURN(DeeType_SLOT_ID(tp_dtor));
+  case KWD___superargs__: YIELD_AND_RETURN(DEE_XAST_TYPESLOT_SUPERARGS);
   DEE_PARSE_TOKENID_CASE_BOOL case KWD___bool__: YIELD_AND_RETURN(DeeType_SLOT_ID(tp_bool));
   case '+': YIELD_AND_RETURN(DeeType_SLOT_ID(tp_p_add));
   case '-': YIELD_AND_RETURN(DeeType_SLOT_ID(tp_p_sub));

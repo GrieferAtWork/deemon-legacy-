@@ -779,7 +779,7 @@ DeeFS_PathExpandVarsObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
 
 #ifdef DEE_PLATFORM_UNIX
 static int _deefs_posix_stat(char const *path, struct stat *attrib) {
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (stat(path,attrib) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "stat(%q) : %K",path,
@@ -790,7 +790,7 @@ static int _deefs_posix_stat(char const *path, struct stat *attrib) {
 }
 static int _deefs_posix_fstat(int fd, DeeObject *path, struct stat *attrib) {
 #if DEE_HAVE_FSTAT
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (fstat(fd,attrib) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "fstat(%d:%k) : %K",fd,path,
@@ -801,7 +801,7 @@ static int _deefs_posix_fstat(int fd, DeeObject *path, struct stat *attrib) {
 #else
  (void)fd;
  if ((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- if (DeeThread_CheckInterrupt() != 0) goto err_path;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_path;
  if (stat(DeeUtf8String_STR(path),attrib) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "stat(%q) : %K",
@@ -817,7 +817,7 @@ err_path:
 }
 static int _deefs_posix_try_stat(
  char const *path, struct stat *attrib) {
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (stat(path,attrib) != 0) {
   int error = DeeSystemError_Consume();
   if (error == ENOTDIR || error == ENOENT) return 1; // Not found
@@ -830,7 +830,7 @@ static int _deefs_posix_try_stat(
 }
 #if DEE_HAVE_LSTAT
 static int _deefs_posix_try_lstat(char const *path, struct stat *attrib) {
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (lstat(path,attrib) != 0) {
   int error = DeeSystemError_Consume();
   if (error == ENOTDIR || error == ENOENT) return 1; // Not found
@@ -1863,7 +1863,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8CopyWithProgress(
  {
   struct _deefs_win32_copywithprogress_systemcallback_data data;
   int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   data.progress = progress; data.closure = closure;
   data.calllevel = 0; data.cancled = FALSE;
   if (!CopyFileExA(src,dst,&_deefs_win32_copywithprogress_systemcallback,
@@ -1939,7 +1939,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideCopyWithProgress(
  {
   struct _deefs_win32_copywithprogress_systemcallback_data data;
   int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   data.progress = progress; data.closure = closure;
   data.calllevel = 0; data.cancled = FALSE;
   if (!CopyFileExW(src,dst,&_deefs_win32_copywithprogress_systemcallback,
@@ -2093,14 +2093,14 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetMachineName(void)
  DeeObject *result; 
  DWORD error,result_size = 1+MAX_COMPUTERNAME_LENGTH;
  if ((result = DeeUtf8String_NewSized(MAX_COMPUTERNAME_LENGTH)) == NULL) return NULL;
- if (DeeThread_CheckInterrupt() != 0) goto err_r;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
  if (!GetComputerNameA(DeeUtf8String_STR(result),&result_size)) {
   error = GetLastError(); SetLastError(0);
   if (error == ERROR_BUFFER_OVERFLOW) {
    if (DeeUtf8String_Resize(&result,result_size++) == -1) {
 err_r: Dee_DECREF(result); return NULL;
    }
-   if (DeeThread_CheckInterrupt() != 0) goto err_r;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
    if (!GetComputerNameA(DeeUtf8String_STR(result),&result_size)) {
     error = GetLastError(); SetLastError(0);
    } else return result;
@@ -2116,7 +2116,7 @@ err_r: Dee_DECREF(result); return NULL;
  DeeObject *result; int error; Dee_size_t result_size = 256;
  if ((result = DeeUtf8String_NewSized(256)) == NULL) return NULL;
  while (1) {
-  if (DeeThread_CheckInterrupt() != 0) goto err_r;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
   if (gethostname(DeeUtf8String_STR(result),result_size) == 0) break;
   error = errno; errno = 0;
 #ifdef ENAMETOOLONG
@@ -2145,14 +2145,14 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideGetMachineName(void)
  DeeObject *result; 
  DWORD error,result_size = 1+MAX_COMPUTERNAME_LENGTH;
  if ((result = DeeWideString_NewSized(MAX_COMPUTERNAME_LENGTH)) == NULL) return NULL;
- if (DeeThread_CheckInterrupt() != 0) goto err_r;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
  if (!GetComputerNameW(DeeWideString_STR(result),&result_size)) {
   error = GetLastError(); SetLastError(0);
   if (error == ERROR_BUFFER_OVERFLOW) {
    if (DeeWideString_Resize(&result,result_size++) == -1) {
 err_r: Dee_DECREF(result); return NULL;
    }
-   if (DeeThread_CheckInterrupt() != 0) goto err_r;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
    if (!GetComputerNameW(DeeWideString_STR(result),&result_size)) {
     error = GetLastError(); SetLastError(0);
    } else return result;
@@ -2179,14 +2179,14 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetUserName(void) {
  DeeObject *result; 
  DWORD error,result_size = 1+UNLEN;
  if ((result = DeeUtf8String_NewSized(UNLEN)) == NULL) return NULL;
- if (DeeThread_CheckInterrupt() != 0) goto err_r;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
  if (!GetUserNameA(DeeUtf8String_STR(result),&result_size)) {
   error = GetLastError(); SetLastError(0);
   if (error == ERROR_BUFFER_OVERFLOW) {
    if (DeeUtf8String_Resize(&result,result_size-1) == -1) {
 err_r: Dee_DECREF(result); return NULL;
    }
-   if (DeeThread_CheckInterrupt() != 0) goto err_r;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
    if (!GetUserNameA(DeeUtf8String_STR(result),&result_size)) {
     error = GetLastError(); SetLastError(0);
    } else return result;
@@ -2203,7 +2203,7 @@ err_r: Dee_DECREF(result); return NULL;
  DeeObject *result; int error; Dee_size_t result_size = 256;
  if ((result = DeeUtf8String_NewSized(256)) == NULL) return NULL;
  while (1) {
-  if (DeeThread_CheckInterrupt() != 0) goto err_r;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
   if (getlogin_r(DeeUtf8String_STR(result),result_size) == 0) break;
   error = errno; errno = 0;
   if (error == ENOMEM) {
@@ -2220,7 +2220,7 @@ err_r: Dee_DECREF(result); return NULL;
  return result;
 #else
  char const *result;
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if ((result = getlogin()) == NULL) {
   DeeError_SystemError("getlogin");
   return NULL;
@@ -2236,14 +2236,14 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideGetUserName(void) {
  DeeObject *result; 
  DWORD error,result_size = 1+UNLEN;
  if ((result = DeeWideString_NewSized(UNLEN)) == NULL) return NULL;
- if (DeeThread_CheckInterrupt() != 0) goto err_r;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
  if (!GetUserNameW(DeeWideString_STR(result),&result_size)) {
   error = GetLastError(); SetLastError(0);
   if (error == ERROR_BUFFER_OVERFLOW) {
    if (DeeWideString_Resize(&result,result_size-1) == -1) {
 err_r: Dee_DECREF(result); return NULL;
    }
-   if (DeeThread_CheckInterrupt() != 0) goto err_r;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
    if (!GetUserNameW(DeeWideString_STR(result),&result_size)) {
     error = GetLastError(); SetLastError(0);
    } else return result;
@@ -2346,7 +2346,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8Win32GetOwnWithHandle(
  DEE_A_IN_Z Dee_Utf8Char const *filename, DEE_A_IN DeeIOHandle file,
  DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
  DWORD error;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if ((error = GetSecurityInfo(file,SE_FILE_OBJECT,
   (DWORD)(owner ? OWNER_SECURITY_INFORMATION : 0)|
   (DWORD)(group ? GROUP_SECURITY_INFORMATION : 0),
@@ -2362,7 +2362,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideWin32GetOwnWithHandle(
  DEE_A_IN_Z Dee_WideChar const *filename, DEE_A_IN DeeIOHandle file,
  DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
  DWORD error;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if ((error = GetSecurityInfo(file,SE_FILE_OBJECT,
   (DWORD)(owner ? OWNER_SECURITY_INFORMATION : 0)|
   (DWORD)(group ? GROUP_SECURITY_INFORMATION : 0),
@@ -2383,7 +2383,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8Win32SetOwnWithHandle(
  if (!owner || !IsValidSid((PSID)owner) ||
      !group || !IsValidSid((PSID)group)
      ) { error = ERROR_INVALID_PARAMETER; goto syserr; }
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if ((error = SetSecurityInfo(file,SE_FILE_OBJECT,
   OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,
   (PSID)owner,(PSID)group,NULL,NULL)) != ERROR_SUCCESS) {
@@ -2405,7 +2405,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideWin32SetOwnWithHandle(
  if (!owner || !IsValidSid((PSID)owner) ||
      !group || !IsValidSid((PSID)group)
      ) { error = ERROR_INVALID_PARAMETER; goto syserr; }
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if ((error = SetSecurityInfo(file,SE_FILE_OBJECT,
   OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,
   (PSID)owner,(PSID)group,NULL,NULL)) != ERROR_SUCCESS) {
@@ -2459,7 +2459,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8GetModWithHandle(
  DEE_A_IN_Z Dee_Utf8Char const *filename,
  DEE_A_IN DeeIOHandle file, DEE_A_OUT Dee_mode_t *mode) {
  BY_HANDLE_FILE_INFORMATION info; int error;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!GetFileInformationByHandle(file,&info)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                        "GetFileInformationByHandle(%q) : %K",
@@ -2476,7 +2476,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideGetModWithHandle(
  DEE_A_IN_Z Dee_WideChar const *filename,
  DEE_A_IN DeeIOHandle file, DEE_A_OUT Dee_mode_t *mode) {
  BY_HANDLE_FILE_INFORMATION info; int error;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!GetFileInformationByHandle(file,&info)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                        "GetFileInformationByHandle(%lq) : %K",
@@ -2493,7 +2493,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8SetModWithHandle(
  DEE_A_IN_Z Dee_Utf8Char const *filename,
  DEE_A_IN DeeIOHandle file, DEE_A_IN Dee_mode_t mode) {
  BY_HANDLE_FILE_INFORMATION info; int error;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DEE_LVERBOSE1("fs::chmod(%q,%#.4I32o)\n",filename,mode);
  if (!GetFileInformationByHandle(file,&info)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -2509,7 +2509,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8SetModWithHandle(
   if ((info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)!=0) return 0;
   info.dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
  }
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!SetFileAttributesA(filename,info.dwFileAttributes)) {
   error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -2517,7 +2517,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8SetModWithHandle(
      !DeeFS_Utf8Win32IsPathUNC(filename)) {
    DeeObject *temp;
    if ((temp = DeeFS_Utf8Win32PathUNC(filename)) == NULL) return -1;
-   if (DeeThread_CheckInterrupt() != 0) { Dee_DECREF(temp); return -1; }
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) { Dee_DECREF(temp); return -1; }
    error = (int)SetFileAttributesW(DeeWideString_STR(temp),info.dwFileAttributes);
    Dee_DECREF(temp);
    if (error) return 0;
@@ -2537,7 +2537,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideSetModWithHandle(
  DEE_A_IN DeeIOHandle file, DEE_A_IN Dee_mode_t mode) {
  BY_HANDLE_FILE_INFORMATION info; int error;
  DEE_LVERBOSE1("fs::chmod(%q,%#.4I32o)\n",filename,mode);
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!GetFileInformationByHandle(file,&info)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                        "GetFileInformationByHandle(%lq) : %K",
@@ -2552,7 +2552,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideSetModWithHandle(
   if ((info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)!=0) return 0;
   info.dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
  }
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!SetFileAttributesW(filename,info.dwFileAttributes)) {
   error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -2560,7 +2560,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideSetModWithHandle(
      !DeeFS_WideWin32IsPathUNC(filename)) {
    DeeObject *temp;
    if ((temp = DeeFS_WideWin32PathUNC(filename)) == NULL) return -1;
-   if (DeeThread_CheckInterrupt() != 0) { Dee_DECREF(temp); return -1; }
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) { Dee_DECREF(temp); return -1; }
    error = (int)SetFileAttributesW(DeeWideString_STR(temp),info.dwFileAttributes);
    Dee_DECREF(temp);
    if (error) return 0;
@@ -2580,7 +2580,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8GetModWithHandle(
  DEE_A_IN_Z Dee_Utf8Char const *filename,
  DEE_A_IN DeeIOHandle file, DEE_A_OUT Dee_mode_t *mode) {
  struct stat attrib;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
 #if DEE_HAVE_FSTAT
  if (fstat(file,&attrib) != 0)
 #else
@@ -2604,7 +2604,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideGetModWithHandle(
  DEE_A_IN DeeIOHandle file, DEE_A_OUT Dee_mode_t *mode) {
 #if DEE_HAVE_FSTAT
  struct stat attrib;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (fstat(file,&attrib) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                        "fstat(%d:%lq,%#.4I32o) : %K",file,
@@ -2626,7 +2626,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8SetModWithHandle(
  DEE_A_IN DeeIOHandle file, DEE_A_IN Dee_mode_t mode) {
  DEE_LVERBOSE1("fs::chmod(%q,%#.4I32o)\n",filename,mode);
 #if DEE_HAVE_FCHMOD
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (fchmod(file,mode) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                        "fchmod(%d:%q,%#.4I32o) : %K",
@@ -2636,7 +2636,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8SetModWithHandle(
  }
 #else
  (void)file;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (chmod(filename,mode) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                        "chmod(%q,%#.4I32o) : %K",
@@ -2652,7 +2652,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideSetModWithHandle(
  DEE_A_IN DeeIOHandle file, DEE_A_IN Dee_mode_t mode) {
 #if DEE_HAVE_FCHMOD
  DEE_LVERBOSE1("fs::chmod(%lq,%#.4I32o)\n",filename,mode);
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (fchmod(file,mode) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                        "fchmod(%d:%lq,%#.4I32o) : %K",
@@ -2723,7 +2723,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8GetMod(
  {
 #ifdef DEE_PLATFORM_WINDOWS
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileA(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_READ,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -2747,7 +2747,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8GetMod(
   return error;
 #elif defined(DEE_PLATFORM_UNIX)
   struct stat attrib;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if (stat(path,&attrib) != 0) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                         "stat(%q) : %K",path,
@@ -2785,7 +2785,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideGetMod(
  {
 #ifdef DEE_PLATFORM_WINDOWS
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileW(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_READ,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -2844,7 +2844,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8Chmod(
  {
 #ifdef DEE_PLATFORM_WINDOWS
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileA(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_WRITE,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -2902,7 +2902,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideChmod(
  {
 #ifdef DEE_PLATFORM_WINDOWS
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_WRITE,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -2956,7 +2956,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8ChmodString(
   Dee_mode_t new_mode;
 #ifdef DEE_PLATFORM_WINDOWS
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileA(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_WRITE,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -3020,7 +3020,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideChmodString(
   Dee_mode_t new_mode;
 #ifdef DEE_PLATFORM_WINDOWS
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_WRITE,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -3234,12 +3234,12 @@ DEE_A_RET_EXCEPT(-1) int DeeFileIO_GetOwn(
  struct stat attrib;
  DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
 #if DEE_HAVE_FSTAT
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (fstat(DeeFileIO_HANDLE(fp),&attrib) != 0)
 #else
  DeeObject *utf8_path;
  if ((utf8_path = DeeUtf8String_Cast(DeeFileIO_FILE(fp))) == NULL) return -1;
- if (DeeThread_CheckInterrupt() != 0) goto err_u8path;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_u8path;
  if (stat(DeeUtf8String_STR(utf8_path),&attrib) != 0)
 #endif
  {
@@ -3288,12 +3288,12 @@ DEE_A_RET_EXCEPT(-1) int DeeFileIO_Chown(
 #elif defined(DEE_PLATFORM_UNIX)
  struct stat attrib;
 #if DEE_HAVE_FCHOWN
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (fchown(DeeFileIO_HANDLE(fp),owner,group) != 0)
 #else
  DeeObject *utf8_path;
  if ((utf8_path = DeeUtf8String_Cast(DeeFileIO_FILE(fp))) == NULL) return -1;
- if (DeeThread_CheckInterrupt() != 0) goto err_u8path;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_u8path;
  if (chown(DeeUtf8String_STR(utf8_path),owner,group) != 0)
 #endif
  {
@@ -3351,7 +3351,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8GetOwn(
 #endif
  {
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileA(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_READ,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -3396,7 +3396,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideGetOwn(
 #endif
  {
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileW(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_READ,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -3449,7 +3449,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8Chown(
 #endif
 again: {
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileA(path,/*WRITE_DAC|*/WRITE_OWNER,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_WRITE,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -3498,7 +3498,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideChown(
 #endif
 again: {
   HANDLE file; int error;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file = CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_WRITE,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -3529,7 +3529,7 @@ again: {
 DEE_A_RET_EXCEPT(-1) int DeeFS_Utf8PosixUserToUid(
  DEE_A_IN_Z Dee_Utf8Char const *user, DEE_A_OUT Dee_uid_t *uid) {
  struct passwd *pd;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  pd = getpwnam(user); // TODO: getpwnam_r
  if (!pd) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -3543,7 +3543,7 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_Utf8PosixUserToUid(
 DEE_A_RET_EXCEPT(-1) int DeeFS_Utf8PosixGroupToGid(
  DEE_A_IN_Z Dee_Utf8Char const *group, DEE_A_OUT Dee_gid_t *gid) {
  struct passwd *pd;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  pd = getpwnam(group); // TODO: getpwnam_r
  if (!pd) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -3558,7 +3558,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8GetOwn(
  DEE_A_IN_Z Dee_Utf8Char const *path,
  DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
  struct stat attrib; int error;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (stat(path,&attrib) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                        "stat(%q) : %K",path,
@@ -3571,7 +3571,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8GetOwn(
 }
 DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8Chown(
  DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (chown(path,owner,group) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "chown(%q,%I32u,%I32u) : %K",
@@ -3944,7 +3944,7 @@ DEE_STATIC_INLINE(int) _DeeFSDirIterator_InitFromFileHandle(
 #if 1 || defined(DEE_PLATFORM_UNIX) && DEE_HAVE_FOPENDIR
  DEE_ASSERT(DeeObject_Check(self) && (
   DeeFSDirIterator_Check(self)||DeeFSQueryIterator_Check(self)));
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if ((self->di_unix.diu_dfd = fdopendir(handle)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "fdopendir(%d) : %K",handle,
@@ -4011,7 +4011,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFSDirIterator_Utf8Init(
   *search_end++ = '*';
   *search_end++ = '\0';
   self->di_flags = DEE_FS_DIR_ITERATOR_FLAGS_NONE;
-  if (DeeThread_CheckInterrupt() != 0) {
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
 #if !DEE_HAVE_ALLOCA
    free_nn(search_end);
 #endif
@@ -4047,7 +4047,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFSDirIterator_Utf8Init(
   DEE_ASSERT(DeeObject_Check(self) && (
    DeeFSDirIterator_Check(self)||DeeFSQueryIterator_Check(self)));
   self->di_flags = DEE_FS_DIR_ITERATOR_FLAGS_NONE;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((self->di_unix.diu_dfd = opendir(path)) == NULL) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "opendir(%q) : %K",path,
@@ -4111,7 +4111,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFSDirIterator_WideInit(
   *search_end++ = '*';
   *search_end++ = '\0';
   self->di_flags = DEE_FS_DIR_ITERATOR_FLAGS_WIDE;
-  if (DeeThread_CheckInterrupt() != 0) {
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
 #if !DEE_HAVE_ALLOCA
    free_nn(search_end);
 #endif
@@ -4205,7 +4205,7 @@ err_r: Dee_DECREF(*result); return -1;
   if (self->di_win.diw_handle == INVALID_HANDLE_VALUE) return 1;
   if ((self->di_flags&DEE_FS_DIR_ITERATOR_FLAGS_WIDE)!=0) {
 again_wide:
-   if (DeeThread_CheckInterrupt() != 0) return -1;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
    if (!FindNextFileW(self->di_win.diw_handle,&self->di_win.diw_wide)) {
     DWORD error = DeeSystemError_Win32Consume();
     if (error == ERROR_NO_MORE_FILES) {
@@ -4226,7 +4226,7 @@ again_wide:
    return 0;
   } else {
 again_utf8:
-   if (DeeThread_CheckInterrupt() != 0) return -1;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
    if (!FindNextFileA(self->di_win.diw_handle,&self->di_win.diw_utf8)) {
     DWORD error = DeeSystemError_Win32Consume();
     if (error == ERROR_NO_MORE_FILES) {
@@ -4250,7 +4250,7 @@ again_utf8:
 #elif defined(DEE_PLATFORM_UNIX)
 again:
  if (!self->di_unix.diu_dfd) return 1;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  errno = 0; // ... NULL is returned and errno is not changed ...
  if ((self->di_unix.diu_dp = readdir(self->di_unix.diu_dfd)) == NULL) {
   int error = errno;

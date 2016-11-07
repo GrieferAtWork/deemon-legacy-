@@ -19,3 +19,51 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+
+=== NOTES ===
+
+Some files may have an incorrect license header due to the change from
+zlib/libpng to MIT that was made when deemon became a git.
+Mistakes are corrected as they are detected, but a change like that this
+late into the life cycle of a project as big as deemon will definitely
+leave artifacts behind that will take some time to clean up.
+
+So to clarify:
+    - Deemon itself is published under the MIT license.
+      This describes all files, excluding those matched by other rules further below.
+
+    - TPP and debug_new continue to be distributed under zlib/libpng. This includes all files matching:
+      >> /src/debug_new/*
+      >> /src/tpp/*
+
+    - Libraries not created by me (aka. containing their own LICENSE files,
+      or otherwise plainly marked as foreign) obviously don't apply to these rules.
+      For example: No ownership is claimed for libffi
+      >> /src/deemon/runtime/libffi/*
+      >> /src/deemon/runtime/libffi_linux/*
+      >> /src/deemon/runtime/libffi_msvc/*
+	  Other sections of files may require their own ruling, as indicated
+	  by plain markings inside the files in question, or dedicated license
+	  files placed somewhere along their tree.
+
+
+=== Licencing your own Dex extension ===
+
+Just do whatever. You're free to create, publish, sell or do whatever with your dex module.
+I won't stop of sue you if you choose to do so. Just keep in mind that it will be your
+job to maintain and update it if some future update breaks it, and __NOT__ mine.
+
+-> You've got full reign as long as any section of code copied from this project,
+   no matter how big or small, still adheres to the MIT license agreement, that
+   is still comes with a copy of the license block as found atop this, as well as
+   many other files, while the copied code is plainly marked as originating from here.
+
+-> Don't have it's name start with an underscore, though. Those names are reserved for the core.
+
+
+
+
+
+

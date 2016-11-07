@@ -766,6 +766,7 @@ DEE_DECL_END
 #include "xast_parse.types_compatible_p.inl"
 #include "xast_parse.unary.inl"
 #include "xast_parse.unary_with_suffix.inl"
+#include "xast_parse.unnamed_function.inl"
 #include "xast_parse.var_lookup.inl"
 #endif
 

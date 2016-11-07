@@ -158,7 +158,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFileIO_Utf8InitObjectEx
    case DEE_FILE_MODE_APPEND|DEE_FILE_FLAG_UPDATE: disposition = OPEN_ALWAYS; access = GENERIC_READ|GENERIC_WRITE; break;
    default: DEE_BUILTIN_UNREACHABLE();
   }
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
 #if 0 /*< Not a good idea... (data leakage and such) */
   DEE_ATOMIC_ONCE({
    // Required for taking advantage of the performance boost gained by 'SetFileValidData'
@@ -235,7 +235,7 @@ no_err:
    case DEE_FILE_MODE_APPEND|DEE_FILE_FLAG_UPDATE: open_mode = O_RDWR|O_CREAT|O_APPEND; break;
    default: DEE_BUILTIN_UNREACHABLE();
   }
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   self->fio_handle = open(DeeUtf8String_STR(file),open_mode,permissions);
   if (self->fio_handle == DEE_FILEIO_INVALID_HANDLE) {
    int error;
@@ -268,7 +268,7 @@ no_err:
    case DEE_FILE_MODE_APPEND|DEE_FILE_FLAG_UPDATE: open_mode = "a+"; break;
    default: DEE_BUILTIN_UNREACHABLE();
   }
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   self->fio_handle = (void *)fopen(DeeUtf8String_STR(file),open_mode);
   if (self->fio_handle == DEE_FILEIO_INVALID_HANDLE) {
    DeeError_SetStringf(&DeeErrorType_IOError,
@@ -323,7 +323,7 @@ DeeFS_F(Win32GetModuleName)(DEE_A_IN_OPT /*HMODULE*/void *module) {
  if ((result = DEE_STRING_NewSized((
   bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32GETMODULENAME))) == NULL) return NULL;
 again:
- if (DeeThread_CheckInterrupt() != 0) goto err_r;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
  temp = WIN32_F(GetModuleFileName)((
   HMODULE)module,DEE_STRING_STR(result),(DWORD)bufsize);
  if (temp == 0) {
@@ -344,7 +344,7 @@ err_r:
 DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32HardLink)(
  DEE_A_IN_Z DEE_CHAR const *src, DEE_A_IN_Z DEE_CHAR const *dst) {
  DEE_ASSERT(src && dst);
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!WIN32_F(CreateHardLink)(dst,src,NULL)) {
   int error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -352,12 +352,12 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32HardLink)(
   if (DEE_FS_WIN32_IS_UNC_ERROR(error)) {
    DeeObject *temp;
    if (!DeeFS_WideWin32IsPathUNC(src)) {
-    if ((temp = DeeFS_WideWin32PathUNC(src)) == NULL) return -1;
+    if DEE_UNLIKELY((temp = DeeFS_WideWin32PathUNC(src)) == NULL) return -1;
     error = _DeeFS_WideWin32HardLink(DeeWideString_STR(temp),dst);
     goto unc_end0;
    }
    if (!DeeFS_WideWin32IsPathUNC(dst)) {
-    if ((temp = DeeFS_WideWin32PathUNC(dst)) == NULL) return -1;
+    if DEE_UNLIKELY((temp = DeeFS_WideWin32PathUNC(dst)) == NULL) return -1;
     error = _DeeFS_WideWin32HardLink(src,DeeWideString_STR(temp));
 unc_end0: Dee_DECREF(temp);
     return error;
@@ -415,7 +415,7 @@ no_mem:
  }
  used_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32DRIVES;
 again:
- if (DeeThread_CheckInterrupt() != 0) { free_nn(buffer); return NULL; }
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) { free_nn(buffer); return NULL; }
  req_bufsize = WIN32_F(GetLogicalDriveStrings)(used_bufsize,buffer);
  if (!req_bufsize) {
   free_nn(buffer);
@@ -481,7 +481,7 @@ DeeFS_F(Win32GetTokenUserHome)(DEE_A_IN HANDLE token) {
                       "(...) : Not implemented");
   return NULL;
  }
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if (!(*WIN32_F(p_GetUserProfileDirectory))(token,NULL,&req_size)) {
   error = (int)DeeSystemError_Win32Consume();
   if (error != ERROR_INSUFFICIENT_BUFFER) {
@@ -491,7 +491,7 @@ err_api:
   }
  }
  if ((result = DEE_STRING_NewSized(req_size-1)) == NULL) return NULL;
- if (DeeThread_CheckInterrupt() != 0) { Dee_DECREF(result); return NULL; }
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) { Dee_DECREF(result); return NULL; }
  if (!(*WIN32_F(p_GetUserProfileDirectory))(
   token,DEE_STRING_STR(result),&req_size)) {
   Dee_DECREF(result);
@@ -505,7 +505,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 static DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
 DeeFS_F(Win32GetProcessUserHome)(DEE_A_IN HANDLE process_handle) {
  DeeObject *result; HANDLE process_token;
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if (!OpenProcessToken(process_handle,TOKEN_QUERY,&process_token)) {
   DeeError_SystemError("OpenProcessToken");
   return NULL;
@@ -518,7 +518,7 @@ DeeFS_F(Win32GetProcessUserHome)(DEE_A_IN HANDLE process_handle) {
 static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32FGetFileType)(
  DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN HANDLE handle) {
  DWORD error,ftype;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if ((ftype = GetFileType(handle)) == 0 && (error = DeeSystemError_Win32Consume()) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "GetFileType(%p:" DEE_PRINTF_STRQ ") : %K",
@@ -530,7 +530,7 @@ static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32FGetFileType)(
 static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32GetFileType)(
  DEE_A_IN_Z DEE_CHAR const *path) {
  DWORD error; int ftype; HANDLE handle;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if ((handle = WIN32_F(CreateFile)(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|
   FILE_SHARE_DELETE,NULL,OPEN_EXISTING,0,NULL)) != INVALID_HANDLE_VALUE) {
   ftype = _DeeFS_F(Win32FGetFileType)(path,handle);
@@ -566,7 +566,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(GetHome)(void) {
  static DEE_CHAR const var_USERPROFILE[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
  static DEE_CHAR const var_HOMEDRIVE[] = {'H','O','M','E','D','R','I','V','E',0};
  static DEE_CHAR const var_HOMEPATH[] = {'H','O','M','E','P','A','T','H',0};
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if ((result = DeeFS_F(TryGetEnv)(var_HOME)) != NULL) return result;
  if ((result = DeeFS_F(TryGetEnv)(var_USERPROFILE)) != NULL) return result;
  if ((homedrive = DeeFS_F(TryGetEnv)(var_HOMEDRIVE)) == NULL) goto win_home_api;
@@ -639,7 +639,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(GetTmp)(void) {
  if ((result = DeeFS_F(TryGetEnv)(name_TMP)) != NULL) return result;
 #ifdef DEE_PLATFORM_WINDOWS
  {DWORD temp;
-  if (DeeThread_CheckInterrupt() != 0) return NULL;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
   if ((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETTMP)) == NULL) return NULL;
   temp = WIN32_F(GetTempPath)(DEE_XCONFIG_FSBUFSIZE_WIN32GETTMP+1,DEE_STRING_STR(result));
   if (!temp) {
@@ -654,7 +654,7 @@ err:
   if (temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETTMP) {
 again:
    if (DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-   if (DeeThread_CheckInterrupt() != 0) {
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
 err_r: Dee_DECREF(result); return NULL;
    }
    temp = WIN32_F(GetTempPath)(temp+1,DEE_STRING_STR(result));
@@ -802,7 +802,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetDllDirectory)(voi
                       "(...) : Not implemented");
   return NULL;
  }
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if ((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETDLLDIRECTORY)) == NULL) return NULL;
  temp = (*WIN32_F(p_GetDllDirectory))(DEE_XCONFIG_FSBUFSIZE_WIN32GETDLLDIRECTORY+1,DEE_STRING_STR(result));
  if (!temp) {
@@ -817,7 +817,7 @@ err:
  if (temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETDLLDIRECTORY) {
 again:
   if (DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if (DeeThread_CheckInterrupt() != 0) {
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
 err_r: Dee_DECREF(result); return NULL;
   }
   temp = (*WIN32_F(p_GetDllDirectory))(temp+1,DEE_STRING_STR(result));
@@ -834,7 +834,7 @@ DEE_COMPILER_PREFAST_WARNING_POP
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetSystemDirectory)(void) {
  DWORD temp; DeeObject *result; int error;
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if ((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMDIRECTORY)) == NULL) return NULL;
  if ((temp = WIN32_F(GetSystemDirectory)(
   DEE_STRING_STR(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMDIRECTORY)) == 0) {
@@ -847,7 +847,7 @@ err: error = (int)DeeSystemError_Win32Consume();
  if (temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMDIRECTORY) {
 again:
   if (DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if (DeeThread_CheckInterrupt() != 0) {
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
 err_r: Dee_DECREF(result); return NULL;
   }
   temp = WIN32_F(GetSystemDirectory)(DEE_STRING_STR(result),temp);
@@ -862,7 +862,7 @@ err_r: Dee_DECREF(result); return NULL;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetWindowsDirectory)(void) {
  DWORD temp; DeeObject *result; int error;
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if ((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETWINDOWSDIRECTORY)) == NULL) return NULL;
  temp = WIN32_F(GetWindowsDirectory)(DEE_STRING_STR(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETWINDOWSDIRECTORY);
  if (!temp) {
@@ -875,7 +875,7 @@ err: error = (int)DeeSystemError_Win32Consume();
  if (temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETWINDOWSDIRECTORY) {
 again:
   if (DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if (DeeThread_CheckInterrupt() != 0) {
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
 err_r: Dee_DECREF(result); return NULL;
   }
   temp = WIN32_F(GetWindowsDirectory)(DEE_STRING_STR(result),temp);
@@ -890,7 +890,7 @@ err_r: Dee_DECREF(result); return NULL;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetSystemWindowsDirectory)(void) {
  DWORD temp; DeeObject *result;
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if ((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMWINDOWSDIRECTORY)) == NULL) return NULL;
  temp = WIN32_F(GetSystemWindowsDirectory)(DEE_STRING_STR(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMWINDOWSDIRECTORY);
  if (!temp) {
@@ -905,7 +905,7 @@ err:
  if (temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMWINDOWSDIRECTORY) {
 again:
   if (DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if (DeeThread_CheckInterrupt() != 0) {
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
 err_r: Dee_DECREF(result); return NULL;
   }
   temp = WIN32_F(GetSystemWindowsDirectory)(DEE_STRING_STR(result),temp);
@@ -920,7 +920,7 @@ err_r: Dee_DECREF(result); return NULL;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetSysWow64Directory)(void) {
  DWORD temp; DeeObject *result;
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if ((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSWOW64DIRECTORY)) == NULL) return NULL;
  temp = WIN32_F(GetSystemWow64Directory)(DEE_STRING_STR(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSWOW64DIRECTORY);
  if (!temp) {
@@ -935,7 +935,7 @@ err:
  if (temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSWOW64DIRECTORY) {
 again:
   if (DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if (DeeThread_CheckInterrupt() != 0) {err_r: Dee_DECREF(result); return NULL; }
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {err_r: Dee_DECREF(result); return NULL; }
   temp = WIN32_F(GetSystemWow64Directory)(DEE_STRING_STR(result),temp);
   if (!temp) goto err;
   if (temp > DEE_STRING_SIZE(result)) goto again;
@@ -950,7 +950,7 @@ again:
 static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32FSetFileTime)(
  DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN HANDLE handle, DEE_A_IN_OPT FILETIME const *tm_access,
  DEE_A_IN_OPT FILETIME const *tm_creation, DEE_A_IN_OPT FILETIME const *tm_modification) {
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!SetFileTime(handle,tm_creation,tm_access,tm_modification)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "SetFileTime(%p:" DEE_PRINTF_STRQ ",%I64u,%I64u,%I64u) : %K",
@@ -968,7 +968,7 @@ static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32SetFileTime)(
  DEE_A_IN_OPT FILETIME const *tm_creation, DEE_A_IN_OPT FILETIME const *tm_modification) {
  DWORD error; int result;
  HANDLE handle;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if ((handle = WIN32_F(CreateFile)(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|
   FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_WRITE,NULL)) != INVALID_HANDLE_VALUE) {
   result = _DeeFS_F(Win32FSetFileTime)(path,handle,tm_access,tm_creation,tm_modification);
@@ -1006,7 +1006,7 @@ static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32SetFileTime)(
 DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(GetCwd)(void) {
 #ifdef DEE_PLATFORM_WINDOWS
  DWORD temp; DeeObject *result;
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if ((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD)) == NULL) return NULL;
  temp = WIN32_F(GetCurrentDirectory)(DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD+1,DEE_STRING_STR(result));
  if (!temp) {
@@ -1017,7 +1017,7 @@ err_r: Dee_DECREF(result);
  if (temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD) {
 again:
   if (DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if (DeeThread_CheckInterrupt() != 0) goto err_r;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
   temp = WIN32_F(GetCurrentDirectory)(temp+1,DEE_STRING_STR(result));
   if (!temp) goto err;
   if (temp > DEE_STRING_SIZE(result)) goto again;
@@ -1036,7 +1036,7 @@ again:
  Dee_size_t bufsize,last_size = 0;
  DeeObject *result;
  Dee_Utf8Char *cwd_start;
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  if ((result = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD)) == NULL) return NULL;
  if (!getcwd(DeeUtf8String_STR(result),DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD)) {
   if (_dee_posix_check_getcwd_error() != 0) {err_r: Dee_DECREF(result); return NULL; }
@@ -1073,7 +1073,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(ChDir)(
  }
 #endif
 #ifdef DEE_PLATFORM_WINDOWS
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!WIN32_F(SetCurrentDirectory)(path)) {
   int error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -1100,7 +1100,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(ChDir)(
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (chdir(path) == -1) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "chdir(" DEE_PRINTF_STRQ ") : %K",path,
@@ -1124,7 +1124,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeFS_F(ListEnv)(void) {
 #endif
  DEE_CHAR const *line;
  if ((result = DeeList_New()) == NULL) return NULL;
- if (DeeThread_CheckInterrupt() != 0) { Dee_DECREF(result); return NULL; }
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) { Dee_DECREF(result); return NULL; }
  if ((env_vars = WIN32_F(GetEnvironmentStrings)()) == NULL) {
   Dee_DECREF(result);
   DeeError_SystemError(DEE_PP_STR(WIN32_F(GetEnvironmentStringsA)));
@@ -1178,7 +1178,7 @@ err: Dee_DECREF(result); result = NULL; goto end;
 
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFS_F(HasEnv)(DEE_A_IN_Z DEE_CHAR const *name) {
 #ifdef DEE_PLATFORM_WINDOWS
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (WIN32_F(GetEnvironmentVariable)(name,NULL,0) == 0) {
   DWORD error = DeeSystemError_Win32Consume();
   if (error == ERROR_ENVVAR_NOT_FOUND) return 0;
@@ -1192,7 +1192,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFS_F(HasEnv)(DEE_A_IN_Z DEE_CHAR const *name)
  Dee_DECREF(name_ob);
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  return getenv(name) ? 1 : (errno = 0,0);
 #else
  (void)name;
@@ -1241,7 +1241,7 @@ DeeFS_F(GetEnv)(DEE_A_IN_Z DEE_CHAR const *name) {
 #ifdef DEE_PLATFORM_WINDOWS
  DWORD error; DeeObject *result;
  if ((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETENV)) == NULL) return NULL;
- if (DeeThread_CheckInterrupt() != 0) goto err_r;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
  DEE_LVERBOSE1("Lookup env variable: " DEE_PRINTF_STRQ "\n",name);
  error = WIN32_F(GetEnvironmentVariable)(name,DEE_STRING_STR(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETENV+1);
  if (error == 0) {
@@ -1272,7 +1272,7 @@ again:
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
  Dee_Utf8Char const *env_value;
- if (DeeThread_CheckInterrupt() != 0) return NULL;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  DEE_LVERBOSE1("[SYSCALL] getenv(" DEE_PRINTF_STRQ ")\n",name);
  if ((env_value = getenv(name)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -1289,7 +1289,7 @@ again:
 
 DEE_A_RET_EXCEPT(-1) int DeeFS_F(DelEnv)(DEE_A_IN_Z DEE_CHAR const *name) {
 #ifdef DEE_PLATFORM_WINDOWS
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DEE_LVERBOSE1("Deleting env variable: " DEE_PRINTF_STRQ "\n",name);
  if (!WIN32_F(SetEnvironmentVariable)(name,NULL)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -1307,7 +1307,7 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_F(DelEnv)(DEE_A_IN_Z DEE_CHAR const *name) {
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
 #if DEE_HAVE_UNSETENV
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DEE_LVERBOSE1("Deleting env variable: " DEE_PRINTF_STRQ "\n",name);
  if (unsetenv(name) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -1336,7 +1336,7 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_F(SetEnv)(
 #if DEE_CONFIG_RUNTIME_HAVE_RECONFIGURE_ENV && defined(WIDE)
  DeeObject *u8name,*u8value;
 #endif
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
 #if DEE_CONFIG_RUNTIME_HAVE_RECONFIGURE_ENV && defined(WIDE)
  if ((u8name = DeeUtf8String_FromWideString(name)) == NULL) return -1;
  if ((u8value = DeeUtf8String_FromWideString(value)) == NULL) { Dee_DECREF(u8name); return -1; }
@@ -1373,7 +1373,7 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_F(SetEnv)(
 end_0: Dee_DECREF(name_ob);
  return result;
 #elif defined(DEE_PLATFORM_UNIX) && DEE_HAVE_SETENV
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DEE_LVERBOSE1("Setting env variable: " DEE_PRINTF_STRQ "=" DEE_PRINTF_STRQ "\n",name,value);
  if (setenv(name,value,1) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -1388,7 +1388,7 @@ end_0: Dee_DECREF(name_ob);
 #elif defined(DEE_PLATFORM_UNIX)
  DeeObject *put_str;
  if ((put_str = DeeUtf8String_Newf("%s=%s",name,value)) == NULL) return -1;
- if (DeeThread_CheckInterrupt() != 0) goto err_putstr;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_putstr;
  DEE_LVERBOSE1("Setting env variable: " DEE_PRINTF_STRQ "=" DEE_PRINTF_STRQ "\n",name,value);
  if (putenv(DeeUtf8String_STR(put_str)) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -1475,7 +1475,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(SetTimes2)(
        DeeTime_AsTimeT(tm_modification,&times.modtime) == -1
        ) return -1;
   }
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if (utime(path,&times) != 0) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "utime(" DEE_PRINTF_STRQ ",<%O>,<%O>) : %K",
@@ -1521,7 +1521,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(GetTimes2)(
 #ifdef DEE_PLATFORM_WINDOWS
   HANDLE file_handle; int error;
   WIN32_FILE_ATTRIBUTE_DATA attribute_data;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if ((file_handle = WIN32_F(CreateFile)(path,GENERIC_READ,FILE_SHARE_WRITE|FILE_SHARE_READ|
    FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL)) == INVALID_HANDLE_VALUE) {
    error = (int)DeeSystemError_Win32Consume();
@@ -1547,7 +1547,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(GetTimes2)(
                        path,DeeSystemError_Win32ToString((unsigned long)error));
    return -1;
   }
-  if (DeeThread_CheckInterrupt() != 0) goto err_fh;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_fh;
   if (!GetFileTime(file_handle,
    tm_access ? &attribute_data.ftLastAccessTime : NULL,
    tm_creation ? &attribute_data.ftCreationTime : NULL,
@@ -1594,7 +1594,7 @@ err_0: if (tm_access) Dee_DECREF(*tm_access);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) WIN32_F(fixed_GetFileAttributes)(
  DEE_A_IN_Z DEE_CHAR const *path, DEE_A_OUT DWORD *attr) {
  DWORD error;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if ((*attr = WIN32_F(GetFileAttributes)(path)) == INVALID_FILE_ATTRIBUTES) {
   error = GetLastError();
   if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
@@ -1655,7 +1655,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsDir)(DEE_A_IN_Z DEE_CHAR const *path)
   if (temp != INVALID_FILE_ATTRIBUTES) {
    if ((temp & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
     HANDLE handle;
-    if (DeeThread_CheckInterrupt() != 0) return -1;
+    if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
     if ((handle = WIN32_F(CreateFile)(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|
      FILE_SHARE_DELETE,NULL,OPEN_EXISTING,0,NULL)) != INVALID_HANDLE_VALUE) {
      CloseHandle(handle);
@@ -2057,7 +2057,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Remove)(DEE_A_IN_Z DEE_CHAR const *path) {
    return -1;
   } else if ((temp&(FILE_ATTRIBUTE_DIRECTORY|
    FILE_ATTRIBUTE_REPARSE_POINT)) == FILE_ATTRIBUTE_DIRECTORY) {
-   if (DeeThread_CheckInterrupt() != 0) return -1;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
    if (!WIN32_F(RemoveDirectory)(path)) {
     error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -2078,7 +2078,7 @@ try_unc:
     return -1;
    }
   } else {
-   if (DeeThread_CheckInterrupt() != 0) return -1;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
    if (!WIN32_F(DeleteFile)(path)) {
     error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -2100,7 +2100,7 @@ try_unc:
   Dee_DECREF(path_ob);
   return result;
 #elif defined(DEE_PLATFORM_UNIX)
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if (remove(path) != 0) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "remove(" DEE_PRINTF_STRQ ") : %K",path,
@@ -2126,7 +2126,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(RmFile)(DEE_A_IN_Z DEE_CHAR const *path) {
  }
 #endif
 #ifdef DEE_PLATFORM_WINDOWS
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!WIN32_F(DeleteFile)(path)) {
   int error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -2153,7 +2153,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(RmFile)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (unlink(path) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "unlink(" DEE_PRINTF_STRQ ") : %K",path,
@@ -2180,7 +2180,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(MkDir)(
 #endif
 #ifdef DEE_PLATFORM_WINDOWS
  (void)mode; // TODO: read-only flag?
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!WIN32_F(CreateDirectory)(path,NULL)) {
   int error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -2207,7 +2207,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(MkDir)(
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (mkdir(path,mode) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "mkdir(" DEE_PRINTF_STRQ ",%#o) : %K",path,mode,
@@ -2232,7 +2232,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(RmDir)(DEE_A_IN_Z DEE_CHAR const *path) {
  }
 #endif
 #ifdef DEE_PLATFORM_WINDOWS
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!WIN32_F(RemoveDirectory)(path)) {
   int error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -2259,7 +2259,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(RmDir)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (rmdir(path) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "rmdir(" DEE_PRINTF_STRQ ") : %K",path,
@@ -2292,7 +2292,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Copy)(
  }
 #endif
 #ifdef DEE_PLATFORM_WINDOWS
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!WIN32_F(CopyFile)(src,dst,TRUE)) {
   int error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -2350,7 +2350,7 @@ end_0: Dee_DECREF(src_ob);
  char buf[4096];
  ssize_t nread;
  int saved_errno;
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  fd_src = open(src,O_RDONLY);
  if (fd_src < 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -2358,7 +2358,7 @@ end_0: Dee_DECREF(src_ob);
                       DeeSystemError_ToString(DeeSystemError_Consume()));
   return -1;
  }
- if (DeeThread_CheckInterrupt() != 0) goto err_from;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_from;
  fd_dst = open(dst,O_WRONLY|O_CREAT|O_EXCL,DEE_FILEIO_DEFAULT_PERMISSIONS);
  if (fd_dst < 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -2370,13 +2370,13 @@ err_from:
  }
  while (1) {
   char *out_ptr;
-  if (DeeThread_CheckInterrupt() != 0) goto err_to;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_to;
   nread = read(fd_src,buf,sizeof(buf));
   if (nread <= 0) break;
   out_ptr = buf;
   ssize_t nwritten;
   do {
-   if (DeeThread_CheckInterrupt() != 0) goto err_to;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_to;
    nwritten = write(fd_dst,out_ptr,nread);
    if (nwritten >= 0) {
     nread -= nwritten;
@@ -2436,7 +2436,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Move)(
  }
 #endif
 #ifdef DEE_PLATFORM_WINDOWS
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (!WIN32_F(MoveFile)(src,dst)) {
   int error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -2490,7 +2490,7 @@ err_unc0: Dee_DECREF(unc_src);
 end_0: Dee_DECREF(src_ob);
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if (rename(src,dst) != 0) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "rename(" DEE_PRINTF_STRQ "," DEE_PRINTF_STRQ ") : %K",src,dst,
@@ -2556,7 +2556,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Link)(
   // >> print(_winapi.CreateJunction("include", "newinclude"))
   // ... manages to create a directory link without admin rights...
   if (WIN32_F(fixed_GetFileAttributes)(src,&attr) == -1) return -1;
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if (!(*WIN32_F(p_CreateSymbolicLink))(dst,src,(DWORD)(
    ((attr&FILE_ATTRIBUTE_DIRECTORY)!=0)
    ? SYMBOLIC_LINK_FLAG_DIRECTORY : 0))) {
@@ -2599,7 +2599,7 @@ err_unc0: Dee_DECREF(unc_src);
 #if 0
    if (error == ERROR_PRIVILEGE_NOT_HELD) { // We can't create symbolic links...
     // TODO: Try out luck with 'mklink <dst> <src>'
-    if (DeeThread_CheckInterrupt() != 0) return -1;
+    if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
     if (!WIN32_F(CreateHardLink)(dst,src,NULL)) {
      DeeError_SetStringf(&DeeErrorType_SystemError,
                          DEE_PP_STR(WIN32_F(CreateHardLink))
@@ -2627,7 +2627,7 @@ err_unc0: Dee_DECREF(unc_src);
 end_0: Dee_DECREF(src_ob);
   return result;
 #elif defined(DEE_PLATFORM_UNIX)
-  if (DeeThread_CheckInterrupt() != 0) return -1;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if (link(src,dst) != 0) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "link(%q,%q) : %K",src,dst,
@@ -2687,7 +2687,7 @@ no_mem: DeeError_NoMemory();
  }
  while (bufsize < MAXIMUM_REPARSE_DATA_BUFFER_SIZE) {
   // Make up the control code - see CTL_CODE on ntddk.h
-  if (DeeThread_CheckInterrupt() != 0) goto err_buffer;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_buffer;
   if (!DeviceIoControl(hfile,FSCTL_GET_REPARSE_POINT,
    NULL,0,buffer,(DWORD)bufsize,&bytesReturned,NULL)) {
    DWORD error = DeeSystemError_Win32Consume();
@@ -2750,7 +2750,7 @@ _DeeFS_F(ReadLink)(DEE_A_IN_Z DEE_CHAR const *path) {
  {
 #ifdef DEE_PLATFORM_WINDOWS
   DeeObject *result; HANDLE hfile;
-  if (DeeThread_CheckInterrupt() != 0) return NULL;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
   if ((hfile = WIN32_F(CreateFile)(
    path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,
    FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL)) == INVALID_HANDLE_VALUE) {
@@ -2785,7 +2785,7 @@ _DeeFS_F(ReadLink)(DEE_A_IN_Z DEE_CHAR const *path) {
 #elif defined(DEE_PLATFORM_UNIX)
   Dee_ssize_t bytes; DeeObject *result; int error;
   if DEE_UNLIKELY((result = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_POSIXREADLINK)) == NULL) return NULL;
-  if (DeeThread_CheckInterrupt() != 0) goto err_r;
+  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
   bytes = (Dee_ssize_t)readlink(path,DeeUtf8String_STR(result),DEE_XCONFIG_FSBUFSIZE_POSIXREADLINK+1);
 again:
   if (DEE_UNLIKELY(bytes < 0)) {
@@ -2799,7 +2799,7 @@ err_r:
   } else if (DEE_UNLIKELY(bytes > DEE_XCONFIG_FSBUFSIZE_POSIXREADLINK)) {
    Dee_ssize_t new_bytes;
    if (DeeUtf8String_Resize(&result,bytes) == -1) goto err_r;
-   if (DeeThread_CheckInterrupt() != 0) goto err_r;
+   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
    new_bytes = (Dee_ssize_t)readlink(path,DeeUtf8String_STR(result),DEE_XCONFIG_FSBUFSIZE_POSIXREADLINK+1);
    if (new_bytes < 0) goto err_sys;
    if (DEE_UNLIKELY(new_bytes != bytes)) {

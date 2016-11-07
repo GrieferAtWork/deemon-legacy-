@@ -41,9 +41,11 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeClass_DelSlot(
 #define SET_VSLOT(x) (void)0
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
-#define GET_OPERATOR(name,loc) suffix->loc
+#define GET_OPERATOR(name,loc)  suffix->loc
+#define GET_OPERATOR_ID(id,loc) suffix->loc
 #else
-#define GET_OPERATOR(name,loc) DeeClassSuffix_GetVirtOperator(suffix,DeeType_SLOT_ID(name))
+#define GET_OPERATOR(name,loc)  DeeClassSuffix_GetVirtOperator(suffix,DeeType_SLOT_ID(name))
+#define GET_OPERATOR_ID(id,loc) DeeClassSuffix_GetVirtOperator(suffix,id)
 #endif
  struct DeeClassSuffix *suffix;
  DEE_ASSERT(DeeObject_Check(self) && DeeClass_Check(self));
@@ -66,84 +68,389 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeClass_DelSlot(
 #endif
    break;
 
-  // tp_ctor <---> tp_copy_ctor <---> tp_move_ctor <---> tp_any_ctor
+#define HAS_CTOR_SUPERARGS()     GET_OPERATOR_ID(DEE_CLASS_SLOTID_SUPERARGS_CTOR,cs_constructor.ctp_ctor_sargs)
+#define HAS_CTOR_ANYSUPERARGS() GET_OPERATOR_ID(DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR,cs_constructor.ctp_any_ctor_sargs)
+#define TRANSFORM_SLOT(tp_name,from,to)\
+ if (DeeType_GET_SLOT(self,tp_name) == (DeeType_SLOT_TYPE(tp_name))(from)) DeeType_GET_SLOT(self,tp_name) = (DeeType_SLOT_TYPE(tp_name))(to); else
+
+   // tp_ctor <---> tp_copy_ctor <---> tp_move_ctor <---> tp_any_ctor
   case DeeType_SLOT_ID(tp_ctor):
    SET_VSLOT(cs_constructor.ctp_ctor);
 #ifdef VALUE
-   DeeType_GET_SLOT(self,tp_ctor) = (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_default;
-   if (DeeType_GET_SLOT(self,tp_any_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin)
-    DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctor;
-   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callcopy)
-    DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctorcopy;
+   DeeType_GET_SLOT(self,tp_ctor) = HAS_CTOR_SUPERARGS()
+    ? (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default_superargs : HAS_CTOR_ANYSUPERARGS()
+    ? (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default_anysuperargs
+    : (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default;
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin                           ,&_deeinstance_tp_any_ctor_callctor)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_nobase                    ,&_deeinstance_tp_any_ctor_callctor_nobase)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_superargs                 ,&_deeinstance_tp_any_ctor_callctor_superargs)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_anysuperargs              ,&_deeinstance_tp_any_ctor_callctor_or_anysuperargs)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs     ,&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default                           ,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default_nobase                    ,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default_anysuperargs              ,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor                          ,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_nobase                   ,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_superargs                ,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_or_anysuperargs          ,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs,...)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callcopy                          ,&_deeinstance_tp_any_ctor_callctorcopy)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callcopy_nobase                   ,&_deeinstance_tp_any_ctor_callctorcopy_nobase)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy                      ,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy_nobase               ,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy_superargs            ,...)
+    ;
 #else
-   if (DeeType_GET_SLOT(self,tp_any_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctor)
-    DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin;
-   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctorcopy)
-    DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callcopy;
-   DeeType_GET_SLOT(self,tp_ctor) = GET_OPERATOR(tp_any_ctor,cs_constructor.ctp_any_ctor)
-    ? (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_callany
-    : (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_builtin;
+   DeeType_GET_SLOT(self,tp_ctor) = HAS_CTOR_SUPERARGS()
+    ? (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_builtin_superargs
+    : GET_OPERATOR(tp_any_ctor,cs_constructor.ctp_any_ctor) ? (HAS_CTOR_ANYSUPERARGS()
+    ? (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_callany_anysuperargs : HAS_CTOR_SUPERARGS()
+    ? (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_callany_superargs
+    : (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_callany) : HAS_CTOR_ANYSUPERARGS()
+    ? (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_builtin_anysuperargs
+    : (int(*)(DeeTypeObject*,DeeObject*))DeeClass_GetNewInstance_tp_ctor_builtin(DeeType_BASE(self));
+
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin,                           ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_nobase,                    ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_superargs,                 ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_anysuperargs,              ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs,     ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default,                           ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default_nobase,                    ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default_anysuperargs,              ...)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor,                          &_deeinstance_tp_any_ctor_builtin)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_nobase,                   &_deeinstance_tp_any_ctor_builtin_nobase)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_superargs,                &_deeinstance_tp_any_ctor_builtin_superargs)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_or_anysuperargs,          &_deeinstance_tp_any_ctor_builtin_anysuperargs)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs,&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callcopy,                          ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callcopy_nobase,                   ...)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy,                      &_deeinstance_tp_any_ctor_callcopy)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy_nobase,               &_deeinstance_tp_any_ctor_callcopy_nobase)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy_superargs,            ...)
+    ;
 #endif
    break;
   case DeeType_SLOT_ID(tp_copy_ctor):
    SET_VSLOT(cs_constructor.ctp_copy_ctor);
 #ifdef VALUE
-   DeeType_GET_SLOT(self,tp_copy_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_default;
-   if (DeeType_GET_SLOT(self,tp_any_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin)
-    DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callcopy;
-   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctor)
-    DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctorcopy;
-   if (DeeType_GET_SLOT(self,tp_move_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_builtin)
-    DeeType_GET_SLOT(self,tp_move_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_callcopy;
+   DeeType_GET_SLOT(self,tp_copy_ctor) =
+    (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_default;
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin,                           &_deeinstance_tp_any_ctor_callcopy)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_nobase,                    &_deeinstance_tp_any_ctor_callcopy_nobase)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_superargs,                 ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_anysuperargs,              ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs,     ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default,                           ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default_nobase,                    ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default_anysuperargs,              ...)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor,                          &_deeinstance_tp_any_ctor_callctorcopy)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_nobase,                   &_deeinstance_tp_any_ctor_callctorcopy_nobase)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_superargs,                &_deeinstance_tp_any_ctor_callctorcopy_superargs)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_or_anysuperargs,          ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs,...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callcopy,                          ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callcopy_nobase,                   ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy,                      ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy_nobase,               ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy_superargs,            ...)
+   ;
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_builtin,&_deeinstance_tp_move_ctor_callcopy);
 #else
-   if (DeeType_GET_SLOT(self,tp_any_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callcopy)
-    DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin;
-   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctorcopy)
-    DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctor;
-   if (DeeType_GET_SLOT(self,tp_move_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_callcopy)
-    DeeType_GET_SLOT(self,tp_move_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_builtin;
    DeeType_GET_SLOT(self,tp_copy_ctor) = GET_OPERATOR(tp_any_ctor,cs_constructor.ctp_any_ctor)
-    ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_callany
-    : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_builtin;
+    ? (HAS_CTOR_ANYSUPERARGS()
+    ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_callany_anysuperargs
+    : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_callany)
+    : (HAS_CTOR_ANYSUPERARGS()
+    ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_builtin_anysuperargs
+    : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_builtin);
+
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin,                           ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_nobase,                    ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_superargs,                 ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_anysuperargs,              ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs,     ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default,                           ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default_nobase,                    ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_default_anysuperargs,              ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor,                          ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_nobase,                   ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_superargs,                ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_or_anysuperargs,          ...)
+// TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs,...)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callcopy,                          &_deeinstance_tp_any_ctor_builtin)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callcopy_nobase,                   &_deeinstance_tp_any_ctor_builtin_nobase)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy,                      &_deeinstance_tp_any_ctor_callctor)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy_nobase,               &_deeinstance_tp_any_ctor_callctor_nobase)
+   TRANSFORM_SLOT(tp_any_ctor,&_deeinstance_tp_any_ctor_callctorcopy_superargs,            &_deeinstance_tp_any_ctor_callctor_superargs)
+   ;
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_callcopy,&_deeinstance_tp_move_ctor_builtin);
 #endif
    break;
   case DeeType_SLOT_ID(tp_move_ctor):
    SET_VSLOT(cs_constructor.ctp_move_ctor);
 #ifdef VALUE
-   DeeType_GET_SLOT(self,tp_move_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_default;
+   DeeType_GET_SLOT(self,tp_move_ctor) =
+    (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_default;
 #else
-   DeeType_GET_SLOT(self,tp_move_ctor) = GET_OPERATOR(tp_copy_ctor,cs_constructor.ctp_copy_ctor)
-    ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_callcopy : GET_OPERATOR(tp_any_ctor,cs_constructor.ctp_any_ctor)
-    ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_callany
-    : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_builtin;
+   DeeType_GET_SLOT(self,tp_copy_ctor) = GET_OPERATOR(tp_any_ctor,cs_constructor.ctp_any_ctor)
+    ? (HAS_CTOR_ANYSUPERARGS()
+    ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_callany_anysuperargs
+    : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_callany)
+    : (HAS_CTOR_ANYSUPERARGS()
+    ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_builtin_anysuperargs
+    : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_builtin);
 #endif
    break;
   case DeeType_SLOT_ID(tp_any_ctor):
    SET_VSLOT(cs_constructor.ctp_any_ctor);
 #ifdef VALUE
-   DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_default;
-   if (DeeType_GET_SLOT(self,tp_move_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_builtin)
-    DeeType_GET_SLOT(self,tp_move_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_callany;
-   if (DeeType_GET_SLOT(self,tp_copy_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_builtin)
-    DeeType_GET_SLOT(self,tp_move_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_callany;
-   if (DeeType_GET_SLOT(self,tp_ctor) == (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_builtin)
-    DeeType_GET_SLOT(self,tp_ctor) = (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_callany;
+   DeeType_GET_SLOT(self,tp_any_ctor) = HAS_CTOR_ANYSUPERARGS()
+    ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_default_anysuperargs
+    : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))DeeClass_GetNewInstance_tp_any_ctor_default(DeeType_BASE(self));
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_builtin,             &_deeinstance_tp_move_ctor_callany)
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_builtin_anysuperargs,&_deeinstance_tp_move_ctor_callany_anysuperargs)
+// TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_default,             ...)
+// TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_callany,             ...)
+// TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_callany_anysuperargs,...)
+// TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_callcopy,            ...)
+   ;
+   TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_builtin,             &_deeinstance_tp_copy_ctor_callany)
+   TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_builtin_anysuperargs,&_deeinstance_tp_copy_ctor_callany_anysuperargs)
+// TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_default,             ...)
+// TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_callany,             ...)
+// TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_callany_anysuperargs,...)
+   ;
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_builtin,             &_deeinstance_tp_ctor_callany)
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_builtin_nobase,      &_deeinstance_tp_ctor_callany_nobase)
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_builtin_superargs,   &_deeinstance_tp_ctor_callany_superargs)
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_builtin_anysuperargs,&_deeinstance_tp_ctor_callany_anysuperargs)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_default,             ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_default_nobase,      ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_default_superargs,   ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_default_anysuperargs,...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_callany,             ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_callany_nobase,      ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_callany_superargs,   ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_callany_anysuperargs,...)
+   ;
 #else
-   if (DeeType_GET_SLOT(self,tp_move_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_callany)
-    DeeType_GET_SLOT(self,tp_move_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_builtin;
-   if (DeeType_GET_SLOT(self,tp_copy_ctor) == (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_callany)
-    DeeType_GET_SLOT(self,tp_move_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_builtin;
-   if (DeeType_GET_SLOT(self,tp_ctor) == (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_callany)
-    DeeType_GET_SLOT(self,tp_ctor) = (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_builtin;
-   DeeType_GET_SLOT(self,tp_any_ctor) = GET_OPERATOR(tp_copy_ctor,cs_constructor.ctp_copy_ctor)
+   DeeType_GET_SLOT(self,tp_any_ctor) = HAS_CTOR_ANYSUPERARGS()
     ? (GET_OPERATOR(tp_ctor,cs_constructor.ctp_ctor)
-     ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctorcopy
-     : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callcopy)
-    : GET_OPERATOR(tp_ctor,cs_constructor.ctp_ctor)
-    ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctor
-    : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin;
+     ? (HAS_CTOR_SUPERARGS()
+      ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs
+      : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctor_or_anysuperargs)
+     : (HAS_CTOR_SUPERARGS()
+      ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs
+      : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin_anysuperargs))
+    : (GET_OPERATOR(tp_copy_ctor,cs_constructor.ctp_copy_ctor)
+     ? (GET_OPERATOR(tp_ctor,cs_constructor.ctp_ctor)
+      ? (HAS_CTOR_SUPERARGS()
+       ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctorcopy_superargs
+       : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))DeeClass_GetNewInstance_tp_any_ctor_callctorcopy(DeeType_BASE(self)))
+      : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))DeeClass_GetNewInstance_tp_any_ctor_callcopy(DeeType_BASE(self)))
+    : (GET_OPERATOR(tp_ctor,cs_constructor.ctp_ctor)
+     ? (HAS_CTOR_SUPERARGS()
+      ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_callctor_superargs
+      : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))DeeClass_GetNewInstance_tp_any_ctor_callctor(DeeType_BASE(self)))
+     : (HAS_CTOR_SUPERARGS()
+      ? (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin_superargs
+      : (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))DeeClass_GetNewInstance_tp_any_ctor_builtin(DeeType_BASE(self)))));
+// TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_builtin,             ...)
+// TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_builtin_anysuperargs,...)
+// TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_default,             ...)
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_callany,             &_deeinstance_tp_move_ctor_builtin)
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_callany_anysuperargs,&_deeinstance_tp_move_ctor_builtin_anysuperargs)
+// TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_callcopy,            ...)
+   ;
+// TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_builtin,             ...)
+// TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_builtin_anysuperargs,...)
+// TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_default,             ...)
+   TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_callany,             &_deeinstance_tp_copy_ctor_builtin)
+   TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_callany_anysuperargs,&_deeinstance_tp_copy_ctor_builtin_anysuperargs)
+   ;
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_builtin,             ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_builtin_nobase,      ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_builtin_superargs,   ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_builtin_anysuperargs,...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_default,             ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_default_nobase,      ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_default_superargs,   ...)
+// TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_default_anysuperargs,...)
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_callany,             &_deeinstance_tp_ctor_builtin)
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_callany_nobase,      &_deeinstance_tp_ctor_builtin_nobase)
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_callany_superargs,   &_deeinstance_tp_ctor_builtin_superargs)
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_callany_anysuperargs,&_deeinstance_tp_ctor_builtin_anysuperargs)
+   ;
 #endif
    break;
+
+  // Super constructor arguments (no input arguments)
+  case DEE_CLASS_SLOTID_SUPERARGS_CTOR:
+   SET_VSLOT(cs_constructor.ctp_ctor_sargs);
+#ifdef VALUE
+        if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin
+         || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin_anysuperargs
+         || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin_nobase
+         ) DeeType_GET_SLOT(self,tp_ctor) = (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin_superargs;
+   else if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default
+         || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default_anysuperargs
+         || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default_nobase
+         ) DeeType_GET_SLOT(self,tp_ctor) = (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default_superargs;
+   else if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_callany
+         || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_callany_anysuperargs
+         || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_callany_nobase
+         ) DeeType_GET_SLOT(self,tp_ctor) = (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_callany_superargs;
+   if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin
+    || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callcopy
+    || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_nobase
+    || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callcopy_nobase)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_superargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_anysuperargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor
+         || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_nobase)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_superargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_or_anysuperargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctorcopy
+         || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctorcopy_nobase)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctorcopy_superargs;
+#else
+   if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin_superargs)
+    DeeType_GET_SLOT(self,tp_ctor) = HAS_CTOR_ANYSUPERARGS()
+    ? (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin_anysuperargs
+    : (DeeType_SLOT_TYPE(tp_ctor))DeeClass_GetNewInstance_tp_ctor_builtin(DeeType_BASE(self));
+   else if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default_superargs)
+    DeeType_GET_SLOT(self,tp_ctor) = HAS_CTOR_ANYSUPERARGS()
+    ? (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default_anysuperargs
+    : (DeeType_SLOT_TYPE(tp_ctor))DeeClass_GetNewInstance_tp_ctor_default(DeeType_BASE(self));
+   else if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_callany_superargs)
+    DeeType_GET_SLOT(self,tp_ctor) = HAS_CTOR_ANYSUPERARGS()
+    ? (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_callany_anysuperargs
+    : (DeeType_SLOT_TYPE(tp_ctor))DeeClass_GetNewInstance_tp_ctor_callany(DeeType_BASE(self));
+   if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_superargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (GET_OPERATOR(tp_copy_ctor,cs_constructor.ctp_copy_ctor)
+    ? (DeeType_SLOT_TYPE(tp_any_ctor))DeeClass_GetNewInstance_tp_any_ctor_callcopy(DeeType_BASE(self))
+    : (DeeType_SLOT_TYPE(tp_any_ctor))DeeClass_GetNewInstance_tp_any_ctor_builtin(DeeType_BASE(self)));
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_anysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_superargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))DeeClass_GetNewInstance_tp_any_ctor_callctor(DeeType_BASE(self));
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_or_anysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctorcopy_superargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))DeeClass_GetNewInstance_tp_any_ctor_callctorcopy(DeeType_BASE(self));
+#endif
+   break;
+
+  // Super constructor arguments (variadic input arguments)
+  case DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR:
+   SET_VSLOT(cs_constructor.ctp_any_ctor_sargs);
+#ifdef VALUE
+        if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin
+         || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin_nobase
+         ) DeeType_GET_SLOT(self,tp_ctor) = (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin_anysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default
+         || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default_nobase
+         ) DeeType_GET_SLOT(self,tp_ctor) = (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_default_anysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_callany
+         || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_callany_nobase
+         ) DeeType_GET_SLOT(self,tp_ctor) = (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_callany_anysuperargs;
+   ;
+   TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_builtin,&_deeinstance_tp_copy_ctor_builtin_anysuperargs)
+   TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_callany,&_deeinstance_tp_copy_ctor_callany_anysuperargs)
+   ;
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_builtin,&_deeinstance_tp_move_ctor_builtin_anysuperargs)
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_callany,&_deeinstance_tp_move_ctor_callany_anysuperargs)
+   ;
+        if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin
+         || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctorcopy
+         || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctorcopy_superargs
+         || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_nobase
+         || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctorcopy_nobase
+         ) DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_anysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_superargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_default
+         || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_default_nobase)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_default_anysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor
+         || DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_nobase)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_or_anysuperargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_superargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs;
+   ;
+#else
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_builtin_anysuperargs,DeeClass_GetNewInstance_tp_ctor_builtin(DeeType_BASE(self)))
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_default_anysuperargs,DeeClass_GetNewInstance_tp_ctor_default(DeeType_BASE(self)))
+   TRANSFORM_SLOT(tp_ctor,&_deeinstance_tp_ctor_callany_anysuperargs,DeeClass_GetNewInstance_tp_ctor_callany(DeeType_BASE(self)))
+   ;
+   TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_builtin_anysuperargs,&_deeinstance_tp_copy_ctor_builtin)
+   TRANSFORM_SLOT(tp_copy_ctor,&_deeinstance_tp_copy_ctor_callany_anysuperargs,&_deeinstance_tp_copy_ctor_callany)
+   ;
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_builtin_anysuperargs,&_deeinstance_tp_move_ctor_builtin)
+   TRANSFORM_SLOT(tp_move_ctor,&_deeinstance_tp_move_ctor_callany_anysuperargs,&_deeinstance_tp_move_ctor_callany)
+   ;
+   if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_anysuperargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = GET_OPERATOR(tp_ctor,cs_constructor.ctp_ctor)
+    ? (GET_OPERATOR(tp_copy_ctor,cs_constructor.ctp_copy_ctor)
+     ? (HAS_CTOR_SUPERARGS()
+      ? (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctorcopy_superargs
+      : (DeeType_SLOT_TYPE(tp_any_ctor))DeeClass_GetNewInstance_tp_any_ctor_callctorcopy(DeeType_BASE(self)))
+     : (DeeType_SLOT_TYPE(tp_any_ctor))DeeClass_GetNewInstance_tp_any_ctor_callctor(DeeType_BASE(self)))
+    : (DeeType_SLOT_TYPE(tp_any_ctor))DeeClass_GetNewInstance_tp_any_ctor_builtin(DeeType_BASE(self));
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_superargsanysuperargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_builtin_superargs;
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_default_anysuperargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))DeeClass_GetNewInstance_tp_any_ctor_default(DeeType_BASE(self));
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_or_anysuperargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))DeeClass_GetNewInstance_tp_any_ctor_callctor(DeeType_BASE(self));
+   else if (DeeType_GET_SLOT(self,tp_any_ctor) == (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs)
+    DeeType_GET_SLOT(self,tp_any_ctor) = (DeeType_SLOT_TYPE(tp_any_ctor))&_deeinstance_tp_any_ctor_callctor_superargs;
+#endif
+   break;
+
+/*
+   _deeinstance_tp_ctor_builtin;
+   _deeinstance_tp_ctor_builtin_nobase;
+   _deeinstance_tp_ctor_builtin_superargs;
+   _deeinstance_tp_ctor_builtin_anysuperargs;
+   _deeinstance_tp_ctor_default;
+   _deeinstance_tp_ctor_default_nobase;
+   _deeinstance_tp_ctor_default_superargs;
+   _deeinstance_tp_ctor_default_anysuperargs;
+   _deeinstance_tp_ctor_callany;
+   _deeinstance_tp_ctor_callany_nobase;
+   _deeinstance_tp_ctor_callany_superargs;
+   _deeinstance_tp_ctor_callany_anysuperargs;
+   _deeinstance_tp_copy_ctor_builtin;
+   _deeinstance_tp_copy_ctor_builtin_anysuperargs;
+   _deeinstance_tp_copy_ctor_callany;
+   _deeinstance_tp_copy_ctor_callany_anysuperargs;
+   _deeinstance_tp_move_ctor_builtin;
+   _deeinstance_tp_move_ctor_builtin_anysuperargs;
+   _deeinstance_tp_move_ctor_callany;
+   _deeinstance_tp_move_ctor_callany_anysuperargs;
+   _deeinstance_tp_any_ctor_builtin;
+   _deeinstance_tp_any_ctor_builtin_nobase;
+   _deeinstance_tp_any_ctor_builtin_superargs;
+   _deeinstance_tp_any_ctor_builtin_anysuperargs;
+   _deeinstance_tp_any_ctor_builtin_superargsanysuperargs;
+   _deeinstance_tp_any_ctor_default;
+   _deeinstance_tp_any_ctor_default_nobase;
+   _deeinstance_tp_any_ctor_default_anysuperargs;
+   _deeinstance_tp_any_ctor_callctor;
+   _deeinstance_tp_any_ctor_callctor_nobase;
+   _deeinstance_tp_any_ctor_callctor_superargs;
+   _deeinstance_tp_any_ctor_callctor_or_anysuperargs;
+   _deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs;
+   _deeinstance_tp_any_ctor_callcopy;
+   _deeinstance_tp_any_ctor_callcopy_nobase;
+   _deeinstance_tp_any_ctor_callctorcopy;
+   _deeinstance_tp_any_ctor_callctorcopy_nobase;
+   _deeinstance_tp_any_ctor_callctorcopy_superargs;
+*/
 
   // tp_copy_assign <---> tp_move_assign <---> tp_any_assign
   case DeeType_SLOT_ID(tp_any_assign):
@@ -618,6 +925,7 @@ err_not_a_file_class:
                        slot);
    return -1;
  }
+#undef GET_OPERATOR_ID
 #undef GET_OPERATOR
 #undef SET_VSLOT
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE

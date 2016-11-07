@@ -1846,7 +1846,8 @@ extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_ParseConstantFunctionWithAttr
  DEE_PARSER_PARAMS); // in "xast_parse.function.inl"
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_ParseUnnamedFunction(
  DEE_A_INOUT DeeTokenObject *function_token, DEE_A_INOUT struct DeeAttributeDecl *attr,
- DEE_A_OUT_OPT Dee_uint32_t *syntax_mode, DEE_PARSER_PARAMS); // in "xast_parse.function.inl"
+ DEE_A_OUT_OPT Dee_uint32_t *syntax_mode, DEE_PARSER_PARAMS); // in "xast_parse.unnamed_function.inl"
+
 // Parses the arguments of a function
 //  - Adds the 'DEE_FUNCTION_FLAG_VARG' flag to '*flags' if the arguments are variadic
 //  - Stores a vector and size in '*out_argc' and '*out_argv', then owned by the caller
@@ -2432,21 +2433,23 @@ extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_ParseSwitchBlock(
 //  "del []"          | tp_p_seq_del                  | tp_seq_del, tp_seq_range_del
 //  "[] ="            | tp_p_seq_set                  | tp_seq_set, tp_seq_range_set
 //  "__constructor__" | tp_p_any_ctor                 | tp_ctor, tp_any_ctor
+//  "__superargs__"   | DEE_XAST_TYPESLOT_SUPERARGS   | DEE_CLASS_SLOTID_SUPERARGS_CTOR, DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR
 //  "none"            | DEE_XAST_TYPESLOT_NONE        | /* nothing */
 //  "__hasattr__"     | DEE_XAST_TYPESLOT_ATTR_HAS    | DeeObject_HasAttr
 //  "__read__"        | DEE_XAST_TYPESLOT_IO_READ     | tp_io_read, DEE_CLASS_SLOTID_OPERATOR_READNP
 //  "__write__"       | DEE_XAST_TYPESLOT_IO_WRITE    | tp_io_write, DEE_CLASS_SLOTID_OPERATOR_WRITENP
 // +------------------+-------------------------------+-----------
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
-#define DEE_XAST_TYPESLOT_REF      0x70000001
-#define DEE_XAST_TYPESLOT_DEREF    0x70000002
+#define DEE_XAST_TYPESLOT_REF       0x70000001
+#define DEE_XAST_TYPESLOT_DEREF     0x70000002
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
-#define DEE_XAST_TYPESLOT_NONE     0x70000003
-#define DEE_XAST_TYPESLOT_ATTR_HAS 0x70000004
+#define DEE_XAST_TYPESLOT_NONE      0x70000003
+#define DEE_XAST_TYPESLOT_ATTR_HAS  0x70000004
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
-#define DEE_XAST_TYPESLOT_IO_READ  0x70000005
-#define DEE_XAST_TYPESLOT_IO_WRITE 0x70000006
+#define DEE_XAST_TYPESLOT_IO_READ   0x70000005
+#define DEE_XAST_TYPESLOT_IO_WRITE  0x70000006
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+#define DEE_XAST_TYPESLOT_SUPERARGS 0x70000007
 extern DEE_A_RET_EXCEPT(-1) int DeeXAstOperatorName_Parse(DEE_PARSER_PARAMS);
 
 //////////////////////////////////////////////////////////////////////////

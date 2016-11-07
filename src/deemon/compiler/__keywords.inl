@@ -400,6 +400,7 @@ KWD(__set__) /*KWD(set)*/ KWD(write) KWD(put)
 
 //////////////////////////////////////////////////////////////////////////
 // Builtin operator functions
+KWD(__superargs__)
 KWD(__constructor__)
 KWD(__destructor__)
 KWD(__assign__)

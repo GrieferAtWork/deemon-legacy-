@@ -141,7 +141,7 @@ constructor_decl_noyield:
    if (DeeAttributeDecl_Parse(attr,DEE_PARSER_ARGS) != 0) goto err_ast_token;
    // Check for constructor declaration
    if (token.tk_id == '(' || token.tk_id == '{' ||
-       token.tk_id == TPP_TOK_ARROW) goto constructor_decl_noyield;
+       token.tk_id == TPP_TOK_ARROW || token.tk_id == ':') goto constructor_decl_noyield;
    Dee_DECREF(ast_token);
    // Reparse w/ class prefix
    if (has_class_prefix) {
@@ -188,8 +188,15 @@ parse_operator:
                                          _DeeType_ClassOperatorName(operator_name));
       break;
     }
-    if (!new_function_name) goto err_ast_token;
+    if DEE_UNLIKELY(!new_function_name) goto err_ast_token;
     attr->a_name = (DeeStringObject *)new_function_name;
+   }
+   if DEE_UNLIKELY(operator_name == DEE_XAST_TYPESLOT_SUPERARGS) {
+    DEE_ASSERT(DeeObject_Check(attr->a_super) && DeeXAst_Check(attr->a_super));
+    //Special operator: This one isn't a [[thiscall]]
+    attr->a_fun_flags &= ~DeeFunctionFlags_CC_MASK; // Delete cc-attributes
+    // v Not really required...
+    //Dee_CLEAR(attr->a_super); // Delete the super type
    }
 #ifdef CONST_ENTRY
    function_ast = DeeXAst_ParseUnnamedFunction(

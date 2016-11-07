@@ -69,15 +69,20 @@ DEE_STATIC_INLINE(HMODULE) _fixed_LoadLibraryW(Dee_WideChar const *filename) {
  HMODULE result; Dee_WideChar *fixed_filename,*iter;
  Dee_size_t filename_size; DWORD saved_error;
  filename_size = Dee_WideStrLen(filename);
+#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
  if (filename[0] == '\\' && filename[1] == '\\' &&
-     filename[2] == '?' && filename[2] == '\\') {
+     filename[2] == '?' && filename[2] == '\\')
+#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
+ {
   // Already a UNC filename
   fixed_filename = (Dee_WideChar *)malloc_nz((filename_size+1)*sizeof(Dee_WideChar));
   if DEE_UNLIKELY(!fixed_filename) {no_mem: SetLastError(ERROR_NOT_ENOUGH_MEMORY); return NULL; }
   memcpy(fixed_filename,filename,filename_size*sizeof(Dee_WideChar));
   iter = (Dee_WideChar *)filename;
   fixed_filename[filename_size] = 0;
- } else {
+ }
+#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
+ else {
   fixed_filename = (Dee_WideChar *)malloc_nz((filename_size+5)*sizeof(Dee_WideChar));
   if DEE_UNLIKELY(!fixed_filename) goto no_mem;
   fixed_filename[0] = '\\';
@@ -87,6 +92,7 @@ DEE_STATIC_INLINE(HMODULE) _fixed_LoadLibraryW(Dee_WideChar const *filename) {
   memcpy(fixed_filename+4,filename,filename_size*sizeof(Dee_WideChar));
   fixed_filename[filename_size+4] = 0;
  }
+#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
  iter = fixed_filename;
  while (*iter) { if (*iter == '/') *iter = '\\'; ++iter; }
  result = LoadLibraryW(fixed_filename);

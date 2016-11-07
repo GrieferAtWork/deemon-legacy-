@@ -432,7 +432,7 @@ err_super_object_token: Dee_XDECREF(super_object); goto err_super_type_token;
    if DEE_UNLIKELY((typeslot = DeeXAstOperatorName_Parse(DEE_PARSER_ARGS)) < 0) goto err_ast_token;
    if DEE_UNLIKELY((operator_function = DeeBuiltin_GetIntrinsicFunctionOfTypeSlot(typeslot)) == NULL) {
     // Can this even happen?
-    if (DeeError_CompilerErrorf(DEE_WARNING_NO_RUNTIME_SUPPORT_FOR_TYPESLOT,
+    if (DeeError_CompilerErrorf(DEE_WARNING_NO_RUNTIME_SUPPORT_FOR_OPERATOR,
      (DeeObject *)lexer,(DeeObject *)ast_token,
      "No runtime support for 'operator %s'",
      _DeeType_ClassOperatorName(typeslot)) != 0) goto err_ast_token;

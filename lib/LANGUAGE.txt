@@ -420,6 +420,7 @@ XAstOperatorName_Parse ::= (
 	| ('__moveassign__')
 	| ('__constructor__')
 	| ('__destructor__')
+	| ('__superargs__')
 	| ('__bool__')
 	| ('+') // __pos__ or __add__ (based on argument count)
 	| ('-') // __neg__ or __sub__ (based on argument count)

@@ -839,7 +839,7 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeProcess_Start(
  PROCESS_INFORMATION pinfo; BOOL temp;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  if (DeeProcess_IS_REF(self)) { _deeprocess_error_is_ref(self); return -1; }
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) {
   DeeProcess_RELEASE(self);
@@ -1009,7 +1009,7 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeProcess_Start(
  DeeObject *used_exe,*used_args;
  char **argv,**envv; int result;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) { DeeProcess_RELEASE(self); return 1; /* Already started */ }
  Dee_INCREF(used_exe = (DeeObject *)_self->p_exe);
@@ -1100,7 +1100,7 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeProcess_Terminate(
  DEE_A_IN DeeProcessReturn exit_code) {
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  DEE_LVERBOSE1("Terminating process: %k\n",self);
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
 #if !DEE_CONFIG_RUNTIME_HAVE_EXIT
  if (DeeProcess_IS_SELF(self)) {
   DeeError_SET_STRING(&DeeErrorType_SystemError,
@@ -1258,7 +1258,7 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1) int DeeProcess_Join(
 #ifdef WIFCONTINUED
 again:
 #endif /* WIFCONTINUED */
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeProcess_ACQUIRE(self);
  error = waitpid(DeeProcess_HANDLE(self),&temp,0);
  DeeProcess_RELEASE(self);
@@ -1361,7 +1361,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeProcess_TryJoin(
 DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeProcess_JoinTimed(
  DEE_A_INOUT_OBJECT(DeeProcessObject) *self, DEE_A_IN unsigned int msecs,
  DEE_A_OUT_OPT DeeProcessReturn *retval) {
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  return _DeeProcess_JoinTimedImpl(self,msecs,retval);
 }
 
@@ -1860,7 +1860,7 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1) int DeeProcess_Win32Times(
  DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **user_time) {
  FILETIME tc,te,tk,tu; BOOL success;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeProcess_ACQUIRE(self);
  success = GetProcessTimes(DeeProcess_HANDLE(self),&tc,&te,&tk,&tu);
  DeeProcess_RELEASE(self);
@@ -1885,7 +1885,7 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeProcess_Win32IsCritical(
  typedef BOOL (WINAPI *LPISPROCESSCRITICAL)(HANDLE hProcess, PBOOL Critical);
  static LPISPROCESSCRITICAL p_IsProcessCritical = NULL;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DEE_ATOMIC_ONCE({
   HMODULE hKernel32 = GetModuleHandle(TEXT("KERNEL32"));
   p_IsProcessCritical = hKernel32 ? (LPISPROCESSCRITICAL)
@@ -1921,7 +1921,7 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1) int DeeProcess_Win32SetPriorityBoost(
  DEE_A_IN_OBJECT(DeeProcessObject) *self, DEE_A_IN int enabled) {
  BOOL success;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
- if (DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeProcess_ACQUIRE(self);
  success = SetProcessPriorityBoost(DeeProcess_HANDLE(self),enabled ? FALSE : TRUE);
  DeeProcess_RELEASE(self);

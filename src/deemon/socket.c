@@ -39,6 +39,7 @@
 #include <deemon/optional/object_malloc.h>
 #include <deemon/optional/string_forward.h>
 #include <deemon/runtime_flags.h>
+#include <deemon/generic_vtable.h>
 #include <deemon/socket.h>
 #include <deemon/string.h>
 #include <deemon/structured.h>
@@ -3232,6 +3233,15 @@ static int DEE_CALL _deesocket_tp_bool(DeeSocketObject *self) {
 static DeeObject *DEE_CALL _deesocket_tp_not(DeeSocketObject *self) {
  DeeReturn_Bool(DeeSocket_IsClosed((DeeObject *)self));
 }
+static int DEE_CALL _deesocket_tp_hash(
+ DeeSocketObject *self, Dee_hash_t start, Dee_hash_t *result) {
+ sock_t hself;
+ DeeSocket_ACQUIRE(self);
+ hself = self->s_socket;
+ DeeSocket_RELEASE(self);
+ *result = start ^ (Dee_hash_t)hself;
+ return 0;
+}
 static DeeObject *DEE_CALL _deesocket_tp_cmp_lo(
  DeeSocketObject *lhs, DeeSocketObject *rhs) {
  sock_t hlhs,hrhs;
@@ -4752,13 +4762,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 DeeTypeObject DeeSocket_Type = {
  DEE_TYPE_OBJECT_HEAD_v100(member("socket"),member(
   "(int af, int type = socket.SOCK_STREAM, int protocol = 0) -> socket\n"
-  "(int af, int type = socket.SOCK_STREAM, string protocol) -> socket\n"
-  "(int af, string type, int protocol) -> socket\n"
-  "(int af, string type, string protocol) -> socket\n"
-  "(string af, int type = socket.SOCK_STREAM, int protocol = 0) -> socket\n"
-  "(string af, int type = socket.SOCK_STREAM, string protocol) -> socket\n"
-  "(string af, string type, int protocol) -> socket\n"
-  "(string af, string type, string protocol) -> socket\n"),null,null),
+  "(int af, int type = socket.SOCK_STREAM, string protocol) -> socket\n"),null,null),
  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeSocketObject),null,null,null,
   member(&_deesocket_tp_move_ctor),
   member(&_deesocket_tp_any_ctor)),
@@ -4773,7 +4777,8 @@ DeeTypeObject DeeSocket_Type = {
   member(&_deesocket_tp_bool),
   null,null,null,null,null,null,null,null,null,null,
   null,null,null,null,null,null,null,null,null,null,
-  null,null,null,null,null,null,null,null,null,null),
+  null,null,null,null,null,null,null,null,null,
+  member(&_deesocket_tp_hash)),
  DEE_TYPE_OBJECT_COMPARE_v100(
   member(&_deesocket_tp_cmp_lo),
   member(&_deesocket_tp_cmp_le),
@@ -5266,7 +5271,8 @@ DeeTypeObject DeeSockAddr_Type = {
  DEE_TYPE_OBJECT_MATH_v101(
   null,null,null,null,null,null,null,null,null,null,null,
   null,null,null,null,null,null,null,null,null,null,null,
-  null,null,null,null,null,null,null,null,null,null),
+  null,null,null,null,null,null,null,null,null,
+  member(&_deegenericmemcmp_tp_hash)),
  DEE_TYPE_OBJECT_COMPARE_v100(
   member(&_deesockaddr_tp_cmd_lo),
   member(&_deesockaddr_tp_cmd_le),

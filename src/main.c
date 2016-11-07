@@ -43,10 +43,6 @@
 // >>   this { print "Hello"; }
 // >> })();
 
-// TODO: User classes currently don't use tp_ctor and always use
-//       tp_any_ctor instead, even if tp_ctor would be the better choice.
-//       >> Figure out why that is, and fix it.
-
 // TODO: Optimize the api by marking more types with 'DEE_TYPE_FLAG_NO_SUBCLASS',
 //       thus allowing check callbacks to be turned into CheckExact.
 
@@ -89,26 +85,6 @@
 //       >>   //            But this still feels like something really dangrous...
 //       >>   return i;
 //       >> }
-
-// TODO: Syntax for util::min: >> print get_seq() < ...;
-// TODO: Syntax for util::max: >> print get_seq() > ...;
-// TODO: Syntax for addressing intrinsic operator functions:
-//  >> local l = [20,10,30];
-//  >> l.sort(operator <);
-//  NOTE: Later optimizations (namely assumptions) might optimize
-//        the sort call, as its argument is just the default (s.a.: another idea below).
-//  'operator <' is parsed as a reference to the constant function '__lo__'
-//  -> When the 'operator' keyword token is encountered in a unary expression,
-//     begin parsing an operator name, because returning the associated
-//     intrinsic operator function.
-//  -> Optimization into direct operators, possibly based on argument count,
-//     optimizing code like 'print operator + (a,b)' is performed later.
-//  -> This way, a user no longer has to #include <intrin>, can instead
-//     directly address the function, even naming previously hidden/internal
-//     functions, such as the __dual_*__ group of operator functions:
-//     >> print operator +;       // prints '__dual_posoradd__'
-//     >> print operator + (x);   // compiled as '__dual_posoradd__(x)' --> '__pos__(x)' --> '+(x)'
-//     >> print operator + (a,b); // compiled as '__dual_posoradd__(a,b)' --> '__add__(a,b)' --> '(a)+(b)'
 
 // TODO: Optimizations:
 // Remove default parameter from explicit function call:

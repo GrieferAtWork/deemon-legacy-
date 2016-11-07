@@ -114,13 +114,15 @@ extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeClassDynamicVTableList_SetOperato
 
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
 struct _DeeClassTypeConstructorOperators {
- DEE_A_REF DeeObject *ctp_ctor;      /*< [0..1]. */
- DEE_A_REF DeeObject *ctp_copy_ctor; /*< [0..1]. */
- DEE_A_REF DeeObject *ctp_move_ctor; /*< [0..1]. */
- DEE_A_REF DeeObject *ctp_any_ctor;  /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_ctor;           /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_ctor_sargs;     /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_copy_ctor;      /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_move_ctor;      /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_any_ctor;       /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_any_ctor_sargs; /*< [0..1]. */
 };
 struct _DeeClassTypeDestructorOperators {
- DEE_A_REF DeeObject *ctp_dtor;      /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_dtor; /*< [0..1]. */
 };
 struct _DeeClassTypeAssignOperators {
  DEE_A_REF DeeObject *ctp_copy_assign; /*< [0..1]. */
@@ -258,9 +260,11 @@ do{\
 #define _DeeGenericClassSuffix_ALL(sfx,xcall)\
 do{\
  xcall((sfx)->cs_constructor.ctp_ctor);\
+ xcall((sfx)->cs_constructor.ctp_ctor_sargs);\
  xcall((sfx)->cs_constructor.ctp_copy_ctor);\
  xcall((sfx)->cs_constructor.ctp_move_ctor);\
  xcall((sfx)->cs_constructor.ctp_any_ctor);\
+ xcall((sfx)->cs_constructor.ctp_any_ctor_sargs);\
  xcall((sfx)->cs_destructor.ctp_dtor);\
  xcall((sfx)->cs_assign.ctp_copy_assign);\
  xcall((sfx)->cs_assign.ctp_move_assign);\
@@ -594,9 +598,20 @@ extern DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *DeeClass_CallAttrString(DEE_A_
 // HINT: The non-pointer 'operator __readnp__(size_s s) -> string'  can be addressed with 'DEE_CLASS_SLOTID_OPERATOR_READNP'
 // HINT: The pointer 'operator __writep__(none *p, size_t s) -> size_t' can be addressed with 'DeeType_SLOT_ID(tp_io_read)'
 // HINT: The pointer 'operator __readp__(none *p, size_t s) -> size_t'  can be addressed with 'DeeType_SLOT_ID(tp_io_write)'
-#define DEE_CLASS_SLOTID_OPERATOR_FOR      DeeType_SLOT_ID(tp_p_seq_iter_self)
-#define DEE_CLASS_SLOTID_OPERATOR_READNP   DeeType_SLOT_ID(tp_p_shr) /*< No special reason for why I chose these. But since classes can't */
-#define DEE_CLASS_SLOTID_OPERATOR_WRITENP  DeeType_SLOT_ID(tp_p_shl) /*< override structured slots, I might as well use them for this. */
+#define DEE_CLASS_SLOTID_OPERATOR_FOR       DeeType_SLOT_ID(tp_p_seq_iter_self)
+#define DEE_CLASS_SLOTID_OPERATOR_READNP    DeeType_SLOT_ID(tp_p_shr) /*< No special reason for why I chose these. But since classes can't */
+#define DEE_CLASS_SLOTID_OPERATOR_WRITENP   DeeType_SLOT_ID(tp_p_shl) /*< override structured slots, I might as well use them for this. */
+
+//////////////////////////////////////////////////////////////////////////
+// These two slots can be set to generate an argument list for a super constructor call
+// -> Taking the same tuple of arguments as their respective constructor,
+//    these function should return the argument tuple used to call the super constructor.
+// -> If something other than a tuple is returned, an error is set at runtime
+// -> When not set, the super constructor is called with the same arguments as your own.
+// NOTE: These functions are not called with the [[thiscall]] protocol, meaning that
+//       they don't have access to the 'this' argument of the actual constructor call.
+#define DEE_CLASS_SLOTID_SUPERARGS_CTOR     DeeType_SLOT_ID(tp_p_str)
+#define DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR DeeType_SLOT_ID(tp_p_repr)
 
 #define DeeClass_HasSlot(ob,slot) (DeeClass_GetSlot(ob,slot)!=NULL)
 DEE_FUNC_DECL(DEE_ATTRIBUTE_ADD_RESULT_REFERENCE DEE_A_RET_NOEXCEPT(NULL) DeeObject *) DeeClass_GetSlot(
