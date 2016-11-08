@@ -244,7 +244,7 @@ DEE_FUNC_DECL(void) _Dee_AssertionFailedf(char const *expr_, char const *file_, 
 DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AssertionFailed(char const *expr_, char const *file_, int line_);
 DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AssertionFailedf(char const *expr_, char const *file_, int line_, char const *fmt, ...);
 #endif /* !DEE_BUILTIN_BREAKPOINT */
-DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination_d(char const *expr, char const *file, int line);
+DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination_d(char const *expr_, char const *file_, int line_);
 DEE_DECL_END
 # define DEE_ABNORMAL_TERMINATION()                 _Dee_AbnormalTermination_d(NULL,__FILE__,__LINE__)
 # define DEE_ABNORMAL_TERMINATION_IF(expr) (!(expr)?_Dee_AbnormalTermination_d(#expr,__FILE__,__LINE__):(void)0)

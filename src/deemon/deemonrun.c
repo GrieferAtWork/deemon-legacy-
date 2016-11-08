@@ -488,7 +488,7 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
 }
 
 
-DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination_d(char const *expr, char const *file, int line);
+DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination_d(char const *expr_, char const *file_, int line_);
 DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination(void);
 
 DEE_ATTRIBUTE_NORETURN void _Dee_AbnormalTermination(void) {
@@ -530,20 +530,22 @@ char *_failsafe_itos(char *out, Dee_size_t max, int v) {
  return iter;
 }
 
+DEE_COMPILER_MSVC_WARNING_PUSH(4702)
 DEE_ATTRIBUTE_NORETURN void _Dee_AbnormalTermination_d(
- char const *expr, char const *file, int line) {
+ char const *expr_, char const *file_, int line_) {
  char buffer[32];
- if (file) DEBUG_PRINTSTR(file);
+ if (file_) DEBUG_PRINTSTR(file_);
  DEBUG_PRINTSTR("(");
- DEBUG_PRINTSTR(_failsafe_itos(buffer,sizeof(buffer)/sizeof(char),line));
+ DEBUG_PRINTSTR(_failsafe_itos(buffer,sizeof(buffer)/sizeof(char),line_));
  DEBUG_PRINTSTR(") : ");
- if (expr) {
-  DEBUG_PRINTSTR(expr);
+ if (expr_) {
+  DEBUG_PRINTSTR(expr_);
   DEBUG_PRINTSTR(   " : ABNORMAL TERMINATION\n");
  } else DEBUG_PRINTSTR("ABNORMAL TERMINATION\n");
  _Dee_AbnormalTermination();
  DEE_BUILTIN_UNREACHABLE();
 }
+DEE_COMPILER_MSVC_WARNING_POP
 
 #ifdef DEE_DEBUG
 int _DeeFlag_NoAssert = 0;

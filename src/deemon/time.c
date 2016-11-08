@@ -128,17 +128,133 @@ static DeeStringWriterFormatSpec const two_digits_space_spec = {
  0,  // upper_hex
 };
 
+#define DEE_TIMEATTRID_NONE     0
+#define DEE_TIMEATTRID_YEAR     1
+#define DEE_TIMEATTRID_YEARS    DEE_TIMEATTRID_YEAR
+#define DEE_TIMEATTRID_MONTH    2
+#define DEE_TIMEATTRID_MONTHS   3
+#define DEE_TIMEATTRID_MWEEK    4
+#define DEE_TIMEATTRID_YWEEK    5
+#define DEE_TIMEATTRID_WDAY     6
+#define DEE_TIMEATTRID_MDAY     7
+#define DEE_TIMEATTRID_YDAY     8
+#define DEE_TIMEATTRID_DAYS     9
+#define DEE_TIMEATTRID_HOUR     10
+#define DEE_TIMEATTRID_HOURS    11
+#define DEE_TIMEATTRID_MINUTE   12
+#define DEE_TIMEATTRID_MINUTES  13
+#define DEE_TIMEATTRID_SECOND   14
+#define DEE_TIMEATTRID_SECONDS  15
+#define DEE_TIMEATTRID_MSECOND  16
+#define DEE_TIMEATTRID_MSECONDS 17
+
+//////////////////////////////////////////////////////////////////////////
+// Returns the mode id of a given format attribute name
+// >> Returns 'DEE_TIMEATTRID_NONE' if the given name is unknown
+DEE_STATIC_INLINE(int) DeeTime_GetAttributeID(
+ char const *name_begin, Dee_size_t name_len) {
+ DEE_ASSERT(!name_len || name_begin);
+ switch (name_len) {
+  case 1:
+   switch (*name_begin) {
+    case 'Y': return DEE_TIMEATTRID_YEAR;
+    case 'M': return DEE_TIMEATTRID_MONTH;
+    case 'D': return DEE_TIMEATTRID_MDAY;
+    case 'H': return DEE_TIMEATTRID_HOUR;
+    case 'I': return DEE_TIMEATTRID_MINUTE;
+    case 'S': return DEE_TIMEATTRID_SECOND;
+    default: break;
+   }
+   break;
+  case 2:
+   if (*name_begin == 'M') {
+    switch (name_begin[1]) {
+     case 'W': return DEE_TIMEATTRID_MWEEK;
+     case 'D': return DEE_TIMEATTRID_MDAY;
+     case 'I': return DEE_TIMEATTRID_MINUTE;
+     case 'S': return DEE_TIMEATTRID_MSECOND;
+     default: break;
+    }
+   } else if (*name_begin == 'Y') {
+    if (name_begin[1] == 'W') return DEE_TIMEATTRID_YWEEK;
+    else if (name_begin[1] == 'D') return DEE_TIMEATTRID_YDAY;
+   } else if (*name_begin == 'W' && name_begin[1] == 'D') {
+    return DEE_TIMEATTRID_WDAY;
+   }
+   break;
+
+#define CHECK(n,name,mode) if (memcmp(name_begin,name,(n)*sizeof(char))==0) return mode
+  case 4:
+   CHECK(4,"year",DEE_TIMEATTRID_YEAR);
+   CHECK(4,"wday",DEE_TIMEATTRID_WDAY);
+   CHECK(4,"mday",DEE_TIMEATTRID_MDAY);
+   CHECK(4,"yday",DEE_TIMEATTRID_YDAY);
+   CHECK(4,"days",DEE_TIMEATTRID_DAYS);
+   CHECK(4,"hour",DEE_TIMEATTRID_HOUR);
+   break;
+  case 5:
+   CHECK(5,"years",DEE_TIMEATTRID_YEARS);
+   CHECK(5,"month",DEE_TIMEATTRID_MONTH);
+   CHECK(5,"mweek",DEE_TIMEATTRID_MWEEK);
+   CHECK(5,"yweek",DEE_TIMEATTRID_YWEEK);
+   CHECK(5,"hours",DEE_TIMEATTRID_HOURS);
+   break;
+  case 6:
+   CHECK(6,"months",DEE_TIMEATTRID_MONTHS);
+   CHECK(6,"minute",DEE_TIMEATTRID_MINUTE);
+   CHECK(6,"second",DEE_TIMEATTRID_SECOND);
+   break;
+  case 7:
+   CHECK(7,"minutes",DEE_TIMEATTRID_MINUTES);
+   CHECK(7,"seconds",DEE_TIMEATTRID_SECONDS);
+   CHECK(7,"msecond",DEE_TIMEATTRID_MSECOND);
+   break;
+  case 8:
+   CHECK(8,"mseconds",DEE_TIMEATTRID_MSECONDS);
+   break;
+#undef CHECK
+  default: break;
+ }
+ return DEE_TIMEATTRID_NONE;
+}
+
+DEE_STATIC_INLINE(DEE_A_RET_WUNUSED Dee_uint64_t) DeeTime_GetAttributeValue(
+ DEE_A_IN_OBJECT(DeeTimeObject) const *self, DEE_A_IN int attrib) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeTime_Check(self));
+ switch (attrib) {
+  case DEE_TIMEATTRID_YEAR     : return DeeTime_GetYear(self);
+  case DEE_TIMEATTRID_MONTH    : return DeeTime_GetMonth(self);
+  case DEE_TIMEATTRID_MONTHS   : return DeeTime_GetTotalMonths(self);
+  case DEE_TIMEATTRID_MWEEK    : return DeeTime_GetMWeek(self);
+  case DEE_TIMEATTRID_YWEEK    : return DeeTime_GetYWeek(self);
+  case DEE_TIMEATTRID_WDAY     : return DeeTime_GetWDay(self);
+  case DEE_TIMEATTRID_MDAY     : return DeeTime_GetMDay(self);
+  case DEE_TIMEATTRID_YDAY     : return DeeTime_GetYDay(self);
+  case DEE_TIMEATTRID_DAYS     : return DeeTime_GetTotalDays(self);
+  case DEE_TIMEATTRID_HOUR     : return DeeTime_GetHour(self);
+  case DEE_TIMEATTRID_HOURS    : return DeeTime_GetTotalHours(self);
+  case DEE_TIMEATTRID_MINUTE   : return DeeTime_GetMinute(self);
+  case DEE_TIMEATTRID_MINUTES  : return DeeTime_GetTotalMinutes(self);
+  case DEE_TIMEATTRID_SECOND   : return DeeTime_GetSecond(self);
+  case DEE_TIMEATTRID_SECONDS  : return DeeTime_GetTotalSeconds(self);
+  case DEE_TIMEATTRID_MSECOND  : return DeeTime_GetMSecond(self);
+  case DEE_TIMEATTRID_MSECONDS : return DeeTime_GetTotalMSeconds(self);
+  default: DEE_BUILTIN_UNREACHABLE();
+ }
+}
+
+
+
 DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeStringObject) *DeeTime_Format(
- DEE_A_IN_OBJECT(DeeTimeObject) const *self,
- DEE_A_IN_R(fmt_len) char const *fmt, DEE_A_IN Dee_size_t fmt_len) {
+ DEE_A_IN_OBJECT(DeeTimeObject) const *self, DEE_A_IN_Z char const *fmt) {
 #if 1
- DeeObject *result;
+ DeeObject *result; char ch;
  DeeStringWriter writer = DeeStringWriter_INIT();
- char ch; char const *fmt_end = fmt+fmt_len;
- while (fmt != fmt_end) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeTime_Check(self));
+ while (1) {
   switch ((ch = *fmt++)) {
+   case '\0': goto done;
    case '%':
-    if (DEE_UNLIKELY(fmt == fmt_end)) goto def;
     switch ((ch = *fmt++)) {
 //TODO: @begin locale_dependent
      case 'a': if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING      (&writer,abbr_wday_names[DeeTime_GetWDay(self)]) != 0) goto err; break;
@@ -205,18 +321,98 @@ DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeStringObject) *DeeTime_Format(
 
      case 'n': if DEE_UNLIKELY(DeeStringWriter_WriteChar(&writer,'\n') != 0) goto err; break;
      case 't': if DEE_UNLIKELY(DeeStringWriter_WriteChar(&writer,'\t') != 0) goto err; break;
-     case '%': if DEE_UNLIKELY(DeeStringWriter_WriteChar(&writer,'%') != 0) goto err; break;
+     case '%': case '\0':
+      if DEE_UNLIKELY(DeeStringWriter_WriteChar(&writer,'%') != 0) goto err;
+      if (!ch) goto done;
+      break;
 
+     case '[': {
+      char const *tag_begin,*tag_end,*mode_begin,*mode_end;
+      unsigned int bracket_recursion = 1; Dee_uint64_t attribval;
+      int repr_mode,attribute_id,width = 0;
+      // Extended formatting
+      mode_end = mode_begin = tag_begin = fmt;
+      while (1) {
+       ch = *fmt++;
+       if (ch == ']') { if (!--bracket_recursion) { tag_end = fmt-1; break; } }
+       else if (ch == '[') ++bracket_recursion;
+       else if (ch == ':' && bracket_recursion == 1)
+        mode_end = fmt-1,tag_begin = fmt;
+       else if (!ch) { tag_end = fmt; break; }
+      }
+      if (mode_begin != mode_end) {
+       if (*mode_begin == 'n' || *mode_begin == 's' ||
+           *mode_begin == 'S' || *mode_begin == ' ')
+        repr_mode = *mode_begin++;
+       else repr_mode = 0;
+       // Parse the width modifier
+       while (mode_begin != mode_end) {
+        if (*mode_begin >= '0' && *mode_begin <= '9') {
+         width = width*10+(*mode_begin-'0');
+        } else {
+         DeeError_SetStringf(&DeeErrorType_ValueError,
+                             "Expected digits, or end of repr-mode, but got %.1q in '%%[%#.*q]'",
+                             mode_begin,(unsigned)(tag_end-mode_begin),mode_begin);
+         goto err;
+        }
+        ++mode_begin;
+       }
+      } else repr_mode = 0;
+      if DEE_UNLIKELY((attribute_id = DeeTime_GetAttributeID(
+       tag_begin,(Dee_size_t)(tag_end-tag_begin))) == DEE_TIMEATTRID_NONE) {
+       DeeError_SetStringf(&DeeErrorType_ValueError,
+                           "Unknown/Invalid time attribute: %.*q",
+                           (unsigned)(tag_end-tag_begin),tag_begin);
+       goto err;
+      }
+      attribval = DeeTime_GetAttributeValue(self,attribute_id);
+      switch (repr_mode) {
+       case 's':
+       case 'S': {
+        char const *repr_value;
+        if (attribute_id == DEE_TIMEATTRID_MONTH) {
+         DEE_ASSERT(attribval < 12);
+         repr_value = repr_mode == 'S' ? full_month_names[attribval] : abbr_month_names[attribval];
+        } else if (attribute_id == DEE_TIMEATTRID_WDAY) {
+         repr_value = repr_mode == 'S' ? full_wday_names[attribval] : abbr_wday_names[attribval];
+         DEE_ASSERT(attribval < 7);
+        } else {
+         DeeError_SetStringf(&DeeErrorType_ValueError,
+                             "Cannot use attribute %.*q with 's'/'S' in '%%[%#.*q]'",
+                             (unsigned)(tag_end-tag_begin),tag_begin,
+                             (unsigned)(tag_end-mode_begin),mode_begin);
+         goto err;
+        }
+        if (DeeStringWriter_WriteString(&writer,repr_value) != 0) goto err;
+       } break;
+       default: {
+        static char const _suffix_values[] = "st" "nd" "rd" "th";
+        struct DeeStringWriterFormatSpec fmt_spec = DeeStringWriterFormatSpec_INIT_BASIC(10);
+        if (width) {
+         fmt_spec.has_width = 1;
+         fmt_spec.width = (unsigned int)width;
+         if (repr_mode != ' ') fmt_spec.pad_zero = 1;
+        }
+        if (DeeStringWriter_SpecWriteUInt64(&writer,attribval,&fmt_spec) != 0) goto err;
+        if (repr_mode == 'n') {
+         Dee_size_t suffix_offset = (attribval >= 3 ? (Dee_size_t)3 : (Dee_size_t)attribval)*2;
+         if (DeeStringWriter_WriteStringWithLength(
+          &writer,2,_suffix_values+suffix_offset) != 0) goto err;
+        }
+       } break;
+      }
+     } break;
      default:
       if DEE_UNLIKELY(DeeStringWriter_WriteStringWithLength(&writer,2,fmt-2) != 0) goto err;
       break;
     }
     break;
-   default:def:
+   default:/*def:*/
     if DEE_UNLIKELY(DeeStringWriter_WriteChar(&writer,ch) != 0) goto err;
     break;
   }
  }
+done:
  result = DeeStringWriter_Pack(&writer);
 end: DeeStringWriter_Quit(&writer);
  return result;
@@ -235,19 +431,7 @@ err: result = NULL; goto end;
 
 
 
-DEE_STATIC_INLINE(int) is_leap_year(Dee_uint64_t year) {
- if (year%400 == 0) return 1; else
- if (year%100 == 0) return 0; else
- if (year%4 == 0) return 1;
- return 0;
-}
-/*
-DEE_STATIC_INLINE(Dee_uint64_t) count_leap_years(Dee_uint64_t years) {
- return 1+((years/4)-((years/100)-(years/400)));
-}
-*/
-
-#define year_month(y,m) month_lengths[is_leap_year(y)]
+#define year_month(y,m) month_lengths[DeeTime_IsLeapYear(y)]
 static unsigned int const month_lengths[2][12] = {
  {31,28,31,30,31,30,31,31,30,31,30,31},
  {31,29,31,30,31,30,31,31,30,31,30,31}};
@@ -265,7 +449,7 @@ static unsigned int const month_start_yday[2][12] = {
 static Dee_uint64_t _DeeTime_MonthsToMseconds(Dee_uint64_t months) {
  Dee_uint64_t years = months/12;
  Dee_uint64_t days = DeeTime_Years2Days(years);
- days += month_start_yday[is_leap_year(years)][months%12];
+ days += month_start_yday[DeeTime_IsLeapYear(years)][months%12];
  return days*msecs_per_day;
 }
 
@@ -324,10 +508,9 @@ DEE_A_RET_WUNUSED Dee_uint64_t DeeTimeTick_FromData(
  DEE_A_IN unsigned int mday, DEE_A_IN unsigned int hour,
  DEE_A_IN unsigned int minute, DEE_A_IN unsigned int second,
  DEE_A_IN unsigned int msecond) {
- year += month/12,month %= 12;
- return ((DeeTime_Years2Days(year)+
-  month_start_yday[is_leap_year(year)][month]+
-  mday)*msecs_per_day)+
+ unsigned int used_year = year+month/12;
+ return ((DeeTime_Years2Days(used_year)+
+  month_start_yday[DeeTime_IsLeapYear(used_year)][month%12]+mday)*msecs_per_day)+
  ((Dee_uint64_t)hour*DEE_UINT64_C(3600000))+
  ((Dee_uint64_t)minute*DEE_UINT64_C(60000))+
  ((Dee_uint64_t)second*DEE_UINT64_C(1000))+
@@ -469,7 +652,7 @@ DEE_A_RET_WUNUSED unsigned int DeeTime_GetMDay(
  unsigned int yday = DeeTime_GetYDay(self);
  unsigned int month = DeeTime_GetMonth(self);
  unsigned int year = DeeTime_GetYear(self);
- return (unsigned int)(yday-month_start_yday[is_leap_year(year)][month]);
+ return (unsigned int)(yday-month_start_yday[DeeTime_IsLeapYear(year)][month]);
 }
 DEE_A_RET_WUNUSED unsigned int DeeTime_GetYDay(
  DEE_A_IN_OBJECT(DeeTimeObject) const *self) {
@@ -485,7 +668,7 @@ void DeeTime_SetMonth(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..11*
  if ((mmonth = v % 12) < 0) mmonth += 12,v += mmonth; else v -= mmonth;
  year = DeeTime_GetYear(self);
  DeeTime_SetYDay(self,(int)DeeTime_GetMDay(self)+
-                 (int)month_start_yday[is_leap_year(year)][mmonth]);
+                 (int)month_start_yday[DeeTime_IsLeapYear(year)][mmonth]);
  if (v) DeeTime_SetYear(self,year+(v/12));
 }
 DEE_A_RET_WUNUSED unsigned int DeeTime_GetMonth(
@@ -493,7 +676,7 @@ DEE_A_RET_WUNUSED unsigned int DeeTime_GetMonth(
  unsigned int result = 0;
  unsigned int yday = DeeTime_GetYDay(self);
  unsigned int year = DeeTime_GetYear(self);
- unsigned int const *day_total = year_day_total[is_leap_year(year)];
+ unsigned int const *day_total = year_day_total[DeeTime_IsLeapYear(year)];
  // Search for the first month that includes yday
  while (yday >= day_total[result]) ++result;
  return result;
@@ -512,7 +695,6 @@ DEE_A_RET_WUNUSED Dee_uint64_t DeeTime_GetTotalMSeconds(
 }
 
 
-#define msecs   ((DeeTimeObject *)self)->tm_msecs
 /*
 void DeeTime_SetMSecond(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..999* /int v) {
  DEE_ASSERT(DeeObject_Check(self) && DeeTime_Check(self));
@@ -566,6 +748,7 @@ void _DeeTime_SetDateMSeconds(
 */
 
 
+#define msecs   ((DeeTimeObject *)self)->tm_msecs
 void DeeTime_SetDate(
  DEE_A_INOUT_OBJECT(DeeTimeObject) *self,
  DEE_A_IN unsigned int years,
@@ -574,7 +757,7 @@ void DeeTime_SetDate(
  Dee_uint64_t n_days;
  years += months/12,months %= 12;
  n_days = DeeTime_Years2Days(years);
- n_days += month_start_yday[is_leap_year(years)][months];
+ n_days += month_start_yday[DeeTime_IsLeapYear(years)][months];
  n_days += days;
  _DeeTime_SetDateMSeconds(self,n_days*msecs_per_day);
 }
@@ -591,29 +774,32 @@ DEE_STATIC_INLINE(void) _DeeTime_InplaceAddYears(
 }
 
 void DeeTime_InplaceAddMSeconds(
- DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_int64_t mseconds) {
+ DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_int64_t n_mseconds) {
  DEE_ASSERT(DeeObject_Check(self) && DeeTime_Check(self));
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
- ((DeeTimeObject *)self)->tm_msecs += mseconds;
+ ((DeeTimeObject *)self)->tm_msecs += n_mseconds;
 }
 void DeeTime_InplaceAddMonths(
- DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_int64_t months) {
- Dee_int64_t more_years,rem_months;
+ DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_int64_t n_months) {
+ Dee_int64_t more_years,rem_months; unsigned int curr_year;
  DEE_ASSERT(DeeObject_Check(self) && DeeTime_Check(self));
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
- months += DeeTime_GetMonth(self);
+ n_months += DeeTime_GetMonth(self);
  DeeTime_SetMonth(self,0);
- more_years = months / DEE_INT64_C(12);
- rem_months = months % DEE_INT64_C(12);
+ more_years = n_months / DEE_INT64_C(12);
+ rem_months = n_months % DEE_INT64_C(12);
  if (rem_months < 0) --more_years,rem_months += DEE_INT64_C(12);
  _DeeTime_InplaceAddYears((DeeTimeObject *)self,more_years);
- msecs += month_start_yday[is_leap_year(DeeTime_GetYear(self))][rem_months]*msecs_per_day;
+ curr_year = DeeTime_GetYear(self);
+ msecs += month_start_yday[DeeTime_IsLeapYear(curr_year)][rem_months]*msecs_per_day;
 }
+#undef msecs
+
 void DeeTime_InplaceAddYears(
- DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_int64_t years) {
+ DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_int64_t n_years) {
  DEE_ASSERT(DeeObject_Check(self) && DeeTime_Check(self));
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
- _DeeTime_InplaceAddYears((DeeTimeObject *)self,years);
+ _DeeTime_InplaceAddYears((DeeTimeObject *)self,n_years);
 }
 
 DEE_COMPILER_PREFAST_WARNING_PUSH(6387)
@@ -731,11 +917,12 @@ static int DEE_CALL _deetime_tp_any_ctor(
  return 0;
 }
 static DeeObject *DEE_CALL _deetime_tp_str(DeeTimeObject *self) {
- return DeeTime_FORMAT((DeeObject *)self,"%d.%m.%Y %H:%M:%S");
+ return DeeTime_Format((DeeObject *)self,"%d.%m.%Y %H:%M:%S");
 }
 static DeeObject *DEE_CALL _deetime_tp_repr(DeeTimeObject *self) {
  // TODO: Extended format (e.g.: 'Saturday, the 13th of August 2016, 20:51:18')
- return DeeTime_FORMAT((DeeObject *)self,"%d.%m.%Y %H:%M:%S");
+ //return DeeTime_Format((DeeObject *)self,"%d.%m.%Y %H:%M:%S");
+ return DeeTime_Format((DeeObject *)self,"%A, the %[n:mday] of %B %Y, %H:%M:%S");
 }
 static int DEE_CALL _deetime_tp_bool(DeeTimeObject *self) { return DeeTime_GetTotalMSeconds((DeeObject *)self) != 0; }
 static DeeObject *DEE_CALL _deetime_tp_not(DeeTimeObject *self) { DeeReturn_Bool(DeeTime_GetTotalMSeconds((DeeObject *)self) == 0); }
@@ -833,13 +1020,13 @@ static DeeObject *DEE_CALL _deetime_format(DeeObject *self, DeeObject *args, voi
  return result;
 }
 
+static int DEE_CALL _deetime_int32(DeeObject *self, Dee_int32_t *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (Dee_int32_t)resval; return 0; }
+static int DEE_CALL _deetime_int64(DeeObject *self, Dee_int64_t *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (Dee_int64_t)resval; return 0; }
+static int DEE_CALL _deetime_double(DeeObject *self, double *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (double)resval; return 0; }
 static DeeObject *DEE_CALL _deetime_time_t_get(DeeObject *self, void *DEE_UNUSED(closure)) {
  Dee_time_t result;
  return DeeTime_AsTimeT(self,&result) != 0 ? NULL : DeeObject_New(Dee_time_t,result);
 }
-static int DEE_CALL _deetime_int32(DeeObject *self, Dee_int32_t *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (Dee_int32_t)resval; return 0; }
-static int DEE_CALL _deetime_int64(DeeObject *self, Dee_int64_t *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (Dee_int64_t)resval; return 0; }
-static int DEE_CALL _deetime_double(DeeObject *self, double *result) { Dee_time_t resval; if DEE_UNLIKELY(DeeTime_AsTimeT(self,&resval) != 0) return -1; *result = (double)resval; return 0; }
 static int DEE_CALL _deetime_time_t_del(DeeObject *self, void *DEE_UNUSED(closure)) { DeeTime_SetTick(self,0); return 0; }
 static int DEE_CALL _deetime_time_t_set(DeeObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
  Dee_uint64_t ticks; Dee_time_t iv;

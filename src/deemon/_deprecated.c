@@ -268,7 +268,7 @@ DEPRECATED_EXPORT(DeeObject *,DeeTime_NewFromDays,(Dee_uint64_t days)) { return 
 DEPRECATED_EXPORT(DeeObject *,DeeTime_NewFromHours,(Dee_uint64_t hours)) { return DeeTime_New(hours*DEE_UINT64_C(3600000)); }
 DEPRECATED_EXPORT(DeeObject *,DeeTime_NewFromMinutes,(Dee_uint64_t minutes)) { return DeeTime_New(minutes*DEE_UINT64_C(60000)); }
 DEPRECATED_EXPORT(DeeObject *,DeeTime_NewFromSeconds,(Dee_uint64_t seconds)) { return DeeTime_New(seconds*DEE_UINT64_C(1000)); }
-DEPRECATED_EXPORT(DeeObject *,DeeTime_FormatObject,(DeeObject *self, DeeObject const *fmt)) { DEE_ASSERT(DeeObject_Check(fmt) && DeeString_Check(fmt)); return DeeTime_Format(self,DeeString_STR(fmt),DeeString_SIZE(fmt)); }
+DEPRECATED_EXPORT(DeeObject *,DeeTime_FormatObject,(DeeObject *self, DeeObject const *fmt)) { DEE_ASSERT(DeeObject_Check(fmt) && DeeString_Check(fmt)); return DeeTime_Format(self,DeeString_STR(fmt)); }
 DEPRECATED_EXPORT(void,DeeTime_SetTime,(DeeObject *self, unsigned int hours, unsigned int minutes, unsigned int seconds, unsigned int mseconds)) { DeeTime_SetAfterCurrentDayMSeconds(self,((Dee_uint64_t)hours*DEE_UINT64_C(3600000))+((Dee_uint64_t)minutes*DEE_UINT64_C(60000))+((Dee_uint64_t)seconds*DEE_UINT64_C(1000))+((Dee_uint64_t)mseconds)); }
 DEPRECATED_EXPORT(void,DeeTime_SetMSecond,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(1000)+(Dee_int64_t)(v)))); }
 DEPRECATED_EXPORT(void,DeeTime_SetSecond,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(60000))+((Dee_int64_t)(v)*DEE_INT64_C(1000)))); }

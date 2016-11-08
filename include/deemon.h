@@ -196,6 +196,8 @@
 //     - Added a predicate overload to 'list.remove'
 //     - Added more documentation for the members of 'list'
 //     - Added a syntax for addressing operator functions from unary expressions (c++ style)
+//     - Improved the formating syntax used in 'time.format' by quite a lot!
+//       -> s.a.: Documentation comments for 'DeeTime_Format' in '<deemon/time.h>'
 //
 //   Changes:
 //     - On linux, deemon will now look for dex extensions
