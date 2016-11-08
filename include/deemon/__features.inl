@@ -53,153 +53,89 @@
 #define __has_include_next(x) 0
 #endif
 
-#if defined(__DEEMON__)
+#ifdef __DEEMON__
 #include <__cdefault.dee>
 #endif
 
 //////////////////////////////////////////////////////////////////////////
 // Preprocessor helper macros
 #ifndef DEE_PP_CAT_2
-#define DEE_PRIVATE_PP_CAT_2(a,b)       a##b
-#define DEE_PRIVATE_PP_CAT_3(a,b,c)     a##b##c
-#define DEE_PRIVATE_PP_CAT_4(a,b,c,d)   a##b##c##d
-#define DEE_PRIVATE_PP_CAT_5(a,b,c,d,e) a##b##c##d##e
-#define DEE_PP_CAT_2(a,b)       DEE_PRIVATE_PP_CAT_2(a,b)
-#define DEE_PP_CAT_3(a,b,c)     DEE_PRIVATE_PP_CAT_3(a,b,c)
-#define DEE_PP_CAT_4(a,b,c,d)   DEE_PRIVATE_PP_CAT_4(a,b,c,d)
-#define DEE_PP_CAT_5(a,b,c,d,e) DEE_PRIVATE_PP_CAT_5(a,b,c,d,e)
+# define DEE_PRIVATE_PP_CAT_2(a,b)       a##b
+# define DEE_PRIVATE_PP_CAT_3(a,b,c)     a##b##c
+# define DEE_PRIVATE_PP_CAT_4(a,b,c,d)   a##b##c##d
+# define DEE_PRIVATE_PP_CAT_5(a,b,c,d,e) a##b##c##d##e
+# define DEE_PP_CAT_2(a,b)       DEE_PRIVATE_PP_CAT_2(a,b)
+# define DEE_PP_CAT_3(a,b,c)     DEE_PRIVATE_PP_CAT_3(a,b,c)
+# define DEE_PP_CAT_4(a,b,c,d)   DEE_PRIVATE_PP_CAT_4(a,b,c,d)
+# define DEE_PP_CAT_5(a,b,c,d,e) DEE_PRIVATE_PP_CAT_5(a,b,c,d,e)
 #endif
 
 #ifndef DEE_PP_STR
-#define DEE_PRIVATE_PP_STR(x) #x
-#define DEE_PP_STR(x) DEE_PRIVATE_PP_STR(x)
+# define DEE_PRIVATE_PP_STR(x) #x
+# define DEE_PP_STR(x) DEE_PRIVATE_PP_STR(x)
 #endif
 
 #ifndef DEE_PP_MUL8
 #ifdef __TPP_EVAL
-#define DEE_PP_MUL8(x) __TPP_EVAL(x*8)
+# define DEE_PP_MUL8(x) __TPP_EVAL(x*8)
 #else
-#define DEE_PRIVATE_PP_MUL8_1   8
-#define DEE_PRIVATE_PP_MUL8_2   16
-#define DEE_PRIVATE_PP_MUL8_4   32
-#define DEE_PRIVATE_PP_MUL8_8   64
-#define DEE_PRIVATE_PP_MUL8_16  128
-#define DEE_PRIVATE_PP_MUL8_32  256
-#define DEE_PRIVATE_PP_MUL8_64  512
-#define DEE_PRIVATE_PP_MUL8_128 1024
-#define DEE_PRIVATE_PP_MUL8(x) DEE_PRIVATE_PP_MUL8_##x
-#define DEE_PP_MUL8(x) DEE_PRIVATE_PP_MUL8(x)
+# define DEE_PRIVATE_PP_MUL8_1   8
+# define DEE_PRIVATE_PP_MUL8_2   16
+# define DEE_PRIVATE_PP_MUL8_4   32
+# define DEE_PRIVATE_PP_MUL8_8   64
+# define DEE_PRIVATE_PP_MUL8_16  128
+# define DEE_PRIVATE_PP_MUL8_32  256
+# define DEE_PRIVATE_PP_MUL8_64  512
+# define DEE_PRIVATE_PP_MUL8_128 1024
+# define DEE_PRIVATE_PP_MUL8(x) DEE_PRIVATE_PP_MUL8_##x
+# define DEE_PP_MUL8(x) DEE_PRIVATE_PP_MUL8(x)
 #endif
 #endif
 
 
 //////////////////////////////////////////////////////////////////////////
 // Compiler specific features
-#ifndef DEE_COMPILER_HAVE_PRAGMA_PACK
-#if defined(_MSC_VER) || defined(__GNUC__) || \
-    defined(__TINYC__) || defined(__DEEMON__)
-#define DEE_COMPILER_HAVE_PRAGMA_PACK 1
-#else /* #pragma pack(push,x) */
-#define DEE_COMPILER_HAVE_PRAGMA_PACK 0
-#endif
-#endif
-
 #ifndef DEE_COMPILER_HAVE_LONG_LONG
 #if (defined(_MSC_VER) && (defined(_MSC_EXTENSIONS) || _MSC_VER >= 1400)) || \
     (defined(__clang__)) || \
     (defined(__GNUC__) && !defined(__DARWIN_NO_LONG_LONG)) || \
     (defined(__BORLANDC__) && __BORLANDC__ >= 0x561 && !defined(__NO_LONG_LONG)) ||\
     (defined(__DEEMON__))
-#define DEE_COMPILER_HAVE_LONG_LONG 1
+# define DEE_COMPILER_HAVE_LONG_LONG 1
 #else /* "long long" */
-#define DEE_COMPILER_HAVE_LONG_LONG 0
+# define DEE_COMPILER_HAVE_LONG_LONG 0
 #endif
 #endif
 
 #ifndef DEE_COMPILER_HAVE_FLOAT
 #if 1
-#define DEE_COMPILER_HAVE_FLOAT 1
+# define DEE_COMPILER_HAVE_FLOAT 1
 #else /* "float" */
-#define DEE_COMPILER_HAVE_FLOAT 0
+# define DEE_COMPILER_HAVE_FLOAT 0
 #endif
 #endif
 
 #ifndef DEE_COMPILER_HAVE_DOUBLE
 #if 1
-#define DEE_COMPILER_HAVE_DOUBLE 1
+# define DEE_COMPILER_HAVE_DOUBLE 1
 #else /* "double" */
-#define DEE_COMPILER_HAVE_DOUBLE 0
+# define DEE_COMPILER_HAVE_DOUBLE 0
 #endif
 #endif
 
 #ifndef DEE_COMPILER_HAVE_LDOUBLE
 #if !defined(__NO_LONG_DOUBLE_MATH)
-#define DEE_COMPILER_HAVE_LDOUBLE 1
+# define DEE_COMPILER_HAVE_LDOUBLE 1
 #else /* "long double" */
-#define DEE_COMPILER_HAVE_LDOUBLE 0
-#endif
-#endif
-
-
-#ifndef DEE_COMPILER_HAVE_CXX_INLINE
-#if defined(__cplusplus)
-#define DEE_COMPILER_HAVE_CXX_INLINE 1
-#else /* "inline" */
-#define DEE_COMPILER_HAVE_CXX_INLINE 0
-#endif
-#endif
-
-#ifndef DEE_ATTRIBUTE_ALWAYS_INLINE
-#if __has_attribute(always_inline) || \
-   (defined(__GNUC__) && __GNUC__*100+__GNUC_MINOR__ >= 301)
-#define DEE_ATTRIBUTE_ALWAYS_INLINE __attribute__((__always_inline__))
-#else
-#define DEE_ATTRIBUTE_ALWAYS_INLINE /* nothing */
-#endif
-#endif
-
-#if __has_attribute(malloc) || \
-   (defined(__GNUC__) && __GNUC__ >= 3)
-#define DEE_ATTRIBUTE_MALLOC __attribute__((__malloc__))
-#elif __has_declspec_attribute(restrict) || \
-     (defined(_MSC_VER) && _MSC_VER >= 1400)
-#define DEE_ATTRIBUTE_MALLOC __declspec(restrict)
-#else
-#define DEE_ATTRIBUTE_MALLOC /* nothing */
-#endif
-
-#ifndef DEE_COMPILER_HAVE_MSVC_INLINE
-#if defined(_MSC_VER) || defined(__BORLANDC__) || \
-    defined(__DMC__) || defined(__SC__) || \
-    defined(__WATCOMC__) || defined(__LCC__) || \
-    defined(__DECC)
-#define DEE_COMPILER_HAVE_MSVC_INLINE 1
-#else /* "__inline" */
-#define DEE_COMPILER_HAVE_MSVC_INLINE 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_GCC_INLINE
-#if defined(__GNUC__)
-#define DEE_COMPILER_HAVE_GCC_INLINE 1
-#else /* "__inline__" */
-#define DEE_COMPILER_HAVE_GCC_INLINE 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_MSVC_COUNTER
-#if defined(__COUNTER__)
-#define DEE_COMPILER_HAVE_MSVC_COUNTER 1
-#else /* "__COUNTER__" */
-#define DEE_COMPILER_HAVE_MSVC_COUNTER 0
+# define DEE_COMPILER_HAVE_LDOUBLE 0
 #endif
 #endif
 
 #ifndef DEE_COMPILER_HAVE_MSVC_SEH
 #if defined(_MSC_VER)
-#define DEE_COMPILER_HAVE_MSVC_SEH 1
+# define DEE_COMPILER_HAVE_MSVC_SEH 1
 #else /* "__try" */
-#define DEE_COMPILER_HAVE_MSVC_SEH 0
+# define DEE_COMPILER_HAVE_MSVC_SEH 0
 #endif
 #endif
 
@@ -210,117 +146,27 @@
 #endif
 #endif
 
-#ifndef DEE_COMPILER_HAVE_CXX11_STATIC_ASSERT
-#if __has_feature(cxx_static_assert) || \
-   (defined(__IBMCPP_STATIC_ASSERT) && __IBMCPP_STATIC_ASSERT) || (defined(__cplusplus) && (\
-   (defined(_MSC_VER) && _MSC_VER >= 1600) || \
-   (defined(__GNUC__) && __GNUC__*100+__GNUC_MINOR__ >= 403 && \
-    (defined(__GXX_EXPERIMENTAL_CXX0X__) || (__cplusplus >= 201103L))) || \
-   (defined(__BORLANDC__) && defined(DEE_PRIVATE_CODEGEAR_0X_SUPPORT) && __BORLANDC__ >= 0x610)))
-#define DEE_COMPILER_HAVE_CXX11_STATIC_ASSERT 1
-#else /* "static_assert" */
-#define DEE_COMPILER_HAVE_CXX11_STATIC_ASSERT 0
-#endif
-#endif
-
 #ifndef DEE_COMPILER_HAVE_WIDESTRING_PREFIX
-#if defined(_MSC_VER)
-#define DEE_COMPILER_HAVE_WIDESTRING_PREFIX 1
+#if defined(_MSC_VER) || (defined(__DEEMON__) && __DEEMON__ >= 101)
+# define DEE_COMPILER_HAVE_WIDESTRING_PREFIX 1
 #else /* L"..." / L'?' */
-#define DEE_COMPILER_HAVE_WIDESTRING_PREFIX 0
+# define DEE_COMPILER_HAVE_WIDESTRING_PREFIX 0
 #endif
 #endif
 
 #ifndef DEE_COMPILER_HAVE_UTF16STRING_PREFIX
 #if defined(__DEEMON__) && __DEEMON__ >= 101
-#define DEE_COMPILER_HAVE_UTF16STRING_PREFIX 1
+# define DEE_COMPILER_HAVE_UTF16STRING_PREFIX 1
 #else /* u"..." / u'?' */
-#define DEE_COMPILER_HAVE_UTF16STRING_PREFIX 0
+# define DEE_COMPILER_HAVE_UTF16STRING_PREFIX 0
 #endif
 #endif
 
 #ifndef DEE_COMPILER_HAVE_UTF32STRING_PREFIX
 #if defined(__DEEMON__) && __DEEMON__ >= 101
-#define DEE_COMPILER_HAVE_UTF32STRING_PREFIX 1
+# define DEE_COMPILER_HAVE_UTF32STRING_PREFIX 1
 #else /* U"..." / U'?' */
-#define DEE_COMPILER_HAVE_UTF32STRING_PREFIX 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_BUILTIN_EXPECT
-#if __has_builtin(__builtin_expect) || \
-  (!defined(__clang__) && defined(__GNUC__))
-#define DEE_COMPILER_HAVE_BUILTIN_EXPECT 1
-#else /* "__builtin_expect" */
-#define DEE_COMPILER_HAVE_BUILTIN_EXPECT 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_MSVC_FIXED_LENGTH_INT
-#if __has_extension(tpp_msvc_integer_suffix) || \
-   (defined(_MSC_VER) && !defined(__ANDROID__))
-#define DEE_COMPILER_HAVE_MSVC_FIXED_LENGTH_INT 1
-#else
-#define DEE_COMPILER_HAVE_MSVC_FIXED_LENGTH_INT 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_MSVC_ASSUME
-#if defined(_MSC_VER)
-#define DEE_COMPILER_HAVE_MSVC_ASSUME 1
-#else /* "__assume" */
-#define DEE_COMPILER_HAVE_MSVC_ASSUME 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_C_STRUCT_NAMESPACE
-#if !defined(__cplusplus)
-#define DEE_COMPILER_HAVE_C_STRUCT_NAMESPACE 1
-#else
-#define DEE_COMPILER_HAVE_C_STRUCT_NAMESPACE 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_CXX_UNNAMED_ARGUMENTS
-#if defined(__cplusplus) || defined(__DEEMON__)
-# define DEE_COMPILER_HAVE_CXX_UNNAMED_ARGUMENTS 1
-#else
-# define DEE_COMPILER_HAVE_CXX_UNNAMED_ARGUMENTS 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_BUILTIN_UNREACHABLE
-#if __has_builtin(__builtin_unreachable) || \
-   (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)))
-# define DEE_COMPILER_HAVE_BUILTIN_UNREACHABLE 1
-#else
-# define DEE_COMPILER_HAVE_BUILTIN_UNREACHABLE 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_BUILTIN_CHOOSE_EXPR
-#if __has_builtin(__builtin_choose_expr) || defined(__GNUC__)
-# define DEE_COMPILER_HAVE_BUILTIN_CHOOSE_EXPR 1
-#else
-# define DEE_COMPILER_HAVE_BUILTIN_CHOOSE_EXPR 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_BUILTIN_CONSTANT_P
-#if __has_builtin(__builtin_constant_p) || defined(__GNUC__)
-# define DEE_COMPILER_HAVE_BUILTIN_CONSTANT_P 1
-#else
-#define DEE_COMPILER_HAVE_BUILTIN_CONSTANT_P 0
-# endif
-#endif
-
-// Early evaluation of __builtin_constant_p,
-// allowing it to be used in __builtin_choose_expr
-#ifndef DEE_COMPILER_HAVE_BUILTIN_CONSTANT_P_EARLY_EVALUATE
-#if DEE_COMPILER_HAVE_BUILTIN_CONSTANT_P && defined(__DEEMON__)
-# define DEE_COMPILER_HAVE_BUILTIN_CONSTANT_P_EARLY_EVALUATE 1
-#else
-# define DEE_COMPILER_HAVE_BUILTIN_CONSTANT_P_EARLY_EVALUATE 0
+# define DEE_COMPILER_HAVE_UTF32STRING_PREFIX 0
 #endif
 #endif
 
@@ -338,27 +184,39 @@
 #else
 # define DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS 0
 #endif
-#endif
+#endif /* !DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
 
-#ifndef DEE_BUILTIN_LATE_CHOOSE_EXPR
-#if DEE_COMPILER_HAVE_BUILTIN_CONSTANT_P_EARLY_EVALUATE
-# define DEE_BUILTIN_LATE_CHOOSE_EXPR          __builtin_choose_expr
+#ifndef DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
+#if __has_extension(__tpp_msvc_integer_suffix__) || \
+   (defined(_MSC_VER) && !defined(__ANDROID__))
+# define DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX 1
 #else
-# define DEE_BUILTIN_LATE_CHOOSE_EXPR(x,tt,ff) ((x)?(tt):(ff))
+# define DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX 0
 #endif
-#endif
+#endif /* !DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX */
 
-#ifndef DEE_COMPILER_HAVE_CXX11_NOEXCEPT
-#if defined(__cplusplus) && (!defined(_HAS_EXCEPTIONS) || _HAS_EXCEPTIONS) && \
-   (__has_feature(cxx_noexcept) || \
-   (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GNUC__ * 10 + __GNUC_MINOR__ >= 46) || \
-   (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 190023026)))
-# define DEE_COMPILER_HAVE_CXX11_NOEXCEPT 1
+#ifndef DEE_COMPILER_HAVE_UNNAMED_UNION
+#if (defined(__DEEMON__)\
+ || (defined(_MSC_VER) /* && TODO: Version */))\
+ || (defined(__STDC__) && __STDC__ >= 201103L && !defined(__cplusplus))\
+ || (defined(__GNUC__) && (__GNUC__ >= 2 && (__GNUC__ != 2 ||\
+    (__GNUC_MINOR__ >= 95 && (__GNUC_MINOR__ != 95 || defined(__cplusplus))))))\
+ && (!defined(__SUNPRO_C) && !defined(__SUNPRO_CC))
+# define DEE_COMPILER_HAVE_UNNAMED_UNION  1
 #else
-# define DEE_COMPILER_HAVE_CXX11_NOEXCEPT 0
+# define DEE_COMPILER_HAVE_UNNAMED_UNION  0
 #endif
-#endif /* !DEE_COMPILER_HAVE_CXX11_NOEXCEPT */
-
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+#ifndef DEE_COMPILER_HAVE_UNNAMED_STRUCT
+#if (defined(__DEEMON__)\
+ || (defined(_MSC_VER) /* && TODO: Version */))\
+ || (defined(__GNUC__) && (__GNUC__ >= 2 && (__GNUC__ != 2 || (!defined(__cplusplus) && __GNUC_MINOR__ >= 96))))\
+ && (!defined(__SUNPRO_C) && !defined(__SUNPRO_CC))
+# define DEE_COMPILER_HAVE_UNNAMED_STRUCT 1
+#else
+# define DEE_COMPILER_HAVE_UNNAMED_STRUCT 0
+#endif
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_STRUCT */
 
 //////////////////////////////////////////////////////////////////////////
 // debug_new config
@@ -389,12 +247,13 @@
 
 #ifdef __APPLE__
 #if DEE_USE_DEBUG_NEW
-#include <debug_new_disable.inl>
-#endif
-#include "AvailabilityMacros.h"
-#include "TargetConditionals.h"
-#if DEE_USE_DEBUG_NEW
-#include <debug_new_enable.inl>
+# include <debug_new_disable.inl>
+# include "AvailabilityMacros.h"
+# include "TargetConditionals.h"
+#else
+# include "AvailabilityMacros.h"
+# include "TargetConditionals.h"
+# include <debug_new_enable.inl>
 #endif
 #endif /* __APPLE__ */
 
@@ -453,7 +312,8 @@
 #if defined(_WIN32) || defined(WIN32) || \
     defined(_WIN64) || defined(WIN64) || \
     defined(__WINDOWS__) || defined(__MINGW32__) || \
-    defined(__MINGW64__) || defined(__CYGWIN__)
+    defined(__MINGW64__) || defined(__CYGWIN__) ||\
+    defined(__CYGWIN32__)
 #define DEE_PLATFORM_WINDOWS 1
 #endif
 #endif
@@ -883,43 +743,85 @@
 
 
 #ifndef DEE_COMPILER_PRAGMA
-#if defined(_MSC_VER)
-#define DEE_COMPILER_PRAGMA    __pragma
+#ifdef _MSC_VER
+# define DEE_COMPILER_PRAGMA    __pragma
 #else
-#define DEE_COMPILER_PRAGMA(x) _Pragma(#x)
+# define DEE_COMPILER_PRAGMA(x) _Pragma(#x)
 #endif
 #endif /* !DEE_COMPILER_PRAGMA */
 
-#if defined(_MSC_VER) || __has_feature(__tpp_msvc_integer_suffix__)
-# define DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX 1
+#ifndef DEE_COMPILER_PACK_PUSH
+#if defined(_MSC_VER) || defined(__GNUC__) || \
+    defined(__TINYC__) || defined(__DEEMON__)
+# define DEE_COMPILER_PACK_PUSH(packed) DEE_COMPILER_PRAGMA(pack(push,packed))
+# define DEE_COMPILER_PACK_POP          DEE_COMPILER_PRAGMA(pack(pop))
 #else
-# define DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX 0
+# define DEE_COMPILER_PACK_PUSH(packed) /* nothing */
+# define DEE_COMPILER_PACK_POP          /* nothing */
+#endif
+#endif /* !DEE_COMPILER_PACK_PUSH */
+
+#ifndef DEE_COMPILER_MSVC_WARNING_PUSH
+#ifdef _MSC_VER
+# define DEE_COMPILER_MSVC_WARNING_PUSH(w) __pragma(warning(push)) __pragma(warning(disable: w))
+# define DEE_COMPILER_MSVC_WARNING_POP     __pragma(warning(pop))
+#else
+# define DEE_COMPILER_MSVC_WARNING_PUSH(w) /* nothing */
+# define DEE_COMPILER_MSVC_WARNING_POP     /* nothing */
+#endif
+#endif /* !DEE_COMPILER_MSVC_WARNING_PUSH */
+
+#ifndef DEE_COMPILER_PREFAST_WARNING_PUSH
+#ifdef _PREFAST_
+# define DEE_COMPILER_PREFAST_WARNING_PUSH    DEE_COMPILER_MSVC_WARNING_PUSH
+# define DEE_COMPILER_PREFAST_WARNING_POP     DEE_COMPILER_MSVC_WARNING_POP
+#else
+# define DEE_COMPILER_PREFAST_WARNING_PUSH(w) /* nothing */
+# define DEE_COMPILER_PREFAST_WARNING_POP     /* nothing */
+#endif
+#endif /* !DEE_COMPILER_PREFAST_WARNING_PUSH */
+
+#ifndef DEE_ATTRIBUTE_ALWAYS_INLINE
+#if __has_attribute(always_inline) || \
+   (defined(__GNUC__) && __GNUC__*100+__GNUC_MINOR__ >= 301)
+# define DEE_ATTRIBUTE_ALWAYS_INLINE __attribute__((__always_inline__))
+#else
+# define DEE_ATTRIBUTE_ALWAYS_INLINE /* nothing */
+#endif
+#endif
+
+#if __has_attribute(malloc) || \
+   (defined(__GNUC__) && __GNUC__ >= 3)
+# define DEE_ATTRIBUTE_MALLOC __attribute__((__malloc__))
+#elif __has_declspec_attribute(restrict) || \
+     (defined(_MSC_VER) && _MSC_VER >= 1400)
+# define DEE_ATTRIBUTE_MALLOC __declspec(restrict)
+#else
+# define DEE_ATTRIBUTE_MALLOC /* nothing */
 #endif
 
 #ifndef DEE_ATTRIBUTE_DLLIMPORT
 #if defined(DEE_PLATFORM_WINDOWS) || defined(__CYGWIN__)
 #if __has_declspec_attribute(dllimport) || defined(_MSC_VER)
-#define DEE_ATTRIBUTE_DLLIMPORT __declspec(dllimport)
-#define DEE_ATTRIBUTE_DLLEXPORT __declspec(dllexport)
+# define DEE_ATTRIBUTE_DLLIMPORT __declspec(dllimport)
+# define DEE_ATTRIBUTE_DLLEXPORT __declspec(dllexport)
 #elif __has_attribute(dllimport) || defined(__TINYC__) || \
      (defined(__GNUC__) && (__GNUC__*100+__GNUC_MINOR__) >= 205)
-#define DEE_ATTRIBUTE_DLLIMPORT __attribute__((__dllimport__))
-#define DEE_ATTRIBUTE_DLLEXPORT __attribute__((__dllexport__))
+# define DEE_ATTRIBUTE_DLLIMPORT __attribute__((__dllimport__))
+# define DEE_ATTRIBUTE_DLLEXPORT __attribute__((__dllexport__))
 #endif
 #else
 #if __has_attribute(visibility) || \
    (defined(__GNUC__) && __GNUC__ >= 4)
-#define DEE_ATTRIBUTE_DLLIMPORT __attribute__((__visibility__("default")))
-#define DEE_ATTRIBUTE_DLLEXPORT __attribute__((__visibility__("default")))
+# define DEE_ATTRIBUTE_DLLIMPORT __attribute__((__visibility__("default")))
+# define DEE_ATTRIBUTE_DLLEXPORT __attribute__((__visibility__("default")))
 #endif
 #endif
 #ifndef DEE_ATTRIBUTE_DLLIMPORT
-#define DEE_ATTRIBUTE_DLLIMPORT /* nothing */
+# define DEE_ATTRIBUTE_DLLIMPORT /* nothing */
+# define DEE_ATTRIBUTE_DLLEXPORT /* nothing */
 #endif
-#ifndef DEE_ATTRIBUTE_DLLEXPORT
-#define DEE_ATTRIBUTE_DLLEXPORT /* nothing */
-#endif
-#endif
+#endif /* !DEE_ATTRIBUTE_DLLIMPORT */
 
 #ifndef DEE_ATTRIBUTE_NORETURN
 #if __has_declspec_attribute(noreturn) || \
@@ -946,7 +848,7 @@
 #ifndef DEE_ATTRIBUTE_NORETURN
 # define DEE_ATTRIBUTE_NORETURN  /* nothing */
 #endif
-#endif
+#endif /* !DEE_ATTRIBUTE_NORETURN */
 
 #ifndef DEE_ATTRIBUTE_NOINLINE
 #if __has_declspec_attribute(noinline) || \
@@ -962,7 +864,7 @@
 #else
 # define DEE_ATTRIBUTE_NOINLINE /* nothing */
 #endif
-#endif
+#endif /* !DEE_ATTRIBUTE_NOINLINE */
 
 
 #ifndef DEE_ATTRIBUTE_CONST
@@ -975,58 +877,71 @@
 #else
 # define DEE_ATTRIBUTE_CONST  /* nothing */
 #endif
-#endif
+#endif /* !DEE_ATTRIBUTE_CONST */
 
 #ifndef DEE_ATTRIBUTE_NONNULL
 #if __has_attribute(nonnull) || \
    (defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)))
-#define DEE_ATTRIBUTE_NONNULL(ids) __attribute__((__nonnull__ ids))
+# define DEE_ATTRIBUTE_NONNULL(ids) __attribute__((__nonnull__ ids))
 #elif defined(__nonnull)
-#define DEE_ATTRIBUTE_NONNULL      __nonnull
+# define DEE_ATTRIBUTE_NONNULL      __nonnull
 #elif defined(__INTELLISENSE__) || (defined(_MSC_VER) && 1)
 // enforce usage of double parenthesis
-#define DEE_PRIVATE_ATTRIBUTE_NONNULL(...) /* nothing */
-#define DEE_ATTRIBUTE_NONNULL(ids) DEE_PRIVATE_ATTRIBUTE_NONNULL ids
+# define DEE_PRIVATE_ATTRIBUTE_NONNULL(...) /* nothing */
+# define DEE_ATTRIBUTE_NONNULL(ids) DEE_PRIVATE_ATTRIBUTE_NONNULL ids
 #else
-#define DEE_ATTRIBUTE_NONNULL(ids) /* nothing */
+# define DEE_ATTRIBUTE_NONNULL(ids) /* nothing */
 #endif
-#endif
+#endif /* !DEE_ATTRIBUTE_NONNULL */
 
 #ifndef DEE_ATTRIBUTE_FALLTHROUGH
 #if __has_cpp_attribute(fallthrough)
-#define DEE_ATTRIBUTE_FALLTHROUGH [[fallthrough]];
+# define DEE_ATTRIBUTE_FALLTHROUGH [[fallthrough]];
 #else
-#define DEE_ATTRIBUTE_FALLTHROUGH /* nothing */
+# define DEE_ATTRIBUTE_FALLTHROUGH /* nothing */
 #endif
-#endif
+#endif /* !DEE_ATTRIBUTE_FALLTHROUGH */
 
 #ifndef DEE_ATTRIBUTE_SENTINAL
 #if __has_attribute(sentinel) || \
    (defined(__GNUC__)  && __GNUC__ >= 4)
-#define DEE_ATTRIBUTE_SENTINAL __attribute__((__sentinel__))
+# define DEE_ATTRIBUTE_SENTINAL __attribute__((__sentinel__))
 #else
-#define DEE_ATTRIBUTE_SENTINAL /* nothing */
+# define DEE_ATTRIBUTE_SENTINAL /* nothing */
 #endif
-#endif
+#endif /* !DEE_ATTRIBUTE_SENTINAL */
 
 #ifndef DEE_ATTRIBUTE_UNUSED
 #if __has_attribute(unused) || \
    (defined(__GNUC__)  && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)))
-#define DEE_ATTRIBUTE_UNUSED __attribute__((__unused__))
+# define DEE_ATTRIBUTE_UNUSED __attribute__((__unused__))
 #else
-#define DEE_ATTRIBUTE_UNUSED /* nothing */
+# define DEE_ATTRIBUTE_UNUSED /* nothing */
 #endif
+#endif /* !DEE_ATTRIBUTE_UNUSED */
+
+#ifndef DEE_ATTRIBUTE_CDECL
+#if !defined(DEE_PLATFORM_UNIX) ||\
+    !defined(DEE_PLATFORM_64_BIT)
+#if defined(_MSC_VER) || defined(__DEEMON__)
+# define DEE_ATTRIBUTE_CDECL __cdecl
+#elif defined(__GNUC__) || __has_attribute(__cdecl__)
+# define DEE_ATTRIBUTE_CDECL __attribute__((__cdecl__))
+#elif 0
+# define DEE_ATTRIBUTE_CDECL _Pragma("cdecl")
 #endif
+#endif /* ... */
+#endif /* !DEE_ATTRIBUTE_CDECL */
 
 // Indicates that a reference should be added to the returned deemon object
 // Requires that the return type be of pointer-to struct with uuid == 'DEE_UUID_DeeObject'
 #ifndef DEE_ATTRIBUTE_ADD_RESULT_REFERENCE
 #if defined(__DEEMON__) && __has_attribute(add_result_reference)
-#define DEE_ATTRIBUTE_ADD_RESULT_REFERENCE  __attribute__((__add_result_reference__))
+# define DEE_ATTRIBUTE_ADD_RESULT_REFERENCE  __attribute__((__add_result_reference__))
 #else
-#define DEE_ATTRIBUTE_ADD_RESULT_REFERENCE  /* nothing */
+# define DEE_ATTRIBUTE_ADD_RESULT_REFERENCE  /* nothing */
 #endif
-#endif
+#endif /* !DEE_ATTRIBUTE_ADD_RESULT_REFERENCE */
 
 #ifndef DEE_ATTRIBUTE_DEPRECATED
 #if __has_declspec_attribute(deprecated) || \
@@ -1046,21 +961,23 @@
 #else
 #define DEE_ATTRIBUTE_DEPRECATED(reason) /* nothing */
 #endif
-#endif
+#endif /* !DEE_ATTRIBUTE_DEPRECATED */
 
 
 #ifndef DEE_CXX11_NOEXCEPT
-#if defined(__cplusplus) && (!defined(_HAS_EXCEPTIONS) || _HAS_EXCEPTIONS)
-#if DEE_COMPILER_HAVE_CXX11_NOEXCEPT
+#if defined(__cplusplus) && (!defined(_HAS_EXCEPTIONS) || _HAS_EXCEPTIONS) && \
+   (__has_feature(cxx_noexcept) || \
+   (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GNUC__ * 10 + __GNUC_MINOR__ >= 46) || \
+   (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 190023026)))
 # define DEE_CXX11_NOEXCEPT noexcept
-#else
+#elif defined(__cplusplus) && (!defined(_HAS_EXCEPTIONS) || _HAS_EXCEPTIONS)
 # define DEE_CXX11_NOEXCEPT throw()
-#endif
 #else
 # define DEE_CXX11_NOEXCEPT /* nothing */
 #endif
 #endif /* !DEE_CXX11_NOEXCEPT */
 
+#ifndef DEE_STATIC_CONST
 #if __has_feature(cxx_constexpr) || \
    (defined(__cpp_constexpr) && __cpp_constexpr >= 200704) || (defined(__cplusplus) && \
    (defined(__IBMCPP__) && defined(__IBMCPP_CONSTEXPR) && __IBMCPP_CONSTEXPR) || \
@@ -1077,7 +994,9 @@
 #else
 # define DEE_STATIC_CONST(T,decl) enum{decl}
 #endif
+#endif
 
+#ifndef DEE_CXX_DELETE_CLASSDEFAULT
 #if __has_feature(deleted_functions) || (defined(__cplusplus) &&\
    (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 180020827))
 #define DEE_CXX_DELETE_CLASSDEFAULT(T)\
@@ -1092,6 +1011,83 @@ private:\
  T &operator = (T const&);\
 public:
 #endif
+#endif
+
+#ifndef DEE_BUILTIN_BREAKPOINT
+#if __has_builtin(__builtin_breakpoint)
+# define DEE_BUILTIN_BREAKPOINT __builtin_breakpoint
+#elif defined(DEBUG_NEW_BREAKPOINT)
+# define DEE_BUILTIN_BREAKPOINT DEBUG_NEW_BREAKPOINT
+#elif defined(_MSC_VER)
+# define DEE_BUILTIN_BREAKPOINT __debugbreak
+#ifdef __cplusplus
+extern "C" { void __cdecl __debugbreak(void); }
+#else
+void __cdecl __debugbreak(void);
+#endif
+#else
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_SIGNAL_H
+# include <signal.h>
+#endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_SIGNAL_H */
+#ifdef SIGTRAP
+#  define DEE_BUILTIN_BREAKPOINT() raise(SIGTRAP)
+#endif
+#endif
+#endif /* !DEE_BUILTIN_BREAKPOINT */
+
+
+#ifndef DEE_COMPILER_ASSUME
+#ifdef _MSC_VER
+# define DEE_COMPILER_ASSUME       __assume
+#elif __has_builtin(__builtin_assume)
+# define DEE_COMPILER_ASSUME       __builtin_assume
+#else
+# define DEE_COMPILER_ASSUME(expr) (void)0
+#endif
+#endif
+
+#ifndef DEE_BUILTIN_UNREACHABLE_
+#if __has_builtin(__builtin_unreachable) || \
+   (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)))
+# define DEE_BUILTIN_UNREACHABLE_   __builtin_unreachable
+#elif defined(_MSC_VER)
+# define DEE_BUILTIN_UNREACHABLE_() __assume(0)
+#else
+# define DEE_BUILTIN_UNREACHABLE_() (void)0
+#endif
+#endif
+
+#ifndef DEE_LIKELY
+#if __has_builtin(__builtin_expect) || \
+  (!defined(__clang__) && defined(__GNUC__))
+#if defined(__cplusplus) || defined(__DEEMON__)
+# define DEE_LIKELY(x)   (__builtin_expect(!!(x),true))
+# define DEE_UNLIKELY(x) (__builtin_expect(!!(x),false))
+#else
+# define DEE_LIKELY(x)   (__builtin_expect(!!(x),1))
+# define DEE_UNLIKELY(x) (__builtin_expect(!!(x),0))
+#endif
+#elif defined(__INTELLISENSE__) && defined(__cplusplus)
+class __intellisense__BOOL_ONLY { public: operator bool (); };
+static __intellisense__BOOL_ONLY __intellisense__DEE_LIKELY(bool x);
+static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
+#define DEE_LIKELY(x)   (__intellisense__DEE_LIKELY(x))
+#define DEE_UNLIKELY(x) (__intellisense__DEE_UNLIKELY(x))
+#else
+#define DEE_LIKELY      /* nothing */
+#define DEE_UNLIKELY    /* nothing */
+#endif
+#endif
+
+#ifndef Dee_OFFSETOF
+#if defined(__GNUC__) || __has_builtin(__builtin_offsetof)
+# define Dee_OFFSETOF       __builtin_offsetof
+#elif defined(offsetof)
+# define Dee_OFFSETOF       offsetof
+#else /* ... */
+# define Dee_OFFSETOF(s,m) (DEE_TYPES_UINT(DEE_TYPES_SIZEOF_SIZE_T))(&((s*)0)->m)
+#endif /* ... */
+#endif /* !Dee_OFFSETOF */
 
 
 
@@ -1300,52 +1296,68 @@ public:
 #else
 #define DEE_TYPES_SIZEOF_INT_LEAST32_T 4
 #endif
+#ifndef DEE_TYPES_SIZEOF_INT_LEAST64_T
 #if defined(__SIZEOF_INT_LEAST64__)
-#define DEE_TYPES_SIZEOF_INT_LEAST64_T __SIZEOF_INT_LEAST64__
+# define DEE_TYPES_SIZEOF_INT_LEAST64_T __SIZEOF_INT_LEAST64__
 #else
-#define DEE_TYPES_SIZEOF_INT_LEAST64_T 8
+# define DEE_TYPES_SIZEOF_INT_LEAST64_T 8
 #endif
+#endif /* !DEE_TYPES_SIZEOF_INT_LEAST64_T */
+#ifndef DEE_TYPES_SIZEOF_PTRDIFF_T
 #define DEE_TYPES_SIZEOF_PTRDIFF_T    DEE_TYPES_SIZEOF_POINTER
+#endif
+#ifndef DEE_TYPES_SIZEOF_SIZE_T
 #define DEE_TYPES_SIZEOF_SIZE_T       DEE_TYPES_SIZEOF_POINTER
+#endif
+#ifndef DEE_TYPES_SIZEOF_INTPTR_T
 #define DEE_TYPES_SIZEOF_INTPTR_T     DEE_TYPES_SIZEOF_POINTER
+#endif
+#ifndef DEE_TYPES_SIZEOF_SSIZE_T
 #define DEE_TYPES_SIZEOF_SSIZE_T      DEE_TYPES_SIZEOF_POINTER
+#endif
+#ifndef DEE_TYPES_SIZEOF_WCHAR_T
 #if defined(__SIZEOF_WCHAR__)
-#define DEE_TYPES_SIZEOF_WCHAR_T   __SIZEOF_WCHAR__
+# define DEE_TYPES_SIZEOF_WCHAR_T   __SIZEOF_WCHAR__
 #elif defined(DEE_PLATFORM_WINDOWS)
-#define DEE_TYPES_SIZEOF_WCHAR_T   2
+# define DEE_TYPES_SIZEOF_WCHAR_T   2
 #else
-#define DEE_TYPES_SIZEOF_WCHAR_T   4
+# define DEE_TYPES_SIZEOF_WCHAR_T   4
 #endif
+#endif /* !DEE_TYPES_SIZEOF_WCHAR_T */
+#ifndef DEE_TYPES_SIZEOF_CHAR16_T
 #if defined(__SIZEOF_CHAR16__)
-#define DEE_TYPES_SIZEOF_CHAR16_T  __SIZEOF_CHAR16__
+# define DEE_TYPES_SIZEOF_CHAR16_T  __SIZEOF_CHAR16__
 #else
-#define DEE_TYPES_SIZEOF_CHAR16_T  2
+# define DEE_TYPES_SIZEOF_CHAR16_T  2
 #endif
+#endif /* !DEE_TYPES_SIZEOF_CHAR16_T */
+#ifndef DEE_TYPES_SIZEOF_CHAR32_T
 #if defined(__SIZEOF_CHAR32__)
-#define DEE_TYPES_SIZEOF_CHAR32_T  __SIZEOF_CHAR32__
+# define DEE_TYPES_SIZEOF_CHAR32_T  __SIZEOF_CHAR32__
 #else
-#define DEE_TYPES_SIZEOF_CHAR32_T  4
+# define DEE_TYPES_SIZEOF_CHAR32_T  4
 #endif
+#endif /* !DEE_TYPES_SIZEOF_CHAR32_T */
 #define DEE_TYPES_CHAR16_T_SIGNED  0
 #define DEE_TYPES_CHAR32_T_SIGNED  0
 
 #ifndef DEE_TYPES_SIZEOF_TIME_T
 #if defined(__SIZEOF_TIME_T__)
-#define DEE_TYPES_SIZEOF_TIME_T    __SIZEOF_TIME_T__
+# define DEE_TYPES_SIZEOF_TIME_T    __SIZEOF_TIME_T__
 #elif defined(_USE_32BIT_TIME_T)
-#define DEE_TYPES_SIZEOF_TIME_T    4
+# define DEE_TYPES_SIZEOF_TIME_T    4
 #elif defined(_MSC_VER) && _MSC_VER < 1400
-#define DEE_TYPES_SIZEOF_TIME_T    4
+# define DEE_TYPES_SIZEOF_TIME_T    4
 #else
-#define DEE_TYPES_SIZEOF_TIME_T    8
+# define DEE_TYPES_SIZEOF_TIME_T    8
 #endif
 #endif
 
 #ifndef DEE_TYPES_TIME_T_SIGNED
 #if defined(_MSC_VER)
-#define DEE_TYPES_TIME_T_SIGNED    1
+# define DEE_TYPES_TIME_T_SIGNED    1
 #else
-#define DEE_TYPES_TIME_T_SIGNED    0
+# define DEE_TYPES_TIME_T_SIGNED    0
 #endif
 #endif
 
@@ -1359,108 +1371,108 @@ public:
 #ifdef DEE_PLATFORM_UNIX
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_FEATURES_H
 #if DEE_USE_DEBUG_NEW || defined(GUARD_DEBUG_NEW_H)
-#include <debug_new_disable.inl>
-#endif
-#include <features.h>
-#if DEE_USE_DEBUG_NEW || defined(GUARD_DEBUG_NEW_H)
-#include <debug_new_enable.inl>
-#endif
-#endif
-#define DEE_TYPES_SIZEOF_UID_T      4
-#define DEE_TYPES_SIZEOF_GID_T      4
-#define DEE_TYPES_SIZEOF_MODE_T     4
-#define DEE_TYPES_SIZEOF_PID_T      4
-#define DEE_TYPES_SIZEOF_SOCKLEN_T  4
-#define DEE_TYPES_SIZEOF_USECONDS_T 4
-#ifdef __USE_FILE_OFFSET64
-#define DEE_TYPES_SIZEOF_OFF_T      8
+# include <debug_new_disable.inl>
+# include <features.h>
+# include <debug_new_enable.inl>
 #else
-#define DEE_TYPES_SIZEOF_OFF_T      4
+# include <features.h>
 #endif
-#define DEE_TYPES_SIZEOF_OFF64_T    8
+#endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_FEATURES_H */
+# define DEE_TYPES_SIZEOF_UID_T      4
+# define DEE_TYPES_SIZEOF_GID_T      4
+# define DEE_TYPES_SIZEOF_MODE_T     4
+# define DEE_TYPES_SIZEOF_PID_T      4
+# define DEE_TYPES_SIZEOF_SOCKLEN_T  4
+# define DEE_TYPES_SIZEOF_USECONDS_T 4
+#ifdef __USE_FILE_OFFSET64
+# define DEE_TYPES_SIZEOF_OFF_T      8
+#else
+# define DEE_TYPES_SIZEOF_OFF_T      4
+#endif
+# define DEE_TYPES_SIZEOF_OFF64_T    8
 #endif
 
 #ifdef DEE_PLATFORM_WINDOWS
-#define DEE_TYPES_SIZEOF_DEE_PROCESS_ID     4
-#define DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN 4
-#define DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE DEE_TYPES_SIZEOF_POINTER
+# define DEE_TYPES_SIZEOF_DEE_PROCESS_ID     4
+# define DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN 4
+# define DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE DEE_TYPES_SIZEOF_POINTER
 #elif defined(DEE_PLATFORM_UNIX)
-#define DEE_TYPES_SIZEOF_DEE_PROCESS_ID     DEE_TYPES_SIZEOF_PID_T
-#define DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN 4
-#define DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE DEE_TYPES_SIZEOF_PID_T
+# define DEE_TYPES_SIZEOF_DEE_PROCESS_ID     DEE_TYPES_SIZEOF_PID_T
+# define DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN 4
+# define DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE DEE_TYPES_SIZEOF_PID_T
 #endif
 
 #if DEE_TYPES_SIZEOF_CHAR == 1
-#define DEE_PRIVATE_TYPES_INT_1  signed char
-#define DEE_PRIVATE_TYPES_UINT_1 unsigned char
+# define DEE_PRIVATE_TYPES_INT_1  signed char
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned char
 #elif DEE_TYPES_SIZEOF_SHORT == 1
-#define DEE_PRIVATE_TYPES_INT_1  short
-#define DEE_PRIVATE_TYPES_UINT_1 unsigned short
+# define DEE_PRIVATE_TYPES_INT_1  short
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned short
 #elif DEE_TYPES_SIZEOF_INT == 1
-#define DEE_PRIVATE_TYPES_INT_1  int
-#define DEE_PRIVATE_TYPES_UINT_1 unsigned int
+# define DEE_PRIVATE_TYPES_INT_1  int
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned int
 #elif DEE_TYPES_SIZEOF_LONG == 1
-#define DEE_PRIVATE_TYPES_INT_1  long
-#define DEE_PRIVATE_TYPES_UINT_1 unsigned long
+# define DEE_PRIVATE_TYPES_INT_1  long
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned long
 #elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 1
-#define DEE_PRIVATE_TYPES_INT_1  long long
-#define DEE_PRIVATE_TYPES_UINT_1 unsigned long long
+# define DEE_PRIVATE_TYPES_INT_1  long long
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned long long
 #else
-#error No type suitable for Dee_int8_t / Dee_uint8_t found
+# error No type suitable for int8_t / uint8_t found
 #endif
 #if DEE_TYPES_SIZEOF_CHAR == 2
-#define DEE_PRIVATE_TYPES_INT_2  signed char
-#define DEE_PRIVATE_TYPES_UINT_2 unsigned char
+# define DEE_PRIVATE_TYPES_INT_2  signed char
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned char
 #elif DEE_TYPES_SIZEOF_SHORT == 2
-#define DEE_PRIVATE_TYPES_INT_2  short
-#define DEE_PRIVATE_TYPES_UINT_2 unsigned short
+# define DEE_PRIVATE_TYPES_INT_2  short
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned short
 #elif DEE_TYPES_SIZEOF_INT == 2
-#define DEE_PRIVATE_TYPES_INT_2  int
-#define DEE_PRIVATE_TYPES_UINT_2 unsigned int
+# define DEE_PRIVATE_TYPES_INT_2  int
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned int
 #elif DEE_TYPES_SIZEOF_LONG == 2
-#define DEE_PRIVATE_TYPES_INT_2  long
-#define DEE_PRIVATE_TYPES_UINT_2 unsigned long
+# define DEE_PRIVATE_TYPES_INT_2  long
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned long
 #elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 2
-#define DEE_PRIVATE_TYPES_INT_2  long long
-#define DEE_PRIVATE_TYPES_UINT_2 unsigned long long
+# define DEE_PRIVATE_TYPES_INT_2  long long
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned long long
 #else
-#error No type suitable for Dee_int16_t / Dee_uint16_t found
+# error No type suitable for int16_t / uint16_t found
 #endif
 #if DEE_TYPES_SIZEOF_CHAR == 4
-#define DEE_PRIVATE_TYPES_INT_4  signed char
-#define DEE_PRIVATE_TYPES_UINT_4 unsigned char
+# define DEE_PRIVATE_TYPES_INT_4  signed char
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned char
 #elif DEE_TYPES_SIZEOF_SHORT == 4
-#define DEE_PRIVATE_TYPES_INT_4  short
-#define DEE_PRIVATE_TYPES_UINT_4 unsigned short
+# define DEE_PRIVATE_TYPES_INT_4  short
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned short
 #elif DEE_TYPES_SIZEOF_INT == 4
-#define DEE_PRIVATE_TYPES_INT_4  int
-#define DEE_PRIVATE_TYPES_UINT_4 unsigned int
+# define DEE_PRIVATE_TYPES_INT_4  int
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned int
 #elif DEE_TYPES_SIZEOF_LONG == 4
-#define DEE_PRIVATE_TYPES_INT_4  long
-#define DEE_PRIVATE_TYPES_UINT_4 unsigned long
+# define DEE_PRIVATE_TYPES_INT_4  long
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned long
 #elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 4
-#define DEE_PRIVATE_TYPES_INT_4  long long
-#define DEE_PRIVATE_TYPES_UINT_4 unsigned long long
+# define DEE_PRIVATE_TYPES_INT_4  long long
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned long long
 #else
-#error No type suitable for Dee_int32_t / Dee_uint32_t found
+# error No type suitable for int32_t / uint32_t found
 #endif
 #if DEE_TYPES_SIZEOF_CHAR == 8
-#define DEE_PRIVATE_TYPES_INT_8  signed char
-#define DEE_PRIVATE_TYPES_UINT_8 unsigned char
+# define DEE_PRIVATE_TYPES_INT_8  signed char
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned char
 #elif DEE_TYPES_SIZEOF_SHORT == 8
-#define DEE_PRIVATE_TYPES_INT_8  short
-#define DEE_PRIVATE_TYPES_UINT_8 unsigned short
+# define DEE_PRIVATE_TYPES_INT_8  short
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned short
 #elif DEE_TYPES_SIZEOF_INT == 8
-#define DEE_PRIVATE_TYPES_INT_8  int
-#define DEE_PRIVATE_TYPES_UINT_8 unsigned int
+# define DEE_PRIVATE_TYPES_INT_8  int
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned int
 #elif DEE_TYPES_SIZEOF_LONG == 8
-#define DEE_PRIVATE_TYPES_INT_8  long
-#define DEE_PRIVATE_TYPES_UINT_8 unsigned long
+# define DEE_PRIVATE_TYPES_INT_8  long
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned long
 #elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
-#define DEE_PRIVATE_TYPES_INT_8  long long
-#define DEE_PRIVATE_TYPES_UINT_8 unsigned long long
+# define DEE_PRIVATE_TYPES_INT_8  long long
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned long long
 #else
-#error No type suitable for Dee_int64_t / Dee_uint64_t found
+# error No type suitable for int64_t / uint64_t found
 #endif
 
 #define DEE_PRIVATE_TYPES_XINT2_0(sizeof) DEE_PRIVATE_TYPES_UINT_##sizeof
@@ -1468,14 +1480,30 @@ public:
 #define DEE_PRIVATE_TYPES_XINT_0(sizeof) DEE_PRIVATE_TYPES_XINT2_0(sizeof)
 #define DEE_PRIVATE_TYPES_XINT_1(sizeof) DEE_PRIVATE_TYPES_XINT2_1(sizeof)
 
+#ifdef DEE_PRIVATE_TYPES_INT_1
 #define DEE_TYPES_INT8_T   DEE_PRIVATE_TYPES_INT_1
+#endif
+#ifdef DEE_PRIVATE_TYPES_INT_2
 #define DEE_TYPES_INT16_T  DEE_PRIVATE_TYPES_INT_2
+#endif
+#ifdef DEE_PRIVATE_TYPES_INT_4
 #define DEE_TYPES_INT32_T  DEE_PRIVATE_TYPES_INT_4
+#endif
+#ifdef DEE_PRIVATE_TYPES_INT_8
 #define DEE_TYPES_INT64_T  DEE_PRIVATE_TYPES_INT_8
+#endif
+#ifdef DEE_PRIVATE_TYPES_UINT_1
 #define DEE_TYPES_UINT8_T  DEE_PRIVATE_TYPES_UINT_1
+#endif
+#ifdef DEE_PRIVATE_TYPES_UINT_2
 #define DEE_TYPES_UINT16_T DEE_PRIVATE_TYPES_UINT_2
+#endif
+#ifdef DEE_PRIVATE_TYPES_UINT_4
 #define DEE_TYPES_UINT32_T DEE_PRIVATE_TYPES_UINT_4
+#endif
+#ifdef DEE_PRIVATE_TYPES_UINT_8
 #define DEE_TYPES_UINT64_T DEE_PRIVATE_TYPES_UINT_8
+#endif
 
 #ifdef DEE_TYPES_SIZEOF_FLOAT
 #define DEE_TYPES_FLOATID_FLOAT   1
@@ -1490,14 +1518,16 @@ public:
 #define DEE_PRIVATE_TYPES_FLOAT_3 long double
 #endif
 
-#define DEE_PRIVATE_TYPES_INT(sizeof)         DEE_PRIVATE_TYPES_INT_##sizeof
-#define DEE_PRIVATE_TYPES_UINT(sizeof)        DEE_PRIVATE_TYPES_UINT_##sizeof
-#define DEE_PRIVATE_TYPES_XINT(signed,sizeof) DEE_PRIVATE_TYPES_XINT_##signed(sizeof)
-#define DEE_PRIVATE_TYPES_FLOAT(id)           DEE_PRIVATE_TYPES_FLOAT_##id
+//////////////////////////////////////////////////////////////////////////
+// Type generators (Return a type matching the given type/sign-ness)
 #define DEE_TYPES_INT(sizeof)         DEE_PRIVATE_TYPES_INT(sizeof)
 #define DEE_TYPES_UINT(sizeof)        DEE_PRIVATE_TYPES_UINT(sizeof)
 #define DEE_TYPES_XINT(signed,sizeof) DEE_PRIVATE_TYPES_XINT(signed,sizeof)
 #define DEE_TYPES_FLOAT(id)           DEE_PRIVATE_TYPES_FLOAT(id)
+#define DEE_PRIVATE_TYPES_INT(sizeof)         DEE_PRIVATE_TYPES_INT_##sizeof
+#define DEE_PRIVATE_TYPES_UINT(sizeof)        DEE_PRIVATE_TYPES_UINT_##sizeof
+#define DEE_PRIVATE_TYPES_XINT(signed,sizeof) DEE_PRIVATE_TYPES_XINT_##signed(sizeof)
+#define DEE_PRIVATE_TYPES_FLOAT(id)           DEE_PRIVATE_TYPES_FLOAT_##id
 
 
 #define DEE_PRIVATES_TYPES_IPRINTF_1  "%I8d"
@@ -1558,20 +1588,21 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 // Printf helpers (NOTE: Only guarantied to work with deemon's own printf-style functions)
-#define DEE_TYPES_IPRINTF(sizeof)         DEE_PRIVATE_TYPES_IPRINTF(sizeof)
-#define DEE_TYPES_IUPRINTF(sizeof)        DEE_PRIVATE_TYPES_IUPRINTF(sizeof)
-#define DEE_TYPES_IXPRINTF(signed,sizeof) DEE_PRIVATE_TYPES_IXPRINTF(signed,sizeof)
+#define DEE_TYPES_IPRINTF(sizeof)                 DEE_PRIVATE_TYPES_IPRINTF(sizeof)
+#define DEE_TYPES_IUPRINTF(sizeof)                DEE_PRIVATE_TYPES_IUPRINTF(sizeof)
+#define DEE_TYPES_IXPRINTF(signed,sizeof)         DEE_PRIVATE_TYPES_IXPRINTF(signed,sizeof)
 #define DEE_PRIVATE_TYPES_IPRINTF(sizeof)         DEE_PRIVATES_TYPES_IPRINTF_##sizeof
 #define DEE_PRIVATE_TYPES_IUPRINTF(sizeof)        DEE_PRIVATES_TYPES_IUPRINTF_##sizeof
 #define DEE_PRIVATE_TYPES_IXPRINTF(signed,sizeof) DEE_PRIVATES_TYPES_IXPRINTF_##signed(sizeof)
 
 
 #ifndef DEE_STATIC_INLINE
-#if DEE_COMPILER_HAVE_CXX_INLINE
+#if defined(__cplusplus)
 # define DEE_STATIC_INLINE(T)  DEE_ATTRIBUTE_UNUSED DEE_ATTRIBUTE_ALWAYS_INLINE inline T
-#elif DEE_COMPILER_HAVE_MSVC_INLINE
+#elif defined(_MSC_VER) || defined(__BORLANDC__) || defined(__DMC__) ||defined(__SC__) || \
+      defined(__WATCOMC__) || defined(__LCC__) || defined(__DECC)
 # define DEE_STATIC_INLINE(T)  DEE_ATTRIBUTE_UNUSED DEE_ATTRIBUTE_ALWAYS_INLINE __inline T
-#elif DEE_COMPILER_HAVE_GCC_INLINE
+#elif defined(__GNUC__)
 # define DEE_STATIC_INLINE(T)  static DEE_ATTRIBUTE_UNUSED DEE_ATTRIBUTE_ALWAYS_INLINE __inline__ T
 #elif defined(__DEEMON__)
 # define DEE_STATIC_INLINE(T)  DEE_ATTRIBUTE_UNUSED T
@@ -1581,9 +1612,16 @@ public:
 #endif /* !DEE_STATIC_INLINE */
 
 #ifndef DEE_STATIC_ASSERT
-#if DEE_COMPILER_HAVE_CXX11_STATIC_ASSERT
+#if __has_feature(cxx_static_assert) || \
+   (defined(__IBMCPP_STATIC_ASSERT) && __IBMCPP_STATIC_ASSERT) || (defined(__cplusplus) && (\
+   (defined(_MSC_VER) && _MSC_VER >= 1600) || \
+   (defined(__GNUC__) && __GNUC__*100+__GNUC_MINOR__ >= 403 && \
+    (defined(__GXX_EXPERIMENTAL_CXX0X__) || (__cplusplus >= 201103L))) || \
+   (defined(__BORLANDC__) && defined(DEE_PRIVATE_CODEGEAR_0X_SUPPORT) && __BORLANDC__ >= 0x610)))
 # define DEE_STATIC_ASSERT(x) static_assert((x),#x)
-#elif DEE_COMPILER_HAVE_MSVC_COUNTER
+#elif defined(__TPP_COUNTER)
+# define DEE_STATIC_ASSERT(x) typedef int DEE_PP_CAT_2(_dee_static_assert_,__TPP_COUNTER(dee_static_assert))[!!(x)?1:0]
+#elif defined(__COUNTER__)
 # define DEE_STATIC_ASSERT(x) typedef int DEE_PP_CAT_2(_dee_static_assert_,__COUNTER__)[!!(x)?1:0]
 #else
 # define DEE_STATIC_ASSERT(x) typedef int DEE_PP_CAT_2(_dee_static_assert_,__LINE__)[!!(x)?1:0]
@@ -1591,33 +1629,26 @@ public:
 #endif /* !DEE_STATIC_ASSERT */
 
 #ifndef DEE_STRUCT_DEF
-#if DEE_COMPILER_HAVE_C_STRUCT_NAMESPACE
-# define DEE_STRUCT_DEF(T) struct T; typedef struct T T
-#else
+#if defined(__cplusplus) || defined(__DEEMON__)
 # define DEE_STRUCT_DEF(T) struct T
+#else
+# define DEE_STRUCT_DEF(T) struct T; typedef struct T T
 #endif
 #endif
 
 #ifndef DEE_UNUSED
-#if DEE_COMPILER_HAVE_CXX_UNNAMED_ARGUMENTS
+#if defined(__cplusplus) || defined(__DEEMON__)
 # define DEE_UNUSED(x) /* nothing */
+#elif __has_attribute(__unused__) || \
+     (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)))
+# define DEE_UNUSED(x) __attribute__((__unused__)) x
 #else
 # define DEE_UNUSED(x) x
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && defined(DEE_LIMITED_DEX)
 # pragma warning(disable: 4100) /* This is just getting too annoying... */
 #endif
 #endif
 #endif /* !DEE_UNUSED */
-
-
-#ifndef DEE_PLATFORM_VA_LIST_IS_ARRAY
-// formerly: DEE_COMPILER_HAVE_VA_LIST_IS_ARRAY
-#if defined(DEE_PLATFORM_UNIX) && defined(DEE_PLATFORM_64_BIT)
-# define DEE_PLATFORM_VA_LIST_IS_ARRAY 1
-#else
-# define DEE_PLATFORM_VA_LIST_IS_ARRAY 0
-#endif
-#endif
 
 
 #ifndef DEE_INT8_C
@@ -1733,10 +1764,10 @@ public:
 #endif
 
 #ifndef Dee_MIN
-# define Dee_MIN(a,b) ((a)<(b)?(a):(b))
+#define Dee_MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 #ifndef Dee_MAX
-# define Dee_MAX(a,b) ((a)<(b)?(b):(a))
+#define Dee_MAX(a,b) ((a)<(b)?(b):(a))
 #endif
 
 #ifndef DEE_BUILTIN_BREAKPOINT
@@ -1751,8 +1782,6 @@ extern "C" { void __cdecl __debugbreak(void); }
 #define DEE_BUILTIN_BREAKPOINT __builtin_breakpoint
 #endif
 #endif /* !DEE_BUILTIN_BREAKPOINT */
-
-
 
 #ifdef DEE_PLATFORM_WINDOWS
 #define DEE_TYPES_SIZEOF_UID_T  DEE_TYPES_SIZEOF_POINTER // sizeof(PSID)
@@ -1789,6 +1818,8 @@ typedef DEE_TYPES_INT(DEE_TYPES_SIZEOF_PID_T)   pid_t;
 #pragma warning(disable: 4710) // Function not inlined (... Who cares?!)
 #pragma warning(disable: 4738) // Storing 32-bit float result in memory, possible loss of performance
 #pragma warning(disable: 4505) // Unreferenced local function has been removed
+#pragma warning(disable: 4619) // Invlaid warning number
+#pragma warning(disable: 4987) // Non-standard extension used
 #ifdef __INTELLISENSE__
 #ifdef __cplusplus
 #undef NULL

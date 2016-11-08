@@ -1243,7 +1243,7 @@ DeeTypeObject DeeSingleListIterator_Type = {
 
 //////////////////////////////////////////////////////////////////////////
 // Module exports
-int DeeDex_Main(DEE_A_INOUT struct DeeDexContext *context) {
+int DeeDex_Main(DEE_A_INOUT DeeDexContext *context) {
  switch (context->dc_kind) {
   case DEE_DEXCONTEXTKIND_INITIALIZE:
    if (DeeMarshal_RegisterType(&DeeSingleList_Type) < 0) return -1;

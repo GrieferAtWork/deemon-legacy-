@@ -181,7 +181,7 @@ static int _intellisense_rt_execute(
 
 #define RT_DEBUG_CHECK_STACK(n) \
  DEE_ASSERTF((Dee_size_t)(stack_end-stack)>=(Dee_size_t)(n),\
-             "%O(%I64d) : +%.4Ix Stack is too small",\
+             "%O(%I32d) : +%.4Ix Stack is too small",\
              _DeeStackFrame_File(&frame),\
              _DeeStackFrame_Line(&frame)+1,\
              (Dee_size_t)((code-1)-frame.f_code->co_code))
@@ -260,7 +260,7 @@ do{if(!_DeeRefCounter_DecFetch(ob->__ob_refcnt)){\
  Dee_uint16_t rt_arg;
 next_op:
 #if 0 /*< For those REALLY hard to find bugs... */
- DEE_LDEBUG("%O(%I64d) : %O : +%.4Ix : HERE\n",
+ DEE_LDEBUG("%O(%I32d) : %O : +%.4Ix : TRACE\n",
             _DeeStackFrame_File(&frame),
             _DeeStackFrame_Line(&frame)+1,
             _DeeStackFrame_Func(&frame),
@@ -1422,7 +1422,7 @@ EXTERN_END;
    RT_CODE_ADDR() += (addroff-sizeof(Dee_uint8_t));
    DEE_ASSERTF(RT_CODE_ADDR() >= frame.f_code->co_code &&
                RT_CODE_ADDR() < frame.f_code->co_code+frame.f_code->co_size,
-               "%s(%I64d) : %k : Code pointer is out-of-bounds after OP_JUMP_DYN_REL:\n"
+               "%s(%I32d) : %k : Code pointer is out-of-bounds after OP_JUMP_DYN_REL:\n"
                "\tbegin: %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n"
                "\tend:   %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n"
                "\taddr:  %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n",
@@ -1444,7 +1444,7 @@ EXTERN_END;
    RT_CODE_ADDR() = frame.f_code->co_code+newaddr;
    DEE_ASSERTF(RT_CODE_ADDR() >= frame.f_code->co_code &&
                RT_CODE_ADDR() < frame.f_code->co_code+frame.f_code->co_size,
-               "%s(%I64d) : %k : Code pointer is out-of-bounds after OP_JUMP_DYN_ABS:\n"
+               "%s(%I32d) : %k : Code pointer is out-of-bounds after OP_JUMP_DYN_ABS:\n"
                "\tbegin: %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n"
                "\tend:   %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n"
                "\taddr:  %#I." DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_POINTER)) "x\n",
@@ -2306,13 +2306,13 @@ EXTERN_END;
 #ifdef OP_TRY_BEGIN
   TARGET(OP_TRY_BEGIN) {
    DEE_ASSERTF(frame.f_exceptv_end < frame.f_exceptv+frame.f_code->co_exceptsize,
-               "%O(%I64u) : +%.4Ix : Can't push more exception handlers (Maximum of %Iu has been reached)",
+               "%O(%I32d) : +%.4Ix : Can't push more exception handlers (Maximum of %Iu has been reached)",
                _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1,
                _DeeStackFrame_Addr(&frame),frame.f_code->co_exceptsize);
 #ifdef DEE_DEBUG
    rt_arg = RT_READ_ARG();
    DEE_ASSERTF(rt_arg < frame.f_code->co_exceptc,
-               "%O(%I64u) : +%.4Ix : Invalid exception handler ID (%I16u exceeds maximum of %Iu)",
+               "%O(%I32d) : +%.4Ix : Invalid exception handler ID (%I16u exceeds maximum of %Iu)",
                _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1,
                _DeeStackFrame_Addr(&frame),rt_arg,frame.f_code->co_exceptc);
    (frame.f_exceptv_end++)->r_handler = frame.f_code->co_exceptv+rt_arg;
@@ -2326,13 +2326,13 @@ EXTERN_END;
 #ifdef OP_TRY_END
   TARGET(OP_TRY_END) {
    DEE_ASSERTF(frame.f_exceptv_end != frame.f_exceptv,
-               "%O(%I64u) : Can't pop exception handler (no handlers have been pushed)",
+               "%O(%I32d) : Can't pop exception handler (no handlers have been pushed)",
                _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1);
    handler = (--frame.f_exceptv_end)->r_handler;
    if (handler->e_kind == DeeExceptionHandleKind_FINALLY) {
     DEE_ASSERTF(_DeeStackFrame_FINALLY_RETURN_ADDRESS_MAX_SIZE(frame) != 
                 _DeeStackFrame_FINALLY_RETURN_ADDRESS_SIZE(frame),
-                "%O(%I64u) : Finally return address buffer is full",
+                "%O(%I32d) : Finally return address buffer is full",
                 _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1);
     // Store the address of the next opcode as
     // the return address to the finally block.
@@ -2349,7 +2349,7 @@ EXTERN_END;
    // End of exception block (finally)
    // Continue executing where the finally ended (code end / OP_TRY_END)
    DEE_ASSERTF(_DeeStackFrame_FINALLY_RETURN_ADDRESS_SIZE(frame),
-               "%O(%I64u) : In OP_FINALLY_END without return address",
+               "%O(%I32d) : In OP_FINALLY_END without return address",
                _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1);
 #if 1
    // - Restore stored exceptions and handle them if they exist
@@ -2495,7 +2495,7 @@ on_unreachable:
    // Now for the hard of manually cleaning everything
    // Step #1: Unlink our frame (so we can start cleaning up)
    DEE_ASSERTF(thread_self->t_frame_last == &frame,
-               "%O(%I64u) : Invalid 't_frame_last' in thread_self",
+               "%O(%I32d) : Invalid 't_frame_last' in thread_self",
                _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1);
    DeeAtomicMutex_Acquire(&thread_self->t_frame_lock);
    thread_self->t_frame_last = frame.f_prev;
@@ -3127,13 +3127,13 @@ EXTERN_END;
 #ifdef OP_TRY_BEGIN
     case OP_TRY_BEGIN:
      DEE_ASSERTF(frame.f_exceptv_end < frame.f_exceptv+frame.f_code->co_exceptsize,
-                 "%O(%I64u) : Can't push more exception handlers (Maximum of %Iu has been reached)",
+                 "%O(%I32d) : Can't push more exception handlers (Maximum of %Iu has been reached)",
                  _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1,
                  frame.f_code->co_exceptsize);
 #ifdef DEE_DEBUG
      rt_arg32 = RT_READ_ARG32();
      DEE_ASSERTF(rt_arg32 < frame.f_code->co_exceptc,
-                 "%O(%I64u) : Invalid exception handler ID (%I32u exceeds maximum of %Iu)",
+                 "%O(%I32d) : Invalid exception handler ID (%I32u exceeds maximum of %Iu)",
                  _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1,
                  rt_arg32,frame.f_code->co_exceptc);
      (frame.f_exceptv_end++)->r_handler = frame.f_code->co_exceptv+rt_arg32;
@@ -4026,10 +4026,9 @@ end_local_clean:
 #ifdef DEE_DEBUG
  if (stack != stack_end) {
   // Make sure the stack got cleaned correctly
-  DEE_LDEBUG("%s(%I64u) : %s : Wrong stack alignment\n",
-             _DeeStackFrame_File(&frame) ? DeeString_STR(_DeeStackFrame_File(&frame)) : "??" "?",
-             _DeeStackFrame_Line(&frame)+1,
-             _DeeStackFrame_Func(&frame) ? DeeString_STR(_DeeStackFrame_Func(&frame)) : "??" "?");
+  DEE_LDEBUG("%O(%I32d) : %O : Wrong stack alignment\n",
+             _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1,
+             _DeeStackFrame_Func(&frame));
   {DeeObject **debug_iter;
    debug_iter = stack;
    while (debug_iter != stack_end)

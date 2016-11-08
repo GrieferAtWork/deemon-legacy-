@@ -726,7 +726,7 @@ static DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeMarshal_TDoWriteObjectWithMap(
                 DeeUUID_GET_INTERNAL(&self_class_marshal->tp_uuid) == DEE_MARSHALID_INSTANCE,
                 "Class object %q must either have a custom uuid, or "
                 "use the internal 'DEE_MARSHALID_INSTANCE' protocol",DeeType_NAME(self));
-    DEE_ASSERTF(self_class_marshal->tp_marshal_ctor,
+    DEE_ASSERTF(self_class_marshal->tp_marshal_ctor_,
                 "Class object %q must implement 'tp_marshal_ctor'",DeeType_NAME(self));
     DEE_ASSERTF(self_class_marshal->tp_marshal_put,
                 "Class object %q must implement 'tp_marshal_put'",DeeType_NAME(self));
@@ -751,7 +751,7 @@ static DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeMarshal_TDoWriteObjectWithMap(
 #endif /* DEE_CONFIG_RUNTIME_HAVE_CLASS_TYPES */
 
    case DEE_MARSHALID_INSTANCE: {
-    DEE_ASSERTF(type_marshal->tp_marshal_ctor,
+    DEE_ASSERTF(type_marshal->tp_marshal_ctor_,
                 "Marshal objects using the 'DEE_MARSHALID_INSTANCE' protocol "
                 "must implement 'tp_marshal_ctor' / 'tp_marshal_new'");
     DEE_ASSERTF(type_marshal->tp_marshal_put,
@@ -1077,11 +1077,11 @@ err_class_name: free(class_name); return NULL;
    DEE_ASSERT(DeeType_GET_SLOT(result,tp_marshal));
    DEE_ASSERT(DeeUUID_CHECK_INTERNAL(&DeeType_GET_SLOT(Dee_TYPE(result),tp_marshal)->tp_uuid));
    DEE_ASSERT(DeeUUID_GET_INTERNAL(&DeeType_GET_SLOT(Dee_TYPE(result),tp_marshal)->tp_uuid) == DEE_MARSHALID_CLASS);
-   DEE_ASSERT(DeeType_GET_SLOT(Dee_TYPE(result),tp_marshal)->tp_marshal_ctor);
+   DEE_ASSERT(DeeType_GET_SLOT(Dee_TYPE(result),tp_marshal)->tp_marshal_ctor_);
    DEE_ASSERT(DeeType_GET_SLOT(Dee_TYPE(result),tp_marshal)->tp_marshal_put);
    (*after_alloc)(result,after_alloc_data);
    // Read the rest of the class declaration (slots and such...)
-   if ((*DeeType_GET_SLOT(Dee_TYPE(result),tp_marshal)->tp_marshal_ctor)(
+   if ((*DeeType_GET_SLOT(Dee_TYPE(result),tp_marshal)->tp_marshal_ctor_)(
     Dee_TYPE(result),(DeeObject *)result,file,file_map) != 0) {
     Dee_CLEAR(result);
    }
@@ -1110,10 +1110,10 @@ err_load_type: Dee_DECREF(loadtype); return NULL;
    }
 #endif
    if ((DeeType_FLAGS(loadtype)&DEE_TYPE_FLAG_VAR_OBJECT)!=0) {
-    DEE_ASSERT(type_marshal->tp_marshal_new);
-    result = (*type_marshal->tp_marshal_new)(loadtype,file,file_map,after_alloc,after_alloc_data);
+    DEE_ASSERT(type_marshal->tp_marshal_new_);
+    result = (*type_marshal->tp_marshal_new_)(loadtype,file,file_map,after_alloc,after_alloc_data);
    } else {
-    DEE_ASSERT(type_marshal->tp_marshal_ctor);
+    DEE_ASSERT(type_marshal->tp_marshal_ctor_);
     // Allocate a new instance
     result = (*DeeType_GET_SLOT(loadtype,tp_alloc))(loadtype);
     if (!result) goto err_load_type;
@@ -1121,7 +1121,7 @@ err_load_type: Dee_DECREF(loadtype); return NULL;
                 "'%#q.tp_alloc' returned an invalid object",DeeType_NAME(loadtype));
     // Register it with the supplied callback
     (*after_alloc)(result,after_alloc_data);
-    if ((*type_marshal->tp_marshal_ctor)(loadtype,result,file,file_map) != 0) {
+    if ((*type_marshal->tp_marshal_ctor_)(loadtype,result,file,file_map) != 0) {
      // Error during loading
      _DeeObject_DELETE(loadtype,result);
      goto err_load_type;
@@ -1212,12 +1212,12 @@ ignore_return_none:
     }
 load_from_type_marshal:
     if ((DeeType_FLAGS(loadtype)&DEE_TYPE_FLAG_VAR_OBJECT)!=0) {
-     DEE_ASSERT(type_marshal->tp_marshal_new);
+     DEE_ASSERT(type_marshal->tp_marshal_new_);
      file_map->mrm_uuid = &block.mhu_uuid;
-     result = (*type_marshal->tp_marshal_new)(loadtype,file,file_map,after_alloc,after_alloc_data);
+     result = (*type_marshal->tp_marshal_new_)(loadtype,file,file_map,after_alloc,after_alloc_data);
      file_map->mrm_uuid = NULL;
     } else {
-     DEE_ASSERT(type_marshal->tp_marshal_ctor);
+     DEE_ASSERT(type_marshal->tp_marshal_ctor_);
      // Allocate a new instance
      result = (*DeeType_GET_SLOT(loadtype,tp_alloc))(loadtype);
      if (!result) { Dee_DECREF(loadtype); return NULL; }
@@ -1226,7 +1226,7 @@ load_from_type_marshal:
      // Register it with the supplied callback
      (*after_alloc)(result,after_alloc_data);
      file_map->mrm_uuid = &block.mhu_uuid;
-     if ((*type_marshal->tp_marshal_ctor)(loadtype,result,file,file_map) != 0) {
+     if ((*type_marshal->tp_marshal_ctor_)(loadtype,result,file,file_map) != 0) {
       // Error during loading
       _DeeObject_DELETE(loadtype,result);
       result = NULL;
@@ -1269,7 +1269,14 @@ union{
  Dee_uint8_t               aaprd_id8;  /*< Reference id that should be used. */
  Dee_uint16_t              aaprd_id16; /*< Reference id that should be used. */
  Dee_uint32_t              aaprd_id32; /*< Reference id that should be used. */
-};
+}
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define aaprd_id8  _aaprd_iddata.aaprd_id8
+#define aaprd_id16 _aaprd_iddata.aaprd_id16
+#define aaprd_id32 _aaprd_iddata.aaprd_id32
+ _aaprd_iddata
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 

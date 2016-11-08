@@ -44,6 +44,9 @@ DEE_A_RET_NOEXCEPT(0) int _DeeObject_TGenericHasAttrString(
  DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
 #endif
  while (1) {
+  struct DeeMemberDef const *members;
+  struct DeeGetSetDef const *getsets;
+  struct DeeMethodDef const *methods;
 #if DEE_XCONFIG_GENERIC_ATTRIBUTE_LOOKUP_CACHE_SIZE
   // Fast pass through attribute cache
   cache = DEE_ATTRIBUTE_CACHE_STRING(tp_self,name);
@@ -58,9 +61,6 @@ DEE_A_RET_NOEXCEPT(0) int _DeeObject_TGenericHasAttrString(
    DEE_ATTRIBUTE_CACHE_RELEASE(cache);
   }
 #endif
-  struct DeeMemberDef const *members;
-  struct DeeGetSetDef const *getsets;
-  struct DeeMethodDef const *methods;
   members = DeeType_GET_SLOT(tp_self,tp_members);
   DEE_ASSERT(members);
   while (members->d_name) {

@@ -51,12 +51,12 @@
 #include DEE_INCLUDE_MEMORY_API()
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
+DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 #include <float.h>
 #ifdef DEE_PLATFORM_WINDOWS
-DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 #include <Windows.h>
-DEE_COMPILER_MSVC_WARNING_POP
 #endif
+DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 
 // */ (nano...)
@@ -630,9 +630,9 @@ static int _DeeLexer_TryAddPathObject(
 static int _DeeLexer_TryAddPathf(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_Z char const *fmt, ...) {
  va_list args; int result; DeeObject *path_ob;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  path_ob = DeeString_VNewf(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  if (!path_ob) return -1;
  result = _DeeLexer_TryAddPathObject(self,path_ob);
  Dee_DECREF(path_ob);

@@ -160,14 +160,14 @@ do{\
  Dee_DECREF((ob)->sr_seq);\
  Dee_XDECREF((ob)->sr_begin);\
  Dee_XDECREF((ob)->sr_end);\
- if ((ob)->ast_kind == DEE_XASTKIND_SEQ_RANGE_SET)\
+ if ((ob)->ast_kind_ == DEE_XASTKIND_SEQ_RANGE_SET)\
   Dee_DECREF((ob)->sr_value);\
 }while(0)
 #define _DeeXAstAttrCAst_Quit(ob)\
 do{\
  Dee_DECREF((ob)->ac_object);\
  Dee_DECREF((ob)->ac_name);\
- if ((ob)->ast_kind == DEE_XASTKIND_ATTR_SET_C)\
+ if ((ob)->ast_kind_ == DEE_XASTKIND_ATTR_SET_C)\
   Dee_DECREF((ob)->ac_value);\
 }while(0)
 #define _DeeXAstModuleAst_Quit(ob)\
@@ -205,7 +205,7 @@ do{\
 }while(0)
 #define _DeeXAstOperatorAst_Quit(ob)\
 do{\
- switch (DEE_XASTKIND_OPCOUNT((ob)->ast_kind)) {\
+ switch (DEE_XASTKIND_OPCOUNT((ob)->ast_kind_)) {\
   case 3: Dee_DECREF((ob)->op_c); DEE_ATTRIBUTE_FALLTHROUGH\
   case 2: Dee_DECREF((ob)->op_b); DEE_ATTRIBUTE_FALLTHROUGH\
   case 1: Dee_DECREF((ob)->op_a);\
@@ -357,14 +357,14 @@ do{\
  Dee_VISIT((ob)->sr_seq);\
  Dee_XVISIT((ob)->sr_begin);\
  Dee_XVISIT((ob)->sr_end);\
- if ((ob)->ast_kind == DEE_XASTKIND_SEQ_RANGE_SET)\
+ if ((ob)->ast_kind_ == DEE_XASTKIND_SEQ_RANGE_SET)\
   Dee_VISIT((ob)->sr_value);\
 }while(0)
 #define _DeeXAstAttrCAst_Visit(ob)\
 do{\
  Dee_VISIT((ob)->ac_object);\
  Dee_VISIT((ob)->ac_name);\
- if ((ob)->ast_kind == DEE_XASTKIND_ATTR_SET_C)\
+ if ((ob)->ast_kind_ == DEE_XASTKIND_ATTR_SET_C)\
   Dee_VISIT((ob)->ac_value);\
 }while(0)
 #define _DeeXAstModuleAst_Visit(ob)\
@@ -400,7 +400,7 @@ do{\
 }while(0)
 #define _DeeXAstOperatorAst_Visit(ob)\
 do{\
- switch (DEE_XASTKIND_OPCOUNT((ob)->ast_kind)) {\
+ switch (DEE_XASTKIND_OPCOUNT((ob)->ast_kind_)) {\
   case 3: Dee_VISIT((ob)->op_c); DEE_ATTRIBUTE_FALLTHROUGH\
   case 2: Dee_VISIT((ob)->op_b); DEE_ATTRIBUTE_FALLTHROUGH\
   case 1: Dee_VISIT((ob)->op_a);\
@@ -615,7 +615,7 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewUnsafe(
  DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
  if DEE_LIKELY((result = DEE_OBJECTPOOL_ALLOC(xast)) != NULL) {
   DeeObject_INIT(result,&DeeXAst_Type);
-  result->ast_common.ast_kind = kind;
+  result->ast_kind = kind;
   Dee_INCREF(result->ast_common.ast_token = tk);
  }
  return result;
@@ -623,30 +623,30 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewUnsafe(
 
 
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewConst(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeObject *ast_const) {
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeObject *constant) {
  DeeXAstObject *result;
- DEE_ASSERT(DeeObject_Check(ast_const));
+ DEE_ASSERT(DeeObject_Check(constant));
  if DEE_LIKELY((result = _DeeXAst_NewUnsafe(DEE_XASTKIND_CONST,tk)) != NULL) {
-  Dee_INCREF(result->ast_const.c_const = ast_const);
+  Dee_INCREF(result->ast_const.c_const = constant);
  }
  return result;
 }
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewVar(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *ast_var,
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *localvar,
  DEE_A_INOUT DeeScopeObject *curr_scope) {
  DeeXAstObject *result; Dee_uint32_t flags;
  DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
- DEE_ASSERT(DeeObject_Check(ast_var) && DeeLocalVar_Check(ast_var));
+ DEE_ASSERT(DeeObject_Check(localvar) && DeeLocalVar_Check(localvar));
  DEE_ASSERT(DeeObject_Check(curr_scope) && DeeScope_Check(curr_scope));
  curr_scope = DeeScope_WEAK_ROOT(curr_scope);
  flags = DEE_XAST_VARAST_FLAG_NONE;
- if (DeeScope_WEAK_ROOT(ast_var->lv_scope) != curr_scope) {
+ if (DeeScope_WEAK_ROOT(localvar->lv_scope) != curr_scope) {
   curr_scope->sc_flags |= DEE_SCOPE_FLAG_FOUND_REFS; // Found a reference
   flags |= DEE_XAST_VARAST_FLAG_REF;
  }
  if DEE_UNLIKELY((result = _DeeXAst_NewUnsafe(DEE_XASTKIND_VAR,tk)) != NULL) {
-  Dee_INCREF(result->ast_var.vs_var = ast_var);
-  DeeLocalVar_ADD_USE(ast_var); 
+  Dee_INCREF(result->ast_var.vs_var = localvar);
+  DeeLocalVar_ADD_USE(localvar); 
   result->ast_var.vs_flags = flags;
  }
  return result;
@@ -654,42 +654,42 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewVar(
 
 #ifdef DEE_DEBUG
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewLocalVar(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *ast_var,
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *localvar,
  DEE_A_INOUT DeeScopeObject *curr_scope)
 #else
 DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewLocalVar(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *ast_var)
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *localvar)
 #endif
 {
  DeeXAstObject *result;
  DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
- DEE_ASSERT(DeeObject_Check(ast_var) && DeeLocalVar_Check(ast_var));
+ DEE_ASSERT(DeeObject_Check(localvar) && DeeLocalVar_Check(localvar));
 #ifdef DEE_DEBUG
  DEE_ASSERT(DeeObject_Check(curr_scope) && DeeScope_Check(curr_scope));
- DEE_ASSERTF(DeeScope_SameWeakScope((DeeObject *)ast_var->lv_scope,(DeeObject *)curr_scope),
+ DEE_ASSERTF(DeeScope_SameWeakScope((DeeObject *)localvar->lv_scope,(DeeObject *)curr_scope),
              "non-local (aka. reference) variable given in 'DeeXAst_NewLocalVar'");
 #endif
  if DEE_UNLIKELY((result = _DeeXAst_NewUnsafe(DEE_XASTKIND_VAR,tk)) != NULL) {
-  Dee_INCREF(result->ast_var.vs_var = ast_var);
-  DeeLocalVar_ADD_USE(ast_var); 
+  Dee_INCREF(result->ast_var.vs_var = localvar);
+  DeeLocalVar_ADD_USE(localvar); 
   result->ast_var.vs_flags = DEE_XAST_VARAST_FLAG_NONE;
  }
  return result;
 }
 
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewReferenceVar(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *ast_var,
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *localvar,
  DEE_A_INOUT DeeScopeObject *curr_scope) {
  DeeXAstObject *result;
  DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
- DEE_ASSERT(DeeObject_Check(ast_var) && DeeLocalVar_Check(ast_var));
+ DEE_ASSERT(DeeObject_Check(localvar) && DeeLocalVar_Check(localvar));
  DEE_ASSERT(DeeObject_Check(curr_scope) && DeeScope_Check(curr_scope));
- DEE_ASSERTF(!DeeScope_SameWeakScope((DeeObject *)ast_var->lv_scope,(DeeObject *)curr_scope),
+ DEE_ASSERTF(!DeeScope_SameWeakScope((DeeObject *)localvar->lv_scope,(DeeObject *)curr_scope),
              "local (aka. non-reference) variable given in 'DeeXAst_NewReferenceVar'");
- (DeeScope_WEAK_ROOT(ast_var->lv_scope))->sc_flags |= DEE_SCOPE_FLAG_FOUND_REFS;
+ (DeeScope_WEAK_ROOT(localvar->lv_scope))->sc_flags |= DEE_SCOPE_FLAG_FOUND_REFS;
  if DEE_UNLIKELY((result = _DeeXAst_NewUnsafe(DEE_XASTKIND_VAR,tk)) != NULL) {
-  Dee_INCREF(result->ast_var.vs_var = ast_var);
-  DeeLocalVar_ADD_USE(ast_var); 
+  Dee_INCREF(result->ast_var.vs_var = localvar);
+  DeeLocalVar_ADD_USE(localvar); 
   result->ast_var.vs_flags = DEE_XAST_VARAST_FLAG_REF;
  }
  return result;
@@ -1085,38 +1085,38 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewIfConstFromIfConstSAst(
 
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewStatement(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLexerObject *lexer,
- DEE_A_IN Dee_uint32_t parser_flags, DEE_A_INOUT struct DeeSAstObject *ast_statement) {
+ DEE_A_IN Dee_uint32_t parser_flags, DEE_A_INOUT struct DeeSAstObject *statement) {
  DeeXAstObject *result;
  DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
  DEE_ASSERT(DeeObject_Check(lexer) && DeeLexer_Check(lexer));
- DEE_ASSERT(DeeObject_Check(ast_statement) && DeeSAst_Check(ast_statement));
+ DEE_ASSERT(DeeObject_Check(statement) && DeeSAst_Check(statement));
  (void)lexer,parser_flags;
- // NOTE: These optimizations assume that 'ast_statement' has already been
+ // NOTE: These optimizations assume that 'statement' has already been
  //       block-optimized (s.a.: 'DeeSAst_NewBlockFromInheritedStatements')
  // Simplify some statements
  if ((parser_flags&DEE_PARSER_FLAG_OPTIMIZE_MERGE_OPERATORS)!=0 &&
-     DeeParserLabelRefList_EMPTY(&ast_statement->ast_common.ast_labels)) {
-  switch (ast_statement->ast_kind) {
+     DeeParserLabelRefList_EMPTY(&statement->ast_common.ast_labels)) {
+  switch (statement->ast_kind) {
 
    case DEE_SASTKIND_EMPTY: // Empty statement --> none constant
     return DeeXAst_NewConst(tk,Dee_None);
 
    case DEE_SASTKIND_IF:
     // Optimize: '({ if (x) { y; } else { z; } })' --> 'x ? y : z'
-    return DeeXAst_NewIfFromIfSAst(tk,ast_statement,lexer,parser_flags);
+    return DeeXAst_NewIfFromIfSAst(tk,statement,lexer,parser_flags);
 
    case DEE_SASTKIND_EXPRESSION:
 /*return_statement_expression:*/
     // Optimize '({ 42; })' --> '42'
-    Dee_INCREF(ast_statement->ast_expression.x_ast);
-    return ast_statement->ast_expression.x_ast;
+    Dee_INCREF(statement->ast_expression.x_ast);
+    return statement->ast_expression.x_ast;
 
    default: break;
   }
  }
 
  if DEE_LIKELY((result = _DeeXAst_NewUnsafe(DEE_XASTKIND_STATEMENT,tk)) != NULL) {
-  Dee_INCREF(result->ast_statement.s_stmt = ast_statement);
+  Dee_INCREF(result->ast_statement.s_stmt = statement);
  }
  return result;
 }
@@ -3374,7 +3374,7 @@ static struct DeeMemberDef const _deexast_tp_members[] = {
  DEE_MEMBERDEF_NAMED_RO_v100("kind",DeeXAstObject,ast_kind,DeeXAstKind),
 #if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
  DEE_MEMBERDEF_NAMED_RO_v100("__ast_kind",DeeXAstObject,ast_kind,DeeXAstKind),
- DEE_MEMBERDEF_NAMED_RO_v100("__ast_common_ast_kind",DeeXAstObject,ast_common.ast_kind,DeeXAstKind),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_common_ast_kind",DeeXAstObject,ast_kind,DeeXAstKind),
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_common_ast_token",DeeXAstObject,ast_common.ast_token,object,"-> token"),
  DEE_MEMBERDEF_NAMED_RO_v100("__ast_const_c_const",DeeXAstObject,ast_const.c_const,object),
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_var_vs_var",DeeXAstObject,ast_var.vs_var,object,"-> local_var"),

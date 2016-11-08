@@ -660,9 +660,9 @@ void DeeError_SetStringf(
  DEE_A_IN DeeTypeObject *type_,
  DEE_A_IN_PRINTF char const *fmt, ...) {
  va_list args;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  DeeError_VSetStringf(type_,fmt,args);
- va_end(args);
+ DEE_VA_END(args);
 }
 
 #if DEE_DEVEL_BUILD
@@ -880,9 +880,9 @@ DEE_A_RET_EXCEPT(-1) int DeeError_TPPCompilerErrorf(
  DEE_A_IN int code, DEE_A_IN struct TPPLexerObject *lexer,
  DEE_A_IN struct TPPTokenObject *token, DEE_A_IN_PRINTF char const *fmt, ...) {
  va_list args; int result;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  result = DeeError_VTPPCompilerErrorf(code,lexer,token,fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_EXCEPT(-1) int DeeError_VTPPCompilerErrorf(
@@ -913,9 +913,9 @@ DEE_A_RET_EXCEPT(-1) int DeeError_CompilerErrorf(
  DEE_A_IN_OBJECT(DeeTokenObject) *token,
  DEE_A_IN_PRINTF char const *fmt, ...) {
  va_list args; int result;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  result = DeeError_VCompilerErrorf(code,lexer,token,fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_EXCEPT(-1) int DeeError_VCompilerErrorf(

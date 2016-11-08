@@ -819,11 +819,11 @@ static DeeObject *_deeyieldfunctioniterator_file_get(
 }
 static DeeObject *_deeyieldfunctioniterator_line_get(
  DeeYieldFunctionIteratorObject *self, void *DEE_UNUSED(closure)) {
- Dee_int64_t result;
+ Dee_int32_t result;
  DeeAtomicMutex_Acquire(&self->yi_frame.f_lock);
  result = _DeeStackFrame_Line(&self->yi_frame);
  DeeAtomicMutex_Release(&self->yi_frame.f_lock);
- return DeeObject_New(Dee_int64_t,result);
+ return DeeObject_New(Dee_int32_t,result);
 }
 static DeeObject *_deeyieldfunctioniterator_func_get(
  DeeYieldFunctionIteratorObject *self, void *DEE_UNUSED(closure)) {
@@ -866,7 +866,7 @@ static struct DeeMethodDef const _deeyieldfunctioniterator_tp_methods[] = {
 };
 static struct DeeGetSetDef const _deeyieldfunctioniterator_tp_getsets[] = {
  DEE_GETSETDEF_v100("file",member(&_deeyieldfunctioniterator_file_get),null,null,"-> string"),
- DEE_GETSETDEF_v100("line",member(&_deeyieldfunctioniterator_line_get),null,null,"-> int64_t"),
+ DEE_GETSETDEF_v100("line",member(&_deeyieldfunctioniterator_line_get),null,null,"-> int32_t"),
  DEE_GETSETDEF_v100("func",member(&_deeyieldfunctioniterator_func_get),null,null,"-> string"),
  DEE_GETSETDEF_END_v100
 };

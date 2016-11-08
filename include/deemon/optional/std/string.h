@@ -23,13 +23,16 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/optional/object_util.h>
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_STRING_H
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
-DEE_COMPILER_MSVC_WARNING_PUSH(4820)
+DEE_COMPILER_MSVC_WARNING_PUSH(4820 4668 4255)
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_STRING_H
 #include <string.h>
+#endif
+#if defined(_MSC_VER) && _MSC_VER <= 1600
+#include <intrin.h> /*< In older versions, memcpy and friends were defined in here. */
+#endif
 DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
-#endif
 
 
 #define DeeMemory_IsOverlapping(a,b,s)\

@@ -488,6 +488,12 @@ DEBUG_NEW_CXX_NAMESPACE_LEAVE_ROOT
 //#if !DEBUG_NEW_COMPILER_HAVE_STRDUP || !DEBUG_NEW_COMPILER_HAVE_STRDUP2
 //#endif /* !DEBUG_NEW_COMPILER_HAVE_STRDUP || !DEBUG_NEW_COMPILER_HAVE_STRDUP2 */
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4820) /* 'xxx' : 'n' bytes sz_pad added after data member 'xxx::yyy' */
+#pragma warning(disable:4668) /* 'xxx' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif' */
+#pragma warning(disable:4255) /* 'xxx' : no function prototype given: converting '()' to '(void)' */
+#endif /* _MSC_VER */
 
 // Fix placement new, when used with SAL
 #if defined(_PREFAST_)
@@ -540,28 +546,12 @@ inline void __CRTDECL operator delete(void *, void *) _THROW0() {}
 #if defined(DEBUG_NEW_PRIVATE_HEADER_NEED_MALLOC_H) && \
             DEBUG_NEW_PRIVATE_HEADER_NEED_MALLOC_H
 #undef DEBUG_NEW_PRIVATE_HEADER_NEED_MALLOC_H
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4820)
-#endif /* _MSC_VER */
 #include <malloc.h>
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif /* _MSC_VER */
 #endif /* DEBUG_NEW_PRIVATE_HEADER_NEED_MALLOC_H */
 #if defined(DEBUG_NEW_PRIVATE_HEADER_NEED_WINDOWS_H) && \
             DEBUG_NEW_PRIVATE_HEADER_NEED_WINDOWS_H
 #undef DEBUG_NEW_PRIVATE_HEADER_NEED_WINDOWS_H
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4820) /* 'xxx' : 'n' bytes sz_pad added after data member 'xxx::yyy' */
-#pragma warning(disable:4668) /* 'xxx' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif' */
-#pragma warning(disable:4255) /* 'xxx' : no function prototype given: converting '()' to '(void)' */
-#endif /* _MSC_VER */
 #include <Windows.h>
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif /* _MSC_VER */
 #endif /* DEBUG_NEW_PRIVATE_HEADER_NEED_WINDOWS_H */
 #if defined(DEBUG_NEW_PRIVATE_HEADER_NEED_PTHREAD_H) && \
             DEBUG_NEW_PRIVATE_HEADER_NEED_PTHREAD_H
@@ -577,6 +567,11 @@ inline void __CRTDECL operator delete(void *, void *) _THROW0() {}
 #if DEBUG_NEW_COMPILER_HAVE_PRAGMA_REGION
 #pragma endregion
 #endif /* DEBUG_NEW_COMPILER_HAVE_PRAGMA_REGION */
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif /* _MSC_VER */
+
 
 #if DEBUG_NEW_COMPILER_HAVE_PRAGMA_REGION
 #pragma region Definition of the used wchar_t type

@@ -34,7 +34,7 @@ do{\
 
 #define _DeeXAstCommonAst_InitCopy(ob,right)\
 do{\
- (ob)->ast_kind = (right)->ast_kind;\
+ (ob)->ast_kind_ = (right)->ast_kind_;\
  Dee_INCREF((ob)->ast_token = (right)->ast_token);\
 }while(0)
 
@@ -88,8 +88,8 @@ do{\
 
 #define _DeeXAstOperatorAst_InitCopy(ob,right,...)\
 do{\
- if (DEE_XASTKIND_ISOPERATOR((right)->ast_kind)) {\
-  switch (DEE_XASTKIND_OPCOUNT((right)->ast_kind)) {\
+ if (DEE_XASTKIND_ISOPERATOR((right)->ast_kind_)) {\
+  switch (DEE_XASTKIND_OPCOUNT((right)->ast_kind_)) {\
    case 3: Dee_INCREF((ob)->op_c = (right)->op_c); DEE_ATTRIBUTE_FALLTHROUGH\
    case 2: Dee_INCREF((ob)->op_b = (right)->op_b); DEE_ATTRIBUTE_FALLTHROUGH\
    case 1: Dee_INCREF((ob)->op_a = (right)->op_a);\
@@ -247,7 +247,7 @@ do{\
  Dee_INCREF((ob)->sr_seq = (right)->sr_seq);\
  Dee_XINCREF((ob)->sr_begin = (right)->sr_begin);\
  Dee_XINCREF((ob)->sr_end = (right)->sr_end);\
- if ((right)->ast_kind == DEE_XASTKIND_SEQ_RANGE_SET)\
+ if ((right)->ast_kind_ == DEE_XASTKIND_SEQ_RANGE_SET)\
   Dee_XINCREF((ob)->sr_value = (right)->sr_value);\
 }while(0)
 
@@ -255,7 +255,7 @@ do{\
 do{\
  Dee_INCREF((ob)->ac_object = (right)->ac_object);\
  Dee_INCREF((ob)->ac_name = (right)->ac_name);\
- if ((right)->ast_kind == DEE_XASTKIND_ATTR_SET_C)\
+ if ((right)->ast_kind_ == DEE_XASTKIND_ATTR_SET_C)\
   Dee_XINCREF((ob)->ac_value = (right)->ac_value);\
 }while(0)
 

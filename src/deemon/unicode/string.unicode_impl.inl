@@ -340,9 +340,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
 DeeString_F(Newf)(DEE_A_IN_PRINTF DEE_CHAR const *fmt, ...) {
  DeeObject *result;
  va_list args;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  result = DeeString_F(VNewf)(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeString_F(VNewf)(
@@ -901,9 +901,9 @@ DEE_A_RET_EXCEPT(-1) int DeeStringWriter_F(Writef)(
  DEE_A_INOUT DEE_STRINGWRITER *self, DEE_A_IN_PRINTF DEE_CHAR const *fmt, ...) {
  int result;
  va_list args;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  result = DeeStringWriter_F(VWritef)(self,fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 
@@ -953,7 +953,7 @@ p_flag: // flags
      break;
     case DEE_CHAR_C('*'):
      spec.has_width = 1;
-     spec.width = (unsigned int)va_arg(args,int);
+     spec.width = (unsigned int)DEE_VA_ARG(args,int);
      ch = *fmt++;
      break;
    }
@@ -976,7 +976,7 @@ p_flag: // flags
       break;
      case DEE_CHAR_C('*'):
       spec.has_precision = 1;
-      spec.precision = (unsigned int)va_arg(args,int);
+      spec.precision = (unsigned int)DEE_VA_ARG(args,int);
       ch = *fmt++;
       break;
      default: --fmt; ch = DEE_CHAR_C('.'); spec.has_precision = 0; break;
@@ -1010,10 +1010,10 @@ p_flag: // flags
      switch (length) {
 #define LABEL_I(sizeof)  DEE_PP_CAT_2(i,DEE_PP_MUL8(sizeof))
 #define LABEL_UI(sizeof) DEE_PP_CAT_2(ui,DEE_PP_MUL8(sizeof))
-      case len_I8:  i8:  if (DeeStringWriter_F(SpecWriteInt8)(self,(Dee_int8_t)va_arg(args,DEE_MININT_T(1)),&spec) == -1) result = -1; break;
-      case len_I16: i16: if (DeeStringWriter_F(SpecWriteInt16)(self,(Dee_int16_t)va_arg(args,DEE_MININT_T(2)),&spec) == -1) result = -1; break;
-      case len_I32: i32: if (DeeStringWriter_F(SpecWriteInt32)(self,(Dee_int32_t)va_arg(args,DEE_MININT_T(4)),&spec) == -1) result = -1; break;
-      case len_I64: i64: if (DeeStringWriter_F(SpecWriteInt64)(self,(Dee_int64_t)va_arg(args,DEE_MININT_T(8)),&spec) == -1) result = -1; break;
+      case len_I8:  i8:  if (DeeStringWriter_F(SpecWriteInt8)(self,(Dee_int8_t)DEE_VA_ARG(args,DEE_MININT_T(1)),&spec) == -1) result = -1; break;
+      case len_I16: i16: if (DeeStringWriter_F(SpecWriteInt16)(self,(Dee_int16_t)DEE_VA_ARG(args,DEE_MININT_T(2)),&spec) == -1) result = -1; break;
+      case len_I32: i32: if (DeeStringWriter_F(SpecWriteInt32)(self,(Dee_int32_t)DEE_VA_ARG(args,DEE_MININT_T(4)),&spec) == -1) result = -1; break;
+      case len_I64: i64: if (DeeStringWriter_F(SpecWriteInt64)(self,(Dee_int64_t)DEE_VA_ARG(args,DEE_MININT_T(8)),&spec) == -1) result = -1; break;
       case len_hh: goto LABEL_I(DEE_TYPES_SIZEOF_CHAR);
       case len_h: goto LABEL_I(DEE_TYPES_SIZEOF_SHORT);
       case len_l: goto LABEL_I(DEE_TYPES_SIZEOF_LONG);
@@ -1033,10 +1033,10 @@ p_flag: // flags
     case DEE_CHAR_C('x'): spec.numsys = 16; goto wu;
     case DEE_CHAR_C('u'): spec.numsys = 10;
 wu:  switch (length) {
-      case len_I8:  ui8:  if (DeeStringWriter_F(SpecWriteUInt8)(self,(Dee_uint8_t)va_arg(args,DEE_MINUINT_T(1)),&spec) == -1) result = -1; break;
-      case len_I16: ui16: if (DeeStringWriter_F(SpecWriteUInt16)(self,(Dee_uint16_t)va_arg(args,DEE_MINUINT_T(2)),&spec) == -1) result = -1; break;
-      case len_I32: ui32: if (DeeStringWriter_F(SpecWriteUInt32)(self,(Dee_uint32_t)va_arg(args,DEE_MINUINT_T(4)),&spec) == -1) result = -1; break;
-      case len_I64: ui64: if (DeeStringWriter_F(SpecWriteUInt64)(self,(Dee_uint64_t)va_arg(args,DEE_MINUINT_T(8)),&spec) == -1) result = -1; break;
+      case len_I8:  ui8:  if (DeeStringWriter_F(SpecWriteUInt8)(self,(Dee_uint8_t)DEE_VA_ARG(args,DEE_MINUINT_T(1)),&spec) == -1) result = -1; break;
+      case len_I16: ui16: if (DeeStringWriter_F(SpecWriteUInt16)(self,(Dee_uint16_t)DEE_VA_ARG(args,DEE_MINUINT_T(2)),&spec) == -1) result = -1; break;
+      case len_I32: ui32: if (DeeStringWriter_F(SpecWriteUInt32)(self,(Dee_uint32_t)DEE_VA_ARG(args,DEE_MINUINT_T(4)),&spec) == -1) result = -1; break;
+      case len_I64: ui64: if (DeeStringWriter_F(SpecWriteUInt64)(self,(Dee_uint64_t)DEE_VA_ARG(args,DEE_MINUINT_T(8)),&spec) == -1) result = -1; break;
       case len_hh: goto LABEL_UI(DEE_TYPES_SIZEOF_CHAR);
       case len_h:  goto LABEL_UI(DEE_TYPES_SIZEOF_SHORT);
       case len_l:  goto LABEL_UI(DEE_TYPES_SIZEOF_LONG);
@@ -1055,17 +1055,17 @@ wu:  switch (length) {
     case DEE_CHAR_C('g'): case DEE_CHAR_C('G'):
     case DEE_CHAR_C('a'): case DEE_CHAR_C('A'):
      if (length == len_L) {
-      if (DeeStringWriter_F(SpecWriteLDouble)(self,va_arg(args,long double),&spec) == -1) result = -1;
+      if (DeeStringWriter_F(SpecWriteLDouble)(self,DEE_VA_ARG(args,long double),&spec) == -1) result = -1;
      } else {
-      if (DeeStringWriter_F(SpecWriteDouble)(self,va_arg(args,double),&spec) == -1) result = -1;
+      if (DeeStringWriter_F(SpecWriteDouble)(self,DEE_VA_ARG(args,double),&spec) == -1) result = -1;
      }
      break;
     case DEE_CHAR_C('c'): switch (length) {
-     case len_l:   if (DeeStringWriter_F(SpecWriteWideChar)(self,(Dee_WideChar)va_arg(args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_WCHAR_T)),&spec) != 0) result = -1; break;
-     case len_I8:  if (DeeStringWriter_F(SpecWriteUtf8Char)(self,(Dee_Utf8Char)va_arg(args,DEE_MINUINT_T(1)),&spec) != 0) result = -1; break;
-     case len_I16: if (DeeStringWriter_F(SpecWriteUtf16Char)(self,(Dee_Utf16Char)va_arg(args,DEE_MINUINT_T(2)),&spec) != 0) result = -1; break;
-     case len_I32: if (DeeStringWriter_F(SpecWriteUtf32Char)(self,(Dee_Utf32Char)va_arg(args,DEE_MINUINT_T(4)),&spec) != 0) result = -1; break;
-     default:      if (DeeStringWriter_F(SpecWriteChar)(self,(char)va_arg(args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_CHAR)),&spec) != 0) result = -1; break;
+     case len_l:   if (DeeStringWriter_F(SpecWriteWideChar)(self,(Dee_WideChar)DEE_VA_ARG(args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_WCHAR_T)),&spec) != 0) result = -1; break;
+     case len_I8:  if (DeeStringWriter_F(SpecWriteUtf8Char)(self,(Dee_Utf8Char)DEE_VA_ARG(args,DEE_MINUINT_T(1)),&spec) != 0) result = -1; break;
+     case len_I16: if (DeeStringWriter_F(SpecWriteUtf16Char)(self,(Dee_Utf16Char)DEE_VA_ARG(args,DEE_MINUINT_T(2)),&spec) != 0) result = -1; break;
+     case len_I32: if (DeeStringWriter_F(SpecWriteUtf32Char)(self,(Dee_Utf32Char)DEE_VA_ARG(args,DEE_MINUINT_T(4)),&spec) != 0) result = -1; break;
+     default:      if (DeeStringWriter_F(SpecWriteChar)(self,(char)DEE_VA_ARG(args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_CHAR)),&spec) != 0) result = -1; break;
     } break;
     case DEE_CHAR_C('s'):
     case DEE_CHAR_C('q'): {
@@ -1076,7 +1076,7 @@ wu:  switch (length) {
       Dee_Utf16Char const *str16;
       Dee_Utf32Char const *str32;
      } str_;
-     str_.str_ = va_arg(args,char const *);
+     str_.str_ = DEE_VA_ARG(args,char const *);
 #define DEE_STRING_NULL_STR  {'(','n','u','l','l',')',0}
      switch (length) {
       case len_l: {
@@ -1121,7 +1121,7 @@ wu:  switch (length) {
     case DEE_CHAR_C('O'):
     case DEE_CHAR_C('k'): case DEE_CHAR_C('r'):
     case DEE_CHAR_C('K'): case DEE_CHAR_C('R'):
-     if ((ob = va_arg(args,DeeObject *)) == NULL) {
+     if ((ob = DEE_VA_ARG(args,DeeObject *)) == NULL) {
       ob = Dee_None;
       if (ch == DEE_CHAR_C('K') || ch == DEE_CHAR_C('R')) Dee_INCREF(Dee_None);
       if (ch != DEE_CHAR_C('O')) result = -1;

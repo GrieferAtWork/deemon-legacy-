@@ -286,37 +286,42 @@ void DeeGC_TrackedRem(DEE_A_GC_TRACKED DEE_A_INOUT DeeObject *ob) {
 
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct dependency_list {
- Dee_size_t               ob_a;
- Dee_size_t               ob_c;
+ Dee_size_t           dl_a;
+ Dee_size_t           dl_c;
 #ifdef DEE_DEBUG
  union{
-  struct _DeeGCHead **ob_vgc;
-  DeeObject         **ob_vob;
- };
+  struct _DeeGCHead **dl_vgc;
+  DeeObject         **dl_vob;
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define dl_vgc _dl_data.dl_vgc
+ _dl_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 #else
- struct _DeeGCHead **ob_vgc;
+ struct _DeeGCHead **dl_vgc;
 #endif
 };
 DEE_COMPILER_MSVC_WARNING_POP
 
-#define dependency_list_init(ob) ((ob)->ob_a=0,(ob)->ob_c=0,(ob)->ob_vgc=NULL)
-#define dependency_list_quit(ob) free((ob)->ob_vgc)
+#define dependency_list_init(ob) ((ob)->dl_a=0,(ob)->dl_c=0,(ob)->dl_vgc=NULL)
+#define dependency_list_quit(ob) free((ob)->dl_vgc)
 #define dependency_list_contains_or_addob(self,ob) \
  dependency_list_contains_or_addgc(self,(struct _DeeGCHead *)(ob))
 static int dependency_list_contains_or_addgc(
  struct dependency_list *self, struct _DeeGCHead *ob) {
  struct _DeeGCHead **iter,**end;
- end = (iter = self->ob_vgc)+self->ob_c;
+ end = (iter = self->dl_vgc)+self->dl_c;
  while (iter != end) if (*iter++ == ob) return 0;
- if (self->ob_c == self->ob_a) {
-  Dee_size_t new_size = self->ob_a ? self->ob_a*2 : 2;
+ if (self->dl_c == self->dl_a) {
+  Dee_size_t new_size = self->dl_a ? self->dl_a*2 : 2;
   iter = (struct _DeeGCHead **)realloc_nz(
-   self->ob_vgc,new_size*sizeof(struct _DeeGCHead *));
+   self->dl_vgc,new_size*sizeof(struct _DeeGCHead *));
   if (!iter) return 1; // This might end badly...
-  self->ob_vgc = iter;
-  self->ob_a = new_size;
+  self->dl_vgc = iter;
+  self->dl_a = new_size;
  }
- self->ob_vgc[self->ob_c++] = ob;
+ self->dl_vgc[self->dl_c++] = ob;
  return 1;
 }
 static void dependency_list_addgc(
@@ -324,23 +329,23 @@ static void dependency_list_addgc(
  struct _DeeGCHead **iter;
 #ifdef DEE_DEBUG
  struct _DeeGCHead **end;
- end = (iter = self->ob_vgc)+self->ob_c;
+ end = (iter = self->dl_vgc)+self->dl_c;
  while (iter != end) { DEE_ASSERT(*iter != ob); ++iter; }
 #endif
- if (self->ob_c == self->ob_a) {
-  Dee_size_t new_size = self->ob_a ? self->ob_a*2 : 2;
+ if (self->dl_c == self->dl_a) {
+  Dee_size_t new_size = self->dl_a ? self->dl_a*2 : 2;
   iter = (struct _DeeGCHead **)realloc_nz(
-   self->ob_vgc,new_size*sizeof(struct _DeeGCHead *));
+   self->dl_vgc,new_size*sizeof(struct _DeeGCHead *));
   if (!iter) return; // This might end badly...
-  self->ob_vgc = iter;
-  self->ob_a = new_size;
+  self->dl_vgc = iter;
+  self->dl_a = new_size;
  }
- self->ob_vgc[self->ob_c++] = ob;
+ self->dl_vgc[self->dl_c++] = ob;
 }
 static int dependency_list_containsgc(
  struct dependency_list *self, struct _DeeGCHead *ob) {
  struct _DeeGCHead **iter,**end;
- end = (iter = self->ob_vgc)+self->ob_c;
+ end = (iter = self->dl_vgc)+self->dl_c;
  while (iter != end) if (*iter++ == ob) return 1;
  return 0;
 }
@@ -553,7 +558,7 @@ static int _deegc_should_delete(
  //    everything that depends on it could be destroyed as well.
  sub_data.visited = &copy_data.visited;
  set_end = (set_iter = copy_data.deps.slots)+dependency_set_size; do {
-  end = (iter = set_iter->ob_vgc)+set_iter->ob_c; while (iter != end) {
+  end = (iter = set_iter->dl_vgc)+set_iter->dl_c; while (iter != end) {
    sub_data.ob = *iter++;
    sub_data.id = _dee_gc_next_visit_id++;
    sub_data.ob->gc_last_seen = sub_data.id;
@@ -566,7 +571,7 @@ static int _deegc_should_delete(
 
  // Check if the entire dependency chain is dead
  set_end = (set_iter = copy_data.deps.slots)+dependency_set_size; do {
-  end = (iter = set_iter->ob_vgc)+set_iter->ob_c;
+  end = (iter = set_iter->dl_vgc)+set_iter->dl_c;
   while (iter != end) if ((*iter++)->gc_refs) { dependency_set_quit(&copy_data.deps); return 0; }
  } while (++set_iter != set_end);
  DEE_ASSERT(head->gc_refs == 0);

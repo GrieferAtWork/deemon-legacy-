@@ -45,21 +45,21 @@ Dee_size_t DeeScope_OptimizeRemoveUnusedNames(
  DEE_ASSERT(DeeObject_Check(self) && DeeScope_Check(self));
  end = (iter = self->sc_namesv)+self->sc_namesc;
  while (iter != end) {
-  DEE_ASSERT(DeeObject_Check(iter->e_const));
-  DEE_ASSERT(!iter->e_depr || DeeObject_Check(iter->e_depr));
-  if (!DeeLocalVar_Check(iter->e_local) ||
-      !iter->e_local->lv_init &&
-      !iter->e_local->lv_uses) {
-   if (DeeLocalVar_Check(iter->e_local)) {
-    --iter->e_local->lv_module_refs;
-    DEE_ASSERTF(iter->e_name == iter->e_local->lv_name,
+  DEE_ASSERT(DeeObject_Check(iter->se_const));
+  DEE_ASSERT(!iter->se_depr || DeeObject_Check(iter->se_depr));
+  if (!DeeLocalVar_Check(iter->se_local) ||
+      !iter->se_local->lv_init &&
+      !iter->se_local->lv_uses) {
+   if (DeeLocalVar_Check(iter->se_local)) {
+    --iter->se_local->lv_module_refs;
+    DEE_ASSERTF(iter->se_name == iter->se_local->lv_name,
                 "Inconsistent names: %u != %u (%r)",
-                iter->e_name,iter->e_local->lv_name,iter->e_local);
+                iter->se_name,iter->se_local->lv_name,iter->se_local);
     DEE_LVERBOSE2("Removing unused local variable %u from scope %p\n",
-                  iter->e_name,self);
+                  iter->se_name,self);
    } else {
     DEE_LVERBOSE2("Removing unused scope entry %u from scope %p: %q:%k\n",
-                  iter->e_name,self,DeeType_NAME(Dee_TYPE(iter->e_const)),iter->e_const);
+                  iter->se_name,self,DeeType_NAME(Dee_TYPE(iter->se_const)),iter->se_const);
    }
    ++result;
    _DeeScopeEntry_Quit(iter);

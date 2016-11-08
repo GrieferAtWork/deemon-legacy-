@@ -38,6 +38,7 @@ DEE_DECL_BEGIN
 //   - gac_lock (if DEE_XCONFIG_GENERIC_ATTRIBUTE_LOOKUP_LOCKEACH is disabled)
 //   - gac_unused
 //   - gac_type (Most significant byte)
+DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeGenericAttributeCache {
 #if DEE_XCONFIG_GENERIC_ATTRIBUTE_LOOKUP_LOCKEACH
  struct DeeAtomicMutex gac_lock;   /*< The lock for this cache entry. */
@@ -59,8 +60,16 @@ struct DeeGenericAttributeCache {
   struct DeeMemberDef const *gac_member;
   struct DeeGetSetDef const *gac_getset;
   struct DeeMethodDef const *gac_method;
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define gac_member  _gac_data.gac_member
+#define gac_getset  _gac_data.gac_getset
+#define gac_method  _gac_data.gac_method
+ _gac_data
+#endif
+ ;
 };
+DEE_COMPILER_MSVC_WARNING_POP
 #define DeeGenericAttributeCache_SET_MEMBER(cache,self,name,member) DeeGenericAttributeCache_SET(cache,self,name,DEE_GENERIC_ATTRIBUTE_CACHE_TYPE_MEMBER,gac_member,member)
 #define DeeGenericAttributeCache_SET_GETSET(cache,self,name,getset) DeeGenericAttributeCache_SET(cache,self,name,DEE_GENERIC_ATTRIBUTE_CACHE_TYPE_GETSET,gac_getset,getset)
 #define DeeGenericAttributeCache_SET_METHOD(cache,self,name,method) DeeGenericAttributeCache_SET(cache,self,name,DEE_GENERIC_ATTRIBUTE_CACHE_TYPE_METHOD,gac_method,method)

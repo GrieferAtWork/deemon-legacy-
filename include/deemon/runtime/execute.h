@@ -77,7 +77,13 @@ struct DeeStackFrame {
 union{
    DEE_A_REF DeeObject             **f_stackv;     /*< [1..1][this..f_stackv_end] Vector of local variables. */
    char                             *f_wbuf;       /*< [1..f_code->ob_wsize] Execution buffer. */
-};
+}
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+   _f_stackv
+#define f_stackv _f_stackv.f_stackv
+#define f_wbuf   _f_stackv.f_wbuf
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+;
 #define _DeeStackFrame_StackSize(ob) (Dee_size_t)((ob)->f_stackv_end-(ob)->f_stackv)
              DeeObject             **f_stackv_end; /*< [?..?][0..1] End of the stack (first invalid stack slot) (unrelyable; only update before 'yield'). */
    DEE_A_REF DeeObject              *f_this;       /*< [0..1][const] Instance this object (Can't be changed once frame has started). */
@@ -166,12 +172,17 @@ extern DEE_A_RET_WUNUSED int _DeeStackFrame_WasExecuted(
 #endif /* DEE_LIMITED_DEX */
 
 #if DEE_CONFIG_RUNTIME_HAVE_EXCEPTIONS
-#ifdef DEE_PRIVATE_DECL_DEE_EXCEPTION_HANDLER_KIND
-DEE_PRIVATE_DECL_DEE_EXCEPTION_HANDLER_KIND
-#undef DEE_PRIVATE_DECL_DEE_EXCEPTION_HANDLER_KIND
-#endif
-
 #ifdef DEE_LIMITED_DEX
+typedef int DeeExceptionHandlerKind; enum{
+ DeeExceptionHandleKind_FLAG_ALL   = 0x01,
+ DeeExceptionHandleKind_FLAG_TYPED = 0x02,
+ DeeExceptionHandleKind_FLAG_VAR   = 0x04,
+ DeeExceptionHandleKind_FINALLY    = 0x00,
+ DeeExceptionHandleKind_ALL        = DeeExceptionHandleKind_FLAG_ALL,
+ DeeExceptionHandleKind_ALL_VAR    = DeeExceptionHandleKind_FLAG_ALL|DeeExceptionHandleKind_FLAG_VAR,
+ DeeExceptionHandleKind_TYPED      = DeeExceptionHandleKind_FLAG_TYPED,
+ DeeExceptionHandleKind_TYPED_VAR  = DeeExceptionHandleKind_FLAG_TYPED|DeeExceptionHandleKind_FLAG_VAR,
+};
 struct DeeExceptionHandlerEntry {
  DeeExceptionHandlerKind  e_kind;    /*< The kind of handler. */
  DEE_A_REF DeeTypeObject *e_type;    /*< [0..1] The typing of objects handled by this (only used by *_TYPED* handlers). */
@@ -373,7 +384,7 @@ DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_size_t) DeeStackFrame_Addr(
  DEE_A_IN struct DeeStackFrame const *self)DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_ATTRIBUTE_ADD_RESULT_REFERENCE DEE_A_RET_OBJECT_NOEXCEPT(DeeStringObject) *)
  DeeStackFrame_File(DEE_A_IN struct DeeStackFrame const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_int64_t) DeeStackFrame_Line(
+DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_int32_t) DeeStackFrame_Line(
  DEE_A_IN struct DeeStackFrame const *self) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_ATTRIBUTE_ADD_RESULT_REFERENCE DEE_A_RET_OBJECT_NOEXCEPT(DeeStringObject) *)
  DeeStackFrame_Func(DEE_A_IN struct DeeStackFrame const *self) DEE_ATTRIBUTE_NONNULL((1));

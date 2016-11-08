@@ -109,9 +109,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_PThisCall(
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallObjArgs(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, ...) {
  DeeObject *result; va_list args;
- va_start(args,self);
+ DEE_VA_START(args,self);
  result = DeeObject_VTCallObjArgs(tp_self,self,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_VTCallObjArgs(
@@ -126,9 +126,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_PCallObjArgs(
  DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self,
  DEE_A_INOUT void *base_addr, ...) {
  DeeObject *result; va_list args;
- va_start(args,base_addr);
+ DEE_VA_START(args,base_addr);
  result = DeeObject_VPCallObjArgs(tp_self,base_addr,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_VPCallObjArgs(
@@ -145,9 +145,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  va_list args; DeeObject *result,*args_ob;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  args_ob = Dee_VBuildTuple(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  if DEE_UNLIKELY(!args_ob) return NULL;
  result = DeeObject_TCall(tp_self,self,args_ob);
  Dee_DECREF(args_ob);
@@ -166,9 +166,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_PCallf(
  DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self,
  DEE_A_INOUT void *base_addr, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  va_list args; DeeObject *result,*args_ob;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  args_ob = Dee_VBuildTuple(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  if DEE_UNLIKELY(!args_ob) return NULL;
  result = DeeObject_PCall(tp_self,base_addr,args_ob);
  Dee_DECREF(args_ob);
@@ -187,9 +187,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TThisCallf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_INOUT DeeObject *this_arg, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  va_list args; DeeObject *result,*args_ob;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  args_ob = Dee_VBuildTuple(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  if DEE_UNLIKELY(!args_ob) return NULL;
  result = DeeObject_TThisCall(tp_self,self,this_arg,args_ob);
  Dee_DECREF(args_ob);

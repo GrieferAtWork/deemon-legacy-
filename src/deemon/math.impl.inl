@@ -310,7 +310,7 @@ DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED float_t N(_Dee_m_scalbn)(DEE_A_IN float_t 
 #if DEE_ENVIRONMENT_HAVE_MATH_SCALBN
  return N(Dee_m_scalbn)(x,n);
 #else
- return x; // TODO
+ return x+n; // TODO
 #endif
 }
 DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED float_t N(_Dee_m_scalbi32n)(DEE_A_IN float_t x, DEE_A_IN Dee_int32_t n) {
@@ -318,7 +318,7 @@ DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED float_t N(_Dee_m_scalbi32n)(DEE_A_IN float
     (DEE_ENVIRONMENT_HAVE_MATH_SCALBLN && (DEE_TYPES_SIZEOF_LONG == 4))
  return N(Dee_m_scalbi32n)(x,n);
 #else
- return x; // TODO
+ return x+n; // TODO
 #endif
 }
 DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED float_t N(_Dee_m_pow)(DEE_A_IN float_t x, DEE_A_IN float_t y) {
@@ -462,6 +462,7 @@ DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED float_t N(_Dee_m_remquo)(DEE_A_IN float_t 
 #if DEE_ENVIRONMENT_HAVE_MATH_REMQUO
  return N(Dee_m_remquo)(number,denom,quot);
 #else
+ *quot = 42;
  return number*denom; // TODO
 #endif
 }
@@ -476,7 +477,7 @@ DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED float_t N(_Dee_m_nextafter)(DEE_A_IN float
 #if DEE_ENVIRONMENT_HAVE_MATH_NEXTAFTER
  return N(Dee_m_nextafter)(x,y);
 #else
- return x; // TODO
+ return (x+y)/2; // TODO
 #endif
 }
 #ifdef DEE_TYPES_SIZEOF_LDOUBLE
@@ -492,14 +493,14 @@ DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED float_t N(_Dee_m_nexttoward)(DEE_A_IN floa
 #if DEE_ENVIRONMENT_HAVE_MATH_NEXTTOWARD
  return N(Dee_m_nexttoward)(x,y);
 #else
- return x; // TODO
+ return (float_t)((x*y)/2); // TODO
 #endif
 }
 DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED float_t N(_Dee_m_fdim)(DEE_A_IN float_t x, DEE_A_IN float_t y) {
 #if DEE_ENVIRONMENT_HAVE_MATH_FDIM
  return N(Dee_m_fdim)(x,y);
 #else
- return x; // TODO
+ return x*y; // TODO
 #endif
 }
 DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED int N(_Dee_m_isfinite)(float_t x) {
@@ -527,7 +528,7 @@ DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED int N(_Dee_m_isnormal)(float_t x) {
 #if DEE_ENVIRONMENT_HAVE_MATH_ISNORMAL
  return N(Dee_m_isnormal)(x);
 #else
- return 1; // TODO
+ return x == 0; // TODO
 #endif
 }
 DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED int N(_Dee_m_signbit)(float_t x) {
@@ -576,7 +577,7 @@ DEE_ATTRIBUTE_CONST DEE_A_RET_WUNUSED int N(_Dee_m_isunordered)(float_t x, float
 #if DEE_ENVIRONMENT_HAVE_MATH_ISUNORDERED
  return N(Dee_m_isunordered)(x,y);
 #else
- return 0; // TODO
+ return x == y; // TODO
 #endif
 }
 

@@ -35,6 +35,7 @@
 #include <deemon/compiler/lexer.h>
 #include <deemon/compiler/scope.h>
 #include <deemon/compiler/xast.h>
+#include <deemon/runtime/execute.h>
 #include <deemon/optional/uuid.h>
 #include <deemon/object.h>
 #include <deemon/optional/string_forward.h>
@@ -118,8 +119,18 @@ extern DEE_A_RET_EXCEPT(-1) int DeeSAstTryHandler_InitCopyWithScope(
  DEE_A_INOUT DeeScopeObject *new_scope, DEE_A_INOUT DeeLexerObject *lexer);
 
 
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#undef ast_kind
+#undef ast_common
+#undef ast_if
+#undef ast_module
+#undef ast_switch
+#undef ast_ifconst
+#undef ast_iftrue
+#undef ast_iffalse
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
 #define DEE_SAST_AST_HEAD \
-           DeeSAstKind        ast_kind;   /*< The kind of AST. */\
+           DeeSAstKind        ast_kind_;  /*< The kind of AST. */\
  DEE_A_REF DeeTokenObject    *ast_token;  /*< [1..1] token of this AST (used in debug/error output) */\
  struct DeeParserLabelRefList ast_labels; /*< List of label end points. */
 struct DeeSAstCommonAst { DEE_SAST_AST_HEAD };
@@ -285,13 +296,46 @@ struct DeeSAstObject {
   struct DeeSAstIfConstAst     ast_ifconst;     /*< DEE_SASTKIND_IFTRUE, DEE_SASTKIND_IFFALSE. */
   struct DeeSAstIfConstAst     ast_iftrue;      /*< DEE_SASTKIND_IFTRUE. */
   struct DeeSAstIfConstAst     ast_iffalse;     /*< DEE_SASTKIND_IFFALSE. */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define ast_kind         _ast_data.ast_kind
+#define ast_common       _ast_data.ast_common
+#define ast_empty        _ast_data.ast_empty
+#define ast_expression   _ast_data.ast_expression
+#define ast_block        _ast_data.ast_block
+#define ast_return       _ast_data.ast_return
+#define ast_yield        _ast_data.ast_yield
+#define ast_assert       _ast_data.ast_assert
+#define ast_print        _ast_data.ast_print
+#define ast_if           _ast_data.ast_if
+#define ast_for          _ast_data.ast_for
+#define ast_forin        _ast_data.ast_forin
+#define ast_foreach      _ast_data.ast_foreach
+#define ast_while        _ast_data.ast_while
+#define ast_dowhile      _ast_data.ast_dowhile
+#define ast_specialloop  _ast_data.ast_specialloop
+#define ast_loopever     _ast_data.ast_loopever
+#define ast_looponce     _ast_data.ast_looponce
+#define ast_loopnone     _ast_data.ast_loopnone
+#define ast_continue     _ast_data.ast_continue
+#define ast_break        _ast_data.ast_break
+#define ast_goto         _ast_data.ast_goto
+#define ast_throw        _ast_data.ast_throw
+#define ast_try          _ast_data.ast_try
+#define ast_module       _ast_data.ast_module
+#define ast_switch       _ast_data.ast_switch
+#define ast_ifconst      _ast_data.ast_ifconst
+#define ast_iftrue       _ast_data.ast_iftrue
+#define ast_iffalse      _ast_data.ast_iffalse
+ _ast_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 
 #define DeeSAst_IsEmpty(ob) \
 ((ob)->ast_kind == DEE_SASTKIND_EMPTY &&\
- (ob)->ast_common.ast_labels.ob_c == 0)
+ (ob)->ast_common.ast_labels.lrl_c == 0)
 
 
 extern DeeTypeObject DeeSAst_Type;
@@ -514,7 +558,7 @@ extern DEE_A_RET_EXCEPT_REF DeeSAstObject *DeeSAst_NewGoto(
 #define DeeSAst_NewRethrow(tk,labels_) DeeSAst_NewThrow(tk,labels_,NULL)
 extern DEE_A_RET_EXCEPT_REF DeeSAstObject *DeeSAst_NewThrow(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT struct DeeParserLabelRefList *labels_,
- DEE_A_INOUT_OPT DeeXAstObject *ast_throw);
+ DEE_A_INOUT_OPT DeeXAstObject *throw_expression);
 
 //////////////////////////////////////////////////////////////////////////
 // Create a new Try-SAst

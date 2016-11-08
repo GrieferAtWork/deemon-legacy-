@@ -77,12 +77,24 @@ struct DeeMemberFunctionObject {
    DeeStructuredMemberFunction               mfs_func; /*< [1..1] C function to call. */
    void                                     *mfs_self; /*< [1..1] Self pointer. */
   } mf_struct;
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define mf_object   _mf_callback_data.mf_object
+#define mf_struct   _mf_callback_data.mf_struct
+ _mf_callback_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
  void                             *mf_closure;  /*< [?..?] Closure (last argument to c function). */
- union{
+union{
  DEE_A_REF struct DeeStringObject *mf_member_o; /*< [1..1] Member name. */
  char const                       *mf_member_s; /*< [1..1] Member name. */
- };
+}
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define mf_member_o _mf_name_data.mf_member_o
+#define mf_member_s _mf_name_data.mf_member_s
+ _mf_name_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 #endif /* !DEE_LIMITED_API */

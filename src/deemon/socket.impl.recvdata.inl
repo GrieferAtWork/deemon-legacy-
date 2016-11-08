@@ -31,8 +31,8 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeSocket_RecvDataEx
 #endif
 (DEE_A_INOUT_OBJECT(DeeSocketObject) *self, DEE_A_IN Dee_size_t max_bytes, DEE_A_IN int flags) {
  Dee_size_t do_read,did_read,total_read = 0; char *buf; DeeObject *result;
- DEE_ASSERT(DeeObject_Check(self) && DeeSocket_Check(self));
  DeeStringWriter writer = DeeStringWriter_INIT();
+ DEE_ASSERT(DeeObject_Check(self) && DeeSocket_Check(self));
  while (1) {
   do_read = DEE_XCONFIG_SOCKET_RECVDATA_BUFSIZE < max_bytes ? DEE_XCONFIG_SOCKET_RECVDATA_BUFSIZE : max_bytes;
   if ((buf = DeeStringWriter_Require(&writer,do_read)) == NULL) goto err;

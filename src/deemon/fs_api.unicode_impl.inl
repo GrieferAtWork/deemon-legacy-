@@ -690,11 +690,11 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *) _dee_fs_wide_
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *) _dee_fs_utf8_gen_initial_tmpname
 #endif
 (DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_Z DEE_CHAR const *prefix, DEE_A_OUT DEE_CHAR **digits) {
- DeeObject *result; DEE_STRINGWRITER writer = DEE_STRINGWRITER_INIT();
- Dee_size_t digit_offset,path_len;
+ static DEE_CHAR const name_0000temp[] = {'0','0','0','0','.','t','m','p',0};
+ DeeObject *result; Dee_size_t digit_offset,path_len;
+ DEE_STRINGWRITER writer = DEE_STRINGWRITER_INIT();
  DEE_ASSERT(path && prefix && digits);
  path_len = DEE_STRLEN(path);
- static DEE_CHAR const name_0000temp[] = {'0','0','0','0','.','t','m','p',0};
  while (path_len && IS_SEP(path[path_len-1])) --path_len;
  if (DeeStringWriter_F(WriteMyStringWithLength)(&writer,path_len,path) != 0 ||
      DeeStringWriter_F(WriteMyChar)(&writer,SEP) != 0 ||
@@ -2670,7 +2670,14 @@ typedef struct _REPARSE_DATA_BUFFER {
     struct {
       UCHAR DataBuffer[1];
     } GenericReparseBuffer;
-  };
+  }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define SymbolicLinkReparseBuffer _rd_data.SymbolicLinkReparseBuffer
+#define MountPointReparseBuffer   _rd_data.MountPointReparseBuffer
+#define GenericReparseBuffer      _rd_data.GenericReparseBuffer
+ _rd_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+  ;
 } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 DEE_COMPILER_MSVC_WARNING_POP
 #endif

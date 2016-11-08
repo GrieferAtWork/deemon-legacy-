@@ -223,22 +223,28 @@ _DeePrivateBSwap64_Impl(DEE_TYPES_UINT64_T x) {
 }
 #endif
 
-#if DEE_COMPILER_HAVE_BUILTIN_CHOOSE_EXPR && \
-    DEE_COMPILER_HAVE_BUILTIN_CONSTANT_P
+#if (__has_builtin(__builtin_choose_expr) || defined(__GNUC__)) && \
+    (__has_builtin(__builtin_constant_p) || defined(__GNUC__))
+#if defined(__DEEMON__)
 #ifndef DEE_BUILTIN_BSWAP16
-#define DEE_BUILTIN_BSWAP16(x) \
- DEE_BUILTIN_LATE_CHOOSE_EXPR(__builtin_constant_p(x),\
- DEE_BUILTIN_BSWAP16_F(x),DEE_BUILTIN_BSWAP16_M(x))
+# define DEE_BUILTIN_BSWAP16(x) __builtin_choose_expr(__builtin_constant_p(x),DEE_BUILTIN_BSWAP16_M(x),DEE_BUILTIN_BSWAP16_F(x))
 #endif
 #ifndef DEE_BUILTIN_BSWAP32
-#define DEE_BUILTIN_BSWAP32(x) \
- DEE_BUILTIN_LATE_CHOOSE_EXPR(__builtin_constant_p(x),\
- DEE_BUILTIN_BSWAP32_F(x),DEE_BUILTIN_BSWAP32_M(x))
+# define DEE_BUILTIN_BSWAP32(x) __builtin_choose_expr(__builtin_constant_p(x),DEE_BUILTIN_BSWAP32_M(x),DEE_BUILTIN_BSWAP32_F(x))
 #endif
 #ifndef DEE_BUILTIN_BSWAP64
-#define DEE_BUILTIN_BSWAP64(x) \
- DEE_BUILTIN_LATE_CHOOSE_EXPR(__builtin_constant_p(x),\
- DEE_BUILTIN_BSWAP64_F(x),DEE_BUILTIN_BSWAP64_M(x))
+# define DEE_BUILTIN_BSWAP64(x) __builtin_choose_expr(__builtin_constant_p(x),DEE_BUILTIN_BSWAP64_M(x),DEE_BUILTIN_BSWAP64_F(x))
+#endif
+#else
+#ifndef DEE_BUILTIN_BSWAP16
+# define DEE_BUILTIN_BSWAP16(x) (__builtin_constant_p(x) ? DEE_BUILTIN_BSWAP16_M(x) : DEE_BUILTIN_BSWAP16_F(x))
+#endif
+#ifndef DEE_BUILTIN_BSWAP32
+# define DEE_BUILTIN_BSWAP32(x) (__builtin_constant_p(x) ? DEE_BUILTIN_BSWAP32_M(x) : DEE_BUILTIN_BSWAP32_F(x))
+#endif
+#ifndef DEE_BUILTIN_BSWAP64
+# define DEE_BUILTIN_BSWAP64(x) (__builtin_constant_p(x) ? DEE_BUILTIN_BSWAP64_M(x) : DEE_BUILTIN_BSWAP64_F(x))
+#endif
 #endif
 #else
 #ifndef DEE_BUILTIN_BSWAP16

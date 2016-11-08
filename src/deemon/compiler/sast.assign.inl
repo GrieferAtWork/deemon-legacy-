@@ -26,7 +26,7 @@ DEE_DECL_BEGIN
 
 #define _DeeSAstCommonAst_InitMove(ob,right)\
 do{\
- (ob)->ast_kind = (right)->ast_kind;\
+ (ob)->ast_kind_ = (right)->ast_kind_;\
  Dee_INCREF((ob)->ast_token = (right)->ast_token);\
  (ob)->ast_labels = (right)->ast_labels;\
  _DeeParserLabelRefList_Init(&(right)->ast_labels);\

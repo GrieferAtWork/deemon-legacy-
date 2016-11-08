@@ -241,13 +241,13 @@ DEE_A_RET_EXCEPT(-1) int FUNC(DeeHashMap_TraverseItems)(
 DEE_A_RET_EXCEPT(-1) int FUNC(DeeHashMap_TraverseValues)(
  DEE_A_IN struct DeeHashMap const *self, DEE_A_IN DeeObjectIterateFunc trav,
  DEE_A_IN_OPT void *closure LOCK_ARG(DEE_A_INOUT_LOCKED)) {
- DEE_ASSERT(self && trav);
  DeeHashMap_TRAVERSE_SAFE_VARS;
 #ifdef WITH_LOCK
  DeeObject *key,*item;
 #endif
  DeeObject *value;
  struct _DeeHashMapNode *node; int temp;
+ DEE_ASSERT(self); DEE_ASSERT(trav);
  DeeHashMap_TRAVERSE_SAFE(node,self) {
 #ifdef WITH_LOCK
   Dee_INCREF(key = node->hmn_key);

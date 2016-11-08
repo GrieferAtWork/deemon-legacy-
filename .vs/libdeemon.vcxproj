@@ -211,7 +211,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\src\deemon\runtime\sandbox.c" />
     <ClCompile Include="..\src\deemon\sequence.c" />
     <ClCompile Include="..\src\deemon\set.c" />
     <ClCompile Include="..\src\deemon\signalhandler.c" />
@@ -330,7 +329,6 @@
     <ClInclude Include="..\include\deemon\runtime\execute.h" />
     <ClInclude Include="..\include\deemon\runtime\extern.h" />
     <ClInclude Include="..\include\deemon\runtime\function.h" />
-    <ClInclude Include="..\include\deemon\runtime\sandbox.h" />
     <ClInclude Include="..\include\deemon\runtime_flags.h" />
     <ClInclude Include="..\include\deemon\sequence.h" />
     <ClInclude Include="..\include\deemon\set.h" />

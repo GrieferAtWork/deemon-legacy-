@@ -922,9 +922,9 @@ DEE_A_RET_EXCEPT(-1) int DeeFile_TPrintf(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN_PRINTF char const *fmt, ...) {
  va_list args; int result;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  result = DeeFile_VTPrintf(tp_self,self,fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_EXCEPT(-1) int DeeFile_VTPrintf(
@@ -2051,7 +2051,7 @@ again:
  DeeFile_ACQUIRE(right);
  if DEE_LIKELY((right_size = right->fw_writer.sw_len) != 0) {
   if DEE_UNLIKELY((self->fw_writer.sw_str = (DeeStringObject *)DeeObject_TryWeakMalloc(
-   Dee_OFFSETOF(DeeAnyStringObject,s_str)+((right_size+1)*sizeof(Dee_Char)))) == NULL) {
+   Dee_OFFSETOF(DeeAnyStringObject,as_str)+((right_size+1)*sizeof(Dee_Char)))) == NULL) {
    DeeFile_RELEASE(right);
    if DEE_LIKELY(Dee_CollectMemory()) goto again;
    DeeError_NoMemory();
@@ -2099,7 +2099,7 @@ again:
   DeeFile_ACQUIRE(right);
   if DEE_LIKELY((new_size = right->fw_writer.sw_len) != 0) {
    if DEE_UNLIKELY((new_writer.sw_str = (DeeStringObject *)DeeObject_TryWeakMalloc(
-    Dee_OFFSETOF(DeeAnyStringObject,s_str)+((new_size+1)*sizeof(Dee_Char)))) == NULL) {
+    Dee_OFFSETOF(DeeAnyStringObject,as_str)+((new_size+1)*sizeof(Dee_Char)))) == NULL) {
     DeeFile_RELEASE(right);
     if DEE_LIKELY(Dee_CollectMemory()) goto again;
     DeeError_NoMemory();
@@ -2209,8 +2209,8 @@ again:
     DeeStringObject *new_str;
     DEE_ASSERT(DeeObject_Check(self->fw_writer.sw_str) && DeeString_Check(self->fw_writer.sw_str));
     new_size = DeeString_SIZE(self->fw_writer.sw_str)*2;
-    if DEE_UNLIKELY((new_str = (DeeStringObject *)DeeObject_TryWeakRealloc(self->fw_writer.sw_str,Dee_OFFSETOF(
-     DeeAnyStringObject,s_str)+((new_size+1)*sizeof(Dee_Char)))) == NULL) {
+    if DEE_UNLIKELY((new_str = (DeeStringObject *)DeeObject_TryWeakRealloc(self->fw_writer.sw_str,
+     Dee_OFFSETOF(DeeAnyStringObject,as_str)+((new_size+1)*sizeof(Dee_Char)))) == NULL) {
 no_mem:
      DeeFile_RELEASE(self);
      if DEE_LIKELY(Dee_CollectMemory()) goto again;
@@ -2222,7 +2222,7 @@ no_mem:
    } else {
     DEE_ASSERT(!self->fw_writer.sw_len && "No string allocated, but size is set");
     if DEE_UNLIKELY((self->fw_writer.sw_str = (DeeStringObject *)DeeObject_TryWeakMalloc(
-     Dee_OFFSETOF(DeeAnyStringObject,s_str)+(min_size+1)*sizeof(Dee_Char))) == NULL) goto no_mem;
+     Dee_OFFSETOF(DeeAnyStringObject,as_str)+(min_size+1)*sizeof(Dee_Char))) == NULL) goto no_mem;
     DeeObject_INIT(self->fw_writer.sw_str,&DeeString_Type);
     self->fw_writer.sw_str->s_len = min_size;
    }
@@ -2276,7 +2276,7 @@ again:
   if DEE_LIKELY(DeeString_SIZE(self->fw_writer.sw_str) != self->fw_writer.sw_len) {
    if DEE_LIKELY((new_size = self->fw_writer.sw_len) != 0) {
     if DEE_UNLIKELY((new_str = (DeeStringObject *)DeeObject_TryWeakRealloc(self->fw_writer.sw_str,
-     Dee_OFFSETOF(DeeAnyStringObject,s_str)+((new_size+1)*sizeof(Dee_Char)))) == NULL) {
+     Dee_OFFSETOF(DeeAnyStringObject,as_str)+((new_size+1)*sizeof(Dee_Char)))) == NULL) {
      DeeFile_RELEASE(self);
      if DEE_LIKELY(Dee_CollectMemory()) goto again;
      DeeError_NoMemory();

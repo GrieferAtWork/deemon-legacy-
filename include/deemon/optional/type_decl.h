@@ -127,21 +127,45 @@ struct _DeeTypeConstructorOperators {
  //  - Does the job of both the tp_alloc and tp_any_ctor
  //    -> Variadic types don't use the different ctors
  union{
-  DeeType_SLOT_TYPE(tp_ctor)      tp_ctor;
-  DeeType_SLOT_TYPE(tp_new)       tp_new;
- };
+  DeeType_SLOT_TYPE(tp_ctor)      tp_ctor_;
+  DeeType_SLOT_TYPE(tp_new)       tp_new_;
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define tp_ctor_ _tp_ctor.tp_ctor_
+#define tp_new_  _tp_ctor.tp_new_
+ _tp_ctor
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
  union{
-  DeeType_SLOT_TYPE(tp_copy_ctor) tp_copy_ctor;
-  DeeType_SLOT_TYPE(tp_copy_new)  tp_copy_new;
- };
+  DeeType_SLOT_TYPE(tp_copy_ctor) tp_copy_ctor_;
+  DeeType_SLOT_TYPE(tp_copy_new)  tp_copy_new_;
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define tp_copy_ctor_ _tp_copy_ctor.tp_copy_ctor_
+#define tp_copy_new_  _tp_copy_ctor.tp_copy_new_
+ _tp_copy_ctor
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
  union{
-  DeeType_SLOT_TYPE(tp_move_ctor) tp_move_ctor;
-  DeeType_SLOT_TYPE(tp_move_new)  tp_move_new;
- };
+  DeeType_SLOT_TYPE(tp_move_ctor) tp_move_ctor_;
+  DeeType_SLOT_TYPE(tp_move_new)  tp_move_new_;
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define tp_move_ctor_ _tp_move_ctor.tp_move_ctor_
+#define tp_move_new_  _tp_move_ctor.tp_move_new_
+ _tp_move_ctor
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
  union{
-  DeeType_SLOT_TYPE(tp_any_ctor)  tp_any_ctor;
-  DeeType_SLOT_TYPE(tp_any_new)   tp_any_new;
- };
+  DeeType_SLOT_TYPE(tp_any_ctor)  tp_any_ctor_;
+  DeeType_SLOT_TYPE(tp_any_new)   tp_any_new_;
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define tp_any_ctor_ _tp_any_ctor.tp_any_ctor_
+#define tp_any_new_  _tp_any_ctor.tp_any_new_
+ _tp_any_ctor
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 struct _DeeTypeDestructorOperators {
@@ -276,13 +300,19 @@ typedef DEE_A_RET_EXCEPT(-1) int (DEE_CALL *DeeType_SLOT_TYPE(tp_marshal_put))(
 
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeTypeMarshal {
- struct DeeUUID                     tp_uuid;         /*< Unique identifier for this type (static). */
-union{
- DeeType_SLOT_TYPE(tp_marshal_ctor) tp_marshal_ctor; /*< [1..1] Constructor from marshal. */
- DeeType_SLOT_TYPE(tp_marshal_new)  tp_marshal_new;  /*< [1..1] Variable-size constructor from marshal. */
-};
- DeeType_SLOT_TYPE(tp_marshal_put)  tp_marshal_put;  /*< [1..1] Marshal-write operator. */
- struct DeeUUID                    *tp_alias_uuids;  /*< [0..1] Empty-uuid terminated list of aliases. */
+ struct DeeUUID                      tp_uuid;          /*< Unique identifier for this type (static). */
+ union{
+  DeeType_SLOT_TYPE(tp_marshal_ctor) tp_marshal_ctor_; /*< [1..1] Constructor from marshal. */
+  DeeType_SLOT_TYPE(tp_marshal_new)  tp_marshal_new_;  /*< [1..1] Variable-size constructor from marshal. */
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define tp_marshal_ctor_ _tp_marshal_ctor.tp_marshal_ctor_
+#define tp_marshal_new_  _tp_marshal_ctor.tp_marshal_new_
+ _tp_marshal_ctor
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
+ DeeType_SLOT_TYPE(tp_marshal_put)   tp_marshal_put;   /*< [1..1] Marshal-write operator. */
+ struct DeeUUID                     *tp_alias_uuids;   /*< [0..1] Empty-uuid terminated list of aliases. */
 };
 DEE_COMPILER_MSVC_WARNING_POP
 #define DEE_TYPE_MARSHAL_v101(_tp_uuid,_tp_marshal_ctor,_tp_marshal_put,_tp_alias_uuids) \

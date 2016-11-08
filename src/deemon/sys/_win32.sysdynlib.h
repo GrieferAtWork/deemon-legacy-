@@ -137,7 +137,7 @@ do{\
 #define DeeWin32SysDynlib_Utf8Win32Name(ob) DeeFS_Utf8Win32GetModuleName((void *)(ob)->sd_lib)
 #define DeeWin32SysDynlib_WideWin32Name(ob) DeeFS_WideWin32GetModuleName((void *)(ob)->sd_lib)
 #define DeeWin32SysDynlib_TryImport(ob,import_name,result) \
- ((*(void **)&(result) = (void *)GetProcAddress((ob)->sd_lib,import_name)) != NULL)
+ ((*(FARPROC *)&(result) = GetProcAddress((ob)->sd_lib,import_name)) != NULL)
 #define DeeWin32SysDynlib_Import(ob,import_name,result,...) \
 do{\
  if DEE_UNLIKELY(!DeeWin32SysDynlib_TryImport(ob,import_name,result)) {\

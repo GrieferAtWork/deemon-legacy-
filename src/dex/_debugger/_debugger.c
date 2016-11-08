@@ -136,7 +136,7 @@ void DeeDebugger_ModalLoop_Locals(
   DeeDebugger_PrintLocals(locals_window,self->d_frame,
                           first_entry,selected_entry,
                           &total_entries,NULL);
-  location_text = DeeString_Newf("%O(%d) : %O",
+  location_text = DeeString_Newf("%O(%I32d) : %O",
                                  _DeeStackFrame_File(self->d_frame),
                                  _DeeStackFrame_Line(self->d_frame)+1,
                                  _DeeStackFrame_Func(self->d_frame));

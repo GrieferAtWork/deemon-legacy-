@@ -371,7 +371,7 @@ static struct { DEE_OBJECT_HEAD Dee_WideChar s_str[size]; Dee_WideChar s_end; }\
   DEE_OBJECT_HEAD Dee_size_t s_len;\
   Dee_WideChar s_str[sizeof(value)/sizeof(Dee_WideChar)];\
  } name = {DEE_OBJECT_HEAD_INIT(&DeeWideString_Type),\
- (sizeof(value)/sizeof(Dee_WideChar))-1,value};\
+ (sizeof(value)/sizeof(Dee_WideChar))-1,value}\
  DEE_COMPILER_MSVC_WARNING_POP
 #define DeeWideString_NEW_STATIC_EX(name,size,...)\
  DEE_COMPILER_MSVC_WARNING_PUSH(4640)\
@@ -398,7 +398,7 @@ static struct { DEE_OBJECT_HEAD Dee_Utf8Char s_str[size]; Dee_Utf8Char s_end; }\
   DEE_OBJECT_HEAD Dee_size_t s_len;\
   Dee_Utf8Char s_str[sizeof(value)/sizeof(Dee_Utf8Char)];\
  } name = {DEE_OBJECT_HEAD_INIT(&DeeUtf8String_Type),\
- (sizeof(value)/sizeof(Dee_Utf8Char))-1,value};\
+ (sizeof(value)/sizeof(Dee_Utf8Char))-1,value}\
  DEE_COMPILER_MSVC_WARNING_POP
 #define DeeUtf8String_NEW_STATIC_EX(name,size,...)\
  DEE_COMPILER_MSVC_WARNING_PUSH(4640)\
@@ -425,7 +425,7 @@ static struct { DEE_OBJECT_HEAD Dee_Utf16Char s_str[size]; Dee_Utf16Char s_end; 
   DEE_OBJECT_HEAD Dee_size_t s_len;\
   Dee_Utf16Char s_str[sizeof(value)/sizeof(Dee_Utf16Char)];\
  } name = {DEE_OBJECT_HEAD_INIT(&DeeUtf16String_Type),\
- (sizeof(value)/sizeof(Dee_Utf16Char))-1,value};\
+ (sizeof(value)/sizeof(Dee_Utf16Char))-1,value}\
  DEE_COMPILER_MSVC_WARNING_POP
 #define DeeUtf16String_NEW_STATIC_EX(name,size,...)\
  DEE_COMPILER_MSVC_WARNING_PUSH(4640)\
@@ -452,7 +452,7 @@ static struct { DEE_OBJECT_HEAD Dee_Utf32Char s_str[size]; Dee_Utf32Char s_end; 
   DEE_OBJECT_HEAD Dee_size_t s_len;\
   Dee_Utf32Char s_str[sizeof(value)/sizeof(Dee_Utf32Char)];\
  } name = {DEE_OBJECT_HEAD_INIT(&DeeUtf32String_Type),\
- (sizeof(value)/sizeof(Dee_Utf32Char))-1,value};\
+ (sizeof(value)/sizeof(Dee_Utf32Char))-1,value}\
  DEE_COMPILER_MSVC_WARNING_POP
 #define DeeUtf32String_NEW_STATIC_EX(name,size,...)\
  DEE_COMPILER_MSVC_WARNING_PUSH(4640)\
@@ -1068,22 +1068,39 @@ DEE_DATA_DECL(struct _DeeEmptyUtf32StringObject)       _Dee_EmptyUtf32String;
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeAnyStringObject {
  DEE_OBJECT_HEAD
- Dee_size_t s_len;
+ Dee_size_t as_len;
  union{
-  char          s_str[8192];    /*< [s_len] String. */
+  char          as_str[8192];    /*< [s_len] String. */
 #if DEE_CONFIG_HAVE_ENCODING_WIDE
-  Dee_WideChar  s_wstr[8192];   /*< [s_len] Wide String */
+  Dee_WideChar  as_wstr[8192];   /*< [s_len] Wide String */
 #endif /* DEE_CONFIG_HAVE_ENCODING_WIDE */
 #if DEE_CONFIG_HAVE_ENCODING_UTF8
-  Dee_Utf8Char  s_u8str[8192];  /*< [s_len] Utf-8 String */
+  Dee_Utf8Char  as_u8str[8192];  /*< [s_len] Utf-8 String */
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF8 */
 #if DEE_CONFIG_HAVE_ENCODING_UTF16
-  Dee_Utf16Char s_u16str[8192]; /*< [s_len] Utf-16 String */
+  Dee_Utf16Char as_u16str[8192]; /*< [s_len] Utf-16 String */
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF16 */
 #if DEE_CONFIG_HAVE_ENCODING_UTF32
-  Dee_Utf32Char s_u32str[8192]; /*< [s_len] Utf-32 String */
+  Dee_Utf32Char as_u32str[8192]; /*< [s_len] Utf-32 String */
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF32 */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define as_str      _as_strdata.as_str
+#if DEE_CONFIG_HAVE_ENCODING_WIDE
+#define as_wstr     _as_strdata.as_wstr
+#endif /* DEE_CONFIG_HAVE_ENCODING_WIDE */
+#if DEE_CONFIG_HAVE_ENCODING_UTF8
+#define as_u8str    _as_strdata.as_u8str
+#endif /* DEE_CONFIG_HAVE_ENCODING_UTF8 */
+#if DEE_CONFIG_HAVE_ENCODING_UTF16
+#define as_u16str   _as_strdata.as_u16str
+#endif /* DEE_CONFIG_HAVE_ENCODING_UTF16 */
+#if DEE_CONFIG_HAVE_ENCODING_UTF32
+#define as_u32str   _as_strdata.as_u32str
+#endif /* DEE_CONFIG_HAVE_ENCODING_UTF32 */
+ _as_strdata
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 #endif

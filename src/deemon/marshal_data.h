@@ -94,7 +94,14 @@ struct DeeMarshalHeaderPutRef_ {
   Dee_uint8_t   mhpr_ref8;   /*< 8-bit reference name. */
   Dee_uint16_t  mhpr_ref16;  /*< 16-bit reference name. */
   Dee_uint32_t  mhpr_ref32;  /*< 32-bit reference name. */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define mhpr_ref8  _mhpr_refdata.mhpr_ref8
+#define mhpr_ref16 _mhpr_refdata.mhpr_ref16
+#define mhpr_ref32 _mhpr_refdata.mhpr_ref32
+ _mhpr_refdata
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 struct DeeMarshalHeaderPutRef {
@@ -111,7 +118,14 @@ struct DeeMarshalHeaderGetRef_ {
   Dee_uint8_t   mhgr_ref8;   /*< 8-bit reference name. */
   Dee_uint16_t  mhgr_ref16;  /*< 16-bit reference name. */
   Dee_uint32_t  mhgr_ref32;  /*< 32-bit reference name. */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define mhgr_ref8  _mhgr_refdata.mhgr_ref8
+#define mhgr_ref16 _mhgr_refdata.mhgr_ref16
+#define mhgr_ref32 _mhgr_refdata.mhgr_ref32
+ _mhgr_refdata
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 struct DeeMarshalHeaderGetRef {
@@ -389,11 +403,17 @@ extern DeeTypeObject *const DeeMashal_IntrinsicTypes[256];
 #define DEE_FILE_SMALL64_KIND_64 (DEE_FILE_SMALL64_XFLAG|8) // +8 bytes
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeSmall64 {
- Dee_uint8_t   marker; /*< If if 'DEE_FILE_SMALL64_XFLAG' flag isn't set, this _IS_ the value. */
+ Dee_uint8_t   sl64_marker; /*< If if 'DEE_FILE_SMALL64_XFLAG' flag isn't set, this _IS_ the value. */
  union{
-  Dee_uint64_t lil_value;
-  Dee_uint8_t  lil_bytes[8];
- };
+  Dee_uint64_t sl64_lil_value;
+  Dee_uint8_t  sl64_lil_bytes[8];
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define sl64_lil_value  _sl64_bytedata.sl64_lil_value
+#define sl64_lil_bytes  _sl64_bytedata.sl64_lil_bytes
+ _sl64_bytedata
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 
@@ -401,48 +421,48 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int)
 DeeFile_PutLeSmall64(DEE_A_INOUT DeeObject *self, DEE_A_IN Dee_uint64_t value) {
  struct DeeSmall64 small64;
  //if (!value) return DeeFile_Putc(self,DEE_FILE_SMALL64_KIND_0);
- small64.lil_value = DEE_BUILTIN_LESWAP64(value);
+ small64.sl64_lil_value = DEE_BUILTIN_LESWAP64(value);
  if (value < (Dee_uint64_t)(Dee_uint8_t)(0xFF&~DEE_FILE_SMALL64_XFLAG)) {
   // Special handling for numbers that (without the extended marker) we can fit into 1 byte
-  small64.marker = (Dee_uint8_t)value;
+  small64.sl64_marker = (Dee_uint8_t)value;
   return DeeFile_WriteAll(self,&small64,1);
  } else
  // Little endian stores its least significant bit at the front.
  // So all we have to do now, is figure out what the last non-zero slot is.
-      if (small64.lil_bytes[7]) small64.marker = DEE_FILE_SMALL64_KIND_64;
- else if (small64.lil_bytes[6]) small64.marker = DEE_FILE_SMALL64_KIND_56;
- else if (small64.lil_bytes[5]) small64.marker = DEE_FILE_SMALL64_KIND_48;
- else if (small64.lil_bytes[4]) small64.marker = DEE_FILE_SMALL64_KIND_40;
- else if (small64.lil_bytes[3]) small64.marker = DEE_FILE_SMALL64_KIND_32;
- else if (small64.lil_bytes[2]) small64.marker = DEE_FILE_SMALL64_KIND_24;
- else if (small64.lil_bytes[1]) small64.marker = DEE_FILE_SMALL64_KIND_16;
- else if (small64.lil_bytes[0]) small64.marker = DEE_FILE_SMALL64_KIND_8;
- else small64.marker = DEE_FILE_SMALL64_KIND_0;
+      if (small64.sl64_lil_bytes[7]) small64.sl64_marker = DEE_FILE_SMALL64_KIND_64;
+ else if (small64.sl64_lil_bytes[6]) small64.sl64_marker = DEE_FILE_SMALL64_KIND_56;
+ else if (small64.sl64_lil_bytes[5]) small64.sl64_marker = DEE_FILE_SMALL64_KIND_48;
+ else if (small64.sl64_lil_bytes[4]) small64.sl64_marker = DEE_FILE_SMALL64_KIND_40;
+ else if (small64.sl64_lil_bytes[3]) small64.sl64_marker = DEE_FILE_SMALL64_KIND_32;
+ else if (small64.sl64_lil_bytes[2]) small64.sl64_marker = DEE_FILE_SMALL64_KIND_24;
+ else if (small64.sl64_lil_bytes[1]) small64.sl64_marker = DEE_FILE_SMALL64_KIND_16;
+ else if (small64.sl64_lil_bytes[0]) small64.sl64_marker = DEE_FILE_SMALL64_KIND_8;
+ else small64.sl64_marker = DEE_FILE_SMALL64_KIND_0;
  // Currently, the markers indicate how many additional bytes should be written.
  // While not written in stone, we do take advantage of that fact.
- return DeeFile_WriteAll(self,&small64,sizeof(small64.marker)+
-                        (small64.marker&~(DEE_FILE_SMALL64_XFLAG)));
+ return DeeFile_WriteAll(self,&small64,sizeof(small64.sl64_marker)+
+                        (small64.sl64_marker&~(DEE_FILE_SMALL64_XFLAG)));
 }
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int)
 DeeFile_GetLeSmall64(DEE_A_INOUT DeeObject *self, DEE_A_OUT Dee_uint64_t *value) {
  struct DeeSmall64 small64;
- if (DeeFile_Getc(self,&small64.marker) != 0) return -1;
+ if (DeeFile_Getc(self,&small64.sl64_marker) != 0) return -1;
  // If there is no extension marker, we've already got our value
- if ((small64.marker&DEE_FILE_SMALL64_XFLAG)==0) {
-  *value = (Dee_uint64_t)small64.marker;
+ if ((small64.sl64_marker&DEE_FILE_SMALL64_XFLAG)==0) {
+  *value = (Dee_uint64_t)small64.sl64_marker;
   return 0;
  }
- if (small64.marker > DEE_FILE_SMALL64_KIND_64) {
+ if (small64.sl64_marker > DEE_FILE_SMALL64_KIND_64) {
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Invalid marker in small64: 0x%.2I8x(%I8u)",
-                      small64.marker,small64.marker);
+                      small64.sl64_marker,small64.sl64_marker);
   return -1;
  }
  // Read the marked bytes
- small64.lil_value = 0; // undefined bytes are set to '0'
- if (DeeFile_ReadAll(self,small64.lil_bytes,(
-  Dee_size_t)(small64.marker&~(DEE_FILE_SMALL64_XFLAG))) != 0) return -1;
- *value = DEE_BUILTIN_LESWAP64(small64.lil_value);
+ small64.sl64_lil_value = 0; // undefined bytes are set to '0'
+ if (DeeFile_ReadAll(self,small64.sl64_lil_bytes,(
+  Dee_size_t)(small64.sl64_marker&~(DEE_FILE_SMALL64_XFLAG))) != 0) return -1;
+ *value = DEE_BUILTIN_LESWAP64(small64.sl64_lil_value);
  return 0;
 }
 

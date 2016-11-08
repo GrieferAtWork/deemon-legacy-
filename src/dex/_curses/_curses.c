@@ -531,7 +531,7 @@ struct DeeDexExportDef DeeDex_Exports[] = {
  DeeDex_EXPORT_END
 };
 
-int DeeDex_Main(DEE_A_INOUT struct DeeDexContext *context) {
+int DeeDex_Main(DEE_A_INOUT DeeDexContext *context) {
  switch (context->dc_kind) {
   case DEE_DEXCONTEXTKIND_INITIALIZE:
    if (DeeNativeMutex_Init(&_DeeCurses_GlobalLock) != 0) return -1;

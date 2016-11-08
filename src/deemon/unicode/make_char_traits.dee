@@ -3,7 +3,7 @@ const copyright = "\
 /* Copyright (c) 2016 - deemon by Griefer@Work                                    *
  *                                                                                *
  * Permission is hereby granted, free of charge, to any person obtaining a copy   *
- * of this software and associated documentation files (the "Software"), to deal  *
+ * of this software and associated documentation files (the \"Software\"), to deal  *
  * in the Software without restriction, including without limitation the rights   *
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
  * copies of the Software, and to permit persons to whom the Software is          *
@@ -12,7 +12,7 @@ const copyright = "\
  * The above copyright notice and this permission notice shall be included in all *
  * copies or substantial portions of the Software.                                *
  *                                                                                *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
@@ -24,7 +24,7 @@ const copyright = "\
 #include <file>
 #include <fs>
 
-fs.chdir(fs.path.head(__FILE__));
+fs::chdir(fs::path::head(__FILE__));
 fp = file.io("char_traits.inl","w");
 
 #define w(s) (fp.write(s))
@@ -54,11 +54,12 @@ print fp: "#define GUARD_DEEMON_CHAR_TRAITS_H 1";
 print fp:;
 print fp: "#include <deemon/__conf.inl>";
 print fp:;
-print fp: "#include DEE_INCLUDE_MEMORY_API_DISABLE()";
-print fp: "#include <stdint.h>";
-print fp: "#include DEE_INCLUDE_MEMORY_API_ENABLE()";
-print fp:;
 print fp: "DEE_DECL_BEGIN";
+print fp:;
+print fp: "#ifdef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES";
+print fp: "DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES";
+print fp: "#undef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES";
+print fp: "#endif";
 print fp:;
 print fp: "#define _DEE_CHAR_FLAG_IS_CNTRL "+h(flag_is_cntrl);
 print fp: "#define _DEE_CHAR_FLAG_IS_PUNCT "+h(flag_is_punct);
@@ -69,7 +70,7 @@ print fp: "#define _DEE_CHAR_FLAG_IS_DIGIT "+h(flag_is_digit);
 print fp: "#define _DEE_CHAR_FLAG_IS_LOWER "+h(flag_is_lower);
 print fp: "#define _DEE_CHAR_FLAG_IS_UPPER "+h(flag_is_upper);
 print fp:;
-fp.write("static uint8_t const _DeeCharTraits[256] = {\n ");
+fp.write("static Dee_uint8_t const _DeeCharTraits[256] = {\n ");
 for (i = 0; i < 256; ++i) {
  flags = 0;
  if (ch_is_cntrl(i)) flags |= flag_is_cntrl;
@@ -105,18 +106,18 @@ print fp: "DEE_STATIC_INLINE(DEE_A_RET_WUNUSED int) DEE_CH_TO_LOWER(int c) { ret
 print fp: "DEE_STATIC_INLINE(DEE_A_RET_WUNUSED int) DEE_CH_TO_UPPER(int c) { return (c>='a'&&c<='z')?(c-('a'-'A')):c; }";
 print fp:;
 print fp: "#if DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS";
-print fp: "#define DEE_CH_IS_BLANK(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);_temp_c == '\\x09' || _temp_c == '\\x20';})";
-print fp: "#define DEE_CH_IS_XCHAR(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='A'&&_temp_c<='F')&&(_temp_c>='a'&&_temp_c<='f');})";
-print fp: "#define DEE_CH_IS_XDIGIT(c) DEE_GCC_EXTENSION({char const _temp_c=(c);DEE_CH_IS_DIGIT(_temp_c)||((_temp_c>='A'&&_temp_c<='F')&&(_temp_c>='a'&&_temp_c<='f'));})";
-print fp: "#define DEE_CH_TO_LOWER(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='A'&&_temp_c<='Z')?(_temp_c+('a'-'A')):_temp_c;})";
-print fp: "#define DEE_CH_TO_UPPER(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='a'&&_temp_c<='z')?(_temp_c-('a'-'A')):_temp_c;})";
-print fp: "#else";
-print fp: "#define DEE_CH_IS_BLANK    DEE_CH_IS_BLANK";
-print fp: "#define DEE_CH_IS_XCHAR    DEE_CH_IS_XCHAR";
-print fp: "#define DEE_CH_IS_XDIGIT   DEE_CH_IS_XDIGIT";
-print fp: "#define DEE_CH_TO_LOWER    DEE_CH_TO_LOWER";
-print fp: "#define DEE_CH_TO_UPPER    DEE_CH_TO_UPPER";
-print fp: "#endif";
+print fp: "# define DEE_CH_IS_BLANK(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);_temp_c == '\\x09' || _temp_c == '\\x20';})";
+print fp: "# define DEE_CH_IS_XCHAR(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='A'&&_temp_c<='F')&&(_temp_c>='a'&&_temp_c<='f');})";
+print fp: "# define DEE_CH_IS_XDIGIT(c) DEE_GCC_EXTENSION({char const _temp_c=(c);DEE_CH_IS_DIGIT(_temp_c)||((_temp_c>='A'&&_temp_c<='F')&&(_temp_c>='a'&&_temp_c<='f'));})";
+print fp: "# define DEE_CH_TO_LOWER(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='A'&&_temp_c<='Z')?(_temp_c+('a'-'A')):_temp_c;})";
+print fp: "# define DEE_CH_TO_UPPER(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='a'&&_temp_c<='z')?(_temp_c-('a'-'A')):_temp_c;})";
+print fp: "#else /* DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */";
+print fp: "# define DEE_CH_IS_BLANK    DEE_CH_IS_BLANK";
+print fp: "# define DEE_CH_IS_XCHAR    DEE_CH_IS_XCHAR";
+print fp: "# define DEE_CH_IS_XDIGIT   DEE_CH_IS_XDIGIT";
+print fp: "# define DEE_CH_TO_LOWER    DEE_CH_TO_LOWER";
+print fp: "# define DEE_CH_TO_UPPER    DEE_CH_TO_UPPER";
+print fp: "#endif /* !DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */";
 print fp:;
 print fp: "DEE_DECL_END";
 print fp:;

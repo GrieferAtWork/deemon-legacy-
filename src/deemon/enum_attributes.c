@@ -136,8 +136,8 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) DeeObject_GenericEnumAttr(
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) DeeType_EnumAttr(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeTypeObject *self,
  DEE_A_IN DeeEnumAttrFunc enum_attr, void *closure) {
- DEE_ASSERT(DeeObject_Check(self) && DeeType_Check(self));
  int temp;
+ DEE_ASSERT(DeeObject_Check(self) && DeeType_Check(self));
  if ((temp = DeeObject_GenericEnumAttr(tp_self,(DeeObject *)self,enum_attr,closure)) != 0) return temp;
  if ((temp = DeeMemberDef_EnumAttr(DeeType_GET_SLOT(self,tp_class_members),tp_self,(DeeObject *)self,enum_attr,closure)) != 0) return temp;
  if ((temp = DeeGetSetDef_EnumAttr(DeeType_GET_SLOT(self,tp_class_getsets),tp_self,(DeeObject *)self,enum_attr,closure)) != 0) return temp;

@@ -340,20 +340,23 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeProcess_Win32GetPEBInfoEx(
  offsets = (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
   ? &known_offsets[1] : &known_offsets[0];
  pebSize = offsets->ProcessParametersOffset + 8;
- while ((peb = (PBYTE)malloc_nz(pebSize)) == NULL) {
+ while DEE_UNLIKELY((peb = (PBYTE)malloc_nz(pebSize)) == NULL) {
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
   return -1;
  }
  ppSize = offsets->CommandLineOffset + 16;
- while ((pp = (PBYTE)malloc_nz(ppSize)) == NULL) {
+ while DEE_UNLIKELY((pp = (PBYTE)malloc_nz(ppSize)) == NULL) {
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   free_nn(peb);
   DeeError_NoMemory();
   return -1;
  }
 #ifndef DEE_PLATFORM_64_BIT
- if (!IsWow64Process(GetCurrentProcess(),&wow)) { DeeError_SystemError("IsWow64Process"); goto err; }
+ if DEE_UNLIKELY(!IsWow64Process(GetCurrentProcess(),&wow)) {
+  DeeError_SystemError("IsWow64Process");
+  goto err;
+ }
  if (wow) {
   // we're running as a 32-bit process in a 64-bit OS
   PROCESS_BASIC_INFORMATION_WOW64 pbi;
@@ -368,26 +371,26 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeProcess_Win32GetPEBInfoEx(
    p_NtWow64ReadVirtualMemory64 = (LPNTWOW64READVIRTUALMEMORY64)
     GetProcAddress(hNTDll,"NtWow64ReadVirtualMemory64");
   });
-  if (!p_NtWow64QueryInformationProcess64) { DeeError_NotImplemented_str("NtWow64QueryInformationProcess64"); goto err; }
-  if (!p_NtWow64ReadVirtualMemory64) { DeeError_NotImplemented_str("NtWow64ReadVirtualMemory64"); goto err; }
+  if DEE_UNLIKELY(!p_NtWow64QueryInformationProcess64) { DeeError_NotImplemented_str("NtWow64QueryInformationProcess64"); goto err; }
+  if DEE_UNLIKELY(!p_NtWow64ReadVirtualMemory64) { DeeError_NotImplemented_str("NtWow64ReadVirtualMemory64"); goto err; }
   // get process information from 64-bit world
   error = (DWORD)(*p_NtWow64QueryInformationProcess64)(process_handle,0,&pbi,sizeof(pbi),NULL);
-  if (error != 0) {
+  if DEE_UNLIKELY(error != 0) {
    DeeError_SystemErrorExplicit("NtWow64QueryInformationProcess64",error);
    goto err;
   }
   // read PEB from 64-bit address space
   error = (DWORD)(*p_NtWow64ReadVirtualMemory64)(process_handle,pbi.PebBaseAddress,peb,pebSize,NULL);
-  if (error != 0) {
+  if DEE_UNLIKELY(error != 0) {
 err_read_wow64:
    if ((flags&DEE_PROCESS_PEB_FLAG_CORRECTRIGHTS)==0) {
     // Retry with the correct rights
-    if ((process_handle = _DeeProcess_Win32AcquireRight(
+    if DEE_UNLIKELY((process_handle = _DeeProcess_Win32AcquireRight(
      process_handle,PROCESS_QUERY_INFORMATION|PROCESS_VM_READ)
      ) == NULL) return -1;
     result = _DeeProcess_Win32GetPEBInfoEx(
      process_handle,flags|DEE_PROCESS_PEB_FLAG_CORRECTRIGHTS,cmd_,cwd_);
-    if (!CloseHandle(process_handle)) SetLastError(0);
+    if DEE_UNLIKELY(!CloseHandle(process_handle)) SetLastError(0);
     goto end;
    }
    DeeError_SystemErrorExplicit("NtWow64ReadVirtualMemory64",error);
@@ -396,25 +399,25 @@ err_read_wow64:
   // read ProcessParameters from 64-bit address space
   parameters = *(Dee_uint64_t*)(peb+offsets->ProcessParametersOffset); // address in remote process adress space
   error = (DWORD)(*p_NtWow64ReadVirtualMemory64)(process_handle,parameters,pp,ppSize,NULL);
-  if (error != 0) goto err_read_wow64;
+  if DEE_UNLIKELY(error != 0) goto err_read_wow64;
   if (cmd_) { // read CommandLine
    pUnicodeString = (UNICODE_STRING_WOW64*)(pp+offsets->CommandLineOffset);
-   if ((system_cmd = (DeeAnyStringObject *)DeeWideString_NewSized(
+   if DEE_UNLIKELY((system_cmd = (DeeAnyStringObject *)DeeWideString_NewSized(
     pUnicodeString->Length/sizeof(Dee_WideChar))) == NULL) goto err;
    error = (DWORD)(*p_NtWow64ReadVirtualMemory64)(process_handle,pUnicodeString->Buffer,
                                                   DeeWideString_STR(system_cmd),
                                                   pUnicodeString->Length,NULL);
-   if (error != 0) { Dee_DECREF(system_cmd); goto err_read_wow64; }
+   if DEE_UNLIKELY(error != 0) { Dee_DECREF(system_cmd); goto err_read_wow64; }
    while (DeeWideString_SIZE(system_cmd) &&
           DEE_CH_IS_SPACE(DeeWideString_STR(system_cmd)[DeeWideString_SIZE(system_cmd)-1])
-          ) --system_cmd->s_len;
+          ) --system_cmd->as_len;
    Dee_INHERIT_REF(*cmd_,*(DeeObject **)&system_cmd);
   }
   if (cwd_) { // read Current Working directory
    pUnicodeString = (UNICODE_STRING_WOW64*)(pp+offsets->CurrentWorkingDirectoryOffset);
-   if ((*cwd_ = DeeWideString_NewSized(pUnicodeString->Length/sizeof(Dee_WideChar))) == NULL) goto err2;
+   if DEE_UNLIKELY((*cwd_ = DeeWideString_NewSized(pUnicodeString->Length/sizeof(Dee_WideChar))) == NULL) goto err2;
    error = (DWORD)(*p_NtWow64ReadVirtualMemory64)(process_handle,pUnicodeString->Buffer,DeeWideString_STR(*cwd_),pUnicodeString->Length,NULL);
-   if (error != 0) { Dee_DECREF(*cwd_); if (cmd_) Dee_DECREF(*cmd_); goto err_read_wow64; }
+   if DEE_UNLIKELY(error != 0) { Dee_DECREF(*cwd_); if (cmd_) Dee_DECREF(*cmd_); goto err_read_wow64; }
   }
  } else
 #endif
@@ -428,20 +431,20 @@ err_read_wow64:
    p_NtQueryInformationProcess = (LPNTQUERYINFORMATIONPROCESS)GetProcAddress(
     GetModuleHandle(TEXT("ntdll.dll")),"NtQueryInformationProcess");
   });
-  if (!p_NtQueryInformationProcess) { DeeError_NotImplemented_str("NtQueryInformationProcess"); goto err; }
+  if DEE_UNLIKELY(!p_NtQueryInformationProcess) { DeeError_NotImplemented_str("NtQueryInformationProcess"); goto err; }
   error = (DWORD)(*p_NtQueryInformationProcess)(process_handle,0,&pbi,sizeof(pbi),NULL);
-  if (error != 0) { DeeError_SystemError("NtQueryInformationProcess"); goto err; }
+  if DEE_UNLIKELY(error != 0) { DeeError_SystemError("NtQueryInformationProcess"); goto err; }
   // read PEB
-  if (!ReadProcessMemory(process_handle,pbi.PebBaseAddress,peb,pebSize,NULL)) {
+  if DEE_UNLIKELY(!ReadProcessMemory(process_handle,pbi.PebBaseAddress,peb,pebSize,NULL)) {
 err_read:
    if ((flags&DEE_PROCESS_PEB_FLAG_CORRECTRIGHTS)==0) {
     // Retry with the correct rights
-    if ((process_handle = _DeeProcess_Win32AcquireRight(
+    if DEE_UNLIKELY((process_handle = _DeeProcess_Win32AcquireRight(
      process_handle,PROCESS_QUERY_INFORMATION|PROCESS_VM_READ)
      ) == NULL) return -1;
     result = _DeeProcess_Win32GetPEBInfoEx(
      process_handle,flags|DEE_PROCESS_PEB_FLAG_CORRECTRIGHTS,cmd_,cwd_);
-    if (!CloseHandle(process_handle)) SetLastError(0);
+    if DEE_UNLIKELY(!CloseHandle(process_handle)) SetLastError(0);
     goto end;
    }
    DeeError_SystemError("ReadProcessMemory");
@@ -449,22 +452,22 @@ err_read:
   }
   // read ProcessParameters
   parameters = (PBYTE*)*(LPVOID*)(peb+offsets->ProcessParametersOffset); // address in remote process adress space
-  if (!ReadProcessMemory(process_handle,parameters,pp,ppSize,NULL)) goto err_read;
+  if DEE_UNLIKELY(!ReadProcessMemory(process_handle,parameters,pp,ppSize,NULL)) goto err_read;
   if (cmd_) { // read CommandLine
    pCommandLine = (UNICODE_STRING*)(pp+offsets->CommandLineOffset);
-   if ((system_cmd = (DeeAnyStringObject *)DeeWideString_NewSized(
+   if DEE_UNLIKELY((system_cmd = (DeeAnyStringObject *)DeeWideString_NewSized(
     pCommandLine->Length/sizeof(Dee_WideChar))) == NULL) goto err;
-   if (!ReadProcessMemory(process_handle,pCommandLine->Buffer,DeeWideString_STR(
+   if DEE_UNLIKELY(!ReadProcessMemory(process_handle,pCommandLine->Buffer,DeeWideString_STR(
     system_cmd),pCommandLine->Length,NULL)) { Dee_DECREF(system_cmd); goto err_read; }
    while (DeeWideString_SIZE(system_cmd) &&
           DEE_CH_IS_SPACE(DeeWideString_STR(system_cmd)[DeeWideString_SIZE(system_cmd)-1])
-          ) --system_cmd->s_len;
+          ) --system_cmd->as_len;
    Dee_INHERIT_REF(*cmd_,*(DeeObject **)&system_cmd);
   }
   if (cwd_) { // read Current Working directory
    pCommandLine = (UNICODE_STRING*)(pp+offsets->CurrentWorkingDirectoryOffset);
-   if ((*cwd_ = DeeWideString_NewSized(pCommandLine->Length/sizeof(Dee_WideChar))) == NULL) goto err2;
-   if (!ReadProcessMemory(process_handle,pCommandLine->Buffer,DeeWideString_STR(
+   if DEE_UNLIKELY((*cwd_ = DeeWideString_NewSized(pCommandLine->Length/sizeof(Dee_WideChar))) == NULL) goto err2;
+   if DEE_UNLIKELY(!ReadProcessMemory(process_handle,pCommandLine->Buffer,DeeWideString_STR(
     *cwd_),pCommandLine->Length,NULL)) { Dee_DECREF(*cwd_); if (cmd_) Dee_DECREF(*cmd_); goto err_read; }
   }
  }
@@ -477,7 +480,7 @@ err: result = -1; goto end;
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *)
 _DeeProcess_WideWin32Cmd(DEE_A_IN HANDLE process_handle, DEE_A_IN int exe_on_fail) {
  DeeObject *result;
- if (_DeeProcess_Win32GetPEBInfo(process_handle,&result,NULL) != 0) {
+ if DEE_UNLIKELY(_DeeProcess_Win32GetPEBInfo(process_handle,&result,NULL) != 0) {
   if (!exe_on_fail) return NULL;
   result = _DeeProcess_WideWin32Exe(process_handle);
   DeeError_Handled(); // Handle another error, or the first
@@ -487,22 +490,22 @@ _DeeProcess_WideWin32Cmd(DEE_A_IN HANDLE process_handle, DEE_A_IN int exe_on_fai
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *)
 _DeeProcess_Utf8Win32Cmd(DEE_A_IN HANDLE process_handle, DEE_A_IN int exe_on_fail) {
  DeeObject *result;
- if ((result = _DeeProcess_WideWin32Cmd(process_handle,exe_on_fail)) != NULL)
-  if (DeeUtf8String_InplaceCast((DeeObject const **)&result) != 0)
+ if DEE_UNLIKELY((result = _DeeProcess_WideWin32Cmd(process_handle,exe_on_fail)) != NULL)
+  if DEE_UNLIKELY(DeeUtf8String_InplaceCast((DeeObject const **)&result) != 0)
    Dee_CLEAR(result);
  return result;
 }
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *)
 _DeeProcess_WideWin32Cwd(DEE_A_IN HANDLE process_handle) {
  DeeObject *result;
- if (_DeeProcess_Win32GetPEBInfo(process_handle,NULL,&result) != 0) return NULL;
+ if DEE_UNLIKELY(_DeeProcess_Win32GetPEBInfo(process_handle,NULL,&result) != 0) return NULL;
  return result;
 }
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *)
 _DeeProcess_Utf8Win32Cwd(DEE_A_IN HANDLE process_handle) {
  DeeObject *result;
- if ((result = _DeeProcess_WideWin32Cwd(process_handle)) != NULL)
-  if (DeeUtf8String_InplaceCast((DeeObject const **)&result) != 0)
+ if DEE_UNLIKELY((result = _DeeProcess_WideWin32Cwd(process_handle)) != NULL)
+  if DEE_UNLIKELY(DeeUtf8String_InplaceCast((DeeObject const **)&result) != 0)
    Dee_CLEAR(result);
  return result;
 }

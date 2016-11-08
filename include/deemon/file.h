@@ -166,8 +166,17 @@ struct DeeFileIOObject {
 union{
  DEE_A_REF DeeUtf8StringObject *fio_utf8file; /*< [1..1] Utf8 name of the file that was opened. */
  DEE_A_REF DeeWideStringObject *fio_widefile; /*< [1..1] Wide name of the file that was opened. */
-};
+}
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define fio_utf8file _fio_filename.fio_utf8file
+#define fio_widefile _fio_filename.fio_widefile
+ _fio_filename
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+;
  Dee_uint16_t                   fio_mode;     /*< The mode the file was opened under. */
+#if DEE_PLATFORM_HAVE_IO_HANDLE || \
+    DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H || \
+    DEE_CONFIG_RUNTIME_HAVE_VFS
  union{
 #if DEE_PLATFORM_HAVE_IO_HANDLE
   DeeIOHandle                   fio_handle;   /*< [0..1] File handle. */
@@ -180,7 +189,18 @@ union{
    void                    *fio_data; /*< [?..?] VFS Data. */
   } fio_vfs;
 #endif
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#if DEE_PLATFORM_HAVE_IO_HANDLE || DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
+#define fio_handle _fio_handledata.fio_handle
+#endif /* DEE_PLATFORM_HAVE_IO_HANDLE || DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H */
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+#define fio_vfs    _fio_handledata.fio_vfs
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
+ _fio_handledata
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+#endif
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 #endif /* DEE_LIMITED_DEX */
@@ -549,7 +569,7 @@ DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int
 #define /*DEE_A_EXEC*/ DeeFile_StdPrintf(printer,...)       DEE_GCC_EXTENSION({int _temp_result;DeeObject*const _temp_fp=DeeFile_Std(printer);_temp_result=DeeFile_Printf(_temp_fp,__VA_ARGS__);Dee_DECREF(_temp_fp);_temp_result;})
 #else /* DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_VStdPrintf(DEE_A_IN enum DeeStdPrinter printer, DEE_A_IN_PRINTF char const *fmt, DEE_A_IN va_list args) { int result; DeeObject *const fp = DeeFile_Std(printer); result = DeeFile_VPrintf(fp,fmt,args); Dee_DECREF(fp); return result; }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_StdPrintf(DEE_A_IN enum DeeStdPrinter printer, DEE_A_IN_PRINTF char const *fmt, ...) { int result; va_list args; DeeObject *const fp = DeeFile_Std(printer); va_start(args,fmt); result = DeeFile_VPrintf(fp,fmt,args); va_end(args); Dee_DECREF(fp); return result; }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_StdPrintf(DEE_A_IN enum DeeStdPrinter printer, DEE_A_IN_PRINTF char const *fmt, ...) { int result; va_list args; DeeObject *const fp = DeeFile_Std(printer); DEE_VA_START(args,fmt); result = DeeFile_VPrintf(fp,fmt,args); DEE_VA_END(args); Dee_DECREF(fp); return result; }
 #endif /* !DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 #define /*DEE_A_EXEC*/ DeeFile_STDPRINT(printer,str_) DeeFile_StdWriteAll(printer,str_,(sizeof(str_)/sizeof(char))-1)

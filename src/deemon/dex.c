@@ -55,7 +55,7 @@
 
 DEE_DECL_BEGIN
 
-typedef DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDeeDexMain)(DEE_A_INOUT struct DeeDexContext *context);
+typedef DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDeeDexMain)(DEE_A_INOUT DeeDexContext *context);
 
 struct DeeDexModuleObject {
  DEE_OBJECT_HEAD
@@ -102,63 +102,63 @@ do{\
 #ifdef DEE_DEBUG
 static void _DeeDexModule_DebugCheckIntegrity(DeeDexModuleObject *self) {
  struct DeeDexExportDef *iter,*iter2;
- for (iter = self->dm_exports; iter->de_name; ++iter) {
-  for (iter2 = iter+1; iter2->de_name; ++iter2) {
-   if (strcmp(iter->de_name,iter2->de_name) == 0) {
+ for (iter = self->dm_exports; iter->dxe_name; ++iter) {
+  for (iter2 = iter+1; iter2->dxe_name; ++iter2) {
+   if (strcmp(iter->dxe_name,iter2->dxe_name) == 0) {
     if (DeeFile_StdPrintf(DEE_STDERR,
      "[dex %r][export %q] Export listed more than once\n",
-     self->dm_name,iter->de_name) != 0) DeeError_Print(NULL,1);
+     self->dm_name,iter->dxe_name) != 0) DeeError_Print(NULL,1);
    }
   }
-  switch (iter->de_kind) {
+  switch (iter->dxe_kind) {
    case DEE_DEX_EXPORT_TYPE_OBJECT:
-    if (!DeeObject_Check(iter->de_object)) {
+    if (!DeeObject_Check(iter->dxe_object)) {
      if (DeeFile_StdPrintf(DEE_STDERR,
       "[dex %r][export %q][DEE_DEX_EXPORT_TYPE_OBJECT] Invalid object at %p\n",
-      self->dm_name,iter->de_name,iter->de_object) != 0) DeeError_Print(NULL,1);
+      self->dm_name,iter->dxe_name,iter->dxe_object) != 0) DeeError_Print(NULL,1);
     }
     break;
    case DEE_DEX_EXPORT_TYPE_GENERATOR:
-    if (iter->de_generator.de_cache != NULL) {
+    if (iter->dxe_generator.dxe_gn_cache != NULL) {
      if (DeeFile_StdPrintf(DEE_STDERR,
       "[dex %r][export %q][DEE_DEX_EXPORT_TYPE_GENERATOR] "
       "Generator cache incorrectly initialized to %p instead of NULL "
       "(this would cause a crash in non-debug builds)\n",
-      self->dm_name,iter->de_name,iter->de_generator.de_cache) != 0) DeeError_Print(NULL,1);
-     iter->de_generator.de_cache = NULL;
+      self->dm_name,iter->dxe_name,iter->dxe_generator.dxe_gn_cache) != 0) DeeError_Print(NULL,1);
+     iter->dxe_generator.dxe_gn_cache = NULL;
     }
-    if (iter->de_generator.de_ctor == NULL) {
+    if (iter->dxe_generator.dxe_gn_ctor == NULL) {
      if (DeeFile_StdPrintf(DEE_STDERR,
       "[dex %r][export %q][DEE_DEX_EXPORT_TYPE_GENERATOR] "
       "Invalid generator constructor (may not be NULL)\n",
-      self->dm_name,iter->de_name) != 0) DeeError_Print(NULL,1);
-     iter->de_generator.de_cache = NULL;
+      self->dm_name,iter->dxe_name) != 0) DeeError_Print(NULL,1);
+     iter->dxe_generator.dxe_gn_cache = NULL;
     }
     break;
    case DEE_DEX_EXPORT_TYPE_GETSET: break;
    case DEE_DEX_EXPORT_TYPE_OBJECTINL:
-    if (!DeeObject_Check(&iter->de_objectinl)) {
+    if (!DeeObject_Check(&iter->dxe_objectinl)) {
      if (DeeFile_StdPrintf(DEE_STDERR,
       "[dex %r][export %q][DEE_DEX_EXPORT_TYPE_OBJECTINL] Invalid inlined object at %p\n",
-      self->dm_name,iter->de_name,&iter->de_objectinl) != 0) DeeError_Print(NULL,1);
+      self->dm_name,iter->dxe_name,&iter->dxe_objectinl) != 0) DeeError_Print(NULL,1);
     }
     break;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS || 1
    case DEE_DEX_EXPORT_TYPE_NATIVE_FUNCTION: {
-    if (!iter->de_native_function.nf_function) {
+    if (!iter->dxe_native_function.dxe_nf_function) {
      if (DeeFile_StdPrintf(DEE_STDERR,
       "[dex %r][export %q][DEE_DEX_EXPORT_TYPE_NATIVE_FUNCTION] Invalid native function pointer: NULL\n",
-      self->dm_name,iter->de_name) != 0) DeeError_Print(NULL,1);
+      self->dm_name,iter->dxe_name) != 0) DeeError_Print(NULL,1);
     }
-    if (!iter->de_native_function.nf_type) {
+    if (!iter->dxe_native_function.dxe_nf_type) {
      if (DeeFile_StdPrintf(DEE_STDERR,
       "[dex %r][export %q][DEE_DEX_EXPORT_TYPE_NATIVE_FUNCTION] Invalid native function type: NULL\n",
-      self->dm_name,iter->de_name) != 0) DeeError_Print(NULL,1);
-    } else if (!DeeType_Structf(iter->de_native_function.nf_type)) {
+      self->dm_name,iter->dxe_name) != 0) DeeError_Print(NULL,1);
+    } else if (!DeeType_Structf(iter->dxe_native_function.dxe_nf_type)) {
      DeeError_Print("Error while testing dex native function export type",1);
      if (DeeFile_StdPrintf(DEE_STDERR,
       "[dex %r][export %q][DEE_DEX_EXPORT_TYPE_NATIVE_FUNCTION] Failed to create native function export type from %q\n",
-      self->dm_name,iter->de_name,iter->de_native_function.nf_type) != 0) DeeError_Print(NULL,1);
+      self->dm_name,iter->dxe_name,iter->dxe_native_function.dxe_nf_type) != 0) DeeError_Print(NULL,1);
     }
    } break;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
@@ -169,7 +169,7 @@ static void _DeeDexModule_DebugCheckIntegrity(DeeDexModuleObject *self) {
    default:
     if (DeeFile_StdPrintf(DEE_STDERR,
      "[dex %r][export %q] Invalid/Unsupported kind of export: 0x%.8I32x\n",
-     self->dm_name,iter->de_name,iter->de_kind) != 0) DeeError_Print(NULL,1);
+     self->dm_name,iter->dxe_name,iter->dxe_kind) != 0) DeeError_Print(NULL,1);
     break;
   }
  }
@@ -209,7 +209,7 @@ wait_init:
 #endif
    DEE_LVERBOSE1("Loading extension %r...\n",self->dm_name);
    if (self->dm_main) {
-    struct DeeDexContext ctx; int temp;
+    DeeDexContext ctx; int temp;
     ctx.dc_kind = DEE_DEXCONTEXTKIND_INITIALIZE;
     ctx.dc_initialize.ci_reason = init_reason;
     ctx.dc_initialize.dc_self = (DeeObject *)self;
@@ -294,12 +294,12 @@ static void DeeDexModule_Shutdown(
  //   We need to go though all of the dex'es exports and destroy generator caches
  // NOTE: Since the dex was shut down, we have exclusive access to the export table
  xiter = self->dm_exports;
- while (xiter->de_name) {
-  if (xiter->de_kind == DEE_DEX_EXPORT_TYPE_GENERATOR && xiter->de_generator.de_cache) {
-   DeeObject *cache_entry = xiter->de_generator.de_cache;
-   xiter->de_generator.de_cache = NULL;
-   if (xiter->de_generator.de_dtor)
-    (*xiter->de_generator.de_dtor)(cache_entry);
+ while (xiter->dxe_name) {
+  if (xiter->dxe_kind == DEE_DEX_EXPORT_TYPE_GENERATOR && xiter->dxe_generator.dxe_gn_cache) {
+   DeeObject *cache_entry = xiter->dxe_generator.dxe_gn_cache;
+   xiter->dxe_generator.dxe_gn_cache = NULL;
+   if (xiter->dxe_generator.dxe_gn_dtor)
+    (*xiter->dxe_generator.dxe_gn_dtor)(cache_entry);
    else Dee_DECREF(cache_entry);
   }
   ++xiter;
@@ -308,7 +308,7 @@ static void DeeDexModule_Shutdown(
  // Finally, call the actual finalizer of the dex
  DEE_LVERBOSE1("Unloading extension %r...\n",self->dm_name);
  if ((old_flags&DEE_DEXMODULE_FLAGS_STATE_INITIALIZED)!=0 && self->dm_main) {
-  struct DeeDexContext ctx; int temp;
+  DeeDexContext ctx; int temp;
   // The dex was in fact initialized (time to finalize it)
   ctx.dc_kind = DEE_DEXCONTEXTKIND_FINALIZE;
   ctx.dc_finalize.cf_reason = quit_reason;
@@ -604,9 +604,9 @@ DeeDex_VCallf(DEE_A_IN_Z char const *name_and_fmt, DEE_A_IN va_list args) {
 DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *
 DeeDex_Callf(DEE_A_IN_Z char const *name_and_fmt, ...) {
  va_list args; DeeObject *result;
- va_start(args,name_and_fmt);
+ DEE_VA_START(args,name_and_fmt);
  result = DeeDex_VCallf(name_and_fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 
@@ -651,9 +651,9 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeDex_VCallAndCastf(
 DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeDex_CallAndCastf(
  DEE_A_OUT void *result, DEE_A_IN_Z char const *name_and_fmt_and_result, ...) {
  va_list args; int error;
- va_start(args,name_and_fmt_and_result);
+ DEE_VA_START(args,name_and_fmt_and_result);
  error = DeeDex_VCallAndCastf(result,name_and_fmt_and_result,args);
- va_end(args);
+ DEE_VA_END(args);
  return error;
 }
 
@@ -1063,24 +1063,24 @@ DEE_A_RET_EXCEPT(-1) int DeeDexModule_EnumAttr(
  if DEE_UNLIKELY(DeeDexModule_Acquire(self,
   DEE_DEXCONTEXT_INITIALIZE_REASON_ENUMXP) != 0) return -1;
  xiter = self->dm_exports,result = 0;
- while (xiter->de_name) {
-  switch (xiter->de_kind) {
+ while (xiter->dxe_name) {
+  switch (xiter->dxe_kind) {
    case DEE_DEX_EXPORT_TYPE_OBJECT:
-    DEE_ASSERT(DeeObject_Check(xiter->de_object));
-    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->de_name,
+    DEE_ASSERT(DeeObject_Check(xiter->dxe_object));
+    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->dxe_name,
                           DEE_ENUMATTRIBUTE_FLAG_PERMISSION_GET,
-                          Dee_TYPE(xiter->de_object),closure);
+                          Dee_TYPE(xiter->dxe_object),closure);
     break;
    case DEE_DEX_EXPORT_TYPE_GENERATOR: {
     DeeTypeObject *attr_type;
     if DEE_UNLIKELY(DeeNativeMutex_Acquire(&self->dm_cachelock) != 0) result = -1;
     else {
-     if (xiter->de_generator.de_cache) {
-      Dee_INCREF(attr_type = Dee_TYPE(xiter->de_generator.de_cache));
+     if (xiter->dxe_generator.dxe_gn_cache) {
+      Dee_INCREF(attr_type = Dee_TYPE(xiter->dxe_generator.dxe_gn_cache));
      } else attr_type = NULL;
      result = DeeNativeMutex_Release(&self->dm_cachelock);
      if DEE_LIKELY(result == 0) result = (*enum_attr)(
-      &DeeDexModule_Type,(DeeObject *)self,xiter->de_name,
+      &DeeDexModule_Type,(DeeObject *)self,xiter->dxe_name,
       DEE_ENUMATTRIBUTE_FLAG_PERMISSION_GET|
       DEE_ENUMATTRIBUTE_FLAG_PERMISSION_DEL,attr_type,closure);
      Dee_XDECREF(attr_type);
@@ -1088,25 +1088,25 @@ DEE_A_RET_EXCEPT(-1) int DeeDexModule_EnumAttr(
    } break;
    case DEE_DEX_EXPORT_TYPE_GETSET: {
     Dee_uint32_t flags = DEE_ENUMATTRIBUTE_FLAG_NONE;
-    if (xiter->de_getset.de_get) flags |= DEE_ENUMATTRIBUTE_FLAG_PERMISSION_GET;
-    if (xiter->de_getset.de_del) flags |= DEE_ENUMATTRIBUTE_FLAG_PERMISSION_DEL;
-    if (xiter->de_getset.de_set) flags |= DEE_ENUMATTRIBUTE_FLAG_PERMISSION_SET;
-    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->de_name,
-                          flags,Dee_TYPE(&xiter->de_objectinl),closure);
+    if (xiter->dxe_getset.dxe_gs_get) flags |= DEE_ENUMATTRIBUTE_FLAG_PERMISSION_GET;
+    if (xiter->dxe_getset.dxe_gs_del) flags |= DEE_ENUMATTRIBUTE_FLAG_PERMISSION_DEL;
+    if (xiter->dxe_getset.dxe_gs_set) flags |= DEE_ENUMATTRIBUTE_FLAG_PERMISSION_SET;
+    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->dxe_name,
+                          flags,Dee_TYPE(&xiter->dxe_objectinl),closure);
    } break;
    case DEE_DEX_EXPORT_TYPE_OBJECTINL:
-    DEE_ASSERT(DeeObject_Check(&xiter->de_objectinl));
-    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->de_name,
+    DEE_ASSERT(DeeObject_Check(&xiter->dxe_objectinl));
+    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->dxe_name,
                           DEE_ENUMATTRIBUTE_FLAG_PERMISSION_GET,
-                          Dee_TYPE(&xiter->de_objectinl),closure);
+                          Dee_TYPE(&xiter->dxe_objectinl),closure);
     break;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
    case DEE_DEX_EXPORT_TYPE_NATIVE_FUNCTION: {
     DeeTypeObject *attr_type;
-    attr_type = DeeType_Structf(xiter->de_native_function.nf_type);
+    attr_type = DeeType_Structf(xiter->dxe_native_function.dxe_nf_type);
     if DEE_LIKELY(attr_type) attr_type = DeeType_LValue(attr_type);
     result = DEE_LIKELY(attr_type) ? (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,
-                                                  xiter->de_name,DEE_ENUMATTRIBUTE_FLAG_PERMISSION_GET,
+                                                  xiter->dxe_name,DEE_ENUMATTRIBUTE_FLAG_PERMISSION_GET,
                                                   attr_type,closure) : -1;
    } break;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
@@ -1120,12 +1120,12 @@ DEE_A_RET_EXCEPT(-1) int DeeDexModule_EnumAttr(
     if (0) { case DEE_DEX_EXPORT_TYPE_UINT16: attr_type = (DeeTypeObject *)&DeeUInt16_Type; }
     if (0) { case DEE_DEX_EXPORT_TYPE_UINT32: attr_type = (DeeTypeObject *)&DeeUInt32_Type; }
     if (0) { case DEE_DEX_EXPORT_TYPE_UINT64: attr_type = (DeeTypeObject *)&DeeUInt64_Type; }
-    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->de_name,
+    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->dxe_name,
                           DEE_ENUMATTRIBUTE_FLAG_PERMISSION_GET,attr_type,closure);
    } break;
 
    default: // Unknown attribute...
-    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->de_name,
+    result = (*enum_attr)(&DeeDexModule_Type,(DeeObject *)self,xiter->dxe_name,
                           DEE_ENUMATTRIBUTE_FLAG_PERMISSION_GET,
                           NULL,closure);
     break;
@@ -1180,49 +1180,49 @@ DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *DeeDexModule_GetAttrString(
  if DEE_UNLIKELY(DeeDexModule_Acquire((DeeDexModuleObject *)self,
   DEE_DEXCONTEXT_INITIALIZE_REASON_GETTER) != 0) return NULL;
  xiter = ((DeeDexModuleObject *)self)->dm_exports;
- while (xiter->de_name) {
-  if (strcmp(xiter->de_name,name) == 0) {
-   switch (xiter->de_kind) {
+ while (xiter->dxe_name) {
+  if (strcmp(xiter->dxe_name,name) == 0) {
+   switch (xiter->dxe_kind) {
     // found it
     case DEE_DEX_EXPORT_TYPE_OBJECT: {
-     DEE_ASSERT(DeeObject_Check(xiter->de_object));
-     Dee_INCREF(result = xiter->de_object);
+     DEE_ASSERT(DeeObject_Check(xiter->dxe_object));
+     Dee_INCREF(result = xiter->dxe_object);
     } goto end;
     case DEE_DEX_EXPORT_TYPE_GENERATOR: {
      if DEE_UNLIKELY(DeeNativeMutex_Acquire(&((DeeDexModuleObject *)self)->dm_cachelock) != 0) goto err;
-     if (xiter->de_generator.de_cache) {
+     if (xiter->dxe_generator.dxe_gn_cache) {
       // Use existing cache
-      Dee_INCREF(result = xiter->de_generator.de_cache);
+      Dee_INCREF(result = xiter->dxe_generator.dxe_gn_cache);
      } else {
-      DEE_ASSERT(xiter->de_generator.de_ctor);
-      result = (*xiter->de_generator.de_ctor)();
-      Dee_XINCREF(xiter->de_generator.de_cache = result);
+      DEE_ASSERT(xiter->dxe_generator.dxe_gn_ctor);
+      result = (*xiter->dxe_generator.dxe_gn_ctor)();
+      Dee_XINCREF(xiter->dxe_generator.dxe_gn_cache = result);
      }
      DeeNativeMutex_ReleaseNoexcept(&((DeeDexModuleObject *)self)->dm_cachelock);
     } goto end;
     case DEE_DEX_EXPORT_TYPE_GETSET: {
-     if DEE_LIKELY(xiter->de_getset.de_get) {
-      result = (*xiter->de_getset.de_get)();
+     if DEE_LIKELY(xiter->dxe_getset.dxe_gs_get) {
+      result = (*xiter->dxe_getset.dxe_gs_get)();
      } else goto noread;
     } goto end;
     case DEE_DEX_EXPORT_TYPE_OBJECTINL: {
-     DEE_ASSERT(DeeObject_Check(&xiter->de_objectinl));
-     Dee_INCREF(result = &xiter->de_objectinl);
+     DEE_ASSERT(DeeObject_Check(&xiter->dxe_objectinl));
+     Dee_INCREF(result = &xiter->dxe_objectinl);
     } goto end;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
     case DEE_DEX_EXPORT_TYPE_NATIVE_FUNCTION: {
-     result = DeeLValue_Newf(xiter->de_native_function.nf_function,
-                             xiter->de_native_function.nf_type);
+     result = DeeLValue_Newf(xiter->dxe_native_function.dxe_nf_function,
+                             xiter->dxe_native_function.dxe_nf_type);
     } goto end;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
-    case DEE_DEX_EXPORT_TYPE_INT8: result = DeeInt8_New(xiter->de_const.c_i8); goto end;
-    case DEE_DEX_EXPORT_TYPE_INT16: result = DeeInt16_New(xiter->de_const.c_i16); goto end;
-    case DEE_DEX_EXPORT_TYPE_INT32: result = DeeInt32_New(xiter->de_const.c_i32); goto end;
-    case DEE_DEX_EXPORT_TYPE_INT64: result = DeeInt64_New(xiter->de_const.c_i64); goto end;
-    case DEE_DEX_EXPORT_TYPE_UINT8: result = DeeUInt8_New(xiter->de_const.c_ui8); goto end;
-    case DEE_DEX_EXPORT_TYPE_UINT16: result = DeeUInt16_New(xiter->de_const.c_ui16); goto end;
-    case DEE_DEX_EXPORT_TYPE_UINT32: result = DeeUInt32_New(xiter->de_const.c_ui32); goto end;
-    case DEE_DEX_EXPORT_TYPE_UINT64: result = DeeUInt64_New(xiter->de_const.c_ui64); goto end;
+    case DEE_DEX_EXPORT_TYPE_INT8: result = DeeInt8_New(xiter->dxe_const.dxe_c_i8); goto end;
+    case DEE_DEX_EXPORT_TYPE_INT16: result = DeeInt16_New(xiter->dxe_const.dxe_c_i16); goto end;
+    case DEE_DEX_EXPORT_TYPE_INT32: result = DeeInt32_New(xiter->dxe_const.dxe_c_i32); goto end;
+    case DEE_DEX_EXPORT_TYPE_INT64: result = DeeInt64_New(xiter->dxe_const.dxe_c_i64); goto end;
+    case DEE_DEX_EXPORT_TYPE_UINT8: result = DeeUInt8_New(xiter->dxe_const.dxe_c_ui8); goto end;
+    case DEE_DEX_EXPORT_TYPE_UINT16: result = DeeUInt16_New(xiter->dxe_const.dxe_c_ui16); goto end;
+    case DEE_DEX_EXPORT_TYPE_UINT32: result = DeeUInt32_New(xiter->dxe_const.dxe_c_ui32); goto end;
+    case DEE_DEX_EXPORT_TYPE_UINT64: result = DeeUInt64_New(xiter->dxe_const.dxe_c_ui64); goto end;
     default:noread: {
      DeeError_SetStringf(&DeeErrorType_AttributeError,
                          "Export %q of dex %k cannot be read",
@@ -1249,8 +1249,8 @@ DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeDexModule_HasAttrString(
  if DEE_UNLIKELY(DeeDexModule_Acquire((DeeDexModuleObject *)self,
   DEE_DEXCONTEXT_INITIALIZE_REASON_HASXPT) != 0) return -1;
  xiter = ((DeeDexModuleObject *)self)->dm_exports;
- while (xiter->de_name) {
-  if (strcmp(xiter->de_name,name) == 0) { result = 1; goto end; }
+ while (xiter->dxe_name) {
+  if (strcmp(xiter->dxe_name,name) == 0) { result = 1; goto end; }
   ++xiter;
  }
  result = 0;
@@ -1267,26 +1267,26 @@ DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeDexModule_DelAttrString(
  if DEE_UNLIKELY(DeeDexModule_Acquire((DeeDexModuleObject *)self,
   DEE_DEXCONTEXT_INITIALIZE_REASON_DELETE) != 0) return -1;
  xiter = ((DeeDexModuleObject *)self)->dm_exports;
- while (xiter->de_name) {
-  if (strcmp(xiter->de_name,name) == 0) {
-   switch (xiter->de_kind) {
+ while (xiter->dxe_name) {
+  if (strcmp(xiter->dxe_name,name) == 0) {
+   switch (xiter->dxe_kind) {
     // found it
     case DEE_DEX_EXPORT_TYPE_GENERATOR: {
      DeeObject *existing_cache;
      if DEE_UNLIKELY(DeeNativeMutex_Acquire(&((DeeDexModuleObject *)self)->dm_cachelock) != 0) goto err;
-     if ((existing_cache = xiter->de_generator.de_cache) != NULL) {
-      xiter->de_generator.de_cache = NULL;
+     if ((existing_cache = xiter->dxe_generator.dxe_gn_cache) != NULL) {
+      xiter->dxe_generator.dxe_gn_cache = NULL;
       // Delete existing cache
-      if (xiter->de_generator.de_dtor) {
-       (*xiter->de_generator.de_dtor)(existing_cache);
+      if (xiter->dxe_generator.dxe_gn_dtor) {
+       (*xiter->dxe_generator.dxe_gn_dtor)(existing_cache);
       } else Dee_DECREF(existing_cache);
       result = 0;
      } else result = 1;
      DeeNativeMutex_ReleaseNoexcept(&((DeeDexModuleObject *)self)->dm_cachelock);
     } goto end;
     case DEE_DEX_EXPORT_TYPE_GETSET: {
-     if DEE_LIKELY(xiter->de_getset.de_del) {
-      result = (*xiter->de_getset.de_del)();
+     if DEE_LIKELY(xiter->dxe_getset.dxe_gs_del) {
+      result = (*xiter->dxe_getset.dxe_gs_del)();
      } else goto nodel;
     } goto end;
     default:nodel: {
@@ -1315,13 +1315,13 @@ DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeDexModule_SetAttrString(
  if DEE_UNLIKELY(DeeDexModule_Acquire((DeeDexModuleObject *)self,
   DEE_DEXCONTEXT_INITIALIZE_REASON_DELETE) != 0) return -1;
  xiter = ((DeeDexModuleObject *)self)->dm_exports;
- while (xiter->de_name) {
-  if (strcmp(xiter->de_name,name) == 0) {
-   switch (xiter->de_kind) {
+ while (xiter->dxe_name) {
+  if (strcmp(xiter->dxe_name,name) == 0) {
+   switch (xiter->dxe_kind) {
     // found it
     case DEE_DEX_EXPORT_TYPE_GETSET: {
-     if DEE_LIKELY(xiter->de_getset.de_set) {
-      result = (*xiter->de_getset.de_set)(v);
+     if DEE_LIKELY(xiter->dxe_getset.dxe_gs_set) {
+      result = (*xiter->dxe_getset.dxe_gs_set)(v);
      } else goto noset;
     } goto end;
     default:noset: {
@@ -1364,7 +1364,7 @@ DEE_A_RET_WUNUSED Dee_uint16_t DeeDexModule_Flags(
 
 DEE_A_EXEC Dee_size_t DeeDexModule_CollectMemoryEx(
  DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN Dee_uint32_t reason) {
- struct DeeDexContext ctx;
+ DeeDexContext ctx;
  DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
  if (DeeDexModule_TryAcquire(self) != DEE_DEX_TRYACQUIRE_SUCCESS) return 0;
  if (!self->dm_main) { ctx.dc_collectmem.ccm_total = 0; goto end; }
@@ -1424,7 +1424,7 @@ static void DEE_CALL _deedexmodule_tp_dtor(DeeDexModuleObject *self) {
 }
 
 DEE_VISIT_PROC(_deedexmodule_tp_visit,DeeDexModuleObject *self) {
- struct DeeDexExportDef *xiter; struct DeeDexContext ctx;
+ struct DeeDexExportDef *xiter; DeeDexContext ctx;
  DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
  Dee_VISIT(self->dm_name);
  if (DeeDexModule_TryAcquire(self) != DEE_DEX_TRYACQUIRE_SUCCESS) return;
@@ -1442,9 +1442,9 @@ DEE_VISIT_PROC(_deedexmodule_tp_visit,DeeDexModuleObject *self) {
  }
 end:
  xiter = self->dm_exports;
- while (xiter->de_name) {
-  if (xiter->de_kind == DEE_DEX_EXPORT_TYPE_GENERATOR)
-   Dee_XVISIT(xiter->de_generator.de_cache);
+ while (xiter->dxe_name) {
+  if (xiter->dxe_kind == DEE_DEX_EXPORT_TYPE_GENERATOR)
+   Dee_XVISIT(xiter->dxe_generator.dxe_gn_cache);
   ++xiter;
  }
 

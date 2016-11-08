@@ -500,17 +500,16 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(DeeHashSet_ContainsPred)(
 DEE_A_RET_EXCEPT_REF DeeObject *FUNC(DeeHashSet_PopSomething)(
  DEE_A_INOUT struct DeeHashSet *self LOCK_ARG(DEE_A_INOUT)) {
  Dee_size_t new_bucket_count;
- Dee_hash_t old_hash;
+ Dee_hash_t old_hash; DeeObject *result;
  DEE_ASSERT(self);
- DeeObject *result;
 again:
  ACQUIRE;
- if (!self->hs_buckets) { // empty self doesn't contain anything!
+ if DEE_UNLIKELY(!self->hs_buckets) { // empty self doesn't contain anything!
   RELEASE;
   DeeError_SET_STRING(&DeeErrorType_ValueError,"Empty mapping");
   return NULL;
  }
- if ((result = _DeeHashSetBucket_TryPopSomething(
+ if DEE_LIKELY((result = _DeeHashSetBucket_TryPopSomething(
   self->hs_valid_buckets_begin,&old_hash)) != NULL) {
   new_bucket_count = _DeeSetCapacityOf(_DeeCeil(
    (--self->hs_map_size)*self->hs_max_load_factor));

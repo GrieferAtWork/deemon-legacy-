@@ -104,7 +104,7 @@ struct file: object {
  public: /* public methods */
   inline void print(DEE_A_IN_Z char const *s) const { if (DeeFile_Print(this->ob_ptr,s) != 0) detail::throw_last_error(); }
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
-  inline void printf(DEE_A_IN_PRINTF char const *fmt, ...) const { va_list args; int error; va_start(args,fmt); error = DeeFile_VPrintf(this->ob_ptr,fmt,args); va_end(args); if (error != 0) detail::throw_last_error(); }
+  inline void printf(DEE_A_IN_PRINTF char const *fmt, ...) const { va_list args; int error; DEE_VA_START(args,fmt); error = DeeFile_VPrintf(this->ob_ptr,fmt,args); DEE_VA_END(args); if (error != 0) detail::throw_last_error(); }
   inline void vprintf(DEE_A_IN_PRINTF char const *fmt, DEE_A_IN va_list args) const { if (DeeFile_VPrintf(this->ob_ptr,fmt,args) != 0) detail::throw_last_error(); }
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
  public: /* public methods */

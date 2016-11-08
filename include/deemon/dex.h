@@ -75,7 +75,7 @@ typedef DEE_A_RET_EXCEPT(-1) int (DEE_CALL *DeeDexSetter)(DEE_A_IN DeeObject *ob
 
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeDexExportDef {
- char const         *de_name;   /*< [0..1] Name of the export. (NULL for end of export list) */
+ char const         *dxe_name;   /*< [0..1] Name of the export. (NULL for end of export list) */
 #define DEE_DEX_EXPORT_TYPE_OBJECT          DEE_UINT32_C(0x00000000)
 #define DEE_DEX_EXPORT_TYPE_GENERATOR       DEE_UINT32_C(0x00000001)
 #define DEE_DEX_EXPORT_TYPE_GETSET          DEE_UINT32_C(0x00000002)
@@ -91,35 +91,47 @@ struct DeeDexExportDef {
 #define DEE_DEX_EXPORT_TYPE_UINT32          DEE_UINT32_C(0x0000000B)
 #define DEE_DEX_EXPORT_TYPE_UINT64          DEE_UINT32_C(0x0000000C)
 #define DEE_DEX_EXPORT_TYPE_MASK            DEE_UINT32_C(0x000000FF)
- Dee_uint32_t        de_kind;   /*< Export type/flags. */
+ Dee_uint32_t        dxe_kind;   /*< Export type/flags. */
  union{
-  void                     *de_data[8];
-  struct DeeCFunctionObject de_cfunction; /*< Inline cfunction object. */
-  DeeObject                 de_objectinl; /*< Inline object. */
-  DeeObject                *de_object;    /*< [1..1] Object being exports. */
+  void                     *dxe_data[8];
+  struct DeeCFunctionObject dxe_cfunction; /*< Inline cfunction object. */
+  DeeObject                 dxe_objectinl; /*< Inline object. */
+  DeeObject                *dxe_object;    /*< [1..1] Object being exports. */
   struct {
    union{
-    Dee_int8_t  c_i8;  Dee_uint8_t  c_ui8;
-    Dee_int16_t c_i16; Dee_uint16_t c_ui16;
-    Dee_int32_t c_i32; Dee_uint32_t c_ui32;
-    Dee_int64_t c_i64; Dee_uint64_t c_ui64;
-   };
-   char const *c_doc; /*< [0..1] Documentation string. */
-  } de_const;
+    Dee_int8_t  dxe_c_i8;  Dee_uint8_t  dxe_c_ui8;
+    Dee_int16_t dxe_c_i16; Dee_uint16_t dxe_c_ui16;
+    Dee_int32_t dxe_c_i32; Dee_uint32_t dxe_c_ui32;
+    Dee_int64_t dxe_c_i64; Dee_uint64_t dxe_c_ui64;
+   }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define dxe_c_i8   _dxe_const_data.dxe_c_i8
+#define dxe_c_i16  _dxe_const_data.dxe_c_i16
+#define dxe_c_i32  _dxe_const_data.dxe_c_i32
+#define dxe_c_i64  _dxe_const_data.dxe_c_i64
+#define dxe_c_ui8  _dxe_const_data.dxe_c_ui8
+#define dxe_c_ui16 _dxe_const_data.dxe_c_ui16
+#define dxe_c_ui32 _dxe_const_data.dxe_c_ui32
+#define dxe_c_ui64 _dxe_const_data.dxe_c_ui64
+   _dxe_const_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+   ;
+   char const *dxe_c_doc; /*< [0..1] Documentation string. */
+  } dxe_const;
   struct {
-   char const *nf_type;     /*< [1..1] Structf-style function type descriptor (NOTE: Not the function pointer type, but the foreign_function_type). */
-   void       *nf_function; /*< [1..1] Function pointer. */
-  } de_native_function;
+   char const *dxe_nf_type;     /*< [1..1] Structf-style function type descriptor (NOTE: Not the function pointer type, but the foreign_function_type). */
+   void       *dxe_nf_function; /*< [1..1] Function pointer. */
+  } dxe_native_function;
   struct {
-   DeeObject        *de_cache; /*< [0..1] Cache generator value (read-only; managed by the dex). */
-   DeeDexConstructor de_ctor;  /*< [1..1] Constructor callback. */
-   DeeDexDestructor  de_dtor;  /*< [0..1] Destructor callback. (If NULL, Dee_DECREF() the object) */
-  } de_generator;
+   DeeObject        *dxe_gn_cache; /*< [0..1] Cache generator value (read-only; managed by the dex). */
+   DeeDexConstructor dxe_gn_ctor;  /*< [1..1] Constructor callback. */
+   DeeDexDestructor  dxe_gn_dtor;  /*< [0..1] Destructor callback. (If NULL, Dee_DECREF() the object) */
+  } dxe_generator;
   struct {
-   DeeDexGetter de_get; /*< [0..1] Getter callback. */
-   DeeDexDelete de_del; /*< [0..1] Delete callback. */
-   DeeDexSetter de_set; /*< [0..1] Setter callback. */
-  } de_getset;
+   DeeDexGetter dxe_gs_get; /*< [0..1] Getter callback. */
+   DeeDexDelete dxe_gs_del; /*< [0..1] Delete callback. */
+   DeeDexSetter dxe_gs_set; /*< [0..1] Setter callback. */
+  } dxe_getset;
  };
 };
 DEE_COMPILER_MSVC_WARNING_POP
@@ -146,7 +158,7 @@ DEE_COMPILER_MSVC_WARNING_POP
  DEE_DEX_TYPECOMPATIBLE(DeeCFunction,func))
 #else
 #define DeeDex_EXPORT_FUNCTION(name,func,doc)\
- {name,DEE_DEX_EXPORT_TYPE_FUNCTION,{.de_cfunction=\
+ {name,DEE_DEX_EXPORT_TYPE_FUNCTION,{.dxe_cfunction=\
  {1,1,&DeeCFunction_Type,name,doc,\
   DEE_DEX_TYPECOMPATIBLE(DeeCFunction,func)}}}
 #endif
@@ -472,24 +484,21 @@ struct DeeDexContext_Visit {
  void        *cv_closure; /*< [?..?] Closure that should be supplied to 'cv_visit'. */
 };
 
-DEE_COMPILER_MSVC_WARNING_PUSH(4201)
-struct DeeDexContext {
- union{
+typedef union DeeDexContext DeeDexContext;
+union DeeDexContext {
 #define DEE_DEXCONTEXTKIND_NONE       0 /*< Unknown context kind. */
 #define DEE_DEXCONTEXTKIND_INITIALIZE 1 /*< Module initialization event (guarantied to be the first event, if any). */
 #define DEE_DEXCONTEXTKIND_FINALIZE   2 /*< Module finalization event (guarantied to be the last event, if any). */
 #define DEE_DEXCONTEXTKIND_COLLECTMEM 3 /*< Memory has run low and must be collected (called from 'Dee_CollectMemory()'). */
 #define DEE_DEXCONTEXTKIND_VISIT      4 /*< The module is being visited (run the given callback on all global object references you currently own). */
-  Dee_uint32_t                    dc_kind;        /*< The kind of context event (one of 'DEE_DEXCONTEXTKIND_*'). */
-  struct DeeDexContext_Common     dc_common;      /*< Data shared between all event types. */
-  struct DeeDexContext_Initialize dc_initialize;  /*< DEE_DEXCONTEXTKIND_INITIALIZE. */
-  struct DeeDexContext_Finalize   dc_finalize;    /*< DEE_DEXCONTEXTKIND_FINALIZE. */
-  struct DeeDexContext_CollectMem dc_collectmem;  /*< DEE_DEXCONTEXTKIND_COLLECTMEM. */
-  struct DeeDexContext_Visit      dc_visit;       /*< DEE_DEXCONTEXTKIND_VISIT. */
-  Dee_uint8_t                     dc_padding[64]; /*< Force 64 bytes for future usage. */
- };
+ Dee_uint32_t                    dc_kind;        /*< The kind of context event (one of 'DEE_DEXCONTEXTKIND_*'). */
+ struct DeeDexContext_Common     dc_common;      /*< Data shared between all event types. */
+ struct DeeDexContext_Initialize dc_initialize;  /*< DEE_DEXCONTEXTKIND_INITIALIZE. */
+ struct DeeDexContext_Finalize   dc_finalize;    /*< DEE_DEXCONTEXTKIND_FINALIZE. */
+ struct DeeDexContext_CollectMem dc_collectmem;  /*< DEE_DEXCONTEXTKIND_COLLECTMEM. */
+ struct DeeDexContext_Visit      dc_visit;       /*< DEE_DEXCONTEXTKIND_VISIT. */
+ Dee_uint8_t                     dc_padding[64]; /*< Force 64 bytes for future usage. */
 };
-DEE_COMPILER_MSVC_WARNING_POP
 
 
 #endif
@@ -503,7 +512,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 //  - Returns 0 on success / negative on error
 //  - This callback is optional
 // WARNING: 'DEE_DEXCONTEXTKIND_VISIT' should be considered noexcept!
-extern DEE_ATTRIBUTE_DLLEXPORT int DEE_CALL DeeDex_Main(DEE_A_INOUT struct DeeDexContext *context);
+extern DEE_ATTRIBUTE_DLLEXPORT int DEE_CALL DeeDex_Main(DEE_A_INOUT DeeDexContext *context);
 
 //////////////////////////////////////////////////////////////////////////
 // List of extension exports

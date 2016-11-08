@@ -2896,8 +2896,8 @@ err_base_init:
    DeeHashMap_Quit(&my_level->il_members);
    return -1;
   }
-  DEE_ASSERT(start_marshal->tp_marshal_ctor);
-  if ((*start_marshal->tp_marshal_ctor)(self_base,(
+  DEE_ASSERT(start_marshal->tp_marshal_ctor_);
+  if ((*start_marshal->tp_marshal_ctor_)(self_base,(
    DeeObject *)self,infile,map) != 0) goto err_base_init;
  }
  if (DeeFile_GetLeSmall64(infile,&read_memberc) != 0) {
@@ -3054,7 +3054,7 @@ err_name:
    goto err_base_dtor;
   }
   type_marshal->tp_uuid = *uuid;
-  type_marshal->tp_marshal_ctor = (int(DEE_CALL *)(DeeTypeObject*,DeeObject*,DeeObject*,struct DeeMarshalReadMap *))&_deeinstance_tp_marshal_ctor;
+  type_marshal->tp_marshal_ctor_ = (int(DEE_CALL *)(DeeTypeObject*,DeeObject*,DeeObject*,struct DeeMarshalReadMap *))&_deeinstance_tp_marshal_ctor;
   type_marshal->tp_marshal_put = (int(DEE_CALL *)(DeeTypeObject*,DeeObject*,DeeObject*,struct DeeMarshalWriteMap *))&_deeinstance_tp_marshal_put;
   type_marshal->tp_alias_uuids = NULL;
   DeeType_GET_SLOT(self,tp_marshal) = type_marshal;

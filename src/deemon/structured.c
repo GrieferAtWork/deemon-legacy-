@@ -125,11 +125,11 @@ DEE_STATIC_ASSERT(sizeof(DeeLValueObject) == sizeof(DeePointerObject));
 // Make sure that the linked list of semi-structured types
 // has binary compatibility with that of actually structured types.
 DEE_STATIC_ASSERT(
- Dee_OFFSETOF(DeeLValueTypeObject,tp_prev_structured_object_type) ==
- Dee_OFFSETOF(DeeStructuredTypeObject,tp_prev_structured_object_type));
+ Dee_OFFSETOF(DeeLValueTypeObject,ltp_prev_structured_object_type) ==
+ Dee_OFFSETOF(DeeStructuredTypeObject,stp_prev_structured_object_type));
 DEE_STATIC_ASSERT(
  Dee_OFFSETOF(DeeVarArrayTypeObject,vat_prev_structured_object_type) ==
- Dee_OFFSETOF(DeeStructuredTypeObject,tp_prev_structured_object_type));
+ Dee_OFFSETOF(DeeStructuredTypeObject,stp_prev_structured_object_type));
 #endif
 
 static DeePointerObject *DEE_CALL _deepointer_tp_alloc(DeePointerTypeObject *tp) {
@@ -220,27 +220,27 @@ void _DeeStructureType_AddToTypePool_AlreadyLocked(DeeTypeObject *tp) {
  DEE_ASSERTF(DeeStructuredType_Check(tp),
              "tp must be a structured_object_type");
 #endif
- ((DeeStructuredTypeObject *)tp)->tp_prev_structured_object_type = _structuretype_pool;
+ ((DeeStructuredTypeObject *)tp)->stp_prev_structured_object_type = _structuretype_pool;
  _structuretype_pool = ((DeeStructuredTypeObject *)tp);
 }
 
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
 void DeeForeignFunctionTypeList_Init(
  DEE_A_OUT struct DeeForeignFunctionTypeList *self) {
- DeeAtomicMutex_Init(&self->atl_lock);
- self->atl_typec = 0;
- self->atl_typev = NULL;
+ DeeAtomicMutex_Init(&self->fftl_lock);
+ self->fftl_typec = 0;
+ self->fftl_typev = NULL;
 }
 void DeeForeignFunctionTypeList_Quit(
  DEE_A_IN struct DeeForeignFunctionTypeList *self) {
- free(self->atl_typev);
+ free(self->fftl_typev);
 }
 void DeeForeignFunctionTypeList_Clear(
  DEE_A_IN struct DeeForeignFunctionTypeList *self) {
- if (self->atl_typec) {
-  free_nn(self->atl_typev);
-  self->atl_typec = 0;
-  self->atl_typev = NULL;
+ if (self->fftl_typec) {
+  free_nn(self->fftl_typev);
+  self->fftl_typec = 0;
+  self->fftl_typev = NULL;
  }
 }
 DEE_STATIC_INLINE(DeeForeignFunctionTypeObject *) _DeeForeignFunctionTypeList_Find_AlreadyLocked(
@@ -253,7 +253,7 @@ DEE_STATIC_INLINE(DeeForeignFunctionTypeObject *) _DeeForeignFunctionTypeList_Fi
  DeeTypeObject const *const *argv_end;
  DEE_ASSERT(self);
  argv_end = argv+argc;
- end = (iter = self->atl_typev)+self->atl_typec;
+ end = (iter = self->fftl_typev)+self->fftl_typec;
  while (iter != end) {
   result = *iter++;
   DEE_ASSERT(DeeObject_Check(result) && DeeForeignFunctionType_Check(result));
@@ -286,18 +286,18 @@ DeeForeignFunctionTypeList_FindOrAddToGlobalCache(
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DeeForeignFunctionTypeObject *result,*temp;
  DEE_ASSERT(self);
- DeeAtomicMutex_AcquireRelaxed(&self->atl_lock);
+ DeeAtomicMutex_AcquireRelaxed(&self->fftl_lock);
 #ifdef DEE_DEBUG
  result = _DeeForeignFunctionTypeList_Find_AlreadyLocked(self,flags,return_type,argc,argv);
 #else
  result = _DeeForeignFunctionTypeList_Find_AlreadyLocked(self,flags,argc,argv);
 #endif
- DeeAtomicMutex_Release(&self->atl_lock);
+ DeeAtomicMutex_Release(&self->fftl_lock);
  if (DEE_UNLIKELY(!result)) { // Arguably unlikely...
   if ((result = (DeeForeignFunctionTypeObject *)_DeeForeignFunctionType_New(
    flags,return_type,argc,argv)) == NULL) return NULL; // Error
 add_new_ff:
-  DeeAtomicMutex_AcquireRelaxed(&self->atl_lock);
+  DeeAtomicMutex_AcquireRelaxed(&self->fftl_lock);
 #ifdef DEE_DEBUG
   temp = _DeeForeignFunctionTypeList_Find_AlreadyLocked(self,flags,return_type,argc,argv);
 #else
@@ -307,17 +307,17 @@ add_new_ff:
    DeeForeignFunctionTypeObject **new_list;
    // Likely case: Insert our new type into the list
    if ((new_list = (DeeForeignFunctionTypeObject **)realloc_nz(
-    self->atl_typev,(self->atl_typec+1)*sizeof(DeeForeignFunctionTypeObject *))
+    self->fftl_typev,(self->fftl_typec+1)*sizeof(DeeForeignFunctionTypeObject *))
     ) == NULL) { // Failed to reallocate list
-    DeeAtomicMutex_Release(&self->atl_lock);
+    DeeAtomicMutex_Release(&self->fftl_lock);
     if DEE_LIKELY(Dee_CollectMemory()) goto add_new_ff;
     DeeError_NoMemory();
     Dee_DECREF(result);
     return NULL;
    }
    // Register a reference to the new type
-   (self->atl_typev = new_list)[self->atl_typec++] = result;
-   DeeAtomicMutex_Release(&self->atl_lock);
+   (self->fftl_typev = new_list)[self->fftl_typec++] = result;
+   DeeAtomicMutex_Release(&self->fftl_lock);
    // At this point, we can be sure that nobody will ever try to create
    // this exact same type again. So we can safely take our time and
    // only have to add the type to the global cache to tell it that it's
@@ -328,7 +328,7 @@ add_new_ff:
   } else {
    // Unlikely case: Someone else created and inserted the same type while we were creating
    // >> Solution: Destroy what we just created and simply return what the other guy did
-   DeeAtomicMutex_Release(&self->atl_lock);
+   DeeAtomicMutex_Release(&self->fftl_lock);
    Dee_DECREF(result);
    result = temp;
   }
@@ -440,7 +440,7 @@ DEE_STATIC_INLINE(DeeForeignFunctionTypeObject *) _DeeForeignFunctionTypeList_Fi
  DeeForeignFunctionTypeObject *result,**iter,**end;
  DeeTypeObject const *const *argv_end;
  argv_end = argv+argc;
- end = (iter = _generic_foreign_function_list.atl_typev)+_generic_foreign_function_list.atl_typec;
+ end = (iter = _generic_foreign_function_list.fftl_typev)+_generic_foreign_function_list.fftl_typec;
  while (iter != end) {
   result = *iter++;
   DEE_ASSERT(DeeObject_Check(result) && DeeForeignFunctionType_Check(result));
@@ -467,32 +467,32 @@ DeeForeignFunctionTypeList_FindOrAddToGlobalCacheDefault(
  DEE_A_IN DeeFunctionFlags flags, DEE_A_IN DeeTypeObject const *return_type,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DeeForeignFunctionTypeObject *result,*temp;
- DeeAtomicMutex_AcquireRelaxed(&_generic_foreign_function_list.atl_lock);
+ DeeAtomicMutex_AcquireRelaxed(&_generic_foreign_function_list.fftl_lock);
  result = _DeeForeignFunctionTypeList_FindDefault_AlreadyLocked(flags,return_type,argc,argv);
- DeeAtomicMutex_Release(&_generic_foreign_function_list.atl_lock);
+ DeeAtomicMutex_Release(&_generic_foreign_function_list.fftl_lock);
  if DEE_UNLIKELY(!result) { // Arguably unlikely...
   if DEE_UNLIKELY((result = (DeeForeignFunctionTypeObject *)_DeeForeignFunctionType_New(
    flags,return_type,argc,argv)) == NULL) return NULL; // Error
 add_new_ff:
-  DeeAtomicMutex_AcquireRelaxed(&_generic_foreign_function_list.atl_lock);
+  DeeAtomicMutex_AcquireRelaxed(&_generic_foreign_function_list.fftl_lock);
   temp = _DeeForeignFunctionTypeList_FindDefault_AlreadyLocked(flags,return_type,argc,argv);
   if DEE_LIKELY(!temp) {
    DeeForeignFunctionTypeObject **new_list;
    // Likely case: Insert our new type into the list
    if DEE_UNLIKELY((new_list = (DeeForeignFunctionTypeObject **)realloc_nz(
-    _generic_foreign_function_list.atl_typev,
-    (_generic_foreign_function_list.atl_typec+1)*sizeof(DeeForeignFunctionTypeObject *))
+    _generic_foreign_function_list.fftl_typev,
+    (_generic_foreign_function_list.fftl_typec+1)*sizeof(DeeForeignFunctionTypeObject *))
     ) == NULL) { // Failed to reallocate list
-    DeeAtomicMutex_Release(&_generic_foreign_function_list.atl_lock);
+    DeeAtomicMutex_Release(&_generic_foreign_function_list.fftl_lock);
     if DEE_LIKELY(Dee_CollectMemory()) goto add_new_ff;
     DeeError_NoMemory();
     Dee_DECREF(result);
     return NULL;
    }
    // Register a reference to the new type
-   (_generic_foreign_function_list.atl_typev = new_list)[
-    _generic_foreign_function_list.atl_typec++] = result;
-   DeeAtomicMutex_Release(&_generic_foreign_function_list.atl_lock);
+   (_generic_foreign_function_list.fftl_typev = new_list)[
+    _generic_foreign_function_list.fftl_typec++] = result;
+   DeeAtomicMutex_Release(&_generic_foreign_function_list.fftl_lock);
    // At this point, we can be sure that nobody will ever try to create
    // this exact same type again. So we can safely take our time and
    // only have to add the type to the global cache to tell it that it's
@@ -503,7 +503,7 @@ add_new_ff:
   } else {
    // Unlikely case: Someone else created and inserted the same type while we were creating
    // >> Solution: Destroy what we just created and simply return what the other guy did
-   DeeAtomicMutex_Release(&_generic_foreign_function_list.atl_lock);
+   DeeAtomicMutex_Release(&_generic_foreign_function_list.fftl_lock);
    Dee_DECREF(result);
    result = temp;
   }
@@ -555,7 +555,7 @@ void DeeStructuredType_Shutdown(void) {
  if ((iter = _structuretype_pool) != NULL) {
   _structuretype_pool = NULL;
   while (1) {
-   prev = iter->tp_prev_structured_object_type;
+   prev = iter->stp_prev_structured_object_type;
    Dee_DECREF(iter);
    if (!prev) break;
    iter = prev;
@@ -574,15 +574,15 @@ void DeeStructuredType_Shutdown(void) {
   while (iter2 != _deestructuredtype_static_instance_list_end) {
    elem = *iter2++;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
-   elem->tp_pointer = NULL;
-   elem->tp_lvalue = NULL;
+   elem->stp_pointer = NULL;
+   elem->stp_lvalue = NULL;
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
-   DeeForeignFunctionTypeList_Clear(&elem->tp_ffunctions);
+   DeeForeignFunctionTypeList_Clear(&elem->stp_ffunctions);
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
-   DeeArrayTypeList_Clear(&elem->tp_arrays);
-   elem->tp_varray = NULL;
+   DeeArrayTypeList_Clear(&elem->stp_arrays);
+   elem->stp_varray = NULL;
 #endif
   }
  }
@@ -606,14 +606,14 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *DeeObject_TRef(
   if DEE_UNLIKELY((ty = (DeePointerTypeObject *)DeeStructuredType_Pointer(tp_self)) == NULL) return NULL;
   if DEE_LIKELY((result = DEE_OBJECTPOOL_ALLOC(pointer)) != NULL) {
    DeeObject_INIT(result,(DeeTypeObject *)ty);
-   result->p = DeeStructured_ADDR(self);
+   result->po_p_ptr = DeeStructured_ADDR(self);
   }
  } else if (DeeLValueType_Check(tp_self)) {
   // Reference an lvalue
   if DEE_UNLIKELY((ty = (DeePointerTypeObject *)DeeLValueType_Pointer(tp_self)) == NULL) return NULL;
   if DEE_LIKELY((result = DEE_OBJECTPOOL_ALLOC(pointer)) != NULL) {
    DeeObject_INIT(result,(DeeTypeObject *)ty);
-   result->p = DeeLValue_ADDR(self);
+   result->po_p_ptr = DeeLValue_ADDR(self);
   }
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTIONCLOSURE
  } else if (tp_self == &DeeForeignFunctionClosure_Type) {
@@ -622,7 +622,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *DeeObject_TRef(
   if DEE_LIKELY((result = DEE_OBJECTPOOL_ALLOC(pointer)) != NULL) {
    DeeObject_INIT(result,(DeeTypeObject *)ty);
 DEE_COMPILER_MSVC_WARNING_PUSH(4054)
-   result->p = (void *)DeeForeignFunctionClosure_FUNC(self);
+   result->po_p_ptr = (void *)DeeForeignFunctionClosure_FUNC(self);
 DEE_COMPILER_MSVC_WARNING_POP
   }
 #endif
@@ -680,7 +680,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeLValueObject) *DeeObject_TLValue(
   DeeStructuredType_LValue(tp_self)) == NULL) return NULL;
  if DEE_LIKELY((result = (DeeLValueObject *)DEE_OBJECTPOOL_ALLOC(pointer)) != NULL) {
   DeeObject_INIT(result,(DeeTypeObject *)ty);
-  result->p = DeeStructured_ADDR(self);
+  result->lv_p_ptr = DeeStructured_ADDR(self);
  }
  return (DeeObject *)result;
 }
@@ -825,7 +825,7 @@ static DeePointerTypeObject *_DeePointerType_New(
   DeeType_GET_SLOT(result,tp_p_any_assign) = (int(*)(DeeStructuredTypeObject*,void*,DeeObject*))&_deepointer_tp_p_any_assign;
   // Just copy all the other 'tp_p_*' operators from the pointer base class
   // >> This has to be done manually, as structured types don't support inheritance
-  memcpy(&result->tp_type.tp_p_assign,&DeePointer_Type.tp_type.tp_p_assign,
+  memcpy(&result->ptp_type.tp_p_assign,&DeePointer_Type.ptp_type.tp_p_assign,
          sizeof(DeeStructuredTypeObject)-Dee_OFFSETOF(DeeStructuredTypeObject,tp_p_assign));
  }
  return result;
@@ -838,7 +838,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeLValueTypeObject) *DeeStructuredType_LValue(
  DeeLValueTypeObject *result;
  DEE_ASSERT(DeeObject_Check(self) && DeeStructuredType_Check(self));
  if DEE_UNLIKELY((result = (DeeLValueTypeObject *)DeeAtomicPtr_Load(
-  ((DeeStructuredTypeObject *)self)->tp_lvalue,memory_order_seq_cst)) == NULL) {
+  ((DeeStructuredTypeObject *)self)->stp_lvalue,memory_order_seq_cst)) == NULL) {
   // Must create a new lvalue type
   result = _DeeLValueType_New((DeeStructuredTypeObject *)self);
   DeeAtomicMutex_Acquire(&_structuretype_poollock);
@@ -846,9 +846,9 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeLValueTypeObject) *DeeStructuredType_LValue(
    DeeLValueTypeObject *temp;
    // Reload the slot to see if someone else already create this type
    if DEE_LIKELY((temp = (DeeLValueTypeObject *)DeeAtomicPtr_Load(
-    ((DeeStructuredTypeObject *)self)->tp_lvalue,memory_order_seq_cst)) == NULL) {
+    ((DeeStructuredTypeObject *)self)->stp_lvalue,memory_order_seq_cst)) == NULL) {
     // Store the pointer type in its rightful place
-    DeeAtomicPtr_Store(((DeeStructuredTypeObject *)self)->tp_lvalue,result,memory_order_seq_cst);
+    DeeAtomicPtr_Store(((DeeStructuredTypeObject *)self)->stp_lvalue,result,memory_order_seq_cst);
     // Add the pointer to the global pool (NOTE: consumes reference created by '_DeeLValueType_New')
     _DeeStructureType_AddToTypePool_AlreadyLocked((DeeTypeObject *)result);
     DeeAtomicMutex_Release(&_structuretype_poollock);
@@ -870,7 +870,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *DeePointer_New(
  DEE_ASSERT(DeeObject_Check(tp) && DeePointerType_Check(tp));
  if DEE_LIKELY((result = DEE_OBJECTPOOL_ALLOC(pointer)) != NULL) {
   DeeObject_INIT(result,(DeeTypeObject *)tp);
-  result->p = p;
+  result->po_p_ptr = p;
  }
  return (DeeObject *)result;
 }
@@ -884,7 +884,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeLValueObject) *DeeLValue_New(
  DEE_ASSERT(DeeObject_Check(tp) && DeeLValueType_Check(tp));
  if DEE_LIKELY((result = (DeeLValueObject *)DEE_OBJECTPOOL_ALLOC(pointer)) != NULL) {
   DeeObject_INIT(result,(DeeTypeObject *)tp);
-  result->p = p;
+  result->lv_p_ptr = p;
  }
  return (DeeObject *)result;
 }
@@ -903,7 +903,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeePointerTypeObject) *DeeStructuredType_Pointer(
  DeePointerTypeObject *result;
  DEE_ASSERT(DeeObject_Check(self) && DeeStructuredType_Check(self));
  if DEE_UNLIKELY((result = (DeePointerTypeObject *)DeeAtomicPtr_Load(
-  ((DeeStructuredTypeObject *)self)->tp_pointer,memory_order_seq_cst)) == NULL) {
+  ((DeeStructuredTypeObject *)self)->stp_pointer,memory_order_seq_cst)) == NULL) {
   // Must create a new pointer type
   result = _DeePointerType_New((DeeStructuredTypeObject *)self);
   DeeAtomicMutex_Acquire(&_structuretype_poollock);
@@ -911,9 +911,9 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeePointerTypeObject) *DeeStructuredType_Pointer(
    DeePointerTypeObject *temp;
    // Reload the slot to see if someone else already create this type
    if DEE_LIKELY((temp = (DeePointerTypeObject *)DeeAtomicPtr_Load(
-    ((DeeStructuredTypeObject *)self)->tp_pointer,memory_order_seq_cst)) == NULL) {
+    ((DeeStructuredTypeObject *)self)->stp_pointer,memory_order_seq_cst)) == NULL) {
     // Store the pointer type in its rightful place
-    DeeAtomicPtr_Store(((DeeStructuredTypeObject *)self)->tp_pointer,result,memory_order_seq_cst);
+    DeeAtomicPtr_Store(((DeeStructuredTypeObject *)self)->stp_pointer,result,memory_order_seq_cst);
     // Add the pointer to the global pool (NOTE: consumes reference created by '_DeePointerType_New')
     _DeeStructureType_AddToTypePool_AlreadyLocked((DeeTypeObject *)result);
     DeeAtomicMutex_Release(&_structuretype_poollock);
@@ -945,7 +945,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *DeeStructuredType_For
  DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DEE_ASSERT(DeeObject_Check(self) && DeeStructuredType_Check(self));
  return (DeeTypeObject *)DeeForeignFunctionTypeList_FindOrAddToGlobalCache(
-  &((DeeStructuredTypeObject *)self)->tp_ffunctions,flags,self,argc,argv);
+  &((DeeStructuredTypeObject *)self)->stp_ffunctions,flags,self,argc,argv);
 }
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
 DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *DeeLValueType_ForeignFunction(
@@ -954,7 +954,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *DeeLValueType_Foreign
  DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DEE_ASSERT(DeeObject_Check(self) && DeeLValueType_Check(self));
  return (DeeTypeObject *)DeeForeignFunctionTypeList_FindOrAddToGlobalCache(
-  &((DeeLValueTypeObject *)self)->tp_ffunctions,flags,self,argc,argv);
+  &((DeeLValueTypeObject *)self)->ltp_ffunctions,flags,self,argc,argv);
 }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
 DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *_DeeType_ForeignFunctionDefault(
@@ -1081,7 +1081,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeArrayTypeObject) *DeeType_TArray(
   return NULL;
  }
  return (DeeTypeObject *)DeeArrayTypeList_FindOrAddToCache(
-  &((DeeStructuredTypeObject *)self)->tp_arrays,
+  &((DeeStructuredTypeObject *)self)->stp_arrays,
   (DeeStructuredTypeObject *)self,array_size);
 }
 DEE_A_RET_TYPEOBJECT_EXCEPT(DeeVarArrayTypeObject) *DeeType_TVArray(
@@ -1105,7 +1105,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeVarArrayTypeObject) *DeeStructuredType_VArray(
  DeeVarArrayTypeObject *result;
  DEE_ASSERT(DeeObject_Check(self) && DeeStructuredType_Check(self));
  if DEE_UNLIKELY((result = (DeeVarArrayTypeObject *)DeeAtomicPtr_Load(
-  ((DeeStructuredTypeObject *)self)->tp_varray,memory_order_seq_cst)) == NULL) {
+  ((DeeStructuredTypeObject *)self)->stp_varray,memory_order_seq_cst)) == NULL) {
   // Must create a new pointer type
   result = _DeeVarArrayType_New((DeeStructuredTypeObject *)self);
   DeeAtomicMutex_Acquire(&_structuretype_poollock);
@@ -1113,9 +1113,9 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeVarArrayTypeObject) *DeeStructuredType_VArray(
    DeeVarArrayTypeObject *temp;
    // Reload the slot to see if someone else already create this type
    if DEE_LIKELY((temp = (DeeVarArrayTypeObject *)DeeAtomicPtr_Load(
-    ((DeeStructuredTypeObject *)self)->tp_varray,memory_order_seq_cst)) == NULL) {
+    ((DeeStructuredTypeObject *)self)->stp_varray,memory_order_seq_cst)) == NULL) {
     // Store the pointer type in its rightful place
-    DeeAtomicPtr_Store(((DeeStructuredTypeObject *)self)->tp_varray,result,memory_order_seq_cst);
+    DeeAtomicPtr_Store(((DeeStructuredTypeObject *)self)->stp_varray,result,memory_order_seq_cst);
     // Add the pointer to the global pool (NOTE: consumes reference created by '_DeePointerType_New')
     _DeeStructureType_AddToTypePool_AlreadyLocked((DeeTypeObject *)result);
     DeeAtomicMutex_Release(&_structuretype_poollock);
@@ -2354,26 +2354,26 @@ static DeeObject *_deestructuredtype_tp_seq_get(
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION || DEE_CONFIG_RUNTIME_HAVE_ARRAYS
 static void _deestructuredtype_tp_dtor(DeeStructuredTypeObject *self) {
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
- DeeForeignFunctionTypeList_Quit(&self->tp_ffunctions);
+ DeeForeignFunctionTypeList_Quit(&self->stp_ffunctions);
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
- DeeArrayTypeList_Quit(&self->tp_arrays);
+ DeeArrayTypeList_Quit(&self->stp_arrays);
 #endif
 }
 #endif /* ... */
 
 static void _DeeStructuredType_InitCommon(DeeStructuredTypeObject *self) {
- self->tp_prev_structured_object_type = NULL;
+ self->stp_prev_structured_object_type = NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
- self->tp_pointer = NULL;
- self->tp_lvalue = NULL;
+ self->stp_pointer = NULL;
+ self->stp_lvalue = NULL;
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
- DeeForeignFunctionTypeList_Init(&self->tp_ffunctions);
+ DeeForeignFunctionTypeList_Init(&self->stp_ffunctions);
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
- DeeArrayTypeList_Init(&self->tp_arrays);
- self->tp_varray = NULL;
+ DeeArrayTypeList_Init(&self->stp_arrays);
+ self->stp_varray = NULL;
 #endif
  DeeType_GET_SLOT(self,tp_flags) |= DEE_TYPE_FLAG_NO_LIFETIME_EFFECT|DEE_TYPE_FLAG_MUST_COPY|
                                     DEE_TYPE_FLAG_CONST_CTOR|DEE_TYPE_FLAG_FUNDAMENTAL;
@@ -2496,25 +2496,36 @@ static int _deelvaluetype_tp_attr_set(
 #endif
 
 
-#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
+#if !DEE_CONFIG_RUNTIME_HAVE_POINTERS
+#define _deestructuredtype_tp_class_members DeeType_DEFAULT_SLOT(tp_class_members)
+#else /* !DEE_CONFIG_RUNTIME_HAVE_POINTERS */
 static struct DeeMemberDef const _deestructuredtype_tp_class_members[] = {
  DEE_MEMBERDEF_CONST_v100("pointer_type",object,&DeePointerType_Type),
  DEE_MEMBERDEF_CONST_v100("lvalue_type",object,&DeeLValueType_Type),
  DEE_MEMBERDEF_END_v100
 };
-#else
-#define _deestructuredtype_tp_class_members DeeType_DEFAULT_SLOT(tp_class_members)
-#endif
+#endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
 static struct DeeMemberDef const _deestructuredtype_tp_members[] = {
  DEE_MEMBERDEF_NAMED_RO_v100("__p_instance_size__",DeeStructuredTypeObject,tp_p_constructor.tp_p_instance_size,Dee_size_t),
- DEE_MEMBERDEF_NAMED_RO_v100("tp_p_instance_size",DeeStructuredTypeObject,tp_p_constructor.tp_p_instance_size,Dee_size_t),
+#if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
+ DEE_MEMBERDEF_NAMED_RO_v100("__tp_p_instance_size",DeeStructuredTypeObject,tp_p_constructor.tp_p_instance_size,Dee_size_t),
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
- DEE_MEMBERDEF_RO_v100(DeeStructuredTypeObject,tp_pointer,object_null),
- DEE_MEMBERDEF_RO_v100(DeeStructuredTypeObject,tp_lvalue,object_null),
-#endif
+ DEE_MEMBERDEF_NAMED_RO_v100("__stp_prev_structured_object_type",DeeStructuredTypeObject,stp_prev_structured_object_type,object_null),
+ DEE_MEMBERDEF_NAMED_RO_v100("__stp_pointer",DeeStructuredTypeObject,stp_pointer,object_null),
+ DEE_MEMBERDEF_NAMED_RO_v100("__stp_lvalue",DeeStructuredTypeObject,stp_lvalue,object_null),
+#endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+#if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
+ DEE_MEMBERDEF_NAMED_RO_v100("__stp_ffunctions_fftl_lock",DeeStructuredTypeObject,stp_ffunctions.fftl_lock,DeeAtomicMutex),
+ DEE_MEMBERDEF_NAMED_RO_v100("__stp_ffunctions_fftl_typec",DeeStructuredTypeObject,stp_ffunctions.fftl_lock,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__stp_ffunctions_fftl_typev",DeeStructuredTypeObject,stp_ffunctions.fftl_typev,p2(void),"-> DeeForeignFunctionTypeObject **"),
+#endif /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
 #if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
- DEE_MEMBERDEF_RO_v100(DeeStructuredTypeObject,tp_varray,object_null),
-#endif
+ DEE_MEMBERDEF_NAMED_RO_v100("__stp_arrays_atl_lock",DeeStructuredTypeObject,stp_arrays.atl_lock,DeeAtomicMutex),
+ DEE_MEMBERDEF_NAMED_RO_v100("__stp_arrays_atl_typec",DeeStructuredTypeObject,stp_arrays.atl_typec,Dee_size_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__stp_arrays_atl_typev",DeeStructuredTypeObject,stp_arrays.atl_typev,p2(void),"-> DeeArrayTypeObject **"),
+ DEE_MEMBERDEF_NAMED_RO_v100("__stp_varray",DeeStructuredTypeObject,stp_varray,object_null),
+#endif /* DEE_CONFIG_RUNTIME_HAVE_ARRAYS */
+#endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
  DEE_MEMBERDEF_END_v100
 };
 

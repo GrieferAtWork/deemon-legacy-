@@ -462,9 +462,9 @@ DEE_A_RET_EXCEPT(-1) int _DeeScope_AddName(
   self->sc_namesv = names;
  } else names = self->sc_namesv;
  names += self->sc_namesc++;
- names->e_name = name;
- names->e_depr = NULL;
- Dee_INCREF(names->e_const = v);
+ names->se_name = name;
+ names->se_depr = NULL;
+ Dee_INCREF(names->se_const = v);
  return 0;
 }
 DEE_A_RET_EXCEPT(-1) int _DeeScope_AddDeprecatedName(
@@ -487,9 +487,9 @@ DEE_A_RET_EXCEPT(-1) int _DeeScope_AddDeprecatedName(
   self->sc_namesv = names;
  } else names = self->sc_namesv;
  names += self->sc_namesc++;
- names->e_name = name;
- Dee_XINCREF(names->e_depr = (DeeStringObject *)depr);
- Dee_INCREF(names->e_const = v);
+ names->se_name = name;
+ Dee_XINCREF(names->se_depr = (DeeStringObject *)depr);
+ Dee_INCREF(names->se_const = v);
  return 0;
 }
 void _DeeScope_DelName(DEE_A_INOUT DeeScopeObject *self, DEE_A_IN TPPTokenID name) {
@@ -497,7 +497,7 @@ void _DeeScope_DelName(DEE_A_INOUT DeeScopeObject *self, DEE_A_IN TPPTokenID nam
  DEE_ASSERT(DEE_TOKENID_IS_VARNAME(name));
  DEE_ASSERT(DeeObject_Check(self) && DeeScope_Check(self));
  end = (iter = self->sc_namesv)+self->sc_namesc;
- while (iter != end) if (iter->e_name == name) {
+ while (iter != end) if (iter->se_name == name) {
   _DeeScopeEntry_Quit(iter);
   memmove(iter,iter+1,(Dee_size_t)((end-iter)-1)*sizeof(struct _DeeScopeEntry));
   --self->sc_namesc;
@@ -510,7 +510,7 @@ void _DeeScope_DelName(DEE_A_INOUT DeeScopeObject *self, DEE_A_IN TPPTokenID nam
  DEE_ASSERT(DEE_TOKENID_IS_VARNAME(name));
  DEE_ASSERT(DeeObject_Check(self) && DeeScope_Check(self));
  end = (iter = self->sc_namesv)+self->sc_namesc;
- while (iter != end) if ((iter++)->e_name == name) return 1;
+ while (iter != end) if ((iter++)->se_name == name) return 1;
  return 0;
 }
 DEE_A_RET_NOEXCEPT(NULL) DeeObject *_DeeScope_GetName(
@@ -519,7 +519,7 @@ DEE_A_RET_NOEXCEPT(NULL) DeeObject *_DeeScope_GetName(
  DEE_ASSERT(DEE_TOKENID_IS_VARNAME(name));
  DEE_ASSERT(DeeObject_Check(self) && DeeScope_Check(self));
  end = (iter = self->sc_namesv)+self->sc_namesc;
- while (iter != end) if (iter->e_name == name) return iter->e_const; else ++iter;
+ while (iter != end) if (iter->se_name == name) return iter->se_const; else ++iter;
  return NULL;
 }
 DEE_A_RET_NOEXCEPT(NULL) DeeObject *_DeeScope_GetNameEx(
@@ -528,9 +528,9 @@ DEE_A_RET_NOEXCEPT(NULL) DeeObject *_DeeScope_GetNameEx(
  DEE_ASSERT(DEE_TOKENID_IS_VARNAME(name));
  DEE_ASSERT(DeeObject_Check(self) && DeeScope_Check(self));
  end = (iter = self->sc_namesv)+self->sc_namesc;
- while (iter != end) if (iter->e_name == name) {
-  if (is_deprecated) *is_deprecated = (DeeObject *)iter->e_depr;
-  return iter->e_const;
+ while (iter != end) if (iter->se_name == name) {
+  if (is_deprecated) *is_deprecated = (DeeObject *)iter->se_depr;
+  return iter->se_const;
  } else ++iter;
  return NULL;
 }
@@ -546,7 +546,7 @@ DEE_A_RET_EXCEPT(-1) int DeeScope_ImportScope(
  DEE_ASSERT(DeeObject_Check(token) && DeeToken_Check(token));
  end = (iter = ((DeeScopeObject *)src)->sc_namesv)+((DeeScopeObject *)src)->sc_namesc;
  while (iter != end) {
-  if (DeeScope_ImportSingle(self,iter->e_name,iter->e_const,lexer,token,depr) == -1) return -1;
+  if (DeeScope_ImportSingle(self,iter->se_name,iter->se_const,lexer,token,depr) == -1) return -1;
   ++iter;
  }
  return 0;
@@ -567,19 +567,19 @@ DEE_A_RET_EXCEPT(-1) int DeeScope_ImportSingle(
    if (DeeLocalVar_Check(ob)) ++((DeeLocalVarObject *)ob)->lv_module_refs;
    return _DeeScope_AddDeprecatedName((DeeScopeObject *)self,name,ob,depr);
   }
-  if (iter->e_name == name) {
-   if (iter->e_const == ob) {
+  if (iter->se_name == name) {
+   if (iter->se_const == ob) {
 same_ob:
     // Overwrite existing deprecation string
     // >> This allows one to re-import things from a module
     //    while also removing a associated deprecation
-    Dee_XDECREF(iter->e_depr);
-    Dee_XINCREF(iter->e_depr = (DeeStringObject *)depr);
+    Dee_XDECREF(iter->se_depr);
+    Dee_XINCREF(iter->se_depr = (DeeStringObject *)depr);
     return 0; // Same object
    }
-   if (Dee_TYPE(iter->e_const) == Dee_TYPE(ob)) {
+   if (Dee_TYPE(iter->se_const) == Dee_TYPE(ob)) {
     int temp;
-    if ((temp = DeeObject_DeepEquals(iter->e_const,ob)) < 0) DeeError_Handled();
+    if ((temp = DeeObject_DeepEquals(iter->se_const,ob)) < 0) DeeError_Handled();
     else if (temp) goto same_ob; // Same object
    }
    if (DeeError_CompilerErrorf(DEE_WARNING_IMPORT_CAUSES_NAME_COLLISION,lexer,token,
@@ -646,7 +646,7 @@ DEE_VISIT_PROC(_deescope_tp_visit,DeeScopeObject *self) {
  struct _DeeScopeEntry *iter,*end;
  DEE_ASSERT(DeeObject_Check(self) && DeeScope_Check(self));
  end = (iter = self->sc_namesv)+self->sc_namesc;
- while (iter != end) Dee_VISIT((iter++)->e_const);
+ while (iter != end) Dee_VISIT((iter++)->se_const);
  if (DeeScope_IS_STRONG(self)) {
   _DeeParserLabelList_Visit(&self->sc_labels);
   Dee_XVISIT(self->sc_supertp);

@@ -92,16 +92,16 @@ again: switch (*fmt++) {
   case 'p': GOTO_X(DEE_TYPES_SIZEOF_POINTER); goto end;
   case 'f':
 #if 0
-   (void)va_arg(*args,float); goto end;
+   (void)DEE_VA_ARG(*args,float); goto end;
 #else
    DEE_ATTRIBUTE_FALLTHROUGH
 #endif
-  case 'D': (void)va_arg(*args,double); goto end;
+  case 'D': (void)DEE_VA_ARG(*args,double); goto end;
   case 'L': switch (*fmt++) {
 #ifdef DEE_TYPES_SIZEOF_LDOUBLE
-   case 'D': (void)va_arg(*args,long double); goto end;
+   case 'D': (void)DEE_VA_ARG(*args,long double); goto end;
 #else
-   case 'D': (void)va_arg(*args,double); goto end;
+   case 'D': (void)DEE_VA_ARG(*args,double); goto end;
 #endif
    default: DEE_BUILDVAL_INVALID_FORMAT();
   } break;
@@ -123,14 +123,14 @@ again: switch (*fmt++) {
    case '8': switch (*fmt++) {
     case 'b': case 'd': case 'i': 
     case 'u': case 'x': case 'X':skip_8:
-     (void)va_arg(*args,DEE_MININT_T(1)); goto end;
+     (void)DEE_VA_ARG(*args,DEE_MININT_T(1)); goto end;
     default: DEE_BUILDVAL_INVALID_FORMAT();
    } break;
    case '1': switch (*fmt++) {
     case '6': switch (*fmt++) {
      case 'b': case 'd': case 'i': 
      case 'u': case 'x': case 'X':skip_16:
-      (void)va_arg(*args,DEE_MININT_T(2)); goto end;
+      (void)DEE_VA_ARG(*args,DEE_MININT_T(2)); goto end;
      default: DEE_BUILDVAL_INVALID_FORMAT();
     } break;
     default: DEE_BUILDVAL_INVALID_FORMAT();
@@ -139,7 +139,7 @@ again: switch (*fmt++) {
     case '2': switch (*fmt++) {
      case 'b': case 'd': case 'i': 
      case 'u': case 'x': case 'X':skip_32:
-      (void)va_arg(*args,DEE_MININT_T(4)); goto end;
+      (void)DEE_VA_ARG(*args,DEE_MININT_T(4)); goto end;
      default: DEE_BUILDVAL_INVALID_FORMAT();
     } break;
     default: DEE_BUILDVAL_INVALID_FORMAT();
@@ -148,7 +148,7 @@ again: switch (*fmt++) {
     case '4': switch (*fmt++) {
      case 'b': case 'd': case 'i': 
      case 'u': case 'x': case 'X':skip_64:
-      (void)va_arg(*args,DEE_MININT_T(8)); goto end;
+      (void)DEE_VA_ARG(*args,DEE_MININT_T(8)); goto end;
      default: DEE_BUILDVAL_INVALID_FORMAT();
     } break;
     default: DEE_BUILDVAL_INVALID_FORMAT();
@@ -190,7 +190,7 @@ again: switch (*fmt++) {
      ++fmt;
      DEE_ATTRIBUTE_FALLTHROUGH
     case 's':
-     (void)va_arg(*args,int);
+     (void)DEE_VA_ARG(*args,int);
      GOTO_X(DEE_TYPES_SIZEOF_POINTER);
     default: DEE_BUILDVAL_INVALID_FORMAT();
    } break;
@@ -198,7 +198,7 @@ again: switch (*fmt++) {
   } break;
   case 's': GOTO_X(DEE_TYPES_SIZEOF_POINTER);
   case 'O': case 'K': case 'R':
-   Dee_XDECREF(va_arg(*args,DeeObject *));
+   Dee_XDECREF(DEE_VA_ARG(*args,DeeObject *));
    goto end;
   case 'k': case 'r': case 'o': GOTO_X(DEE_TYPES_SIZEOF_POINTER);
   default: goto end;
@@ -268,15 +268,15 @@ err_r: Dee_DECREF(result); goto err;
    break;
   case 'c':
 #if 1
-   result = DeeString_Character(va_arg(*args,int));
+   result = DeeString_Character(DEE_VA_ARG(*args,int));
 #else
-   result = DeeString_Character(va_arg(*args,char));
+   result = DeeString_Character(DEE_VA_ARG(*args,char));
 #endif
    Dee_INCREF(result);
    break;
   case 'p':
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
-   result = DeeVoidPointer_New(va_arg(*args,void *));
+   result = DeeVoidPointer_New(DEE_VA_ARG(*args,void *));
    goto check_res;
 #else /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
    DeeError_NotImplemented_str("DEE_CONFIG_RUNTIME_HAVE_POINTERS");
@@ -287,21 +287,21 @@ err_r: Dee_DECREF(result); goto err;
 #define GOTO_INT_UX(sizeof)  goto DEE_PP_CAT_2(o_ui,DEE_PP_MUL8(sizeof))
   case 'f':
 #if 1
-   result = DeeObject_New(float,(float)va_arg(*args,double));
+   result = DeeObject_New(float,(float)DEE_VA_ARG(*args,double));
 #else
-   result = DeeObject_New(float,va_arg(*args,float));
+   result = DeeObject_New(float,DEE_VA_ARG(*args,float));
 #endif
 check_res: if DEE_UNLIKELY(!result) goto err;
    break;
   case 'D':
-   result = DeeObject_New(double,va_arg(*args,double));
+   result = DeeObject_New(double,DEE_VA_ARG(*args,double));
    goto check_res;
   case 'L': switch (*fmt++) {
    case 'D':
 #ifdef DEE_TYPES_SIZEOF_LDOUBLE
-    result = DeeObject_New(ldouble,va_arg(*args,long double));
+    result = DeeObject_New(ldouble,DEE_VA_ARG(*args,long double));
 #else
-    result = DeeObject_New(double,va_arg(*args,double));
+    result = DeeObject_New(double,DEE_VA_ARG(*args,double));
 #endif
     goto check_res;
    default: DEE_BUILDVAL_INVALID_FORMAT();
@@ -324,34 +324,34 @@ check_res: if DEE_UNLIKELY(!result) goto err;
    case 'b': GOTO_BOOL_X(DEE_TYPES_SIZEOF_SIZE_T);
    case 'd': case 'i': case 'u': case 'x': case 'X': GOTO_INT_X(DEE_TYPES_SIZEOF_SIZE_T);
    case '8': switch (*fmt++) {
-    case 'b': b_8: result = DeeBool_New(va_arg(*args,DEE_MINUINT_T(1))); goto check_res;
-    case 'd': case 'i': o_i8: result = DeeObject_New(Dee_int8_t,(Dee_int8_t)va_arg(*args,DEE_MININT_T(1))); goto check_res;
-    case 'u': case 'x': case 'X': o_ui8: result = DeeObject_New(Dee_uint8_t,(Dee_uint8_t)va_arg(*args,DEE_MINUINT_T(1))); goto check_res;
+    case 'b': b_8: result = DeeBool_New(DEE_VA_ARG(*args,DEE_MINUINT_T(1))); goto check_res;
+    case 'd': case 'i': o_i8: result = DeeObject_New(Dee_int8_t,(Dee_int8_t)DEE_VA_ARG(*args,DEE_MININT_T(1))); goto check_res;
+    case 'u': case 'x': case 'X': o_ui8: result = DeeObject_New(Dee_uint8_t,(Dee_uint8_t)DEE_VA_ARG(*args,DEE_MINUINT_T(1))); goto check_res;
     default: DEE_BUILDVAL_INVALID_FORMAT();
    } break;
    case '1': switch (*fmt++) {
     case '6': switch (*fmt++) {
-     case 'b': b_16: result = DeeBool_New((Dee_uint16_t)va_arg(*args,DEE_MINUINT_T(2))); goto check_res;
-     case 'd': case 'i': o_i16: result = DeeObject_New(Dee_int16_t,(Dee_int16_t)va_arg(*args,DEE_MININT_T(2))); goto check_res;
-     case 'u': case 'x': case 'X': o_ui16: result = DeeObject_New(Dee_uint16_t,(Dee_uint16_t)va_arg(*args,DEE_MINUINT_T(2))); goto check_res;
+     case 'b': b_16: result = DeeBool_New((Dee_uint16_t)DEE_VA_ARG(*args,DEE_MINUINT_T(2))); goto check_res;
+     case 'd': case 'i': o_i16: result = DeeObject_New(Dee_int16_t,(Dee_int16_t)DEE_VA_ARG(*args,DEE_MININT_T(2))); goto check_res;
+     case 'u': case 'x': case 'X': o_ui16: result = DeeObject_New(Dee_uint16_t,(Dee_uint16_t)DEE_VA_ARG(*args,DEE_MINUINT_T(2))); goto check_res;
      default: DEE_BUILDVAL_INVALID_FORMAT();
     } break;
     default: DEE_BUILDVAL_INVALID_FORMAT();
    } break;
    case '3': switch (*fmt++) {
     case '2': switch (*fmt++) {
-     case 'b': b_32: result = DeeBool_New(va_arg(*args,DEE_MINUINT_T(4))); goto check_res;
-     case 'd': case 'i': o_i32: result = DeeObject_New(Dee_int32_t,(Dee_int32_t)va_arg(*args,DEE_MININT_T(4))); goto check_res;
-     case 'u': case 'x': case 'X': o_ui32: result = DeeObject_New(Dee_uint32_t,(Dee_uint32_t)va_arg(*args,DEE_MINUINT_T(4))); goto check_res;
+     case 'b': b_32: result = DeeBool_New(DEE_VA_ARG(*args,DEE_MINUINT_T(4))); goto check_res;
+     case 'd': case 'i': o_i32: result = DeeObject_New(Dee_int32_t,(Dee_int32_t)DEE_VA_ARG(*args,DEE_MININT_T(4))); goto check_res;
+     case 'u': case 'x': case 'X': o_ui32: result = DeeObject_New(Dee_uint32_t,(Dee_uint32_t)DEE_VA_ARG(*args,DEE_MINUINT_T(4))); goto check_res;
      default: DEE_BUILDVAL_INVALID_FORMAT();
     } break;
     default: DEE_BUILDVAL_INVALID_FORMAT();
    } break;
    case '6': switch (*fmt++) {
     case '4': switch (*fmt++) {
-     case 'b': b_64: result = DeeBool_New(va_arg(*args,DEE_MINUINT_T(8))); goto check_res;
-     case 'd': case 'i': o_i64: result = DeeObject_New(Dee_int64_t,(Dee_int64_t)va_arg(*args,DEE_MININT_T(8))); goto check_res;
-     case 'u': case 'x': case 'X': o_ui64: result = DeeObject_New(Dee_uint64_t,(Dee_uint64_t)va_arg(*args,DEE_MINUINT_T(8))); goto check_res;
+     case 'b': b_64: result = DeeBool_New(DEE_VA_ARG(*args,DEE_MINUINT_T(8))); goto check_res;
+     case 'd': case 'i': o_i64: result = DeeObject_New(Dee_int64_t,(Dee_int64_t)DEE_VA_ARG(*args,DEE_MININT_T(8))); goto check_res;
+     case 'u': case 'x': case 'X': o_ui64: result = DeeObject_New(Dee_uint64_t,(Dee_uint64_t)DEE_VA_ARG(*args,DEE_MINUINT_T(8))); goto check_res;
      default: DEE_BUILDVAL_INVALID_FORMAT();
     } break;
     default: DEE_BUILDVAL_INVALID_FORMAT();
@@ -365,14 +365,14 @@ check_res: if DEE_UNLIKELY(!result) goto err;
   } break;
   case 'l': switch (*fmt++) {
    case 's':
-    if DEE_UNLIKELY((result = DeeWideString_New(va_arg(*args,Dee_WideChar *))) == NULL) goto err;
+    if DEE_UNLIKELY((result = DeeWideString_New(DEE_VA_ARG(*args,Dee_WideChar *))) == NULL) goto err;
     break;
    case 'c':
     if DEE_UNLIKELY((result = DeeWideString_NewSized(1)) == NULL) goto err;
 #if DEE_TYPES_WCHAR_T_SIGNED
-    DeeWideString_STR(result)[0] = (Dee_WideChar)va_arg(*args,DEE_MININT_T(DEE_TYPES_SIZEOF_WCHAR_T));
+    DeeWideString_STR(result)[0] = (Dee_WideChar)DEE_VA_ARG(*args,DEE_MININT_T(DEE_TYPES_SIZEOF_WCHAR_T));
 #else
-    DeeWideString_STR(result)[0] = (Dee_WideChar)va_arg(*args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_WCHAR_T));
+    DeeWideString_STR(result)[0] = (Dee_WideChar)DEE_VA_ARG(*args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_WCHAR_T));
 #endif
     break;
    case 'b': GOTO_BOOL_X(DEE_TYPES_SIZEOF_LONG);
@@ -405,13 +405,13 @@ check_res: if DEE_UNLIKELY(!result) goto err;
 #endif
      ++fmt;
     {
-     unsigned int string_len = va_arg(*args,unsigned int);
-     Dee_WideChar const *string = va_arg(*args,Dee_WideChar const *);
+     unsigned int string_len = DEE_VA_ARG(*args,unsigned int);
+     Dee_WideChar const *string = DEE_VA_ARG(*args,Dee_WideChar const *);
      result = DeeWideString_NewWithLength(Dee_WideStrNLen(string,(Dee_size_t)string_len),string);
     } goto check_res;
     case 's': {
-     unsigned int string_len = va_arg(*args,unsigned int);
-     char const *string = va_arg(*args,char const *);
+     unsigned int string_len = DEE_VA_ARG(*args,unsigned int);
+     char const *string = DEE_VA_ARG(*args,char const *);
      result = DeeString_NewWithLength(Dee_StrNLen(string,(Dee_size_t)string_len),string);
     } goto check_res;
     default: DEE_BUILDVAL_INVALID_FORMAT();
@@ -419,32 +419,32 @@ check_res: if DEE_UNLIKELY(!result) goto err;
    default: DEE_BUILDVAL_INVALID_FORMAT();
   } break;
   case 's': {
-   char const *string = va_arg(*args,char const *);
+   char const *string = DEE_VA_ARG(*args,char const *);
    result = DeeString_New(string ? string : "(null)");
   } goto check_res;
   case 'O':
-   result = va_arg(*args,DeeObject *);
+   result = DEE_VA_ARG(*args,DeeObject *);
    goto check_res;
   case 'K':
-   if ((temp = va_arg(*args,DeeObject *)) == NULL) goto err;
+   if ((temp = DEE_VA_ARG(*args,DeeObject *)) == NULL) goto err;
    result = DeeObject_Str(temp);
    Dee_DECREF(temp);
    goto check_res;
   case 'R':
-   if ((temp = va_arg(*args,DeeObject *)) == NULL) goto err;
+   if ((temp = DEE_VA_ARG(*args,DeeObject *)) == NULL) goto err;
    result = DeeObject_Repr(temp);
    Dee_DECREF(temp);
    goto check_res;
   case 'k':
-   if ((temp = va_arg(*args,DeeObject *)) == NULL) goto err;
+   if ((temp = DEE_VA_ARG(*args,DeeObject *)) == NULL) goto err;
    result = DeeObject_Str(temp);
    goto check_res;
   case 'r':
-   if ((temp = va_arg(*args,DeeObject *)) == NULL) goto err;
+   if ((temp = DEE_VA_ARG(*args,DeeObject *)) == NULL) goto err;
    result = DeeObject_Repr(temp);
    goto check_res;
   case 'o':
-   if ((result = va_arg(*args,DeeObject *)) == NULL) goto err;
+   if ((result = DEE_VA_ARG(*args,DeeObject *)) == NULL) goto err;
    Dee_INCREF(result);
    break;
 
@@ -460,10 +460,10 @@ err: _Dee_VBuildValue_RunRemainder(&fmt,args); return NULL;
 DEE_A_RET_EXCEPT_REF DeeObject *Dee_BuildValue(
  DEE_A_IN_BUILDVALUEF char const *fmt, ...) {
  DeeObject *result; va_list args;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  result = _Dee_VBuildValueOne(&fmt,&args);
  DEE_ASSERTF(!*fmt,"Expected end of BuildValue format at %q",fmt);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 
@@ -481,9 +481,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *Dee_VBuildValue(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *
 Dee_BuildTuple(DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  DeeObject *result; va_list args;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  result = Dee_VBuildTuple(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *

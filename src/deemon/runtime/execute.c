@@ -634,7 +634,7 @@ DeeStackFrame_File(DEE_A_IN struct DeeStackFrame const *self) {
  DEE_ASSERT(self);
  return _DeeStackFrame_File(self);
 }
-DEE_A_RET_WUNUSED Dee_int64_t DeeStackFrame_Line(
+DEE_A_RET_WUNUSED Dee_int32_t DeeStackFrame_Line(
  DEE_A_IN struct DeeStackFrame const *self) {
  DEE_ASSERT(self);
  return _DeeStackFrame_Line(self);

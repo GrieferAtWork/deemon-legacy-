@@ -33,17 +33,17 @@
 #define _DeeType_SlotGet_tp_alloc(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_alloc
 #define _DeeType_SlotGet_tp_free(ob) ((DeeTypeObject *)ob)->tp_destructor.tp_free
 #define _DeeType_SlotGet___free__ _DeeType_SlotGet_tp_free
-#define _DeeType_SlotGet_tp_ctor(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_ctor
-#define _DeeType_SlotGet_tp_copy_ctor(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_copy_ctor
+#define _DeeType_SlotGet_tp_ctor(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_ctor_
+#define _DeeType_SlotGet_tp_copy_ctor(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_copy_ctor_
 #define _DeeType_SlotGet___copy__ _DeeType_SlotGet_tp_copy_ctor
-#define _DeeType_SlotGet_tp_move_ctor(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_move_ctor
+#define _DeeType_SlotGet_tp_move_ctor(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_move_ctor_
 #define _DeeType_SlotGet___move__ _DeeType_SlotGet_tp_move_ctor
-#define _DeeType_SlotGet_tp_any_ctor(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_any_ctor
+#define _DeeType_SlotGet_tp_any_ctor(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_any_ctor_
 #define _DeeType_SlotGet___constructor__ _DeeType_SlotGet_tp_any_ctor
-#define _DeeType_SlotGet_tp_new(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_new
-#define _DeeType_SlotGet_tp_copy_new(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_copy_new
-#define _DeeType_SlotGet_tp_move_new(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_move_new
-#define _DeeType_SlotGet_tp_any_new(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_any_new
+#define _DeeType_SlotGet_tp_new(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_new_
+#define _DeeType_SlotGet_tp_copy_new(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_copy_new_
+#define _DeeType_SlotGet_tp_move_new(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_move_new_
+#define _DeeType_SlotGet_tp_any_new(ob) ((DeeTypeObject *)ob)->tp_constructor.tp_any_new_
 #define _DeeType_SlotGet_tp_dtor(ob) ((DeeTypeObject *)ob)->tp_destructor.tp_dtor
 #define _DeeType_SlotGet___destructor__ _DeeType_SlotGet_tp_dtor
 #define _DeeType_SlotGet_tp_copy_assign(ob) ((DeeTypeObject *)ob)->tp_assign.tp_copy_assign

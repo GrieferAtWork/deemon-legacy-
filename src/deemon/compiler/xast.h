@@ -389,7 +389,14 @@ struct DeeXAstClassAstEntry {
    DEE_A_REF DeeXAstObject   *cg_del;  /*< [0..1] Delete value. */
    DEE_A_REF DeeXAstObject   *cg_set;  /*< [0..1] Setter value. */
   } ce_getset;
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define ce_slot    _ce_data.ce_slot
+#define ce_method  _ce_data.ce_method
+#define ce_getset  _ce_data.ce_getset
+ _ce_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 
@@ -456,8 +463,18 @@ do{\
 
 
 
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#undef ast_kind
+#undef ast_common
+#undef ast_if
+#undef ast_module
+#undef ast_switch
+#undef ast_ifconst
+#undef ast_iftrue
+#undef ast_iffalse
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
 #define DEE_XAST_AST_HEAD \
-                  DeeXAstKind     ast_kind;  /*< The kind of AST. */\
+                  DeeXAstKind     ast_kind_;  /*< The kind of AST. */\
  DEE_A_REF struct DeeTokenObject *ast_token; /*< [1..1] token of this AST (used in debug/error output) */
 
 struct DeeXAstCommonAst { DEE_XAST_AST_HEAD };
@@ -687,7 +704,6 @@ struct DeeXAstObject {
  (sizeof(DeeXAstObject)-(sizeof(DeeObject)+sizeof(struct DeeXAstCommonAst)))
 #define DeeXAst_UNCOMMON_DATA(ob)\
  (void *)(((uintptr_t)(ob))+(sizeof(DeeObject)+sizeof(struct DeeXAstCommonAst)))
-
  union{
   DeeXAstKind                       ast_kind;            /*< The kind of AST. */
   struct DeeXAstCommonAst           ast_common;          /*< DEE_XASTKIND_*. */
@@ -737,7 +753,59 @@ struct DeeXAstObject {
   struct DeeXAstOperatorAst         ast_operator;        /*< DEE_XASTKIND_ISOPERATOR(ast_kind). */
   struct DeeXAstUnaryInplaceVarAst  ast_unary_var;       /*< DEE_XASTKIND_ISUNARYVAR(ast_kind). */
   struct DeeXAstBinaryInplaceVarAst ast_binary_var;      /*< DEE_XASTKIND_ISBINARYVAR(ast_kind). */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define ast_kind            _ast_data.ast_kind
+#define ast_common          _ast_data.ast_common
+#define ast_const           _ast_data.ast_const
+#define ast_var             _ast_data.ast_var
+#define ast_vardecl         _ast_data.ast_vardecl
+#define ast_multivardecl    _ast_data.ast_multivardecl
+#define ast_statement       _ast_data.ast_statement
+#define ast_if              _ast_data.ast_if
+#define ast_function        _ast_data.ast_function
+#if DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES
+#define ast_class           _ast_data.ast_class
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_CLASS_TYPES */
+#define ast_sequence        _ast_data.ast_sequence
+#define ast_tuple           _ast_data.ast_tuple
+#define ast_list            _ast_data.ast_list
+#define ast_set             _ast_data.ast_set
+#define ast_dict            _ast_data.ast_dict
+#define ast_seq_range       _ast_data.ast_seq_range
+#define ast_seq_range_get   _ast_data.ast_seq_range_get
+#define ast_seq_range_del   _ast_data.ast_seq_range_del
+#define ast_seq_range_set   _ast_data.ast_seq_range_set
+#define ast_attr_c          _ast_data.ast_attr_c
+#define ast_attr_get_c      _ast_data.ast_attr_get_c
+#define ast_attr_has_c      _ast_data.ast_attr_has_c
+#define ast_attr_del_c      _ast_data.ast_attr_del_c
+#define ast_attr_set_c      _ast_data.ast_attr_set_c
+#define ast_module          _ast_data.ast_module
+#define ast_delvar          _ast_data.ast_delvar
+#if DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION
+#define ast_foreignfunction _ast_data.ast_foreignfunction
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION */
+#define ast_switch          _ast_data.ast_switch
+#define ast_ifconst         _ast_data.ast_ifconst
+#define ast_iftrue          _ast_data.ast_iftrue
+#define ast_iffalse         _ast_data.ast_iffalse
+#if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_BOUND
+#define ast_builtin_bound   _ast_data.ast_builtin_bound
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_BOUND */
+#if DEE_CONFIG_LANGUAGE_HAVE_EXTERN
+#define ast_builtin_extern  _ast_data.ast_builtin_extern
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_EXTERN */
+#if DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT
+#define ast_builtin_expect  _ast_data.ast_builtin_expect
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_BUILTIN_EXPECT */
+#define ast_zeroop          _ast_data.ast_zeroop
+#define ast_operator        _ast_data.ast_operator
+#define ast_unary_var       _ast_data.ast_unary_var
+#define ast_binary_var      _ast_data.ast_binary_var
+ _ast_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 
@@ -844,21 +912,21 @@ extern /*noexcept*/int DeeXAst_GetOffsetof(
 //////////////////////////////////////////////////////////////////////////
 // Create a new constant/variable AST
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewConst(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeObject *ast_const);
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeObject *constant);
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewVar(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *ast_var,
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *localvar,
  DEE_A_INOUT DeeScopeObject *curr_scope);
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewReferenceVar(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *ast_var,
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *localvar,
  DEE_A_INOUT DeeScopeObject *curr_scope);
 #ifdef DEE_DEBUG
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewLocalVar(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *ast_var,
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *localvar,
  DEE_A_INOUT DeeScopeObject *curr_scope);
 #else
-#define DeeXAst_NewLocalVar(tk,ast_var,curr_scope) _DeeXAst_NewLocalVar(tk,ast_var)
+#define DeeXAst_NewLocalVar(tk,localvar,curr_scope) _DeeXAst_NewLocalVar(tk,localvar)
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *_DeeXAst_NewLocalVar(
- DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *ast_var);
+ DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLocalVarObject *localvar);
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -1083,7 +1151,7 @@ extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_OptimizeMultiVarDecl(
 // Create a new statement-AST
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewStatement(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLexerObject *lexer,
- DEE_A_IN Dee_uint32_t parser_flags, DEE_A_INOUT struct DeeSAstObject *ast_statement);
+ DEE_A_IN Dee_uint32_t parser_flags, DEE_A_INOUT struct DeeSAstObject *statement);
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewIfFromIfSAst(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT struct DeeSAstObject *if_sast,
  DEE_A_INOUT DeeLexerObject *lexer, DEE_A_IN Dee_uint32_t parser_flags);
@@ -2152,7 +2220,17 @@ struct DeeXAstTypeOperationsEntry {
 #if DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION
   struct DeeXAstTypeOperationsForeignFunctionEntry oe_foreign_function;
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#if DEE_CONFIG_LANGUAGE_HAVE_ARRAYS
+#define oe_array            _oe_data.oe_array
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_ARRAYS */
+#if DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION
+#define oe_foreign_function _oe_data.oe_foreign_function
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION */
+ _oe_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 #endif /* ... */
 };
 DEE_COMPILER_MSVC_WARNING_POP
@@ -2566,6 +2644,7 @@ struct DeeOptimizerVarTypeAssumption {
 struct DeeOptimizerExprAssumption {
  DEE_A_REF DeeXAstObject     *oea_expr;  /*< [1..1] The expression assumed to be true. */
 };
+DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeOptimizerAssumption {
 #define DEE_OPTIMIZER_ASSUMPTION_KIND_NONE    DEE_UINT32_C(0x00000000)
 #define DEE_OPTIMIZER_ASSUMPTION_KIND_VARINIT DEE_UINT32_C(0x00000001) /*< Assume a given variable to be initialized with some constant. */
@@ -2576,8 +2655,16 @@ struct DeeOptimizerAssumption {
   struct DeeOptimizerVarInitAssumption oa_varinit; /*< DEE_OPTIMIZER_ASSUMPTION_KIND_VARINIT. */
   struct DeeOptimizerVarTypeAssumption oa_vartype; /*< DEE_OPTIMIZER_ASSUMPTION_KIND_VARTYPE. */
   struct DeeOptimizerExprAssumption    oa_expr;    /*< DEE_OPTIMIZER_ASSUMPTION_KIND_EXPR. */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define oa_varinit _oa_data.oa_varinit
+#define oa_vartype _oa_data.oa_vartype
+#define oa_expr    _oa_data.oa_expr
+ _oa_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
+DEE_COMPILER_MSVC_WARNING_POP
 #if 1
 #define _DeeOptimizerAssumption_Quit(ob)\
 do{\

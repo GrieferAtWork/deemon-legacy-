@@ -94,7 +94,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeStructType_SetUUID(
   if DEE_LIKELY(Dee_CollectMemory()) continue;
  }
  marshal->tp_uuid = *uuid;
- marshal->tp_marshal_ctor = (DeeType_SLOT_TYPE(tp_marshal_ctor))&_deestructured_tp_marshal_ctor;
+ marshal->tp_marshal_ctor_ = (DeeType_SLOT_TYPE(tp_marshal_ctor))&_deestructured_tp_marshal_ctor;
  marshal->tp_marshal_put = (DeeType_SLOT_TYPE(tp_marshal_put))&_deestructured_tp_marshal_put;
  DEE_ASSERT(!DeeType_GET_SLOT(self,tp_marshal));
  DeeType_GET_SLOT(self,tp_marshal) = marshal;
@@ -748,7 +748,7 @@ err: result = NULL; goto end;
 static void _deestructtype_tp_dtor(DeeStructTypeObject *self) {
  struct DeeStructMember *members;
  DEE_ASSERT(!DeeType_HAS_SLOT(self,tp_marshal) || (DeeType_GET_SLOT(self,tp_marshal)->
-  tp_marshal_ctor == (DeeType_SLOT_TYPE(tp_marshal_ctor))&_deestructured_tp_marshal_ctor));
+  tp_marshal_ctor_ == (DeeType_SLOT_TYPE(tp_marshal_ctor))&_deestructured_tp_marshal_ctor));
  DEE_ASSERT(!DeeType_HAS_SLOT(self,tp_marshal) || (DeeType_GET_SLOT(self,tp_marshal)->
   tp_marshal_put == (DeeType_SLOT_TYPE(tp_marshal_put))&_deestructured_tp_marshal_put));
  free(DeeType_GET_SLOT(self,tp_marshal)); // Free a custom marshal struct uuid
@@ -861,10 +861,10 @@ static int DEE_CALL _deestructtype_tp_marshal_ctor(
  DeeObject *infile, struct DeeMarshalReadMap *map) {
  Dee_uint64_t read_size; Dee_size_t size,new_size,max_size;
  struct DeeStructMember *members;
- if ((*DeeType_GET_SLOT(&DeeStructuredType_Type,tp_marshal)->tp_marshal_ctor)(
-  tp_self,(DeeObject *)self,infile,map) != 0) return -1;
+ if DEE_UNLIKELY((*DeeType_GET_SLOT(&DeeStructuredType_Type,tp_marshal)->
+  tp_marshal_ctor_)(tp_self,(DeeObject *)self,infile,map) != 0) return -1;
  _DeeStructType_InitCommon(self);
- if (DeeFile_GetLeSmall64(infile,&read_size) != 0) goto err;
+ if DEE_UNLIKELY(DeeFile_GetLeSmall64(infile,&read_size) != 0) goto err;
 #if DEE_TYPES_SIZEOF_SIZE_T < 8
  if DEE_UNLIKELY(read_size > (Dee_uint64_t)((Dee_size_t)-1)) {
   DeeError_SetStringf(&DeeErrorType_ValueError,
@@ -875,7 +875,7 @@ static int DEE_CALL _deestructtype_tp_marshal_ctor(
 #endif
  DEE_ASSERT(self->tp_smembers == _DeeStructType_EmptyMembers);
  if ((size = (Dee_size_t)read_size) != 0) {
-  while ((members = (struct DeeStructMember *)malloc_nz(
+  while DEE_UNLIKELY((members = (struct DeeStructMember *)malloc_nz(
    (size+1)*sizeof(struct DeeStructMember))) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    DeeError_NoMemory();
@@ -884,7 +884,7 @@ static int DEE_CALL _deestructtype_tp_marshal_ctor(
   self->tp_smembers = members;
   max_size = 0;
   do {
-   if ((members->sm_type = (DeeStructuredTypeObject *)
+   if DEE_UNLIKELY((members->sm_type = (DeeStructuredTypeObject *)
     DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
 err_members: while (members != self->tp_smembers) {
      --members;
@@ -895,10 +895,10 @@ err_members: while (members != self->tp_smembers) {
     self->tp_smembers = _DeeStructType_EmptyMembers;
     goto err;
    }
-   if (DeeError_TypeError_CheckType((DeeObject *)members->sm_type,&DeeStructuredType_Type) != 0) goto err_members;
-   if ((members->sm_name = (DeeStringObject *)DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {err_members_type: Dee_DECREF(members->sm_type); goto err_members; }
-   if (DeeError_TypeError_CheckTypeExact((DeeObject *)members->sm_name,&DeeString_Type) != 0) {err_members_name: Dee_DECREF(members->sm_name); goto err_members_type; }
-   if (DeeFile_GetLeSmall64(infile,&read_size) != 0) goto err_members_name;
+   if DEE_UNLIKELY(DeeError_TypeError_CheckType((DeeObject *)members->sm_type,&DeeStructuredType_Type) != 0) goto err_members;
+   if DEE_UNLIKELY((members->sm_name = (DeeStringObject *)DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {err_members_type: Dee_DECREF(members->sm_type); goto err_members; }
+   if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)members->sm_name,&DeeString_Type) != 0) {err_members_name: Dee_DECREF(members->sm_name); goto err_members_type; }
+   if DEE_UNLIKELY(DeeFile_GetLeSmall64(infile,&read_size) != 0) goto err_members_name;
 #if DEE_TYPES_SIZEOF_SIZE_T < 8
    if DEE_UNLIKELY(read_size > (Dee_uint64_t)((Dee_size_t)-1)) {
     DeeError_SetStringf(&DeeErrorType_ValueError,
@@ -933,16 +933,16 @@ static int DEE_CALL _deestructtype_tp_marshal_put(
  DeeTypeObject *tp_self, DeeStructTypeObject *self,
  DeeObject *outfile, struct DeeMarshalWriteMap *map) {
  Dee_size_t size; struct DeeStructMember *members;
- if ((*DeeType_GET_SLOT(&DeeStructuredType_Type,tp_marshal)->tp_marshal_put)(
+ if DEE_UNLIKELY((*DeeType_GET_SLOT(&DeeStructuredType_Type,tp_marshal)->tp_marshal_put)(
   tp_self,(DeeObject *)self,outfile,map) != 0) return -1;
  members = self->tp_smembers; size = 0;
  while (members->sm_type) ++size,++members;
- if (DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)size) != 0) return -1;
+ if DEE_UNLIKELY(DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)size) != 0) return -1;
  members = self->tp_smembers;
  while (members->sm_type) {
-  if (DeeMarshal_WriteObjectWithMap(outfile,map,(DeeObject *)members->sm_type) != 0) return -1;
-  if (DeeMarshal_WriteObjectWithMap(outfile,map,(DeeObject *)members->sm_name) != 0) return -1;
-  if (DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)members->sm_offset) != 0) return -1;
+  if DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,(DeeObject *)members->sm_type) != 0) return -1;
+  if DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,(DeeObject *)members->sm_name) != 0) return -1;
+  if DEE_UNLIKELY(DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)members->sm_offset) != 0) return -1;
   ++members;
  }
  return 0;

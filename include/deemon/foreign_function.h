@@ -91,7 +91,13 @@ struct DeeForeignFunctionTypeObject {
 union{
  Dee_size_t                fft_woff_argptr;
  Dee_size_t                fft_woff_variadic_argmem;
-};
+}
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define fft_woff_argptr          _fft_woff_argptr_data.fft_woff_argptr
+#define fft_woff_variadic_argmem _fft_woff_argptr_data.fft_woff_variadic_argmem
+ _fft_woff_argptr_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+;
  enum DeeForeignFunctionReturnTypeKind fft_return_kind;
 };
 #define DeeForeignFunctionType_FLAGS(ob)      ((DeeForeignFunctionTypeObject *)(ob))->fft_flags
@@ -133,10 +139,16 @@ struct DeeForeignFunctionObject {
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeForeignFunctionClosureObject {
  DEE_OBJECT_HEAD
- union{
+union{
  DeeForeignFunction                      ffc_funptr;   /*< [1..1][owned] Callback function pointer. */
  void                                   *ffc_exec;     /*< [1..1] The executable callback function pointer. */
- };
+}
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define ffc_funptr _ffc_funptr_data.ffc_funptr
+#define ffc_exec   _ffc_funptr_data.ffc_exec
+ _ffc_funptr_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+;
  DEE_A_REF DeeObject                    *ffc_callback; /*< [1..1] Object that should be called from 'ffc_funptr' (using 'tp_call'). */
  DEE_A_REF DeeForeignFunctionTypeObject *ffc_type;     /*< [1..1] The Regular foreign-function type. */
  ffi_closure                            *ffc_write;    /*< [1..1] The writable callback function pointer. */

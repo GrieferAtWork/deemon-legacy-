@@ -23,11 +23,12 @@
 
 #include <deemon/__conf.inl>
 
-#include DEE_INCLUDE_MEMORY_API_DISABLE()
-#include <stdint.h>
-#include DEE_INCLUDE_MEMORY_API_ENABLE()
-
 DEE_DECL_BEGIN
+
+#ifdef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
+DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
+#undef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
+#endif
 
 #define _DEE_CHAR_FLAG_IS_CNTRL 0x01
 #define _DEE_CHAR_FLAG_IS_PUNCT 0x02
@@ -38,7 +39,7 @@ DEE_DECL_BEGIN
 #define _DEE_CHAR_FLAG_IS_LOWER 0x40
 #define _DEE_CHAR_FLAG_IS_UPPER 0x80
 
-static uint8_t _DeeCharTraits[256] = {
+static Dee_uint8_t const _DeeCharTraits[256] = {
  0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x11,0x11,0x11,0x11,0x11,0x01,0x01,
  0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
  0x18,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,
@@ -75,18 +76,18 @@ DEE_STATIC_INLINE(DEE_A_RET_WUNUSED int) DEE_CH_TO_LOWER(int c) { return (c>='A'
 DEE_STATIC_INLINE(DEE_A_RET_WUNUSED int) DEE_CH_TO_UPPER(int c) { return (c>='a'&&c<='z')?(c-('a'-'A')):c; }
 
 #if DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS
-#define DEE_CH_IS_BLANK(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);_temp_c == '\x09' || _temp_c == '\x20';})
-#define DEE_CH_IS_XCHAR(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='A'&&_temp_c<='F')&&(_temp_c>='a'&&_temp_c<='f');})
-#define DEE_CH_IS_XDIGIT(c) DEE_GCC_EXTENSION({char const _temp_c=(c);DEE_CH_IS_DIGIT(_temp_c)||((_temp_c>='A'&&_temp_c<='F')&&(_temp_c>='a'&&_temp_c<='f'));})
-#define DEE_CH_TO_LOWER(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='A'&&_temp_c<='Z')?(_temp_c+('a'-'A')):_temp_c;})
-#define DEE_CH_TO_UPPER(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='a'&&_temp_c<='z')?(_temp_c-('a'-'A')):_temp_c;})
-#else
-#define DEE_CH_IS_BLANK    DEE_CH_IS_BLANK
-#define DEE_CH_IS_XCHAR    DEE_CH_IS_XCHAR
-#define DEE_CH_IS_XDIGIT   DEE_CH_IS_XDIGIT
-#define DEE_CH_TO_LOWER    DEE_CH_TO_LOWER
-#define DEE_CH_TO_UPPER    DEE_CH_TO_UPPER
-#endif
+# define DEE_CH_IS_BLANK(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);_temp_c == '\x09' || _temp_c == '\x20';})
+# define DEE_CH_IS_XCHAR(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='A'&&_temp_c<='F')&&(_temp_c>='a'&&_temp_c<='f');})
+# define DEE_CH_IS_XDIGIT(c) DEE_GCC_EXTENSION({char const _temp_c=(c);DEE_CH_IS_DIGIT(_temp_c)||((_temp_c>='A'&&_temp_c<='F')&&(_temp_c>='a'&&_temp_c<='f'));})
+# define DEE_CH_TO_LOWER(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='A'&&_temp_c<='Z')?(_temp_c+('a'-'A')):_temp_c;})
+# define DEE_CH_TO_UPPER(c)  DEE_GCC_EXTENSION({char const _temp_c=(c);(_temp_c>='a'&&_temp_c<='z')?(_temp_c-('a'-'A')):_temp_c;})
+#else /* DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
+# define DEE_CH_IS_BLANK    DEE_CH_IS_BLANK
+# define DEE_CH_IS_XCHAR    DEE_CH_IS_XCHAR
+# define DEE_CH_IS_XDIGIT   DEE_CH_IS_XDIGIT
+# define DEE_CH_TO_LOWER    DEE_CH_TO_LOWER
+# define DEE_CH_TO_UPPER    DEE_CH_TO_UPPER
+#endif /* !DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
 
 DEE_DECL_END
 

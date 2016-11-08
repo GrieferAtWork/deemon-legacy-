@@ -590,7 +590,6 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeList_Back(
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeList_Front(
  DEE_A_IN_OBJECT(DeeListObject) const *self) {
- DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeObject *result; Dee_size_t size;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeList_ACQUIRE(self);
@@ -636,8 +635,8 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeList_At(
 DEE_A_RET_EXCEPT(-1) int DeeList_Set(
  DEE_A_INOUT_OBJECT(DeeListObject) *self,
  DEE_A_IN Dee_ssize_t i, DEE_A_INOUT DeeObject *v) {
- DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeObject *old_elem;
+ DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeList_ACQUIRE(self);
  if DEE_UNLIKELY(DeeList_EMPTY(self)) {
   DeeList_RELEASE(self);
@@ -655,8 +654,8 @@ DEE_A_RET_EXCEPT(-1) int DeeList_Set(
 DEE_A_RET_EXCEPT(-1) int DeeList_SetAt(
  DEE_A_INOUT_OBJECT(DeeListObject) *self,
  DEE_A_IN Dee_size_t i, DEE_A_INOUT DeeObject *v) {
- DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeObject *old_elem;
+ DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeList_ACQUIRE(self);
  if DEE_UNLIKELY(i >= DeeList_SIZE(self)) {
   DeeList_RELEASE(self);
@@ -722,7 +721,6 @@ DeeList_IterSelf(DEE_A_INOUT_OBJECT(DeeListObject) *self) {
 
 DEE_A_RET_EXCEPT(-1) int DeeList_Del(
  DEE_A_INOUT_OBJECT(DeeListObject) *self, DEE_A_IN Dee_ssize_t i) {
- DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeObject *result; Dee_size_t list_size;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeList_ACQUIRE(self);
@@ -742,7 +740,6 @@ DEE_A_RET_EXCEPT(-1) int DeeList_Del(
 }
 DEE_A_RET_EXCEPT(-1) int DeeList_DelAt(
  DEE_A_INOUT_OBJECT(DeeListObject) *self, DEE_A_IN Dee_size_t i) {
- DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeObject *result; Dee_size_t list_size;
  DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
  DeeList_ACQUIRE(self);

@@ -121,7 +121,17 @@ struct DeeVarArrayTypeObject {
   struct DeeLValueTypeObject       *vat_prev_lvalule_type;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
   struct DeeVarArrayTypeObject     *vat_prev_varray_type;
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define vat_prev_structured_object_type _vat_prev_data.vat_prev_structured_object_type
+#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
+#define vat_prev_pointer_type           _vat_prev_data.vat_prev_pointer_type
+#define vat_prev_lvalule_type           _vat_prev_data.vat_prev_lvalule_type
+#endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+#define vat_prev_varray_type            _vat_prev_data.vat_prev_varray_type
+   _vat_prev_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
  DEE_A_REF DeeStructuredTypeObject *vat_array_base;       /*< [1..1] Array element type. */
            Dee_size_t               vat_array_elem_size;  /*< Array element size (== at_array_base->tp_p_instance_size). */
 };

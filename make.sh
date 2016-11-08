@@ -322,7 +322,6 @@ compile_deemon() {
 	update_object_file "$source_path/deemon/runtime/execute.c"
 	update_object_file "$source_path/deemon/runtime/extern.c"
 	update_object_file "$source_path/deemon/runtime/function.c"
-	update_object_file "$source_path/deemon/runtime/sandbox.c"
 	update_object_file "$source_path/deemon/sequence.c"
 	update_object_file "$source_path/deemon/set.c"
 	update_object_file "$source_path/deemon/signalhandler.c"
@@ -392,7 +391,6 @@ link_deemon() {
 		"$build_path/execute.c.o" \
 		"$build_path/extern.c.o" \
 		"$build_path/function.c.o" \
-		"$build_path/sandbox.c.o" \
 		"$build_path/sequence.c.o" \
 		"$build_path/set.c.o" \
 		"$build_path/signalhandler.c.o" \
@@ -463,7 +461,6 @@ link_deemon_static() {
 		"$build_path/execute.c.o" \
 		"$build_path/extern.c.o" \
 		"$build_path/function.c.o" \
-		"$build_path/sandbox.c.o" \
 		"$build_path/sequence.c.o" \
 		"$build_path/set.c.o" \
 		"$build_path/signalhandler.c.o" \

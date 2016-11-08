@@ -611,7 +611,7 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_lvalue_rem) {
 }
 #endif
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_assertion_failed) {
- DeeThreadObject *thread_self; char const *file; Dee_int64_t line;
+ DeeThreadObject *thread_self; char const *file; Dee_int32_t line;
  DeeObject *expr = Dee_None,*msg = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|oo:__builtin_assertion_failed",&expr,&msg) != 0) return NULL;
  if DEE_UNLIKELY((thread_self = DeeThread_SELF()) == NULL) return NULL;
@@ -625,11 +625,11 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_assertion_failed) {
  }
  if (DeeNone_Check(msg)) {
   DeeError_SetStringf(&DeeErrorType_AssertionError,
-                      "%s(%I64d) : Assertion failed : %s:%k",
+                      "%s(%I32d) : Assertion failed : %s:%k",
                       file,line+1,DeeType_NAME(Dee_TYPE(expr)),expr);
  } else {
   DeeError_SetStringf(&DeeErrorType_AssertionError,
-                      "%s(%I64d) : Assertion failed : %s:%k : %k",
+                      "%s(%I32d) : Assertion failed : %s:%k : %k",
                       file,line+1,DeeType_NAME(Dee_TYPE(expr)),expr,msg);
  }
  return NULL;
@@ -2633,7 +2633,7 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_LINE) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_LINE") != 0) return NULL;
  if DEE_UNLIKELY((thread_self = DeeThread_SELF()) == NULL) return NULL;
  if DEE_UNLIKELY(!thread_self->t_frame_last) return DeeObject_New(int,-1);
- return DeeObject_New(Dee_int64_t,_DeeStackFrame_Line(thread_self->t_frame_last)+1);
+ return DeeObject_New(Dee_int32_t,_DeeStackFrame_Line(thread_self->t_frame_last)+1);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_FUNCTION) {
  DeeThreadObject *thread_self; DeeObject *result;

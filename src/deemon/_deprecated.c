@@ -124,7 +124,7 @@ DEPRECATED_EXPORT(int,DeeFile_Getc,(DeeObject *self, Dee_uint8_t *c)) { return D
 DEPRECATED_EXPORT(int,DeeFile_Putc,(DeeObject *self, Dee_uint8_t c)) { return DeeFile_TPutc(Dee_TYPE(self),self,c); }
 DEPRECATED_EXPORT(int,DeeFile_Puts,(DeeObject *self, char const *msg)) { return DeeFile_TPuts(Dee_TYPE(self),self,msg); }
 DEPRECATED_EXPORT(int,DeeFile_Print,(DeeObject *self, char const *msg)) { return DeeFile_TPrint(Dee_TYPE(self),self,msg); }
-DEPRECATED_EXPORT(int,DeeFile_Printf,(DeeObject *self, char const *fmt, ...)) { int result; va_list args; va_start(args,fmt); result = DeeFile_VTPrintf(Dee_TYPE(self),self,fmt,args); va_end(args); return result; }
+DEPRECATED_EXPORT(int,DeeFile_Printf,(DeeObject *self, char const *fmt, ...)) { int result; va_list args; DEE_VA_START(args,fmt); result = DeeFile_VTPrintf(Dee_TYPE(self),self,fmt,args); DEE_VA_END(args); return result; }
 DEPRECATED_EXPORT(int,DeeFile_VPrintf,(DeeObject *self, char const *fmt, va_list args)) { return DeeFile_VTPrintf(Dee_TYPE(self),self,fmt,args); }
 #undef DeeFile_ReadLine
 #undef DeeFile_ReadData
@@ -170,19 +170,19 @@ DEPRECATED_EXPORT(void,DeeTuple_SetElem,(DeeObject const *self, Dee_size_t index
 #undef DeeObject_CallAttrStringObjArgs
 #undef DeeObject_CallAttrf
 #undef DeeObject_CallAttrStringf
-DEPRECATED_EXPORT(DeeObject *,DeeObject_CallAttrObjArgs,(DeeObject *self, DeeObject const *attr, ...)) { DeeObject *result; va_list args; va_start(args,attr); result = DeeObject_VTCallAttrObjArgs(Dee_TYPE(self),self,attr,args); va_end(args); return result; }
-DEPRECATED_EXPORT(DeeObject *,DeeObject_CallAttrStringObjArgs,(DeeObject *self, char const *attr, ...)) { DeeObject *result; va_list args; va_start(args,attr); result = DeeObject_VTCallAttrStringObjArgs(Dee_TYPE(self),self,attr,args); va_end(args); return result; }
-DEPRECATED_EXPORT(DeeObject *,DeeObject_CallAttrf,(DeeObject *self, DeeObject const *attr, char const *fmt, ...)) { DeeObject *result; va_list args; va_start(args,fmt); result = DeeObject_VTCallAttrf(Dee_TYPE(self),self,attr,fmt,args); va_end(args); return result; }
-DEPRECATED_EXPORT(DeeObject *,DeeObject_CallAttrStringf,(DeeObject *self, char const *attr, char const *fmt, ...)) { DeeObject *result; va_list args; va_start(args,fmt); result = DeeObject_VTCallAttrStringf(Dee_TYPE(self),self,attr,fmt,args); va_end(args); return result; }
+DEPRECATED_EXPORT(DeeObject *,DeeObject_CallAttrObjArgs,(DeeObject *self, DeeObject const *attr, ...)) { DeeObject *result; va_list args; DEE_VA_START(args,attr); result = DeeObject_VTCallAttrObjArgs(Dee_TYPE(self),self,attr,args); DEE_VA_END(args); return result; }
+DEPRECATED_EXPORT(DeeObject *,DeeObject_CallAttrStringObjArgs,(DeeObject *self, char const *attr, ...)) { DeeObject *result; va_list args; DEE_VA_START(args,attr); result = DeeObject_VTCallAttrStringObjArgs(Dee_TYPE(self),self,attr,args); DEE_VA_END(args); return result; }
+DEPRECATED_EXPORT(DeeObject *,DeeObject_CallAttrf,(DeeObject *self, DeeObject const *attr, char const *fmt, ...)) { DeeObject *result; va_list args; DEE_VA_START(args,fmt); result = DeeObject_VTCallAttrf(Dee_TYPE(self),self,attr,fmt,args); DEE_VA_END(args); return result; }
+DEPRECATED_EXPORT(DeeObject *,DeeObject_CallAttrStringf,(DeeObject *self, char const *attr, char const *fmt, ...)) { DeeObject *result; va_list args; DEE_VA_START(args,fmt); result = DeeObject_VTCallAttrStringf(Dee_TYPE(self),self,attr,fmt,args); DEE_VA_END(args); return result; }
 
 #undef DeeObject_CallObjArgs
 #undef DeeObject_Callf
 #undef DeeObject_ThisCallf
 #undef DeeObject_VCallf
 #undef DeeObject_VThisCallf
-DEPRECATED_EXPORT(DeeObject *,DeeObject_CallObjArgs,(DeeObject *self, ...)) { DeeObject *result; va_list args; va_start(args,self); result = DeeObject_VTCallObjArgs(Dee_TYPE(self),self,args); va_end(args); return result; }
-DEPRECATED_EXPORT(DeeObject *,DeeObject_Callf,(DeeObject *self, char const *fmt, ...)) { DeeObject *result; va_list args; va_start(args,fmt); result = DeeObject_VTCallf(Dee_TYPE(self),self,fmt,args); va_end(args); return result; }
-DEPRECATED_EXPORT(DeeObject *,DeeObject_ThisCallf,(DeeObject *self, DeeObject *this_arg, char const *fmt, ...)) { DeeObject *result; va_list args; va_start(args,fmt); result = DeeObject_VTThisCallf(Dee_TYPE(self),self,this_arg,fmt,args); va_end(args); return result; }
+DEPRECATED_EXPORT(DeeObject *,DeeObject_CallObjArgs,(DeeObject *self, ...)) { DeeObject *result; va_list args; DEE_VA_START(args,self); result = DeeObject_VTCallObjArgs(Dee_TYPE(self),self,args); DEE_VA_END(args); return result; }
+DEPRECATED_EXPORT(DeeObject *,DeeObject_Callf,(DeeObject *self, char const *fmt, ...)) { DeeObject *result; va_list args; DEE_VA_START(args,fmt); result = DeeObject_VTCallf(Dee_TYPE(self),self,fmt,args); DEE_VA_END(args); return result; }
+DEPRECATED_EXPORT(DeeObject *,DeeObject_ThisCallf,(DeeObject *self, DeeObject *this_arg, char const *fmt, ...)) { DeeObject *result; va_list args; DEE_VA_START(args,fmt); result = DeeObject_VTThisCallf(Dee_TYPE(self),self,this_arg,fmt,args); DEE_VA_END(args); return result; }
 DEPRECATED_EXPORT(DeeObject *,DeeObject_VCallf,(DeeObject *self, char const *fmt, va_list args)) { return DeeObject_VTCallf(Dee_TYPE(self),self,fmt,args); }
 DEPRECATED_EXPORT(DeeObject *,DeeObject_VThisCallf,(DeeObject *self, DeeObject *this_arg, char const *fmt, va_list args)) { return DeeObject_VTThisCallf(Dee_TYPE(self),self,this_arg,fmt,args); }
 
@@ -204,7 +204,7 @@ DEPRECATED_EXPORT(int,DeeObject_GetPointerEx,(DeeObject *ob, DeeTypeObject *tp, 
 
 #undef DeeObject_GetPointerExf
 #undef DeeObject_VGetPointerExf
-DEPRECATED_EXPORT(int,DeeObject_GetPointerExf,(DeeObject *ob, void **result, char const *ty_fmt, ...)) { va_list args; int ires; va_start(args,ty_fmt); ires = DeeObject_VTGetPointerExf(Dee_TYPE(ob),ob,result,ty_fmt,args); va_end(args); return ires; }
+DEPRECATED_EXPORT(int,DeeObject_GetPointerExf,(DeeObject *ob, void **result, char const *ty_fmt, ...)) { va_list args; int ires; DEE_VA_START(args,ty_fmt); ires = DeeObject_VTGetPointerExf(Dee_TYPE(ob),ob,result,ty_fmt,args); DEE_VA_END(args); return ires; }
 DEPRECATED_EXPORT(int,DeeObject_VGetPointerExf,(DeeObject *ob, void **result, char const *ty_fmt, va_list args)) { return DeeObject_VTGetPointerExf(Dee_TYPE(ob),ob,result,ty_fmt,args); }
 
 #undef DeeObject_TryGetPointer

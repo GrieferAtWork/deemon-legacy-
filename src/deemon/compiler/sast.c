@@ -317,7 +317,7 @@ DEE_A_RET_EXCEPT_REF DeeSAstObject *_DeeSAst_NewUnsafe(
  DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
  if ((result = DEE_OBJECTPOOL_ALLOC(sast)) != NULL) {
   DeeObject_INIT(result,&DeeSAst_Type);
-  result->ast_common.ast_kind = kind;
+  result->ast_kind = kind;
   _DeeParserLabelRefList_InitMove(&result->ast_common.ast_labels,labels_);
   Dee_INCREF(result->ast_common.ast_token = tk);
  }
@@ -334,7 +334,7 @@ DEE_A_RET_EXCEPT_REF DeeSAstObject *_DeeSAst_NewEmptyEx(
  DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
  if ((result = DEE_OBJECTPOOL_ALLOC(sast)) != NULL) {
   DeeObject_INIT(result,&DeeSAst_Type);
-  result->ast_common.ast_kind = kind;
+  result->ast_kind = kind;
   _DeeParserLabelRefList_InitMove(&result->ast_common.ast_labels,labels_);
   Dee_INCREF(result->ast_common.ast_token = tk);
  }
@@ -988,12 +988,12 @@ DEE_A_RET_EXCEPT_REF DeeSAstObject *DeeSAst_NewGoto(
 
 DEE_A_RET_EXCEPT_REF DeeSAstObject *DeeSAst_NewThrow(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT struct DeeParserLabelRefList *labels_,
- DEE_A_INOUT_OPT DeeXAstObject *ast_throw) {
+ DEE_A_INOUT_OPT DeeXAstObject *throw_expression) {
  DeeSAstObject *result;
  DEE_ASSERT(DeeObject_Check(tk) && DeeToken_Check(tk));
- DEE_ASSERT(!ast_throw || (DeeObject_Check(ast_throw) && DeeXAst_Check(ast_throw)));
+ DEE_ASSERT(!throw_expression || (DeeObject_Check(throw_expression) && DeeXAst_Check(throw_expression)));
  if ((result = _DeeSAst_NewUnsafe(DEE_SASTKIND_THROW,tk,labels_)) != NULL) {
-  Dee_XINCREF(result->ast_throw.t_object = ast_throw);
+  Dee_XINCREF(result->ast_throw.t_object = throw_expression);
  }
  return result;
 }
@@ -1425,7 +1425,7 @@ static struct DeeMemberDef const _deesast_tp_members[] = {
  DEE_MEMBERDEF_NAMED_RO_v100("kind",DeeSAstObject,ast_kind,DeeSAstKind),
 #if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
  DEE_MEMBERDEF_NAMED_RO_v100("__ast_kind",DeeSAstObject,ast_kind,DeeSAstKind),
- DEE_MEMBERDEF_NAMED_RO_v100("__ast_common_ast_kind",DeeSAstObject,ast_common.ast_kind,DeeSAstKind),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ast_common_ast_kind",DeeSAstObject,ast_kind,DeeSAstKind),
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_common_ast_token",DeeSAstObject,ast_common.ast_token,object,"-> token"),
  DEE_MEMBERDEF_NAMED_RO_v100("__ast_common_ast_labels_lrl_c",DeeSAstObject,ast_common.ast_labels.lrl_c,Dee_size_t),
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_common_ast_labels_lrl_v",DeeSAstObject,ast_common.ast_labels.lrl_v,p2(void),"-> DeeParserLabel **"),

@@ -517,7 +517,7 @@ void _Dee_VerboseOut(char const *fmt, ...) {
  HANDLE hConsole;
 #endif /* DEE_PLATFORM_WINDOWS */
 #endif
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
 #if 0
 #ifdef DEE_PLATFORM_WINDOWS
  hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -530,13 +530,13 @@ void _Dee_VerboseOut(char const *fmt, ...) {
  SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_RED);
 #endif /* DEE_PLATFORM_WINDOWS */
 #endif
- va_end(args);
+ DEE_VA_END(args);
 }
 void _Dee_DebugOut(char const *fmt, ...) {
  va_list args;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  _DeeVDebugOut(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
 }
 DEE_ATTRIBUTE_NORETURN void _Dee_AbnormalTermination(void) {
  // We use this function to instantly terminate the application
@@ -570,9 +570,9 @@ void _Dee_AssertionFailedf(
  char const *expr, char const *file_, int line_, char const *fmt, ...) {
  va_list args;
  DEE_LDEBUG("%s(%d) : Assertion failed : %s\n>> ",file_,line_,expr);
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  _DeeVDebugOut(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  _Dee_DebugOut("\n");
 #ifndef DEE_BUILTIN_BREAKPOINT
  _Dee_AbnormalTermination();
@@ -976,9 +976,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *Dee##prefix##_##name##f(\
  DEE_PRIVATE_EXPAND_TUPLE arg_types,\
  DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {\
  va_list args; DeeObject *result,*args_ob;\
- va_start(args,fmt);\
+ DEE_VA_START(args,fmt);\
  args_ob = Dee_VBuildTuple(fmt,args);\
- va_end(args);\
+ DEE_VA_END(args);\
  if (!args_ob) return NULL;\
  result = Dee##prefix##_##name(DEE_PRIVATE_EXPAND_TUPLE arg_vars,args_ob);\
  Dee_DECREF(args_ob);\
@@ -1349,19 +1349,38 @@ static void _debugnew_hushfunc(char const *DEE_UNUSED(msg)) {}
 
 
 #ifdef __cplusplus
-#define DEE_COMPILER_CXX "++"
+# define DEE_COMPILER_CXX "++"
 #else
-#define DEE_COMPILER_CXX ""
+# define DEE_COMPILER_CXX ""
 #endif
+
 #if defined(_MSC_FULL_VER)
-#if _MSC_VER == 1600
-#define DEE_VC_VERSION " 2010"
-#elif _MSC_VER == 1800
-#define DEE_VC_VERSION " 2013"
+//////////////////////////////////////////////////////////////////////////
+// >> http://stackoverflow.com/questions/70013/how-to-detect-if-im-compiling-code-with-visual-studio-2008
+#if _MSC_VER <= 1100
+# define DEE_VC_VERSION " 5.0"
+#elif _MSC_VER <= 1200
+# define DEE_VC_VERSION " 6.0"
+#elif _MSC_VER <= 1300
+# define DEE_VC_VERSION " 7.0"
+#elif _MSC_VER <= 1310
+# define DEE_VC_VERSION " 7.1 (VS 2003)"
+#elif _MSC_VER <= 1400
+# define DEE_VC_VERSION " 8.0 (VS 2005)"
+#elif _MSC_VER <= 1500
+# define DEE_VC_VERSION " 9.0 (VS 2008)"
+#elif _MSC_VER <= 1600
+# define DEE_VC_VERSION " 10.0 (VS 2010)"
+#elif _MSC_VER <= 1700
+# define DEE_VC_VERSION " 11.0 (VS 2012)"
+#elif _MSC_VER <= 1800
+# define DEE_VC_VERSION " 12.0 (VS 2013)"
+#elif _MSC_VER <= 1900
+# define DEE_VC_VERSION " 14.0 (VS 2015)"
 #else
-#define DEE_VC_VERSION ""
+# define DEE_VC_VERSION ""
 #endif
-#define DEE_COMPILER "VC" DEE_COMPILER_CXX DEE_VC_VERSION " (" DEE_PP_STR(_MSC_FULL_VER) ")"
+# define DEE_COMPILER "VC" DEE_COMPILER_CXX DEE_VC_VERSION " (" DEE_PP_STR(_MSC_FULL_VER) ")"
 #elif defined(__clang__)
 # define DEE_COMPILER "clang" DEE_COMPILER_CXX " " DEE_PP_STR(__clang__)
 #elif defined(__GNUC__) && defined(__cplusplus)
@@ -1545,15 +1564,16 @@ DEE_PP_STR(DEE_PLATFORM_ENDIAN) "-endian"
 DEE_PP_STR(DEE_VERSION_API) "/"
 DEE_PP_STR(DEE_VERSION_COMPILER) ":"
 DEE_PP_STR(DEE_VERSION_REVISION)       " -    Deemon Compiler    - "
-"Copyright (C) 2016 Cyder aka Griefer@Work\n"
+"Copyright (C) 2016 Griefer@Work\n"
 "tpp       version " "  "
 DEE_PP_STR(TPP_API_VERSION) "/"
 DEE_PP_STR(TPP_PREPROCESSOR_VERSION)   " -   Tiny PreProcessor   - "
-"Copyright (C) 2015-2016 Cyder aka Griefer@Work\n"
+"Copyright (C) 2015-2016 Griefer@Work\n"
 "debug_new version " "  " "    "
 DEE_PP_STR(DEBUG_NEW_VERSION)          " - c/c++ Memory Debugger - "
-"Copyright (C) 2015-2016 Cyder aka Griefer@Work\n"
-"\tGriefer@Work: https://sourceforge.net/users/grieferatwork\n"
+"Copyright (C) 2015-2016 Griefer@Work\n"
+"\tSourceforce: https://sourceforge.net/projects/deemon\n"
+"\tGitub:       https://github.com/GrieferAtWork/deemon\n"
 "\n\n"
 ;
 

@@ -73,7 +73,8 @@ DEBUG_NEW_CXX_NAMESPACE_LEAVE_ROOT
 #ifndef DEBUG_NEW_WITHOUT_HEADERS
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable:4820) /* 'xxx' : 'n' bytes padding added after data member 'xxx::yyy' */
+#pragma warning(disable: 4820) /* 'xxx' : 'n' bytes padding added after data member 'xxx::yyy' */
+#pragma warning(disable: 4668) /* 'xxx' : is not defined as a preprocessor macro, replacing with '0' for '#if/#elif' */
 #endif /* _MSC_VER */
 #include <stdio.h>
 #include <stdarg.h>

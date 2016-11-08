@@ -77,7 +77,13 @@ struct DeeParserLabel {
  union{
   struct DeeParserCaseLabelCase  pl_c_case;  /*< DEE_PARSERLABEL_KIND_C_CASE. */
   struct DeeParserCaseLabelRange pl_c_range; /*< DEE_PARSERLABEL_KIND_C_RANGE. */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define pl_c_case  _pl_data.pl_c_case
+#define pl_c_range _pl_data.pl_c_range
+ _pl_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 #define DeeParserLabel_ADD_GOTO(ob) ++(ob)->pl_refs
 #define DeeParserLabel_REM_GOTO(ob) (DEE_ASSERTF((ob)->pl_refs,"Underflow in label goto counter"),--(ob)->pl_refs)
@@ -350,18 +356,25 @@ extern DEE_A_RET_Z char const *DeeLocalVarKind_Name(DEE_A_IN Dee_uint32_t kind);
 // Scope object
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct _DeeScopeEntry {
- TPPTokenID                           e_name;
- DEE_A_REF struct DeeStringObject    *e_depr;   /*< [0..1] Set if this entry is deprecated (string is the reason). */
+ TPPTokenID                           se_name;
+ DEE_A_REF struct DeeStringObject    *se_depr;   /*< [0..1] Set if this entry is deprecated (string is the reason). */
  union{
-  DEE_A_REF DeeObject                *e_const;  /*< [1..1] Local const. */
-  DEE_A_REF struct DeeLocalVarObject *e_local;  /*< [1..1] Local var. */
-  DEE_A_REF struct DeeModuleObject   *e_module; /*< [1..1] Local module. */
- };
+  DEE_A_REF DeeObject                *se_const;  /*< [1..1] Local const. */
+  DEE_A_REF struct DeeLocalVarObject *se_local;  /*< [1..1] Local var. */
+  DEE_A_REF struct DeeModuleObject   *se_module; /*< [1..1] Local module. */
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define se_const  _se_data.se_const
+#define se_local  _se_data.se_local
+#define se_module _se_data.se_module
+ _se_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 #define _DeeScopeEntry_Quit(ob)\
 do{\
- Dee_XDECREF((ob)->e_depr);\
- Dee_DECREF((ob)->e_const);\
+ Dee_XDECREF((ob)->se_depr);\
+ Dee_DECREF((ob)->se_const);\
 }while(0)
 
 DEE_COMPILER_MSVC_WARNING_POP
@@ -473,7 +486,6 @@ struct DeeLocalVarObject;
 struct DeeStringObject;
 struct DeeXAstObject;
 struct DeeTokenObject;
-DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeVarDeclVarStorage {
  DEE_A_REF struct DeeTokenObject    *vs_token; /*< [1..1] Token used during error/debug output. */
  DEE_A_REF struct DeeLocalVarObject *vs_var;   /*< [1..1] Variable to assign to. (NOTE: This ast also owns +1 in 'vs_var->lv_init'). */
@@ -561,6 +573,7 @@ struct DeeVarDeclAssignStorage {
 #define _DeeVarDeclAssignStorage_Visit(ob)              do{Dee_VISIT((ob)->as_ast);}while(0)
 #define _DeeVarDeclAssignStorage_InitCopy(ob,right,...) do{Dee_INCREF((ob)->as_ast=(right)->as_ast);}while(0)
 
+DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeVarDeclStorage {
 #define DEE_VARDECLSTORAGEKIND_NONE   0 /*< none; (Drop value) */
 #define DEE_VARDECLSTORAGEKIND_VAR    1 /*< x */
@@ -579,7 +592,18 @@ struct DeeVarDeclStorage {
   struct DeeVarDeclRangeStorage  vds_range;  /*< DEE_VARDECLSTORAGEKIND_RANGE. */
   struct DeeVarDeclExpandStorage vds_expand; /*< DEE_VARDECLSTORAGEKIND_EXPAND. */
   struct DeeVarDeclAssignStorage vds_assign; /*< DEE_VARDECLSTORAGEKIND_ASSIGN. */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define vds_var    _vds_data.vds_var
+#define vds_attr   _vds_data.vds_attr
+#define vds_attr_c _vds_data.vds_attr_c
+#define vds_item   _vds_data.vds_item
+#define vds_range  _vds_data.vds_range
+#define vds_expand _vds_data.vds_expand
+#define vds_assign _vds_data.vds_assign
+ _vds_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 

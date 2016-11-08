@@ -45,9 +45,9 @@ DEE_A_RET_EXCEPT(-1) int DeeObject_TCastf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_OUT_OPT void *result, DEE_A_IN_Z char const *fmt, ...) {
  va_list args; int error;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  error = DeeObject_VTCastf(tp_self,self,result,fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return error;
 }
 DEE_A_RET_EXCEPT(-1) int DeeObject_VTCastf(

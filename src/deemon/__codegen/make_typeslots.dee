@@ -37,6 +37,7 @@ f_typ = open("../../../include/deemon/__typeslots_typ.inl");
 f_slt = open("../__typeslots.inl");
 
 function get_name(x) {
+	x = x.rstrip("_");
 	local i = x.rfind(".");
 	return (i != -1) ? x[i+1:] : x;
 }
@@ -109,16 +110,16 @@ s(5,"Dee_size_t","tp_constructor.tp_instance_size","sizeof(DeeObject)","__instan
 s(6,"DeeObject *(DEE_CALL *)(DeeTypeObject *tp)","tp_constructor.tp_alloc","&_DeeGenericFallback_tp_alloc");
 s(12,"void (DEE_CALL *)(DeeTypeObject *tp, DeeObject *self)","tp_destructor.tp_free","&_DeeGenericFallback_tp_free","__free__");
 
-s(8,"int (DEE_CALL *)(DeeTypeObject *tp, DeeObject *self)","tp_constructor.tp_ctor","&_DeeGenericMissing_tp_ctor"/*,"__constructor__"*/);
-s(9,"int (DEE_CALL *)(DeeTypeObject *tp, DeeObject *self, DeeObject *right)","tp_constructor.tp_copy_ctor","&_DeeGenericMissing_tp_copy_ctor","__copy__");
-s(10,"int (DEE_CALL *)(DeeTypeObject *tp, DeeObject *self, DeeObject *right)","tp_constructor.tp_move_ctor","&_DeeGenericMissing_tp_move_ctor","__move__");
-s(11,"int (DEE_CALL *)(DeeTypeObject *tp, DeeObject *self, DeeObject *args)","tp_constructor.tp_any_ctor","&_DeeGenericMissing_tp_any_ctor","__constructor__");
+s(8,"int (DEE_CALL *)(DeeTypeObject *tp, DeeObject *self)","tp_constructor.tp_ctor_","&_DeeGenericMissing_tp_ctor"/*,"__constructor__"*/);
+s(9,"int (DEE_CALL *)(DeeTypeObject *tp, DeeObject *self, DeeObject *right)","tp_constructor.tp_copy_ctor_","&_DeeGenericMissing_tp_copy_ctor","__copy__");
+s(10,"int (DEE_CALL *)(DeeTypeObject *tp, DeeObject *self, DeeObject *right)","tp_constructor.tp_move_ctor_","&_DeeGenericMissing_tp_move_ctor","__move__");
+s(11,"int (DEE_CALL *)(DeeTypeObject *tp, DeeObject *self, DeeObject *args)","tp_constructor.tp_any_ctor_","&_DeeGenericMissing_tp_any_ctor","__constructor__");
 
 // New/Refactored var-operators added in v101
-s(82,"DeeObject *(DEE_CALL *)(DeeTypeObject *tp)","tp_constructor.tp_new","&_DeeGenericFallback_tp_new");
-s(83,"DeeObject *(DEE_CALL *)(DeeTypeObject *tp, DeeObject *self)","tp_constructor.tp_copy_new","&_DeeGenericFallback_tp_copy_new");
-s(84,"DeeObject *(DEE_CALL *)(DeeTypeObject *tp, DeeObject *self)","tp_constructor.tp_move_new","&_DeeGenericFallback_tp_move_new");
-s(7,"DeeObject *(DEE_CALL *)(DeeTypeObject *tp, DeeObject *args)","tp_constructor.tp_any_new","&_DeeGenericFallback_tp_any_new");
+s(82,"DeeObject *(DEE_CALL *)(DeeTypeObject *tp)","tp_constructor.tp_new_","&_DeeGenericFallback_tp_new");
+s(83,"DeeObject *(DEE_CALL *)(DeeTypeObject *tp, DeeObject *self)","tp_constructor.tp_copy_new_","&_DeeGenericFallback_tp_copy_new");
+s(84,"DeeObject *(DEE_CALL *)(DeeTypeObject *tp, DeeObject *self)","tp_constructor.tp_move_new_","&_DeeGenericFallback_tp_move_new");
+s(7,"DeeObject *(DEE_CALL *)(DeeTypeObject *tp, DeeObject *args)","tp_constructor.tp_any_new_","&_DeeGenericFallback_tp_any_new");
 
 s(13,"void (DEE_CALL *)(DeeObject *self)","tp_destructor.tp_dtor","NULL","__destructor__");
 s(14,"int (DEE_CALL *)(DeeObject *self, DeeObject *right)","tp_assign.tp_copy_assign","NULL","__copyassign__");

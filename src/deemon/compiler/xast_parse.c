@@ -62,20 +62,20 @@ DEE_DECL_BEGIN
 
 DEE_A_RET_EXCEPT_REF DeeObject *DeeXAst_ParseConst(
  DEE_A_REF DEE_A_OUT_OPT DeeTokenObject **const_token, DEE_PARSER_PARAMS) {
- DeeXAstObject *ast_const; DeeObject *result;
- if DEE_UNLIKELY((ast_const = DeeXAst_ParseSingle(DEE_PARSER_ARGS_EX(
+ DeeXAstObject *constant_ast; DeeObject *result;
+ if DEE_UNLIKELY((constant_ast = DeeXAst_ParseSingle(DEE_PARSER_ARGS_EX(
   parser_flags|DEE_PARSER_FLAG_GENERATE_CONSTANT))) == NULL) return NULL;
- if DEE_UNLIKELY(ast_const->ast_kind != DEE_XASTKIND_CONST) {
+ if DEE_UNLIKELY(constant_ast->ast_kind != DEE_XASTKIND_CONST) {
   if DEE_UNLIKELY(DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_CONSTANT,
    (DeeObject *)lexer,(DeeObject *)token_ob,"Expected constant, but got %r",
-   ast_const) != 0) return NULL;
-  if (const_token) Dee_INCREF(*const_token = ast_const->ast_common.ast_token);
-  Dee_DECREF(ast_const);
+   constant_ast) != 0) return NULL;
+  if (const_token) Dee_INCREF(*const_token = constant_ast->ast_common.ast_token);
+  Dee_DECREF(constant_ast);
   DeeReturn_None;
  }
- Dee_INCREF(result = ast_const->ast_const.c_const);
- if (const_token) Dee_INCREF(*const_token = ast_const->ast_common.ast_token);
- Dee_DECREF(ast_const);
+ Dee_INCREF(result = constant_ast->ast_const.c_const);
+ if (const_token) Dee_INCREF(*const_token = constant_ast->ast_common.ast_token);
+ Dee_DECREF(constant_ast);
  return result;
 }
 

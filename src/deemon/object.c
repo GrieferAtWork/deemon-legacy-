@@ -950,18 +950,18 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallAttrStringObjArgs(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_IN_Z char const *attr, ...) {
  DeeObject *result; va_list args;
- va_start(args,attr);
+ DEE_VA_START(args,attr);
  result = DeeObject_VTCallAttrStringObjArgs(tp_self,self,attr,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallAttrObjArgs(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_IN_OBJECT(DeeStringObject) const *attr, ...) {
  DeeObject *result; va_list args;
- va_start(args,attr);
+ DEE_VA_START(args,attr);
  result = DeeObject_VTCallAttrObjArgs(tp_self,self,attr,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_VTCallAttrStringObjArgs(
@@ -987,9 +987,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallAttrf(
  DEE_A_IN_OBJECT(DeeStringObject) const *attr,
  DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  va_list args; DeeObject *result,*args_ob;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  args_ob = Dee_VBuildTuple(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  if DEE_UNLIKELY(!args_ob) return NULL;
  result = DeeObject_TCallAttr(tp_self,self,attr,args_ob);
  Dee_DECREF(args_ob);
@@ -999,9 +999,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallAttrStringf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_IN_Z char const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  va_list args; DeeObject *result,*args_ob;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  args_ob = Dee_VBuildTuple(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  if DEE_UNLIKELY(!args_ob) return NULL;
  result = DeeObject_TCallAttrString(tp_self,self,attr,args_ob);
  Dee_DECREF(args_ob);
@@ -1012,9 +1012,9 @@ DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeObject_TCallAttrAndCastf(
  DEE_A_OUT_OPT void *result, DEE_A_IN_Z char const *result_fmt,
  DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  va_list args; int error;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  error = DeeObject_VTCallAttrAndCastf(tp_self,self,result,result_fmt,attr,fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return error;
 }
 DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeObject_TCallAttrStringAndCastf(
@@ -1022,9 +1022,9 @@ DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeObject_TCallAttrStringAndCastf(
  DEE_A_OUT_OPT void *result, DEE_A_IN_Z char const *result_fmt,
  DEE_A_IN_Z char const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  va_list args; int error;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  error = DeeObject_VTCallAttrStringAndCastf(tp_self,self,result,result_fmt,attr,fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return error;
 }
 
@@ -1159,18 +1159,18 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_PCallAttrStringObjArgs(
  DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr,
  DEE_A_IN_Z char const *attr, ...) {
  DeeObject *result; va_list args;
- va_start(args,attr);
+ DEE_VA_START(args,attr);
  result = DeeObject_VPCallAttrStringObjArgs(tp_self,base_addr,attr,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_PCallAttrObjArgs(
  DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr,
  DEE_A_IN_OBJECT(DeeStringObject) const *attr, ...) {
  DeeObject *result; va_list args;
- va_start(args,attr);
+ DEE_VA_START(args,attr);
  result = DeeObject_VPCallAttrObjArgs(tp_self,base_addr,attr,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_VPCallAttrStringObjArgs(
@@ -1196,9 +1196,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_PCallAttrf(
  DEE_A_IN_OBJECT(DeeStringObject) const *attr,
  DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  va_list args; DeeObject *result,*args_ob;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  args_ob = Dee_VBuildTuple(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  if DEE_UNLIKELY(!args_ob) return NULL;
  result = DeeObject_PCallAttr(tp_self,base_addr,attr,args_ob);
  Dee_DECREF(args_ob);
@@ -1219,9 +1219,9 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_PCallAttrStringf(
  DEE_A_INOUT void *base_addr, DEE_A_IN_Z char const *attr,
  DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  va_list args; DeeObject *result,*args_ob;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  args_ob = Dee_VBuildTuple(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  if DEE_UNLIKELY(!args_ob) return NULL;
  result = DeeObject_PCallAttrString(tp_self,base_addr,attr,args_ob);
  Dee_DECREF(args_ob);

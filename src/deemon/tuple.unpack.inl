@@ -253,13 +253,13 @@ err_invargc:
                 DeeUUID_CHECK_INTERNAL(&DeeType_GET_SLOT(obtype,tp_marshal)->tp_uuid)) {
    switch (DeeUUID_GET_INTERNAL(&DeeType_GET_SLOT(obtype,tp_marshal)->tp_uuid)) {
     case DEE_MARSHALTYPEID_object:
-     *va_arg(args,DeeObject **) = elem;
+     *DEE_VA_ARG(args,DeeObject **) = elem;
      goto next;
     case DEE_MARSHALTYPEID_int8:
     case DEE_MARSHALTYPEID_uint8:
     case DEE_MARSHALTYPEID_atomic_int8:
     case DEE_MARSHALTYPEID_atomic_uint8: {
-     int8_t *resp = va_arg(args,int8_t *);
+     int8_t *resp = DEE_VA_ARG(args,int8_t *);
      if DEE_UNLIKELY(DEE_UNLIKELY(do_bool) ? ((*resp = (int8_t)DeeObject_Bool(elem)) < 0)
                                            : (DeeObject_Cast(int8_t,elem,resp) != 0)) {
 err_arg_type:
@@ -279,7 +279,7 @@ err_arg_type:
     case DEE_MARSHALTYPEID_uint16:
     case DEE_MARSHALTYPEID_atomic_int16:
     case DEE_MARSHALTYPEID_atomic_uint16: {
-     int16_t *resp = va_arg(args,int16_t *);
+     int16_t *resp = DEE_VA_ARG(args,int16_t *);
      if DEE_UNLIKELY(DEE_UNLIKELY(do_bool) ? ((*resp = (int16_t)DeeObject_Bool(elem)) < 0)
                                            : (DeeObject_Cast(int16_t,elem,resp) != 0)
                                            ) goto err_arg_type;
@@ -289,7 +289,7 @@ err_arg_type:
     case DEE_MARSHALTYPEID_uint32:
     case DEE_MARSHALTYPEID_atomic_int32:
     case DEE_MARSHALTYPEID_atomic_uint32: {
-     int32_t *resp = va_arg(args,int32_t *);
+     int32_t *resp = DEE_VA_ARG(args,int32_t *);
      if DEE_UNLIKELY(DEE_UNLIKELY(do_bool) ? ((*resp = (int32_t)DeeObject_Bool(elem)) < 0)
                                            : (DeeObject_Cast(int32_t,elem,resp) != 0)
                                            ) goto err_arg_type;
@@ -299,7 +299,7 @@ err_arg_type:
     case DEE_MARSHALTYPEID_uint64:
     case DEE_MARSHALTYPEID_atomic_int64:
     case DEE_MARSHALTYPEID_atomic_uint64: {
-     int64_t *resp = va_arg(args,int64_t *);
+     int64_t *resp = DEE_VA_ARG(args,int64_t *);
      if DEE_UNLIKELY(DEE_UNLIKELY(do_bool) ? ((*resp = (int64_t)DeeObject_Bool(elem)) < 0)
                                            : (DeeObject_Cast(int64_t,elem,resp) != 0)
                                            ) goto err_arg_type;
@@ -309,18 +309,18 @@ err_arg_type:
    }
   }
   if (obtype == (DeeTypeObject *)&DeeFloat_Type) {
-   Dee_rt_float *resp = va_arg(args,Dee_rt_float *);
+   Dee_rt_float *resp = DEE_VA_ARG(args,Dee_rt_float *);
    if (DeeObject_Cast(Dee_rt_float,elem,resp) != 0) goto err_arg_type;
   } else if (obtype == (DeeTypeObject *)&DeeDouble_Type) {
-   Dee_rt_double *resp = va_arg(args,Dee_rt_double *);
+   Dee_rt_double *resp = DEE_VA_ARG(args,Dee_rt_double *);
    if (DeeObject_Cast(Dee_rt_double,elem,resp) != 0) goto err_arg_type;
   } else if (obtype == (DeeTypeObject *)&DeeLDouble_Type) {
-   Dee_rt_ldouble *resp = va_arg(args,Dee_rt_ldouble *);
+   Dee_rt_ldouble *resp = DEE_VA_ARG(args,Dee_rt_ldouble *);
    if (DeeObject_Cast(Dee_rt_ldouble,elem,resp) != 0) goto err_arg_type;
   }
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
   else if (DeePointerType_Check(obtype)) {
-   void **resp = va_arg(args,void **);
+   void **resp = DEE_VA_ARG(args,void **);
    if (DeeObject_GetPointerEx(elem,DeePointerType_BASE(obtype),resp) != 0) goto err_arg_type;
   }
 #endif /* !DEE_CONFIG_RUNTIME_HAVE_POINTERS */
@@ -517,11 +517,11 @@ DEE_A_RET_EXCEPT(-1) int _DeeTuple_VUnpack(
 #define SIMPLE_CAST(T,get)\
     {T temp; GET_ARG();\
      if (get(arg,&temp) != 0) return -1;\
-     *va_arg(args,T *) = temp;}
+     *DEE_VA_ARG(args,T *) = temp;}
 #define BOOL_CAST(T)\
     {int temp; GET_ARG();\
      if ((temp = DeeObject_Bool(arg)) < 0) return -1;\
-     *va_arg(args,T *) = (T)temp;}
+     *DEE_VA_ARG(args,T *) = (T)temp;}
     case 'c':
      GET_ARG();
      if (!DeeString_Check(arg)||DeeString_SIZE(arg)!=1) {
@@ -531,27 +531,27 @@ ex_chr:
                           DeeType_NAME(Dee_TYPE(arg)));
       return -1;
      }
-     *va_arg(args,char *) = *DeeString_STR(arg);
+     *DEE_VA_ARG(args,char *) = *DeeString_STR(arg);
      break;
     case 'p': {
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
      void *temp;
      GET_ARG();
      if (DeeObject_GetVoidPointerEx(arg,&temp) != 0) return -1;
-     *va_arg(args,void **) = temp;
+     *DEE_VA_ARG(args,void **) = temp;
 #else /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
      GET_ARG();
 #if DEE_CONFIG_HAVE_ENCODING_WIDE
-     if (DeeWideString_Check(arg)) *va_arg(args,Dee_WideChar **) = DeeWideString_STR(arg); else
+     if (DeeWideString_Check(arg)) *DEE_VA_ARG(args,Dee_WideChar **) = DeeWideString_STR(arg); else
 #endif /* DEE_CONFIG_HAVE_ENCODING_WIDE */
 #if DEE_CONFIG_HAVE_ENCODING_UTF8
-     if (DeeUtf8String_Check(arg)) *va_arg(args,Dee_Utf8Char **) = DeeUtf8String_STR(arg); else
+     if (DeeUtf8String_Check(arg)) *DEE_VA_ARG(args,Dee_Utf8Char **) = DeeUtf8String_STR(arg); else
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF8 */
 #if DEE_CONFIG_HAVE_ENCODING_UTF16
-     if (DeeUtf16String_Check(arg)) *va_arg(args,Dee_Utf16Char **) = DeeUtf16String_STR(arg); else
+     if (DeeUtf16String_Check(arg)) *DEE_VA_ARG(args,Dee_Utf16Char **) = DeeUtf16String_STR(arg); else
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF16 */
 #if DEE_CONFIG_HAVE_ENCODING_UTF32
-     if (DeeUtf32String_Check(arg)) *va_arg(args,Dee_Utf32Char **) = DeeUtf32String_STR(arg); else
+     if (DeeUtf32String_Check(arg)) *DEE_VA_ARG(args,Dee_Utf32Char **) = DeeUtf32String_STR(arg); else
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF32 */
      {
       DeeError_TypeError_UnexpectedType(arg,&DeeString_Type);
@@ -633,11 +633,11 @@ ex_chr:
       Dee_WideChar *temp;
       GET_ARG();
       if (DeeObject_GetPointerEx(arg,DeeObject_TYPE(Dee_WideChar),(void **)&temp) != 0) return -1;
-      *va_arg(args,Dee_WideChar **) = temp;
+      *DEE_VA_ARG(args,Dee_WideChar **) = temp;
 #else /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
       GET_ARG();
 #if DEE_CONFIG_HAVE_ENCODING_WIDE
-      if (DeeWideString_Check(arg)) *va_arg(args,Dee_WideChar **) = DeeWideString_STR(arg); else
+      if (DeeWideString_Check(arg)) *DEE_VA_ARG(args,Dee_WideChar **) = DeeWideString_STR(arg); else
       { DeeError_TypeError_UnexpectedType(arg,&DeeWideString_Type); return -1; }
 #else /* DEE_CONFIG_HAVE_ENCODING_WIDE */
       { DeeError_TypeError_UnexpectedType(arg,&DeeString_Type); return -1; }
@@ -647,7 +647,7 @@ ex_chr:
      case 'c':
       GET_ARG();
       if (!DeeString_Check(arg)||DeeString_SIZE(arg)!=1) goto ex_chr;
-      *va_arg(args,Dee_WideChar *) = (Dee_WideChar)*DeeString_STR(arg);
+      *DEE_VA_ARG(args,Dee_WideChar *) = (Dee_WideChar)*DeeString_STR(arg);
       break;
      case 'b': GOTO_BOOL_X(DEE_TYPES_SIZEOF_LONG);
      case 'd': case 'i': GOTO_INT_X(DEE_TYPES_SIZEOF_LONG);
@@ -679,13 +679,13 @@ ex_chr:
 #endif
        ++fmt;
        if (DeeError_TypeError_CheckTypeExact(arg,&DeeWideString_Type) != 0) return -1;
-       *va_arg(args,unsigned int *) = (unsigned int)DeeWideString_SIZE(arg);
-       *va_arg(args,Dee_WideChar **) = DeeWideString_STR(arg);
+       *DEE_VA_ARG(args,unsigned int *) = (unsigned int)DeeWideString_SIZE(arg);
+       *DEE_VA_ARG(args,Dee_WideChar **) = DeeWideString_STR(arg);
        break;
       case 's': GET_ARG();
        if (DeeError_TypeError_CheckTypeExact(arg,&DeeString_Type) != 0) return -1;
-       *va_arg(args,unsigned int *) = (unsigned int)DeeString_SIZE(arg);
-       *va_arg(args,char **) = DeeString_STR(arg);
+       *DEE_VA_ARG(args,unsigned int *) = (unsigned int)DeeString_SIZE(arg);
+       *DEE_VA_ARG(args,char **) = DeeString_STR(arg);
        break;
       default: DEE_TUPLE_INVALID_FORMAT();
      } break;
@@ -696,10 +696,10 @@ ex_chr:
      char *temp;
      GET_ARG();
      if (DeeObject_GetPointerEx(arg,DeeObject_TYPE(char),(void **)&temp) != 0) return -1;
-     *va_arg(args,char **) = temp;
+     *DEE_VA_ARG(args,char **) = temp;
 #else /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
       GET_ARG();
-      if (DeeString_Check(arg)) *va_arg(args,char **) = DeeString_STR(arg); else
+      if (DeeString_Check(arg)) *DEE_VA_ARG(args,char **) = DeeString_STR(arg); else
       { DeeError_TypeError_UnexpectedType(arg,&DeeString_Type); return -1; }
 #endif /* !DEE_CONFIG_RUNTIME_HAVE_POINTERS */
     } break;
@@ -707,7 +707,7 @@ ex_chr:
     case 'r': case 'R':
     case 'o': case 'O':
      GET_ARG();
-     *va_arg(args,DeeObject **) = arg;
+     *DEE_VA_ARG(args,DeeObject **) = arg;
      break;
 #if !DEE_CONFIG_TUPLE_PERCENT_OPTIONAL
    default: DEE_TUPLE_INVALID_FORMAT();
@@ -741,9 +741,9 @@ inv_argc:
 DEE_A_RET_EXCEPT(-1) int DeeTuple_Unpack(
  DEE_A_IN_OBJECT(DeeTupleObject) *self, DEE_A_IN_UNPACKTUPLEF char const *fmt, ...) {
  int result; va_list args;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  result = _DeeTuple_VUnpack(self,fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 

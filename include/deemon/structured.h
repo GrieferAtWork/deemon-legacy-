@@ -111,9 +111,9 @@ DEE_OBJECT_DEF(DeeLValueObject);
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
 struct DeeForeignFunctionTypeObject;
 struct DeeForeignFunctionTypeList {
- struct DeeAtomicMutex                 atl_lock;  /*< Lock (required for synchronization) */
- Dee_size_t                            atl_typec; /*< Amount of known types. */
- struct DeeForeignFunctionTypeObject **atl_typev; /*< [1..1][0..atl_typec][owned] List of types. */
+ struct DeeAtomicMutex                 fftl_lock;  /*< Lock (required for synchronization) */
+ Dee_size_t                            fftl_typec; /*< Amount of known types. */
+ struct DeeForeignFunctionTypeObject **fftl_typev; /*< [1..1][0..atl_typec][owned] List of types. */
 };
 #define DeeForeignFunctionTypeList_INIT() {DeeAtomicMutex_INIT(),0,NULL}
 extern void DeeForeignFunctionTypeList_Init(DEE_A_OUT struct DeeForeignFunctionTypeList *self);
@@ -230,27 +230,39 @@ struct _DeeStructuredTypeAttributeOperators {
 };
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeStructuredTypeObject {
- DeeTypeObject         tp_type;     /*< Underlying type structure (default for all types). */
+ DeeTypeObject                    stp_type;     /*< Underlying type structure (default for all types). */
  union{ // [0..1] Used to keep the global linked list of structured types
-  struct DeeStructuredTypeObject *tp_prev_structured_object_type;
+  struct DeeStructuredTypeObject *stp_prev_structured_object_type;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
-  struct DeePointerTypeObject    *tp_prev_pointer_type;
-  struct DeeLValueTypeObject     *tp_prev_lvalule_type;
+  struct DeePointerTypeObject    *stp_prev_pointer_type;
+  struct DeeLValueTypeObject     *stp_prev_lvalule_type;
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
-  struct DeeVarArrayTypeObject   *tp_prev_varray_type;
+  struct DeeVarArrayTypeObject   *stp_prev_varray_type;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define stp_prev_structured_object_type _stp_prev_data.stp_prev_structured_object_type
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
- /*atomic_read|locked_write*/DeePointerTypeObject         *tp_pointer;    /*< [0..1] 'type(this) *'. */
- /*atomic_read|locked_write*/DeeLValueTypeObject          *tp_lvalue;     /*< [0..1] 'type(this) &'. */
+#define stp_prev_pointer_type _stp_prev_data.stp_prev_pointer_type
+#define stp_prev_lvalule_type _stp_prev_data.stp_prev_lvalule_type
+#endif
+#if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
+#define stp_prev_varray_type  _stp_prev_data.stp_prev_varray_type
+#endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+ _stp_prev_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
+#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
+ /*atomic_read|locked_write*/DeePointerTypeObject         *stp_pointer;    /*< [0..1] 'type(this) *'. */
+ /*atomic_read|locked_write*/DeeLValueTypeObject          *stp_lvalue;     /*< [0..1] 'type(this) &'. */
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
- struct DeeForeignFunctionTypeList                         tp_ffunctions; /*< List of foreign function types returning this type. */
+ struct DeeForeignFunctionTypeList                         stp_ffunctions; /*< List of foreign function types returning this type. */
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
- struct DeeArrayTypeList                                   tp_arrays;     /*< List of array types using this type as element. */
- /*atomic_read|locked_write*/struct DeeVarArrayTypeObject *tp_varray;     /*< [0..1] Variable size array type. */
+ struct DeeArrayTypeList                                   stp_arrays;     /*< List of array types using this type as element. */
+ /*atomic_read|locked_write*/struct DeeVarArrayTypeObject *stp_varray;     /*< [0..1] Variable size array type. */
 #endif
  // New operator that don't require 'self' to necessarily be a 'DeeObject'
  // 'self' instead points directly after the object header.
@@ -381,7 +393,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
 struct DeePointerTypeObject {
-           DeeStructuredTypeObject  tp_type;             /*< Underlying type structure (default for all types). */
+           DeeStructuredTypeObject  ptp_type;            /*< Underlying type structure (default for all types). */
            Dee_size_t               tp_ptr_elem_size;    /*< instance size helper '== tp_pointer_rem->tp_basesize'. */
  DEE_A_REF DeeStructuredTypeObject *tp_ptr_pointer_base; /*< [1..1] non-lvalue pointer base type: 'type(*this).tp_lval_lvalue_base'. */
 };
@@ -390,20 +402,30 @@ struct DeePointerTypeObject {
 
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeLValueTypeObject {
- DeeTypeObject                      tp_type; /*< Underlying type structure (default for all types). */
+ DeeTypeObject                      ltp_type; /*< Underlying type structure (default for all types). */
  // Lvalue_type doesn't inherit from structured_object_type,
  // meaning we have to add the linked list again.
  union{ // [0..1] Used to keep the global linked list of structured types
-  struct DeeStructuredTypeObject   *tp_prev_structured_object_type;
-  struct DeePointerTypeObject      *tp_prev_pointer_type;
-  struct DeeLValueTypeObject       *tp_prev_lvalule_type;
+  struct DeeStructuredTypeObject   *ltp_prev_structured_object_type;
+  struct DeePointerTypeObject      *ltp_prev_pointer_type;
+  struct DeeLValueTypeObject       *ltp_prev_lvalule_type;
 #if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
-  struct DeeVarArrayTypeObject     *tp_prev_varray_type;
+  struct DeeVarArrayTypeObject     *ltp_prev_varray_type;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define ltp_prev_structured_object_type _ltp_prev_data.ltp_prev_structured_object_type
+#define ltp_prev_pointer_type           _ltp_prev_data.ltp_prev_pointer_type
+#define ltp_prev_lvalule_type           _ltp_prev_data.ltp_prev_lvalule_type
+#if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
+#define ltp_prev_varray_type            _ltp_prev_data.ltp_prev_varray_type
+#endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+ _ltp_prev_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
  DEE_A_REF DeeStructuredTypeObject *tp_lval_lvalue_base;  /*< [1..1] Lvalue-less type (without the '&'). This type is used to implement operators. */
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
- struct DeeForeignFunctionTypeList  tp_ffunctions; /*< List of foreign function types returning this type. */
+ struct DeeForeignFunctionTypeList  ltp_ffunctions; /*< List of foreign function types returning this type. */
 #endif
 };
 DEE_COMPILER_MSVC_WARNING_POP

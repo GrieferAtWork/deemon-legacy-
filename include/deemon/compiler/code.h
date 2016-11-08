@@ -120,11 +120,11 @@ struct DeeCodeDebugInfoObject {
 #define DeeCodeDebugInfo_NAME(ob) \
  ((DeeObject *)((DeeCodeDebugInfoObject *)Dee_REQUIRES_POINTER(ob))->di_name)
 #define DeeCodeDebugInfo_ADDR2LINE(ob,addr) \
- _DeeCodeLnOffList_Addr2Line(((DeeCodeDebugInfoObject *)Dee_REQUIRES_POINTER(ob))->di_lno,addr)
+ ((Dee_int32_t)_DeeCodeLnOffList_Addr2Line(((DeeCodeDebugInfoObject *)Dee_REQUIRES_POINTER(ob))->di_lno,addr))
 #define DeeCodeDebugInfo_ADDR2FILE(ob,addr) \
  DeeCodeDebugInfo_Addr2File((DeeCodeDebugInfoObject *)Dee_REQUIRES_POINTER(ob),addr)
 #define DeeCodeDebugInfo_ADDR2FILEID(ob,addr) \
- _DeeCodeLnOffList_Addr2Line(((DeeCodeDebugInfoObject *)Dee_REQUIRES_POINTER(ob))->di_fno,addr)
+ ((Dee_size_t)_DeeCodeLnOffList_Addr2Line(((DeeCodeDebugInfoObject *)Dee_REQUIRES_POINTER(ob))->di_fno,addr))
 
 #ifdef DEE_LIMITED_API
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeCodeDebugInfoObject) *_DeeCodeDebugInfo_New(void);
@@ -138,18 +138,18 @@ DEE_DATA_DECL(DeeTypeObject) DeeCodeDebugInfo_Type;
 #ifdef DEE_LIMITED_DEX
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT(DeeStringObject) *) DeeCodeDebugInfo_Addr2File(
  DEE_A_IN DeeCodeDebugInfoObject const *self, DEE_A_IN Dee_size_t addr) {
- Dee_int64_t fileid;
+ Dee_size_t fileid;
  DEE_ASSERT(DeeObject_Check(self) && DeeCodeDebugInfo_Check(self));
  fileid = DeeCodeDebugInfo_ADDR2FILEID(self,addr)-1;
- if (fileid < 0 || fileid >= DeeTuple_SIZE(self->di_file_names)) return NULL;
+ if (/*fileid < 0 || */fileid >= DeeTuple_SIZE(self->di_file_names)) return NULL;
 #ifdef DEE_DEBUG
  {
-  DeeObject *result = DeeTuple_GET(self->di_file_names,(Dee_size_t)fileid);
+  DeeObject *result = DeeTuple_GET(self->di_file_names,fileid);
   DEE_ASSERT(DeeObject_Check(result) && DeeString_Check(result));
   return result;
  }
 #else
- return DeeTuple_GET(self->di_file_names,(Dee_size_t)fileid);
+ return DeeTuple_GET(self->di_file_names,fileid);
 #endif
 }
 
@@ -253,7 +253,7 @@ do{\
 // Returns the line of a given code address
 DEE_FUNC_DECL(DEE_A_RET_OBJECT_NOEXCEPT(DeeStringObject) *) DeeCode_Addr2File(
  DEE_A_IN_OBJECT(DeeCodeObject) const *self, DEE_A_IN Dee_size_t addr) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_int64_t) DeeCode_Addr2Line(
+DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_int32_t) DeeCode_Addr2Line(
  DEE_A_IN_OBJECT(DeeCodeObject) const *self, DEE_A_IN Dee_size_t addr) DEE_ATTRIBUTE_NONNULL((1));
 #ifdef DEE_LIMITED_DEX
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_size_t) DeeCode_Ptr2Addr(

@@ -36,9 +36,9 @@ struct tuple: object {
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
   static inline DEE_A_RET_WUNUSED tuple pack(DEE_A_IN Dee_size_t n, ...) {
    DeeObject *result; va_list args;
-   va_start(args,n);
+   DEE_VA_START(args,n);
    result = _DeeTuple_VPack(n,args);
-   va_end(args);
+   DEE_VA_END(args);
    return tuple(result,detail::tag_ref_or_err());
   }
   static inline DEE_A_RET_WUNUSED tuple vpack(DEE_A_IN Dee_size_t n, DEE_A_IN va_list args) {

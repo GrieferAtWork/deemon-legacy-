@@ -3007,8 +3007,8 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *DeeDict_GetValueIndex(
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeDict_GetKeyIndexAt(
  DEE_A_IN_OBJECT(DeeDictObject) const *self, DEE_A_IN Dee_size_t index) {
- DEE_ASSERT(DeeObject_Check(self) && DeeDict_Check(self));
  DeeObject *result;
+ DEE_ASSERT(DeeObject_Check(self) && DeeDict_Check(self));
  DeeDict_ACQUIRE(self);
  if (index >= DeeDict_SIZE(self)) {
   DeeDict_RELEASE(self);
@@ -3022,8 +3022,8 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeDict_GetKeyIndexAt(
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeDict_GetItemIndexAt(
  DEE_A_IN_OBJECT(DeeDictObject) const *self, DEE_A_IN Dee_size_t index) {
- DEE_ASSERT(DeeObject_Check(self) && DeeDict_Check(self));
  DeeObject *result;
+ DEE_ASSERT(DeeObject_Check(self) && DeeDict_Check(self));
  DeeDict_ACQUIRE(self);
  if (index >= DeeDict_SIZE(self)) {
   DeeDict_RELEASE(self);

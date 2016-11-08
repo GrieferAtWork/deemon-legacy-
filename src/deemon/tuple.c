@@ -269,9 +269,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *
 DeeTuple_Pack(DEE_A_IN Dee_size_t n, ...) {
  va_list args;
  DeeObject *result;
- va_start(args,n);
+ DEE_VA_START(args,n);
  result = _DeeTuple_VPack(n,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *
@@ -280,7 +280,7 @@ _DeeTuple_VPack(DEE_A_IN Dee_size_t n, DEE_A_IN va_list args) {
  if DEE_UNLIKELY(!n) DeeReturn_EmptyTuple;
  if DEE_LIKELY((result = _DeeTuple_NewUnsafe(n)) != NULL) {
   elem = DeeTuple_ELEM(result);
-  do Dee_INCREF(*elem++ = va_arg(args,DeeObject *));
+  do Dee_INCREF(*elem++ = DEE_VA_ARG(args,DeeObject *));
   while DEE_LIKELY(--n);
  }
  return result;
@@ -703,46 +703,28 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *DeeTuple_Types(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *
 _DeeTuple_NewObjArgs(DEE_A_IN int prefix, ...) {
  DeeObject *result; va_list args;
- va_start(args,prefix);
+ DEE_VA_START(args,prefix);
  result = DeeTuple_VNewObjArgs(args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *
 DeeTuple_VNewObjArgs(DEE_A_IN va_list args) {
  DeeObject **elem,*result; Dee_size_t n = 0;
  va_list count_copy;
-#if defined(va_copy) && !defined(_MSC_VER)
- // In msvc this is just an external function containing a single assign
- // Like seriously: Why not implement that in a macro?
- // OH! Forward compatibility? I dare you to change that and break
- // code of everyone trying to be as cutting edge as I am!
- // hash-tag: #savage
- va_copy(count_copy,args);
-#define MUST_END_COPY
-#elif defined(__va_copy)
- __va_copy(count_copy,args);
-#define MUST_END_COPY
-#elif DEE_PLATFORM_VA_LIST_IS_ARRAY
- memcpy(count_copy,args,sizeof(va_list));
-#else
- count_copy = args;
-#endif
- while (va_arg(count_copy,DeeObject *)) ++n;
-#ifdef MUST_END_COPY
-#undef MUST_END_COPY
- va_end(count_copy);
-#endif
+ DEE_VA_COPY(count_copy,args);
+ while (DEE_VA_ARG(count_copy,DeeObject *)) ++n;
+ DEE_VA_END(count_copy);
  if DEE_UNLIKELY((result = _DeeTuple_NewUnsafe(n)) == NULL) return NULL;
  elem = DeeTuple_ELEM(result);
 #if defined(DEE_DEBUG) || defined(_PREFAST_)
  while DEE_LIKELY(n--) {
-  DeeObject *temp = va_arg(args,DeeObject *);
+  DeeObject *temp = DEE_VA_ARG(args,DeeObject *);
   DEE_ASSERT(temp);
   Dee_INCREF(*elem++ = temp);
  }
 #else
- while (n--) Dee_INCREF(*elem++ = va_arg(args,DeeObject *));
+ while (n--) Dee_INCREF(*elem++ = DEE_VA_ARG(args,DeeObject *));
 #endif
  return result;
 }

@@ -54,7 +54,7 @@ DEE_A_RET_EXCEPT(NULL) DeeTypeObject *_DeeType_VStructf_Tyname(
  } len = len_none;
 len_again:
  switch (*fmt) {
-  case '%': DEE_TYPEF_ASSERT(fmt[1] == 'o'); result = va_arg(*pargs,DeeTypeObject *); break;
+  case '%': DEE_TYPEF_ASSERT(fmt[1] == 'o'); result = DEE_VA_ARG(*pargs,DeeTypeObject *); break;
   case 'a': DEE_TYPEF_ASSERT(!do_atomic); do_atomic = 1,++fmt; goto len_again;
   case 'L': ++fmt; len = len_L; break;
   case 'l': if (*++fmt == 'l') len = len_ll,++fmt; else len = len_l; break;
@@ -153,10 +153,10 @@ Dee_size_t _DeeType_VStructf_Intname(
     case len_h:   goto DEE_PP_CAT_2(i,DEE_PP_MUL8(DEE_TYPES_SIZEOF_SHORT));
     case len_hh:  goto DEE_PP_CAT_2(i,DEE_PP_MUL8(DEE_TYPES_SIZEOF_CHAR));
     case len_I:   goto DEE_PP_CAT_2(i,DEE_PP_MUL8(DEE_TYPES_SIZEOF_SIZE_T));
-    case len_I8:  i8:result = (Dee_size_t)va_arg(*pargs,DEE_MININT_T(1)); break;
-    case len_I16: i16:result = (Dee_size_t)va_arg(*pargs,DEE_MININT_T(2)); break;
-    case len_I32: i32:result = (Dee_size_t)va_arg(*pargs,DEE_MININT_T(4)); break;
-    case len_I64: i64:result = (Dee_size_t)va_arg(*pargs,DEE_MININT_T(8)); break;
+    case len_I8:  i8:result = (Dee_size_t)DEE_VA_ARG(*pargs,DEE_MININT_T(1)); break;
+    case len_I16: i16:result = (Dee_size_t)DEE_VA_ARG(*pargs,DEE_MININT_T(2)); break;
+    case len_I32: i32:result = (Dee_size_t)DEE_VA_ARG(*pargs,DEE_MININT_T(4)); break;
+    case len_I64: i64:result = (Dee_size_t)DEE_VA_ARG(*pargs,DEE_MININT_T(8)); break;
     default:      goto DEE_PP_CAT_2(i,DEE_PP_MUL8(DEE_TYPES_SIZEOF_INT));
    } break;
    case 'u': case 'x': case 'X': switch (len) {
@@ -165,10 +165,10 @@ Dee_size_t _DeeType_VStructf_Intname(
     case len_h:   goto DEE_PP_CAT_2(ui,DEE_PP_MUL8(DEE_TYPES_SIZEOF_SHORT));
     case len_hh:  goto DEE_PP_CAT_2(ui,DEE_PP_MUL8(DEE_TYPES_SIZEOF_CHAR));
     case len_I:   goto DEE_PP_CAT_2(ui,DEE_PP_MUL8(DEE_TYPES_SIZEOF_SIZE_T));
-    case len_I8:  ui8:result = (Dee_size_t)va_arg(*pargs,DEE_MINUINT_T(1)); break;
-    case len_I16: ui16:result = (Dee_size_t)va_arg(*pargs,DEE_MINUINT_T(2)); break;
-    case len_I32: ui32:result = (Dee_size_t)va_arg(*pargs,DEE_MINUINT_T(4)); break;
-    case len_I64: ui64:result = (Dee_size_t)va_arg(*pargs,DEE_MINUINT_T(8)); break;
+    case len_I8:  ui8:result = (Dee_size_t)DEE_VA_ARG(*pargs,DEE_MINUINT_T(1)); break;
+    case len_I16: ui16:result = (Dee_size_t)DEE_VA_ARG(*pargs,DEE_MINUINT_T(2)); break;
+    case len_I32: ui32:result = (Dee_size_t)DEE_VA_ARG(*pargs,DEE_MINUINT_T(4)); break;
+    case len_I64: ui64:result = (Dee_size_t)DEE_VA_ARG(*pargs,DEE_MINUINT_T(8)); break;
     default:      goto DEE_PP_CAT_2(ui,DEE_PP_MUL8(DEE_TYPES_SIZEOF_INT));
    } break;
    default: DEE_TYPEF_INVALID_FORMAT();
@@ -275,9 +275,9 @@ DEE_A_RET_EXCEPT(NULL) DeeTypeObject *DeeType_VStructf(
 DEE_A_RET_EXCEPT(NULL) DeeTypeObject *DeeType_Structf(
  DEE_A_IN_Z char const *fmt, ...) {
  va_list args; DeeTypeObject *result;
- va_start(args,fmt);
+ DEE_VA_START(args,fmt);
  result = _DeeType_VStructf(fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 
@@ -293,9 +293,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeStructuredObject) *DeeStructured_VNewFromDataf(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeStructuredObject) *DeeStructured_NewFromDataf(
  DEE_A_IN void const *self, DEE_A_IN_Z char const *ty_fmt, ...) {
  va_list args; DeeObject *result;
- va_start(args,ty_fmt);
+ DEE_VA_START(args,ty_fmt);
  result = DeeStructured_VNewFromDataf(self,ty_fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 
@@ -311,9 +311,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *DeePointer_VNewf(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *DeePointer_Newf(
  void *p, DEE_A_IN_Z char const *ty_fmt, ...) {
  va_list args; DeeObject *result;
- va_start(args,ty_fmt);
+ DEE_VA_START(args,ty_fmt);
  result = DeePointer_VNewf(p,ty_fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 
@@ -328,9 +328,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeLValueObject) *DeeLValue_VNewf(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeLValueObject) *DeeLValue_Newf(
  DEE_A_IN void *p, DEE_A_IN_Z char const *ty_fmt, ...) {
  va_list args; DeeObject *result;
- va_start(args,ty_fmt);
+ DEE_VA_START(args,ty_fmt);
  result = DeeLValue_VNewf(p,ty_fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return result;
 }
 
@@ -346,9 +346,9 @@ DEE_A_RET_EXCEPT(-1) int DeeObject_TGetPointerExf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_OUT void **result, DEE_A_IN_Z char const *ty_fmt, ...) {
  va_list args; int retval;
- va_start(args,ty_fmt);
+ DEE_VA_START(args,ty_fmt);
  retval = DeeObject_VTGetPointerExf(tp_self,self,result,ty_fmt,args);
- va_end(args);
+ DEE_VA_END(args);
  return retval;
 }
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_POINTERS */

@@ -95,7 +95,14 @@ struct DeeTimeObject {
   Dee_uint64_t tm_msecs;  /*< kind == DeeTimeKind_DEFAULT: Milliseconds since 01.01.0000. */
   Dee_uint64_t tm_months; /*< kind == DeeTimeKind_MONTHS:  Months since 01.01.0000. */
   Dee_uint64_t tm_years;  /*< kind == DeeTimeKind_YEARS:   Years since 01.01.0000. */
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define tm_msecs  _tm_timedata.tm_msecs
+#define tm_months _tm_timedata.tm_months
+#define tm_years  _tm_timedata.tm_years
+ _tm_timedata
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
  // NOTE: I purposefully didn't use 1970 as base, so
  //       the user can easily just take a time object
  //       and use another to add onto it. e.g.:

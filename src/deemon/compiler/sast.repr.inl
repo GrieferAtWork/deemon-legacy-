@@ -178,9 +178,9 @@ static DeeObject *_deesast_tp_repr(DeeSAstObject *self) {
  {
   DeeObject *result;
   struct DeeParserLabel **iter,**end,*elem;
+  DeeStringWriter writer = DeeStringWriter_INIT();
   end = (iter = DeeParserLabelRefList_ELEM(&self->ast_common.ast_labels)
          )+DeeParserLabelRefList_SIZE(&self->ast_common.ast_labels);
-  DeeStringWriter writer = DeeStringWriter_INIT();
   while (iter != end) {
    elem = *iter++;
    switch (elem->pl_kind) {

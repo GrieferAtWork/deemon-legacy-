@@ -31,7 +31,13 @@
 #endif
 #endif /* !DEE_DEBUG */
 
-#include "__features.inl"
+#ifndef DEE_LIMITED_DEX
+#if defined(DEE_LIMITED_API) || defined(DEE_EXTENSION)
+#define DEE_LIMITED_DEX 1
+#endif
+#endif
+
+#include "__features.inl" /*< Keep as relative #include */
 
 #ifdef DEE_WITHOUT_IO
 #define DEE_PLATFORM_HAVE_IO 0
@@ -44,12 +50,6 @@
 #define DEE_HAVE_CXX_API 0
 #else
 #define DEE_HAVE_CXX_API 1
-#endif
-#endif
-
-#ifndef DEE_LIMITED_DEX
-#if defined(DEE_LIMITED_API) || defined(DEE_EXTENSION)
-#define DEE_LIMITED_DEX 1
 #endif
 #endif
 
@@ -89,96 +89,53 @@
   (support_end) > DEE_VERSION_API)
 #endif
 
-#ifndef DEE_COMPILER_STRUCTURE_PACKED_BEGIN
-#if DEE_COMPILER_HAVE_PRAGMA_PACK
-#define DEE_COMPILER_STRUCTURE_PACKED_BEGIN DEE_COMPILER_PRAGMA(pack(push,1))
-#define DEE_COMPILER_STRUCTURE_PACKED_END   DEE_COMPILER_PRAGMA(pack(pop))
+#ifndef DEE_PRIVATE_DECL_CXX_BEGIN
+#ifdef __cplusplus
+# define DEE_PRIVATE_DECL_CXX_BEGIN extern "C" {
+# define DEE_PRIVATE_DECL_CXX_END   }
 #else
-#define DEE_COMPILER_STRUCTURE_PACKED_BEGIN /* nothing */
-#define DEE_COMPILER_STRUCTURE_PACKED_END   /* nothing */
+# define DEE_PRIVATE_DECL_CXX_BEGIN /* nothing */
+# define DEE_PRIVATE_DECL_CXX_END   /* nothing */
 #endif
-#endif /* !DEE_COMPILER_STRUCTURE_PACKED_BEGIN */
+#endif /* !DEE_PRIVATE_DECL_CXX_BEGIN */
 
-#ifndef DEE_COMPILER_MSVC_WARNING_PUSH
-#ifdef _MSC_VER
-#define DEE_COMPILER_MSVC_WARNING_PUSH(w) __pragma(warning(push)) __pragma(warning(disable: w))
-#define DEE_COMPILER_MSVC_WARNING_POP     __pragma(warning(pop))
-#else
-#define DEE_COMPILER_MSVC_WARNING_PUSH(w) /* nothing */
-#define DEE_COMPILER_MSVC_WARNING_POP     /* nothing */
-#endif
-#endif /* !DEE_COMPILER_MSVC_WARNING_PUSH */
-
-#ifndef DEE_COMPILER_PREFAST_WARNING_PUSH
-#ifdef _PREFAST_
-#define DEE_COMPILER_PREFAST_WARNING_PUSH    DEE_COMPILER_MSVC_WARNING_PUSH
-#define DEE_COMPILER_PREFAST_WARNING_POP     DEE_COMPILER_MSVC_WARNING_POP
-#else
-#define DEE_COMPILER_PREFAST_WARNING_PUSH(w) /* nothing */
-#define DEE_COMPILER_PREFAST_WARNING_POP     /* nothing */
-#endif
-#endif /* !DEE_COMPILER_PREFAST_WARNING_PUSH */
-
-#if defined(__cplusplus)
-#define DEE_PRIVATE_DECL_CXX_BEGIN extern "C" {
-#define DEE_PRIVATE_DECL_CXX_END   }
-#else
-#define DEE_PRIVATE_DECL_CXX_BEGIN /* nothing */
-#define DEE_PRIVATE_DECL_CXX_END   /* nothing */
-#endif
-
-#ifndef DEE_LIMITED_DEX
-#define DEE_PRIVATE_DECL_WARN_NONLIMITED\
- __pragma(warning(disable: 4127)) /*< Conditional expression is constant */
-#else
-#define DEE_PRIVATE_DECL_WARN_NONLIMITED
-#endif
-
+#ifndef DEE_PRIVATE_DECL_WARN_BEGIN
 #if defined(_MSC_VER)
-#define DEE_PRIVATE_DECL_WARN_BEGIN __pragma(warning(push)) DEE_PRIVATE_DECL_WARN_NONLIMITED\
- __pragma(warning(disable: 4820)) /*< Padding added to type. */\
- __pragma(warning(disable: 4191)) /*< Unsafe type cast (the cast is always intended...). */\
- __pragma(warning(error:   4047)) /*< This (normally) warning is raised if we link a type method with invalid params / return type(s). */
-#define DEE_PRIVATE_DECL_WARN_END   __pragma(warning(pop))
-#elif defined(__DEEMON__)
-#define DEE_PRIVATE_DECL_WARN_BEGIN \
- _Pragma("warning(push,disable: 213 455)")
-#define DEE_PRIVATE_DECL_WARN_END   _Pragma("warning(pop)")
+#ifndef DEE_LIMITED_DEX
+# define DEE_PRIVATE_DECL_WARN_NONLIMITED\
+   __pragma(warning(disable: 4127)) /*< Conditional expression is constant */
 #else
-#define DEE_PRIVATE_DECL_WARN_BEGIN /* nothing */
-#define DEE_PRIVATE_DECL_WARN_END   /* nothing */
+# define DEE_PRIVATE_DECL_WARN_NONLIMITED
 #endif
+# define DEE_PRIVATE_DECL_WARN_BEGIN __pragma(warning(push)) DEE_PRIVATE_DECL_WARN_NONLIMITED\
+   __pragma(warning(disable: 4820)) /*< Padding added to type. */\
+   __pragma(warning(disable: 4191)) /*< Unsafe type cast (the cast is always intended...). */\
+   __pragma(warning(error:   4047)) /*< This (normally) warning is raised if we link a type method with invalid params / return type(s). */
+# define DEE_PRIVATE_DECL_WARN_END   __pragma(warning(pop))
+#elif defined(__DEEMON__)
+# define DEE_PRIVATE_DECL_WARN_BEGIN _Pragma("warning(push,disable: 213 455)")
+# define DEE_PRIVATE_DECL_WARN_END   _Pragma("warning(pop)")
+#else
+# define DEE_PRIVATE_DECL_WARN_BEGIN /* nothing */
+# define DEE_PRIVATE_DECL_WARN_END   /* nothing */
+#endif
+#endif /* !DEE_PRIVATE_DECL_WARN_BEGIN */
 
 
 //////////////////////////////////////////////////////////////////////////
 // Ensure that all types are aligned for pointers (by default)
-#if defined(_MSC_VER) && defined(DEE_PLATFORM_64_BIT)
-#define DEE_PRIVATE_DECL_PACK_BEGIN __pragma(pack(push,8))
-#define DEE_PRIVATE_DECL_PACK_END   __pragma(pack(pop))
-#elif defined(_MSC_VER) && !defined(DEE_PLATFORM_64_BIT)
-#define DEE_PRIVATE_DECL_PACK_BEGIN __pragma(pack(push,4))
-#define DEE_PRIVATE_DECL_PACK_END   __pragma(pack(pop))
-#elif 1 && defined(DEE_PLATFORM_64_BIT)
-#define DEE_PRIVATE_DECL_PACK_BEGIN _Pragma("pack(push,8)")
-#define DEE_PRIVATE_DECL_PACK_END   _Pragma("pack(pop)")
-#elif 1 && !defined(DEE_PLATFORM_64_BIT)
-#define DEE_PRIVATE_DECL_PACK_BEGIN _Pragma("pack(push,4)")
-#define DEE_PRIVATE_DECL_PACK_END   _Pragma("pack(pop)")
-#else
-#define DEE_PRIVATE_DECL_PACK_BEGIN /* nothing */
-#define DEE_PRIVATE_DECL_PACK_END   /* nothing */
-#endif
-
-#define DEE_DECL_CXX_BEGIN DEE_PRIVATE_DECL_WARN_BEGIN DEE_PRIVATE_DECL_PACK_BEGIN
-#define DEE_DECL_CXX_END   DEE_PRIVATE_DECL_PACK_END DEE_PRIVATE_DECL_WARN_END
-#define DEE_DECL_BEGIN     DEE_PRIVATE_DECL_CXX_BEGIN DEE_DECL_CXX_BEGIN
-#define DEE_DECL_END       DEE_DECL_CXX_END DEE_PRIVATE_DECL_CXX_END
+#define DEE_COMPILER_STRUCTURE_PACKED_BEGIN DEE_COMPILER_PACK_PUSH(1)
+#define DEE_COMPILER_STRUCTURE_PACKED_END   DEE_COMPILER_PACK_POP
+#define DEE_DECL_CXX_BEGIN                  DEE_PRIVATE_DECL_WARN_BEGIN DEE_COMPILER_PACK_PUSH(DEE_TYPES_SIZEOF_POINTER)
+#define DEE_DECL_CXX_END                    DEE_COMPILER_PACK_POP DEE_PRIVATE_DECL_WARN_END
+#define DEE_DECL_BEGIN                      DEE_PRIVATE_DECL_CXX_BEGIN DEE_DECL_CXX_BEGIN
+#define DEE_DECL_END                        DEE_DECL_CXX_END DEE_PRIVATE_DECL_CXX_END
 
 #ifdef DEE_EXTENSION
 #ifndef DEE_LINK_DLL_IMPORT
 #define DEE_LINK_DLL_IMPORT 1
 #endif
-#endif
+#endif /* DEE_EXTENSION */
 
 #if !defined(DEE_NO_AUTO_CONFIG) && \
     !defined(DEE_LINK_DLL_IMPORT) && \
@@ -190,26 +147,13 @@
 #endif
 
 
-#ifndef DEE_ATTRIBUTE_CDECL
-#if !defined(DEE_PLATFORM_UNIX) ||\
-    !defined(DEE_PLATFORM_64_BIT)
-#if defined(_MSC_VER)
-# define DEE_ATTRIBUTE_CDECL __cdecl
-#elif defined(__GNUC__)
-# define DEE_ATTRIBUTE_CDECL __attribute__((__cdecl__))
-#elif 0
-# define DEE_ATTRIBUTE_CDECL _Pragma("cdecl")
-#endif
-#endif /* ... */
-#endif /* !DEE_ATTRIBUTE_CDECL */
-
 #ifndef DEE_CALL
 #ifdef DEE_ATTRIBUTE_CDECL
 # define DEE_CALL DEE_ATTRIBUTE_CDECL
 #else
 # define DEE_CALL /* nothing */
 #endif
-#endif
+#endif /* !DEE_CALL */
 
 #ifndef __DEEMON__
 # define DEE_EXPORT_DATA_DECL(T) extern DEE_ATTRIBUTE_DLLEXPORT T
@@ -264,7 +208,7 @@
 # define DEE_INCLUDE_MEMORY_API()         <debug_new.h>
 # define DEE_INCLUDE_MEMORY_API_DISABLE() <debug_new_disable.inl>
 # define DEE_INCLUDE_MEMORY_API_ENABLE()  <debug_new_enable.inl>
-#if defined(__FUNCTION__) && defined(_MSC_VER)
+#if defined(__FUNCTION__) && (defined(_MSC_VER) || defined(__DEEMON__))
 # define DEE_DEBUG_NEW_ACCESS(expr)       __FILE__ "\0" DEE_PP_STR(__LINE__) "\0" expr "\0" __FUNCTION__
 #else
 # define DEE_DEBUG_NEW_ACCESS(expr)       __FILE__ "\0" DEE_PP_STR(__LINE__) "\0" expr
@@ -283,75 +227,6 @@
 # define DEE_INCLUDE_MEMORY_API_ENABLE()  <deemon/__nullfile>
 # define DEE_DEBUG_NEW_ACCESS(expr)       ((char const *)0)
 #endif /* !DEE_USE_DEBUG_NEW */
-
-#if __has_builtin(__builtin_breakpoint)
-# define DEE_BUILTIN_BREAKPOINT __builtin_breakpoint
-#elif defined(DEBUG_NEW_BREAKPOINT)
-# define DEE_BUILTIN_BREAKPOINT DEBUG_NEW_BREAKPOINT
-#elif defined(_MSC_VER)
-DEE_DECL_BEGIN
-void __cdecl __debugbreak(void);
-DEE_DECL_END
-# define DEE_BUILTIN_BREAKPOINT __debugbreak
-#else
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_SIGNAL_H
-# include <signal.h>
-#endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_SIGNAL_H */
-#ifdef SIGTRAP
-#  define DEE_BUILTIN_BREAKPOINT() raise(SIGTRAP)
-#endif
-#endif
-
-
-#ifndef DEE_COMPILER_ASSUME
-#if DEE_COMPILER_HAVE_MSVC_ASSUME
-#define DEE_COMPILER_ASSUME       __assume
-#else
-#define DEE_COMPILER_ASSUME(expr) (void)0
-#endif
-#endif
-
-#ifndef DEE_BUILTIN_UNREACHABLE_
-#if DEE_COMPILER_HAVE_BUILTIN_UNREACHABLE
-#define DEE_BUILTIN_UNREACHABLE_   __builtin_unreachable
-#elif DEE_COMPILER_HAVE_MSVC_ASSUME
-#define DEE_BUILTIN_UNREACHABLE_() __assume(0)
-#else
-#define DEE_BUILTIN_UNREACHABLE_() (void)0
-#endif
-#endif
-
-#ifndef DEE_LIKELY
-#if DEE_COMPILER_HAVE_BUILTIN_EXPECT
-#if defined(__cplusplus) || defined(__DEEMON__)
-#define DEE_LIKELY(x)   (__builtin_expect(!!(x),true))
-#define DEE_UNLIKELY(x) (__builtin_expect(!!(x),false))
-#else
-#define DEE_LIKELY(x)   (__builtin_expect(!!(x),1))
-#define DEE_UNLIKELY(x) (__builtin_expect(!!(x),0))
-#endif
-#elif defined(__INTELLISENSE__) && defined(__cplusplus)
-class __intellisense__BOOL_ONLY { public: operator bool (); };
-static __intellisense__BOOL_ONLY __intellisense__DEE_LIKELY(bool x);
-static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
-#define DEE_LIKELY(x)   (__intellisense__DEE_LIKELY(x))
-#define DEE_UNLIKELY(x) (__intellisense__DEE_UNLIKELY(x))
-#else
-#define DEE_LIKELY      /* nothing */
-#define DEE_UNLIKELY    /* nothing */
-#endif
-#endif
-
-#ifndef Dee_OFFSETOF
-#if defined(__GNUC__) || __has_builtin(__builtin_offsetof)
-# define Dee_OFFSETOF       __builtin_offsetof
-#elif defined(offsetof)
-# define Dee_OFFSETOF       offsetof
-#else /* ... */
-# define Dee_OFFSETOF(s,m) (DEE_TYPES_UINT(DEE_TYPES_SIZEOF_SIZE_T))(&((s*)0)->m)
-#endif /* ... */
-#endif /* !Dee_OFFSETOF */
-
 
 #ifdef DEE_DEBUG
 DEE_DECL_BEGIN
@@ -372,60 +247,46 @@ DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AssertionFailedf(char const *exp
 #endif /* !DEE_BUILTIN_BREAKPOINT */
 DEE_DECL_END
 #ifdef DEE_BUILTIN_BREAKPOINT
-# define DEE_ASSERT(expr)         (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?(_Dee_AssertionFailed(#expr,__FILE__,__LINE__),DEE_BUILTIN_BREAKPOINT()):(void)0)
-# define DEE_ASSERTF(expr,...)    (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?(_Dee_AssertionFailedf(#expr,__FILE__,__LINE__,__VA_ARGS__),DEE_BUILTIN_BREAKPOINT()):(void)0)
+# define DEE_ASSERT(expr)          (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?(_Dee_AssertionFailed(#expr,__FILE__,__LINE__),DEE_BUILTIN_BREAKPOINT()):(void)0)
+# define DEE_ASSERTF(expr,...)     (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?(_Dee_AssertionFailedf(#expr,__FILE__,__LINE__,__VA_ARGS__),DEE_BUILTIN_BREAKPOINT()):(void)0)
 #else /* DEE_BUILTIN_BREAKPOINT */
-# define DEE_ASSERT(expr)         (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?_Dee_AssertionFailed(#expr,__FILE__,__LINE__):(void)0)
-# define DEE_ASSERTF(expr,...)    (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?_Dee_AssertionFailedf(#expr,__FILE__,__LINE__,__VA_ARGS__):(void)0)
+# define DEE_ASSERT(expr)          (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?_Dee_AssertionFailed(#expr,__FILE__,__LINE__):(void)0)
+# define DEE_ASSERTF(expr,...)     (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?_Dee_AssertionFailedf(#expr,__FILE__,__LINE__,__VA_ARGS__):(void)0)
 #endif /* !DEE_BUILTIN_BREAKPOINT */
-#define DEE_LVERBOSE_LV_R(lv,...) (DEE_UNLIKELY(_DeeFlag_Verbose>=(lv))?_Dee_VerboseOut(__VA_ARGS__):(void)0)
-#define DEE_LVERBOSE_LV(lv,...)   (DEE_UNLIKELY(_DeeFlag_Verbose>=(lv))?_Dee_VerboseOut(__FILE__ "(" DEE_PP_STR(__LINE__) ") : " __VA_ARGS__):(void)0)
-#define DEE_LVERBOSE1R(...)        DEE_LVERBOSE_LV_R(1,__VA_ARGS__)
-#define DEE_LVERBOSE1(...)         DEE_LVERBOSE_LV(1,__VA_ARGS__)
-#define DEE_LVERBOSE2R(...)        DEE_LVERBOSE_LV_R(2,__VA_ARGS__)
-#define DEE_LVERBOSE2(...)         DEE_LVERBOSE_LV(2,__VA_ARGS__)
-#define DEE_LVERBOSE3R(...)        DEE_LVERBOSE_LV_R(3,__VA_ARGS__)
-#define DEE_LVERBOSE3(...)         DEE_LVERBOSE_LV(3,__VA_ARGS__)
-#define DEE_LVERBOSE4R(...)        DEE_LVERBOSE_LV_R(4,__VA_ARGS__)
-#define DEE_LVERBOSE4(...)         DEE_LVERBOSE_LV(4,__VA_ARGS__)
-#define DEE_LDEBUG                 _Dee_DebugOut
-#define DEE_ABNORMAL_TERMINATION   _Dee_AbnormalTermination
+# define DEE_LVERBOSE_LV_R(lv,...) (DEE_UNLIKELY(_DeeFlag_Verbose>=(lv))?_Dee_VerboseOut(__VA_ARGS__):(void)0)
+# define DEE_LVERBOSE_LV(lv,...)   (DEE_UNLIKELY(_DeeFlag_Verbose>=(lv))?_Dee_VerboseOut(__FILE__ "(" DEE_PP_STR(__LINE__) ") : " __VA_ARGS__):(void)0)
+# define DEE_LVERBOSE1R(...)        DEE_LVERBOSE_LV_R(1,__VA_ARGS__)
+# define DEE_LVERBOSE1(...)         DEE_LVERBOSE_LV(1,__VA_ARGS__)
+# define DEE_LVERBOSE2R(...)        DEE_LVERBOSE_LV_R(2,__VA_ARGS__)
+# define DEE_LVERBOSE2(...)         DEE_LVERBOSE_LV(2,__VA_ARGS__)
+# define DEE_LVERBOSE3R(...)        DEE_LVERBOSE_LV_R(3,__VA_ARGS__)
+# define DEE_LVERBOSE3(...)         DEE_LVERBOSE_LV(3,__VA_ARGS__)
+# define DEE_LVERBOSE4R(...)        DEE_LVERBOSE_LV_R(4,__VA_ARGS__)
+# define DEE_LVERBOSE4(...)         DEE_LVERBOSE_LV(4,__VA_ARGS__)
+# define DEE_LDEBUG                 _Dee_DebugOut
+# define DEE_ABNORMAL_TERMINATION   _Dee_AbnormalTermination
 #else /* DEE_DEBUG */
-#define DEE_ASSERT				             DEE_COMPILER_ASSUME
-#define DEE_ASSERTF(expr,...)				  DEE_COMPILER_ASSUME(expr)
-#define DEE_ABNORMAL_TERMINATION   DEE_BUILTIN_UNREACHABLE
+# define DEE_ASSERT				             DEE_COMPILER_ASSUME
+# define DEE_ASSERTF(expr,...)				  DEE_COMPILER_ASSUME(expr)
+# define DEE_ABNORMAL_TERMINATION   DEE_BUILTIN_UNREACHABLE
 #if defined(_MSC_VER)
 # define DEE_LDEBUG               (void)__noop
+#elif defined(__DEEMON__)
+# define DEE_LDEBUG               __builtin_noop
 #else
 # define DEE_LDEBUG(...)          (void)0
 #endif
+# define DEE_LVERBOSE1  DEE_LDEBUG
+# define DEE_LVERBOSE1R DEE_LDEBUG
+# define DEE_LVERBOSE2  DEE_LDEBUG
+# define DEE_LVERBOSE2R DEE_LDEBUG
+# define DEE_LVERBOSE3  DEE_LDEBUG
+# define DEE_LVERBOSE3R DEE_LDEBUG
+# define DEE_LVERBOSE4  DEE_LDEBUG
+# define DEE_LVERBOSE4R DEE_LDEBUG
 #endif /* !DEE_DEBUG */
 
 
-#ifndef DEE_LVERBOSE1
-#define DEE_LVERBOSE1  DEE_LDEBUG
-#endif /* !DEE_LVERBOSE1 */
-#ifndef DEE_LVERBOSE1R
-#define DEE_LVERBOSE1R DEE_LDEBUG
-#endif /* !DEE_LVERBOSE1R */
-#ifndef DEE_LVERBOSE2
-#define DEE_LVERBOSE2  DEE_LDEBUG
-#endif /* !DEE_LVERBOSE2 */
-#ifndef DEE_LVERBOSE2R
-#define DEE_LVERBOSE2R DEE_LDEBUG
-#endif /* !DEE_LVERBOSE2R */
-#ifndef DEE_LVERBOSE3
-#define DEE_LVERBOSE3  DEE_LDEBUG
-#endif /* !DEE_LVERBOSE3 */
-#ifndef DEE_LVERBOSE3R
-#define DEE_LVERBOSE3R DEE_LDEBUG
-#endif /* !DEE_LVERBOSE3R */
-#ifndef DEE_LVERBOSE4
-#define DEE_LVERBOSE4  DEE_LDEBUG
-#endif /* !DEE_LVERBOSE4 */
-#ifndef DEE_LVERBOSE4R
-#define DEE_LVERBOSE4R DEE_LDEBUG
-#endif /* !DEE_LVERBOSE4R */
 
 #ifdef __INTELLISENSE__
 #ifdef __cplusplus
@@ -473,11 +334,9 @@ static void __intellisense__DEE_LVERBOSE4R(char const *fmt, ...);
 
 #ifndef DEE_BUILTIN_UNREACHABLE
 #ifdef DEE_DEBUG
-#define DEE_BUILTIN_UNREACHABLE() (\
- DEE_ASSERT(!"DEE_BUILTIN_UNREACHABLE() reached"),\
- DEE_BUILTIN_UNREACHABLE_())
+#define DEE_BUILTIN_UNREACHABLE() (DEE_ASSERT(!"DEE_BUILTIN_UNREACHABLE() reached"),DEE_BUILTIN_UNREACHABLE_())
 #else
-#define DEE_BUILTIN_UNREACHABLE DEE_BUILTIN_UNREACHABLE_
+#define DEE_BUILTIN_UNREACHABLE    DEE_BUILTIN_UNREACHABLE_
 #endif
 #endif
 
@@ -557,10 +416,9 @@ static void __intellisense__DEE_LVERBOSE4R(char const *fmt, ...);
 #define DEE_CONFIG_RT_SIZEOF_LDOUBLE DEE_TYPES_SIZEOF_LDOUBLE
 #endif
 
-#include "__annotations.inl"
-
+#include "__annotations.inl" /*< Keep as relative #include */
 #ifndef GUARD_DEEMON_VERSION_H
-#include "version.h"
+#include "version.h" /*< Keep as relative #include */
 #endif
 
 #define DEE_OBJECT_DEF DEE_STRUCT_DEF
@@ -639,38 +497,27 @@ static void __intellisense__DEE_LVERBOSE4R(char const *fmt, ...);
 #define DEE_PRIVATE_DECL_DEE_FILE_TYPEOBJECT       DEE_OBJECT_DEF(DeeFileTypeObject);
 #define DEE_PRIVATE_DECL_DEE_STRUCTURED_OBJECT     DEE_OBJECT_DEF(DeeStructuredObject);
 #define DEE_PRIVATE_DECL_DEE_STRUCTURED_TYPEOBJECT DEE_OBJECT_DEF(DeeStructuredTypeObject);
-#define DEE_PRIVATE_DECL_DEE_EXCEPTION_HANDLER_KIND \
-typedef int DeeExceptionHandlerKind; enum{\
- DeeExceptionHandleKind_FLAG_ALL   = 0x01,\
- DeeExceptionHandleKind_FLAG_TYPED = 0x02,\
- DeeExceptionHandleKind_FLAG_VAR   = 0x04,\
- DeeExceptionHandleKind_FINALLY    = 0x00,\
- DeeExceptionHandleKind_ALL        = DeeExceptionHandleKind_FLAG_ALL,\
- DeeExceptionHandleKind_ALL_VAR    = DeeExceptionHandleKind_FLAG_ALL|DeeExceptionHandleKind_FLAG_VAR,\
- DeeExceptionHandleKind_TYPED      = DeeExceptionHandleKind_FLAG_TYPED,\
- DeeExceptionHandleKind_TYPED_VAR  = DeeExceptionHandleKind_FLAG_TYPED|DeeExceptionHandleKind_FLAG_VAR,\
-};
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
 #define DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS \
 typedef DEE_TYPES_UINT16_T DeeFunctionFlags; enum{\
- DeeFunctionFlags_NONE     = 0x0000,\
- DeeFunctionFlags_DEFAULT  = 0x0000,\
- DeeFunctionFlags_SYSV     = 0x0001,\
- DeeFunctionFlags_STDCALL  = 0x0002,\
- DeeFunctionFlags_THISCALL = 0x0003,\
- DeeFunctionFlags_FASTCALL = 0x0004,\
- DeeFunctionFlags_MS_CDECL = 0x0005,\
- DeeFunctionFlags_PASCAL   = 0x0006,\
- DeeFunctionFlags_REGISTER = 0x0007,\
- DeeFunctionFlags_WIN64    = 0x0008,\
- DeeFunctionFlags_UNIX64   = 0x0009,\
- DeeFunctionFlags_CC_MASK  = 0x000F,\
+ DeeFunctionFlags_NONE                 = 0x0000,\
+ DeeFunctionFlags_DEFAULT              = 0x0000,\
+ DeeFunctionFlags_SYSV                 = 0x0001,\
+ DeeFunctionFlags_STDCALL              = 0x0002,\
+ DeeFunctionFlags_THISCALL             = 0x0003,\
+ DeeFunctionFlags_FASTCALL             = 0x0004,\
+ DeeFunctionFlags_MS_CDECL             = 0x0005,\
+ DeeFunctionFlags_PASCAL               = 0x0006,\
+ DeeFunctionFlags_REGISTER             = 0x0007,\
+ DeeFunctionFlags_WIN64                = 0x0008,\
+ DeeFunctionFlags_UNIX64               = 0x0009,\
+ DeeFunctionFlags_CC_MASK              = 0x000F,\
  DeeFunctionFlags_ADD_RESULT_REFERENCE = 0x0010,\
- DeeFunctionFlags_VARARGS  = 0x0020,\
- DeeFunctionFlags_NOEXCEPT = 0x0040,\
- DeeFunctionFlags_NORETURN = 0x0080,\
+ DeeFunctionFlags_VARARGS              = 0x0020,\
+ DeeFunctionFlags_NOEXCEPT             = 0x0040,\
+ DeeFunctionFlags_NORETURN             = 0x0080,\
 };
-#else
+#else /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
 #define DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS \
 typedef DEE_TYPES_UINT16_T DeeFunctionFlags; enum{\
  DeeFunctionFlags_NONE     = 0x0000,\
@@ -679,7 +526,7 @@ typedef DEE_TYPES_UINT16_T DeeFunctionFlags; enum{\
  DeeFunctionFlags_NOEXCEPT = 0x0040,\
  DeeFunctionFlags_NORETURN = 0x0080,\
 };
-#endif
+#endif /* !DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
 #define DEE_PRIVATE_DECL_DEE_VISIT_PROC\
  struct DeeObject; typedef int (DEE_CALL *DeeVisitProc)(struct DeeObject*,void*);
 #define DEE_PRIVATE_DECL_DEE_CFUNCTION\
@@ -716,9 +563,9 @@ typedef DEE_TYPES_UINT16_T DeeFunctionFlags; enum{\
 #ifndef DEE_PLATFORM_HAVE_IO
 #if DEE_PLATFORM_HAVE_IO_HANDLE || \
     DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
-#define DEE_PLATFORM_HAVE_IO 1
+# define DEE_PLATFORM_HAVE_IO 1
 #else
-#define DEE_PLATFORM_HAVE_IO 0
+# define DEE_PLATFORM_HAVE_IO 0
 #endif
 #endif
 
@@ -726,9 +573,9 @@ typedef DEE_TYPES_UINT16_T DeeFunctionFlags; enum{\
 #if DEE_PLATFORM_HAVE_IO_HANDLE && \
    (defined(DEE_PLATFORM_WINDOWS) ||\
     defined(DEE_PLATFORM_UNIX))
-#define DEE_PLATFORM_HAVE_PROCESS 1
+# define DEE_PLATFORM_HAVE_PROCESS 1
 #else
-#define DEE_PLATFORM_HAVE_PROCESS 0
+# define DEE_PLATFORM_HAVE_PROCESS 0
 #endif
 #endif
 

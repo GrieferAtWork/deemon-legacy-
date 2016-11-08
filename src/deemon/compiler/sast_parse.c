@@ -39,8 +39,7 @@ DEE_DECL_BEGIN
 #define token    lexer->l_token->tk_token
 
 DEE_A_RET_EXCEPT_REF DeeSAstObject *DeeSAst_Parse(DEE_PARSER_PARAMS) {
- DeeSAstObject *ast_result;
- DeeXAstObject *ast_expression;
+ DeeSAstObject *result; DeeXAstObject *expression;
  DeeTokenObject *ast_token; DeeXAstKind kind;
  DeeScopeObject *cond_scope;
  struct DeeParserLabelRefList label_endpts = DeeParserLabelRefList_INIT();
@@ -70,10 +69,10 @@ again: switch (token.tk_id) {
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
    if ((import_ast = DeeXAst_ParseAllImports(ast_token,DEE_PARSER_ARGS)) == NULL) goto err_ast_token;
-   ast_result = DeeSAst_NewExpression(ast_token,&label_endpts,lexer,parser_flags,import_ast);
+   result = DeeSAst_NewExpression(ast_token,&label_endpts,lexer,parser_flags,import_ast);
    Dee_DECREF(import_ast);
    Dee_DECREF(ast_token);
-   if (!ast_result) goto err;
+   if (!result) goto err;
    if (token.tk_id != ';') {
     if (DeeError_CompilerError(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_IMPORT,
      (DeeObject *)lexer,(DeeObject *)token_ob,
@@ -83,8 +82,8 @@ again: switch (token.tk_id) {
 
   case ';': {
    // Empty statement
-   if ((ast_result = DeeSAst_NewEmpty(token_ob,&label_endpts)) == NULL) goto err;
-   if DEE_UNLIKELY(!yield()) {err_r: Dee_DECREF(ast_result); goto err; }
+   if ((result = DeeSAst_NewEmpty(token_ob,&label_endpts)) == NULL) goto err;
+   if DEE_UNLIKELY(!yield()) {err_r: Dee_DECREF(result); goto err; }
   } break;
 
   case '}': {
@@ -93,14 +92,14 @@ again: switch (token.tk_id) {
    if (DeeError_CompilerError(DEE_WARNING_EXPECTED_SEMICOLLON_FOR_EMPTY_STATEMENT,
     (DeeObject *)lexer,(DeeObject *)token_ob,
     "Expected ';' for empty expression") != 0) goto err;
-   if ((ast_result = DeeSAst_NewEmpty(token_ob,&label_endpts)) == NULL) goto err;
+   if ((result = DeeSAst_NewEmpty(token_ob,&label_endpts)) == NULL) goto err;
   } break;
 
   case '{': {
    // Block statement
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   ast_result = DeeSAst_ParseAllInNewScopeUntil(ast_token,'}',&label_endpts,DEE_PARSER_ARGS);
+   result = DeeSAst_ParseAllInNewScopeUntil(ast_token,'}',&label_endpts,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
   } break;
 
@@ -111,24 +110,24 @@ parse_return:
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
    if (token.tk_id != ';') {
     DeeScopeObject *weak_root;
-    if ((ast_expression = DeeXAst_Parse(DEE_PARSER_ARGS)) == NULL) goto err_ast_token;
+    if ((expression = DeeXAst_Parse(DEE_PARSER_ARGS)) == NULL) goto err_ast_token;
     weak_root = DeeScope_WEAK_ROOT(scope);
     if ((weak_root->sc_flags&DEE_SCOPE_FLAG_FOUND_YIELD)!=0) {
      if (DeeError_CompilerError(DEE_WARNING_RETURN_AFTER_YIELD,
       (DeeObject *)lexer,(DeeObject *)token_ob,
       "non-empty 'return' statement found after a 'yield' statement had already been encountered"
       ) != 0) goto err_expression_ast_token;
-     Dee_CLEAR(ast_expression);
+     Dee_CLEAR(expression);
     } else weak_root->sc_flags |= DEE_SCOPE_FLAG_FOUND_RETURN;
-   } else ast_expression = NULL;
-   ast_result = DeeSAst_NewReturn(ast_token,&label_endpts,ast_expression);
-   Dee_XDECREF(ast_expression);
+   } else expression = NULL;
+   result = DeeSAst_NewReturn(ast_token,&label_endpts,expression);
+   Dee_XDECREF(expression);
    Dee_DECREF(ast_token);
-   if (!ast_result) goto err;
+   if (!result) goto err;
    if (token.tk_id != ';') {
     if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_RETURN,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after 'return %r'",
-     ast_result->ast_return.r_value) != 0) goto err_r;
+     result->ast_return.r_value) != 0) goto err_r;
    } else if DEE_UNLIKELY(!yield()) goto err_r;
   } break;
 
@@ -150,15 +149,15 @@ parse_return:
    } else weak_root->sc_flags |= DEE_SCOPE_FLAG_FOUND_YIELD;
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   if ((ast_expression = DeeXAst_ParseTuple(DEE_PARSER_ARGS)) == NULL) goto err_ast_token;
-   ast_result = DeeSAst_NewYield(ast_token,&label_endpts,ast_expression);
-   Dee_DECREF(ast_expression);
+   if ((expression = DeeXAst_ParseTuple(DEE_PARSER_ARGS)) == NULL) goto err_ast_token;
+   result = DeeSAst_NewYield(ast_token,&label_endpts,expression);
+   Dee_DECREF(expression);
    Dee_DECREF(ast_token);
-   if (!ast_result) goto err;
+   if (!result) goto err;
    if (token.tk_id != ';') {
     if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_YIELD,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after 'yield %r...'",
-     ast_result->ast_yield.y_value) != 0) goto err_r;
+     result->ast_yield.y_value) != 0) goto err_r;
    } else if DEE_UNLIKELY(!yield()) goto err_r;
   } break;
 
@@ -168,17 +167,17 @@ parse_return:
    // Assert statement
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   if ((ast_expression = DeeXAst_Parse(DEE_PARSER_ARGS)) == NULL) goto err_ast_token;
+   if ((expression = DeeXAst_Parse(DEE_PARSER_ARGS)) == NULL) goto err_ast_token;
    if (token.tk_id == ':') {
-    if DEE_UNLIKELY(!yield()) {err_expression_ast_token: Dee_DECREF(ast_expression); goto err_ast_token; }
+    if DEE_UNLIKELY(!yield()) {err_expression_ast_token: Dee_DECREF(expression); goto err_ast_token; }
     if ((assert_message = DeeXAst_Parse(DEE_PARSER_ARGS)) == NULL) goto err_expression_ast_token;
    } else assert_message = NULL;
-   ast_result = DeeSAst_NewAssert(ast_token,&label_endpts,lexer,parser_flags,
-                                  ast_expression,assert_message);
+   result = DeeSAst_NewAssert(ast_token,&label_endpts,lexer,parser_flags,
+                                  expression,assert_message);
    Dee_XDECREF(assert_message);
-   Dee_DECREF(ast_expression);
+   Dee_DECREF(expression);
    Dee_DECREF(ast_token);
-   if (!ast_result) goto err;
+   if (!result) goto err;
    if (token.tk_id != ';') {
     if (DeeError_CompilerError(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_ASSERT,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after 'assert ...'") != 0) goto err_r;
@@ -222,7 +221,7 @@ parse_return:
      print_flags |= DEE_SASTPRINT_FLAG_NOLF;
     }
    } else print_file = NULL,print_data = NULL;
-   ast_result = DeeSAst_NewPrint(ast_token,&label_endpts,lexer,parser_flags,
+   result = DeeSAst_NewPrint(ast_token,&label_endpts,lexer,parser_flags,
                                  print_flags,print_file,print_data);
    Dee_XDECREF(print_data);
    Dee_XDECREF(print_file);
@@ -236,7 +235,7 @@ parse_return:
   case KWD_if: {
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   ast_result = DeeSAst_ParseIfStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
+   result = DeeSAst_ParseIfStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
   } break;
 
@@ -244,7 +243,7 @@ parse_return:
   case KWD_for: kind = DEE_SASTKIND_FORIN; parse_any_for: {
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   ast_result = DeeSAst_ParseForOrForeachStatement(ast_token,kind,&label_endpts,DEE_PARSER_ARGS);
+   result = DeeSAst_ParseForOrForeachStatement(ast_token,kind,&label_endpts,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
   } break;
 
@@ -252,7 +251,7 @@ parse_return:
    // While loop
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   ast_result = DeeSAst_ParseWhileStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
+   result = DeeSAst_ParseWhileStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
   } break;
 
@@ -260,7 +259,7 @@ parse_return:
    // Do-While loop
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   ast_result = DeeSAst_ParseDoWhileStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
+   result = DeeSAst_ParseDoWhileStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
   } break;
 
@@ -270,7 +269,7 @@ parse_return:
    if (0) { case KWD___loopnone: kind = DEE_SASTKIND_LOOPNONE; }
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   ast_result = DeeSAst_ParseSpecialLoopStatement(kind,ast_token,&label_endpts,DEE_PARSER_ARGS);
+   result = DeeSAst_ParseSpecialLoopStatement(kind,ast_token,&label_endpts,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
   } break;
 
@@ -305,7 +304,7 @@ err_ifc_succ_block: Dee_DECREF(succ_block); goto err_ifc_succ_scope;
    }
 #endif
    else fail_scope = NULL,fail_block = NULL;
-   ast_result = DeeSAst_NewIfConst(kind,ast_token,&label_endpts,
+   result = DeeSAst_NewIfConst(kind,ast_token,&label_endpts,
                                           succ_scope,succ_block,
                                           fail_scope,fail_block);
    Dee_XDECREF(fail_block);
@@ -318,7 +317,7 @@ err_ifc_succ_block: Dee_DECREF(succ_block); goto err_ifc_succ_scope;
   case KWD_break: kind = DEE_SASTKIND_BREAK; goto parse_break_or_continue;
   case KWD_continue: kind = DEE_SASTKIND_CONTINUE; parse_break_or_continue: {
    // Break/Continue statement
-   if ((ast_result = _DeeSAst_NewEmptyEx(kind,token_ob,&label_endpts)) == NULL) goto err;
+   if ((result = _DeeSAst_NewEmptyEx(kind,token_ob,&label_endpts)) == NULL) goto err;
    if DEE_UNLIKELY(!yield()) goto err_r;
    if (token.tk_id != ';') {
     if (DeeError_CompilerErrorf(kind == DEE_SASTKIND_BREAK
@@ -326,7 +325,7 @@ err_ifc_succ_block: Dee_DECREF(succ_block); goto err_ifc_succ_scope;
      : DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_CONTINUE,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after '%s",
      TPPLexer_TokenIDStr(DeeLexer_LEXER(lexer),
-     ast_result->ast_common.ast_token->tk_token.tk_id)) != 0) goto err_r;
+     result->ast_common.ast_token->tk_token.tk_id)) != 0) goto err_r;
    } else if DEE_UNLIKELY(!yield()) goto err_r;
   } break;
 
@@ -338,17 +337,17 @@ err_ifc_succ_block: Dee_DECREF(succ_block); goto err_ifc_succ_scope;
    if (!TPPTokenID_IS_KEYWORD(token.tk_id)) {
     if (DeeError_CompilerError(DEE_WARNING_EXPECTED_KEYWORD_AFTER_GOTO,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected keyword after 'goto'") != 0) goto err_ast_token;
-    ast_result = DeeSAst_NewEmpty(ast_token,&label_endpts);
+    result = DeeSAst_NewEmpty(ast_token,&label_endpts);
    } else {
     struct DeeParserLabel *dest_label;
     weak_root = DeeScope_WEAK_ROOT(scope);
     if ((dest_label = DeeParserLabelList_GetOrAddForwardLabel(
      &weak_root->sc_labels,token.tk_id)) == NULL) goto err_ast_token;
     if DEE_UNLIKELY(!yield()) goto err_ast_token;
-    ast_result = DeeSAst_NewGoto(ast_token,&label_endpts,dest_label);
+    result = DeeSAst_NewGoto(ast_token,&label_endpts,dest_label);
    }
    Dee_DECREF(ast_token);
-   if (!ast_result) goto err;
+   if (!result) goto err;
    if (token.tk_id != ';') {
     if (DeeError_CompilerError(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_GOTO,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after 'goto ...'"
@@ -361,12 +360,12 @@ err_ifc_succ_block: Dee_DECREF(succ_block); goto err_ifc_succ_scope;
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
    if (token.tk_id != ';') {
-    if ((ast_expression = DeeXAst_Parse(DEE_PARSER_ARGS)) == NULL) goto err_ast_token;
-   } else ast_expression = NULL;
-   ast_result = DeeSAst_NewThrow(ast_token,&label_endpts,ast_expression);
-   Dee_XDECREF(ast_expression);
+    if ((expression = DeeXAst_Parse(DEE_PARSER_ARGS)) == NULL) goto err_ast_token;
+   } else expression = NULL;
+   result = DeeSAst_NewThrow(ast_token,&label_endpts,expression);
+   Dee_XDECREF(expression);
    Dee_DECREF(ast_token);
-   if (!ast_result) goto err;
+   if (!result) goto err;
    if (token.tk_id != ';') {
     if (DeeError_CompilerError(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_THROW,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after 'throw ...'"
@@ -387,18 +386,18 @@ err_try_1: Dee_DECREF(try_root_scope); goto err_ast_token;
    if ((try_block = DeeSAst_Parse(DEE_PARSER_ARGS_SCOPE(try_block_scope))) == NULL) {
 /*err_try_2:*/ Dee_DECREF(try_block_scope); goto err_try_1;
    }
-   ast_result = DeeSAst_NewTry(ast_token,&label_endpts,
+   result = DeeSAst_NewTry(ast_token,&label_endpts,
                                try_root_scope,try_block_scope,try_block);
    Dee_DECREF(try_block);
    Dee_DECREF(try_block_scope);
-   if (!ast_result) goto err_try_1;
+   if (!result) goto err_try_1;
    Dee_DECREF(ast_token);
    // Parse try handler blocks
 try_handler_more:
    switch (token.tk_id) {
     case KWD_catch:
     case KWD_finally:
-     if (_DeeSAst_ParseTryHandler(ast_result,DEE_PARSER_ARGS_SCOPE(try_root_scope)) != 0) {
+     if (_DeeSAst_ParseTryHandler(result,DEE_PARSER_ARGS_SCOPE(try_root_scope)) != 0) {
       Dee_DECREF(try_root_scope);
       goto err_r;
      }
@@ -407,13 +406,13 @@ try_handler_more:
    }
    Dee_DECREF(try_root_scope);
    // Finalize the try block
-   if (DeeSAst_FinalizeTry(ast_result,lexer,parser_flags) != 0) goto err_r;
+   if (DeeSAst_FinalizeTry(result,lexer,parser_flags) != 0) goto err_r;
   } break;
 
   case KWD_module: {
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   ast_result = DeeSAst_ParseModuleStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
+   result = DeeSAst_ParseModuleStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
   } break;
 
@@ -453,7 +452,7 @@ err_switch_switch_cases:
      block_scope,parser_flags|DEE_PARSER_FLAG_ALLOW_BREAK_CONTINUE));
     weak_root->sc_cases = old_cases;
     if (!switch_block) { Dee_DECREF(block_scope); goto err_switch_switch_cases; }
-    ast_result = DeeSAst_NewSwitch(ast_token,&label_endpts,lexer,parser_flags,
+    result = DeeSAst_NewSwitch(ast_token,&label_endpts,lexer,parser_flags,
                                    cond_scope,switch_expr,block_scope,switch_block,&switch_cases);
     _DeeParserLabelList_Quit(&switch_cases);
     Dee_DECREF(switch_block);
@@ -467,13 +466,13 @@ err_switch_switch_cases:
   case KWD_del: {
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) goto err_ast_token;
-   ast_expression = DeeXAst_ParseAllDel(ast_token,DEE_PARSER_ARGS);
+   expression = DeeXAst_ParseAllDel(ast_token,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
-   if (!ast_expression) goto err;
-   ast_result = DeeSAst_NewExpression(ast_expression->ast_common.ast_token,
-                                      &label_endpts,lexer,parser_flags,ast_expression);
-   Dee_DECREF(ast_expression);
-   if (!ast_result) goto err;
+   if (!expression) goto err;
+   result = DeeSAst_NewExpression(expression->ast_common.ast_token,
+                                      &label_endpts,lexer,parser_flags,expression);
+   Dee_DECREF(expression);
+   if (!result) goto err;
    if (token.tk_id != ';') {
     if (DeeError_CompilerError(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_DEL,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after 'del ...'"
@@ -489,10 +488,10 @@ err_switch_switch_cases:
     if (DeeError_CompilerError(DEE_WARNING_EMPTY_EXTERN_DECLARATION,
      (DeeObject *)lexer,(DeeObject *)ast_token,"Empty extern declaration"
      ) != 0) goto err_ast_token;
-    ast_result = DeeSAst_NewEmpty(ast_token,&label_endpts);
-   } else ast_result = DeeSAst_ParseExternStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
+    result = DeeSAst_NewEmpty(ast_token,&label_endpts);
+   } else result = DeeSAst_ParseExternStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
-   if (!ast_result) goto err;
+   if (!result) goto err;
    if (token.tk_id != ';') {
     if (DeeError_CompilerError(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_EXTERN,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after 'extern ...'"
@@ -508,10 +507,10 @@ err_switch_switch_cases:
     if (DeeError_CompilerError(DEE_WARNING_EMPTY_TYPEDEF_DECLARATION,
      (DeeObject *)lexer,(DeeObject *)ast_token,"Empty typedef declaration"
      ) != 0) goto err_ast_token;
-    ast_result = DeeSAst_NewEmpty(ast_token,&label_endpts);
-   } else ast_result = DeeSAst_ParseTypedefStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
+    result = DeeSAst_NewEmpty(ast_token,&label_endpts);
+   } else result = DeeSAst_ParseTypedefStatement(ast_token,&label_endpts,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
-   if (!ast_result) goto err;
+   if (!result) goto err;
    if (token.tk_id != ';') {
     if (DeeError_CompilerError(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_TYPEDEF,
      (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after 'typedef ...'"
@@ -594,15 +593,15 @@ add_label_endp:
   DEE_ATTRIBUTEDECL_TOKENS
   DEE_XAST_UNARY_TOKENS_NOSTMT
   DEE_XAST_VARIBLE_LOOKUP_TOKENS_NOSTMT
-   if ((ast_expression = DeeSAst_ParseExpression(DEE_PARSER_ARGS)) == NULL) goto err;
-   ast_result = DeeSAst_NewExpression(ast_expression->ast_common.ast_token,
-                                      &label_endpts,lexer,parser_flags,ast_expression);
-   Dee_DECREF(ast_expression);
+   if ((expression = DeeSAst_ParseExpression(DEE_PARSER_ARGS)) == NULL) goto err;
+   result = DeeSAst_NewExpression(expression->ast_common.ast_token,
+                                      &label_endpts,lexer,parser_flags,expression);
+   Dee_DECREF(expression);
    break;
  }
 end: _DeeParserLabelRefList_Quit(&label_endpts);
- return ast_result;
-err: ast_result = NULL; goto end;
+ return result;
+err: result = NULL; goto end;
 }
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeSAst_ParseExpression(DEE_PARSER_PARAMS) {
  DeeXAstObject *result;
@@ -615,7 +614,7 @@ DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeSAst_ParseExpression(DEE_PARSER_PARAMS) {
 }
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeSAst_ParseExpressionWithAttribute(
 DEE_A_INOUT struct DeeAttributeDecl *attr, DEE_PARSER_PARAMS) {
- DeeXAstObject *ast_result; DeeTokenObject *ast_token;
+ DeeXAstObject *result; DeeTokenObject *ast_token;
  Dee_uint32_t vardecl_mode = DEE_XAST_VARDECL_MODE_DEFAULT|DEE_XAST_VARDECL_FLAG_ENABLED;
 again: switch (token.tk_id) {
 
@@ -629,19 +628,19 @@ again: switch (token.tk_id) {
    Dee_INCREF(ast_token = token_ob);
    if DEE_UNLIKELY(!yield()) {err_ast_token: Dee_DECREF(ast_token); return NULL; }
    if (DeeAttributeDecl_Parse(attr,DEE_PARSER_ARGS) != 0) goto err_ast_token;
-   ast_result = DeeXAst_ParseFunctionWithAttribute(
+   result = DeeXAst_ParseFunctionWithAttribute(
     ast_token,vardecl_mode,&syntax_mode,attr,DEE_PARSER_ARGS);
    Dee_DECREF(ast_token);
-   if DEE_UNLIKELY(!ast_result) return NULL;
+   if DEE_UNLIKELY(!result) return NULL;
    // Expression-style functions still require a ';' afterwards
    if (DEE_XAST_FUNCTION_SYNTAX_MODE(syntax_mode) ==
        DEE_XAST_FUNCTION_SYNTAX_MODE_EXPR) {
     if (token.tk_id != ';') {
      if (DeeError_CompilerErrorf(DEE_WARNING_EXPECTED_SEMICOLLON_AFTER_EXPRESSION,
       (DeeObject *)lexer,(DeeObject *)token_ob,"Expected ';' after expression '%r'",
-      ast_result) != 0) goto err_r;
+      result) != 0) goto err_r;
     } else if DEE_UNLIKELY(!yield()) {
-err_r: Dee_DECREF(ast_result); return NULL;
+err_r: Dee_DECREF(result); return NULL;
     }
    } else {
     // Still consume an optional ';' if it follows a statement-style function
@@ -650,13 +649,13 @@ err_r: Dee_DECREF(ast_result); return NULL;
   } break;
 
   default:
-   if ((ast_result = _DeeXAst_ParseInitOrDecl(vardecl_mode,
+   if ((result = _DeeXAst_ParseInitOrDecl(vardecl_mode,
     DEE_XAST_INITORDECL_FLAGS_ALLOWINIT|
     DEE_XAST_INITORDECL_FLAGS_REQSEMICOLLON,
     DEE_XASTKIND_TUPLE,attr,NULL,DEE_PARSER_ARGS)) == NULL) return NULL;
    break;
  }
- return ast_result;
+ return result;
 }
 
 

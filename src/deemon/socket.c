@@ -623,7 +623,31 @@ struct DeeSockAddr {
  struct sockaddr_sco bt_sco;
  struct sockaddr_hci bt_hci;
 #endif
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define sa      _sa_data.sa
+#if DEE_HAVE_AF_INET
+#define sa_inet _sa_data.sa_inet
+#endif
+#if DEE_HAVE_AF_INET6
+#define sa_inet6 _sa_data.sa_inet6
+#define storage _sa_data.storage
+#endif
+#if DEE_HAVE_AF_UNIX
+#define sa_un   _sa_data.sa_un
+#endif
+#if DEE_HAVE_AF_NETLINK
+#define sa_nl   _sa_data.sa_nl
+#endif
+#if DEE_HAVE_AF_BLUETOOTH
+#define bt_l2   _sa_data.bt_l2
+#define bt_rc   _sa_data.bt_rc
+#define bt_sco  _sa_data.bt_sco
+#define bt_hci  _sa_data.bt_hci
+#endif
+ _sa_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 
@@ -696,13 +720,13 @@ DEE_COMPILER_MSVC_WARNING_POP
 #define DEE_SOCKET_SIZEOF_SOCKADDR_NEEDS_PROTOCOL 1
 #define Dee_SizeofSockAddr _Dee_SizeofSockAddr
 DEE_STATIC_INLINE(Dee_size_t) _Dee_SizeofSockAddr(
- struct DeeSockAddr const *sa, int protocol)
+ struct DeeSockAddr const *saddr, int protocol)
 #else
-#define Dee_SizeofSockAddr(sa,protocol) _Dee_SizeofSockAddr(sa)
-DEE_STATIC_INLINE(Dee_size_t) _Dee_SizeofSockAddr(struct DeeSockAddr const *sa)
+#define Dee_SizeofSockAddr(saddr,protocol) _Dee_SizeofSockAddr(saddr)
+DEE_STATIC_INLINE(Dee_size_t) _Dee_SizeofSockAddr(struct DeeSockAddr const *saddr)
 #endif
 {
- switch (DeeSockAddr_FAMILY(sa)) {
+ switch (DeeSockAddr_FAMILY(saddr)) {
 #if DEE_HAVE_AF_INET
   case AF_INET: return sizeof(struct sockaddr_in);
 #endif
@@ -2629,8 +2653,8 @@ DeeSocket_NewTCPServerEx(DEE_A_IN Dee_uint16_t port, DEE_A_IN int max_backlog) {
  // If dual stacking is supported, prefer IPv6
  DEESOCKET_API_BEGIN(return NULL);
  if DEE_LIKELY((sock = socket(AF_INET6,DEE_TCP_TYPE,DEE_TCP_PROTOCOL)) != INVALID_SOCKET) {
-  _DeeSockAddr_InitINET(&sockaddr,INADDR_ANY,DEE_BUILTIN_HTON16(port));
   int value = 0; socklen_t optlen = sizeof(value);
+  _DeeSockAddr_InitINET(&sockaddr,INADDR_ANY,DEE_BUILTIN_HTON16(port));
   if (setsockopt(sock,IPPROTO_IPV6,IPV6_V6ONLY,(char const *)&value,sizeof(value)) != 0
    || getsockopt(sock,IPPROTO_IPV6,IPV6_V6ONLY,(char *)&value,&optlen) != 0
    || !optlen || value) { // Failed to enable dual-stack

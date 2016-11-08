@@ -317,10 +317,10 @@ put_fileid:
 
 DEE_A_RET_MAYBE_NULL char const *DeeCodeWriterDebugFnoTab_Addr2File(
  DEE_A_IN struct DeeCodeWriterDebugFnoTab const *self, DEE_A_IN Dee_size_t addr) {
- DeeObject *result_str; Dee_int64_t fileid; DEE_ASSERT(self);
+ DeeObject *result_str; Dee_uint64_t fileid; DEE_ASSERT(self);
  if (!self->cwdft_files) return NULL;
- fileid = DeeCodeWriterDebugLnoTab_Addr2Line(&self->cwdft_lno,addr)-1;
- if (fileid < 0 || fileid > DeeTuple_SIZE(self->cwdft_files)) return NULL;
+ fileid = (Dee_uint64_t)DeeCodeWriterDebugLnoTab_Addr2Line(&self->cwdft_lno,addr)-1;
+ if (fileid > DeeTuple_SIZE(self->cwdft_files)) return NULL;
  result_str = DeeTuple_GET(self->cwdft_files,(Dee_size_t)fileid);
  DEE_ASSERT(DeeObject_Check(result_str) && DeeString_Check(result_str));
  return DeeString_STR(result_str);
@@ -1152,7 +1152,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DelVar(
    //       meaning that 'var->ob_scope' is the current scope
    end = (iter = var->lv_scope->sc_namesv)+var->lv_scope->sc_namesc;
    while (iter != end) {
-    locv = iter->e_local;
+    locv = iter->se_local;
     if (DeeLocalVar_Check(locv) &&
         DeeLocalVar_IS_COMPILERINIT(locv) &&
         DeeLocalVar_KIND(locv) == DEE_LOCALVAR_KIND_STACK &&
@@ -1600,12 +1600,12 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_FinalizeStrongScope(
  iter = (begin = scope->sc_namesv)+scope->sc_namesc;
  while (iter != begin) {
   --iter;
-  DEE_ASSERT(DeeObject_Check(iter->e_local));
-  if (DeeLocalVar_Check(iter->e_local) &&
-      DEE_LOCALVARFLAGS_KIND(iter->e_local->lv_flags) == DEE_LOCALVAR_KIND_STACK &&
-     (iter->e_local->lv_flags&DEE_LOCALVAR_FLAG_INITIALIZED)!=0) {
+  DEE_ASSERT(DeeObject_Check(iter->se_local));
+  if (DeeLocalVar_Check(iter->se_local) &&
+      DEE_LOCALVARFLAGS_KIND(iter->se_local->lv_flags) == DEE_LOCALVAR_KIND_STACK &&
+     (iter->se_local->lv_flags&DEE_LOCALVAR_FLAG_INITIALIZED)!=0) {
    // Only delete initialized stack variables
-   if DEE_UNLIKELY(DeeCodeWriter_DelVar(self,iter->e_local,compiler_flags) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_DelVar(self,iter->se_local,compiler_flags) != 0) return -1;
   }
  }
  return DeeCodeWriter_FinalizeLabels(self,&scope->sc_labels,lexer);
@@ -1620,13 +1620,13 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_FinalizeWeakScope(
  iter = (begin = scope->sc_namesv)+scope->sc_namesc;
  while (iter != begin) {
   --iter;
-  DEE_ASSERT(DeeObject_Check(iter->e_local));
-  if (DeeLocalVar_Check(iter->e_local) &&
-     (iter->e_local->lv_flags&DEE_LOCALVAR_FLAG_INITIALIZED)!=0 &&
-      DEE_LOCALVARFLAGS_KIND(iter->e_local->lv_flags) == DEE_LOCALVAR_KIND_LOCAL ||
-      DEE_LOCALVARFLAGS_KIND(iter->e_local->lv_flags) == DEE_LOCALVAR_KIND_STACK) {
+  DEE_ASSERT(DeeObject_Check(iter->se_local));
+  if (DeeLocalVar_Check(iter->se_local) &&
+     (iter->se_local->lv_flags&DEE_LOCALVAR_FLAG_INITIALIZED)!=0 &&
+      DEE_LOCALVARFLAGS_KIND(iter->se_local->lv_flags) == DEE_LOCALVAR_KIND_LOCAL ||
+      DEE_LOCALVARFLAGS_KIND(iter->se_local->lv_flags) == DEE_LOCALVAR_KIND_STACK) {
    // Only delete initialized locals
-   if DEE_UNLIKELY(DeeCodeWriter_DelVar(self,iter->e_local,compiler_flags) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_DelVar(self,iter->se_local,compiler_flags) != 0) return -1;
   }
  }
  return 0;

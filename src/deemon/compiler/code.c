@@ -124,7 +124,7 @@ DEE_A_RET_OBJECT_NOEXCEPT(DeeStringObject) *DeeCode_Addr2File(
  DEE_ASSERT(DeeObject_Check(self) && DeeCode_Check(self));
  return DeeCode_ADDR2FILE(self,addr);
 }
-DEE_A_RET_WUNUSED Dee_int64_t DeeCode_Addr2Line(
+DEE_A_RET_WUNUSED Dee_int32_t DeeCode_Addr2Line(
  DEE_A_IN_OBJECT(DeeCodeObject) const *self, DEE_A_IN Dee_size_t addr) {
  DEE_ASSERT(DeeObject_Check(self) && DeeCode_Check(self));
  return DeeCode_ADDR2LINE(self,addr);
@@ -993,7 +993,7 @@ static DeeObject *_deecodedebuginfo_addr2line(
  DeeCodeDebugInfoObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_size_t addr;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu:addr2line",&addr) != 0) return NULL;
- return DeeObject_New(Dee_int64_t,DeeCodeDebugInfo_ADDR2LINE(self,addr));
+ return DeeObject_New(Dee_int32_t,DeeCodeDebugInfo_ADDR2LINE(self,addr));
 }
 static DeeObject *_deecodedebuginfo_addr2file(
  DeeCodeDebugInfoObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
@@ -1005,7 +1005,7 @@ static DeeObject *_deecodedebuginfo_addr2file(
 
 static struct DeeMethodDef const _deecodedebuginfo_tp_methods[] = {
  DEE_METHODDEF_v100("addr2line",member(&_deecodedebuginfo_addr2line),
-  "(size_t addr) -> int64_t\n\tReturns the source-code line associated with a given address, or -1 if no such data is available.\n"
+  "(size_t addr) -> intmin32_t\n\tReturns the source-code line associated with a given address, or -1 if no such data is available.\n"
   "\tNote: The first line is 0, meaning you should add +1 when presenting to the user"),
  DEE_METHODDEF_v100("addr2file",member(&_deecodedebuginfo_addr2file),
   "(size_t addr) -> string\n\tReturns the source-code filename associated with a given address, or an empty string if no such data is available.\n"),

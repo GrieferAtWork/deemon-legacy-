@@ -25,6 +25,7 @@
 
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
 #include <deemon/optional/object_decl.h>
+#include <deemon/optional/object_util.h>
 #include <deemon/optional/structured_decl.h>
 
 DEE_DECL_BEGIN
@@ -41,15 +42,30 @@ struct DeePointerObject {
  DEE_STRUCTURED_OBJECT_HEAD // '__ob_type' is a 'DeePointerTypeObject'
  union{ // NOTE: 'p' may be NULL
   // Just a bunch of different pointer types (to make debugging easier)
-  void *p; char *p_str; int (*p_fun)();
-  Dee_int8_t  *p_i8;  Dee_uint8_t  *p_ui8;
-  Dee_int16_t *p_i16; Dee_uint16_t *p_ui16;
-  Dee_int32_t *p_i32; Dee_uint32_t *p_ui32;
-  Dee_int64_t *p_i64; Dee_uint64_t *p_ui64;
- };
+  void *po_p_ptr; char *po_p_str; int (*po_p_fun)();
+  Dee_int8_t  *po_p_i8;  Dee_uint8_t  *po_p_ui8;
+  Dee_int16_t *po_p_i16; Dee_uint16_t *po_p_ui16;
+  Dee_int32_t *po_p_i32; Dee_uint32_t *po_p_ui32;
+  Dee_int64_t *po_p_i64; Dee_uint64_t *po_p_ui64;
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define po_p_ptr  _po_data.po_p_ptr
+#define po_p_str  _po_data.po_p_str
+#define po_p_fun  _po_data.po_p_fun
+#define po_p_i8   _po_data.po_p_i8 
+#define po_p_ui8  _po_data.po_p_ui8
+#define po_p_i16  _po_data.po_p_i16 
+#define po_p_ui16 _po_data.po_p_ui16
+#define po_p_i32  _po_data.po_p_i32 
+#define po_p_ui32 _po_data.po_p_ui32
+#define po_p_i64  _po_data.po_p_i64 
+#define po_p_ui64 _po_data.po_p_ui64
+ _po_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
 };
 DEE_COMPILER_MSVC_WARNING_POP
-#define DeePointer_ADDR(ob) (((DeePointerObject *)(ob))->p)
+#define DeePointer_ADDR(ob) ((DeePointerObject *)Dee_REQUIRES_POINTER(ob))->po_p_ptr
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */

@@ -23,22 +23,22 @@ enum{
 
  // >> DeeTypeObject >> char const *tp_name = NULL;
  // Internal: tp_name
- // Deemon:   __name__
+ // Deemon:   __name
  tp_name = 0,
 
- // >> DeeTypeObject >> char const *__name__ = NULL;
+ // >> DeeTypeObject >> char const *__name = NULL;
  // Internal: tp_name
- // Deemon:   __name__
+ // Deemon:   __name
  __name__ = 0,
 
  // >> DeeTypeObject >> char const *tp_doc = NULL;
  // Internal: tp_doc
- // Deemon:   __doc__
+ // Deemon:   __doc
  tp_doc = 1,
 
- // >> DeeTypeObject >> char const *__doc__ = NULL;
+ // >> DeeTypeObject >> char const *__doc = NULL;
  // Internal: tp_doc
- // Deemon:   __doc__
+ // Deemon:   __doc
  __doc__ = 1,
 
  // >> DeeTypeObject >> Dee_uint32_t tp_flags = DEE_TYPE_FLAG_NONE;
@@ -47,22 +47,22 @@ enum{
 
  // >> DeeTypeObject >> DeeTypeObject *tp_base = &DeeObject_Type;
  // Internal: tp_base
- // Deemon:   __base__
+ // Deemon:   __base
  tp_base = 4,
 
- // >> DeeTypeObject >> DeeTypeObject *__base__ = &DeeObject_Type;
+ // >> DeeTypeObject >> DeeTypeObject *__base = &DeeObject_Type;
  // Internal: tp_base
- // Deemon:   __base__
+ // Deemon:   __base
  __base__ = 4,
 
  // >> DeeTypeObject >> Dee_size_t tp_instance_size = sizeof(DeeObject);
  // Internal: tp_instance_size
- // Deemon:   __instance_size__
+ // Deemon:   __instance_size
  tp_instance_size = 5,
 
- // >> DeeTypeObject >> Dee_size_t __instance_size__ = sizeof(DeeObject);
+ // >> DeeTypeObject >> Dee_size_t __instance_size = sizeof(DeeObject);
  // Internal: tp_instance_size
- // Deemon:   __instance_size__
+ // Deemon:   __instance_size
  __instance_size__ = 5,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_alloc)(DeeTypeObject *tp) = &_DeeGenericFallback_tp_alloc;
@@ -71,12 +71,12 @@ enum{
 
  // >> DeeTypeObject >> void (DEE_CALL *tp_free)(DeeTypeObject *tp, DeeObject *self) = &_DeeGenericFallback_tp_free;
  // Internal: tp_free
- // Deemon:   __free__
+ // Deemon:   __free
  tp_free = 12,
 
- // >> DeeTypeObject >> void (DEE_CALL *__free__)(DeeTypeObject *tp, DeeObject *self) = &_DeeGenericFallback_tp_free;
+ // >> DeeTypeObject >> void (DEE_CALL *__free)(DeeTypeObject *tp, DeeObject *self) = &_DeeGenericFallback_tp_free;
  // Internal: tp_free
- // Deemon:   __free__
+ // Deemon:   __free
  __free__ = 12,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_ctor)(DeeTypeObject *tp, DeeObject *self) = &_DeeGenericMissing_tp_ctor;
@@ -85,32 +85,32 @@ enum{
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_copy_ctor)(DeeTypeObject *tp, DeeObject *self, DeeObject *right) = &_DeeGenericMissing_tp_copy_ctor;
  // Internal: tp_copy_ctor
- // Deemon:   __copy__
+ // Deemon:   __copy
  tp_copy_ctor = 9,
 
- // >> DeeTypeObject >> int (DEE_CALL *__copy__)(DeeTypeObject *tp, DeeObject *self, DeeObject *right) = &_DeeGenericMissing_tp_copy_ctor;
+ // >> DeeTypeObject >> int (DEE_CALL *__copy)(DeeTypeObject *tp, DeeObject *self, DeeObject *right) = &_DeeGenericMissing_tp_copy_ctor;
  // Internal: tp_copy_ctor
- // Deemon:   __copy__
+ // Deemon:   __copy
  __copy__ = 9,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_move_ctor)(DeeTypeObject *tp, DeeObject *self, DeeObject *right) = &_DeeGenericMissing_tp_move_ctor;
  // Internal: tp_move_ctor
- // Deemon:   __move__
+ // Deemon:   __move
  tp_move_ctor = 10,
 
- // >> DeeTypeObject >> int (DEE_CALL *__move__)(DeeTypeObject *tp, DeeObject *self, DeeObject *right) = &_DeeGenericMissing_tp_move_ctor;
+ // >> DeeTypeObject >> int (DEE_CALL *__move)(DeeTypeObject *tp, DeeObject *self, DeeObject *right) = &_DeeGenericMissing_tp_move_ctor;
  // Internal: tp_move_ctor
- // Deemon:   __move__
+ // Deemon:   __move
  __move__ = 10,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_any_ctor)(DeeTypeObject *tp, DeeObject *self, DeeObject *args) = &_DeeGenericMissing_tp_any_ctor;
  // Internal: tp_any_ctor
- // Deemon:   __constructor__
+ // Deemon:   __constructor
  tp_any_ctor = 11,
 
- // >> DeeTypeObject >> int (DEE_CALL *__constructor__)(DeeTypeObject *tp, DeeObject *self, DeeObject *args) = &_DeeGenericMissing_tp_any_ctor;
+ // >> DeeTypeObject >> int (DEE_CALL *__constructor)(DeeTypeObject *tp, DeeObject *self, DeeObject *args) = &_DeeGenericMissing_tp_any_ctor;
  // Internal: tp_any_ctor
- // Deemon:   __constructor__
+ // Deemon:   __constructor
  __constructor__ = 11,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_new)(DeeTypeObject *tp) = &_DeeGenericFallback_tp_new;
@@ -131,102 +131,102 @@ enum{
 
  // >> DeeTypeObject >> void (DEE_CALL *tp_dtor)(DeeObject *self) = NULL;
  // Internal: tp_dtor
- // Deemon:   __destructor__
+ // Deemon:   __destructor
  tp_dtor = 13,
 
- // >> DeeTypeObject >> void (DEE_CALL *__destructor__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> void (DEE_CALL *__destructor)(DeeObject *self) = NULL;
  // Internal: tp_dtor
- // Deemon:   __destructor__
+ // Deemon:   __destructor
  __destructor__ = 13,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_copy_assign)(DeeObject *self, DeeObject *right) = NULL;
  // Internal: tp_copy_assign
- // Deemon:   __copyassign__
+ // Deemon:   __copyassign
  tp_copy_assign = 14,
 
- // >> DeeTypeObject >> int (DEE_CALL *__copyassign__)(DeeObject *self, DeeObject *right) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__copyassign)(DeeObject *self, DeeObject *right) = NULL;
  // Internal: tp_copy_assign
- // Deemon:   __copyassign__
+ // Deemon:   __copyassign
  __copyassign__ = 14,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_move_assign)(DeeObject *self, DeeObject *right) = NULL;
  // Internal: tp_move_assign
- // Deemon:   __moveassign__
+ // Deemon:   __moveassign
  tp_move_assign = 15,
 
- // >> DeeTypeObject >> int (DEE_CALL *__moveassign__)(DeeObject *self, DeeObject *right) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__moveassign)(DeeObject *self, DeeObject *right) = NULL;
  // Internal: tp_move_assign
- // Deemon:   __moveassign__
+ // Deemon:   __moveassign
  __moveassign__ = 15,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_any_assign)(DeeObject *self, DeeObject *right) = NULL;
  // Internal: tp_any_assign
- // Deemon:   __assign__
+ // Deemon:   __assign
  tp_any_assign = 16,
 
- // >> DeeTypeObject >> int (DEE_CALL *__assign__)(DeeObject *self, DeeObject *right) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__assign)(DeeObject *self, DeeObject *right) = NULL;
  // Internal: tp_any_assign
- // Deemon:   __assign__
+ // Deemon:   __assign
  __assign__ = 16,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_str)(DeeObject *self) = NULL;
  // Internal: tp_str
- // Deemon:   __str__
+ // Deemon:   __str
  tp_str = 17,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__str__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__str)(DeeObject *self) = NULL;
  // Internal: tp_str
- // Deemon:   __str__
+ // Deemon:   __str
  __str__ = 17,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_repr)(DeeObject *self) = NULL;
  // Internal: tp_repr
- // Deemon:   __repr__
+ // Deemon:   __repr
  tp_repr = 18,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__repr__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__repr)(DeeObject *self) = NULL;
  // Internal: tp_repr
- // Deemon:   __repr__
+ // Deemon:   __repr
  __repr__ = 18,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_int32)(DeeObject *self, Dee_int32_t *result) = NULL;
  // Internal: tp_int32
- // Deemon:   __int32__
+ // Deemon:   __int32
  tp_int32 = 19,
 
- // >> DeeTypeObject >> int (DEE_CALL *__int32__)(DeeObject *self, Dee_int32_t *result) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__int32)(DeeObject *self, Dee_int32_t *result) = NULL;
  // Internal: tp_int32
- // Deemon:   __int32__
+ // Deemon:   __int32
  __int32__ = 19,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_int64)(DeeObject *self, Dee_int64_t *result) = NULL;
  // Internal: tp_int64
- // Deemon:   __int64__
+ // Deemon:   __int64
  tp_int64 = 20,
 
- // >> DeeTypeObject >> int (DEE_CALL *__int64__)(DeeObject *self, Dee_int64_t *result) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__int64)(DeeObject *self, Dee_int64_t *result) = NULL;
  // Internal: tp_int64
- // Deemon:   __int64__
+ // Deemon:   __int64
  __int64__ = 20,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_double)(DeeObject *self, double *result) = NULL;
  // Internal: tp_double
- // Deemon:   __double__
+ // Deemon:   __double
  tp_double = 21,
 
- // >> DeeTypeObject >> int (DEE_CALL *__double__)(DeeObject *self, double *result) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__double)(DeeObject *self, double *result) = NULL;
  // Internal: tp_double
- // Deemon:   __double__
+ // Deemon:   __double
  __double__ = 21,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_call)(DeeObject *self, DeeObject *args) = NULL;
  // Internal: tp_call
- // Deemon:   __call__
+ // Deemon:   __call
  tp_call = 22,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__call__)(DeeObject *self, DeeObject *args) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__call)(DeeObject *self, DeeObject *args) = NULL;
  // Internal: tp_call
- // Deemon:   __call__
+ // Deemon:   __call
  __call__ = 22,
 
  // >> DeeTypeObject >> void(DEE_CALL *tp_visit)(DeeTypeObject *tp_self, DeeObject *self, DeeVisitProc visit, DEE_A_IN_OPT void *closure) = NULL;
@@ -239,512 +239,512 @@ enum{
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_not)(DeeObject *self) = NULL;
  // Internal: tp_not
- // Deemon:   __not__
+ // Deemon:   __not
  tp_not = 24,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__not__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__not)(DeeObject *self) = NULL;
  // Internal: tp_not
- // Deemon:   __not__
+ // Deemon:   __not
  __not__ = 24,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_bool)(DeeObject *self) = NULL;
  // Internal: tp_bool
- // Deemon:   __bool__
+ // Deemon:   __bool
  tp_bool = 25,
 
- // >> DeeTypeObject >> int (DEE_CALL *__bool__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__bool)(DeeObject *self) = NULL;
  // Internal: tp_bool
- // Deemon:   __bool__
+ // Deemon:   __bool
  __bool__ = 25,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_inv)(DeeObject *self) = NULL;
  // Internal: tp_inv
- // Deemon:   __inv__
+ // Deemon:   __inv
  tp_inv = 26,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__inv__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__inv)(DeeObject *self) = NULL;
  // Internal: tp_inv
- // Deemon:   __inv__
+ // Deemon:   __inv
  __inv__ = 26,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_pos)(DeeObject *self) = NULL;
  // Internal: tp_pos
- // Deemon:   __pos__
+ // Deemon:   __pos
  tp_pos = 27,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__pos__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__pos)(DeeObject *self) = NULL;
  // Internal: tp_pos
- // Deemon:   __pos__
+ // Deemon:   __pos
  __pos__ = 27,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_neg)(DeeObject *self) = NULL;
  // Internal: tp_neg
- // Deemon:   __neg__
+ // Deemon:   __neg
  tp_neg = 28,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__neg__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__neg)(DeeObject *self) = NULL;
  // Internal: tp_neg
- // Deemon:   __neg__
+ // Deemon:   __neg
  __neg__ = 28,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_inc)(DeeObject *self) = NULL;
  // Internal: tp_inc
- // Deemon:   __inc__
+ // Deemon:   __inc
  tp_inc = 29,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__inc__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__inc)(DeeObject *self) = NULL;
  // Internal: tp_inc
- // Deemon:   __inc__
+ // Deemon:   __inc
  __inc__ = 29,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_incpost)(DeeObject *self) = NULL;
  // Internal: tp_incpost
- // Deemon:   __incpost__
+ // Deemon:   __incpost
  tp_incpost = 30,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__incpost__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__incpost)(DeeObject *self) = NULL;
  // Internal: tp_incpost
- // Deemon:   __incpost__
+ // Deemon:   __incpost
  __incpost__ = 30,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_dec)(DeeObject *self) = NULL;
  // Internal: tp_dec
- // Deemon:   __dec__
+ // Deemon:   __dec
  tp_dec = 31,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__dec__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__dec)(DeeObject *self) = NULL;
  // Internal: tp_dec
- // Deemon:   __dec__
+ // Deemon:   __dec
  __dec__ = 31,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_decpost)(DeeObject *self) = NULL;
  // Internal: tp_decpost
- // Deemon:   __decpost__
+ // Deemon:   __decpost
  tp_decpost = 32,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__decpost__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__decpost)(DeeObject *self) = NULL;
  // Internal: tp_decpost
- // Deemon:   __decpost__
+ // Deemon:   __decpost
  __decpost__ = 32,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_add)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_add
- // Deemon:   __add__
+ // Deemon:   __add
  tp_add = 33,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__add__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__add)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_add
- // Deemon:   __add__
+ // Deemon:   __add
  __add__ = 33,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_iadd)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_iadd
- // Deemon:   __iadd__
+ // Deemon:   __iadd
  tp_iadd = 34,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__iadd__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__iadd)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_iadd
- // Deemon:   __iadd__
+ // Deemon:   __iadd
  __iadd__ = 34,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_sub)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_sub
- // Deemon:   __sub__
+ // Deemon:   __sub
  tp_sub = 35,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__sub__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__sub)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_sub
- // Deemon:   __sub__
+ // Deemon:   __sub
  __sub__ = 35,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_isub)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_isub
- // Deemon:   __isub__
+ // Deemon:   __isub
  tp_isub = 36,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__isub__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__isub)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_isub
- // Deemon:   __isub__
+ // Deemon:   __isub
  __isub__ = 36,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_mul)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_mul
- // Deemon:   __mul__
+ // Deemon:   __mul
  tp_mul = 37,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__mul__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__mul)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_mul
- // Deemon:   __mul__
+ // Deemon:   __mul
  __mul__ = 37,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_imul)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_imul
- // Deemon:   __imul__
+ // Deemon:   __imul
  tp_imul = 38,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__imul__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__imul)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_imul
- // Deemon:   __imul__
+ // Deemon:   __imul
  __imul__ = 38,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_div)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_div
- // Deemon:   __div__
+ // Deemon:   __div
  tp_div = 39,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__div__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__div)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_div
- // Deemon:   __div__
+ // Deemon:   __div
  __div__ = 39,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_idiv)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_idiv
- // Deemon:   __idiv__
+ // Deemon:   __idiv
  tp_idiv = 40,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__idiv__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__idiv)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_idiv
- // Deemon:   __idiv__
+ // Deemon:   __idiv
  __idiv__ = 40,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_mod)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_mod
- // Deemon:   __mod__
+ // Deemon:   __mod
  tp_mod = 41,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__mod__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__mod)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_mod
- // Deemon:   __mod__
+ // Deemon:   __mod
  __mod__ = 41,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_imod)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_imod
- // Deemon:   __imod__
+ // Deemon:   __imod
  tp_imod = 42,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__imod__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__imod)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_imod
- // Deemon:   __imod__
+ // Deemon:   __imod
  __imod__ = 42,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_shl)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_shl
- // Deemon:   __shl__
+ // Deemon:   __shl
  tp_shl = 43,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__shl__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__shl)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_shl
- // Deemon:   __shl__
+ // Deemon:   __shl
  __shl__ = 43,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_ishl)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ishl
- // Deemon:   __ishl__
+ // Deemon:   __ishl
  tp_ishl = 44,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ishl__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ishl)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ishl
- // Deemon:   __ishl__
+ // Deemon:   __ishl
  __ishl__ = 44,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_shr)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_shr
- // Deemon:   __shr__
+ // Deemon:   __shr
  tp_shr = 45,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__shr__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__shr)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_shr
- // Deemon:   __shr__
+ // Deemon:   __shr
  __shr__ = 45,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_ishr)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ishr
- // Deemon:   __ishr__
+ // Deemon:   __ishr
  tp_ishr = 46,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ishr__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ishr)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ishr
- // Deemon:   __ishr__
+ // Deemon:   __ishr
  __ishr__ = 46,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_and)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_and
- // Deemon:   __and__
+ // Deemon:   __and
  tp_and = 47,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__and__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__and)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_and
- // Deemon:   __and__
+ // Deemon:   __and
  __and__ = 47,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_iand)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_iand
- // Deemon:   __iand__
+ // Deemon:   __iand
  tp_iand = 48,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__iand__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__iand)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_iand
- // Deemon:   __iand__
+ // Deemon:   __iand
  __iand__ = 48,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_or)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_or
- // Deemon:   __or__
+ // Deemon:   __or
  tp_or = 49,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__or__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__or)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_or
- // Deemon:   __or__
+ // Deemon:   __or
  __or__ = 49,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_ior)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ior
- // Deemon:   __ior__
+ // Deemon:   __ior
  tp_ior = 50,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ior__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ior)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ior
- // Deemon:   __ior__
+ // Deemon:   __ior
  __ior__ = 50,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_xor)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_xor
- // Deemon:   __xor__
+ // Deemon:   __xor
  tp_xor = 51,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__xor__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__xor)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_xor
- // Deemon:   __xor__
+ // Deemon:   __xor
  __xor__ = 51,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_ixor)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ixor
- // Deemon:   __ixor__
+ // Deemon:   __ixor
  tp_ixor = 52,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ixor__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ixor)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ixor
- // Deemon:   __ixor__
+ // Deemon:   __ixor
  __ixor__ = 52,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_pow)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_pow
- // Deemon:   __pow__
+ // Deemon:   __pow
  tp_pow = 53,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__pow__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__pow)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_pow
- // Deemon:   __pow__
+ // Deemon:   __pow
  __pow__ = 53,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_ipow)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ipow
- // Deemon:   __ipow__
+ // Deemon:   __ipow
  tp_ipow = 54,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ipow__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ipow)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_ipow
- // Deemon:   __ipow__
+ // Deemon:   __ipow
  __ipow__ = 54,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_hash)(DeeObject *self, Dee_hash_t start, Dee_hash_t *result) = NULL;
  // Internal: tp_hash
- // Deemon:   __hash__
+ // Deemon:   __hash
  tp_hash = 55,
 
- // >> DeeTypeObject >> int (DEE_CALL *__hash__)(DeeObject *self, Dee_hash_t start, Dee_hash_t *result) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__hash)(DeeObject *self, Dee_hash_t start, Dee_hash_t *result) = NULL;
  // Internal: tp_hash
- // Deemon:   __hash__
+ // Deemon:   __hash
  __hash__ = 55,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_cmp_lo)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_lo
- // Deemon:   __lo__
+ // Deemon:   __lo
  tp_cmp_lo = 56,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__lo__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__lo)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_lo
- // Deemon:   __lo__
+ // Deemon:   __lo
  __lo__ = 56,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_cmp_le)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_le
- // Deemon:   __le__
+ // Deemon:   __le
  tp_cmp_le = 57,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__le__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__le)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_le
- // Deemon:   __le__
+ // Deemon:   __le
  __le__ = 57,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_cmp_eq)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_eq
- // Deemon:   __eq__
+ // Deemon:   __eq
  tp_cmp_eq = 58,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__eq__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__eq)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_eq
- // Deemon:   __eq__
+ // Deemon:   __eq
  __eq__ = 58,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_cmp_ne)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_ne
- // Deemon:   __ne__
+ // Deemon:   __ne
  tp_cmp_ne = 59,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ne__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ne)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_ne
- // Deemon:   __ne__
+ // Deemon:   __ne
  __ne__ = 59,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_cmp_gr)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_gr
- // Deemon:   __gr__
+ // Deemon:   __gr
  tp_cmp_gr = 60,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__gr__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__gr)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_gr
- // Deemon:   __gr__
+ // Deemon:   __gr
  __gr__ = 60,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_cmp_ge)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_ge
- // Deemon:   __ge__
+ // Deemon:   __ge
  tp_cmp_ge = 61,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ge__)(DeeObject *lhs, DeeObject *rhs) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__ge)(DeeObject *lhs, DeeObject *rhs) = NULL;
  // Internal: tp_cmp_ge
- // Deemon:   __ge__
+ // Deemon:   __ge
  __ge__ = 61,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_seq_get)(DeeObject *self, DeeObject *i) = NULL;
  // Internal: tp_seq_get
- // Deemon:   __getitem__
+ // Deemon:   __getitem
  tp_seq_get = 62,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__getitem__)(DeeObject *self, DeeObject *i) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__getitem)(DeeObject *self, DeeObject *i) = NULL;
  // Internal: tp_seq_get
- // Deemon:   __getitem__
+ // Deemon:   __getitem
  __getitem__ = 62,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_seq_del)(DeeObject *self, DeeObject *i) = NULL;
  // Internal: tp_seq_del
- // Deemon:   __delitem__
+ // Deemon:   __delitem
  tp_seq_del = 63,
 
- // >> DeeTypeObject >> int (DEE_CALL *__delitem__)(DeeObject *self, DeeObject *i) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__delitem)(DeeObject *self, DeeObject *i) = NULL;
  // Internal: tp_seq_del
- // Deemon:   __delitem__
+ // Deemon:   __delitem
  __delitem__ = 63,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_seq_set)(DeeObject *self, DeeObject *i, DeeObject *v) = NULL;
  // Internal: tp_seq_set
- // Deemon:   __setitem__
+ // Deemon:   __setitem
  tp_seq_set = 64,
 
- // >> DeeTypeObject >> int (DEE_CALL *__setitem__)(DeeObject *self, DeeObject *i, DeeObject *v) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__setitem)(DeeObject *self, DeeObject *i, DeeObject *v) = NULL;
  // Internal: tp_seq_set
- // Deemon:   __setitem__
+ // Deemon:   __setitem
  __setitem__ = 64,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_seq_size)(DeeObject *self) = NULL;
  // Internal: tp_seq_size
- // Deemon:   __size__
+ // Deemon:   __size
  tp_seq_size = 65,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__size__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__size)(DeeObject *self) = NULL;
  // Internal: tp_seq_size
- // Deemon:   __size__
+ // Deemon:   __size
  __size__ = 65,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_seq_contains)(DeeObject *self, DeeObject *ob) = NULL;
  // Internal: tp_seq_contains
- // Deemon:   __contains__
+ // Deemon:   __contains
  tp_seq_contains = 66,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__contains__)(DeeObject *self, DeeObject *ob) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__contains)(DeeObject *self, DeeObject *ob) = NULL;
  // Internal: tp_seq_contains
- // Deemon:   __contains__
+ // Deemon:   __contains
  __contains__ = 66,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_seq_range_get)(DeeObject *self, DeeObject *lo, DeeObject *hi) = NULL;
  // Internal: tp_seq_range_get
- // Deemon:   __getrange__
+ // Deemon:   __getrange
  tp_seq_range_get = 67,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__getrange__)(DeeObject *self, DeeObject *lo, DeeObject *hi) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__getrange)(DeeObject *self, DeeObject *lo, DeeObject *hi) = NULL;
  // Internal: tp_seq_range_get
- // Deemon:   __getrange__
+ // Deemon:   __getrange
  __getrange__ = 67,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_seq_range_del)(DeeObject *self, DeeObject *lo, DeeObject *hi) = NULL;
  // Internal: tp_seq_range_del
- // Deemon:   __delrange__
+ // Deemon:   __delrange
  tp_seq_range_del = 68,
 
- // >> DeeTypeObject >> int (DEE_CALL *__delrange__)(DeeObject *self, DeeObject *lo, DeeObject *hi) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__delrange)(DeeObject *self, DeeObject *lo, DeeObject *hi) = NULL;
  // Internal: tp_seq_range_del
- // Deemon:   __delrange__
+ // Deemon:   __delrange
  __delrange__ = 68,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_seq_range_set)(DeeObject *self, DeeObject *lo, DeeObject *hi, DeeObject *v) = NULL;
  // Internal: tp_seq_range_set
- // Deemon:   __setrange__
+ // Deemon:   __setrange
  tp_seq_range_set = 69,
 
- // >> DeeTypeObject >> int (DEE_CALL *__setrange__)(DeeObject *self, DeeObject *lo, DeeObject *hi, DeeObject *v) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__setrange)(DeeObject *self, DeeObject *lo, DeeObject *hi, DeeObject *v) = NULL;
  // Internal: tp_seq_range_set
- // Deemon:   __setrange__
+ // Deemon:   __setrange
  __setrange__ = 69,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_seq_iter_self)(DeeObject *self) = NULL;
  // Internal: tp_seq_iter_self
- // Deemon:   __iterself__
+ // Deemon:   __iterself
  tp_seq_iter_self = 70,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__iterself__)(DeeObject *self) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__iterself)(DeeObject *self) = NULL;
  // Internal: tp_seq_iter_self
- // Deemon:   __iterself__
+ // Deemon:   __iterself
  __iterself__ = 70,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_seq_iter_next)(DeeObject *self, DeeObject **elem) = NULL;
  // Internal: tp_seq_iter_next
- // Deemon:   __iternext__
+ // Deemon:   __iternext
  tp_seq_iter_next = 71,
 
- // >> DeeTypeObject >> int (DEE_CALL *__iternext__)(DeeObject *self, DeeObject **elem) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__iternext)(DeeObject *self, DeeObject **elem) = NULL;
  // Internal: tp_seq_iter_next
- // Deemon:   __iternext__
+ // Deemon:   __iternext
  __iternext__ = 71,
 
  // >> DeeTypeObject >> DeeObject *(DEE_CALL *tp_attr_get)(DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) *name) = NULL;
  // Internal: tp_attr_get
- // Deemon:   __getattr__
+ // Deemon:   __getattr
  tp_attr_get = 72,
 
- // >> DeeTypeObject >> DeeObject *(DEE_CALL *__getattr__)(DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) *name) = NULL;
+ // >> DeeTypeObject >> DeeObject *(DEE_CALL *__getattr)(DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) *name) = NULL;
  // Internal: tp_attr_get
- // Deemon:   __getattr__
+ // Deemon:   __getattr
  __getattr__ = 72,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_attr_del)(DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) *name) = NULL;
  // Internal: tp_attr_del
- // Deemon:   __delattr__
+ // Deemon:   __delattr
  tp_attr_del = 73,
 
- // >> DeeTypeObject >> int (DEE_CALL *__delattr__)(DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) *name) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__delattr)(DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) *name) = NULL;
  // Internal: tp_attr_del
- // Deemon:   __delattr__
+ // Deemon:   __delattr
  __delattr__ = 73,
 
  // >> DeeTypeObject >> int (DEE_CALL *tp_attr_set)(DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) *name, DeeObject *v) = NULL;
  // Internal: tp_attr_set
- // Deemon:   __setattr__
+ // Deemon:   __setattr
  tp_attr_set = 74,
 
- // >> DeeTypeObject >> int (DEE_CALL *__setattr__)(DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) *name, DeeObject *v) = NULL;
+ // >> DeeTypeObject >> int (DEE_CALL *__setattr)(DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) *name, DeeObject *v) = NULL;
  // Internal: tp_attr_set
- // Deemon:   __setattr__
+ // Deemon:   __setattr
  __setattr__ = 74,
 
  // >> DeeTypeObject >> struct DeeMemberDef const *tp_members = _DeeGenericFallback_MemberDef;
@@ -1025,61 +1025,61 @@ enum{
 
  // >> DeeFileTypeObject >> int (DEE_CALL *tp_io_read)(struct DeeFileObject *self, void *p, Dee_size_t s, Dee_size_t *rs) = NULL;
  // Internal: tp_io_read
- // Deemon:   __read__
+ // Deemon:   __read
  tp_io_read = 3000,
 
- // >> DeeFileTypeObject >> int (DEE_CALL *__read__)(struct DeeFileObject *self, void *p, Dee_size_t s, Dee_size_t *rs) = NULL;
+ // >> DeeFileTypeObject >> int (DEE_CALL *__read)(struct DeeFileObject *self, void *p, Dee_size_t s, Dee_size_t *rs) = NULL;
  // Internal: tp_io_read
- // Deemon:   __read__
+ // Deemon:   __read
  __read__ = 3000,
 
  // >> DeeFileTypeObject >> int (DEE_CALL *tp_io_write)(struct DeeFileObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) = NULL;
  // Internal: tp_io_write
- // Deemon:   __write__
+ // Deemon:   __write
  tp_io_write = 3001,
 
- // >> DeeFileTypeObject >> int (DEE_CALL *__write__)(struct DeeFileObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) = NULL;
+ // >> DeeFileTypeObject >> int (DEE_CALL *__write)(struct DeeFileObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) = NULL;
  // Internal: tp_io_write
- // Deemon:   __write__
+ // Deemon:   __write
  __write__ = 3001,
 
  // >> DeeFileTypeObject >> int (DEE_CALL *tp_io_seek)(struct DeeFileObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) = NULL;
  // Internal: tp_io_seek
- // Deemon:   __seek__
+ // Deemon:   __seek
  tp_io_seek = 3002,
 
- // >> DeeFileTypeObject >> int (DEE_CALL *__seek__)(struct DeeFileObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) = NULL;
+ // >> DeeFileTypeObject >> int (DEE_CALL *__seek)(struct DeeFileObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) = NULL;
  // Internal: tp_io_seek
- // Deemon:   __seek__
+ // Deemon:   __seek
  __seek__ = 3002,
 
  // >> DeeFileTypeObject >> int (DEE_CALL *tp_io_flush)(struct DeeFileObject *self) = NULL;
  // Internal: tp_io_flush
- // Deemon:   __flush__
+ // Deemon:   __flush
  tp_io_flush = 3003,
 
- // >> DeeFileTypeObject >> int (DEE_CALL *__flush__)(struct DeeFileObject *self) = NULL;
+ // >> DeeFileTypeObject >> int (DEE_CALL *__flush)(struct DeeFileObject *self) = NULL;
  // Internal: tp_io_flush
- // Deemon:   __flush__
+ // Deemon:   __flush
  __flush__ = 3003,
 
  // >> DeeFileTypeObject >> int (DEE_CALL *tp_io_trunc)(struct DeeFileObject *self) = NULL;
  // Internal: tp_io_trunc
- // Deemon:   __trunc__
+ // Deemon:   __trunc
  tp_io_trunc = 3004,
 
- // >> DeeFileTypeObject >> int (DEE_CALL *__trunc__)(struct DeeFileObject *self) = NULL;
+ // >> DeeFileTypeObject >> int (DEE_CALL *__trunc)(struct DeeFileObject *self) = NULL;
  // Internal: tp_io_trunc
- // Deemon:   __trunc__
+ // Deemon:   __trunc
  __trunc__ = 3004,
 
  // >> DeeFileTypeObject >> void (DEE_CALL *tp_io_close)(struct DeeFileObject *self) = NULL;
  // Internal: tp_io_close
- // Deemon:   __close__
+ // Deemon:   __close
  tp_io_close = 3005,
 
- // >> DeeFileTypeObject >> void (DEE_CALL *__close__)(struct DeeFileObject *self) = NULL;
+ // >> DeeFileTypeObject >> void (DEE_CALL *__close)(struct DeeFileObject *self) = NULL;
  // Internal: tp_io_close
- // Deemon:   __close__
+ // Deemon:   __close
  __close__ = 3005,
 };
