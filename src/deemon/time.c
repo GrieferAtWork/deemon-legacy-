@@ -241,13 +241,11 @@ DEE_STATIC_INLINE(int) is_leap_year(Dee_uint64_t year) {
  if (year%4 == 0) return 1;
  return 0;
 }
+/*
 DEE_STATIC_INLINE(Dee_uint64_t) count_leap_years(Dee_uint64_t years) {
  return 1+((years/4)-((years/100)-(years/400)));
 }
-// days = (years*365)+count_leap_years(years)
-// d = (y*365)+(1+((y/4)-((y/100)-(y/400))))
-#define years2days(y) (((DEE_UINT64_C(146097)*(y))/DEE_UINT64_C(400))/*-DEE_UINT64_C(1)*/) // rounding error?
-#define days2years(d) ((DEE_UINT64_C(400)*((d)+DEE_UINT64_C(1)))/DEE_UINT64_C(146097))
+*/
 
 #define year_month(y,m) month_lengths[is_leap_year(y)]
 static unsigned int const month_lengths[2][12] = {
@@ -263,10 +261,10 @@ static unsigned int const month_start_yday[2][12] = {
 #define msecs_per_day   DEE_UINT64_C(86400000)
 
 #define _DeeTime_YearsToMseconds(years) \
- (years2days(years)*msecs_per_day)
+ (DeeTime_Years2Days(years)*msecs_per_day)
 static Dee_uint64_t _DeeTime_MonthsToMseconds(Dee_uint64_t months) {
  Dee_uint64_t years = months/12;
- Dee_uint64_t days = years2days(years);
+ Dee_uint64_t days = DeeTime_Years2Days(years);
  days += month_start_yday[is_leap_year(years)][months%12];
  return days*msecs_per_day;
 }
@@ -327,7 +325,7 @@ DEE_A_RET_WUNUSED Dee_uint64_t DeeTimeTick_FromData(
  DEE_A_IN unsigned int minute, DEE_A_IN unsigned int second,
  DEE_A_IN unsigned int msecond) {
  year += month/12,month %= 12;
- return ((years2days(year)+
+ return ((DeeTime_Years2Days(year)+
   month_start_yday[is_leap_year(year)][month]+
   mday)*msecs_per_day)+
  ((Dee_uint64_t)hour*DEE_UINT64_C(3600000))+
@@ -462,13 +460,9 @@ DeeTime_New(DEE_A_IN Dee_uint64_t ticks) {
 }
 
 
-DEE_A_RET_WUNUSED unsigned int DeeTime_GetYear(
- DEE_A_IN_OBJECT(DeeTimeObject) const *self) {
- return (unsigned int)days2years(DeeTime_GetTotalDays(self));
-}
 DEE_A_RET_WUNUSED Dee_uint64_t DeeTime_GetTotalMonths(
  DEE_A_IN_OBJECT(DeeTimeObject) const *self) {
- return days2years(DeeTime_GetTotalDays(self))*12;
+ return DeeTime_Days2Years(DeeTime_GetTotalDays(self))*12;
 }
 DEE_A_RET_WUNUSED unsigned int DeeTime_GetMDay(
  DEE_A_IN_OBJECT(DeeTimeObject) const *self) {
@@ -480,18 +474,26 @@ DEE_A_RET_WUNUSED unsigned int DeeTime_GetMDay(
 DEE_A_RET_WUNUSED unsigned int DeeTime_GetYDay(
  DEE_A_IN_OBJECT(DeeTimeObject) const *self) {
  Dee_uint64_t total_days = DeeTime_GetTotalDays(self);
- Dee_uint64_t years = days2years(total_days);
- Dee_uint64_t year_days = years2days(years);
+ Dee_uint64_t years = DeeTime_Days2Years(total_days);
+ Dee_uint64_t year_days = DeeTime_Years2Days(years);
  return (unsigned int)(total_days-year_days);
 }
 
+void DeeTime_SetMonth(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..11*/int v) {
+ unsigned int year; int mmonth;
+ _DeeTime_InplaceDefault((DeeTimeObject *)self);
+ if ((mmonth = v % 12) < 0) mmonth += 12,v += mmonth; else v -= mmonth;
+ year = DeeTime_GetYear(self);
+ DeeTime_SetYDay(self,(int)DeeTime_GetMDay(self)+
+                 (int)month_start_yday[is_leap_year(year)][mmonth]);
+ if (v) DeeTime_SetYear(self,year+(v/12));
+}
 DEE_A_RET_WUNUSED unsigned int DeeTime_GetMonth(
  DEE_A_IN_OBJECT(DeeTimeObject) const *self) {
  unsigned int result = 0;
  unsigned int yday = DeeTime_GetYDay(self);
  unsigned int year = DeeTime_GetYear(self);
  unsigned int const *day_total = year_day_total[is_leap_year(year)];
- //DEE_ASSERT(yday < day_total[11]);
  // Search for the first month that includes yday
  while (yday >= day_total[result]) ++result;
  return result;
@@ -510,60 +512,45 @@ DEE_A_RET_WUNUSED Dee_uint64_t DeeTime_GetTotalMSeconds(
 }
 
 
-
 #define msecs   ((DeeTimeObject *)self)->tm_msecs
-void DeeTime_SetMSecond(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..999*/int v) {
+/*
+void DeeTime_SetMSecond(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..999* /int v) {
  DEE_ASSERT(DeeObject_Check(self) && DeeTime_Check(self));
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs-(msecs % DEE_UINT64_C(1000)))+(Dee_int64_t)v;
 }
-void DeeTime_SetSecond(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..59*/int v) {
+void DeeTime_SetSecond(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..59* /int v) {
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs-(msecs % DEE_UINT64_C(60000)))+((Dee_int64_t)v*DEE_INT64_C(1000));
 }
-void DeeTime_SetMinute(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..59*/int v) {
+void DeeTime_SetMinute(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..59* /int v) {
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs-(msecs % DEE_UINT64_C(3600000)))+((Dee_int64_t)v*DEE_INT64_C(60000));
 }
-void DeeTime_SetHour(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..23*/int v) {
+void DeeTime_SetHour(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..23* /int v) {
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs-(msecs % DEE_UINT64_C(86400000)))+((Dee_int64_t)v*DEE_INT64_C(3600000));
 }
-void DeeTime_SetWDay(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..6*/int v) {
+void DeeTime_SetWDay(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..6* /int v) {
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs-(msecs % DEE_UINT64_C(604800000)))+((Dee_int64_t)v*DEE_INT64_C(86400000));
 }
-void DeeTime_SetMDay(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..[27,28,29,30]*/int v) {
+void DeeTime_SetMDay(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..[27,28,29,30]* /int v) {
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs-(DeeTime_GetMDay(self)*DEE_INT64_C(86400000)))+((Dee_int64_t)v*DEE_INT64_C(86400000));
 }
-void DeeTime_SetYDay(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..[365,366]*/int v) {
+void DeeTime_SetYDay(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..[365,366]* /int v) {
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs-(DeeTime_GetYDay(self)*DEE_INT64_C(86400000)))+((Dee_int64_t)v*DEE_INT64_C(86400000));
 }
-void DeeTime_SetMWeek(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..4*/int v) {
+void DeeTime_SetMWeek(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..4* /int v) {
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs-(DeeTime_GetMWeek(self)*DEE_INT64_C(604800000)))+((Dee_int64_t)v*DEE_INT64_C(604800000));
 }
-void DeeTime_SetYWeek(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..55*/int v) {
+void DeeTime_SetYWeek(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN / *0..55* /int v) {
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs-(DeeTime_GetYWeek(self)*DEE_INT64_C(604800000)))+((Dee_int64_t)v*DEE_INT64_C(604800000));
 }
-void DeeTime_SetMonth(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..11*/int v) {
- unsigned int year; int mmonth;
- _DeeTime_InplaceDefault((DeeTimeObject *)self);
- if ((mmonth = v % 12) < 0) mmonth += 12,v += mmonth; else v -= mmonth;
- year = DeeTime_GetYear(self);
- DeeTime_SetYDay(self,(int)DeeTime_GetMDay(self)+
-                 (int)month_start_yday[is_leap_year(year)][mmonth]);
- if (v) DeeTime_SetYear(self,year+(v/12));
-}
-void DeeTime_SetYear(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..~584542046*/unsigned int v) {
- Dee_uint64_t ysecs = ((Dee_uint64_t)DeeTime_GetYDay(self)*DEE_UINT64_C(86400000))+
-                       (msecs%DEE_UINT64_C(86400000));
- msecs = (years2days(v)*DEE_UINT64_C(86400000))+ysecs;
-}
-
 void _DeeTime_SetTimeMSeconds(
  DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_uint64_t mseconds) {
  DEE_ASSERT(DeeObject_Check(self) && DeeTime_Check(self));
@@ -576,20 +563,9 @@ void _DeeTime_SetDateMSeconds(
  _DeeTime_InplaceDefault((DeeTimeObject *)self);
  msecs = (msecs%msecs_per_day)+mseconds;
 }
+*/
 
 
-void DeeTime_SetTime(
- DEE_A_INOUT_OBJECT(DeeTimeObject) *self,
- DEE_A_IN unsigned int hours,
- DEE_A_IN unsigned int minutes,
- DEE_A_IN unsigned int seconds,
- DEE_A_IN unsigned int mseconds) {
- _DeeTime_SetTimeMSeconds(self,
-  ((Dee_uint64_t)hours*DEE_UINT64_C(3600000))+
-  ((Dee_uint64_t)minutes*DEE_UINT64_C(60000))+
-  ((Dee_uint64_t)seconds*DEE_UINT64_C(1000))+
-  ((Dee_uint64_t)mseconds));
-}
 void DeeTime_SetDate(
  DEE_A_INOUT_OBJECT(DeeTimeObject) *self,
  DEE_A_IN unsigned int years,
@@ -597,7 +573,7 @@ void DeeTime_SetDate(
  DEE_A_IN unsigned int days) {
  Dee_uint64_t n_days;
  years += months/12,months %= 12;
- n_days = years2days(years);
+ n_days = DeeTime_Years2Days(years);
  n_days += month_start_yday[is_leap_year(years)][months];
  n_days += days;
  _DeeTime_SetDateMSeconds(self,n_days*msecs_per_day);
@@ -609,8 +585,8 @@ DEE_STATIC_INLINE(void) _DeeTime_InplaceAddYears(
  Dee_uint64_t old_years,old_days,new_days;
  DEE_ASSERT(DeeObject_Check(self) && DeeTime_Check(self));
  old_days = msecs/msecs_per_day;
- old_years = days2years(old_days);
- new_days = years2days((Dee_uint64_t)(old_years+years))+(old_days-years2days(old_years));
+ old_years = DeeTime_Days2Years(old_days);
+ new_days = DeeTime_Years2Days((Dee_uint64_t)(old_years+years))+(old_days-DeeTime_Years2Days(old_years));
  msecs += ((Dee_int64_t)new_days-(Dee_int64_t)old_days)*msecs_per_day;
 }
 

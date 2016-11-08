@@ -488,6 +488,63 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
 }
 
 
+DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination_d(char const *expr, char const *file, int line);
+DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination(void);
+
+DEE_ATTRIBUTE_NORETURN void _Dee_AbnormalTermination(void) {
+ // We use this function to instantly terminate the application
+ // It is called, if a fatal error was encountered
+ // NOTE: Only available in debug mode and used if an assertion fails,
+ //       or other undefined behavior is executed.
+#ifdef DEE_PLATFORM_WINDOWS
+ // Doing it this way skips c++ finalization code.
+ // >> So the error output doesn't get spammed with memory leaks...
+ TerminateProcess(GetCurrentProcess(),1);
+#elif 1
+ unsigned int *ptr = (unsigned int *)0xDEADBEEF;
+ while (1) *ptr++ *= 2; // Cause a core dump
+#else
+ exit(1);
+#endif
+ DEE_BUILTIN_UNREACHABLE();
+}
+
+#ifdef DEE_PLATFORM_WINDOWS
+#define DEBUG_PRINTSTR(s) (void)(OutputDebugStringA(s),fwrite(s,sizeof(char),strlen(s),stderr))
+#else /* DEE_PLATFORM_WINDOWS */
+#define DEBUG_PRINTSTR(s) (void)fwrite(s,sizeof(char),strlen(s),stderr)
+#endif /* DEE_PLATFORM_WINDOWS */
+
+char *_failsafe_itos(char *out, Dee_size_t max, int v) {
+ char *iter; int isneg = 0;
+ if (v < 0) { v = -v; isneg = 1; }
+ iter = out+max;
+ if (iter != out) *--iter = '\0';
+ if (!v) { if (iter != out) *--iter = '0'; }
+ else while (v) {
+  if (iter == out) break;
+  *--iter = '0'+(v%10);
+  v /= 10;
+ }
+ if (iter != out && isneg) *--iter = '-';
+ return iter;
+}
+
+DEE_ATTRIBUTE_NORETURN void _Dee_AbnormalTermination_d(
+ char const *expr, char const *file, int line) {
+ char buffer[32];
+ if (file) DEBUG_PRINTSTR(file);
+ DEBUG_PRINTSTR("(");
+ DEBUG_PRINTSTR(_failsafe_itos(buffer,sizeof(buffer)/sizeof(char),line));
+ DEBUG_PRINTSTR(") : ");
+ if (expr) {
+  DEBUG_PRINTSTR(expr);
+  DEBUG_PRINTSTR(   " : ABNORMAL TERMINATION\n");
+ } else DEBUG_PRINTSTR("ABNORMAL TERMINATION\n");
+ _Dee_AbnormalTermination();
+ DEE_BUILTIN_UNREACHABLE();
+}
+
 #ifdef DEE_DEBUG
 int _DeeFlag_NoAssert = 0;
 int _DeeFlag_Verbose = 0;
@@ -537,23 +594,6 @@ void _Dee_DebugOut(char const *fmt, ...) {
  DEE_VA_START(args,fmt);
  _DeeVDebugOut(fmt,args);
  DEE_VA_END(args);
-}
-DEE_ATTRIBUTE_NORETURN void _Dee_AbnormalTermination(void) {
- // We use this function to instantly terminate the application
- // It is called, if a fatal error was encountered
- // NOTE: Only available in debug mode and used if an assertion fails,
- //       or other undefined behavior is executed.
-#ifdef DEE_PLATFORM_WINDOWS
- // Doing it this way skips c++ finalization code.
- // >> So the error output doesn't get spammed with memory leaks...
- TerminateProcess(GetCurrentProcess(),1);
-#elif 1
- unsigned int *ptr = (unsigned int *)0xDEADBEEF;
- while (1) *ptr++ *= 2; // Cause a core dump
-#else
- exit(1);
-#endif
- DEE_BUILTIN_UNREACHABLE();
 }
 
 #ifndef DEE_BUILTIN_BREAKPOINT

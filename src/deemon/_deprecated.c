@@ -54,11 +54,10 @@
 
 DEE_DECL_BEGIN
 
-
 #define DEPRECATED_EXPORT(return,name,args)\
  DEE_FUNC_DECL(return) name args; return name args
 
-#if DEE_API_BACKWARDS_IMPLEMENTED(101)
+#if DEE_API_BACKWARDS_IMPLEMENTED(102)
 DEPRECATED_EXPORT(int,DeeClass_AddGetSet,(DeeTypeObject *self, DeeObject const *name, DeeObject *getter_, DeeObject *delete_, DeeObject *setter_)) { return DeeClass_AddProperty(self,name,getter_,delete_,setter_); }
 DEPRECATED_EXPORT(int,DeeClass_AddClassGetSet,(DeeTypeObject *self, DeeObject const *name, DeeObject *getter_, DeeObject *delete_, DeeObject *setter_)) { return DeeClass_AddClassProperty(self,name,getter_,delete_,setter_); }
 DEPRECATED_EXPORT(int,DeeClass_HasGetSet,(DeeTypeObject *self, DeeObject const *name)) { return DeeClass_HasProperty(self,name); }
@@ -251,12 +250,39 @@ DEPRECATED_EXPORT(DeeTypeObject *,DeeType_VArray,(DeeTypeObject const *self)) { 
 #undef DeeTime_NewFromMinutes
 #undef DeeTime_NewFromSeconds
 #undef DeeTime_FormatObject
+#undef DeeTime_SetTime
+#undef DeeTime_SetMSecond
+#undef DeeTime_SetSecond
+#undef DeeTime_SetMinute
+#undef DeeTime_SetHour
+#undef DeeTime_SetWDay
+#undef DeeTime_GetYear
+#undef DeeTime_SetMDay
+#undef DeeTime_SetYDay
+#undef DeeTime_SetMWeek
+#undef DeeTime_SetYWeek
+#undef _DeeTime_SetTimeMSeconds
+#undef _DeeTime_SetDateMSeconds
 DEPRECATED_EXPORT(DeeObject *,DeeTime_NewFromWeeks,(Dee_uint64_t weeks)) { return DeeTime_New(weeks*DEE_UINT64_C(604800000)); }
 DEPRECATED_EXPORT(DeeObject *,DeeTime_NewFromDays,(Dee_uint64_t days)) { return DeeTime_New(days*DEE_UINT64_C(86400000)); }
 DEPRECATED_EXPORT(DeeObject *,DeeTime_NewFromHours,(Dee_uint64_t hours)) { return DeeTime_New(hours*DEE_UINT64_C(3600000)); }
 DEPRECATED_EXPORT(DeeObject *,DeeTime_NewFromMinutes,(Dee_uint64_t minutes)) { return DeeTime_New(minutes*DEE_UINT64_C(60000)); }
 DEPRECATED_EXPORT(DeeObject *,DeeTime_NewFromSeconds,(Dee_uint64_t seconds)) { return DeeTime_New(seconds*DEE_UINT64_C(1000)); }
 DEPRECATED_EXPORT(DeeObject *,DeeTime_FormatObject,(DeeObject *self, DeeObject const *fmt)) { DEE_ASSERT(DeeObject_Check(fmt) && DeeString_Check(fmt)); return DeeTime_Format(self,DeeString_STR(fmt),DeeString_SIZE(fmt)); }
+DEPRECATED_EXPORT(void,DeeTime_SetTime,(DeeObject *self, unsigned int hours, unsigned int minutes, unsigned int seconds, unsigned int mseconds)) { DeeTime_SetAfterCurrentDayMSeconds(self,((Dee_uint64_t)hours*DEE_UINT64_C(3600000))+((Dee_uint64_t)minutes*DEE_UINT64_C(60000))+((Dee_uint64_t)seconds*DEE_UINT64_C(1000))+((Dee_uint64_t)mseconds)); }
+DEPRECATED_EXPORT(void,DeeTime_SetMSecond,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(1000)+(Dee_int64_t)(v)))); }
+DEPRECATED_EXPORT(void,DeeTime_SetSecond,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(60000))+((Dee_int64_t)(v)*DEE_INT64_C(1000)))); }
+DEPRECATED_EXPORT(void,DeeTime_SetMinute,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(3600000))+((Dee_int64_t)(v)*DEE_INT64_C(60000)))); }
+DEPRECATED_EXPORT(void,DeeTime_SetHour,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(86400000))+((Dee_int64_t)(v)*DEE_INT64_C(3600000)))); }
+DEPRECATED_EXPORT(void,DeeTime_SetWDay,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(604800000))+((Dee_int64_t)(v)*DEE_INT64_C(86400000)))); }
+DEPRECATED_EXPORT(unsigned int,DeeTime_GetYear,(DeeObject *self)) { return (unsigned int)DeeTime_Days2Years(DeeTime_GetTotalDays(self)); }
+DEPRECATED_EXPORT(void,DeeTime_SetMDay,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_GetTotalMSeconds(self)-((Dee_uint64_t)DeeTime_GetMDay(self)*DEE_INT64_C(86400000)))+((Dee_int64_t)(v)*DEE_INT64_C(86400000)))); }
+DEPRECATED_EXPORT(void,DeeTime_SetYDay,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_GetTotalMSeconds(self)-((Dee_uint64_t)DeeTime_GetYDay(self)*DEE_INT64_C(86400000)))+((Dee_int64_t)(v)*DEE_INT64_C(86400000)))); }
+DEPRECATED_EXPORT(void,DeeTime_SetMWeek,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_GetTotalMSeconds(self)-((Dee_uint64_t)DeeTime_GetMWeek(self)*DEE_INT64_C(604800000)))+((Dee_int64_t)(v)*DEE_INT64_C(604800000)))); }
+DEPRECATED_EXPORT(void,DeeTime_SetYWeek,(DeeObject *self, int v)) { DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_GetTotalMSeconds(self)-((Dee_uint64_t)DeeTime_GetYWeek(self)*DEE_INT64_C(604800000)))+((Dee_int64_t)(v)*DEE_INT64_C(604800000)))); }
+DEPRECATED_EXPORT(void,_DeeTime_SetTimeMSeconds,(DeeObject *self, Dee_uint64_t v)) { DeeTime_SetAfterCurrentDayMSeconds(self,v); }
+DEPRECATED_EXPORT(void,_DeeTime_SetDateMSeconds,(DeeObject *self, Dee_uint64_t v)) { DeeTime_SetBeforeCurrentDayMSeconds(self,v); }
+
 
 #undef DeeSuper_Of
 DEPRECATED_EXPORT(DeeObject *,DeeSuper_Of,(DeeObject *ob)) { return DeeSuper_TOf(Dee_TYPE(ob),ob); }
@@ -323,7 +349,7 @@ DEPRECATED_EXPORT(int,DeeSystem_GetCPUCount,(Dee_uint64_t *msecs)) { return DeeD
 #undef DeeMember_Set
 DEPRECATED_EXPORT(int,DeeMember_Set,(DeeObject *base_ob, struct DeeMemberDef const *def, DeeObject *v)) { return DeeMember_TSet(base_ob,def,Dee_TYPE(v),v); }
 
-#endif /* 101 */
+#endif /* 102 */
 
 DEE_DECL_END
 

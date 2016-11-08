@@ -105,48 +105,72 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeObject_VTCastf(
 #define DEE_PRIVATE_OBJECT_CAST_object    /* nothing */
 #define DEE_PRIVATE_OBJECT_CAST_DeeObject /* nothing */
 
+#ifdef DEE_TYPES_INT8_T
 #define DEE_PRIVATE_OBJECT_CAST_int8_t    DeeObject_TGetInt8
-#define DEE_PRIVATE_OBJECT_CAST_int16_t   DeeObject_TGetInt16
-#define DEE_PRIVATE_OBJECT_CAST_int32_t   DeeObject_TGetInt32
-#define DEE_PRIVATE_OBJECT_CAST_int64_t   DeeObject_TGetInt64
 #define DEE_PRIVATE_OBJECT_CAST_uint8_t   DeeObject_TGetUInt8
+#endif
+#ifdef DEE_TYPES_INT16_T
+#define DEE_PRIVATE_OBJECT_CAST_int16_t   DeeObject_TGetInt16
 #define DEE_PRIVATE_OBJECT_CAST_uint16_t  DeeObject_TGetUInt16
+#endif
+#ifdef DEE_TYPES_INT32_T
+#define DEE_PRIVATE_OBJECT_CAST_int32_t   DeeObject_TGetInt32
 #define DEE_PRIVATE_OBJECT_CAST_uint32_t  DeeObject_TGetUInt32
+#endif
+#ifdef DEE_TYPES_INT64_T
+#define DEE_PRIVATE_OBJECT_CAST_int64_t   DeeObject_TGetInt64
 #define DEE_PRIVATE_OBJECT_CAST_uint64_t  DeeObject_TGetUInt64
-#define DEE_PRIVATE_OBJECT_CAST_float     DeeObject_TGetFloat
+#endif
+#ifdef DEE_TYPES_SIZEOF_DOUBLE
 #define DEE_PRIVATE_OBJECT_CAST_double    DeeObject_TGetDouble
+#ifdef DEE_TYPES_SIZEOF_FLOAT
+#define DEE_PRIVATE_OBJECT_CAST_float     DeeObject_TGetFloat
+#endif
+#ifdef DEE_TYPES_SIZEOF_LDOUBLE
 #define DEE_PRIVATE_OBJECT_CAST_ldouble   DeeObject_TGetLDouble
+#endif
+#endif
 #if defined(DEE_TYPES_FLOATID_FLOAT) && DEE_CONFIG_RT_FLOATID_FLOAT == DEE_TYPES_FLOATID_FLOAT
-#define DEE_PRIVATE_OBJECT_CAST_Dee_rt_float      DEE_PRIVATE_OBJECT_CAST_float
+# define DEE_PRIVATE_OBJECT_CAST_Dee_rt_float      DEE_PRIVATE_OBJECT_CAST_float
 #elif defined(DEE_TYPES_FLOATID_DOUBLE) && DEE_CONFIG_RT_FLOATID_FLOAT == DEE_TYPES_FLOATID_DOUBLE
-#define DEE_PRIVATE_OBJECT_CAST_Dee_rt_float      DEE_PRIVATE_OBJECT_CAST_double
+# define DEE_PRIVATE_OBJECT_CAST_Dee_rt_float      DEE_PRIVATE_OBJECT_CAST_double
 #elif defined(DEE_TYPES_FLOATID_LDOUBLE) && DEE_CONFIG_RT_FLOATID_FLOAT == DEE_TYPES_FLOATID_LDOUBLE
-#define DEE_PRIVATE_OBJECT_CAST_Dee_rt_float      DEE_PRIVATE_OBJECT_CAST_ldouble
+# define DEE_PRIVATE_OBJECT_CAST_Dee_rt_float      DEE_PRIVATE_OBJECT_CAST_ldouble
 #endif
 #if defined(DEE_TYPES_FLOATID_FLOAT) && DEE_CONFIG_RT_FLOATID_DOUBLE == DEE_TYPES_FLOATID_FLOAT
-#define DEE_PRIVATE_OBJECT_CAST_Dee_rt_double     DEE_PRIVATE_OBJECT_CAST_float
+# define DEE_PRIVATE_OBJECT_CAST_Dee_rt_double     DEE_PRIVATE_OBJECT_CAST_float
 #elif defined(DEE_TYPES_FLOATID_DOUBLE) && DEE_CONFIG_RT_FLOATID_DOUBLE == DEE_TYPES_FLOATID_DOUBLE
-#define DEE_PRIVATE_OBJECT_CAST_Dee_rt_double     DEE_PRIVATE_OBJECT_CAST_double
+# define DEE_PRIVATE_OBJECT_CAST_Dee_rt_double     DEE_PRIVATE_OBJECT_CAST_double
 #elif defined(DEE_TYPES_FLOATID_LDOUBLE) && DEE_CONFIG_RT_FLOATID_DOUBLE == DEE_TYPES_FLOATID_LDOUBLE
-#define DEE_PRIVATE_OBJECT_CAST_Dee_rt_double     DEE_PRIVATE_OBJECT_CAST_ldouble
+# define DEE_PRIVATE_OBJECT_CAST_Dee_rt_double     DEE_PRIVATE_OBJECT_CAST_ldouble
 #endif
 #if defined(DEE_TYPES_FLOATID_FLOAT) && DEE_CONFIG_RT_FLOATID_LDOUBLE == DEE_TYPES_FLOATID_FLOAT
-#define DEE_PRIVATE_OBJECT_CAST_Dee_rt_ldouble    DEE_PRIVATE_OBJECT_CAST_float
+# define DEE_PRIVATE_OBJECT_CAST_Dee_rt_ldouble    DEE_PRIVATE_OBJECT_CAST_float
 #elif defined(DEE_TYPES_FLOATID_DOUBLE) && DEE_CONFIG_RT_FLOATID_LDOUBLE == DEE_TYPES_FLOATID_DOUBLE
-#define DEE_PRIVATE_OBJECT_CAST_Dee_rt_ldouble    DEE_PRIVATE_OBJECT_CAST_double
+# define DEE_PRIVATE_OBJECT_CAST_Dee_rt_ldouble    DEE_PRIVATE_OBJECT_CAST_double
 #elif defined(DEE_TYPES_FLOATID_LDOUBLE) && DEE_CONFIG_RT_FLOATID_LDOUBLE == DEE_TYPES_FLOATID_LDOUBLE
-#define DEE_PRIVATE_OBJECT_CAST_Dee_rt_ldouble    DEE_PRIVATE_OBJECT_CAST_ldouble
+# define DEE_PRIVATE_OBJECT_CAST_Dee_rt_ldouble    DEE_PRIVATE_OBJECT_CAST_ldouble
 #endif
 #include <deemon/__tg_cast.inl>
 
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetInt32(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT Dee_int32_t *result) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetInt64(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT Dee_int64_t *result) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetInt32(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_int32_t *result) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetInt64(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_int64_t *result) DEE_ATTRIBUTE_NONNULL((1,2,3));
+#ifdef DEE_TYPES_INT8_T
 #define /* DEE_A_EXEC int */DeeObject_GetInt8(ob,result)    DeeObject_TGetInt8(Dee_TYPE(ob),ob,result)
+#endif
+#ifdef DEE_TYPES_INT16_T
 #define /* DEE_A_EXEC int */DeeObject_GetInt16(ob,result)   DeeObject_TGetInt16(Dee_TYPE(ob),ob,result)
+#endif
+
+#ifdef DEE_TYPES_INT32_T
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetInt32(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT Dee_int32_t *result) DEE_ATTRIBUTE_NONNULL((1,2,3));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetInt32(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_int32_t *result) DEE_ATTRIBUTE_NONNULL((1,2,3));
 #define /* DEE_A_EXEC int */DeeObject_GetInt32(ob,result)   DeeObject_TGetInt32(Dee_TYPE(ob),ob,result)
+#endif
+
+#ifdef DEE_TYPES_INT64_T
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetInt64(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT Dee_int64_t *result) DEE_ATTRIBUTE_NONNULL((1,2,3));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetInt64(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_int64_t *result) DEE_ATTRIBUTE_NONNULL((1,2,3));
 #define /* DEE_A_EXEC int */DeeObject_GetInt64(ob,result)   DeeObject_TGetInt64(Dee_TYPE(ob),ob,result)
+#endif
 
 #ifdef DEE_TYPES_SIZEOF_DOUBLE
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetDouble(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT double *result) DEE_ATTRIBUTE_NONNULL((1,2,3));
@@ -161,10 +185,14 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetDouble(DEE_A_IN
 #endif
 
 #if DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS
+#ifdef DEE_TYPES_INT8_T
 #define /* DEE_A_EXEC int */DeeObject_TGetInt8(tp_ob,ob,result)             DEE_GCC_EXTENSION({Dee_int32_t _get_temp; DEE_ASSERT(result); DEE_LIKELY(DeeObject_TGetInt32(tp_ob,ob,&_get_temp) == 0) ? (*(result) = (Dee_int8_t)_get_temp,0) : -1;})
-#define /* DEE_A_EXEC int */DeeObject_TGetInt16(tp_ob,ob,result)            DEE_GCC_EXTENSION({Dee_int32_t _get_temp; DEE_ASSERT(result); DEE_LIKELY(DeeObject_TGetInt32(tp_ob,ob,&_get_temp) == 0) ? (*(result) = (Dee_int16_t)_get_temp,0) : -1;})
 #define /* DEE_A_EXEC int */DeeObject_PGetInt8(tp_self,base_addr,result)    DEE_GCC_EXTENSION({Dee_int32_t _get_temp; DEE_ASSERT(result); DEE_LIKELY(DeeObject_PGetInt32(tp_self,base_addr,&_get_temp) == 0) ? (*(result) = (Dee_int8_t)_get_temp,0) : -1;})
+#endif
+#ifdef DEE_TYPES_INT16_T
+#define /* DEE_A_EXEC int */DeeObject_TGetInt16(tp_ob,ob,result)            DEE_GCC_EXTENSION({Dee_int32_t _get_temp; DEE_ASSERT(result); DEE_LIKELY(DeeObject_TGetInt32(tp_ob,ob,&_get_temp) == 0) ? (*(result) = (Dee_int16_t)_get_temp,0) : -1;})
 #define /* DEE_A_EXEC int */DeeObject_PGetInt16(tp_self,base_addr,result)   DEE_GCC_EXTENSION({Dee_int32_t _get_temp; DEE_ASSERT(result); DEE_LIKELY(DeeObject_PGetInt32(tp_self,base_addr,&_get_temp) == 0) ? (*(result) = (Dee_int16_t)_get_temp,0) : -1;})
+#endif
 #ifdef DEE_TYPES_SIZEOF_DOUBLE
 #ifdef DEE_TYPES_SIZEOF_FLOAT
 #define /* DEE_A_EXEC int */DeeObject_TGetFloat(tp_ob,ob,result)            DEE_GCC_EXTENSION({double _get_temp; DEE_ASSERT(result); DEE_LIKELY(DeeObject_TGetDouble(tp_ob,ob,&_get_temp) == 0) ? (*(result) = (float)_get_temp,0) : -1;})
@@ -176,10 +204,14 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetDouble(DEE_A_IN
 #endif
 #endif /* DEE_TYPES_SIZEOF_DOUBLE */
 #else /* DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
+#ifdef DEE_TYPES_INT8_T
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetInt8(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT Dee_int8_t *result) { Dee_int32_t result2; DEE_ASSERT(result); if (DeeObject_TGetInt32(tp_self,self,&result2) != 0) return -1; *result = (Dee_int8_t)result2; return 0; }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetInt16(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT Dee_int16_t *result) { Dee_int32_t result2; DEE_ASSERT(result); if (DeeObject_TGetInt32(tp_self,self,&result2) != 0) return -1; *result = (Dee_int16_t)result2; return 0; }
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetInt8(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_int8_t *result) { Dee_int32_t result2; DEE_ASSERT(result); if (DeeObject_PGetInt32(tp_self,base_addr,&result2) != 0) return -1; *result = (Dee_int8_t)result2; return 0; }
+#endif
+#ifdef DEE_TYPES_INT16_T
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetInt16(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT Dee_int16_t *result) { Dee_int32_t result2; DEE_ASSERT(result); if (DeeObject_TGetInt32(tp_self,self,&result2) != 0) return -1; *result = (Dee_int16_t)result2; return 0; }
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetInt16(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_int16_t *result) { Dee_int32_t result2; DEE_ASSERT(result); if (DeeObject_PGetInt32(tp_self,base_addr,&result2) != 0) return -1; *result = (Dee_int16_t)result2; return 0; }
+#endif
 #ifdef DEE_TYPES_SIZEOF_DOUBLE
 #ifdef DEE_TYPES_SIZEOF_FLOAT
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetFloat(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT float *result) { double result2; DEE_ASSERT(result); if (DeeObject_TGetDouble(tp_self,self,&result2) != 0) return -1; *result = (float)result2; return 0; }
@@ -192,32 +224,48 @@ DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1)
 #endif /* DEE_TYPES_SIZEOF_DOUBLE */
 #endif /* !DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
 
-#ifndef __INTELLISENSE__
-#define /*DEE_A_EXEC*/ DeeObject_GetUInt8(ob,result)                  DeeObject_GetInt8(ob,(Dee_int8_t *)(result)) 
-#define /*DEE_A_EXEC*/ DeeObject_GetUInt16(ob,result)                 DeeObject_GetInt16(ob,(Dee_int16_t *)(result))
-#define /*DEE_A_EXEC*/ DeeObject_GetUInt32(ob,result)                 DeeObject_GetInt32(ob,(Dee_int32_t *)(result))
-#define /*DEE_A_EXEC*/ DeeObject_GetUInt64(ob,result)                 DeeObject_GetInt64(ob,(Dee_int64_t *)(result))
-#define /*DEE_A_EXEC*/ DeeObject_TGetUInt8(tp_self,ob,result)         DeeObject_TGetInt8(tp_self,ob,(Dee_int8_t *)(result)) 
-#define /*DEE_A_EXEC*/ DeeObject_TGetUInt16(tp_self,ob,result)        DeeObject_TGetInt16(tp_self,ob,(Dee_int16_t *)(result))
-#define /*DEE_A_EXEC*/ DeeObject_TGetUInt32(tp_self,ob,result)        DeeObject_TGetInt32(tp_self,ob,(Dee_int32_t *)(result))
-#define /*DEE_A_EXEC*/ DeeObject_TGetUInt64(tp_self,ob,result)        DeeObject_TGetInt64(tp_self,ob,(Dee_int64_t *)(result))
-#define /*DEE_A_EXEC*/ DeeObject_PGetUInt8(tp_self,base_addr,result)  DeeObject_PGetInt8(tp_self,base_addr,(Dee_int8_t *)(result)) 
-#define /*DEE_A_EXEC*/ DeeObject_PGetUInt16(tp_self,base_addr,result) DeeObject_PGetInt16(tp_self,base_addr,(Dee_int16_t *)(result))
-#define /*DEE_A_EXEC*/ DeeObject_PGetUInt32(tp_self,base_addr,result) DeeObject_PGetInt32(tp_self,base_addr,(Dee_int32_t *)(result))
-#define /*DEE_A_EXEC*/ DeeObject_PGetUInt64(tp_self,base_addr,result) DeeObject_PGetInt64(tp_self,base_addr,(Dee_int64_t *)(result))
+#if defined(__INTELLISENSE__) || defined(_PREFAST_)
+#ifdef DEE_TYPES_UINT8_T
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_GetUInt8(DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint8_t *result);
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetUInt8(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint8_t *result);
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetUInt8(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_uint8_t *result);
+#endif
+#ifdef DEE_TYPES_UINT16_T
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_GetUInt16(DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint16_t *result);
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetUInt16(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint16_t *result);
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetUInt16(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_uint16_t *result);
+#endif
+#ifdef DEE_TYPES_UINT32_T
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_GetUInt32(DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint32_t *result);
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetUInt32(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint32_t *result);
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetUInt32(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_uint32_t *result);
+#endif
+#ifdef DEE_TYPES_UINT64_T
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_GetUInt64(DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint64_t *result);
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetUInt64(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint64_t *result);
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetUInt64(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_uint64_t *result);
+#endif
 #else
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_GetUInt8(DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint8_t *result) { return DeeObject_GetInt8(ob,(Dee_int8_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_GetUInt16(DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint16_t *result) { return DeeObject_GetInt16(ob,(Dee_int16_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_GetUInt32(DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint32_t *result) { return DeeObject_GetInt32(ob,(Dee_int32_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_GetUInt64(DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint64_t *result) { return DeeObject_GetInt64(ob,(Dee_int64_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetUInt8(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint8_t *result) { return DeeObject_TGetInt8(tp_self,ob,(Dee_int8_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetUInt16(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint16_t *result) { return DeeObject_TGetInt16(tp_self,ob,(Dee_int16_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetUInt32(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint32_t *result) { return DeeObject_TGetInt32(tp_self,ob,(Dee_int32_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetUInt64(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *ob, DEE_A_OUT Dee_uint64_t *result) { return DeeObject_TGetInt64(tp_self,ob,(Dee_int64_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetUInt8(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_uint8_t *result) { return DeeObject_PGetInt8(tp_self,base_addr,(Dee_int8_t *)result) ; }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetUInt16(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_uint16_t *result) { return DeeObject_PGetInt16(tp_self,base_addr,(Dee_int16_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetUInt32(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_uint32_t *result) { return DeeObject_PGetInt32(tp_self,base_addr,(Dee_int32_t *)result); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PGetUInt64(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_OUT Dee_uint64_t *result) { return DeeObject_PGetInt64(tp_self,base_addr,(Dee_int64_t *)result); }
+#ifdef DEE_TYPES_UINT8_T
+#define /*DEE_A_EXEC*/ DeeObject_GetUInt8(ob,result)                  DeeObject_GetInt8(ob,(Dee_int8_t *)(result)) 
+#define /*DEE_A_EXEC*/ DeeObject_TGetUInt8(tp_self,ob,result)         DeeObject_TGetInt8(tp_self,ob,(Dee_int8_t *)(result)) 
+#define /*DEE_A_EXEC*/ DeeObject_PGetUInt8(tp_self,base_addr,result)  DeeObject_PGetInt8(tp_self,base_addr,(Dee_int8_t *)(result)) 
+#endif
+#ifdef DEE_TYPES_UINT16_T
+#define /*DEE_A_EXEC*/ DeeObject_GetUInt16(ob,result)                 DeeObject_GetInt16(ob,(Dee_int16_t *)(result))
+#define /*DEE_A_EXEC*/ DeeObject_TGetUInt16(tp_self,ob,result)        DeeObject_TGetInt16(tp_self,ob,(Dee_int16_t *)(result))
+#define /*DEE_A_EXEC*/ DeeObject_PGetUInt16(tp_self,base_addr,result) DeeObject_PGetInt16(tp_self,base_addr,(Dee_int16_t *)(result))
+#endif
+#ifdef DEE_TYPES_UINT32_T
+#define /*DEE_A_EXEC*/ DeeObject_GetUInt32(ob,result)                 DeeObject_GetInt32(ob,(Dee_int32_t *)(result))
+#define /*DEE_A_EXEC*/ DeeObject_TGetUInt32(tp_self,ob,result)        DeeObject_TGetInt32(tp_self,ob,(Dee_int32_t *)(result))
+#define /*DEE_A_EXEC*/ DeeObject_PGetUInt32(tp_self,base_addr,result) DeeObject_PGetInt32(tp_self,base_addr,(Dee_int32_t *)(result))
+#endif
+#ifdef DEE_TYPES_UINT64_T
+#define /*DEE_A_EXEC*/ DeeObject_GetUInt64(ob,result)                 DeeObject_GetInt64(ob,(Dee_int64_t *)(result))
+#define /*DEE_A_EXEC*/ DeeObject_TGetUInt64(tp_self,ob,result)        DeeObject_TGetInt64(tp_self,ob,(Dee_int64_t *)(result))
+#define /*DEE_A_EXEC*/ DeeObject_PGetUInt64(tp_self,base_addr,result) DeeObject_PGetInt64(tp_self,base_addr,(Dee_int64_t *)(result))
+#endif
 #endif
 
 DEE_DECL_END

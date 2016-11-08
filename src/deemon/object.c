@@ -666,6 +666,37 @@ DEE_A_RET_EXCEPT(-1) int DeeObject_PSetItemString(
 }
 
 
+
+DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeObject_TGetAttrAndCast(
+ DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT_OPT void *result,
+ DEE_A_IN_Z char const *result_fmt, DEE_A_IN_OBJECT(DeeStringObject) const *attr) {
+ DeeObject *attr_value; int error;
+ DEE_ASSERT(DeeObject_Check(self));
+ DEE_ASSERT(DeeObject_Check(attr) && DeeString_Check(attr));
+ DEE_ASSERT(DeeObject_Check(tp_self) && DeeType_Check(tp_self));
+ DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
+ DEE_ASSERT(result_fmt);
+ if DEE_UNLIKELY((attr_value = DeeObject_TGetAttr(tp_self,self,attr)) == NULL) return -1;
+ error = DeeObject_Castf(attr_value,result,result_fmt);
+ Dee_DECREF(attr_value);
+ return error;
+}
+DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeObject_TGetAttrStringAndCast(
+ DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT_OPT void *result,
+ DEE_A_IN_Z char const *result_fmt, DEE_A_IN_Z char const *attr) {
+ DeeObject *attr_value; int error;
+ DEE_ASSERT(DeeObject_Check(self));
+ DEE_ASSERT(attr);
+ DEE_ASSERT(DeeObject_Check(tp_self) && DeeType_Check(tp_self));
+ DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
+ DEE_ASSERT(result_fmt);
+ if DEE_UNLIKELY((attr_value = DeeObject_TGetAttrString(tp_self,self,attr)) == NULL) return -1;
+ error = DeeObject_Castf(attr_value,result,result_fmt);
+ Dee_DECREF(attr_value);
+ return error;
+}
+
+
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TGetAttr(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_IN_OBJECT(DeeStringObject) const *attr) {

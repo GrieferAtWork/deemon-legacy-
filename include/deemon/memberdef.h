@@ -75,16 +75,6 @@ enum{
  DeeMemberType_weak_object = 17,        // DEE_A_WEAK_REF DeeObject * (raises AttributeError if NULL)
  DeeMemberType_weak_object_null = 18,   // DEE_A_WEAK_REF DeeObject * (return Dee_None if NULL)
 
- // Misc types
- DeeMemberType_time_t_astime = 19,
- DeeMemberType_local_time_t_astime = 20,
- DeeMemberType_struct_tm = 21, // When combined with a pointer, still returns a time object
-#ifdef DEE_PLATFORM_WINDOWS
- DeeMemberType__SYSTEMTIME = 22,     // When combined with a pointer, still returns a time object
- DeeMemberType__FILETIME = 23,       // When combined with a pointer, still returns a time object
- DeeMemberType_local__FILETIME = 24, // When combined with a pointer, still returns a time object
-#endif
-
  // -- New in v101: all the new string types
  DeeMemberType_widechar = 25,             // wchar_t
  DeeMemberType_widestring = 26,           // wchar_t *   ([readonly][0..1])
@@ -252,15 +242,6 @@ enum{
  DeeMemberType_PCUNZWCH = DeeMemberType_POINTER(DeeMemberType_wchar_t),
  DeeMemberType_LARGE_INTEGER = DeeMemberType_POINTER(DeeMemberType_int64_t),
  DeeMemberType_ULARGE_INTEGER = DeeMemberType_POINTER(DeeMemberType_uint64_t),
- DeeMemberType_SYSTEMTIME = DeeMemberType__SYSTEMTIME,
- DeeMemberType_FILETIME = DeeMemberType__FILETIME,
- DeeMemberType_local_FILETIME = DeeMemberType_local__FILETIME,
- DeeMemberType_PSYSTEMTIME = DeeMemberType_POINTER(DeeMemberType_SYSTEMTIME),
- DeeMemberType_LPSYSTEMTIME = DeeMemberType_POINTER(DeeMemberType_SYSTEMTIME),
- DeeMemberType_PFILETIME = DeeMemberType_POINTER(DeeMemberType_FILETIME),
- DeeMemberType_LPFILETIME = DeeMemberType_POINTER(DeeMemberType_FILETIME),
- DeeMemberType_local_PFILETIME = DeeMemberType_POINTER(DeeMemberType_local_FILETIME),
- DeeMemberType_local_LPFILETIME = DeeMemberType_POINTER(DeeMemberType_local_FILETIME),
 #endif
 };
 #define DeeMemberType_atomic(x) DeeMemberType_ATOMIC|(DeeMemberType_##x)

@@ -237,7 +237,6 @@ DEE_DATA_DECL(int) _DeeFlag_Verbose;
 #endif /* !DEE_PRIVATE_DEBUG_ONLY_FLAGS_DEFINED */
 DEE_FUNC_DECL(void) _Dee_DebugOut(char const *fmt, ...);
 DEE_FUNC_DECL(void) _Dee_VerboseOut(char const *fmt, ...);
-DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination(void);
 #ifdef DEE_BUILTIN_BREAKPOINT
 DEE_FUNC_DECL(void) _Dee_AssertionFailed(char const *expr_, char const *file_, int line_);
 DEE_FUNC_DECL(void) _Dee_AssertionFailedf(char const *expr_, char const *file_, int line_, char const *fmt, ...);
@@ -245,7 +244,10 @@ DEE_FUNC_DECL(void) _Dee_AssertionFailedf(char const *expr_, char const *file_, 
 DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AssertionFailed(char const *expr_, char const *file_, int line_);
 DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AssertionFailedf(char const *expr_, char const *file_, int line_, char const *fmt, ...);
 #endif /* !DEE_BUILTIN_BREAKPOINT */
+DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination_d(char const *expr, char const *file, int line);
 DEE_DECL_END
+# define DEE_ABNORMAL_TERMINATION()                 _Dee_AbnormalTermination_d(NULL,__FILE__,__LINE__)
+# define DEE_ABNORMAL_TERMINATION_IF(expr) (!(expr)?_Dee_AbnormalTermination_d(#expr,__FILE__,__LINE__):(void)0)
 #ifdef DEE_BUILTIN_BREAKPOINT
 # define DEE_ASSERT(expr)          (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?(_Dee_AssertionFailed(#expr,__FILE__,__LINE__),DEE_BUILTIN_BREAKPOINT()):(void)0)
 # define DEE_ASSERTF(expr,...)     (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?(_Dee_AssertionFailedf(#expr,__FILE__,__LINE__,__VA_ARGS__),DEE_BUILTIN_BREAKPOINT()):(void)0)
@@ -264,11 +266,12 @@ DEE_DECL_END
 # define DEE_LVERBOSE4R(...)        DEE_LVERBOSE_LV_R(4,__VA_ARGS__)
 # define DEE_LVERBOSE4(...)         DEE_LVERBOSE_LV(4,__VA_ARGS__)
 # define DEE_LDEBUG                 _Dee_DebugOut
-# define DEE_ABNORMAL_TERMINATION   _Dee_AbnormalTermination
 #else /* DEE_DEBUG */
+DEE_DECL_BEGIN DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination(void); DEE_DECL_END
+# define DEE_ABNORMAL_TERMINATION                   _Dee_AbnormalTermination
+# define DEE_ABNORMAL_TERMINATION_IF(expr) (!(expr)?_Dee_AbnormalTermination():(void)0)
 # define DEE_ASSERT				             DEE_COMPILER_ASSUME
 # define DEE_ASSERTF(expr,...)				  DEE_COMPILER_ASSUME(expr)
-# define DEE_ABNORMAL_TERMINATION   DEE_BUILTIN_UNREACHABLE
 #if defined(_MSC_VER)
 # define DEE_LDEBUG               (void)__noop
 #elif defined(__DEEMON__)
@@ -292,11 +295,18 @@ DEE_DECL_END
 #ifdef __cplusplus
 #undef DEE_ASSERT
 #undef DEE_ASSERTF
+#undef DEE_ABNORMAL_TERMINATION_IF
 static void __intellisense__DEE_ASSERT(bool expr);
 static void __intellisense__DEE_ASSERTF(bool expr, char const *fmt, ...);
-#define DEE_ASSERT     __intellisense__DEE_ASSERT
-#define DEE_ASSERTF    __intellisense__DEE_ASSERTF
+static void __intellisense__DEE_ABNORMAL_TERMINATION_IF(bool expr);
+#define DEE_ASSERT                  __intellisense__DEE_ASSERT
+#define DEE_ASSERTF                 __intellisense__DEE_ASSERTF
+#define DEE_ABNORMAL_TERMINATION_IF __intellisense__DEE_ABNORMAL_TERMINATION_IF
 #endif
+
+#undef DEE_ABNORMAL_TERMINATION
+static void __intellisense__DEE_ABNORMAL_TERMINATION(void);
+#define DEE_ABNORMAL_TERMINATION __intellisense__DEE_ABNORMAL_TERMINATION
 
 #undef DEE_LDEBUG
 #undef DEE_LVERBOSE1

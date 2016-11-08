@@ -153,6 +153,9 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeTimeTick_Now(DEE_A_OUT Dee_uint64_t *
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeTimeTick_FromTimeT(DEE_A_IN Dee_time_t t, DEE_A_OUT Dee_uint64_t *ticks) DEE_ATTRIBUTE_NONNULL((2));
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_uint64_t) DeeTimeTick_FromTm(DEE_A_IN struct tm const *t) DEE_ATTRIBUTE_NONNULL((1));
 
+#define /* Dee_uint64_t */DeeTime_Years2Days(/* Dee_uint64_t */n_years) (((DEE_UINT64_C(146097)*(Dee_uint64_t)(n_years))/DEE_UINT64_C(400))/*-DEE_UINT64_C(1)*/) // rounding error?
+#define /* Dee_uint64_t */DeeTime_Days2Years(/* Dee_uint64_t */n_days)  ((DEE_UINT64_C(400)*((Dee_uint64_t)(n_days)+DEE_UINT64_C(1)))/DEE_UINT64_C(146097))
+
 
 #ifdef DEE_PLATFORM_WINDOWS
 struct _SYSTEMTIME; struct _FILETIME;
@@ -179,41 +182,60 @@ DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *) DeeTime_NewFromWin32
 DEE_FUNC_DECL(void) DeeTime_InplaceAddMSeconds(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_int64_t mseconds) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(void) DeeTime_InplaceAddMonths(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_int64_t months) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(void) DeeTime_InplaceAddYears(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_int64_t years) DEE_ATTRIBUTE_NONNULL((1));
-#define DeeTime_SetTotalYears(ob,years)       (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_YEARS,((DeeTimeObject *)(ob))->tm_years=(years))
-#define DeeTime_SetTotalMonths(ob,months)     (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_MONTHS,((DeeTimeObject *)(ob))->tm_months=(months))
-#define DeeTime_SetTotalWeeks(ob,weeks)       (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(weeks)*DEE_UINT64_C(604800000))
-#define DeeTime_SetTotalDays(ob,days)         (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(days)*DEE_UINT64_C(86400000))
-#define DeeTime_SetTotalHours(ob,hours)       (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(hours)*DEE_UINT64_C(3600000))
-#define DeeTime_SetTotalMinutes(ob,minutes)   (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(minutes)*DEE_UINT64_C(60000))
-#define DeeTime_SetTotalSeconds(ob,seconds)   (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(seconds)*DEE_UINT64_C(1000))
+#define DeeTime_InplaceAddSeconds(self,seconds) DeeTime_InplaceAddMSeconds(self,(seconds)*DEE_INT64_C(1000))
+#define DeeTime_InplaceAddMinutes(self,minutes) DeeTime_InplaceAddMSeconds(self,(minutes)*DEE_INT64_C(60000))
+#define DeeTime_InplaceAddHours(self,hours)     DeeTime_InplaceAddMSeconds(self,(hours)*DEE_INT64_C(3600000))
+#define DeeTime_InplaceAddDays(self,days)       DeeTime_InplaceAddMSeconds(self,(days)*DEE_INT64_C(86400000))
+#define DeeTime_InplaceAddWeeks(self,weeks)     DeeTime_InplaceAddMSeconds(self,(weeks)*DEE_INT64_C(604800000))
+
 #define DeeTime_SetTotalMSeconds(ob,mseconds) (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(mseconds))
+#define DeeTime_SetTotalSeconds(ob,seconds)   (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(seconds)*DEE_UINT64_C(1000))
+#define DeeTime_SetTotalMinutes(ob,minutes)   (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(minutes)*DEE_UINT64_C(60000))
+#define DeeTime_SetTotalHours(ob,hours)       (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(hours)*DEE_UINT64_C(3600000))
+#define DeeTime_SetTotalDays(ob,days)         (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(days)*DEE_UINT64_C(86400000))
+#define DeeTime_SetTotalWeeks(ob,weeks)       (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_DEFAULT,((DeeTimeObject *)(ob))->tm_msecs=(weeks)*DEE_UINT64_C(604800000))
+#define DeeTime_SetTotalMonths(ob,months)     (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_MONTHS,((DeeTimeObject *)(ob))->tm_months=(months))
+#define DeeTime_SetTotalYears(ob,years)       (((DeeTimeObject *)Dee_REQUIRES_POINTER(ob))->tm_diff_kind=DeeTimeKind_YEARS,((DeeTimeObject *)(ob))->tm_years=(years))
 
-#define DeeTime_GetTotalYears   (Dee_uint64_t)DeeTime_GetYear
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_uint64_t) DeeTime_GetTotalMonths(DEE_A_IN_OBJECT(DeeTimeObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-#define DeeTime_GetTotalWeeks(ob)   (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(604800000))
-#define DeeTime_GetTotalDays(ob)    (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(86400000))
-#define DeeTime_GetTotalHours(ob)   (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(3600000))
-#define DeeTime_GetTotalMinutes(ob) (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(60000))
-#define DeeTime_GetTotalSeconds(ob) (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(1000))
+#define _DeeTime_GetAlignedMSeconds(self,alignment) ((DeeTime_GetTotalMSeconds(self)/(alignment))*(alignment))
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_uint64_t) DeeTime_GetTotalMSeconds(DEE_A_IN_OBJECT(DeeTimeObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-#define DeeTime_Compare(a,b)   (DeeTime_GetTotalMSeconds(b)-DeeTime_GetTotalMSeconds(a))
-#define DeeTime_CompareLo(a,b) (DeeTime_GetTotalMSeconds(a) < DeeTime_GetTotalMSeconds(b))
-#define DeeTime_CompareLe(a,b) (DeeTime_GetTotalMSeconds(a) <= DeeTime_GetTotalMSeconds(b))
-#define DeeTime_CompareEq(a,b) (DeeTime_GetTotalMSeconds(a) == DeeTime_GetTotalMSeconds(b))
-#define DeeTime_CompareNe(a,b) (DeeTime_GetTotalMSeconds(a) != DeeTime_GetTotalMSeconds(b))
-#define DeeTime_CompareGr(a,b) (DeeTime_GetTotalMSeconds(a) > DeeTime_GetTotalMSeconds(b))
-#define DeeTime_CompareGe(a,b) (DeeTime_GetTotalMSeconds(a) >= DeeTime_GetTotalMSeconds(b))
+#define DeeTime_GetTotalSeconds(ob) (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(1000))
+#define DeeTime_GetTotalMinutes(ob) (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(60000))
+#define DeeTime_GetTotalHours(ob)   (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(3600000))
+#define DeeTime_GetTotalDays(ob)    (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(86400000))
+#define DeeTime_GetTotalWeeks(ob)   (DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(604800000))
+DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_uint64_t) DeeTime_GetTotalMonths(DEE_A_IN_OBJECT(DeeTimeObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeTime_GetTotalYears   (Dee_uint64_t)DeeTime_GetYear
 
-#define _DeeTime_GetTimeMSeconds(ob) (DeeTime_GetTotalMSeconds(ob)%DEE_UINT64_C(86400000))
-#define _DeeTime_GetDateMSeconds(ob) ((DeeTime_GetTotalMSeconds(ob)/DEE_UINT64_C(86400000))*DEE_UINT64_C(86400000))
-DEE_FUNC_DECL(void) _DeeTime_SetTimeMSeconds(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_uint64_t mseconds) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(void) _DeeTime_SetDateMSeconds(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_uint64_t mseconds) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeTime_Compare(a,b)   (DeeTime_GetTotalMSeconds(b)-DeeTime_GetTotalMSeconds(a))
+#define DeeTime_CompareLo(a,b) (DeeTime_GetTotalMSeconds(a)< DeeTime_GetTotalMSeconds(b))
+#define DeeTime_CompareLe(a,b) (DeeTime_GetTotalMSeconds(a)<=DeeTime_GetTotalMSeconds(b))
+#define DeeTime_CompareEq(a,b) (DeeTime_GetTotalMSeconds(a)==DeeTime_GetTotalMSeconds(b))
+#define DeeTime_CompareNe(a,b) (DeeTime_GetTotalMSeconds(a)!=DeeTime_GetTotalMSeconds(b))
+#define DeeTime_CompareGr(a,b) (DeeTime_GetTotalMSeconds(a)> DeeTime_GetTotalMSeconds(b))
+#define DeeTime_CompareGe(a,b) (DeeTime_GetTotalMSeconds(a)>=DeeTime_GetTotalMSeconds(b))
+
+#define /* Dee_uint64_t */DeeTime_GetBeforeCurrentYearMSeconds(self)     (DeeTime_Years2Days(DeeTime_GetYear(self))*DEE_UINT64_C(86400000))
+#define /*         void */DeeTime_SetBeforeCurrentYearMSeconds(self,mseconds)                DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(DeeTime_GetAfterCurrentYearMSeconds(self)+(Dee_int64_t)(mseconds)))
+#define /* unsigned int */DeeTime_GetAfterCurrentYearMSeconds(self)          ((unsigned int)(DeeTime_GetTotalMSeconds(self)-DeeTime_GetBeforeCurrentYearMSeconds(self)))
+#define /*         void */DeeTime_SetAfterCurrentYearMSeconds(self,mseconds)                 DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_Years2Days(DeeTime_GetYear(self))*DEE_UINT64_C(86400000))+(Dee_int64_t)(mseconds)))
+#define /* Dee_uint64_t */DeeTime_GetBeforeCurrentDayMSeconds(self)                         _DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(86400000))
+#define /*         void */DeeTime_SetBeforeCurrentDayMSeconds(self,mseconds)                 DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_GetTotalMSeconds(self)%DEE_UINT64_C(86400000))+(Dee_int64_t)(mseconds)))
+#define /* unsigned int */DeeTime_GetAfterCurrentDayMSeconds(self)           ((unsigned int)(DeeTime_GetTotalMSeconds(self)%DEE_UINT64_C(86400000)))
+#define /*         void */DeeTime_SetAfterCurrentDayMSeconds(self,mseconds)                  DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(86400000))+(Dee_int64_t)(mseconds)))
+#define /* Dee_uint64_t */_DeeTime_GetTimeMSeconds DeeTime_GetAfterCurrentDayMSeconds
+#define /*         void */_DeeTime_SetTimeMSeconds DeeTime_SetAfterCurrentDayMSeconds
+#define /* Dee_uint64_t */_DeeTime_GetDateMSeconds DeeTime_GetBeforeCurrentDayMSeconds
+#define /*         void */_DeeTime_SetDateMSeconds DeeTime_SetBeforeCurrentDayMSeconds
+//DEE_FUNC_DECL(void) _DeeTime_SetDateMSeconds(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN Dee_uint64_t mseconds) DEE_ATTRIBUTE_NONNULL((1));
 
 //////////////////////////////////////////////////////////////////////////
 // Get / Set the date / time portions of a time object
 #define DeeTime_GetTime(ob) DeeTime_New(_DeeTime_GetTimeMSeconds(ob))
 #define DeeTime_GetDate(ob) DeeTime_New(_DeeTime_GetDateMSeconds(ob))
-DEE_FUNC_DECL(void) DeeTime_SetTime(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN unsigned int hours, DEE_A_IN unsigned int minutes, DEE_A_IN unsigned int seconds, DEE_A_IN unsigned int mseconds) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeTime_SetTime(self,hours,minutes,seconds,mseconds) _DeeTime_SetTimeMSeconds(self,\
+ ((Dee_uint64_t)(hours)*DEE_UINT64_C(3600000))+((Dee_uint64_t)(minutes)*DEE_UINT64_C(60000))+\
+ ((Dee_uint64_t)(seconds)*DEE_UINT64_C(1000))+((Dee_uint64_t)(mseconds)))
 DEE_FUNC_DECL(void) DeeTime_SetDate(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN unsigned int years, DEE_A_IN unsigned int months, DEE_A_IN unsigned int days) DEE_ATTRIBUTE_NONNULL((1));
 #define DeeTime_SetTimeObject(ob,right) _DeeTime_SetTimeMSeconds(ob,_DeeTime_GetTimeMSeconds(right))
 #define DeeTime_SetDateObject(ob,right) _DeeTime_SetDateMSeconds(ob,_DeeTime_GetDateMSeconds(right))
@@ -226,28 +248,31 @@ DEE_FUNC_DECL(void) DeeTime_SetDate(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE
 //       >> time = time.now();
 //       >> time.wday = -2;
 //       >> print time; // Last friday at the current time
-#define DeeTime_GetMSecond(ob) (unsigned int)(DeeTime_GetTotalMSeconds(ob)%DEE_UINT64_C(1000))
-DEE_FUNC_DECL(void) DeeTime_SetMSecond(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..999*/int v) DEE_ATTRIBUTE_NONNULL((1));
-#define DeeTime_GetSecond(ob) (unsigned int)(DeeTime_GetTotalSeconds(ob)%DEE_UINT64_C(60))
-DEE_FUNC_DECL(void) DeeTime_SetSecond(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..59*/int v) DEE_ATTRIBUTE_NONNULL((1));
-#define DeeTime_GetMinute(ob) (unsigned int)(DeeTime_GetTotalMinutes(ob)%DEE_UINT64_C(60))
-DEE_FUNC_DECL(void) DeeTime_SetMinute(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..59*/int v) DEE_ATTRIBUTE_NONNULL((1));
-#define DeeTime_GetHour(ob) (unsigned int)(DeeTime_GetTotalHours(ob)%DEE_UINT64_C(24))
-DEE_FUNC_DECL(void) DeeTime_SetHour(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..23*/int v) DEE_ATTRIBUTE_NONNULL((1));
-#define DeeTime_GetWDay(ob) (unsigned int)(DeeTime_GetTotalDays(ob)%DEE_UINT64_C(7)) // NOTE: 0 == Sunday
-DEE_FUNC_DECL(void) DeeTime_SetWDay(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..6*/int v) DEE_ATTRIBUTE_NONNULL((1));
+#define /* [0..999] unsigned int */DeeTime_GetMSecond(ob) (unsigned int)(DeeTime_GetTotalMSeconds(ob)%DEE_UINT64_C(1000))
+#define /*                  void */DeeTime_SetMSecond(self,/*0..999*/v) DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(1000)+(Dee_int64_t)(v))))
+#define /* [0..59]  unsigned int */DeeTime_GetSecond(ob) (unsigned int)(DeeTime_GetTotalSeconds(ob)%DEE_UINT64_C(60))
+#define /*                  void */DeeTime_SetSecond(self,/*0..59*/v)   DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(60000))+((Dee_int64_t)(v)*DEE_INT64_C(1000))))
+#define /* [0..59]  unsigned int */DeeTime_GetMinute(ob) (unsigned int)(DeeTime_GetTotalMinutes(ob)%DEE_UINT64_C(60))
+#define /*                  void */DeeTime_SetMinute(self,/*0..59*/v)   DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(3600000))+((Dee_int64_t)(v)*DEE_INT64_C(60000))))
+#define /* [0..23]  unsigned int */DeeTime_GetHour(ob)   (unsigned int)(DeeTime_GetTotalHours(ob)%DEE_UINT64_C(24))
+#define /*                  void */DeeTime_SetHour(self,/*0..23*/v)     DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(86400000))+((Dee_int64_t)(v)*DEE_INT64_C(3600000))))
+#define /* [0..6]   unsigned int */DeeTime_GetWDay(ob)   (unsigned int)(DeeTime_GetTotalDays(ob)%DEE_UINT64_C(7)) // NOTE: 0 == Sunday
+#define /*                  void */DeeTime_SetWDay(self,/*0..6*/v)      DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)(_DeeTime_GetAlignedMSeconds(self,DEE_UINT64_C(604800000))+((Dee_int64_t)(v)*DEE_INT64_C(86400000))))
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED /*0..[27|28|29|30]*/unsigned int) DeeTime_GetMDay(DEE_A_IN_OBJECT(DeeTimeObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(void) DeeTime_SetMDay(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..[27|28|29|30]*/int v) DEE_ATTRIBUTE_NONNULL((1));
+#define /*                  void */DeeTime_SetMDay(self,/*0..(27|28|29|30)*/v) DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_GetTotalMSeconds(self)-((Dee_uint64_t)DeeTime_GetMDay(self)*DEE_INT64_C(86400000)))+((Dee_int64_t)(v)*DEE_INT64_C(86400000))))
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED /*0..[365|366]*/unsigned int) DeeTime_GetYDay(DEE_A_IN_OBJECT(DeeTimeObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(void) DeeTime_SetYDay(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..[365|366]*/int v) DEE_ATTRIBUTE_NONNULL((1));
+#define /*                  void */DeeTime_SetYDay(self,/*0..[365|366]*/v) DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_GetTotalMSeconds(self)-((Dee_uint64_t)DeeTime_GetYDay(self)*DEE_INT64_C(86400000)))+((Dee_int64_t)(v)*DEE_INT64_C(86400000))))
 #define DeeTime_GetMWeek(ob) (DeeTime_GetMDay(ob)/7u)
-DEE_FUNC_DECL(void) DeeTime_SetMWeek(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..4*/int v) DEE_ATTRIBUTE_NONNULL((1));
+#define /*                  void */DeeTime_SetMWeek(self,/*0..4*/v)     DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_GetTotalMSeconds(self)-((Dee_uint64_t)DeeTime_GetMWeek(self)*DEE_INT64_C(604800000)))+((Dee_int64_t)(v)*DEE_INT64_C(604800000))))
+//DEE_FUNC_DECL(void) DeeTime_SetMWeek(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..4*/int v) DEE_ATTRIBUTE_NONNULL((1));
 #define DeeTime_GetYWeek(ob) (DeeTime_GetYDay(ob)/7u)
-DEE_FUNC_DECL(void) DeeTime_SetYWeek(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..55*/int v) DEE_ATTRIBUTE_NONNULL((1));
+#define /*                  void */DeeTime_SetYWeek(self,/*0..55*/v)    DeeTime_SetTotalMSeconds(self,(Dee_uint64_t)((DeeTime_GetTotalMSeconds(self)-((Dee_uint64_t)DeeTime_GetYWeek(self)*DEE_INT64_C(604800000)))+((Dee_int64_t)(v)*DEE_INT64_C(604800000))))
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED /*0..11*/unsigned int) DeeTime_GetMonth(DEE_A_IN_OBJECT(DeeTimeObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(void) DeeTime_SetMonth(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..11*/int v) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED /*0..~584542046*/unsigned int) DeeTime_GetYear(DEE_A_IN_OBJECT(DeeTimeObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(void) DeeTime_SetYear(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..~584542046*/unsigned int v) DEE_ATTRIBUTE_NONNULL((1));
+#define /* [0..~584542046] unsigned int */DeeTime_GetYear(self) ((unsigned int)DeeTime_Days2Years(DeeTime_GetTotalDays(self)))
+#define /*                         void */DeeTime_SetYear(self,/*0..~584542046*/v) DeeTime_SetTotalMSeconds(self,(DeeTime_Years2Days(v)*DEE_UINT64_C(86400000))+DeeTime_GetBeforeCurrentYearMSeconds(self))
+
+//DEE_FUNC_DECL(void) DeeTime_SetYear(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DEE_A_IN /*0..~584542046*/unsigned int v) DEE_ATTRIBUTE_NONNULL((1));
 
 #define DeeTime_FORMAT(ob,fmt)  DeeTime_Format(ob,fmt,(sizeof(fmt)/sizeof(char))-1)
 DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeStringObject) *) DeeTime_Format(

@@ -46,6 +46,18 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeObject_THasAttrStri
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TDelAttrString(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_Z char const *attr) DEE_ATTRIBUTE_NONNULL((1,2,3));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TSetAttrString(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_Z char const *attr, DEE_A_INOUT DeeObject *v) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
 
+#define DeeObject_GetAttrAndCast(self,result,result_fmt,attr) \
+ DeeObject_TGetAttrAndCast(Dee_TYPE(self),self,result,result_fmt,attr)
+#define DeeObject_GetAttrStringAndCast(self,result,result_fmt,attr) \
+ DeeObject_TGetAttrStringAndCast(Dee_TYPE(self),self,result,result_fmt,attr)
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetAttrAndCast(
+ DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT_OPT void *result,
+ DEE_A_IN_Z char const *result_fmt, DEE_A_IN_OBJECT(DeeStringObject) const *attr) DEE_ATTRIBUTE_NONNULL((1,2,4,5));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetAttrStringAndCast(
+ DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT_OPT void *result,
+ DEE_A_IN_Z char const *result_fmt, DEE_A_IN_Z char const *attr) DEE_ATTRIBUTE_NONNULL((1,2,4,5));
+
+
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_PGetAttr(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_OBJECT(DeeStringObject) const *attr) DEE_ATTRIBUTE_NONNULL((1,2,3));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PDelAttr(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_OBJECT(DeeStringObject) const *attr) DEE_ATTRIBUTE_NONNULL((1,2,3));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PSetAttr(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_INOUT DeeObject *v) DEE_ATTRIBUTE_NONNULL((1,2,3,4));

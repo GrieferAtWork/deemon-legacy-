@@ -32,7 +32,6 @@
 #include <deemon/none.h>
 #include <deemon/string.h>
 #include <deemon/structured.h>
-#include <deemon/time.h>
 #include <deemon/type.h>
 #include <deemon/weakref.h>
 
@@ -117,19 +116,6 @@ static DeeTypeObject *_DeeMember_GetBasicType(DeeMemberType mtype) {
 #else
    return &DeeString_Type;
 #endif
-
-#ifdef DEE_PLATFORM_WINDOWS
-  case DeeMemberType__SYSTEMTIME:
-  case DeeMemberType__FILETIME:
-  case DeeMemberType_local__FILETIME:
-  case DeeMemberType_POINTER_X1+DeeMemberType__FILETIME:
-  case DeeMemberType_POINTER_X1+DeeMemberType_local__FILETIME:
-#endif
-  case DeeMemberType_time_t_astime:
-  case DeeMemberType_local_time_t_astime:
-  case DeeMemberType_struct_tm:
-  case DeeMemberType_POINTER_X1+DeeMemberType_struct_tm:
-   return &DeeTime_Type;
 
   case DeeMemberType_object:
   case DeeMemberType_object_null:
@@ -252,52 +238,6 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeMember_Get(
    Dee_INCREF(result = DeeString_Character((char)(Dee_Utf32Char)def->d_offset));
 #endif
    break;
-
-  case DeeMemberType_CONST|DeeMemberType_time_t_astime:
-   result = DeeTime_NewFromTimeT((Dee_time_t)def->d_offset);
-   break;
-  case DeeMemberType_CONST|DeeMemberType_local_time_t_astime:
-   result = DeeTime_NewFromLocalTimeT((Dee_time_t)def->d_offset);
-   break;
-  case DeeMemberType_CONST|DeeMemberType_struct_tm:
-  case DeeMemberType_CONST|(DeeMemberType_POINTER_X1+DeeMemberType_struct_tm):
-   result = def->d_offset ? DeeTime_NewFromTm((struct tm *)def->d_offset) : DeeTime_New(0);
-   break;
-
-  case DeeMemberType_time_t_astime:
-   result = DeeTime_NewFromTimeT(*(Dee_time_t *)base_ob);
-   break;
-  case DeeMemberType_local_time_t_astime:
-   result = DeeTime_NewFromLocalTimeT(*(Dee_time_t *)base_ob);
-   break;
-  case DeeMemberType_struct_tm:
-   result = DeeTime_NewFromTm((struct tm *)base_ob);
-   break;
-  case DeeMemberType_POINTER_X1+DeeMemberType_struct_tm: {
-   struct tm *temp = *(struct tm **)base_ob;
-   result = temp ? DeeTime_NewFromTm(temp) : DeeTime_New(0);
-  } break;
-
-#ifdef DEE_PLATFORM_WINDOWS
-  case DeeMemberType__SYSTEMTIME:
-   return DeeTime_NewFromWin32SystemTime((struct _SYSTEMTIME *)base_ob);
-  case DeeMemberType_POINTER_X1+DeeMemberType__SYSTEMTIME: {
-   struct _SYSTEMTIME *temp = *(struct _SYSTEMTIME **)base_ob;
-   return temp ? DeeTime_NewFromWin32SystemTime(temp) : DeeTime_New(0);
-  } break;
-  case DeeMemberType__FILETIME:
-   return DeeTime_NewFromWin32FileTime((struct _FILETIME *)base_ob);
-  case DeeMemberType_POINTER_X1+DeeMemberType__FILETIME: {
-   struct _FILETIME *temp = *(struct _FILETIME **)base_ob;
-   return temp ? DeeTime_NewFromWin32FileTime(temp) : DeeTime_New(0);
-  } break;
-  case DeeMemberType_local__FILETIME:
-   return DeeTime_NewFromWin32LocalFileTime((struct _FILETIME *)base_ob);
-  case DeeMemberType_POINTER_X1+DeeMemberType_local__FILETIME: {
-   struct _FILETIME *temp = *(struct _FILETIME **)base_ob;
-   return temp ? DeeTime_NewFromWin32LocalFileTime(temp) : DeeTime_New(0);
-  } break;
-#endif
 
   case DeeMemberType_CONST|DeeMemberType_ldouble:
 #ifdef DEE_TYPES_SIZEOF_LDOUBLE
@@ -702,61 +642,6 @@ wobn:
     *((void **)base_ob),v,memory_order_seq_cst);
    Dee_WEAKXDECREF(v);
    break;
-
-
-  case DeeMemberType_time_t_astime:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (DeeTime_AsTimeT(v,(Dee_time_t *)base_ob) != 0) return -1;
-   break;
-  case DeeMemberType_local_time_t_astime:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (DeeTime_AsLocalTimeT(v,(Dee_time_t *)base_ob) != 0) return -1;
-   break;
-  case DeeMemberType_struct_tm:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (DeeTime_AsTm(v,(struct tm *)base_ob) != 0) return -1;
-   break;
-  case DeeMemberType_POINTER_X1+DeeMemberType_struct_tm:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (*(struct tm **)base_ob) {
-    if (DeeTime_AsTm(v,*(struct tm **)base_ob) != 0) return -1;
-   } else {
-#ifdef DEE_PLATFORM_WINDOWS
-no_attr:
-#endif
-    DeeError_SetStringf(&DeeErrorType_AttributeError,"Missing attribute: %s",def->d_name);
-    return -1;
-   }
-   break;
-#ifdef DEE_PLATFORM_WINDOWS
-  case DeeMemberType__SYSTEMTIME:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (DeeTime_AsWin32SystemTime(v,(struct _SYSTEMTIME *)base_ob) != 0) return -1;
-   break;
-  case DeeMemberType__FILETIME:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (DeeTime_AsWin32FileTime(v,(struct _FILETIME *)base_ob) != 0) return -1;
-   break;
-  case DeeMemberType_local__FILETIME:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (DeeTime_AsWin32LocalFileTime(v,(struct _FILETIME *)base_ob) != 0) return -1;
-   break;
-  case DeeMemberType_POINTER_X1+DeeMemberType__SYSTEMTIME:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (!*(struct _SYSTEMTIME **)base_ob) goto no_attr;
-   if (DeeTime_AsWin32SystemTime(v,*(struct _SYSTEMTIME **)base_ob) != 0) return -1;
-   break;
-  case DeeMemberType_POINTER_X1+DeeMemberType__FILETIME:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (!*(struct _FILETIME **)base_ob) goto no_attr;
-   if (DeeTime_AsWin32FileTime(v,*(struct _FILETIME **)base_ob) != 0) return -1;
-   break;
-  case DeeMemberType_POINTER_X1+DeeMemberType_local__FILETIME:
-   if (!DeeType_IsSameOrDerived(tp_v,&DeeTime_Type)) { DeeError_TypeError_UnexpectedTypeT(&DeeTime_Type,tp_v); return -1; }
-   if (!*(struct _FILETIME **)base_ob) goto no_attr;
-   if (DeeTime_AsWin32LocalFileTime(v,*(struct _FILETIME **)base_ob) != 0) return -1;
-   break;
-#endif
 
   default: {
    DeeTypeObject *ptr_base_tp;

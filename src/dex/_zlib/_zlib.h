@@ -22,8 +22,6 @@
 #define GUARD_DEEMON_DEX_ZLIB_H 1
  
 #include <deemon/__conf.inl>
-#include <deemon/dex.h>
-#include <deemon/object.h>
 #include <deemon/string.h>
 #include DEE_INCLUDE_MEMORY_API()
 
