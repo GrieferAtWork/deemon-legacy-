@@ -700,7 +700,11 @@ _DeeAtomic64_Load_seq_cst(DEE_ATOMIC64_NATIVE_T volatile *x) {
  result = *x;
  _DEE_MSVC_COMPILER_BARRIER();
 #elif defined(_M_ARM)
- result = __ldrexd((long volatile long *)x);
+#ifdef DEE_TYPES_SIZEOF_LLONG
+ result = __ldrexd((volatile long long *)x);
+#else
+ result = __ldrexd(x);
+#endif
  _DEE_MSVC_MEMORY_BARRIER();
 #else
  result = _DeeAtomic64_FetchOr_seq_cst(x,0);
@@ -713,7 +717,11 @@ _DeeAtomic64_Load_relaxed(DEE_ATOMIC64_NATIVE_T volatile *x) {
 #if DEE_ATOMIC_MS_64
  result = *x;
 #elif defined(_M_ARM)
- result = __ldrexd((volatile long long *)_Tgt);
+#ifdef DEE_TYPES_SIZEOF_LLONG
+ result = __ldrexd((volatile long long *)x);
+#else
+ result = __ldrexd(x);
+#endif
 #else
  result = _DeeAtomic64_FetchOr_relaxed(x,0);
 #endif

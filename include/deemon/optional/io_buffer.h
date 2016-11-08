@@ -22,8 +22,9 @@
 #define GUARD_DEEMON_OPTIONAL_IO_BUFFER_H 1
 
 #include <deemon/__conf.inl>
-#include <deemon/__atomic_intrin.inl>
+#ifdef DEE_LIMITED_DEX
 #include <deemon/mp/mutex.h>
+#endif
 
 DEE_DECL_BEGIN
 
@@ -68,7 +69,8 @@ struct DeeIOBuffer {
  : ((ob)->iob_size-(Dee_size_t)((ob)->iob_wpos-(ob)->iob_rpos)))
 #define DeeIOBuffer_Init(ob) DeeIOBuffer_InitEx(ob,0,DEE_IOBUFFER_FLAG_NONE)
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeIOBuffer_InitEx(
- DEE_A_OUT struct DeeIOBuffer *self, DEE_A_IN Dee_size_t size_hint, DEE_A_IN Dee_uint32_t flags);
+ DEE_A_OUT struct DeeIOBuffer *self, DEE_A_IN Dee_size_t size_hint,
+ DEE_A_IN Dee_uint32_t flags) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(void) DeeIOBuffer_Quit(DEE_A_IN struct DeeIOBuffer *self);
 #endif
 
@@ -79,8 +81,8 @@ DEE_FUNC_DECL(void) DeeIOBuffer_Quit(DEE_A_IN struct DeeIOBuffer *self);
 #define DeeIOBuffer_New() DeeIOBuffer_NewEx(0,DEE_IOBUFFER_FLAG_NONE)
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(NULL) struct DeeIOBuffer *)
  DeeIOBuffer_NewEx(DEE_A_IN Dee_size_t size_hint, DEE_A_IN Dee_uint32_t flags);
-DEE_FUNC_DECL(void) DeeIOBuffer_Delete(DEE_A_IN struct DeeIOBuffer *self);
-DEE_FUNC_DECL(void) DeeIOBuffer_Close(DEE_A_INOUT struct DeeIOBuffer *self);
+DEE_FUNC_DECL(void) DeeIOBuffer_Delete(DEE_A_IN struct DeeIOBuffer *self) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(void) DeeIOBuffer_Close(DEE_A_INOUT struct DeeIOBuffer *self) DEE_ATTRIBUTE_NONNULL((1));
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -90,15 +92,15 @@ DEE_FUNC_DECL(void) DeeIOBuffer_Close(DEE_A_INOUT struct DeeIOBuffer *self);
 // - Sets '*rs' to 0 if the buffer was closed
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeIOBuffer_Read(
  DEE_A_INOUT struct DeeIOBuffer *self, DEE_A_OUT_WB(*rs) void *p,
- DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs);
+ DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs) DEE_ATTRIBUTE_NONNULL((1));
 
 //////////////////////////////////////////////////////////////////////////
 // Write data into the buffer
 // - Wakes the first thread that was waiting for data
 // - Throws an Error.IOError if the buffer was closed
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeIOBuffer_Write(
- DEE_A_INOUT struct DeeIOBuffer *self,
- DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s);
+ DEE_A_INOUT struct DeeIOBuffer *self, DEE_A_IN_RB(s) void const *p,
+ DEE_A_IN Dee_size_t s) DEE_ATTRIBUTE_NONNULL((1));
 
 //////////////////////////////////////////////////////////////////////////
 // Skips data from the buffer
@@ -109,7 +111,7 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeIOBuffer_Write(
 // - Sets '*pos' to the about of skipped data
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeIOBuffer_Seek(
  DEE_A_INOUT struct DeeIOBuffer *self, DEE_A_IN Dee_int64_t off,
- DEE_A_IN int whence, DEE_A_OUT_OPT Dee_uint64_t *pos);
+ DEE_A_IN int whence, DEE_A_OUT_OPT Dee_uint64_t *pos) DEE_ATTRIBUTE_NONNULL((1));
 
 
 DEE_DECL_END

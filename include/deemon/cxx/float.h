@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_CXX_FLOAT_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/cxx/__features.inl>
 #include <deemon/float.h>
 #include <deemon/cxx/object.h>
 

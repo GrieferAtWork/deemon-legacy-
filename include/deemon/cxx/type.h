@@ -22,7 +22,9 @@
 #define GUARD_DEEMON_CXX_TYPE_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/cxx/__features.inl>
 #include <deemon/cxx/object.h>
+#include <deemon/optional/type_slots.h>
 
 #if DEE_HAVE_CXX_API
 #ifdef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS

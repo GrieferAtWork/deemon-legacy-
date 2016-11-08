@@ -129,21 +129,6 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PDelRangeItem(DEE_A
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PSetRangeItem(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_INOUT DeeObject *begin, DEE_A_INOUT DeeObject *end, DEE_A_INOUT DeeObject *v) DEE_ATTRIBUTE_NONNULL((1,2,3,4,5));
 
 
-#if DEE_DEPRECATED_API_VERSION(100,101,102)
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_ATTRIBUTE_DEPRECATED(
- "'DeeObject_IterNext()' isn't exception safe. Use 'DeeObject_IterNextEx' instead")
- DEE_A_EXEC DEE_A_RET_EXCEPT_REF/*MAYBE*/ DeeObject *)
- DeeObject_IterNext(DEE_A_INOUT DeeObject *self) {
- DeeObject *result; int error;
- if ((error = DeeObject_IterNextEx(self,&result)) != 0) {
-  if (error < 0) return (DeeObject *)0; // Error
-  if (error > 0) return (DeeObject *)0; // End of iterator (but an error may have still been set by the caller)
- }
- return result;
-}
-#endif
-
-
 //////////////////////////////////////////////////////////////////////////
 // Iterate an object using its iterator interface
 //  - returns   -1: if other errors caused problems

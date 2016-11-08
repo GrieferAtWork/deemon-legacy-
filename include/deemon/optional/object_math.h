@@ -141,18 +141,6 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PHash(DEE_A_IN_TYPE
 
 #define DeeObject_HashInplace(ob,hash) DeeObject_HashEx(ob,hash,&(hash))
 
-#if DEE_DEPRECATED_API_VERSION(100,101,102)
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_ATTRIBUTE_DEPRECATED(
- "'DeeObject_Hash()' isn't exception safe. Use 'DeeObject_HashEx' instead")
- DEE_A_EXEC DEE_A_RET_EXCEPT/*MAYBE*/(-1) Dee_hash_t) DeeObject_Hash(
- DEE_A_INOUT DeeObject *self, DEE_A_IN Dee_hash_t start) {
- Dee_hash_t result;
- if (DeeObject_HashEx(self,start,&result) != 0)
-  return (Dee_hash_t)-1; // Hash might naturally return -1; Error may have occurred before
- return result;
-}
-#endif
-
 //////////////////////////////////////////////////////////////////////////
 // These versions of the inplace functions are
 // used when executing an inplace operator on: 

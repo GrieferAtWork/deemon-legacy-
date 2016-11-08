@@ -172,22 +172,6 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1))
 }
 #endif
 
-#if DEE_DEPRECATED_API_VERSION(100,101,102)
-#ifdef DEE_PRIVATE_DECL_DEE_HASH_T
-DEE_PRIVATE_DECL_DEE_HASH_T
-#undef DEE_PRIVATE_DECL_DEE_HASH_T
-#endif
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1))
- DEE_ATTRIBUTE_DEPRECATED("'DeeTuple_Hash()' isn't exception safe. Use 'DeeObject_HashEx' instead")
- DEE_A_RET_EXCEPT(-1) Dee_hash_t) DeeTuple_Hash(
- DEE_A_INOUT DeeObject *self, DEE_A_IN Dee_hash_t start) {
- Dee_hash_t result;
- DEE_ASSERT(DeeObject_Check(self) && DeeTuple_Check(self));
- if (DeeObject_HashEx(self,start,&result) != 0)
-  return (Dee_hash_t)-1; // Hash might naturally return -1; Error may have occurred before
- return result;
-}
-#else
 #ifdef DEE_LIMITED_API
 #ifdef DEE_PRIVATE_DECL_DEE_HASH_T
 DEE_PRIVATE_DECL_DEE_HASH_T
@@ -196,7 +180,6 @@ DEE_PRIVATE_DECL_DEE_HASH_T
 extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeTuple_Hash(
  DEE_A_IN_OBJECT(DeeTupleObject) const *self,
  DEE_A_IN Dee_hash_t start, DEE_A_OUT Dee_hash_t *result) DEE_ATTRIBUTE_NONNULL((1,3));
-#endif
 #endif
 
 

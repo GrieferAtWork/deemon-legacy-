@@ -324,20 +324,35 @@ a("TPP_rt_wchar_t", "Dee_rt_wchar_t");
 a("TPP_rt_char16_t","Dee_rt_char16_t");
 a("TPP_rt_char32_t","Dee_rt_char32_t");
 
-#if 1
+all("#ifdef DEE_TYPES_SIZEOF_INT");
 a("signed","int");
 a("unsigned","uint");
 a("sint","int");
 a("signed_int","int");
 a("unsigned_int","uint");
+a("u_int","uint");
+all("#endif");
+
+all("#ifdef DEE_TYPES_SIZEOF_CHAR");
 a("signed_char","schar");
 a("unsigned_char","uchar");
+a("u_char","uchar");
+all("#endif");
+
+all("#ifdef DEE_TYPES_SIZEOF_SHORT");
 a("sshort","short");
 a("signed_short","short");
 a("unsigned_short","ushort");
+a("u_short","ushort");
+all("#endif");
+
+all("#ifdef DEE_TYPES_SIZEOF_LONG");
 a("slong","long");
 a("signed_long","long");
 a("unsigned_long","ulong");
+a("u_long","ulong");
+all("#endif");
+
 all("#ifdef DEE_TYPES_SIZEOF_LLONG");
 a("sllong","llong");
 a("signed_llong","llong");
@@ -348,15 +363,11 @@ a("signed_long_long","llong");
 a("ulong_long","ullong");
 a("unsigned_long_long","ullong");
 all("#endif");
+
 all("#ifdef DEE_TYPES_SIZEOF_LDOUBLE");
 a("long_double","ldouble");
 all("#endif");
-#endif
 
-a("u_char","uchar");
-a("u_short","ushort");
-a("u_int","uint");
-a("u_long","ulong");
 
 #if 1
 // Internal Linux types
@@ -425,7 +436,7 @@ a("PROPID","ULONG");
 a("SIZE_T","ULONG_PTR");
 a("SSIZE_T","LONG_PTR");
 a("DWORD_PTR","ULONG_PTR");
-all("#if DEE_COMPILER_HAVE_LONG_LONG");
+all("#ifdef DEE_TYPES_SIZEOF_LLONG");
 a("LONGLONG","llong");
 a("ULONGLONG","ullong");
 all("#else");

@@ -231,20 +231,24 @@ DEE_A_RET_WUNUSED Dee_int64_t DeeRandomNumberGenerator_NextInt64(
  return (Dee_int64_t)next_seed();
 }
 
+#ifdef DEE_TYPES_SIZEOF_FLOAT
 DEE_A_RET_WUNUSED float DeeRandomNumberGenerator_NextFloat(
  DEE_A_INOUT struct DeeRandomNumberGenerator *self) {
  return ((float)((Dee_uint32_t)next_seed()))*((1.0f/0x10000)/0x10000)/* 2^-32 */;
 }
+#endif /* DEE_TYPES_SIZEOF_FLOAT */
+#ifdef DEE_TYPES_SIZEOF_DOUBLE
 DEE_A_RET_WUNUSED double DeeRandomNumberGenerator_NextDouble(
  DEE_A_INOUT struct DeeRandomNumberGenerator *self) {
  return ((double)((Dee_uint32_t)next_seed()))*((1.0/0x10000)/0x10000)/* 2^-32 */;
 }
-#if DEE_COMPILER_HAVE_LDOUBLE
+#endif /* DEE_TYPES_SIZEOF_DOUBLE */
+#ifdef DEE_TYPES_SIZEOF_LDOUBLE
 DEE_A_RET_WUNUSED long double DeeRandomNumberGenerator_NextLDouble(
  DEE_A_INOUT struct DeeRandomNumberGenerator *self) {
  return ((long double)((Dee_uint32_t)next_seed()))*((1.0L/0x10000)/0x10000)/* 2^-32 */;
 }
-#endif
+#endif /* DEE_TYPES_SIZEOF_LDOUBLE */
 
 void DeeRandomNumberGenerator_NextData(
  DEE_A_INOUT struct DeeRandomNumberGenerator *self,

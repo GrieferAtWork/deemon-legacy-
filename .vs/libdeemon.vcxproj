@@ -372,6 +372,7 @@
     <ClInclude Include="..\src\tpp\tpp.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\include\deemon\cxx\__features.inl" />
     <None Include="..\include\deemon\cxx\__string_impl.inl" />
     <None Include="..\include\deemon\__annotations.inl" />
     <None Include="..\include\deemon\__atomic_intrin.inl" />

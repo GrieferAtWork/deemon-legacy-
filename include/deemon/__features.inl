@@ -95,42 +95,6 @@
 
 //////////////////////////////////////////////////////////////////////////
 // Compiler specific features
-#ifndef DEE_COMPILER_HAVE_LONG_LONG
-#if (defined(_MSC_VER) && (defined(_MSC_EXTENSIONS) || _MSC_VER >= 1400)) || \
-    (defined(__clang__)) || \
-    (defined(__GNUC__) && !defined(__DARWIN_NO_LONG_LONG)) || \
-    (defined(__BORLANDC__) && __BORLANDC__ >= 0x561 && !defined(__NO_LONG_LONG)) ||\
-    (defined(__DEEMON__))
-# define DEE_COMPILER_HAVE_LONG_LONG 1
-#else /* "long long" */
-# define DEE_COMPILER_HAVE_LONG_LONG 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_FLOAT
-#if 1
-# define DEE_COMPILER_HAVE_FLOAT 1
-#else /* "float" */
-# define DEE_COMPILER_HAVE_FLOAT 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_DOUBLE
-#if 1
-# define DEE_COMPILER_HAVE_DOUBLE 1
-#else /* "double" */
-# define DEE_COMPILER_HAVE_DOUBLE 0
-#endif
-#endif
-
-#ifndef DEE_COMPILER_HAVE_LDOUBLE
-#if !defined(__NO_LONG_DOUBLE_MATH)
-# define DEE_COMPILER_HAVE_LDOUBLE 1
-#else /* "long double" */
-# define DEE_COMPILER_HAVE_LDOUBLE 0
-#endif
-#endif
-
 #ifndef DEE_COMPILER_HAVE_MSVC_SEH
 #if defined(_MSC_VER)
 # define DEE_COMPILER_HAVE_MSVC_SEH 1
@@ -197,7 +161,7 @@
 
 #ifndef DEE_COMPILER_HAVE_UNNAMED_UNION
 #if (defined(__DEEMON__)\
- || (defined(_MSC_VER) /* && TODO: Version */))\
+ || (defined(_MSC_VER) /* && Apparently supported on all versions? */))\
  || (defined(__STDC__) && __STDC__ >= 201103L && !defined(__cplusplus))\
  || (defined(__GNUC__) && (__GNUC__ >= 2 && (__GNUC__ != 2 ||\
     (__GNUC_MINOR__ >= 95 && (__GNUC_MINOR__ != 95 || defined(__cplusplus))))))\
@@ -209,7 +173,7 @@
 #endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
 #ifndef DEE_COMPILER_HAVE_UNNAMED_STRUCT
 #if (defined(__DEEMON__)\
- || (defined(_MSC_VER) /* && TODO: Version */))\
+ || (defined(_MSC_VER) /* && Apparently supported on all versions? */))\
  || (defined(__GNUC__) && (__GNUC__ >= 2 && (__GNUC__ != 2 || (!defined(__cplusplus) && __GNUC_MINOR__ >= 96))))\
  && (!defined(__SUNPRO_C) && !defined(__SUNPRO_CC))
 # define DEE_COMPILER_HAVE_UNNAMED_STRUCT 1
@@ -946,72 +910,23 @@
 #ifndef DEE_ATTRIBUTE_DEPRECATED
 #if __has_declspec_attribute(deprecated) || \
    (defined(_MSC_VER) && _MSC_VER >= 1200)
-#define DEE_ATTRIBUTE_DEPRECATED(reason) __declspec(deprecated(reason))
+# define DEE_ATTRIBUTE_DEPRECATED(reason) __declspec(deprecated(reason))
 #elif __has_attribute(deprecated) || \
      (defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)))
-#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))) || \
-     defined(__DEEMON__)
-#define DEE_ATTRIBUTE_DEPRECATED(reason) __attribute__((__deprecated__(reason)))
+#if (defined(__GNUC__) && (__GNUC__ > 4 ||\
+    (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))) || defined(__DEEMON__)
+# define DEE_ATTRIBUTE_DEPRECATED(reason) __attribute__((__deprecated__(reason)))
 #else
-#define DEE_ATTRIBUTE_DEPRECATED(reason) __attribute__((__deprecated__))
+# define DEE_ATTRIBUTE_DEPRECATED(reason) __attribute__((__deprecated__))
 #endif
 #elif (__has_cpp_attribute(deprecated) >= 201309) || \
       (defined(__cplusplus) && defined(_MSC_VER) && _MSC_VER >= 1900)
-#define DEE_ATTRIBUTE_DEPRECATED(reason) [[deprecated(reason)]]
+# define DEE_ATTRIBUTE_DEPRECATED(reason) [[deprecated(reason)]]
 #else
-#define DEE_ATTRIBUTE_DEPRECATED(reason) /* nothing */
+# define DEE_ATTRIBUTE_DEPRECATED(reason) /* nothing */
 #endif
 #endif /* !DEE_ATTRIBUTE_DEPRECATED */
 
-
-#ifndef DEE_CXX11_NOEXCEPT
-#if defined(__cplusplus) && (!defined(_HAS_EXCEPTIONS) || _HAS_EXCEPTIONS) && \
-   (__has_feature(cxx_noexcept) || \
-   (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GNUC__ * 10 + __GNUC_MINOR__ >= 46) || \
-   (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 190023026)))
-# define DEE_CXX11_NOEXCEPT noexcept
-#elif defined(__cplusplus) && (!defined(_HAS_EXCEPTIONS) || _HAS_EXCEPTIONS)
-# define DEE_CXX11_NOEXCEPT throw()
-#else
-# define DEE_CXX11_NOEXCEPT /* nothing */
-#endif
-#endif /* !DEE_CXX11_NOEXCEPT */
-
-#ifndef DEE_STATIC_CONST
-#if __has_feature(cxx_constexpr) || \
-   (defined(__cpp_constexpr) && __cpp_constexpr >= 200704) || (defined(__cplusplus) && \
-   (defined(__IBMCPP__) && defined(__IBMCPP_CONSTEXPR) && __IBMCPP_CONSTEXPR) || \
-   (defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x5130) || \
-   (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && \
-   (defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L)) || \
-   (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 190023026))
-# define DEE_STATIC_CONST(T,decl) static constexpr T decl
-#elif defined(__cplusplus) && (\
-   (!defined(__SUNPRO_CC) || __SUNPRO_CC > 0x520) &&\
-   (!defined(__IBMCPP__) || __IBMCPP__ > 502) &&\
-   (!defined(MPW_CPLUS) || MPW_CPLUS > 0x890))
-# define DEE_STATIC_CONST(T,decl) static T const decl
-#else
-# define DEE_STATIC_CONST(T,decl) enum{decl}
-#endif
-#endif
-
-#ifndef DEE_CXX_DELETE_CLASSDEFAULT
-#if __has_feature(deleted_functions) || (defined(__cplusplus) &&\
-   (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 180020827))
-#define DEE_CXX_DELETE_CLASSDEFAULT(T)\
- T() = delete;\
- T(T const&) = delete;\
- T &operator = (T const&) = delete;
-#else
-#define DEE_CXX_DELETE_CLASSDEFAULT(T)\
-private:\
- T();\
- T(T const&);\
- T &operator = (T const&);\
-public:
-#endif
-#endif
 
 #ifndef DEE_BUILTIN_BREAKPOINT
 #if __has_builtin(__builtin_breakpoint)
@@ -1030,21 +945,10 @@ void __cdecl __debugbreak(void);
 # include <signal.h>
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_SIGNAL_H */
 #ifdef SIGTRAP
-#  define DEE_BUILTIN_BREAKPOINT() raise(SIGTRAP)
+# define DEE_BUILTIN_BREAKPOINT() raise(SIGTRAP)
 #endif
 #endif
 #endif /* !DEE_BUILTIN_BREAKPOINT */
-
-
-#ifndef DEE_COMPILER_ASSUME
-#ifdef _MSC_VER
-# define DEE_COMPILER_ASSUME       __assume
-#elif __has_builtin(__builtin_assume)
-# define DEE_COMPILER_ASSUME       __builtin_assume
-#else
-# define DEE_COMPILER_ASSUME(expr) (void)0
-#endif
-#endif
 
 #ifndef DEE_BUILTIN_UNREACHABLE_
 #if __has_builtin(__builtin_unreachable) || \
@@ -1054,6 +958,16 @@ void __cdecl __debugbreak(void);
 # define DEE_BUILTIN_UNREACHABLE_() __assume(0)
 #else
 # define DEE_BUILTIN_UNREACHABLE_() (void)0
+#endif
+#endif
+
+#ifndef DEE_COMPILER_ASSUME
+#ifdef _MSC_VER
+# define DEE_COMPILER_ASSUME       __assume
+#elif __has_builtin(__builtin_assume)
+# define DEE_COMPILER_ASSUME       __builtin_assume
+#else
+# define DEE_COMPILER_ASSUME(expr) (void)0
 #endif
 #endif
 
@@ -1144,9 +1058,9 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #endif /* Lil-Endian... */
 #endif
 #if DEE_PLATFORM_ENDIAN == 1234
-#define DEE_PLATFORM_LIL_ENDIAN 1
+# define DEE_PLATFORM_LIL_ENDIAN 1
 #elif DEE_PLATFORM_ENDIAN == 4321
-#define DEE_PLATFORM_BIG_ENDIAN 1
+# define DEE_PLATFORM_BIG_ENDIAN 1
 #endif
 #endif
 
@@ -1156,64 +1070,78 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 // >> These are used everywhere, so changing them
 //    should fix errors from invalid type sizes
 // >> 'DEE_TYPES_SIZEOF_LLONG' is optional, but all others are mandatory
+#ifndef DEE_TYPES_SIZEOF_CHAR
 #if defined(__SIZEOF_CHAR__)
-#define DEE_TYPES_SIZEOF_CHAR  __SIZEOF_CHAR__
-#else
-#define DEE_TYPES_SIZEOF_CHAR  1
+# define DEE_TYPES_SIZEOF_CHAR  __SIZEOF_CHAR__
+#elif 1
+# define DEE_TYPES_SIZEOF_CHAR  1
 #endif
+#endif /* !DEE_TYPES_SIZEOF_CHAR */
+
+#ifndef DEE_TYPES_SIZEOF_SHORT
 #if defined(__SIZEOF_SHORT__)
-#define DEE_TYPES_SIZEOF_SHORT __SIZEOF_SHORT__
-#else
-#define DEE_TYPES_SIZEOF_SHORT 2
+# define DEE_TYPES_SIZEOF_SHORT __SIZEOF_SHORT__
+#elif 1
+# define DEE_TYPES_SIZEOF_SHORT 2
 #endif
+#endif /* !DEE_TYPES_SIZEOF_SHORT */
+
+#ifndef DEE_TYPES_SIZEOF_INT
 #if defined(__SIZEOF_INT__)
-#define DEE_TYPES_SIZEOF_INT   __SIZEOF_INT__
-#else
-#define DEE_TYPES_SIZEOF_INT   4
+# define DEE_TYPES_SIZEOF_INT   __SIZEOF_INT__
+#elif 1
+# define DEE_TYPES_SIZEOF_INT   4
 #endif
+#endif /* !DEE_TYPES_SIZEOF_INT */
+
+#ifndef DEE_TYPES_SIZEOF_LONG
 #if defined(__SIZEOF_LONG__)
-#define DEE_TYPES_SIZEOF_LONG  __SIZEOF_LONG__
+# define DEE_TYPES_SIZEOF_LONG  __SIZEOF_LONG__
 #elif defined(DEE_PLATFORM_64_BIT) && \
      !defined(DEE_PLATFORM_WINDOWS)
-#define DEE_TYPES_SIZEOF_LONG  8
-#else
-#define DEE_TYPES_SIZEOF_LONG  4
+# define DEE_TYPES_SIZEOF_LONG  8
+#elif 1
+# define DEE_TYPES_SIZEOF_LONG  4
 #endif
+#endif /* !DEE_TYPES_SIZEOF_LONG */
+
+#ifndef DEE_TYPES_SIZEOF_LLONG
 #if defined(__SIZEOF_LLONG__)
-#define DEE_TYPES_SIZEOF_LLONG __SIZEOF_LLONG__
+# define DEE_TYPES_SIZEOF_LLONG __SIZEOF_LLONG__
 #elif defined(__SIZEOF_LONG_LONG__)
-#define DEE_TYPES_SIZEOF_LLONG __SIZEOF_LONG_LONG__
-#elif DEE_COMPILER_HAVE_LONG_LONG
-#define DEE_TYPES_SIZEOF_LLONG 8
+# define DEE_TYPES_SIZEOF_LLONG __SIZEOF_LONG_LONG__
+#elif (defined(_MSC_VER) && (defined(_MSC_EXTENSIONS) || _MSC_VER >= 1400))\
+   ||  defined(__clang__) || defined(__DEEMON__)\
+   || (defined(__GNUC__) && !defined(__DARWIN_NO_LONG_LONG))\
+   || (defined(__BORLANDC__) && __BORLANDC__ >= 0x561 && !defined(__NO_LONG_LONG))\
+   || (defined(__SIZEOF_LLONG__) || defined(__SIZEOF_LONG_LONG__))
+# define DEE_TYPES_SIZEOF_LLONG 8
 #endif
+#endif /* !DEE_TYPES_SIZEOF_LLONG */
 
 #ifndef DEE_TYPES_SIZEOF_FLOAT
-#if DEE_COMPILER_HAVE_FLOAT
 #if defined(__SIZEOF_FLOAT__)
 # define DEE_TYPES_SIZEOF_FLOAT __SIZEOF_FLOAT__
-#else
+#elif 1
 # define DEE_TYPES_SIZEOF_FLOAT 4
 #endif
-#endif
-#endif
+#endif /* !DEE_TYPES_SIZEOF_FLOAT */
 
 #ifndef DEE_TYPES_SIZEOF_DOUBLE
-#if DEE_COMPILER_HAVE_DOUBLE
 #if defined(__SIZEOF_DOUBLE__)
 # define DEE_TYPES_SIZEOF_DOUBLE __SIZEOF_DOUBLE__
-#else
+#elif 1
 # define DEE_TYPES_SIZEOF_DOUBLE 8
 #endif
-#endif
-#endif
+#endif /* !DEE_TYPES_SIZEOF_DOUBLE */
 
 #ifndef DEE_TYPES_SIZEOF_LDOUBLE
-#if DEE_COMPILER_HAVE_LDOUBLE
 #if defined(__SIZEOF_LONG_DOUBLE__)
 # define DEE_TYPES_SIZEOF_LDOUBLE __SIZEOF_LONG_DOUBLE__
 #elif defined(__SIZEOF_LDOUBLE__)
 # define DEE_TYPES_SIZEOF_LDOUBLE __SIZEOF_LDOUBLE__
-#elif defined(__C67__) || defined(__i386__)
+#elif !defined(__NO_LONG_DOUBLE_MATH)
+#if defined(__C67__) || defined(__i386__)
 # define DEE_TYPES_SIZEOF_LDOUBLE 12
 #elif defined(__x86_64__)
 # define DEE_TYPES_SIZEOF_LDOUBLE 16
@@ -1222,99 +1150,169 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #else
 # define DEE_TYPES_SIZEOF_LDOUBLE 8
 #endif
+#endif /* ... */
+#endif /* !DEE_TYPES_SIZEOF_LDOUBLE */
+
+
+#if defined(DEE_TYPES_SIZEOF_CHAR) && DEE_TYPES_SIZEOF_CHAR == 1
+# define DEE_PRIVATE_TYPES_INT_1  signed char
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned char
+#elif defined(DEE_TYPES_SIZEOF_SHORT) && DEE_TYPES_SIZEOF_SHORT == 1
+# define DEE_PRIVATE_TYPES_INT_1  short
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned short
+#elif defined(DEE_TYPES_SIZEOF_INT) && DEE_TYPES_SIZEOF_INT == 1
+# define DEE_PRIVATE_TYPES_INT_1  int
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned int
+#elif defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 1
+# define DEE_PRIVATE_TYPES_INT_1  long
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned long
+#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 1
+# define DEE_PRIVATE_TYPES_INT_1  long long
+# define DEE_PRIVATE_TYPES_UINT_1 unsigned long long
+#elif defined(DEE_REQUIRE_ALL_INTEGRAL_TYPES)
+# error No type suitable for int8_t / uint8_t found
 #endif
+#if defined(DEE_TYPES_SIZEOF_SHORT) && DEE_TYPES_SIZEOF_SHORT == 2
+# define DEE_PRIVATE_TYPES_INT_2  short
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned short
+#elif defined(DEE_TYPES_SIZEOF_INT) && DEE_TYPES_SIZEOF_INT == 2
+# define DEE_PRIVATE_TYPES_INT_2  int
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned int
+#elif defined(DEE_TYPES_SIZEOF_CHAR) && DEE_TYPES_SIZEOF_CHAR == 2
+# define DEE_PRIVATE_TYPES_INT_2  signed char
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned char
+#elif defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 2
+# define DEE_PRIVATE_TYPES_INT_2  long
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned long
+#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 2
+# define DEE_PRIVATE_TYPES_INT_2  long long
+# define DEE_PRIVATE_TYPES_UINT_2 unsigned long long
+#elif defined(DEE_REQUIRE_ALL_INTEGRAL_TYPES)
+# error No type suitable for int16_t / uint16_t found
+#endif
+#if defined(DEE_TYPES_SIZEOF_INT) && DEE_TYPES_SIZEOF_INT == 4
+# define DEE_PRIVATE_TYPES_INT_4  int
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned int
+#elif defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 4
+# define DEE_PRIVATE_TYPES_INT_4  long
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned long
+#elif defined(DEE_TYPES_SIZEOF_SHORT) && DEE_TYPES_SIZEOF_SHORT == 4
+# define DEE_PRIVATE_TYPES_INT_4  short
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned short
+#elif defined(DEE_TYPES_SIZEOF_CHAR) && DEE_TYPES_SIZEOF_CHAR == 4
+# define DEE_PRIVATE_TYPES_INT_4  signed char
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned char
+#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 4
+# define DEE_PRIVATE_TYPES_INT_4  long long
+# define DEE_PRIVATE_TYPES_UINT_4 unsigned long long
+#elif defined(DEE_REQUIRE_ALL_INTEGRAL_TYPES)
+# error No type suitable for int32_t / uint32_t found
+#endif
+#if defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
+# define DEE_PRIVATE_TYPES_INT_8  long long
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned long long
+#elif defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 8
+# define DEE_PRIVATE_TYPES_INT_8  long
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned long
+#elif defined(DEE_TYPES_SIZEOF_CHAR) && DEE_TYPES_SIZEOF_CHAR == 8
+# define DEE_PRIVATE_TYPES_INT_8  signed char
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned char
+#elif defined(DEE_TYPES_SIZEOF_SHORT) && DEE_TYPES_SIZEOF_SHORT == 8
+# define DEE_PRIVATE_TYPES_INT_8  short
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned short
+#elif defined(DEE_TYPES_SIZEOF_INT) && DEE_TYPES_SIZEOF_INT == 8
+# define DEE_PRIVATE_TYPES_INT_8  int
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned int
+#elif defined(DEE_REQUIRE_ALL_INTEGRAL_TYPES)
+# error No type suitable for int64_t / uint64_t found
 #endif
 
+#define DEE_PRIVATE_TYPES_XINT2_0(sizeof) DEE_PRIVATE_TYPES_UINT_##sizeof
+#define DEE_PRIVATE_TYPES_XINT2_1(sizeof) DEE_PRIVATE_TYPES_INT_##sizeof
+#define DEE_PRIVATE_TYPES_XINT_0(sizeof) DEE_PRIVATE_TYPES_XINT2_0(sizeof)
+#define DEE_PRIVATE_TYPES_XINT_1(sizeof) DEE_PRIVATE_TYPES_XINT2_1(sizeof)
+
+#ifdef DEE_PRIVATE_TYPES_UINT_1
+#define DEE_PRIVATE_TYPES_HAVE_1 1
+#define DEE_TYPES_INT8_T   DEE_PRIVATE_TYPES_INT_1
+#define DEE_TYPES_UINT8_T  DEE_PRIVATE_TYPES_UINT_1
+#else
+#define DEE_PRIVATE_TYPES_HAVE_1 0
+#endif
+#ifdef DEE_PRIVATE_TYPES_UINT_2
+#define DEE_PRIVATE_TYPES_HAVE_2 1
+#define DEE_TYPES_INT16_T  DEE_PRIVATE_TYPES_INT_2
+#define DEE_TYPES_UINT16_T DEE_PRIVATE_TYPES_UINT_2
+#else
+#define DEE_PRIVATE_TYPES_HAVE_2 0
+#endif
+#ifdef DEE_PRIVATE_TYPES_UINT_4
+#define DEE_PRIVATE_TYPES_HAVE_4 1
+#define DEE_TYPES_INT32_T  DEE_PRIVATE_TYPES_INT_4
+#define DEE_TYPES_UINT32_T DEE_PRIVATE_TYPES_UINT_4
+#else
+#define DEE_PRIVATE_TYPES_HAVE_4 0
+#endif
+#ifdef DEE_PRIVATE_TYPES_UINT_8
+#define DEE_PRIVATE_TYPES_HAVE_8 1
+#define DEE_TYPES_INT64_T  DEE_PRIVATE_TYPES_INT_8
+#define DEE_TYPES_UINT64_T DEE_PRIVATE_TYPES_UINT_8
+#else
+#define DEE_PRIVATE_TYPES_HAVE_8 0
+#endif
+
+#ifdef DEE_TYPES_SIZEOF_FLOAT
+#define DEE_TYPES_FLOATID_FLOAT   1
+#define DEE_PRIVATE_TYPES_FLOAT_1 float
+#endif
+#ifdef DEE_TYPES_SIZEOF_DOUBLE
+#define DEE_TYPES_FLOATID_DOUBLE  2
+#define DEE_PRIVATE_TYPES_FLOAT_2 double
+#endif
+#ifdef DEE_TYPES_SIZEOF_LDOUBLE
+#define DEE_TYPES_FLOATID_LDOUBLE 3
+#define DEE_PRIVATE_TYPES_FLOAT_3 long double
+#endif
+
+//////////////////////////////////////////////////////////////////////////
+// Type generators (Return a type matching the given type/sign-ness)
+#define DEE_TYPES_INT(sizeof)         DEE_PRIVATE_TYPES_INT(sizeof)
+#define DEE_TYPES_UINT(sizeof)        DEE_PRIVATE_TYPES_UINT(sizeof)
+#define DEE_TYPES_XINT(signed,sizeof) DEE_PRIVATE_TYPES_XINT(signed,sizeof)
+#define DEE_TYPES_HAVE(sizeof)        DEE_PRIVATE_TYPES_HAVE(sizeof)
+#define DEE_TYPES_FLOAT(id)           DEE_PRIVATE_TYPES_FLOAT(id)
+#define DEE_PRIVATE_TYPES_INT(sizeof)         DEE_PRIVATE_TYPES_INT_##sizeof
+#define DEE_PRIVATE_TYPES_UINT(sizeof)        DEE_PRIVATE_TYPES_UINT_##sizeof
+#define DEE_PRIVATE_TYPES_XINT(signed,sizeof) DEE_PRIVATE_TYPES_XINT_##signed(sizeof)
+#define DEE_PRIVATE_TYPES_HAVE(sizeof)        DEE_PRIVATE_TYPES_HAVE_##sizeof
+#define DEE_PRIVATE_TYPES_FLOAT(id)           DEE_PRIVATE_TYPES_FLOAT_##id
+
+#ifndef DEE_TYPES_SIZEOF_POINTER
 #if defined(__SIZEOF_POINTER__)
 # define DEE_TYPES_SIZEOF_POINTER __SIZEOF_POINTER__
+#elif defined(__SIZEOF_PTRDIFF_T__)
+# define DEE_TYPES_SIZEOF_POINTER __SIZEOF_PTRDIFF_T__
+#elif defined(__SIZEOF_INTPTR_T__)
+# define DEE_TYPES_SIZEOF_POINTER __SIZEOF_INTPTR_T__
+#elif defined(__SIZEOF_UINTPTR_T__)
+# define DEE_TYPES_SIZEOF_POINTER __SIZEOF_UINTPTR_T__
+#elif defined(__SIZEOF_SIZE_T__)
+# define DEE_TYPES_SIZEOF_POINTER __SIZEOF_SIZE_T__
+#elif defined(__SIZEOF_SSIZE_T__)
+# define DEE_TYPES_SIZEOF_POINTER __SIZEOF_SSIZE_T__
 #elif defined(DEE_PLATFORM_64_BIT)
 # define DEE_TYPES_SIZEOF_POINTER 8
 #else
 # define DEE_TYPES_SIZEOF_POINTER 4
 #endif
-
-#if defined(__CHAR_SIGNED__) || defined(_CHAR_SIGNED)
-#define DEE_TYPES_CHAR_SIGNED 1
-#elif defined(__CHAR_UNSIGNED__) || defined(_CHAR_UNSIGNED)
-#define DEE_TYPES_CHAR_SIGNED 0
-#elif '\xFF' != 0xFF
-#define DEE_TYPES_CHAR_SIGNED 1
-#else
-#define DEE_TYPES_CHAR_SIGNED 0
 #endif
 
-#if defined(__WCHAR_SIGNED__) || defined(__WCHAR_T_SIGNED__) || \
-    defined(_WCHAR_SIGNED) || defined(_WCHAR_T_SIGNED)
-#define DEE_TYPES_WCHAR_T_SIGNED 1
-#elif defined(__WCHAR_UNSIGNED__) || defined(__WCHAR_T_UNSIGNED__) || \
-      defined(_WCHAR_UNSIGNED) || defined(_WCHAR_T_UNSIGNED)
-#define DEE_TYPES_WCHAR_T_SIGNED 0
-#elif DEE_COMPILER_HAVE_WIDESTRING_PREFIX
-#if L'\xFFFF' != 0xFFFF
-#define DEE_TYPES_WCHAR_T_SIGNED 1
-#else
-#define DEE_TYPES_WCHAR_T_SIGNED 0
-#endif
-#else
-#define DEE_TYPES_WCHAR_T_SIGNED 0
-#endif
+#define DEE_TYPES_SIZEOF_PTRDIFF_T DEE_TYPES_SIZEOF_POINTER
+#define DEE_TYPES_SIZEOF_INTPTR_T  DEE_TYPES_SIZEOF_POINTER
+#define DEE_TYPES_SIZEOF_UINTPTR_T DEE_TYPES_SIZEOF_POINTER
+#define DEE_TYPES_SIZEOF_SIZE_T    DEE_TYPES_SIZEOF_POINTER
+#define DEE_TYPES_SIZEOF_SSIZE_T   DEE_TYPES_SIZEOF_POINTER
 
-#if defined(__SIZEOF_INT_FAST8__)
-#define DEE_TYPES_SIZEOF_INT_FAST8_T __SIZEOF_INT_FAST8__
-#else
-#define DEE_TYPES_SIZEOF_INT_FAST8_T 1
-#endif
-#if defined(__SIZEOF_INT_FAST16__)
-#define DEE_TYPES_SIZEOF_INT_FAST16_T  __SIZEOF_INT_FAST16__
-#elif defined(_MSC_VER) && defined(DEE_PLATFORM_WINDOWS)
-#define DEE_TYPES_SIZEOF_INT_FAST16_T  4
-#else
-#define DEE_TYPES_SIZEOF_INT_FAST16_T  2
-#endif
-#if defined(__SIZEOF_INT_FAST32__)
-#define DEE_TYPES_SIZEOF_INT_FAST32_T  __SIZEOF_INT_FAST32__
-#else
-#define DEE_TYPES_SIZEOF_INT_FAST32_T  4
-#endif
-#if defined(__SIZEOF_INT_FAST64__)
-#define DEE_TYPES_SIZEOF_INT_FAST64_T  __SIZEOF_INT_FAST64__
-#else
-#define DEE_TYPES_SIZEOF_INT_FAST64_T  8
-#endif
-#if defined(__SIZEOF_INT_LEAST8__)
-#define DEE_TYPES_SIZEOF_INT_LEAST8_T  __SIZEOF_INT_LEAST8__
-#else
-#define DEE_TYPES_SIZEOF_INT_LEAST8_T  1
-#endif
-#if defined(__SIZEOF_INT_LEAST16__)
-#define DEE_TYPES_SIZEOF_INT_LEAST16_T __SIZEOF_INT_LEAST16__
-#else
-#define DEE_TYPES_SIZEOF_INT_LEAST16_T 2
-#endif
-#if defined(__SIZEOF_INT_LEAST32__)
-#define DEE_TYPES_SIZEOF_INT_LEAST32_T __SIZEOF_INT_LEAST32__
-#else
-#define DEE_TYPES_SIZEOF_INT_LEAST32_T 4
-#endif
-#ifndef DEE_TYPES_SIZEOF_INT_LEAST64_T
-#if defined(__SIZEOF_INT_LEAST64__)
-# define DEE_TYPES_SIZEOF_INT_LEAST64_T __SIZEOF_INT_LEAST64__
-#else
-# define DEE_TYPES_SIZEOF_INT_LEAST64_T 8
-#endif
-#endif /* !DEE_TYPES_SIZEOF_INT_LEAST64_T */
-#ifndef DEE_TYPES_SIZEOF_PTRDIFF_T
-#define DEE_TYPES_SIZEOF_PTRDIFF_T    DEE_TYPES_SIZEOF_POINTER
-#endif
-#ifndef DEE_TYPES_SIZEOF_SIZE_T
-#define DEE_TYPES_SIZEOF_SIZE_T       DEE_TYPES_SIZEOF_POINTER
-#endif
-#ifndef DEE_TYPES_SIZEOF_INTPTR_T
-#define DEE_TYPES_SIZEOF_INTPTR_T     DEE_TYPES_SIZEOF_POINTER
-#endif
-#ifndef DEE_TYPES_SIZEOF_SSIZE_T
-#define DEE_TYPES_SIZEOF_SSIZE_T      DEE_TYPES_SIZEOF_POINTER
-#endif
 #ifndef DEE_TYPES_SIZEOF_WCHAR_T
 #if defined(__SIZEOF_WCHAR__)
 # define DEE_TYPES_SIZEOF_WCHAR_T   __SIZEOF_WCHAR__
@@ -1323,12 +1321,19 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #else
 # define DEE_TYPES_SIZEOF_WCHAR_T   4
 #endif
+#if !DEE_TYPES_HAVE(DEE_TYPES_SIZEOF_WCHAR_T)
+#undef DEE_TYPES_SIZEOF_WCHAR_T
+#endif
 #endif /* !DEE_TYPES_SIZEOF_WCHAR_T */
+
 #ifndef DEE_TYPES_SIZEOF_CHAR16_T
 #if defined(__SIZEOF_CHAR16__)
 # define DEE_TYPES_SIZEOF_CHAR16_T  __SIZEOF_CHAR16__
 #else
 # define DEE_TYPES_SIZEOF_CHAR16_T  2
+#endif
+#if !DEE_TYPES_HAVE(DEE_TYPES_SIZEOF_CHAR16_T)
+#undef DEE_TYPES_SIZEOF_WCHAR_T
 #endif
 #endif /* !DEE_TYPES_SIZEOF_CHAR16_T */
 #ifndef DEE_TYPES_SIZEOF_CHAR32_T
@@ -1337,9 +1342,141 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #else
 # define DEE_TYPES_SIZEOF_CHAR32_T  4
 #endif
+#if !DEE_TYPES_HAVE(DEE_TYPES_SIZEOF_CHAR32_T)
+#undef DEE_TYPES_SIZEOF_WCHAR_T
+#endif
 #endif /* !DEE_TYPES_SIZEOF_CHAR32_T */
+
+#ifdef DEE_TYPES_SIZEOF_CHAR16_T
 #define DEE_TYPES_CHAR16_T_SIGNED  0
+#endif
+#ifdef DEE_TYPES_SIZEOF_CHAR32_T
 #define DEE_TYPES_CHAR32_T_SIGNED  0
+#endif
+
+
+#ifndef DEE_TYPES_CHAR_SIGNED
+#ifdef DEE_TYPES_SIZEOF_CHAR
+#if defined(__CHAR_SIGNED__) || defined(_CHAR_SIGNED)
+# define DEE_TYPES_CHAR_SIGNED 1
+#elif defined(__CHAR_UNSIGNED__) || defined(_CHAR_UNSIGNED)
+# define DEE_TYPES_CHAR_SIGNED 0
+#elif '\xFF' != 0xFF
+# define DEE_TYPES_CHAR_SIGNED 1
+#else
+# define DEE_TYPES_CHAR_SIGNED 0
+#endif
+#endif /* DEE_TYPES_SIZEOF_CHAR */
+#endif /* !DEE_TYPES_CHAR_SIGNED */
+
+#ifndef DEE_TYPES_WCHAR_T_SIGNED
+#if defined(__WCHAR_SIGNED__) || defined(__WCHAR_T_SIGNED__) || \
+    defined(_WCHAR_SIGNED) || defined(_WCHAR_T_SIGNED)
+# define DEE_TYPES_WCHAR_T_SIGNED 1
+#elif defined(__WCHAR_UNSIGNED__) || defined(__WCHAR_T_UNSIGNED__) || \
+      defined(_WCHAR_UNSIGNED) || defined(_WCHAR_T_UNSIGNED)
+# define DEE_TYPES_WCHAR_T_SIGNED 0
+#elif DEE_COMPILER_HAVE_WIDESTRING_PREFIX
+#if L'\xFFFF' != 0xFFFF
+# define DEE_TYPES_WCHAR_T_SIGNED 1
+#else
+# define DEE_TYPES_WCHAR_T_SIGNED 0
+#endif
+#else
+# define DEE_TYPES_WCHAR_T_SIGNED 0
+#endif
+#endif /* DEE_TYPES_WCHAR_T_SIGNED */
+
+#ifndef DEE_TYPES_SIZEOF_INT_FAST8_T
+#if defined(__SIZEOF_INT_FAST8__)
+# define DEE_TYPES_SIZEOF_INT_FAST8_T __SIZEOF_INT_FAST8__
+#elif defined(DEE_TYPES_INT8_T)
+# define DEE_TYPES_SIZEOF_INT_FAST8_T 1
+#elif defined(DEE_TYPES_INT16_T)
+# define DEE_TYPES_SIZEOF_INT_FAST8_T 2
+#elif defined(DEE_TYPES_INT32_T)
+# define DEE_TYPES_SIZEOF_INT_FAST8_T 4
+#elif defined(DEE_TYPES_INT64_T)
+# define DEE_TYPES_SIZEOF_INT_FAST8_T 8
+#endif
+#endif /* !DEE_TYPES_SIZEOF_INT_FAST8_T */
+
+#ifndef DEE_TYPES_SIZEOF_INT_FAST16_T
+#if defined(__SIZEOF_INT_FAST16__)
+# define DEE_TYPES_SIZEOF_INT_FAST16_T  __SIZEOF_INT_FAST16__
+#elif defined(_MSC_VER) && defined(DEE_PLATFORM_WINDOWS)
+# define DEE_TYPES_SIZEOF_INT_FAST16_T  4
+#elif defined(DEE_TYPES_INT16_T)
+# define DEE_TYPES_SIZEOF_INT_FAST16_T  2
+#elif defined(DEE_TYPES_INT32_T)
+# define DEE_TYPES_SIZEOF_INT_FAST16_T  4
+#elif defined(DEE_TYPES_INT64_T)
+# define DEE_TYPES_SIZEOF_INT_FAST16_T  8
+#endif
+#endif /* !DEE_TYPES_SIZEOF_INT_FAST16_T */
+
+#ifndef DEE_TYPES_SIZEOF_INT_FAST32_T
+#if defined(__SIZEOF_INT_FAST32__)
+# define DEE_TYPES_SIZEOF_INT_FAST32_T  __SIZEOF_INT_FAST32__
+#elif defined(DEE_TYPES_INT32_T)
+# define DEE_TYPES_SIZEOF_INT_FAST32_T  4
+#elif defined(DEE_TYPES_INT64_T)
+# define DEE_TYPES_SIZEOF_INT_FAST32_T  8
+#endif
+#endif /* !DEE_TYPES_SIZEOF_INT_FAST32_T */
+
+#ifndef DEE_TYPES_SIZEOF_INT_FAST64_T
+#if defined(__SIZEOF_INT_FAST64__)
+# define DEE_TYPES_SIZEOF_INT_FAST64_T  __SIZEOF_INT_FAST64__
+#elif defined(DEE_TYPES_INT64_T)
+# define DEE_TYPES_SIZEOF_INT_FAST64_T  8
+#endif
+#endif /* !DEE_TYPES_SIZEOF_INT_FAST64_T */
+
+#ifndef DEE_TYPES_SIZEOF_INT_LEAST8_T
+#if defined(__SIZEOF_INT_LEAST8__)
+# define DEE_TYPES_SIZEOF_INT_LEAST8_T  __SIZEOF_INT_LEAST8__
+#elif defined(DEE_TYPES_INT8_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST8_T  1
+#elif defined(DEE_TYPES_INT16_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST8_T  2
+#elif defined(DEE_TYPES_INT32_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST8_T  4
+#elif defined(DEE_TYPES_INT64_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST8_T  8
+#endif
+#endif /* !DEE_TYPES_SIZEOF_INT_LEAST8_T */
+
+#ifndef DEE_TYPES_SIZEOF_INT_LEAST16_T
+#if defined(__SIZEOF_INT_LEAST16__)
+# define DEE_TYPES_SIZEOF_INT_LEAST16_T __SIZEOF_INT_LEAST16__
+#elif defined(DEE_TYPES_INT16_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST16_T 2
+#elif defined(DEE_TYPES_INT32_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST16_T 4
+#elif defined(DEE_TYPES_INT64_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST16_T 8
+#endif
+#endif /* !DEE_TYPES_SIZEOF_INT_LEAST16_T */
+
+#ifndef DEE_TYPES_SIZEOF_INT_LEAST32_T
+#if defined(__SIZEOF_INT_LEAST32__)
+# define DEE_TYPES_SIZEOF_INT_LEAST32_T __SIZEOF_INT_LEAST32__
+#elif defined(DEE_TYPES_INT32_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST32_T 4
+#elif defined(DEE_TYPES_INT64_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST32_T 8
+#endif
+#endif /* !DEE_TYPES_SIZEOF_INT_LEAST32_T */
+
+#ifndef DEE_TYPES_SIZEOF_INT_LEAST64_T
+#if defined(__SIZEOF_INT_LEAST64__)
+# define DEE_TYPES_SIZEOF_INT_LEAST64_T __SIZEOF_INT_LEAST64__
+#elif defined(DEE_TYPES_INT64_T)
+# define DEE_TYPES_SIZEOF_INT_LEAST64_T 8
+#endif
+#endif /* !DEE_TYPES_SIZEOF_INT_LEAST64_T */
+
 
 #ifndef DEE_TYPES_SIZEOF_TIME_T
 #if defined(__SIZEOF_TIME_T__)
@@ -1363,10 +1500,21 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 
 #define DEE_TYPES_SIZEOF_THREADID  4
 
-// deemon requires this type to be at least 64 bits
-// >> todo: If the compiler supports 128 bit integers, this probably has to be '16'
-#define DEE_TYPES_SIZEOF_INTMAX_T  8
+#ifndef DEE_TYPES_SIZEOF_INTMAX_T
+#if DEE_TYPES_HAVE(8)
+# define DEE_TYPES_SIZEOF_INTMAX_T  8
+#elif DEE_TYPES_HAVE(4)
+# define DEE_TYPES_SIZEOF_INTMAX_T  4
+#elif DEE_TYPES_HAVE(2)
+# define DEE_TYPES_SIZEOF_INTMAX_T  2
+#elif DEE_TYPES_HAVE(1)
+# define DEE_TYPES_SIZEOF_INTMAX_T  1
+#endif
+#endif /* !DEE_TYPES_SIZEOF_INTMAX_T */
+
+#ifdef DEE_TYPES_SIZEOF_INTMAX_T
 #define DEE_TYPES_SIZEOF_UINTMAX_T DEE_TYPES_SIZEOF_INTMAX_T
+#endif
 
 #ifdef DEE_PLATFORM_UNIX
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_FEATURES_H
@@ -1402,189 +1550,75 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 # define DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE DEE_TYPES_SIZEOF_PID_T
 #endif
 
-#if DEE_TYPES_SIZEOF_CHAR == 1
-# define DEE_PRIVATE_TYPES_INT_1  signed char
-# define DEE_PRIVATE_TYPES_UINT_1 unsigned char
-#elif DEE_TYPES_SIZEOF_SHORT == 1
-# define DEE_PRIVATE_TYPES_INT_1  short
-# define DEE_PRIVATE_TYPES_UINT_1 unsigned short
-#elif DEE_TYPES_SIZEOF_INT == 1
-# define DEE_PRIVATE_TYPES_INT_1  int
-# define DEE_PRIVATE_TYPES_UINT_1 unsigned int
-#elif DEE_TYPES_SIZEOF_LONG == 1
-# define DEE_PRIVATE_TYPES_INT_1  long
-# define DEE_PRIVATE_TYPES_UINT_1 unsigned long
-#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 1
-# define DEE_PRIVATE_TYPES_INT_1  long long
-# define DEE_PRIVATE_TYPES_UINT_1 unsigned long long
-#else
-# error No type suitable for int8_t / uint8_t found
-#endif
-#if DEE_TYPES_SIZEOF_CHAR == 2
-# define DEE_PRIVATE_TYPES_INT_2  signed char
-# define DEE_PRIVATE_TYPES_UINT_2 unsigned char
-#elif DEE_TYPES_SIZEOF_SHORT == 2
-# define DEE_PRIVATE_TYPES_INT_2  short
-# define DEE_PRIVATE_TYPES_UINT_2 unsigned short
-#elif DEE_TYPES_SIZEOF_INT == 2
-# define DEE_PRIVATE_TYPES_INT_2  int
-# define DEE_PRIVATE_TYPES_UINT_2 unsigned int
-#elif DEE_TYPES_SIZEOF_LONG == 2
-# define DEE_PRIVATE_TYPES_INT_2  long
-# define DEE_PRIVATE_TYPES_UINT_2 unsigned long
-#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 2
-# define DEE_PRIVATE_TYPES_INT_2  long long
-# define DEE_PRIVATE_TYPES_UINT_2 unsigned long long
-#else
-# error No type suitable for int16_t / uint16_t found
-#endif
-#if DEE_TYPES_SIZEOF_CHAR == 4
-# define DEE_PRIVATE_TYPES_INT_4  signed char
-# define DEE_PRIVATE_TYPES_UINT_4 unsigned char
-#elif DEE_TYPES_SIZEOF_SHORT == 4
-# define DEE_PRIVATE_TYPES_INT_4  short
-# define DEE_PRIVATE_TYPES_UINT_4 unsigned short
-#elif DEE_TYPES_SIZEOF_INT == 4
-# define DEE_PRIVATE_TYPES_INT_4  int
-# define DEE_PRIVATE_TYPES_UINT_4 unsigned int
-#elif DEE_TYPES_SIZEOF_LONG == 4
-# define DEE_PRIVATE_TYPES_INT_4  long
-# define DEE_PRIVATE_TYPES_UINT_4 unsigned long
-#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 4
-# define DEE_PRIVATE_TYPES_INT_4  long long
-# define DEE_PRIVATE_TYPES_UINT_4 unsigned long long
-#else
-# error No type suitable for int32_t / uint32_t found
-#endif
-#if DEE_TYPES_SIZEOF_CHAR == 8
-# define DEE_PRIVATE_TYPES_INT_8  signed char
-# define DEE_PRIVATE_TYPES_UINT_8 unsigned char
-#elif DEE_TYPES_SIZEOF_SHORT == 8
-# define DEE_PRIVATE_TYPES_INT_8  short
-# define DEE_PRIVATE_TYPES_UINT_8 unsigned short
-#elif DEE_TYPES_SIZEOF_INT == 8
-# define DEE_PRIVATE_TYPES_INT_8  int
-# define DEE_PRIVATE_TYPES_UINT_8 unsigned int
-#elif DEE_TYPES_SIZEOF_LONG == 8
-# define DEE_PRIVATE_TYPES_INT_8  long
-# define DEE_PRIVATE_TYPES_UINT_8 unsigned long
-#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
-# define DEE_PRIVATE_TYPES_INT_8  long long
-# define DEE_PRIVATE_TYPES_UINT_8 unsigned long long
-#else
-# error No type suitable for int64_t / uint64_t found
-#endif
-
-#define DEE_PRIVATE_TYPES_XINT2_0(sizeof) DEE_PRIVATE_TYPES_UINT_##sizeof
-#define DEE_PRIVATE_TYPES_XINT2_1(sizeof) DEE_PRIVATE_TYPES_INT_##sizeof
-#define DEE_PRIVATE_TYPES_XINT_0(sizeof) DEE_PRIVATE_TYPES_XINT2_0(sizeof)
-#define DEE_PRIVATE_TYPES_XINT_1(sizeof) DEE_PRIVATE_TYPES_XINT2_1(sizeof)
-
-#ifdef DEE_PRIVATE_TYPES_INT_1
-#define DEE_TYPES_INT8_T   DEE_PRIVATE_TYPES_INT_1
-#endif
-#ifdef DEE_PRIVATE_TYPES_INT_2
-#define DEE_TYPES_INT16_T  DEE_PRIVATE_TYPES_INT_2
-#endif
-#ifdef DEE_PRIVATE_TYPES_INT_4
-#define DEE_TYPES_INT32_T  DEE_PRIVATE_TYPES_INT_4
-#endif
-#ifdef DEE_PRIVATE_TYPES_INT_8
-#define DEE_TYPES_INT64_T  DEE_PRIVATE_TYPES_INT_8
-#endif
-#ifdef DEE_PRIVATE_TYPES_UINT_1
-#define DEE_TYPES_UINT8_T  DEE_PRIVATE_TYPES_UINT_1
-#endif
-#ifdef DEE_PRIVATE_TYPES_UINT_2
-#define DEE_TYPES_UINT16_T DEE_PRIVATE_TYPES_UINT_2
-#endif
-#ifdef DEE_PRIVATE_TYPES_UINT_4
-#define DEE_TYPES_UINT32_T DEE_PRIVATE_TYPES_UINT_4
-#endif
-#ifdef DEE_PRIVATE_TYPES_UINT_8
-#define DEE_TYPES_UINT64_T DEE_PRIVATE_TYPES_UINT_8
-#endif
-
-#ifdef DEE_TYPES_SIZEOF_FLOAT
-#define DEE_TYPES_FLOATID_FLOAT   1
-#define DEE_PRIVATE_TYPES_FLOAT_1 float
-#endif
-#ifdef DEE_TYPES_SIZEOF_DOUBLE
-#define DEE_TYPES_FLOATID_DOUBLE  2
-#define DEE_PRIVATE_TYPES_FLOAT_2 double
-#endif
-#ifdef DEE_TYPES_SIZEOF_LDOUBLE
-#define DEE_TYPES_FLOATID_LDOUBLE 3
-#define DEE_PRIVATE_TYPES_FLOAT_3 long double
-#endif
-
-//////////////////////////////////////////////////////////////////////////
-// Type generators (Return a type matching the given type/sign-ness)
-#define DEE_TYPES_INT(sizeof)         DEE_PRIVATE_TYPES_INT(sizeof)
-#define DEE_TYPES_UINT(sizeof)        DEE_PRIVATE_TYPES_UINT(sizeof)
-#define DEE_TYPES_XINT(signed,sizeof) DEE_PRIVATE_TYPES_XINT(signed,sizeof)
-#define DEE_TYPES_FLOAT(id)           DEE_PRIVATE_TYPES_FLOAT(id)
-#define DEE_PRIVATE_TYPES_INT(sizeof)         DEE_PRIVATE_TYPES_INT_##sizeof
-#define DEE_PRIVATE_TYPES_UINT(sizeof)        DEE_PRIVATE_TYPES_UINT_##sizeof
-#define DEE_PRIVATE_TYPES_XINT(signed,sizeof) DEE_PRIVATE_TYPES_XINT_##signed(sizeof)
-#define DEE_PRIVATE_TYPES_FLOAT(id)           DEE_PRIVATE_TYPES_FLOAT_##id
 
 
+#ifdef DEE_TYPES_UINT8_T
 #define DEE_PRIVATES_TYPES_IPRINTF_1  "%I8d"
 #define DEE_PRIVATES_TYPES_IUPRINTF_1 "%I8u"
+#endif
+#ifdef DEE_TYPES_UINT16_T
 #define DEE_PRIVATES_TYPES_IPRINTF_2  "%I16d"
 #define DEE_PRIVATES_TYPES_IUPRINTF_2 "%I16u"
+#endif
+#ifdef DEE_TYPES_UINT32_T
 #define DEE_PRIVATES_TYPES_IPRINTF_4  "%I32d"
 #define DEE_PRIVATES_TYPES_IUPRINTF_4 "%I32u"
+#endif
+#ifdef DEE_TYPES_UINT64_T
 #define DEE_PRIVATES_TYPES_IPRINTF_8  "%I64d"
 #define DEE_PRIVATES_TYPES_IUPRINTF_8 "%I64u"
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Some optimizations, to get the printf string shorter
-#if DEE_TYPES_SIZEOF_SIZE_T == 1
-#undef DEE_PRIVATES_TYPES_IPRINTF_1
-#undef DEE_PRIVATES_TYPES_IUPRINTF_1
-#define DEE_PRIVATES_TYPES_IPRINTF_1  "%Id"
-#define DEE_PRIVATES_TYPES_IUPRINTF_1 "%Iu"
-#elif DEE_TYPES_SIZEOF_SIZE_T == 2
-#undef DEE_PRIVATES_TYPES_IPRINTF_2
-#undef DEE_PRIVATES_TYPES_IUPRINTF_2
-#define DEE_PRIVATES_TYPES_IPRINTF_2  "%Id"
-#define DEE_PRIVATES_TYPES_IUPRINTF_2 "%Iu"
-#elif DEE_TYPES_SIZEOF_SIZE_T == 4
-#undef DEE_PRIVATES_TYPES_IPRINTF_4
-#undef DEE_PRIVATES_TYPES_IUPRINTF_4
-#define DEE_PRIVATES_TYPES_IPRINTF_4  "%Id"
-#define DEE_PRIVATES_TYPES_IUPRINTF_4 "%Iu"
+#ifdef DEE_TYPES_SIZEOF_SIZE_T
+#if DEE_TYPES_SIZEOF_SIZE_T == 4
+# undef DEE_PRIVATES_TYPES_IPRINTF_4
+# undef DEE_PRIVATES_TYPES_IUPRINTF_4
+# define DEE_PRIVATES_TYPES_IPRINTF_4  "%Id"
+# define DEE_PRIVATES_TYPES_IUPRINTF_4 "%Iu"
 #elif DEE_TYPES_SIZEOF_SIZE_T == 8
-#undef DEE_PRIVATES_TYPES_IPRINTF_8
-#undef DEE_PRIVATES_TYPES_IUPRINTF_8
-#define DEE_PRIVATES_TYPES_IPRINTF_8  "%Id"
-#define DEE_PRIVATES_TYPES_IUPRINTF_8 "%Iu"
+# undef DEE_PRIVATES_TYPES_IPRINTF_8
+# undef DEE_PRIVATES_TYPES_IUPRINTF_8
+# define DEE_PRIVATES_TYPES_IPRINTF_8  "%Id"
+# define DEE_PRIVATES_TYPES_IUPRINTF_8 "%Iu"
+#elif DEE_TYPES_SIZEOF_SIZE_T == 1
+# undef DEE_PRIVATES_TYPES_IPRINTF_1
+# undef DEE_PRIVATES_TYPES_IUPRINTF_1
+# define DEE_PRIVATES_TYPES_IPRINTF_1  "%Id"
+# define DEE_PRIVATES_TYPES_IUPRINTF_1 "%Iu"
+#elif DEE_TYPES_SIZEOF_SIZE_T == 2
+# undef DEE_PRIVATES_TYPES_IPRINTF_2
+# undef DEE_PRIVATES_TYPES_IUPRINTF_2
+# define DEE_PRIVATES_TYPES_IPRINTF_2  "%Id"
+# define DEE_PRIVATES_TYPES_IUPRINTF_2 "%Iu"
 #endif
-#if DEE_TYPES_SIZEOF_INT == 1
-#undef DEE_PRIVATES_TYPES_IPRINTF_1
-#undef DEE_PRIVATES_TYPES_IUPRINTF_1
-#define DEE_PRIVATES_TYPES_IPRINTF_1  "%d"
-#define DEE_PRIVATES_TYPES_IUPRINTF_1 "%u"
+#endif /* DEE_TYPES_SIZEOF_SIZE_T */
+#ifdef DEE_TYPES_SIZEOF_INT
+#if DEE_TYPES_SIZEOF_INT == 4
+# undef DEE_PRIVATES_TYPES_IPRINTF_4
+# undef DEE_PRIVATES_TYPES_IUPRINTF_4
+# define DEE_PRIVATES_TYPES_IPRINTF_4  "%d"
+# define DEE_PRIVATES_TYPES_IUPRINTF_4 "%u"
 #elif DEE_TYPES_SIZEOF_INT == 2
-#undef DEE_PRIVATES_TYPES_IPRINTF_2
-#undef DEE_PRIVATES_TYPES_IUPRINTF_2
-#define DEE_PRIVATES_TYPES_IPRINTF_2  "%d"
-#define DEE_PRIVATES_TYPES_IUPRINTF_2 "%u"
-#elif DEE_TYPES_SIZEOF_INT == 4
-#undef DEE_PRIVATES_TYPES_IPRINTF_4
-#undef DEE_PRIVATES_TYPES_IUPRINTF_4
-#define DEE_PRIVATES_TYPES_IPRINTF_4  "%d"
-#define DEE_PRIVATES_TYPES_IUPRINTF_4 "%u"
+# undef DEE_PRIVATES_TYPES_IPRINTF_2
+# undef DEE_PRIVATES_TYPES_IUPRINTF_2
+# define DEE_PRIVATES_TYPES_IPRINTF_2  "%d"
+# define DEE_PRIVATES_TYPES_IUPRINTF_2 "%u"
+#elif DEE_TYPES_SIZEOF_INT == 1
+# undef DEE_PRIVATES_TYPES_IPRINTF_1
+# undef DEE_PRIVATES_TYPES_IUPRINTF_1
+# define DEE_PRIVATES_TYPES_IPRINTF_1  "%d"
+# define DEE_PRIVATES_TYPES_IUPRINTF_1 "%u"
 #elif DEE_TYPES_SIZEOF_INT == 8
-#undef DEE_PRIVATES_TYPES_IPRINTF_8
-#undef DEE_PRIVATES_TYPES_IUPRINTF_8
-#define DEE_PRIVATES_TYPES_IPRINTF_8  "%d"
-#define DEE_PRIVATES_TYPES_IUPRINTF_8 "%u"
+# undef DEE_PRIVATES_TYPES_IPRINTF_8
+# undef DEE_PRIVATES_TYPES_IUPRINTF_8
+# define DEE_PRIVATES_TYPES_IPRINTF_8  "%d"
+# define DEE_PRIVATES_TYPES_IUPRINTF_8 "%u"
 #endif
-#define DEE_PRIVATES_TYPES_IXPRINTF_0 DEE_TYPES_IUPRINTF
-#define DEE_PRIVATES_TYPES_IXPRINTF_1 DEE_TYPES_IPRINTF
+#endif /* DEE_TYPES_SIZEOF_INT */
+#define DEE_PRIVATES_TYPES_IXPRINTF_0 DEE_PRIVATE_TYPES_IUPRINTF
+#define DEE_PRIVATES_TYPES_IXPRINTF_1 DEE_PRIVATE_TYPES_IPRINTF
 
 //////////////////////////////////////////////////////////////////////////
 // Printf helpers (NOTE: Only guarantied to work with deemon's own printf-style functions)
@@ -1599,8 +1633,8 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #ifndef DEE_STATIC_INLINE
 #if defined(__cplusplus)
 # define DEE_STATIC_INLINE(T)  DEE_ATTRIBUTE_UNUSED DEE_ATTRIBUTE_ALWAYS_INLINE inline T
-#elif defined(_MSC_VER) || defined(__BORLANDC__) || defined(__DMC__) ||defined(__SC__) || \
-      defined(__WATCOMC__) || defined(__LCC__) || defined(__DECC)
+#elif defined(_MSC_VER) || defined(__BORLANDC__) || defined(__DMC__) || defined(__SC__)\
+   || defined(__WATCOMC__) || defined(__LCC__) || defined(__DECC)
 # define DEE_STATIC_INLINE(T)  DEE_ATTRIBUTE_UNUSED DEE_ATTRIBUTE_ALWAYS_INLINE __inline T
 #elif defined(__GNUC__)
 # define DEE_STATIC_INLINE(T)  static DEE_ATTRIBUTE_UNUSED DEE_ATTRIBUTE_ALWAYS_INLINE __inline__ T
@@ -1639,9 +1673,8 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #ifndef DEE_UNUSED
 #if defined(__cplusplus) || defined(__DEEMON__)
 # define DEE_UNUSED(x) /* nothing */
-#elif __has_attribute(__unused__) || \
-     (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)))
-# define DEE_UNUSED(x) __attribute__((__unused__)) x
+#elif defined(__GNUC__)
+# define DEE_UNUSED(x) DEE_ATTRIBUTE_UNUSED x
 #else
 # define DEE_UNUSED(x) x
 #if defined(_MSC_VER) && defined(DEE_LIMITED_DEX)
@@ -1652,116 +1685,156 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 
 
 #ifndef DEE_INT8_C
-#if defined(__INT8_C)
-# define DEE_INT8_C    __INT8_C
-#elif defined(INT8_C)
-# define DEE_INT8_C    INT8_C
-#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
+#ifdef DEE_TYPES_INT8_T
+#if DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
 # define DEE_INT8_C(x) x##i8
-#else
+#elif defined(DEE_TYPES_SIZEOF_INT_LEAST8_T) && DEE_TYPES_SIZEOF_INT_LEAST16_T == 1
+#ifdef INT8_C
+# define DEE_INT8_C    INT8_C
+#elif defined(__INT8_C)
+# define DEE_INT8_C    __INT8_C
+#endif
+#endif /* ... */
+#endif /* DEE_TYPES_INT8_T */
+#ifndef DEE_INT8_C
 # define DEE_INT8_C(x) x
 #endif
-#endif
+#endif /* !DEE_INT8_C */
 
 #ifndef DEE_UINT8_C
-#if defined(__UINT8_C)
-# define DEE_UINT8_C    __UINT8_C
-#elif defined(UINT8_C)
-# define DEE_UINT8_C    UINT8_C
-#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
+#ifdef DEE_TYPES_UINT8_T
+#if DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
 # define DEE_UINT8_C(x) x##ui8
-#else
+#elif defined(DEE_TYPES_SIZEOF_INT_LEAST8_T) && DEE_TYPES_SIZEOF_INT_LEAST16_T == 1
+#ifdef UINT8_C
+# define DEE_UINT8_C    UINT8_C
+#elif defined(__UINT8_C)
+# define DEE_UINT8_C    __UINT8_C
+#endif
+#endif /* ... */
+#endif /* DEE_TYPES_UINT8_T */
+#ifndef DEE_UINT8_C
 # define DEE_UINT8_C(x) x
 #endif
-#endif
+#endif /* !DEE_UINT8_C */
 
 #ifndef DEE_INT16_C
-#if defined(__INT16_C)
-# define DEE_INT16_C    __INT16_C
-#elif defined(INT16_C)
-# define DEE_INT16_C    INT16_C
-#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
+#ifdef DEE_TYPES_INT16_T
+#if DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
 # define DEE_INT16_C(x) x##i16
-#else
+#elif defined(DEE_TYPES_SIZEOF_INT_LEAST16_T) && DEE_TYPES_SIZEOF_INT_LEAST16_T == 2
+#ifdef INT16_C
+# define DEE_INT16_C    INT16_C
+#elif defined(__INT16_C)
+# define DEE_INT16_C    __INT16_C
+#endif
+#endif /* ... */
+#endif /* DEE_TYPES_INT16_T */
+#ifndef DEE_INT16_C
 # define DEE_INT16_C(x) x
 #endif
-#endif
+#endif /* !DEE_INT16_C */
 
 #ifndef DEE_UINT16_C
-#if defined(__UINT16_C)
-# define DEE_UINT16_C    __UINT16_C
-#elif defined(UINT16_C)
-# define DEE_UINT16_C    UINT16_C
-#elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
+#ifdef DEE_TYPES_UINT16_T
+#if DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
 # define DEE_UINT16_C(x) x##ui16
-#else
+#elif defined(DEE_TYPES_SIZEOF_INT_LEAST16_T) && DEE_TYPES_SIZEOF_INT_LEAST16_T == 2
+#ifdef UINT16_C
+# define DEE_UINT16_C    UINT16_C
+#elif defined(__UINT16_C)
+# define DEE_UINT16_C    __UINT16_C
+#endif
+#endif /* ... */
+#endif /* DEE_TYPES_UINT16_T */
+#ifndef DEE_UINT16_C
 # define DEE_UINT16_C(x) x
 #endif
-#endif
+#endif /* !DEE_UINT16_C */
 
 #ifndef DEE_INT32_C
-#if defined(__INT32_C)
-# define DEE_INT32_C    __INT32_C
-#elif defined(INT32_C)
-# define DEE_INT32_C    INT32_C
-#elif DEE_TYPES_SIZEOF_INT == 4
+#ifdef DEE_TYPES_INT32_T
+#if defined(DEE_TYPES_SIZEOF_INT) && DEE_TYPES_SIZEOF_INT == 4
 # define DEE_INT32_C(x) x
-#elif DEE_TYPES_SIZEOF_LONG == 4
+#elif defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 4
 # define DEE_INT32_C(x) x##l
 #elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
 # define DEE_INT32_C(x) x##i32
-#else
+#elif defined(DEE_TYPES_SIZEOF_INT_LEAST32_T) && DEE_TYPES_SIZEOF_INT_LEAST32_T == 4
+#ifdef INT32_C
+# define DEE_INT32_C    INT32_C
+#elif defined(__INT32_C)
+# define DEE_INT32_C    __INT32_C
+#endif
+#endif /* ... */
+#endif /* DEE_TYPES_INT32_T */
+#ifndef DEE_INT32_C
 # define DEE_INT32_C(x) x
 #endif
-#endif
+#endif /* !DEE_INT32_C */
 
 #ifndef DEE_UINT32_C
-#if defined(__UINT32_C)
-# define DEE_UINT32_C    __UINT32_C
-#elif defined(UINT32_C)
-# define DEE_UINT32_C    UINT32_C
-#elif DEE_TYPES_SIZEOF_INT == 4
+#ifdef DEE_TYPES_UINT32_T
+#if defined(DEE_TYPES_SIZEOF_INT) && DEE_TYPES_SIZEOF_INT == 4
 # define DEE_UINT32_C(x) x##u
-#elif DEE_TYPES_SIZEOF_LONG == 4
+#elif defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 4
 # define DEE_UINT32_C(x) x##ul
 #elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
 # define DEE_UINT32_C(x) x##ui32
-#else
-# define DEE_UINT32_C(x) x
+#elif defined(DEE_TYPES_SIZEOF_INT_LEAST32_T) && DEE_TYPES_SIZEOF_INT_LEAST32_T == 4
+#ifdef UINT32_C
+# define DEE_UINT32_C    UINT32_C
+#elif defined(__UINT32_C)
+# define DEE_UINT32_C    __UINT32_C
 #endif
+#endif /* ... */
+#endif /* DEE_TYPES_UINT32_T */
+#ifndef DEE_UINT32_C
+#define DEE_UINT32_C(x) x
 #endif
+#endif /* !DEE_UINT32_C */
 
 #ifndef DEE_INT64_C
-#if defined(__INT64_C)
-# define DEE_INT64_C    __INT64_C
-#elif defined(INT64_C)
-# define DEE_INT64_C    INT64_C
-#elif DEE_TYPES_SIZEOF_LONG == 8
+#ifdef DEE_TYPES_INT64_T
+#if defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 8
 # define DEE_INT64_C(x) x##l
 #elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
 # define DEE_INT64_C(x) x##ll
 #elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
 # define DEE_INT64_C(x) x##i64
-#else
+#elif defined(DEE_TYPES_SIZEOF_INT_LEAST64_T) && DEE_TYPES_SIZEOF_INT_LEAST64_T == 8
+#ifdef INT64_C
+# define DEE_INT64_C    INT64_C
+#elif defined(__INT64_C)
+# define DEE_INT64_C    __INT64_C
+#endif
+#endif /* ... */
+#endif /* DEE_TYPES_INT64_T */
+#ifndef DEE_INT64_C
 # define DEE_INT64_C(x) x
 #endif
-#endif
+#endif /* !DEE_INT64_C */
 
 #ifndef DEE_UINT64_C
-#if defined(__UINT64_C)
-# define DEE_UINT64_C    __UINT64_C
-#elif defined(UINT64_C)
-# define DEE_UINT64_C    UINT64_C
-#elif DEE_TYPES_SIZEOF_LONG == 8
+#ifdef DEE_TYPES_UINT64_T
+#if defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 8
 # define DEE_UINT64_C(x) x##ul
 #elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
 # define DEE_UINT64_C(x) x##ull
 #elif DEE_COMPILER_HAVE_MSVC_INTEGER_SUFFIX
 # define DEE_UINT64_C(x) x##ui64
-#else
+#elif defined(DEE_TYPES_SIZEOF_INT_LEAST64_T) && DEE_TYPES_SIZEOF_INT_LEAST64_T == 8
+#ifdef UINT64_C
+# define DEE_UINT64_C    UINT64_C
+#elif defined(__UINT64_C)
+# define DEE_UINT64_C    __UINT64_C
+#endif
+#endif /* ... */
+#endif /* DEE_TYPES_UINT64_T */
+#ifndef DEE_UINT64_C
 # define DEE_UINT64_C(x) x
 #endif
-#endif
+#endif /* !DEE_UINT64_C */
 
 #ifndef Dee_MIN
 #define Dee_MIN(a,b) ((a)<(b)?(a):(b))
@@ -1769,19 +1842,6 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #ifndef Dee_MAX
 #define Dee_MAX(a,b) ((a)<(b)?(b):(a))
 #endif
-
-#ifndef DEE_BUILTIN_BREAKPOINT
-#if defined(_MSC_VER)
-#define DEE_BUILTIN_BREAKPOINT __debugbreak
-#ifdef __cplusplus
-extern "C" { void __cdecl __debugbreak(void); }
-#else
-             void __cdecl __debugbreak(void);
-#endif
-#elif __has_builtin(__builtin_breakpoint)
-#define DEE_BUILTIN_BREAKPOINT __builtin_breakpoint
-#endif
-#endif /* !DEE_BUILTIN_BREAKPOINT */
 
 #ifdef DEE_PLATFORM_WINDOWS
 #define DEE_TYPES_SIZEOF_UID_T  DEE_TYPES_SIZEOF_POINTER // sizeof(PSID)

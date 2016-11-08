@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_CXX_FUNCTION_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/cxx/__features.inl>
 #include <deemon/compiler/code.h>
 #include <deemon/runtime/function.h>
 #include <deemon/cxx/object.h>

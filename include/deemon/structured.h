@@ -758,20 +758,6 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeObject_VTGetPointerExf(
 
 #define DeeObject_GetVoidPointerEx(ob,result) \
  DeeObject_GetPointerEx(ob,(DeeTypeObject *)&DeeNone_Type,result)
-
-#if DEE_DEPRECATED_API_VERSION(100,101,102)
-#define DeeObject_AnyPointer(ob)  DeeObject_GetPointer(ob,(DeeTypeObject *)&DeeNone_Type)
-#define DeeObject_Pointer_ERROR   (void *)((Dee_size_t)-1)
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2))
- DEE_ATTRIBUTE_DEPRECATED("'DeeObject_GetPointer()' isn't exception safe. Use 'DeeObject_GetPointerEx' instead")
- DEE_A_RET_EXCEPT(-1) void *) DeeObject_GetPointer(
- DEE_A_INOUT DeeObject *ob, DEE_A_IN DeeTypeObject *tp) {
- void *result;
- if (DeeObject_GetPointerEx(ob,tp,&result) != 0)
-  return DeeObject_Pointer_ERROR; // Pointer might naturally be this; Error may have occurred before
- return result;
-}
-#endif
 #endif
 
 

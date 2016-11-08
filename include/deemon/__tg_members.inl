@@ -207,19 +207,31 @@
  DeeMemberType_TPP_rt_wchar_t = DeeMemberType_Dee_rt_wchar_t,
  DeeMemberType_TPP_rt_char16_t = DeeMemberType_Dee_rt_char16_t,
  DeeMemberType_TPP_rt_char32_t = DeeMemberType_Dee_rt_char32_t,
+#ifdef DEE_TYPES_SIZEOF_INT
  DeeMemberType_signed = DeeMemberType_int,
  DeeMemberType_unsigned = DeeMemberType_uint,
  DeeMemberType_sint = DeeMemberType_int,
  DeeMemberType_signed_int = DeeMemberType_int,
  DeeMemberType_unsigned_int = DeeMemberType_uint,
+ DeeMemberType_u_int = DeeMemberType_uint,
+#endif
+#ifdef DEE_TYPES_SIZEOF_CHAR
  DeeMemberType_signed_char = DeeMemberType_schar,
  DeeMemberType_unsigned_char = DeeMemberType_uchar,
+ DeeMemberType_u_char = DeeMemberType_uchar,
+#endif
+#ifdef DEE_TYPES_SIZEOF_SHORT
  DeeMemberType_sshort = DeeMemberType_short,
  DeeMemberType_signed_short = DeeMemberType_short,
  DeeMemberType_unsigned_short = DeeMemberType_ushort,
+ DeeMemberType_u_short = DeeMemberType_ushort,
+#endif
+#ifdef DEE_TYPES_SIZEOF_LONG
  DeeMemberType_slong = DeeMemberType_long,
  DeeMemberType_signed_long = DeeMemberType_long,
  DeeMemberType_unsigned_long = DeeMemberType_ulong,
+ DeeMemberType_u_long = DeeMemberType_ulong,
+#endif
 #ifdef DEE_TYPES_SIZEOF_LLONG
  DeeMemberType_sllong = DeeMemberType_llong,
  DeeMemberType_signed_llong = DeeMemberType_llong,
@@ -233,10 +245,6 @@
 #ifdef DEE_TYPES_SIZEOF_LDOUBLE
  DeeMemberType_long_double = DeeMemberType_ldouble,
 #endif
- DeeMemberType_u_char = DeeMemberType_uchar,
- DeeMemberType_u_short = DeeMemberType_ushort,
- DeeMemberType_u_int = DeeMemberType_uint,
- DeeMemberType_u_long = DeeMemberType_ulong,
  DeeMemberType___u8 = DeeMemberType_uint8_t,
  DeeMemberType___u16 = DeeMemberType_uint16_t,
  DeeMemberType___u32 = DeeMemberType_uint32_t,
@@ -299,7 +307,7 @@
  DeeMemberType_SIZE_T = DeeMemberType_ULONG_PTR,
  DeeMemberType_SSIZE_T = DeeMemberType_LONG_PTR,
  DeeMemberType_DWORD_PTR = DeeMemberType_ULONG_PTR,
-#if DEE_COMPILER_HAVE_LONG_LONG
+#ifdef DEE_TYPES_SIZEOF_LLONG
  DeeMemberType_LONGLONG = DeeMemberType_llong,
  DeeMemberType_ULONGLONG = DeeMemberType_ullong,
 #else

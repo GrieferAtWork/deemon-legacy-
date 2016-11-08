@@ -28,11 +28,6 @@
 #include <deemon/object.h>
 #endif
 
-#if DEE_DEPRECATED_API_VERSION(100,101,102)
-#include <deemon/object.h> // Required for deprecated functions
-#include <deemon/type.h>   // Required for deprecated functions
-#endif
-
 DEE_DECL_BEGIN
 
 #ifdef DEE_PRIVATE_DECL_DEE_OBJECT
@@ -175,35 +170,15 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *
 
 
 #ifdef DEE_LIMITED_API
+#ifdef DEE_PRIVATE_DECL_DEE_HASH_T
+DEE_PRIVATE_DECL_DEE_HASH_T
+#undef DEE_PRIVATE_DECL_DEE_HASH_T
+#endif
 extern DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListIteratorObject) *DeeList_IterSelf(
  DEE_A_INOUT_OBJECT(DeeListObject) *self) DEE_ATTRIBUTE_NONNULL((1));
-#endif
-
-#if DEE_DEPRECATED_API_VERSION(100,101,102)
-#ifdef DEE_PRIVATE_DECL_DEE_HASH_T
-DEE_PRIVATE_DECL_DEE_HASH_T
-#undef DEE_PRIVATE_DECL_DEE_HASH_T
-#endif
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1))
- DEE_ATTRIBUTE_DEPRECATED("'DeeList_Hash()' isn't exception safe. Use 'DeeObject_HashEx' instead")
- DEE_A_EXEC DEE_A_RET_EXCEPT(-1) Dee_hash_t) DeeList_Hash(
- DEE_A_INOUT DeeObject *self, DEE_A_IN Dee_hash_t start) {
- Dee_hash_t result;
- DEE_ASSERT(DeeObject_Check(self) && DeeList_Check(self));
- if (DeeObject_HashEx(self,start,&result) != 0)
-  return (Dee_hash_t)-1; // Hash might naturally return -1; Error may have occurred before
- return result;
-}
-#else
-#ifdef DEE_LIMITED_API
-#ifdef DEE_PRIVATE_DECL_DEE_HASH_T
-DEE_PRIVATE_DECL_DEE_HASH_T
-#undef DEE_PRIVATE_DECL_DEE_HASH_T
-#endif
 extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeList_Hash(
  DEE_A_IN_OBJECT(DeeListObject) const *self,
  DEE_A_IN Dee_hash_t start, DEE_A_OUT Dee_hash_t *result) DEE_ATTRIBUTE_NONNULL((1,3));
-#endif
 #endif
 
 

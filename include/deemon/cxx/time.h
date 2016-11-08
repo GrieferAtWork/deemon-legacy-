@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_CXX_TIME_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/cxx/__features.inl>
 #include <deemon/time.h>
 #include <deemon/cxx/object.h>
 #include <deemon/cxx/string.h>

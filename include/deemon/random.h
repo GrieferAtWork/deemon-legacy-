@@ -80,9 +80,9 @@ DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_int64_t) DeeRandomNumberGenerator_NextInt64(
 #define DeeRandomNumberGenerator_NextUInt64 (Dee_uint64_t)DeeRandomNumberGenerator_NextInt64
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED float) DeeRandomNumberGenerator_NextFloat(DEE_A_INOUT struct DeeRandomNumberGenerator *self) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED double) DeeRandomNumberGenerator_NextDouble(DEE_A_INOUT struct DeeRandomNumberGenerator *self) DEE_ATTRIBUTE_NONNULL((1));
-#if DEE_COMPILER_HAVE_LDOUBLE
+#ifdef DEE_TYPES_SIZEOF_LDOUBLE
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED long double) DeeRandomNumberGenerator_NextLDouble(DEE_A_INOUT struct DeeRandomNumberGenerator *self) DEE_ATTRIBUTE_NONNULL((1));
-#endif
+#endif /* DEE_TYPES_SIZEOF_LDOUBLE */
 DEE_FUNC_DECL(void) DeeRandomNumberGenerator_NextData(
  DEE_A_INOUT struct DeeRandomNumberGenerator *self,
  DEE_A_OUT_WB(s) void *p, DEE_A_IN Dee_size_t s) DEE_ATTRIBUTE_NONNULL((1));
@@ -119,11 +119,15 @@ DEE_FUNC_DECL(DEE_A_RET_NEVER_NULL struct DeeRandomNumberGenerator *) DeeRandom_
 #define DeeRandom_NextUInt16(ob) DeeRandomNumberGenerator_NextUInt16(DeeRandom_RNG(ob))
 #define DeeRandom_NextUInt32(ob) DeeRandomNumberGenerator_NextUInt32(DeeRandom_RNG(ob))
 #define DeeRandom_NextUInt64(ob) DeeRandomNumberGenerator_NextUInt64(DeeRandom_RNG(ob))
+#ifdef DEE_TYPES_SIZEOF_FLOAT
 #define DeeRandom_NextFloat(ob)  DeeRandomNumberGenerator_NextFloat(DeeRandom_RNG(ob))
+#endif /* DEE_TYPES_SIZEOF_FLOAT */
+#ifdef DEE_TYPES_SIZEOF_DOUBLE
 #define DeeRandom_NextDouble(ob) DeeRandomNumberGenerator_NextDouble(DeeRandom_RNG(ob))
-#if DEE_COMPILER_HAVE_LDOUBLE
+#endif /* DEE_TYPES_SIZEOF_DOUBLE */
+#ifdef DEE_TYPES_SIZEOF_LDOUBLE
 #define DeeRandom_NextLDouble(ob) DeeRandomNumberGenerator_NextLDouble(DeeRandom_RNG(ob))
-#endif
+#endif /* DEE_TYPES_SIZEOF_LDOUBLE */
 #define DeeRandom_NextData(ob,p,s) DeeRandomNumberGenerator_NextData(DeeRandom_RNG(ob),p,s)
 
 

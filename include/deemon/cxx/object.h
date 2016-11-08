@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_CXX_OBJECT_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/cxx/__features.inl>
 #include <deemon/object.h>
 #include <deemon/sequence.h>
 #include <deemon/none.h>
@@ -421,22 +422,36 @@ DEE_COMPILER_MSVC_WARNING_POP
    if (DeeObject_Cast(name,this->ob_ptr,&result) != 0) detail::throw_last_error();\
    return result;\
   }
+#ifdef DEE_TYPES_SIZEOF_FLOAT
   DEE_PRIVATE_CXX_DEFINE_CAST(float,float)
+#endif /* DEE_TYPES_SIZEOF_FLOAT */
+#ifdef DEE_TYPES_SIZEOF_DOUBLE
   DEE_PRIVATE_CXX_DEFINE_CAST(double,double)
+#endif /* DEE_TYPES_SIZEOF_DOUBLE */
+#ifdef DEE_TYPES_SIZEOF_LDOUBLE
   DEE_PRIVATE_CXX_DEFINE_CAST(long double,ldouble)
+#endif /* DEE_TYPES_SIZEOF_LDOUBLE */
+#ifdef DEE_TYPES_SIZEOF_CHAR
   DEE_PRIVATE_CXX_DEFINE_CAST(char,char)
   DEE_PRIVATE_CXX_DEFINE_CAST(signed char,schar)
   DEE_PRIVATE_CXX_DEFINE_CAST(unsigned char,uchar)
+#endif /* DEE_TYPES_SIZEOF_CHAR */
+#ifdef DEE_TYPES_SIZEOF_SHORT
   DEE_PRIVATE_CXX_DEFINE_CAST(short,short)
   DEE_PRIVATE_CXX_DEFINE_CAST(unsigned short,ushort)
+#endif /* DEE_TYPES_SIZEOF_SHORT */
+#ifdef DEE_TYPES_SIZEOF_INT
   DEE_PRIVATE_CXX_DEFINE_CAST(int,int)
   DEE_PRIVATE_CXX_DEFINE_CAST(unsigned int,uint)
+#endif /* DEE_TYPES_SIZEOF_INT */
+#ifdef DEE_TYPES_SIZEOF_LONG
   DEE_PRIVATE_CXX_DEFINE_CAST(long,long)
   DEE_PRIVATE_CXX_DEFINE_CAST(unsigned long,ulong)
-#if DEE_COMPILER_HAVE_LONG_LONG
+#endif /* DEE_TYPES_SIZEOF_LONG */
+#ifdef DEE_TYPES_SIZEOF_LLONG
   DEE_PRIVATE_CXX_DEFINE_CAST(long long,llong)
   DEE_PRIVATE_CXX_DEFINE_CAST(unsigned long long,ullong)
-#endif /* DEE_COMPILER_HAVE_LONG_LONG */
+#endif /* DEE_TYPES_SIZEOF_LLONG */
 #undef DEE_PRIVATE_CXX_DEFINE_CAST
   inline DEE_A_RET_WUNUSED operator bool () const { int result; if ((result = ::DeeObject_Bool(this->ob_ptr)) < 0) detail::throw_last_error(); return !!result; }
   inline DEE_A_RET_WUNUSED object operator ! () const { return object(::DeeObject_Not(this->ob_ptr),detail::tag_ref_or_err()); }

@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_CXX_STRING_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/cxx/__features.inl>
 #include <deemon/string.h>
 #include <deemon/cxx/object.h>
 #include <deemon/__string_encoding.inl>

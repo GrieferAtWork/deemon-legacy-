@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_CXX_DICT_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/cxx/__features.inl>
 #include <deemon/none.h>
 #include <deemon/dict.h>
 #include <deemon/cxx/tuple.h>

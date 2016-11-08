@@ -914,16 +914,31 @@ DEE_A_RET_EXCEPT(-1) int DeeStringWriter_F(VWritef)(
  DEE_CHAR ch;
  DEE_CHAR const *flush_start = fmt;
  enum{
-  len_none,len_hh,len_h,len_l,len_ll,len_j,len_z,
-  len_t,len_L,len_I,len_I8,len_I16,len_I32,len_I64
+  len_none,len_hh,len_h,len_l,
+  len_j,len_z,len_t,len_L,len_I
+#ifdef DEE_TYPES_UINT8_T
+  ,len_I8
+#endif
+#ifdef DEE_TYPES_UINT16_T
+  ,len_I16
+#endif
+#ifdef DEE_TYPES_UINT32_T
+  ,len_I32
+#endif
+#ifdef DEE_TYPES_UINT64_T
+  ,len_I64
+#endif
+#ifdef DEE_TYPES_SIZEOF_LLONG
+  ,len_ll
+#endif
  }length;
  DeeObject *ob,*ob2;
  int result = 0;
  DEE_ASSERT(self);
  while ((ch = *fmt++) != 0) {
   if (ch == DEE_CHAR_C('%')) {
-   if (DeeStringWriter_F(DEE_PP_CAT_3(Write,ENC,StringWithLength))(
-    self,(Dee_size_t)((fmt-flush_start)-1),flush_start) == -1) result = -1;
+   if DEE_UNLIKELY(DeeStringWriter_F(DEE_PP_CAT_3(Write,ENC,StringWithLength))(
+    self,(Dee_size_t)((fmt-flush_start)-1),flush_start) != 0) result = -1;
    ch = *fmt++;
    memset(&spec,0,sizeof(spec));
    length = len_none;
@@ -985,16 +1000,28 @@ p_flag: // flags
    // Length specifier
    switch (ch) {
     case DEE_CHAR_C('h'): ch = *fmt++; if (ch == DEE_CHAR_C('h')) { ch = *fmt++; length = len_hh; } else length = len_h; break;
+#ifdef DEE_TYPES_SIZEOF_LLONG
     case DEE_CHAR_C('l'): ch = *fmt++; if (ch == DEE_CHAR_C('l')) { ch = *fmt++; length = len_ll; } else length = len_l; break;
+#else
+    case DEE_CHAR_C('l'): ch = *fmt++; length = len_l; break;
+#endif
     case DEE_CHAR_C('j'): ch = *fmt++; length = len_j; break;
     case DEE_CHAR_C('z'): ch = *fmt++; length = len_z; break;
     case DEE_CHAR_C('t'): ch = *fmt++; length = len_t; break;
     case DEE_CHAR_C('L'): ch = *fmt++; length = len_L; break;
     case DEE_CHAR_C('I'): switch ((ch = *fmt++)) {
+#ifdef DEE_TYPES_UINT8_T
      case DEE_CHAR_C('8'): ch = *fmt++; length = len_I8; break;
+#endif
+#ifdef DEE_TYPES_UINT16_T
      case DEE_CHAR_C('1'): if ((ch = *fmt++) == DEE_CHAR_C('6')) { ch = *fmt++; length = len_I16; } else { ch = *--fmt; goto def_lI; } break;
+#endif
+#ifdef DEE_TYPES_UINT32_T
      case DEE_CHAR_C('3'): if ((ch = *fmt++) == DEE_CHAR_C('2')) { ch = *fmt++; length = len_I32; } else { ch = *--fmt; goto def_lI; } break;
+#endif
+#ifdef DEE_TYPES_UINT64_T
      case DEE_CHAR_C('6'): if ((ch = *fmt++) == DEE_CHAR_C('4')) { ch = *fmt++; length = len_I64; } else { ch = *--fmt; goto def_lI; } break;
+#endif
      default: def_lI: length = len_I; break;
     } break;
     default: break;
@@ -1017,9 +1044,9 @@ p_flag: // flags
       case len_hh: goto LABEL_I(DEE_TYPES_SIZEOF_CHAR);
       case len_h: goto LABEL_I(DEE_TYPES_SIZEOF_SHORT);
       case len_l: goto LABEL_I(DEE_TYPES_SIZEOF_LONG);
-#if DEE_COMPILER_HAVE_LONG_LONG
+#ifdef DEE_TYPES_SIZEOF_LLONG
       case len_ll: goto LABEL_I(DEE_TYPES_SIZEOF_LLONG);
-#endif /* DEE_COMPILER_HAVE_LONG_LONG */
+#endif /* DEE_TYPES_SIZEOF_LLONG */
       case len_j: goto LABEL_I(DEE_TYPES_SIZEOF_INTMAX_T);
       case len_z: goto LABEL_UI(DEE_TYPES_SIZEOF_SIZE_T);
       case len_I: goto LABEL_I(DEE_TYPES_SIZEOF_SIZE_T);
@@ -1033,16 +1060,24 @@ p_flag: // flags
     case DEE_CHAR_C('x'): spec.numsys = 16; goto wu;
     case DEE_CHAR_C('u'): spec.numsys = 10;
 wu:  switch (length) {
-      case len_I8:  ui8:  if (DeeStringWriter_F(SpecWriteUInt8)(self,(Dee_uint8_t)DEE_VA_ARG(args,DEE_MINUINT_T(1)),&spec) == -1) result = -1; break;
-      case len_I16: ui16: if (DeeStringWriter_F(SpecWriteUInt16)(self,(Dee_uint16_t)DEE_VA_ARG(args,DEE_MINUINT_T(2)),&spec) == -1) result = -1; break;
-      case len_I32: ui32: if (DeeStringWriter_F(SpecWriteUInt32)(self,(Dee_uint32_t)DEE_VA_ARG(args,DEE_MINUINT_T(4)),&spec) == -1) result = -1; break;
-      case len_I64: ui64: if (DeeStringWriter_F(SpecWriteUInt64)(self,(Dee_uint64_t)DEE_VA_ARG(args,DEE_MINUINT_T(8)),&spec) == -1) result = -1; break;
+#ifdef DEE_TYPES_UINT8_T
+      case len_I8:  ui8:  if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteUInt8)(self,(Dee_uint8_t)DEE_VA_ARG(args,DEE_MINUINT_T(1)),&spec) != 0) result = -1; break;
+#endif
+#ifdef DEE_TYPES_UINT16_T
+      case len_I16: ui16: if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteUInt16)(self,(Dee_uint16_t)DEE_VA_ARG(args,DEE_MINUINT_T(2)),&spec) != 0) result = -1; break;
+#endif
+#ifdef DEE_TYPES_UINT32_T
+      case len_I32: ui32: if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteUInt32)(self,(Dee_uint32_t)DEE_VA_ARG(args,DEE_MINUINT_T(4)),&spec) != 0) result = -1; break;
+#endif
+#ifdef DEE_TYPES_UINT64_T
+      case len_I64: ui64: if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteUInt64)(self,(Dee_uint64_t)DEE_VA_ARG(args,DEE_MINUINT_T(8)),&spec) != 0) result = -1; break;
+#endif
       case len_hh: goto LABEL_UI(DEE_TYPES_SIZEOF_CHAR);
       case len_h:  goto LABEL_UI(DEE_TYPES_SIZEOF_SHORT);
       case len_l:  goto LABEL_UI(DEE_TYPES_SIZEOF_LONG);
-#if DEE_COMPILER_HAVE_LONG_LONG
+#ifdef DEE_TYPES_SIZEOF_LLONG
       case len_ll: goto LABEL_UI(DEE_TYPES_SIZEOF_LLONG);
-#endif /* DEE_COMPILER_HAVE_LONG_LONG */
+#endif /* DEE_TYPES_SIZEOF_LLONG */
       case len_j: goto LABEL_UI(DEE_TYPES_SIZEOF_INTMAX_T);
       case len_z: goto LABEL_UI(DEE_TYPES_SIZEOF_SIZE_T);
       case len_I: goto LABEL_UI(DEE_TYPES_SIZEOF_SIZE_T);
@@ -1050,22 +1085,35 @@ wu:  switch (length) {
       default: goto LABEL_UI(DEE_TYPES_SIZEOF_INT);
      }
      break;
+#ifdef DEE_TYPES_SIZEOF_DOUBLE
     case DEE_CHAR_C('f'): case DEE_CHAR_C('F'):
     case DEE_CHAR_C('e'): case DEE_CHAR_C('E'):
     case DEE_CHAR_C('g'): case DEE_CHAR_C('G'):
     case DEE_CHAR_C('a'): case DEE_CHAR_C('A'):
+#ifdef DEE_TYPES_SIZEOF_LDOUBLE
      if (length == len_L) {
-      if (DeeStringWriter_F(SpecWriteLDouble)(self,DEE_VA_ARG(args,long double),&spec) == -1) result = -1;
-     } else {
-      if (DeeStringWriter_F(SpecWriteDouble)(self,DEE_VA_ARG(args,double),&spec) == -1) result = -1;
+      if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteLDouble)(self,DEE_VA_ARG(args,long double),&spec) != 0) result = -1;
+     } else
+#endif /* DEE_TYPES_SIZEOF_LDOUBLE */
+     {
+      if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteDouble)(self,DEE_VA_ARG(args,double),&spec) != 0) result = -1;
      }
      break;
+#endif /* DEE_TYPES_SIZEOF_DOUBLE */
     case DEE_CHAR_C('c'): switch (length) {
-     case len_l:   if (DeeStringWriter_F(SpecWriteWideChar)(self,(Dee_WideChar)DEE_VA_ARG(args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_WCHAR_T)),&spec) != 0) result = -1; break;
-     case len_I8:  if (DeeStringWriter_F(SpecWriteUtf8Char)(self,(Dee_Utf8Char)DEE_VA_ARG(args,DEE_MINUINT_T(1)),&spec) != 0) result = -1; break;
-     case len_I16: if (DeeStringWriter_F(SpecWriteUtf16Char)(self,(Dee_Utf16Char)DEE_VA_ARG(args,DEE_MINUINT_T(2)),&spec) != 0) result = -1; break;
-     case len_I32: if (DeeStringWriter_F(SpecWriteUtf32Char)(self,(Dee_Utf32Char)DEE_VA_ARG(args,DEE_MINUINT_T(4)),&spec) != 0) result = -1; break;
-     default:      if (DeeStringWriter_F(SpecWriteChar)(self,(char)DEE_VA_ARG(args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_CHAR)),&spec) != 0) result = -1; break;
+#ifdef DEE_TYPES_SIZEOF_WCHAR_T
+     case len_l:   if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteWideChar)(self,(Dee_WideChar)DEE_VA_ARG(args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_WCHAR_T)),&spec) != 0) result = -1; break;
+#endif
+#ifdef DEE_TYPES_UINT8_T
+     case len_I8:  if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteUtf8Char)(self,(Dee_Utf8Char)DEE_VA_ARG(args,DEE_MINUINT_T(1)),&spec) != 0) result = -1; break;
+#endif
+#ifdef DEE_TYPES_UINT16_T
+     case len_I16: if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteUtf16Char)(self,(Dee_Utf16Char)DEE_VA_ARG(args,DEE_MINUINT_T(2)),&spec) != 0) result = -1; break;
+#endif
+#ifdef DEE_TYPES_UINT32_T
+     case len_I32: if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteUtf32Char)(self,(Dee_Utf32Char)DEE_VA_ARG(args,DEE_MINUINT_T(4)),&spec) != 0) result = -1; break;
+#endif
+     default:      if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteChar)(self,(char)DEE_VA_ARG(args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_CHAR)),&spec) != 0) result = -1; break;
     } break;
     case DEE_CHAR_C('s'):
     case DEE_CHAR_C('q'): {
@@ -1079,36 +1127,48 @@ wu:  switch (length) {
      str_.str_ = DEE_VA_ARG(args,char const *);
 #define DEE_STRING_NULL_STR  {'(','n','u','l','l',')',0}
      switch (length) {
+#ifdef DEE_TYPES_SIZEOF_WCHAR_T
       case len_l: {
        if (!str_.strw) { static Dee_WideChar const null_strw[] = DEE_STRING_NULL_STR; str_.strw = null_strw; }
-       if ((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteWideStringWithLength)(self,spec.has_precision ? Dee_WideStrNLen(str_.strw,spec.precision) : Dee_WideStrLen(str_.strw),str_.strw,&spec)
-                            : DeeStringWriter_F(SpecWriteQuotedWideStringWithLength)(self,spec.has_precision ? Dee_WideStrNLen(str_.strw,spec.precision) : Dee_WideStrLen(str_.strw),str_.strw,&spec)
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteWideStringWithLength)(self,spec.has_precision ? Dee_WideStrNLen(str_.strw,spec.precision) : Dee_WideStrLen(str_.strw),str_.strw,&spec)
+                                        : DeeStringWriter_F(SpecWriteQuotedWideStringWithLength)(self,spec.has_precision ? Dee_WideStrNLen(str_.strw,spec.precision) : Dee_WideStrLen(str_.strw),str_.strw,&spec)
           ) != 0) result = -1;
       } break;
+#endif
+#ifdef DEE_TYPES_UINT8_T
       case len_I8: {
        if (!str_.str8) { static Dee_Utf8Char const null_str8[] = DEE_STRING_NULL_STR; str_.str8 = null_str8; }
-       if ((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteUtf8StringWithLength)(self,spec.has_precision ? Dee_Utf8StrNLen(str_.str8,spec.precision) : Dee_Utf8StrLen(str_.str8),str_.str8,&spec)
-                            : DeeStringWriter_F(SpecWriteQuotedUtf8StringWithLength)(self,spec.has_precision ? Dee_Utf8StrNLen(str_.str8,spec.precision) : Dee_Utf8StrLen(str_.str8),str_.str8,&spec)
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteUtf8StringWithLength)(self,spec.has_precision ? Dee_Utf8StrNLen(str_.str8,spec.precision) : Dee_Utf8StrLen(str_.str8),str_.str8,&spec)
+                                        : DeeStringWriter_F(SpecWriteQuotedUtf8StringWithLength)(self,spec.has_precision ? Dee_Utf8StrNLen(str_.str8,spec.precision) : Dee_Utf8StrLen(str_.str8),str_.str8,&spec)
           ) != 0) result = -1;
       } break;
+#endif
+#ifdef DEE_TYPES_UINT16_T
       case len_I16: {
        if (!str_.str16) { static Dee_Utf16Char const null_str16[] = DEE_STRING_NULL_STR; str_.str16 = null_str16; }
-       if ((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteUtf16StringWithLength)(self,spec.has_precision ? Dee_Utf16StrNLen(str_.str16,spec.precision) : Dee_Utf16StrLen(str_.str16),str_.str16,&spec)
-                            : DeeStringWriter_F(SpecWriteQuotedUtf16StringWithLength)(self,spec.has_precision ? Dee_Utf16StrNLen(str_.str16,spec.precision) : Dee_Utf16StrLen(str_.str16),str_.str16,&spec)
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteUtf16StringWithLength)(self,spec.has_precision ? Dee_Utf16StrNLen(str_.str16,spec.precision) : Dee_Utf16StrLen(str_.str16),str_.str16,&spec)
+                                        : DeeStringWriter_F(SpecWriteQuotedUtf16StringWithLength)(self,spec.has_precision ? Dee_Utf16StrNLen(str_.str16,spec.precision) : Dee_Utf16StrLen(str_.str16),str_.str16,&spec)
           ) != 0) result = -1;
       } break;
+#endif
+#ifdef DEE_TYPES_UINT32_T
       case len_I32: {
        if (!str_.str32) { static Dee_Utf32Char const null_str32[] = DEE_STRING_NULL_STR; str_.str32 = null_str32; }
-       if ((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteUtf32StringWithLength)(self,spec.has_precision ? Dee_Utf32StrNLen(str_.str32,spec.precision) : Dee_Utf32StrLen(str_.str32),str_.str32,&spec)
-                            : DeeStringWriter_F(SpecWriteQuotedUtf32StringWithLength)(self,spec.has_precision ? Dee_Utf32StrNLen(str_.str32,spec.precision) : Dee_Utf32StrLen(str_.str32),str_.str32,&spec)
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteUtf32StringWithLength)(self,spec.has_precision ? Dee_Utf32StrNLen(str_.str32,spec.precision) : Dee_Utf32StrLen(str_.str32),str_.str32,&spec)
+                                        : DeeStringWriter_F(SpecWriteQuotedUtf32StringWithLength)(self,spec.has_precision ? Dee_Utf32StrNLen(str_.str32,spec.precision) : Dee_Utf32StrLen(str_.str32),str_.str32,&spec)
           ) != 0) result = -1;
       } break;
-      default: {
+#endif
+      default:
+#ifdef DEE_TYPES_SIZEOF_CHAR
+      {
        if (!str_.str_) { static char const null_str[] = DEE_STRING_NULL_STR; str_.str_ = null_str; }
-       if ((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteStringWithLength)(self,spec.has_precision ? Dee_StrNLen(str_.str_,spec.precision) : Dee_StrLen(str_.str_),str_.str_,&spec)
-                            : DeeStringWriter_F(SpecWriteQuotedStringWithLength)(self,spec.has_precision ? Dee_StrNLen(str_.str_,spec.precision) : Dee_StrLen(str_.str_),str_.str_,&spec)
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteStringWithLength)(self,spec.has_precision ? Dee_StrNLen(str_.str_,spec.precision) : Dee_StrLen(str_.str_),str_.str_,&spec)
+                                              : DeeStringWriter_F(SpecWriteQuotedStringWithLength)(self,spec.has_precision ? Dee_StrNLen(str_.str_,spec.precision) : Dee_StrLen(str_.str_),str_.str_,&spec)
           ) != 0) result = -1;
-      } break;
+      }
+#endif
+      break;
      }
 #undef DEE_STRING_NULL_STR
     } break;
@@ -1129,8 +1189,8 @@ wu:  switch (length) {
      ob2 = (ch == DEE_CHAR_C('r') || ch == DEE_CHAR_C('R')) ? DeeObject_Repr(ob) : DeeObject_Str(ob);
      if (ch == DEE_CHAR_C('K') || ch == DEE_CHAR_C('R')) Dee_DECREF(ob);
      if (ob2) {
-      if (DeeStringWriter_F(DEE_PP_CAT_3(SpecWrite,DEE_CONFIG_DEFAULT_ENCODING,StringWithLength))(
-       self,DeeString_SIZE(ob2),DeeString_STR(ob2),&spec) == -1) result = -1;
+      if DEE_UNLIKELY(DeeStringWriter_F(DEE_PP_CAT_3(SpecWrite,DEE_CONFIG_DEFAULT_ENCODING,StringWithLength))(
+       self,DeeString_SIZE(ob2),DeeString_STR(ob2),&spec) != 0) result = -1;
       Dee_DECREF(ob2);
      } else result = -1;
      break;
@@ -1143,8 +1203,8 @@ wu:  switch (length) {
   }
  }
  // Flush remainder
- if (DeeStringWriter_F(DEE_PP_CAT_3(Write,ENC,StringWithLength))(
-  self,(Dee_size_t)((fmt-flush_start)-1),flush_start) == -1) result = -1;
+ if DEE_UNLIKELY(DeeStringWriter_F(DEE_PP_CAT_3(Write,ENC,StringWithLength))(
+  self,(Dee_size_t)((fmt-flush_start)-1),flush_start) != 0) result = -1;
  return result;
 }
 DEE_COMPILER_MSVC_WARNING_POP
@@ -1178,16 +1238,14 @@ DEE_A_RET_EXCEPT(-1) int DeeStringWriter_F(WriteHexDump)(
  DEE_CHAR *ascii_mem;
  DEE_ASSERT(p);
  while (1) {
-  if (s >= sizeof(line))
-   memcpy(line,p,line_size = sizeof(line));
-  else memcpy(line,p,line_size = s);
+  memcpy(line,p,line_size = Dee_MIN(s,sizeof(line)));
   for (i = 0; i < line_size; ++i) {
-   if (DeeStringWriter_F(SpecWriteUInt8)(self,line[i],&hex_byte_spec) == -1 ||
-       DeeStringWriter_F(DEE_PP_CAT_3(Write,ENC,Char))(self,DEE_CHAR_C(' ')) == -1) return -1;
+   if DEE_UNLIKELY(DEE_UNLIKELY(DeeStringWriter_F(SpecWriteUInt8)(self,line[i],&hex_byte_spec) != 0) ||
+                   DEE_UNLIKELY(DeeStringWriter_F(DEE_PP_CAT_3(Write,ENC,Char))(self,DEE_CHAR_C(' ')) != 0)) return -1;
   }
   // Fill unused space
-  if (DeeStringWriter_F(RepeatChar)(self,DEE_CHAR_C(' '),5*(sizeof(line)-line_size)) == -1) return -1;
-  if ((ascii_mem = DeeStringWriter_F(Require)(self,sizeof(line)+1)) == NULL) return -1;
+  if DEE_UNLIKELY(DeeStringWriter_F(RepeatChar)(self,DEE_CHAR_C(' '),5*(sizeof(line)-line_size)) != 0) return -1;
+  if DEE_UNLIKELY((ascii_mem = DeeStringWriter_F(Require)(self,sizeof(line)+1)) == NULL) return -1;
   for (i = 0; i < line_size; ++i) *ascii_mem++ = (DEE_CHAR)(
    DEE_CH_IS_GRAPH(line[i]) ? (DEE_CHAR)line[i] : DEE_CHAR_C('.'));
   line_size = (sizeof(line)-line_size);

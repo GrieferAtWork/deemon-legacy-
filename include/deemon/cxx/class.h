@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_CXX_CLASS_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/cxx/__features.inl>
 #include <deemon/cxx/object.h>
 #include <deemon/cxx/object.h>
 #include <deemon/cxx/type.h>

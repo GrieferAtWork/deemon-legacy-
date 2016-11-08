@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_CXX_INTEGER_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/cxx/__features.inl>
 #include <deemon/integer.h>
 #include <deemon/cxx/object.h>
 
@@ -120,7 +121,7 @@ template<> struct _typeof_impl<unsigned long> {
  static inline DeeTypeObject *type_() DEE_CXX11_NOEXCEPT { return DeeObject_TYPE(ulong); }
  static inline DeeObject *new_(unsigned long v) DEE_CXX11_NOEXCEPT { return DeeObject_New(ulong,v); }
 };
-#if DEE_COMPILER_HAVE_LONG_LONG
+#ifdef DEE_TYPES_SIZEOF_LLONG
 template<> struct _typeof_impl<long long> {
  static inline DeeTypeObject *type_() DEE_CXX11_NOEXCEPT { return DeeObject_TYPE(llong); }
  static inline DeeObject *new_(long long v) DEE_CXX11_NOEXCEPT { return DeeObject_New(llong,v); }
