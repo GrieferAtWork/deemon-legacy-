@@ -516,11 +516,11 @@ static DeeObject *_deeobject_this(DeeObject *self, void *DEE_UNUSED(closure)) {
 
 struct DeeMemberDef const _deeobject_tp_members[] = {
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__type__",DeeObject,__ob_type,object,"-> type object\n@return: The technical type of @this"),
- DEE_MEMBERDEF_NAMED_DOC_RO_v100("__refcnt__",DeeObject,__ob_refcnt,atomic(uint),"@return: The amount of references to @this object"),
- DEE_MEMBERDEF_NAMED_DOC_RO_v100("__weakcnt__",DeeObject,__ob_weakcnt,atomic(uint),"@return: The amount of weak references to @this object"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__refcnt__",DeeObject,__ob_refcnt,atomic(Dee_refcnt_t),"@return: The amount of references to @this object"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__weakcnt__",DeeObject,__ob_weakcnt,atomic(Dee_weakcnt_t),"@return: The amount of weak references to @this object"),
 #if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
- DEE_MEMBERDEF_NAMED_RO_v100("__ob_refcnt",DeeObject,__ob_refcnt,atomic(uint)),
- DEE_MEMBERDEF_NAMED_RO_v100("__ob_weakcnt",DeeObject,__ob_weakcnt,atomic(uint)),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ob_refcnt",DeeObject,__ob_refcnt,atomic(Dee_refcnt_t)),
+ DEE_MEMBERDEF_NAMED_RO_v100("__ob_weakcnt",DeeObject,__ob_weakcnt,atomic(Dee_weakcnt_t)),
 #endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
  DEE_MEMBERDEF_END_v100
 };

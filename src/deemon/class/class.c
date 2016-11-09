@@ -2332,7 +2332,7 @@ DEE_A_RET_EXCEPT(-1) int DeeClass_AddMethod(
    new_list = (struct _DeeClassTypeMethodDef *)malloc_nz(
     2*sizeof(struct _DeeClassTypeMethodDef));
   }
-  if (new_list) break;
+  if DEE_LIKELY(new_list) break;
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
   return -1;
@@ -2368,7 +2368,7 @@ DEE_A_RET_EXCEPT(-1) int DeeClass_AddProperty(
    new_list = (struct _DeeClassTypeGetSetDef *)malloc_nz(
     2*sizeof(struct _DeeClassTypeGetSetDef));
   }
-  if (new_list) break;
+  if DEE_LIKELY(new_list) break;
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
   return -1;
@@ -2406,7 +2406,7 @@ DEE_A_RET_EXCEPT(-1) int DeeClass_AddClassMethod(
    new_list = (struct _DeeClassTypeMethodDef *)malloc_nz(
     2*sizeof(struct _DeeClassTypeMethodDef));
   }
-  if (new_list) break;
+  if DEE_LIKELY(new_list) break;
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
   return -1;
@@ -2631,7 +2631,7 @@ DEE_A_RET_EXCEPT(-1) int DeeClass_AddMethodString(
  DEE_A_INOUT_TYPEOBJECT(DeeClassObject) *self,
  DEE_A_IN_Z char const *name, DEE_A_INOUT DeeObject *method) {
  DeeObject *name_ob; int result;
- if ((name_ob = DeeString_New(name)) == NULL) return -1;
+ if DEE_UNLIKELY((name_ob = DeeString_New(name)) == NULL) return -1;
  result = DeeClass_AddMethod(self,name_ob,method);
  Dee_DECREF(name_ob);
  return result;
@@ -2641,7 +2641,7 @@ DEE_A_RET_EXCEPT(-1) int DeeClass_AddPropertyString(
  DEE_A_INOUT_OPT DeeObject *getter_, DEE_A_INOUT_OPT DeeObject *delete_,
  DEE_A_INOUT_OPT DeeObject *setter_) {
  DeeObject *name_ob; int result;
- if ((name_ob = DeeString_New(name)) == NULL) return -1;
+ if DEE_UNLIKELY((name_ob = DeeString_New(name)) == NULL) return -1;
  result = DeeClass_AddProperty(self,name_ob,getter_,delete_,setter_);
  Dee_DECREF(name_ob);
  return result;
@@ -2650,7 +2650,7 @@ DEE_A_RET_EXCEPT(-1) int DeeClass_AddClassMethodString(
  DEE_A_INOUT_TYPEOBJECT(DeeClassObject) *self,
  DEE_A_IN_Z char const *name, DEE_A_INOUT DeeObject *method) {
  DeeObject *name_ob; int result;
- if ((name_ob = DeeString_New(name)) == NULL) return -1;
+ if DEE_UNLIKELY((name_ob = DeeString_New(name)) == NULL) return -1;
  result = DeeClass_AddClassMethod(self,name_ob,method);
  Dee_DECREF(name_ob);
  return result;
@@ -2660,7 +2660,7 @@ DEE_A_RET_EXCEPT(-1) int DeeClass_AddClassPropertyString(
  DEE_A_INOUT_OPT DeeObject *getter_, DEE_A_INOUT_OPT DeeObject *delete_,
  DEE_A_INOUT_OPT DeeObject *setter_) {
  DeeObject *name_ob; int result;
- if ((name_ob = DeeString_New(name)) == NULL) return -1;
+ if DEE_UNLIKELY((name_ob = DeeString_New(name)) == NULL) return -1;
  result = DeeClass_AddClassProperty(self,name_ob,getter_,delete_,setter_);
  Dee_DECREF(name_ob);
  return result;
@@ -2805,7 +2805,7 @@ DEE_A_RET_NOEXCEPT(NULL) DeeObject *DeeClass_GetSlot(
    break;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
   case DeeType_SLOT_ID(tp_io_read):
-   if (!DeeFileClass_Check(self)) return NULL;
+   if DEE_UNLIKELY(!DeeFileClass_Check(self)) return NULL;
    if (DeeType_GET_SLOT(self,tp_io_read) != &_deefileinstance_tp_io_read) return NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
    return ((struct DeeFileClassSuffix *)suffix)->tp_file.ctp_io_read;
@@ -2813,7 +2813,7 @@ DEE_A_RET_NOEXCEPT(NULL) DeeObject *DeeClass_GetSlot(
    return DeeClassSuffix_GetVirtOperator(suffix,DeeType_SLOT_ID(tp_io_read));
 #endif /* !DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
   case DeeType_SLOT_ID(tp_io_write):
-   if (!DeeFileClass_Check(self)) return NULL;
+   if DEE_UNLIKELY(!DeeFileClass_Check(self)) return NULL;
    if (DeeType_GET_SLOT(self,tp_io_write) != &_deefileinstance_tp_io_write) return NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
    return ((struct DeeFileClassSuffix *)suffix)->tp_file.ctp_io_write;
@@ -2823,7 +2823,7 @@ DEE_A_RET_NOEXCEPT(NULL) DeeObject *DeeClass_GetSlot(
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
 
   case DEE_CLASS_SLOTID_OPERATOR_READNP:
-   if (!DeeFileClass_Check(self)) return NULL;
+   if DEE_UNLIKELY(!DeeFileClass_Check(self)) return NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
    if (DeeType_GET_SLOT(self,tp_io_read) != &_deefileinstance_tp_io_read_np) return NULL;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
@@ -2833,7 +2833,7 @@ DEE_A_RET_NOEXCEPT(NULL) DeeObject *DeeClass_GetSlot(
    return DeeClassSuffix_GetVirtOperator(suffix,DeeType_SLOT_ID(tp_io_read));
 #endif /* !DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
   case DEE_CLASS_SLOTID_OPERATOR_WRITENP:
-   if (!DeeFileClass_Check(self)) return NULL;
+   if DEE_UNLIKELY(!DeeFileClass_Check(self)) return NULL;
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
    if (DeeType_GET_SLOT(self,tp_io_write) != &_deefileinstance_tp_io_write_np) return NULL;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
@@ -2845,7 +2845,7 @@ DEE_A_RET_NOEXCEPT(NULL) DeeObject *DeeClass_GetSlot(
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
 #define FILE_OPERATOR_SLOT(tp_name,tp_c_name)\
   case DeeType_SLOT_ID(tp_name):\
-   if (!DeeFileClass_Check(self)) return NULL;\
+   if DEE_UNLIKELY(!DeeFileClass_Check(self)) return NULL;\
    return ((struct DeeFileClassSuffix *)suffix)->tp_c_name
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
 #define FILE_OPERATOR_SLOT(tp_name,tp_c_name)\
@@ -2886,7 +2886,7 @@ static int DEE_CALL _deeinstance_tp_marshal_ctor(
  if (self_base != &DeeObject_Type) {
   struct DeeTypeMarshal *start_marshal;
   start_marshal = DeeType_GET_SLOT(self_base,tp_marshal);
-  if (!start_marshal) {
+  if DEE_UNLIKELY(!start_marshal) {
    DeeError_SetStringf(&DeeErrorType_NotImplemented,
                        "Instance base %q cannot be marshaled",
                        DeeType_NAME(self_base));
@@ -2895,10 +2895,10 @@ err_base_init:
    return -1;
   }
   DEE_ASSERT(start_marshal->tp_marshal_ctor_);
-  if ((*start_marshal->tp_marshal_ctor_)(self_base,(
+  if DEE_UNLIKELY((*start_marshal->tp_marshal_ctor_)(self_base,(
    DeeObject *)self,infile,map) != 0) goto err_base_init;
  }
- if (DeeFile_GetLeSmall64(infile,&read_memberc) != 0) {
+ if DEE_UNLIKELY(DeeFile_GetLeSmall64(infile,&read_memberc) != 0) {
 err: temp = _DeeObject_DestructChain(self_base,(DeeObject *)self);
   DeeHashMap_Quit(&my_level->il_members);
   return temp;
@@ -2914,8 +2914,8 @@ err: temp = _DeeObject_DestructChain(self_base,(DeeObject *)self);
  memberc = (Dee_size_t)read_memberc;
  while (memberc--) {
   DeeObject *key,*item; int temp;
-  if ((key = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) goto err;
-  if ((item = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
+  if DEE_UNLIKELY((key = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) goto err;
+  if DEE_UNLIKELY((item = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
 /*err_self_key:*/ Dee_DECREF(key); goto err;
   }
   temp = DeeHashMap_SetItem(&my_level->il_members,key,item);
@@ -2934,32 +2934,32 @@ static int DEE_CALL _deeinstance_tp_marshal_put(
  Dee_size_t memberc; int temp;
  // v recursively write data from all underlying levels / objects
  if (DeeType_BASE(tp_self) != &DeeObject_Type) {
-  if (DeeMarshal_TWriteObjectWithMap(outfile,map,
+  if DEE_UNLIKELY(DeeMarshal_TWriteObjectWithMap(outfile,map,
    DeeType_BASE(tp_self),(DeeObject *)self) != 0) return -1;
  }
  my_level = DeeInstance_MEMBERS_EX(tp_self,self);
  DeeAtomicMutex_Acquire(&my_level->il_lock);
  memberc = DeeHashMap_SIZE(&my_level->il_members);
  DeeAtomicMutex_Release(&my_level->il_lock);
- if (DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)memberc) != 0) return -1;
+ if DEE_UNLIKELY(DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)memberc) != 0) return -1;
  DeeAtomicMutex_Acquire(&my_level->il_lock);
  DeeHashMap_TRAVERSE_SAFE(node,&my_level->il_members) {
   Dee_INCREF(key = node->hmn_key);
   Dee_INCREF(item = node->hmn_item);
   DeeAtomicMutex_Release(&my_level->il_lock);
   temp = DeeMarshal_WriteObjectWithMap(outfile,map,key);
-  if (temp == 0) temp = DeeMarshal_WriteObjectWithMap(outfile,map,item);
+  if DEE_UNLIKELY(temp == 0) temp = DeeMarshal_WriteObjectWithMap(outfile,map,item);
   Dee_DECREF(item);
   Dee_DECREF(key);
-  if (temp != 0) return temp;
+  if DEE_UNLIKELY(temp != 0) return temp;
   --memberc;
   DeeAtomicMutex_Acquire(&my_level->il_lock);
  }
  DeeAtomicMutex_Release(&my_level->il_lock);
  // Write members that have gone missing (due to thread-safety as 'none')
  while (memberc--) {
-  if (DeeMarshal_WriteObjectWithMap(outfile,map,Dee_None) != 0 ||
-      DeeMarshal_WriteObjectWithMap(outfile,map,Dee_None) != 0) return -1;
+  if (DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,Dee_None) != 0)
+   || DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,Dee_None) != 0)) return -1;
  }
  return 0;
 }
@@ -3007,9 +3007,9 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeClass_Init(
  }
  // Initialize the type base
  class_type_base = DeeType_BASE(class_type);
- if ((*DeeType_GET_SLOT(class_type_base,tp_ctor))(
+ if DEE_UNLIKELY((*DeeType_GET_SLOT(class_type_base,tp_ctor))(
   (DeeTypeObject *)class_type_base,(DeeObject *)self) != 0) return -1;
- if (DeeType_SetName((DeeTypeObject *)self,name) != 0) {
+ if DEE_UNLIKELY(DeeType_SetName((DeeTypeObject *)self,name) != 0) {
 err_base_dtor:
   return _DeeObject_DestructChain(class_type_base,(DeeObject *)self);
  }
@@ -3043,7 +3043,7 @@ err_base_dtor:
  if (uuid) {
   // Register a new type by uuid
   struct DeeTypeMarshal *type_marshal;
-  while ((type_marshal = (struct DeeTypeMarshal *)
+  while DEE_UNLIKELY((type_marshal = (struct DeeTypeMarshal *)
    malloc_nz(sizeof(struct DeeTypeMarshal))) == NULL) {
    if DEE_LIKELY(Dee_CollectMemory()) continue;
    DeeError_NoMemory();
@@ -3056,7 +3056,7 @@ err_name:
   type_marshal->tp_marshal_put = (int(DEE_CALL *)(DeeTypeObject*,DeeObject*,DeeObject*,struct DeeMarshalWriteMap *))&_deeinstance_tp_marshal_put;
   type_marshal->tp_alias_uuids = NULL;
   DeeType_GET_SLOT(self,tp_marshal) = type_marshal;
-  if (DeeMarshal_RegisterType((DeeTypeObject *)self) != 0) {
+  if DEE_UNLIKELY(DeeMarshal_RegisterType((DeeTypeObject *)self) != 0) {
    free_nn(type_marshal);
    goto err_name;
   }
@@ -3071,16 +3071,16 @@ DEE_FUNC_DECL(DEE_A_RET_TYPEOBJECT_EXCEPT_REF(DeeClassObject) *) DeeClass_NewEx(
  DEE_A_IN_OPT struct DeeUUID const *uuid) {
  DeeClassTypeObject *class_type; DeeClassObject *result;
  DEE_ASSERT(DeeObject_Check(base) && DeeType_Check(base));
- if ((DeeType_FLAGS(base)&DEE_TYPE_FLAG_INCOMPLETE)!=0) {
+ if DEE_UNLIKELY((DeeType_FLAGS(base)&DEE_TYPE_FLAG_INCOMPLETE)!=0) {
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Can't use incomplete type %q as class base",
                       DeeType_NAME(base));
   return NULL;
  }
- if ((class_type = DeeClassType_TypeOf(base)) == NULL) return NULL;
+ if DEE_UNLIKELY((class_type = DeeClassType_TypeOf(base)) == NULL) return NULL;
  result = (DeeClassObject *)(*DeeType_GET_SLOT(class_type,tp_alloc))((DeeTypeObject *)class_type);
  Dee_DECREF(class_type);
- if (_DeeClass_Init(class_type,result,base,name,uuid) != 0) {
+ if DEE_UNLIKELY(_DeeClass_Init(class_type,result,base,name,uuid) != 0) {
   _DeeObject_DELETE((DeeTypeObject *)class_type,(DeeObject *)result);
   result = NULL;
  } else DeeGC_TrackedAdd((DeeObject *)result);
@@ -3109,7 +3109,7 @@ static int _deeclass_tp_any_ctor(
  DeeClassTypeObject *tp, DeeClassObject *self, DeeObject *args) {
  DeeTypeObject *base = &DeeObject_Type;
  DeeObject *name = Dee_EmptyString; int result;
- if (DeeTuple_Unpack(args,"o|o",&base,&name) != 0) return -1;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o",&base,&name) != 0) return -1;
  if (!DeeType_IsSameOrDerived((DeeTypeObject *)tp,Dee_TYPE(base))) {
   // Invalid class-type for this kind of base class
   DeeError_SetStringf(&DeeErrorType_ValueError,
@@ -3117,7 +3117,7 @@ static int _deeclass_tp_any_ctor(
                       tp,base,Dee_TYPE(base));
   return -1;
  }
- if ((name = DeeString_Cast(name)) == NULL) return -1;
+ if DEE_UNLIKELY((name = DeeString_Cast(name)) == NULL) return -1;
  result = _DeeClass_Init(tp,self,base,DeeString_STR(name),NULL);
  Dee_DECREF(name);
  return result;

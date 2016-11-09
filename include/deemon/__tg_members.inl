@@ -121,6 +121,8 @@
  DeeMemberType_Dee_rt_uint_least16_t = DeeMemberType_UINT(DEE_CONFIG_RT_SIZEOF_INT_LEAST16_T),
  DeeMemberType_Dee_rt_uint_least32_t = DeeMemberType_UINT(DEE_CONFIG_RT_SIZEOF_INT_LEAST32_T),
  DeeMemberType_Dee_rt_uint_least64_t = DeeMemberType_UINT(DEE_CONFIG_RT_SIZEOF_INT_LEAST64_T),
+ DeeMemberType_Dee_refcnt_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_REFCNT),
+ DeeMemberType_Dee_weakcnt_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_WEAKCNT),
 #ifdef DEE_TYPES_SIZEOF_UID_T
  DeeMemberType_Dee_uid_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_UID_T),
 #endif

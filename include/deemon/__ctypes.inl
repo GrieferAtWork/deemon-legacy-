@@ -252,6 +252,10 @@
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_rt_uint_least32_t (auto,0,DEE_CONFIG_RT_SIZEOF_INT_LEAST32_T,1,0)
 #define DEE_PRIVATE_TYPEDEF_Dee_rt_uint_least64_t        (auto,0,DEE_CONFIG_RT_SIZEOF_INT_LEAST64_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_rt_uint_least64_t (auto,0,DEE_CONFIG_RT_SIZEOF_INT_LEAST64_T,1,0)
+#define DEE_PRIVATE_TYPEDEF_Dee_refcnt_t        (auto,0,DEE_TYPES_SIZEOF_REFCNT,0,0)
+#define DEE_PRIVATE_TYPEDEF_atomic_Dee_refcnt_t (auto,0,DEE_TYPES_SIZEOF_REFCNT,1,0)
+#define DEE_PRIVATE_TYPEDEF_Dee_weakcnt_t        (auto,0,DEE_TYPES_SIZEOF_WEAKCNT,0,0)
+#define DEE_PRIVATE_TYPEDEF_atomic_Dee_weakcnt_t (auto,0,DEE_TYPES_SIZEOF_WEAKCNT,1,0)
 #ifdef DEE_TYPES_SIZEOF_UID_T
 #define DEE_PRIVATE_TYPEDEF_Dee_uid_t        (auto,0,DEE_TYPES_SIZEOF_UID_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_uid_t (auto,0,DEE_TYPES_SIZEOF_UID_T,1,0)

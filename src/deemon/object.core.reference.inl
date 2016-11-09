@@ -93,12 +93,12 @@ DeeObject_LockWeakref(DEE_A_INOUT struct DeeObject *self) {
  // NOTE: DeeObject_Check(self) would fail if the object is dead
  //       So this check works around that fact and accepts dead objects
  do {
-  DEE_ASSERT(self && _DeeRefCounter_Fetch(self->__ob_weakcnt) != 0
+  DEE_ASSERT(self && DeeAtomicN_Load(DEE_TYPES_SIZEOF_WEAKCNT,self->__ob_weakcnt,memory_order_seq_cst) != 0
              // v can't check the type, as it's value might be inconsistent if 'v == 0'
              /*&& DeeObject_Check(Dee_TYPE(self))*/);
   v = _DeeRefCounter_Fetch(self->__ob_refcnt);
-  if (v == 0) return NULL; // Dead object
- } while (!DeeAtomicInt_CompareExchangeWeak(
+  if (!v) return NULL; // Dead object
+ } while (!DeeAtomicN_CompareExchangeWeak(DEE_TYPES_SIZEOF_REFCNT,
   self->__ob_refcnt,v,v+1,memory_order_seq_cst,memory_order_seq_cst));
  // Do some sanity checks now that we've locked the object.
  DEE_ASSERT(DeeObject_Check(self) && DeeType_Check(Dee_TYPE(self)));

@@ -41,11 +41,11 @@ DEE_DECL_BEGIN
 #ifdef AGGRESSIVE
 DEE_STATIC_INLINE(int) _DeeObject_InternalDestroyGCAggressive(
  DEE_A_INOUT DeeObject *ob, struct _DeeGCHead **next,
- unsigned int initial_refcnt)
+ Dee_refcnt_t initial_refcnt)
 #else
 DEE_STATIC_INLINE(int) _DeeObject_InternalDestroyGC(
  DEE_A_INOUT DeeObject *ob, struct _DeeGCHead **next,
- unsigned int initial_refcnt)
+ Dee_refcnt_t initial_refcnt)
 #endif
 #else
 #ifdef DEE_DEBUG
@@ -71,13 +71,12 @@ void _DeeObject_InternalDestroy(DEE_A_INOUT DeeObject *ob)
  DeeTypeObject *tp_first,*tp_iter;
 #ifndef GC
  int gc_object;
- DEE_ASSERT(ob && DeeAtomicInt_Load(ob->__ob_refcnt,memory_order_seq_cst) == 0);
+ DEE_ASSERT(ob && _DeeRefCounter_Fetch(ob->__ob_refcnt) == 0);
 #else
 #ifndef AGGRESSIVE
- unsigned int temp;
+ Dee_refcnt_t temp;
 #endif
- DEE_ASSERT(ob && (unsigned int)DeeAtomicInt_Load(
-  ob->__ob_refcnt,memory_order_seq_cst) >= initial_refcnt);
+ DEE_ASSERT(ob && _DeeRefCounter_Fetch(ob->__ob_refcnt) >= initial_refcnt);
 #endif
  tp_first = Dee_TYPE(ob);
  DEE_ASSERTF(DeeObject_Check(tp_first) && DeeType_Check(tp_first),
@@ -156,7 +155,8 @@ begin_clear_call:
    // Fake reference to satisfy the state an object
    // has to be in when tp_clear is called
 #ifdef GC
-   if (!DeeAtomicInt_CompareExchangeStrong(ob->__ob_refcnt,
+   if (!DeeAtomicN_CompareExchangeStrong(
+        DEE_TYPES_SIZEOF_REFCNT,ob->__ob_refcnt,
         initial_refcnt,initial_refcnt+1,
         memory_order_seq_cst,memory_order_seq_cst)) {
     *next = DeeGC_OB2HEAD(ob)->gc_next;
@@ -164,10 +164,10 @@ begin_clear_call:
    }
 #else
 #ifdef DEE_DEBUG
-   if (DeeAtomicInt_FetchInc(ob->__ob_refcnt,memory_order_seq_cst) != 0)
+   if (DeeAtomicN_FetchInc(DEE_TYPES_SIZEOF_REFCNT,ob->__ob_refcnt,memory_order_seq_cst) != 0)
     DEE_ASSERTF(0,"Object wasn't dead or someone added a reference to a dead object");
 #else
-   DeeAtomicInt_IncFetch(ob->__ob_refcnt,memory_order_seq_cst);
+   DeeAtomicN_IncFetch(DEE_TYPES_SIZEOF_REFCNT,ob->__ob_refcnt,memory_order_seq_cst);
 #endif
 #endif
    // Do some assertions, to make people implementing destructors feel safer.
@@ -179,11 +179,12 @@ begin_clear_call:
 
    // Remove the temporary reference and check if destruction was aborted
 #ifdef GC
-   temp = (unsigned int)DeeAtomicInt_DecFetch(ob->__ob_refcnt,memory_order_seq_cst);
-   // NOTE: We need to re-confirm tha the object should still be deleted!
+   temp = (Dee_refcnt_t)DeeAtomicN_DecFetch(
+    DEE_TYPES_SIZEOF_REFCNT,ob->__ob_refcnt,memory_order_seq_cst);
+   // NOTE: We need to re-confirm that the object should still be deleted!
    //       >> If we simply say that it shouldn't if it still has references,
    //          we could potentially skip clear callbacks that are actually
-   //          responsible for clearing lookback references:
+   //          responsible for clearing loopback references:
    // >> cl = <>;
    // >> class a { this() { cl.set(this); } ~this() { print "Last dtor"; } };
    // >> class b: a { ~this() { print "Don't skip me!"; } };
@@ -194,7 +195,7 @@ begin_clear_call:
    if DEE_UNLIKELY(temp && !_deegc_should_delete(DeeGC_OB2HEAD(ob),temp))
    //if (temp /*&& !_deegc_should_delete(DeeGC_OB2HEAD(ob),temp)*/)
 #else
-   if DEE_UNLIKELY(DeeAtomicInt_DecFetch(ob->__ob_refcnt,memory_order_seq_cst) != 0)
+   if DEE_UNLIKELY(DeeAtomicN_DecFetch(DEE_TYPES_SIZEOF_REFCNT,ob->__ob_refcnt,memory_order_seq_cst) != 0)
 #endif
    {
     // Destruction aborted (object will remain alive as the portion we haven't destroyed yet)
@@ -230,7 +231,7 @@ begin_clear_call:
 begin_dtor_call:
 #ifndef GC
    // NOTE: The gc is allowed to destroy objects that still have references
-   DEE_ASSERTF(!DeeAtomicInt_Load(ob->__ob_refcnt,memory_order_seq_cst),
+   DEE_ASSERTF(!_DeeRefCounter_Fetch(ob->__ob_refcnt),
                "Object %s:%p has non-zero reference count before call to destructor",
                DeeType_NAME(Dee_TYPE(tp_iter)),ob);
 #endif
@@ -249,20 +250,21 @@ begin_next:
  }
 #ifdef DEE_DEBUG
 #ifdef GC
- DEE_ASSERTF((unsigned int)DeeAtomicInt_Load(ob->__ob_refcnt,memory_order_seq_cst) == initial_refcnt,
+ DEE_ASSERTF(_DeeRefCounter_Fetch(ob->__ob_refcnt) == initial_refcnt,
              "Object still referenced after all destructors have been called. "
              "If this assertion fails when called by the gc, there might be "
              "some missing 'tp_visit' functions!");
 #else
- DEE_ASSERTF(DeeAtomicInt_Load(ob->__ob_refcnt,memory_order_seq_cst) == 0,
+ DEE_ASSERTF(_DeeRefCounter_Fetch(ob->__ob_refcnt) == 0,
              "Object still referenced after all destructors have been called. "
              "If this assertion fails when called by the gc, there might be "
              "some missing 'tp_visit' functions!");
 #endif
 #endif
  // Release a weak reference (and possibly free the object)
- if DEE_LIKELY(DeeAtomicInt_CompareExchangeStrong(ob->__ob_weakcnt,
-  1,0,memory_order_seq_cst,memory_order_seq_cst)) {
+ if DEE_LIKELY(DeeAtomicN_CompareExchangeStrong(
+  DEE_TYPES_SIZEOF_WEAKCNT,ob->__ob_weakcnt,1,0,
+  memory_order_seq_cst,memory_order_seq_cst)) {
 do_free:
 #ifdef GC
   DEE_ASSERTF(DeeType_GET_SLOT(tp_first,tp_free) == &_DeeGC_TpFree,
@@ -284,7 +286,8 @@ do_free:
   //       we can simply set the original type (which contains
   //       that free function).
   ob->__ob_type = tp_first;
-  if DEE_UNLIKELY(_DeeRefCounter_DecFetch(ob->__ob_weakcnt) == 0) {
+  if DEE_UNLIKELY(DeeAtomicN_DecFetch(DEE_TYPES_SIZEOF_WEAKCNT,
+   ob->__ob_weakcnt,memory_order_seq_cst) == 0) {
    // The weak reference was removed in this split millisecond
    // But now we are the owner of this object!
    goto do_free;

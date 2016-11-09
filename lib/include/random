@@ -27,7 +27,16 @@
 //////////////////////////////////////////////////////////////////////////
 //
 // >> class random() -> random
-//       Creates a (pseudo-)randomly initialized random object
+//       Creates a (pseudo-)randomly initialized random object.
+//       NOTE: This rng generator isn't meant for application in situations
+//             where unpredictable (true) random numbers are required.
+//             Though it does do its best to obscure its seed generation
+//             with as much entropy as possible, combining it in different
+//             way sometimes even depending on previously acquired entropy.
+//             Yet that is only one during constructor / when randomize() is
+//             called. Meaning that it might be possible to narrow down
+//             its next value if given the previous value.
+//             
 // >> class random(uint64_t seed) -> random
 // >> copy(random right) -> random
 // >> operator copy = (random right);

@@ -122,6 +122,8 @@
 #define DEE_PRIVATE_OBJECT_CAST_Dee_rt_uint_least16_t(tp_ob,ob,result) DeeObject_CAST_UINT_F(DEE_CONFIG_RT_SIZEOF_INT_LEAST16_T)(tp_ob,ob,(DEE_TYPES_UINT(DEE_CONFIG_RT_SIZEOF_INT_LEAST16_T)*)(result))
 #define DEE_PRIVATE_OBJECT_CAST_Dee_rt_uint_least32_t(tp_ob,ob,result) DeeObject_CAST_UINT_F(DEE_CONFIG_RT_SIZEOF_INT_LEAST32_T)(tp_ob,ob,(DEE_TYPES_UINT(DEE_CONFIG_RT_SIZEOF_INT_LEAST32_T)*)(result))
 #define DEE_PRIVATE_OBJECT_CAST_Dee_rt_uint_least64_t(tp_ob,ob,result) DeeObject_CAST_UINT_F(DEE_CONFIG_RT_SIZEOF_INT_LEAST64_T)(tp_ob,ob,(DEE_TYPES_UINT(DEE_CONFIG_RT_SIZEOF_INT_LEAST64_T)*)(result))
+#define DEE_PRIVATE_OBJECT_CAST_Dee_refcnt_t(tp_ob,ob,result) DeeObject_CAST_UINT_F(DEE_TYPES_SIZEOF_REFCNT)(tp_ob,ob,(DEE_TYPES_UINT(DEE_TYPES_SIZEOF_REFCNT)*)(result))
+#define DEE_PRIVATE_OBJECT_CAST_Dee_weakcnt_t(tp_ob,ob,result) DeeObject_CAST_UINT_F(DEE_TYPES_SIZEOF_WEAKCNT)(tp_ob,ob,(DEE_TYPES_UINT(DEE_TYPES_SIZEOF_WEAKCNT)*)(result))
 #ifdef DEE_TYPES_SIZEOF_UID_T
 #define DEE_PRIVATE_OBJECT_CAST_Dee_uid_t(tp_ob,ob,result) DeeObject_CAST_UINT_F(DEE_TYPES_SIZEOF_UID_T)(tp_ob,ob,(DEE_TYPES_UINT(DEE_TYPES_SIZEOF_UID_T)*)(result))
 #endif

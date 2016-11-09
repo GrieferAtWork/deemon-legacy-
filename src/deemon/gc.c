@@ -92,7 +92,12 @@ DEE_DECL_BEGIN
 // 7. call tp_dtor on 'b', successfully destroying it
 //
 
-unsigned int _dee_gc_next_visit_id = GC_VISITID_FIRST_COLLECTION;
+Dee_gc_visitid_t _dee_gc_next_visit_id = GC_VISITID_FIRST_COLLECTION;
+#define DeeGC_GetNextVisitID() \
+(DEE_UNLIKELY(_dee_gc_next_visit_id < GC_VISITID_FIRST_COLLECTION)\
+ ? (/*very unlikely: overflow*/_dee_gc_next_visit_id = GC_VISITID_FIRST_COLLECTION+1,GC_VISITID_FIRST_COLLECTION)\
+ : _dee_gc_next_visit_id++)
+
 #ifndef DEE_WITHOUT_THREADS
 static struct _DeeGCHead *_dee_gc_tracked_pending = NULL;
 #endif
@@ -372,7 +377,7 @@ static void dependency_set_quit(struct dependency_set *self) {
 
 
 
-
+//////////////////////////////////////////////////////////////////////////
 // Step #1: Starting with 'ob', copy all references of all reachable gc objects into 'gc_refs'
 //          All objects currently being visited when reaching 'ob' again are put into a dependency set
 // Step #2: Starting with 'ob', for every reachable object, subtract
@@ -406,10 +411,10 @@ struct dependency_chain {
  struct _DeeGCHead       *entry;
 };
 struct copyrefs_data {
- unsigned int             id;
+ Dee_gc_visitid_t         id;
  struct dependency_set    deps;
  struct dependency_chain *chain;
- unsigned int             changed;
+ int                      changed;
  // v set of visited non-gc objects
  struct dependency_set    visited;
 };
@@ -475,7 +480,7 @@ static int _deegc_collectdeps_visitproc(
 
 
 struct subrefs_data {
- unsigned int           id;
+ Dee_gc_visitid_t       id;
  struct _DeeGCHead     *ob;
  // v set of visited non-gc objects
  struct dependency_set *visited;
@@ -498,7 +503,7 @@ static int _deegc_subrefs_visitproc(
 }
 
 static int _deegc_should_delete(
- struct _DeeGCHead *head, unsigned int initial_refcnt) {
+ struct _DeeGCHead *head, Dee_refcnt_t initial_refcnt) {
  struct copyrefs_data copy_data;
  struct subrefs_data sub_data;
  struct dependency_list *set_iter,*set_end;
@@ -509,7 +514,7 @@ static int _deegc_should_delete(
  // Copy references And calculate dependencies
  dependency_set_init(&copy_data.deps);
  dependency_set_addgc(&copy_data.deps,head); // The object depends on itself
- copy_data.id = _dee_gc_next_visit_id++;
+ copy_data.id = DeeGC_GetNextVisitID();
  copy_data.chain = NULL;
  copy_data.changed = 0;
  head->gc_refs = initial_refcnt;
@@ -545,7 +550,7 @@ static int _deegc_should_delete(
  //       - Actual implementation of 'tp_visit' may be extremely expensive
  while (copy_data.changed) {
   copy_data.changed = 0; 
-  copy_data.id = _dee_gc_next_visit_id++;
+  copy_data.id = DeeGC_GetNextVisitID();
   head->gc_last_seen = copy_data.id;
   dependency_set_init(&copy_data.visited);
   _deeobject_visit_all(DeeGC_HEAD2OB(head),(DeeVisitProc)&_deegc_collectdeps_visitproc,&copy_data);
@@ -560,7 +565,7 @@ static int _deegc_should_delete(
  set_end = (set_iter = copy_data.deps.slots)+dependency_set_size; do {
   end = (iter = set_iter->dl_vgc)+set_iter->dl_c; while (iter != end) {
    sub_data.ob = *iter++;
-   sub_data.id = _dee_gc_next_visit_id++;
+   sub_data.id = DeeGC_GetNextVisitID();
    sub_data.ob->gc_last_seen = sub_data.id;
    DEE_ASSERT(sub_data.ob->gc_refs && "GC : should_delete : Dead object in dependency chain");
    dependency_set_init(&copy_data.visited);
@@ -601,14 +606,14 @@ static int _deegc_should_delete(
 #include "object.core.destroy.inl"
 #else
 DEE_STATIC_INLINE(int) _DeeObject_InternalDestroyGC(
- DEE_A_INOUT DeeObject *ob, struct _DeeGCHead **next, unsigned int initial_refcnt);
+ DEE_A_INOUT DeeObject *ob, struct _DeeGCHead **next, Dee_refcnt_t initial_refcnt);
 DEE_STATIC_INLINE(int) _DeeObject_InternalDestroyGCAggressive(
- DEE_A_INOUT DeeObject *ob, struct _DeeGCHead **next, unsigned int initial_refcnt);
+ DEE_A_INOUT DeeObject *ob, struct _DeeGCHead **next, Dee_refcnt_t initial_refcnt);
 #endif
 
 
 Dee_size_t DeeGC_CollectNow(void) {
- Dee_size_t result; int temp; unsigned int initial_refcnt;
+ Dee_size_t result; int temp; Dee_refcnt_t initial_refcnt;
  struct _DeeGCHead *iter,*next;
  if (!DeeAtomicMutex_TryAcquire(&_dee_gc_collect_lock)) {
   // Somewhere, garbage is already being collected (don't do anything; return 0)
@@ -668,18 +673,17 @@ DEE_STATIC_INLINE(void) _DeeGC_CollectAggressive(void) {
 #endif
  iter = _dee_gc_tracked;
  while (iter) {
-  unsigned int initial_refcnt = _DeeRefCounter_Fetch(DeeGC_HEAD2OB(iter)->__ob_refcnt);
-  DEE_ASSERT(iter->gc_next != iter &&
-             iter->gc_prev != iter &&
-             (iter->gc_next != iter->gc_prev || !iter->gc_prev) &&
-             "Infinite loop in GC");
+  Dee_refcnt_t initial_refcnt = _DeeRefCounter_Fetch(DeeGC_HEAD2OB(iter)->__ob_refcnt);
+  DEE_ASSERTF(iter->gc_next != iter && iter->gc_prev != iter &&
+             (iter->gc_next != iter->gc_prev || !iter->gc_prev),
+             "Infinite loop in GC object chain");
   if (initial_refcnt != 0 && // Rare case: The object is currently being destroyed
       _deegc_should_delete(iter,initial_refcnt)) {
    int temp; // Must destroy this object
    DEE_LVERBOSE1("Destroying GC object through aggressive collect: Instance of %q\n",
                  DeeType_NAME(Dee_TYPE(DeeGC_HEAD2OB(iter))));
    temp = _DeeObject_InternalDestroyGCAggressive(DeeGC_HEAD2OB(iter),&next,initial_refcnt);
-   if (DEE_LIKELY(temp != 0)) {
+   if DEE_LIKELY(temp != 0) {
     // Object got destroyed --> remove it from the list of tracked objects
 #if 0 // v this is allowed to happen in aggressive mode!
     DEE_ASSERT(_DeeRefCounter_Fetch(DeeGC_HEAD2OB(iter)->__ob_refcnt) == 0 &&
@@ -708,14 +712,15 @@ DEE_STATIC_INLINE(void) _DeeGC_CollectAggressive(void) {
 
 
 DEE_A_GC_UNTRACKED DEE_A_RET_EXCEPT_REF DeeObject *
-_DeeGC_TpAlloc(DEE_A_IN DeeTypeObject *tp) {
+DEE_CALL _DeeGC_TpAlloc(DEE_A_IN DeeTypeObject *tp) {
  DeeObject *result;
- if ((result = (DeeObject *)DeeGC_Malloc(
-  DeeType_GET_SLOT(tp,tp_instance_size))
-  ) != NULL) DeeObject_INIT(result,tp);
+ if DEE_LIKELY((result = (DeeObject *)DeeGC_Malloc(
+  DeeType_GET_SLOT(tp,tp_instance_size))) != NULL) {
+  DeeObject_INIT(result,tp);
+ }
  return result;
 }
-void _DeeGC_TpFree(
+void DEE_CALL _DeeGC_TpFree(
  DEE_A_IN DeeTypeObject *DEE_UNUSED(tp),
  DEE_A_GC_UNTRACKED DeeObject *ob) {
  //DeeGC_TrackedRem(ob);

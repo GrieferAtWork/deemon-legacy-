@@ -46,19 +46,11 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 DEE_DECL_BEGIN
 
-#if DEE_TYPES_SIZEOF_INT == 4
-#define _DeeRefCounter_Fetch(x)     ((unsigned int)DeeAtomic32_Load(x,memory_order_seq_cst))
-#define _DeeRefCounter_FetchInc(x)  ((unsigned int)DeeAtomic32_FetchInc(x,memory_order_seq_cst))
-#define _DeeRefCounter_FetchDec(x)  ((unsigned int)DeeAtomic32_FetchDec(x,memory_order_seq_cst))
-#define _DeeRefCounter_IncFetch(x)  ((unsigned int)DeeAtomic32_IncFetch(x,memory_order_seq_cst))
-#define _DeeRefCounter_DecFetch(x)  ((unsigned int)DeeAtomic32_DecFetch(x,memory_order_seq_cst))
-#else
-#define _DeeRefCounter_Fetch(x)     ((unsigned int)DeeAtomicN_Load(DEE_TYPES_SIZEOF_INT,x,memory_order_seq_cst))
-#define _DeeRefCounter_FetchInc(x)  ((unsigned int)DeeAtomicN_FetchInc(DEE_TYPES_SIZEOF_INT,x,memory_order_seq_cst))
-#define _DeeRefCounter_FetchDec(x)  ((unsigned int)DeeAtomicN_FetchDec(DEE_TYPES_SIZEOF_INT,x,memory_order_seq_cst))
-#define _DeeRefCounter_IncFetch(x)  ((unsigned int)DeeAtomicN_IncFetch(DEE_TYPES_SIZEOF_INT,x,memory_order_seq_cst))
-#define _DeeRefCounter_DecFetch(x)  ((unsigned int)DeeAtomicN_DecFetch(DEE_TYPES_SIZEOF_INT,x,memory_order_seq_cst))
-#endif
+#define _DeeRefCounter_Fetch(x)     ((Dee_refcnt_t)DeeAtomicN_Load(DEE_TYPES_SIZEOF_REFCNT,x,memory_order_seq_cst))
+#define _DeeRefCounter_FetchInc(x)  ((Dee_refcnt_t)DeeAtomicN_FetchInc(DEE_TYPES_SIZEOF_REFCNT,x,memory_order_seq_cst))
+#define _DeeRefCounter_FetchDec(x)  ((Dee_refcnt_t)DeeAtomicN_FetchDec(DEE_TYPES_SIZEOF_REFCNT,x,memory_order_seq_cst))
+#define _DeeRefCounter_IncFetch(x)  ((Dee_refcnt_t)DeeAtomicN_IncFetch(DEE_TYPES_SIZEOF_REFCNT,x,memory_order_seq_cst))
+#define _DeeRefCounter_DecFetch(x)  ((Dee_refcnt_t)DeeAtomicN_DecFetch(DEE_TYPES_SIZEOF_REFCNT,x,memory_order_seq_cst))
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -69,34 +61,74 @@ DEE_DECL_BEGIN
 // - Essentially: To get a reference you must already have one, or be given one
 //   So if the caller owns the object (refcnt == 1), then nobody else
 //   will be able to get a new reference, meaning that the caller is the absolute owner
-#if 1
 // We use this version, to guaranty that the object can't just randomly
 // not be unique any longer. But as a consequence, the object could
 // just be referenced through a weak reference, meaning that this version
 // doesn't imply that 'ob' will live on if it's decrefed.
+#ifdef DEE_WITHOUT_THREADS
+// Unsynchronized version
 #define DeeObject_IS_UNIQUE(ob) \
-((Dee_uint64_t)DeeAtomic64_Load(((struct DeeObject*)Dee_REQUIRES_POINTER(ob))->__ob_refcnt,memory_order_seq_cst)==\
-  DEE_UINT64_C(0x0000000100000001))
+ (((struct DeeObject*)Dee_REQUIRES_POINTER(ob))->__ob_refcnt == 1\
+                   && ((struct DeeObject*)(ob))->__ob_weakcnt == 1)
+#elif (DEE_TYPES_SIZEOF_REFCNT == 4 && DEE_TYPES_SIZEOF_WEAKCNT == 4)
+// XXX: Is this actually safe?
+// -> Wouldn't we need to perform two consecutive a cmpxch32 on refcnt/weakrefcnt?
+// -> It's been working fine thus far, but we realldy rely on the fact
+//    that atomic32 and atomic64 are either not emulated, or share locks when emulated.
+//    >> EITHER: true 64-bit atomics
+//    >> OR:     address-only-based atomic emulation
+// -> Obviously, this version is faster. And with something as low-level as reference counters,
+//    we should prefer any implementation providing us with just that tiny bit more speed.
+//    But should at any point some problems arise, switch to the second version.
+#define DeeObject_IS_UNIQUE(ob) \
+((Dee_uint64_t)DeeAtomic64_Load(((struct DeeObject*)Dee_REQUIRES_POINTER(ob))\
+ ->__ob_refcnt,memory_order_seq_cst)==DEE_UINT64_C(0x0000000100000001))
 #else
-//   EXCEPTION: Someone else holds a weak reference and locks it
-//   NOTE: We could theoretically work around this restriction by
-//         loading both refcnt & weakrefcnt with 'DeeAtomic64_Load'
-//         and check if its equal to '0x0000000100000001ui64'.
-//      >> But that would kind of defeat the purpose of weak references
-//         only being meant to sleep in the background and not
-//         interfere with the regular lifetime of any given object...
-// >> However itn't relyable if 'ob' is held through a weak_reference,
-//    but why would you check if the object is unique before locking it?
-#define DeeObject_IS_UNIQUE(ob) (_DeeRefCounter_Fetch(((struct DeeObject*)Dee_REQUIRES_POINTER(ob))->__ob_refcnt)==1)
+//////////////////////////////////////////////////////////////////////////
+// This implementation of 'DeeObject_IS_UNIQUE' doesn't rely on fixed-length
+// reference counters, or requires true 64-bit atomics, or address-only-based emulation.
+#define DeeObject_IS_UNIQUE(ob) \
+  (DeeAtomicN_Load(DEE_TYPES_SIZEOF_REFCNT, ((struct DeeObject*)Dee_REQUIRES_POINTER(ob))->__ob_refcnt, memory_order_seq_cst) == 1\
+&& DeeAtomicN_Load(DEE_TYPES_SIZEOF_WEAKCNT,((struct DeeObject*)(ob))->__ob_weakcnt,memory_order_seq_cst) == 1\
+&& _DeeObject_IsReallyUnique((struct DeeObject*)(ob)))
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_WUNUSED int)
+_DeeObject_IsReallyUnique(DEE_A_IN struct DeeObject const *ob) {
+ Dee_refcnt_t refcnt; Dee_weakcnt_t weakcnt;
+ // NOTE: Checks are optimized for fallthrough, as this function should
+ //       only be called from the 'DeeObject_IS_UNIQUE' macro, which
+ //       already does most of the checking.
+ do {
+  if DEE_UNLIKELY((refcnt = ob->__ob_refcnt) != 1) return 0;
+  if DEE_UNLIKELY((weakcnt = ob->__ob_weakcnt) != 1) return 0;
+  // NOTE: At this point we can safely say that the object is unique,
+  //       __IF__ that we just read is really what it says in the refcnt data.
+  // NOTE: We don't need to ensure that one of the reference counters doesn't
+  //       change between the two atomic calls, as we are already checking
+  //       to make sure that they're both equal to '1' (which is the indicator
+  //       for no other thread currently using the object and thereby possibly
+  //       adding new reference between the two calls).
+  //       -> This obviously assumes that anyone using
+  //          the object is holding a reference to it.
+ } while DEE_UNLIKELY(
+     !DeeAtomicN_CompareExchangeWeak(DEE_TYPES_SIZEOF_REFCNT,
+      ob->__ob_refcnt,refcnt,refcnt,memory_order_seq_cst,memory_order_seq_cst)
+  || !DeeAtomicN_CompareExchangeWeak(DEE_TYPES_SIZEOF_WEAKCNT,
+      ob->__ob_weakcnt,weakcnt,weakcnt,memory_order_seq_cst,memory_order_seq_cst));
+ return 1;
+}
 #endif
 
 //////////////////////////////////////////////////////////////////////////
 // Not reliable when multi-threading (object may have already been revived upon return of this call)
+// >> Only use for assertions, or to check the state of a weak reference
+// NOTE: This is one of the tests performed by 'DeeObject_Check'
 #define DeeObject_IS_ALIVE(ob)  (_DeeRefCounter_Fetch((ob)->__ob_refcnt)!=0)
+
 #define DeeObject_INIT(ob,ob_type) (void)(\
-                                              ((struct DeeObject*)Dee_REQUIRES_POINTER(ob))->__ob_refcnt=1,\
-                                              ((struct DeeObject*)(ob))->__ob_weakcnt=1,\
- _DeeRefCounter_IncFetch(((struct DeeObject*)(((struct DeeObject*)(ob))->__ob_type=(ob_type)))->__ob_refcnt))
+ ((struct DeeObject*)Dee_REQUIRES_POINTER(ob))->__ob_refcnt=1,\
+ ((struct DeeObject*)(ob))->__ob_weakcnt=1,\
+ DeeAtomicN_IncFetch(DEE_TYPES_SIZEOF_REFCNT,((struct DeeObject*)((\
+  (struct DeeObject*)(ob))->__ob_type=(ob_type)))->__ob_refcnt,memory_order_seq_cst))
 
 #if defined(_MSC_VER) && DEE_CONFIG_HAVE_MSVC_MEMORY_DEBUG >= 1
 #define DEE_DEBUG_CHECK_MEMORY _CrtCheckMemory
@@ -112,19 +144,21 @@ DEE_DECL_BEGIN
 
 #ifdef DEE_DEBUG
 #define /*DEE_A_EXEC*/_DeeInternalObject_DECREF(ob) \
-{unsigned int const _temp = _DeeRefCounter_DecFetch(ob->__ob_refcnt);\
- if(!_temp)_DeeObject_InternalDestroy_d(ob,__FILE__,__LINE__);\
+{Dee_refcnt_t const _temp = _DeeRefCounter_DecFetch(ob->__ob_refcnt);\
+ if DEE_UNLIKELY(!_temp)_DeeObject_InternalDestroy_d(ob,__FILE__,__LINE__);\
  else DEE_ASSERTF(_temp!=0xFFFFFFFF,"Dee_DECREF(...) : Dead object");}
 #else /* DEE_DEBUG */
 #define /*DEE_A_EXEC*/_DeeInternalObject_DECREF(ob) \
- do{_DeeRefCounter_DecFetch(ob->__ob_refcnt)?(void)0:_DeeObject_InternalDestroy(ob);}while(0)
+ do{DEE_LIKELY(DeeAtomicN_DecFetch(DEE_TYPES_SIZEOF_REFCNT,ob->__ob_refcnt,\
+    memory_order_seq_cst))?(void)0:_DeeObject_InternalDestroy(ob);}while(0)
 #endif /* !DEE_DEBUG */
 #ifdef DEE_DEBUG
 #define               _DeeInternalObject_INCREF(ob) (_DeeFlag_NoAssert\
- ?(void)_DeeRefCounter_IncFetch(ob->__ob_refcnt):(_DeeRefCounter_FetchInc(ob->__ob_refcnt)==0\
+ ?(void)DeeAtomicN_IncFetch(DEE_TYPES_SIZEOF_REFCNT,ob->__ob_refcnt,memory_order_seq_cst):(\
+ DeeAtomicN_FetchInc(DEE_TYPES_SIZEOF_REFCNT,ob->__ob_refcnt,memory_order_seq_cst)==0\
  ?_Dee_AssertionFailed("Dee_INCREF(...) : Dead object",__FILE__,__LINE__):(void)0))
 #else
-#define               _DeeInternalObject_INCREF(ob) _DeeRefCounter_IncFetch(ob->__ob_refcnt)
+#define               _DeeInternalObject_INCREF(ob) DeeAtomicN_IncFetch(DEE_TYPES_SIZEOF_REFCNT,ob->__ob_refcnt,memory_order_seq_cst)
 #endif
 #define /*DEE_A_EXEC*/_DeeObject_DECREF      _DeeInternalObject_DECREF
 #define               _DeeObject_INCREF      _DeeInternalObject_INCREF
@@ -169,21 +203,23 @@ DEE_FUNC_DECL(DEE_A_EXEC void) Dee_XDecRef(DEE_A_INOUT_OPT struct DeeObject *ob)
 DEE_FUNC_DECL(DEE_A_EXEC void) _DeeObject_InternalDestroy(
  DEE_A_INOUT DEE_A_OUT_INVALID struct DeeObject *ob) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_A_EXEC void) _DeeObject_InternalDestroy_d(
- DEE_A_INOUT DEE_A_OUT_INVALID struct DeeObject *ob, DEE_A_IN_Z char const *file, DEE_A_IN int line) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_INOUT DEE_A_OUT_INVALID struct DeeObject *ob,
+ DEE_A_IN_Z char const *file, DEE_A_IN int line) DEE_ATTRIBUTE_NONNULL((1,2));
 
 //////////////////////////////////////////////////////////////////////////
 // Weak reference counting API
 DEE_FUNC_DECL(void) _DeeObject_InternalDestroyWeak(
  DEE_A_INOUT DEE_A_OUT_INVALID struct DeeObject *ob) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(void) _DeeObject_InternalDestroyWeak_d(
- DEE_A_INOUT DEE_A_OUT_INVALID struct DeeObject *ob, DEE_A_IN_Z char const *file, DEE_A_IN int line) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_INOUT DEE_A_OUT_INVALID struct DeeObject *ob,
+ DEE_A_IN_Z char const *file, DEE_A_IN int line) DEE_ATTRIBUTE_NONNULL((1,2));
 
 #ifdef DEE_DEBUG
-#define _DeeeInternalObject_WEAKDECREF(ob) (_DeeRefCounter_DecFetch(ob->__ob_weakcnt)?(void)0:_DeeObject_InternalDestroyWeak_d(ob,__FILE__,__LINE__))
+#define _DeeeInternalObject_WEAKDECREF(ob) (DeeAtomicN_DecFetch(DEE_TYPES_SIZEOF_WEAKCNT,ob->__ob_weakcnt,memory_order_seq_cst)?(void)0:_DeeObject_InternalDestroyWeak_d(ob,__FILE__,__LINE__))
 #else /* DEE_DEBUG */
-#define _DeeeInternalObject_WEAKDECREF(ob) (_DeeRefCounter_DecFetch(ob->__ob_weakcnt)?(void)0:_DeeObject_InternalDestroyWeak(ob))
+#define _DeeeInternalObject_WEAKDECREF(ob) (DeeAtomicN_DecFetch(DEE_TYPES_SIZEOF_WEAKCNT,ob->__ob_weakcnt,memory_order_seq_cst)?(void)0:_DeeObject_InternalDestroyWeak(ob))
 #endif /* !DEE_DEBUG */
-#define _DeeeInternalObject_WEAKINCREF(ob)  _DeeRefCounter_IncFetch(ob->__ob_weakcnt)
+#define _DeeeInternalObject_WEAKINCREF(ob)  DeeAtomicN_IncFetch(DEE_TYPES_SIZEOF_WEAKCNT,ob->__ob_weakcnt,memory_order_seq_cst)
 #define _DeeObject_WEAKINCREF _DeeeInternalObject_WEAKINCREF
 #define _DeeObject_WEAKDECREF _DeeeInternalObject_WEAKDECREF
 #if DEE_CONFIG_HAVE_MSVC_MEMORY_DEBUG >= 2

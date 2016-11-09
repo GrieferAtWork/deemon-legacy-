@@ -571,7 +571,7 @@ err_r_ast_token: Dee_DECREF(ast_result); goto err_ast_token;
         if (attr && ast_result) {
          // Parse & apply used/unused attributes
          Dee_DECREF(found_entry);
-         DEE_ASSERT(DeeObject_IS_ALIVE(found_entry)); // Still exists in 'ast_result'
+         DEE_ASSERT(DeeObject_Check(found_entry)); // Still exists in 'ast_result'
          if DEE_UNLIKELY(!yield()) goto err_r;
          if DEE_UNLIKELY(DeeAttributeDecl_Parse(attr,DEE_PARSER_ARGS) != 0) goto err_r;
          DeeLocalVar_ApplyAttributes(((DeeLocalVarObject *)found_entry),attr);

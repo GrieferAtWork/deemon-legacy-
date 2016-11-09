@@ -35,6 +35,7 @@
 #include <deemon/mp/thread.h>
 #include <deemon/none.h>
 #include <deemon/optional/object_malloc.h>
+#include <deemon/optional/object_hash.h>
 #include <deemon/optional/std/string.h>
 #include <deemon/random.h>
 #include <deemon/runtime/builtins.h>
@@ -191,21 +192,44 @@ DEE_COMPILER_PREFAST_WARNING_PUSH(6001 6102)
 void DeeRandomNumberGenerator_Randomize(
  DEE_A_OUT struct DeeRandomNumberGenerator *self) {
  Dee_uint64_t new_seed;
+#if DEE_TYPES_SIZEOF_POINTER <= 8
+#define ADD_POINTER(seed,p) \
+ (seed) ^= ((((Dee_uint64_t)(p) << (((seed)^(Dee_uint64_t)(p))\
+      %((8-DEE_TYPES_SIZEOF_POINTER)*8))) ^ (Dee_uint64_t)(p))-1)
+#else
+#define ADD_POINTER(seed,p) (seed) ^= ((Dee_uint64_t)(p)-1)
+#endif
+
  // Try to reverse-engineer this! (Hue hue hue...)
- if (DeeRandom_SystemURandom(&new_seed,sizeof(new_seed)) != 0)
-  DeeError_Handled(); // Ignore errors & if they occurred, they're part of the entropy
+ if (DeeRandom_SystemURandom(&new_seed,sizeof(new_seed)) != 0) {
+  DeeObject *occurred_error;
+  // Ignore errors & if they occurred, they're part of the entropy
+  while (DeeError_PopOccurredOne(&occurred_error,NULL) >= 0) {
+   ADD_POINTER(new_seed,(Dee_uintptr_t)occurred_error);
+   ADD_POINTER(new_seed,(Dee_uintptr_t)Dee_TYPE(occurred_error));
+   Dee_DECREF(occurred_error);
+  }
+ }
+
+ // Add some more entropy using our platform-given thread-id
+ ((DeeThreadID *)&new_seed)[new_seed % (8-sizeof(DeeThreadID))] ^= DeeThread_SelfID();
+
+#ifdef DEE_PLATFORM_WINDOWS
+ ADD_POINTER(new_seed,(Dee_uintptr_t)GetCurrentThread());
+ ADD_POINTER(new_seed,(Dee_uintptr_t)GetCurrentProcess());
+ ((DWORD *)&new_seed)[new_seed % (8-sizeof(DWORD))] ^= GetCurrentProcessId();
+#endif
+
  // Note how we even take advantage of possible dangling data... (twice if urandom failed) ;)
  self->rng_seed ^= new_seed;
- if ((self->rng_seed & 0x1) != 0)
-  self->rng_seed ^= ~DeeTime_GetClockTick();
+ if ((self->rng_seed & 0x1) != 0) self->rng_seed ^= ~DeeTime_GetClockTick();
+ if ((self->rng_seed & 0x2) != 0) self->rng_seed ^= (DeeTime_GetClockFreq()-1);
  // Improve the randomization a bit
  _dee_randomize2(&self->rng_seed);
-#if DEE_TYPES_SIZEOF_POINTER <= 8
  // Lastly, add the address of the rng structure
  // NOTE: This only improves entropy if the rng isn't statically allocated
- if ((self->rng_seed & 0x3) != 0)
-  *((Dee_uintptr_t *)&self->rng_seed) ^= (Dee_uintptr_t)self;
-#endif
+ if ((self->rng_seed & 0x3) != 0) ADD_POINTER(self->rng_seed,(Dee_uintptr_t)self);
+
 }
 DEE_COMPILER_PREFAST_WARNING_POP
 DEE_COMPILER_MSVC_WARNING_POP
@@ -263,13 +287,11 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeRandomNumberGenerator_Next(
  DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp) {
  DeeObject *result;
  DEE_ASSERT(self);
- DEE_ASSERT(DeeObject_Check(tp) && DeeStructuredType_Check(tp) &&
-            "Not a structured type");
- if ((result = (*DeeType_GET_SLOT(tp,tp_alloc))((DeeTypeObject *)tp)) != NULL) {
-  // Fill with random data
-  DeeRandomNumberGenerator_NextData(
-   self,DeeStructured_DATA(result),
-   DeeType_GET_SLOT(tp,tp_p_instance_size));
+ DEE_ASSERTF(DeeObject_Check(tp) && DeeStructuredType_Check(tp),"Not valid a structured type");
+ if DEE_UNLIKELY((result = (*DeeType_GET_SLOT(tp,tp_alloc))((DeeTypeObject *)tp)) != NULL) {
+  // Fill the instance with random data
+  DeeRandomNumberGenerator_NextData(self,DeeStructured_DATA(result),
+                                    DeeType_GET_SLOT(tp,tp_p_instance_size));
  }
  return result;
 }
@@ -280,7 +302,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeRandomNumberGenerator_Next(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeRandomObject) *
 DeeRandom_NewWithSeed(DEE_A_IN Dee_uint64_t seed) {
  DeeRandomObject *result;
- if ((result = DeeObject_MALLOC(DeeRandomObject)) != NULL) {
+ if DEE_LIKELY((result = DeeObject_MALLOC(DeeRandomObject)) != NULL) {
   DeeObject_INIT(result,&DeeRandom_Type);
   result->r_rng.rng_seed = seed;
  }
@@ -310,7 +332,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeRandomObject) *DeeRandom_ThreadLocal(void) {
   } else {
    Dee_INCREF(thread_self->t_rt_rand = (DeeRandomObject *)result);
   }
- } else Dee_INCREF(result);
+ } else {
+  Dee_INCREF(result);
+ }
  DeeAtomicMutex_Release(&thread_self->t_rt_lock);
  return result;
 }
@@ -355,35 +379,20 @@ static DeeObject *DEE_CALL _deerandom_tp_cmp_eq(DeeRandomObject *self, DeeRandom
 static DeeObject *DEE_CALL _deerandom_tp_cmp_ne(DeeRandomObject *self, DeeRandomObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeRandom_Type) != 0) return NULL; DeeReturn_Bool(DeeRandom_SEED(self) != DeeRandom_SEED(right)); }
 static DeeObject *DEE_CALL _deerandom_tp_cmp_gr(DeeRandomObject *self, DeeRandomObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeRandom_Type) != 0) return NULL; DeeReturn_Bool(DeeRandom_SEED(self) > DeeRandom_SEED(right)); }
 static DeeObject *DEE_CALL _deerandom_tp_cmp_ge(DeeRandomObject *self, DeeRandomObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeRandom_Type) != 0) return NULL; DeeReturn_Bool(DeeRandom_SEED(self) >= DeeRandom_SEED(right)); }
-static int DEE_CALL _deerandom_tp_hash(DeeRandomObject *self, Dee_hash_t start, Dee_hash_t *result) {
-#if DEE_CONFIG_SIZEOF_DEE_HASH_T >= 8
- *result = start ^ (Dee_hash_t)self->r_rng.rng_seed;
-#elif DEE_CONFIG_SIZEOF_DEE_HASH_T*2 == 8
- *result = start ^ ((Dee_hash_t *)&self->r_rng.rng_seed)[0] ^
-                   ((Dee_hash_t *)&self->r_rng.rng_seed)[1];
-#elif DEE_CONFIG_SIZEOF_DEE_HASH_T*4 == 8
- *result = start ^ ((Dee_hash_t *)&self->r_rng.rng_seed)[0] ^
-                   ((Dee_hash_t *)&self->r_rng.rng_seed)[1] ^
-                   ((Dee_hash_t *)&self->r_rng.rng_seed)[2] ^
-                   ((Dee_hash_t *)&self->r_rng.rng_seed)[3];
-#else
-#error "Invalid/Unsupported hash/integer size"
-#endif
- return 0;
-}
+static int DEE_CALL _deerandom_tp_hash(DeeRandomObject *self, Dee_hash_t start, Dee_hash_t *result) { *result = DeeHash_Integer(Dee_uint64_t,start,self->r_rng.rng_seed); return 0; }
 
 
 static DeeObject *DEE_CALL _deerandom_next(
  DeeRandomObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeTypeObject *ty = DeeObject_TYPE(Dee_rt_int);
- if (DeeTuple_Unpack(args,"|o:next",&ty) != 0) return NULL;
- if (DeeObject_InplaceGetInstance(&ty,(DeeTypeObject *)&DeeStructuredType_Type) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:next",&ty) != 0) return NULL;
+ if DEE_UNLIKELY(DeeObject_InplaceGetInstance(&ty,(DeeTypeObject *)&DeeStructuredType_Type) != 0) return NULL;
  return DeeRandomNumberGenerator_Next(&self->r_rng,ty);
 }
 static DeeObject *DEE_CALL _deerandom_nextflt(
  DeeRandomObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeTypeObject *ty = DeeObject_TYPE(Dee_rt_double);
- if (DeeTuple_Unpack(args,"|o:nextflt",&ty) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:nextflt",&ty) != 0) return NULL;
 #if defined(DEE_TYPES_FLOATID_FLOAT) && DEE_CONFIG_RT_FLOATID_DOUBLE == DEE_TYPES_FLOATID_FLOAT
  if (ty == (DeeTypeObject *)&DeeDouble_Type) return DeeDouble_New(DeeRandom_NextFloat((DeeObject *)self));
 #elif defined(DEE_TYPES_FLOATID_DOUBLE) && DEE_CONFIG_RT_FLOATID_DOUBLE == DEE_TYPES_FLOATID_DOUBLE
@@ -418,21 +427,21 @@ static DeeObject *DEE_CALL _deerandom_nextflt(
 static DeeObject *DEE_CALL _deerandom_nextdata(
  DeeRandomObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *result; Dee_size_t data_size;
- if (DeeTuple_Unpack(args,"Iu:nextdata",&data_size) != 0) return NULL;
- if ((result = DeeString_NewSized(data_size)) == NULL) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"Iu:nextdata",&data_size) != 0) return NULL;
+ if DEE_UNLIKELY((result = DeeString_NewSized(data_size)) == NULL) return NULL;
  DeeRandom_NextData(self,DeeString_STR(result),data_size);
  return result;
 }
 static DeeObject *DEE_CALL _deerandom_randomize(
  DeeRandomObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- if (DeeTuple_Unpack(args,":randomize") != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":randomize") != 0) return NULL;
  DeeRandomNumberGenerator_Randomize(&self->r_rng);
  DeeReturn_None;
 }
 
 static DeeObject *DEE_CALL _deerandomclass_thread_local(
  DeeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
- if (DeeTuple_Unpack(args,":thread_local") != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":thread_local") != 0) return NULL;
  return DeeRandom_ThreadLocal();
 }
 

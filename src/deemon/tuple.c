@@ -1419,15 +1419,21 @@ static DeeObject *DEE_CALL _deetuple_tp_marshal_new(
  used_size = (Dee_size_t)read_size;
  if DEE_UNLIKELY((result = _DeeTuple_NewUnsafe(used_size)) != NULL) {
   DEE_ASSERTF(DeeObject_IS_UNIQUE(result),
-              "Marshalled tuple at %p (size: %Iu) isn't unique before alloc notification (ref: %u; wref: %u)\n",
+              "Marshalled tuple at %p (size: %Iu) isn't unique before alloc notification "
+              "(ref: " DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_REFCNT) "; "
+              "wref: " DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_WEAKCNT) ")\n",
               result,used_size,result->__ob_refcnt,result->__ob_weakcnt);
   (*after_alloc)(result,after_alloc_data);
   DEE_ASSERTF(DeeObject_IS_UNIQUE(result),
-              "Marshalled tuple at %p (size: %Iu) isn't unique after notifying about its allocation (ref: %u; wref: %u)\n",
+              "Marshalled tuple at %p (size: %Iu) isn't unique after notifying about its allocation "
+              "(ref: " DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_REFCNT) "; "
+              "wref: " DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_WEAKCNT) ")\n",
               result,used_size,result->__ob_refcnt,result->__ob_weakcnt);
   if DEE_UNLIKELY(DeeMarshal_ReadObjectsWithMap(infile,map,used_size,DeeTuple_ELEM(result)) != 0) {
    DEE_ASSERTF(DeeObject_IS_UNIQUE(result),
-               "Marshalled tuple at %p (size: %Iu) isn't unique after reading its elements failed (ref: %u; wref: %u)\n",
+               "Marshalled tuple at %p (size: %Iu) isn't unique after reading its elements failed "
+              "(ref: " DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_REFCNT) "; "
+              "wref: " DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_WEAKCNT) ")\n",
                result,used_size,result->__ob_refcnt,result->__ob_weakcnt);
    _DeeTuple_FreeUnsafe(result);
    result = NULL;

@@ -255,6 +255,8 @@ d("Dee_rt_uint_least8_t",false,"DEE_CONFIG_RT_SIZEOF_INT_LEAST8_T");
 d("Dee_rt_uint_least16_t",false,"DEE_CONFIG_RT_SIZEOF_INT_LEAST16_T");
 d("Dee_rt_uint_least32_t",false,"DEE_CONFIG_RT_SIZEOF_INT_LEAST32_T");
 d("Dee_rt_uint_least64_t",false,"DEE_CONFIG_RT_SIZEOF_INT_LEAST64_T");
+d("Dee_refcnt_t",false,"DEE_TYPES_SIZEOF_REFCNT");
+d("Dee_weakcnt_t",false,"DEE_TYPES_SIZEOF_WEAKCNT");
 
 d("Dee_uid_t",false,"DEE_TYPES_SIZEOF_UID_T",true);
 d("Dee_gid_t",false,"DEE_TYPES_SIZEOF_GID_T",true);

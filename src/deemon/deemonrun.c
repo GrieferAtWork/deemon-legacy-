@@ -441,10 +441,13 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
  // all the references to static objects are consistent
  {Dee_uint16_t i = 0; DeeObject *ob;
   while ((ob = DeeBuiltin_Get(i++)) != NULL) {
-   if (ob->__ob_refcnt != 1) {
+   if (!DeeObject_IS_UNIQUE(ob)) {
     DEE_LDEBUG("[shutdown][builtin %I16x][%R] "
-    "Inconsistent reference count (%u too many)\n",
-    i-1,DeeObject_Str(ob),ob->__ob_refcnt-1u);
+    "Inconsistent reference count ("
+    DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_REFCNT) "|"
+    DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_WEAKCNT) " too many)\n",i-1,DeeObject_Str(ob),
+    (Dee_refcnt_t)(ob->__ob_refcnt-1),
+    (Dee_weakcnt_t)(ob->__ob_weakcnt-1));
 #ifndef DEE_WITHOUT_THREADS
     // 'DeeObject_Str' caused the thread api to re-initializie
     // >> Let's finalize it (again... *sigh*)

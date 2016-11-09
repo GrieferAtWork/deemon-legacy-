@@ -352,6 +352,9 @@ static void __intellisense__DEE_LVERBOSE4R(char const *fmt, ...);
 
 
 #define DEE_CONFIG_SIZEOF_DEE_HASH_T  DEE_TYPES_SIZEOF_SIZE_T
+#define DEE_TYPES_SIZEOF_REFCNT       4
+#define DEE_TYPES_SIZEOF_WEAKCNT      4
+
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -441,6 +444,9 @@ static void __intellisense__DEE_LVERBOSE4R(char const *fmt, ...);
  typedef DEE_TYPES_UINT16_T Dee_uint16_t;\
  typedef DEE_TYPES_UINT32_T Dee_uint32_t;\
  typedef DEE_TYPES_UINT64_T Dee_uint64_t;
+#define DEE_PRIVATE_DECL_DEE_REFCNT_TYPES\
+ typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_REFCNT) Dee_refcnt_t;\
+ typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_WEAKCNT) Dee_weakcnt_t;
 #define DEE_PRIVATE_DECL_DEE_SIZE_TYPES\
  typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_SIZE_T) Dee_size_t;\
  typedef DEE_TYPES_INT(DEE_TYPES_SIZEOF_SIZE_T) Dee_ssize_t;\

@@ -57,20 +57,25 @@ DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 //    state where visit can still be called.
 
 #ifdef DEE_LIMITED_API
-extern unsigned int _dee_gc_next_visible_id;
-extern unsigned int _dee_gc_next_visit_id;
+typedef unsigned int Dee_gc_visitid_t;
+extern Dee_gc_visitid_t      _dee_gc_next_visit_id;
 extern struct DeeAtomicMutex _dee_gc_collect_lock;
 #endif
 
 #ifdef DEE_LIMITED_API
+#ifdef DEE_PRIVATE_DECL_DEE_REFCNT_TYPES
+DEE_PRIVATE_DECL_DEE_REFCNT_TYPES
+#undef DEE_PRIVATE_DECL_DEE_REFCNT_TYPES
+#endif
+
 struct _DeeGCHead {
  struct _DeeGCHead *gc_prev;      /*< [0..1] Prev (younger) object in global linked list of gc objects. */
  struct _DeeGCHead *gc_next;      /*< [0..1] Next (older) object in global linked list of gc objects. */
- unsigned int       gc_last_seen; /*< Last time this object was seen. */
- unsigned int       gc_refs;      /*< Last time this object was seen. */
+ Dee_gc_visitid_t   gc_last_seen; /*< Last time this object was seen. */
+ Dee_refcnt_t       gc_refs;      /*< The amount of tracked references. */
 };
 #define DeeGC_OB2HEAD(ob) (((struct _DeeGCHead *)Dee_REQUIRES_POINTER(ob))-1)
-#define DeeGC_HEAD2OB(ob) ((DeeObject *)(Dee_REQUIRES_POINTER(ob)+1))
+#define DeeGC_HEAD2OB(ob) ((DeeObject *)((struct _DeeGCHead *)Dee_REQUIRES_POINTER(ob)+1))
 #endif
 
 #define DeeObject_IS_GC(ob) \
