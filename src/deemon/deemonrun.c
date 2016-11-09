@@ -99,6 +99,72 @@ void Dee_SetArgv(DEE_A_INOUT_OBJECT_OPT(DeeListObject) *ob) {
 }
 
 
+#define _Dee_ClearHome()\
+do{\
+ DeeAtomicMutex_AcquireRelaxed(&_dee_home_lock);\
+ Dee_XCLEAR(_dee_home);\
+ DeeAtomicMutex_Release(&_dee_home_lock);\
+}while(0)
+static struct DeeAtomicMutex _dee_home_lock = DeeAtomicMutex_INIT();
+static DeeAnyStringObject *_dee_home = NULL;
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *Dee_GetHome(void) {
+ DeeAnyStringObject *result,*newresult;
+ DeeAtomicMutex_AcquireRelaxed(&_dee_home_lock);
+ if (_dee_home) {
+  Dee_INCREF(result = _dee_home);
+  DeeAtomicMutex_Release(&_dee_home_lock);
+ } else {
+  DeeAtomicMutex_Release(&_dee_home_lock);
+  if ((result = (DeeAnyStringObject *)DeeFS_TryGetEnv(DEE_AUTOCONF_VARNAME_DEEMON_HOME)) == NULL) {
+   // No explicit home path specified (use default home)
+#ifdef DEE_DEFAULT_HOMEPATH
+   DeeString_NEW_STATIC(_default_home,DEE_DEFAULT_HOMEPATH "/");
+   Dee_INCREF(result = (DeeAnyStringObject *)&_default_home);
+#else
+   static Dee_WideChar const _suffixw[] = {'l','i','b',DEE_FS_SEP};
+   static Dee_Utf8Char const _suffix8[] = {'l','i','b',DEE_FS_SEP};
+   if DEE_UNLIKELY((result = (DeeAnyStringObject *)
+    DeeFS_GetDeemonExecutable()) == NULL) return NULL;
+   newresult = (DeeAnyStringObject *)DeeFS_PathHeadObject((DeeObject *)result);
+   Dee_DECREF(result);
+   if DEE_UNLIKELY(!newresult) return NULL;
+   if (DeeWideString_Check(newresult)) {
+    if (DeeWideString_AppendWithLength((DeeObject **)&newresult,
+     sizeof(_suffixw)/sizeof(Dee_WideChar),_suffixw) != 0) {
+err_newresult: Dee_DECREF(newresult); return NULL;
+    }
+   } else {
+    if (DeeUtf8String_AppendWithLength((DeeObject **)&newresult,
+     sizeof(_suffix8)/sizeof(Dee_Utf8Char),_suffix8) != 0) goto err_newresult;
+   }
+   Dee_INHERIT_REF(result,newresult);
+#endif
+  }
+  DeeAtomicMutex_AcquireRelaxed(&_dee_home_lock);
+  if (!_dee_home) {
+   Dee_INCREF(_dee_home = result);
+   DeeAtomicMutex_Release(&_dee_home_lock);
+  } else {
+   Dee_INCREF(newresult = _dee_home);
+   DeeAtomicMutex_Release(&_dee_home_lock);
+   Dee_DECREF(result);
+   result = newresult;
+  }
+ }
+ return (DeeObject *)result;
+}
+DEE_A_RET_EXCEPT(-1) int Dee_SetHome(DEE_A_IN_OBJECT(DeeAnyStringObject) const *home) {
+ DeeAnyStringObject *old_home;
+ DEE_ASSERT(DeeObject_Check(home) && DeeAnyString_Check(home));
+ DeeAtomicMutex_AcquireRelaxed(&_dee_home_lock);
+ old_home = _dee_home; Dee_INCREF(_dee_home = (DeeAnyStringObject *)home);
+ DeeAtomicMutex_Release(&_dee_home_lock);
+ Dee_XDECREF(old_home);
+ return 0;
+}
+
+
+
 #if DEE_CONFIG_RUNTIME_HAVE_STACKLIMIT_CHECKS
 Dee_size_t Dee_StackLimit = DEE_XCONFIG_RUNTIME_DEFAULT_STACKLIMIT;
 extern void _Dee_SetStackLimitString(char const *value);
@@ -405,6 +471,9 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
 #endif
  
  _DeeDex_QuitApi();
+
+ // Clear the cached home location
+ _Dee_ClearHome();
 
  // From this point on, no user-level code can be executed!
 

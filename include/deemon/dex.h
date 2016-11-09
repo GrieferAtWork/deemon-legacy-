@@ -123,7 +123,7 @@ struct DeeDexExportDef {
    void       *dxe_nf_function; /*< [1..1] Function pointer. */
   } dxe_native_function;
   struct {
-   DeeObject        *dxe_gn_cache; /*< [0..1] Cache generator value (read-only; managed by the dex). */
+   DeeObject        *dxe_gn_cache; /*< [0..1] Cached generator value (read-only; managed by the dex). */
    DeeDexConstructor dxe_gn_ctor;  /*< [1..1] Constructor callback. */
    DeeDexDestructor  dxe_gn_dtor;  /*< [0..1] Destructor callback. (If NULL, Dee_DECREF() the object) */
   } dxe_generator;
@@ -189,7 +189,7 @@ DEE_COMPILER_MSVC_WARNING_POP
   DEE_DEX_TYPECOMPATIBLE(DeeDexGetter,get),\
   DEE_DEX_TYPECOMPATIBLE(DeeDexDelete,del),\
   DEE_DEX_TYPECOMPATIBLE(DeeDexSetter,set)}}}
-#define DeeDex_EXPORT_END {NULL,0,{{0}}}
+#define DeeDex_EXPORT_END {NULL,0,{{NULL,}}}
 #define DeeDex_EXPORT_NATIVE_FUNCTION(name,structF,fun) \
  {name,DEE_DEX_EXPORT_TYPE_NATIVE_FUNCTION,{{structF,fun}}}
 
@@ -268,7 +268,8 @@ DEE_DATA_DECL(struct DeeListObject) _DeeDex_SearchPath;
 
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *) DeeDex_GetDefaultSearchPath(void);
 
-#define DEEDEX_SEARCHORDER_VERPATH "V" /*< Search the version-dependent dex path ("/usr/lib/deemon/dex.%d" % DEE_VERSION_API). Ignored on windows. */
+#define DEEDEX_SEARCHORDER_STDPATH "S" /*< Search the standard dex path ("$DEEMON_HOME/dex"). */
+#define DEEDEX_SEARCHORDER_VERPATH "V" /*< Search the version-dependent dex path ("$DEEMON_HOME/dex.%d" % DEE_VERSION_API). */
 #define DEEDEX_SEARCHORDER_DEXPATH "D" /*< Search the dex search path (DeeDex_SearchPath). */
 #define DEEDEX_SEARCHORDER_CWDPATH "C" /*< Search the current working directory (fs::getcwd()). */
 #define DEEDEX_SEARCHORDER_EXEPATH "X" /*< Search the hosting exe's directory (fs::path::head(fs::readlink("/proc/self/exe"))). */
@@ -280,11 +281,13 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *) DeeDex_Ge
 //    when searching for dlls, deemon's dex does the same by default.
 #ifdef DEE_PLATFORM_WINDOWS
 #define DEEDEX_SEARCHORDER_DEFAULT \
- DEEDEX_SEARCHORDER_DEXPATH DEEDEX_SEARCHORDER_CWDPATH \
- DEEDEX_SEARCHORDER_EXEPATH DEEDEX_SEARCHORDER_SYSPATH
+ DEEDEX_SEARCHORDER_DEXPATH DEEDEX_SEARCHORDER_STDPATH \
+ DEEDEX_SEARCHORDER_VERPATH DEEDEX_SEARCHORDER_EXEPATH \
+ DEEDEX_SEARCHORDER_CWDPATH DEEDEX_SEARCHORDER_SYSPATH
 #else
 #define DEEDEX_SEARCHORDER_DEFAULT \
- DEEDEX_SEARCHORDER_VERPATH DEEDEX_SEARCHORDER_DEXPATH
+ DEEDEX_SEARCHORDER_DEXPATH DEEDEX_SEARCHORDER_STDPATH \
+ DEEDEX_SEARCHORDER_VERPATH DEEDEX_SEARCHORDER_EXEPATH
 #endif
 
 //////////////////////////////////////////////////////////////////////////

@@ -639,6 +639,17 @@ static int _DeeLexer_TryAddPathf(
  return result;
 }
 DEE_A_RET_EXCEPT(-1) int DeeLexer_AddStdInc(DEE_A_INOUT_OBJECT(DeeLexerObject) *self) {
+#if 1
+ DeeObject *home; int error;
+ if DEE_UNLIKELY((home = Dee_GetHome()) == NULL) return -1;
+ error = (_DeeLexer_TryAddPathf(self,"%kinclude",home) != 0
+       || _DeeLexer_TryAddPathf(self,"%kinclude" DEE_FS_SEP_S "cxx",home) != 0
+       || _DeeLexer_TryAddPathf(self,"%kinclude" DEE_FS_SEP_S "dex",home) != 0
+       || _DeeLexer_TryAddPathf(self,"%kinclude" DEE_FS_SEP_S "tpp",home) != 0
+       ) ? -1 : 0;
+ Dee_DECREF(home);
+ return error;
+#else
  DeeObject *exe_file,*search_path; int result; char const *path_begin,*iter,*path_end;
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
  // Search in the directory that the executable is located in
@@ -693,6 +704,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_AddStdInc(DEE_A_INOUT_OBJECT(DeeLexerObject) *
  }
 #endif
  return 0;
+#endif
 }
 DEE_A_RET_WUNUSED DEE_A_RET_NEVER_NULL DeeObject *
 DeeLexer_Token(DEE_A_INOUT_OBJECT(DeeLexerObject) *self) {

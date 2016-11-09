@@ -141,6 +141,18 @@ DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT(0) int) Dee_HasWildFeatures(DEE_A_IN_Z char con
 DEE_FUNC_DECL(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeListObject) *) Dee_GetArgv(void);
 DEE_FUNC_DECL(DEE_A_EXEC void) Dee_SetArgv(DEE_A_INOUT_OBJECT_OPT(DeeListObject) *ob);
 
+//////////////////////////////////////////////////////////////////////////
+// Get/Set the globally used deemon home folder, that is the root
+// directory used to search for dexes, as well as the standard library.
+// >> Calling 'Dee_GetHome' will lazily look for an enviroment variable '$DEEMON_HOME',
+//    before defaulting to '/usr/lib/deemon' (on linux), or the hosting exe's directory+'/lib' (on windows)
+// NOTE: 'Dee_SetHome' can be called to change the home folder at any time,
+//       though note that the paths of some objects (such as lexers) will not be updated.
+// NOTE: The home path is used by the "S" and "V" dex search modes.
+DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *) Dee_GetHome(void);
+DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) Dee_SetHome(DEE_A_IN_OBJECT(DeeAnyStringObject) const *home);
+
+
 
 struct DeeCompilerConfig;
 struct DeeFunctionObject;

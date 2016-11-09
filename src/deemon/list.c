@@ -551,14 +551,18 @@ DEE_A_RET_EXCEPT(-1) int DeeList_AssignVector(
  DEE_A_INOUT_OBJECT(DeeListObject) *self,
  DEE_A_IN Dee_size_t n, DEE_A_IN_R(n) DeeObject *const *p) {
  DeeObject **old_list,**new_list,**iter,**end; Dee_size_t old_size;
- while DEE_UNLIKELY((new_list = (DeeObject **)mallocf_nz(n*sizeof(DeeObject *),
-  "Assigned list (size: %u; elem: %p...)",(unsigned int)n,p)) == NULL) {
-  if DEE_LIKELY(Dee_CollectMemory()) continue;
-  DeeError_NoMemory();
-  return -1;
+ if DEE_LIKELY(n) {
+  while DEE_UNLIKELY((new_list = (DeeObject **)mallocf_nz(n*sizeof(DeeObject *),
+   "Assigned list (size: %u; elem: %p...)",(unsigned int)n,p)) == NULL) {
+   if DEE_LIKELY(Dee_CollectMemory()) continue;
+   DeeError_NoMemory();
+   return -1;
+  }
+  end = (iter = new_list)+n;
+  do Dee_INCREF(*iter++ = *p++); while (iter != end);
+ } else {
+  new_list = NULL;
  }
- end = (iter = new_list)+n;
- while (iter != end) Dee_INCREF(*iter++ = *p++);
  DeeList_ACQUIRE(self);
  old_list = DeeList_ELEM(self);
  old_size = DeeList_SIZE(self);

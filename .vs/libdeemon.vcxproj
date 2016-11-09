@@ -524,6 +524,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\compiler\__warnings.inl" />
     <None Include="..\src\deemon\deemonrun.active_features.inl" />
     <None Include="..\src\deemon\dex.import.inl" />
+    <None Include="..\src\deemon\dex.locate.inl" />
     <None Include="..\src\deemon\dict.impl.hashmap.inl" />
     <None Include="..\src\deemon\file.impl.buffered_read.inl" />
     <None Include="..\src\deemon\file.impl.read.inl" />

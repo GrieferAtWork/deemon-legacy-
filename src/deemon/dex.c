@@ -334,8 +334,7 @@ static struct DeeHashMap _dex_modules_map = DeeHashMap_INIT();
 
 DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *
 DeeDex_GetDefaultSearchPath(void) {
- DeeObject *result,*env_paths,*new_path,*deemon_exe,*deemon_path;
- int error;
+ DeeObject *result,*env_paths,*new_path; int error;
  if DEE_UNLIKELY((result = DeeList_New()) == NULL) return NULL;
  if ((env_paths = DeeFS_TryGetEnv(DEE_AUTOCONF_VARNAME_DEEMON_DEXPATH)) != NULL) {
   char const *begin,*iter,*end;
@@ -346,7 +345,7 @@ DeeDex_GetDefaultSearchPath(void) {
      if DEE_UNLIKELY((new_path = DeeString_NewWithLength((
       size_t)(iter-begin),begin)) == NULL) {
 err_renv: Dee_DECREF(env_paths);
-err_r: Dee_DECREF(result); return NULL;
+/*err_r:*/ Dee_DECREF(result); return NULL;
      }
      error = DeeList_Append(result,new_path);
      Dee_DECREF(new_path);
@@ -371,33 +370,6 @@ err_r: Dee_DECREF(result); return NULL;
   }
   Dee_DECREF(env_paths);
  }
-
-#ifdef DEE_PLATFORM_UNIX
- {
-  DeeString_NEW_STATIC(_unix_def,DEE_DEFAULT_HOMEPATH "/dex");
-  // On unix, add the the default dex path
-  // NOTE: The version-dependent path takes precedence over the default path
-  //       >> This is done in case only a single version need a special dex
-  if DEE_UNLIKELY(DeeList_Append(result,(DeeObject *)&_unix_def) != 0) goto err_r;
- }
-#endif /* DEE_PLATFORM_UNIX */
-
- // Add the path of the deemon executable
- // NOTE: Here we don't add the version-dependent path,
- //       as the main dex path itself is dependent on
- //       the executable's location.
- //       -> So we are safe to assume that this path (if it exists)
- //          only contains dex extensions that we are able to load.
- if DEE_UNLIKELY((deemon_exe = DeeFS_GetDeemonExecutable()) == NULL) goto err_r;
- deemon_path = DeeFS_PathHeadObject(deemon_exe);
- Dee_DECREF(deemon_exe);
- if DEE_UNLIKELY(!deemon_path) goto err_r;
- new_path = DeeString_Newf("%klib" DEE_FS_SEP_S "dex",deemon_path);
- Dee_DECREF(deemon_path);
- if DEE_UNLIKELY(!new_path) goto err_r;
- error = DeeList_Append(result,new_path);
- Dee_DECREF(new_path);
- if DEE_UNLIKELY(error != 0) goto err_r;
  return result;
 }
 
@@ -660,197 +632,9 @@ DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeDex_CallAndCastf(
 
 
 
-#define DEE_DEXMODULE_RAWINIT_SUCCESS    0
-#define DEE_DEXMODULE_RAWINIT_NOTFOUND (-1) /*< The specified dex file wasn't found. */
-#define DEE_DEXMODULE_RAWINIT_BROKEN   (-3) /*< The specified dex file is broken (missing non-optional exports) */
-#define DEE_DEXMODULE_RAWINIT_ERROR    (-4) /*< Other, miscellaneous deemon error (s.a.: DeeError_Occurred()) */
-static DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_RAWINIT_NOTFOUND) int DeeDexModule_RawInitEx(
- DEE_A_INOUT DeeDexModuleObject *self,
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *dex_file,
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *dex_name) {
- DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
- DEE_ASSERT(DeeObject_Check(dex_file) && DeeAnyString_Check(dex_file));
- DEE_ASSERT(DeeObject_Check(dex_name) && DeeAnyString_Check(dex_name));
- DEE_LVERBOSE2("Attempting to load dex %r from %r...",dex_name,dex_file);
-#ifdef DEE_PLATFORM_WINDOWS
- if DEE_UNLIKELY(DeeWideString_Check(dex_file)) {
-  if (!DeeSysDynlibN_WideTryInitFromFilenameObject(&self->dm_dynlib,dex_file)) {
-   DEE_LVERBOSE2R(" (Failed)\n");
-   return DEE_DEXMODULE_RAWINIT_NOTFOUND;
-  }
- } else
-#endif
- {
-  if DEE_UNLIKELY((dex_file = DeeUtf8String_Cast(dex_file)) == NULL) {
-   DEE_LVERBOSE2R(" ERROR\n");
-   return DEE_DEXMODULE_RAWINIT_ERROR;
-  }
-  if (!DeeSysDynlibN_Utf8TryInitFromFilenameObject(&self->dm_dynlib,dex_file)) {
-   DEE_LVERBOSE2R(" (Failed)\n");
-   Dee_DECREF(dex_file);
-   return DEE_DEXMODULE_RAWINIT_NOTFOUND;
-  }
-  Dee_DECREF(dex_file);
- }
- DEE_LVERBOSE2R(" (Found)\n");
-
- // Time to load the basic exports
- if DEE_UNLIKELY(!DeeSysDynlib_TryImport(&self->dm_dynlib,"DeeDex_Exports",self->dm_exports)) {
-  DeeSysDynlibN_Quit(&self->dm_dynlib);
-  return DEE_DEXMODULE_RAWINIT_BROKEN;
- } // Broken dex
- if (!DeeSysDynlib_TryImport(&self->dm_dynlib,"DeeDex_Main",self->dm_main)) self->dm_main = NULL;
- if DEE_UNLIKELY(DeeNativeMutex_Init(&self->dm_cachelock) != 0) {
-  DeeSysDynlibN_Quit(&self->dm_dynlib);
-  return DEE_DEXMODULE_RAWINIT_ERROR;
- }
- Dee_INCREF(self->dm_name = (DeeAnyStringObject *)dex_name);
- self->dm_state = DEE_DEXMODULE_FLAGS_NONE;
- self->dm_tickets = 0;
- self->dm_initnext = NULL;
- self->dm_initprev = NULL;
- return DEE_DEXMODULE_RAWINIT_SUCCESS;
-}
-
-#ifndef DEE_PLATFORM_WINDOWS
-DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_RAWINIT_NOTFOUND) int) DeeDexModule_RawInit_FromVerPath(
- DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *dex_name) {
- Dee_size_t i; DeeObject *path,*dex_file; int temp;
- DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
- DEE_ASSERT(DeeObject_Check(dex_name) && DeeAnyString_Check(dex_name));
- dex_file = DeeString_Newf(DEE_DEFAULT_HOMEPATH "/dex." DEE_PP_STR(DEE_VERSION_API) "/%k.so",dex_name);
- if DEE_UNLIKELY(!dex_file) return DEE_DEXMODULE_RAWINIT_ERROR;
- temp = DeeDexModule_RawInitEx(self,dex_file,dex_name);
- Dee_DECREF(dex_file);
- return temp;
-}
-#endif
-
-DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_RAWINIT_NOTFOUND) int) DeeDexModule_RawInit_FromDexPath(
- DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *dex_name) {
- Dee_size_t i; DeeObject *path,*dex_file; int temp;
- DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
- DEE_ASSERT(DeeObject_Check(dex_name) && DeeAnyString_Check(dex_name));
- DeeList_ACQUIRE(DeeDex_SearchPath);
- for (i = 0; i < DeeList_SIZE(DeeDex_SearchPath); ++i) {
-#ifdef DEE_PLATFORM_WINDOWS
-  static Dee_WideChar const _fmtw[] = {'%','k',DEE_FS_SEP,'%','k','.','d','l','l',0};
-  static Dee_Utf8Char const _fmt8[] = {'%','k',DEE_FS_SEP,'%','k','.','d','l','l',0};
-#else
-  static Dee_WideChar const _fmtw[] = {'%','k',DEE_FS_SEP,'%','k','.','s','o',0};
-  static Dee_Utf8Char const _fmt8[] = {'%','k',DEE_FS_SEP,'%','k','.','s','o',0};
-#endif
-  Dee_INCREF(path = DeeList_GET(DeeDex_SearchPath,i));
-  DeeList_RELEASE(DeeDex_SearchPath);
-  dex_file = DeeWideString_Check(path)
-   ? DeeWideString_Newf(_fmtw,path,dex_name)
-   : DeeUtf8String_Newf(_fmt8,path,dex_name);
-  Dee_DECREF(path);
-  if DEE_UNLIKELY(!dex_file) return DEE_DEXMODULE_RAWINIT_ERROR;
-  temp = DeeDexModule_RawInitEx(self,dex_file,dex_name);
-  Dee_DECREF(dex_file);
-  if (temp != DEE_DEXMODULE_RAWINIT_NOTFOUND) return temp; // Success or error
-  DeeList_ACQUIRE(DeeDex_SearchPath);
- }
- DeeList_RELEASE(DeeDex_SearchPath);
- return DEE_DEXMODULE_RAWINIT_NOTFOUND;
-}
-
-DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_RAWINIT_NOTFOUND) int) DeeDexModule_RawInit_FromCwdPath(
- DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *dex_name) {
- DeeObject *dex_file; int temp;
- DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
- DEE_ASSERT(DeeObject_Check(dex_name) && DeeAnyString_Check(dex_name));
-#ifdef DEE_PLATFORM_WINDOWS
- if (DeeWideString_Check(dex_name)) {
-  static Dee_WideChar const wfmt[] = {'%','K','\\','%','k','.','d','l','l',0};
-  dex_file = DeeWideString_Newf(wfmt,DeeFS_WideGetCwd(),dex_name);
- } else
-#endif
- {
-#ifdef DEE_PLATFORM_WINDOWS
-  dex_file = DeeString_Newf("%K/%k.dll",DeeFS_GetCwd(),dex_name);
-#else
-  dex_file = DeeString_Newf("%K/%k.so",DeeFS_GetCwd(),dex_name);
-#endif
- }
- if DEE_UNLIKELY(!dex_file) return DEE_DEXMODULE_RAWINIT_ERROR;
- temp = DeeDexModule_RawInitEx(self,dex_file,dex_name);
- Dee_DECREF(dex_file);
- return temp;
-}
-
-DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_RAWINIT_NOTFOUND) int) DeeDexModule_RawInit_FromExePath(
- DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *dex_name) {
- DeeObject *dex_file,*exefile,*exepath; int temp;
- DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
- DEE_ASSERT(DeeObject_Check(dex_name) && DeeAnyString_Check(dex_name));
-#ifdef DEE_PLATFORM_WINDOWS
- if (DeeWideString_Check(dex_name)) {
-  static Dee_WideChar const wfmt[] = {'%','k','\\','%','k','.','d','l','l',0};
-  if DEE_UNLIKELY((exefile = DeeFS_WideGetDeemonExecutable()) == NULL) return DEE_DEXMODULE_RAWINIT_ERROR;
-  exepath = DeeFS_PathHeadObject(exefile);
-  Dee_DECREF(exefile);
-  if DEE_UNLIKELY(!exepath) return DEE_DEXMODULE_RAWINIT_ERROR;
-  dex_file = DeeWideString_Newf(wfmt,exepath,dex_name);
- } else
-#endif
- {
-  if DEE_UNLIKELY((exefile = DeeFS_GetDeemonExecutable()) == NULL) return DEE_DEXMODULE_RAWINIT_ERROR;
-  exepath = DeeFS_PathHeadObject(exefile);
-  Dee_DECREF(exefile);
-#ifdef DEE_PLATFORM_WINDOWS
-  dex_file = DeeString_Newf("%k/%k.dll",exepath,dex_name);
-#else
-  dex_file = DeeString_Newf("%k/%k.so",exepath,dex_name);
-#endif
- }
- Dee_DECREF(exepath);
- if (!dex_file) return DEE_DEXMODULE_RAWINIT_ERROR;
- temp = DeeDexModule_RawInitEx(self,dex_file,dex_name);
- Dee_DECREF(dex_file);
- return temp;
-}
-
-DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_RAWINIT_NOTFOUND) int) DeeDexModule_RawInit_FromSysPath(
- DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *dex_name) {
- DeeObject *dex_file,*syspath; int temp;
- char const *path_begin,*path_end,*iter,*end;
- DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
- DEE_ASSERT(DeeObject_Check(dex_name) && DeeAnyString_Check(dex_name));
- if DEE_UNLIKELY((syspath = DeeFS_GetEnv("PATH")) == NULL) return DEE_DEXMODULE_RAWINIT_ERROR;
- end = (path_begin = iter = DeeString_STR(syspath))+DeeString_SIZE(syspath);
- while (iter != end) {
-  if (*iter == DEE_FS_DELIM) {
-   path_end = iter;
-   while (path_end != path_begin && (
-    path_end[-1] == '/' || path_end[-1] == '\\')) --path_end;
-   if (path_end != path_begin) {
-#ifdef DEE_PLATFORM_WINDOWS
-    dex_file = DeeString_Newf("%.*s" DEE_FS_SEP_S "%k.dll",(unsigned)(path_end-path_begin),path_begin,dex_name);
-#else
-    dex_file = DeeString_Newf("%.*s" DEE_FS_SEP_S "%k.so",(unsigned)(path_end-path_begin),path_begin,dex_name);
-#endif
-    if DEE_UNLIKELY(!dex_file) { Dee_DECREF(syspath); return DEE_DEXMODULE_RAWINIT_ERROR; }
-    temp = DeeDexModule_RawInitEx(self,dex_file,dex_name);
-    Dee_DECREF(dex_file);
-    if (temp != DEE_DEXMODULE_RAWINIT_NOTFOUND) {
-     Dee_DECREF(syspath);
-     return temp; // Success or error
-    }
-    path_begin = iter;
-   }
-  }
-  ++iter;
- }
- Dee_DECREF(syspath);
- return DEE_DEXMODULE_RAWINIT_NOTFOUND;
-}
-
-
-// v currently, there are only 5 different modes, so this is enough (+1 for \0 end marker)
-#define DEEDEX_SEARCHORDER_INTERNAL_MAXSIZE 6
-static char const _dex_searchorder_default[DEEDEX_SEARCHORDER_INTERNAL_MAXSIZE] = DEEDEX_SEARCHORDER_DEFAULT "\0";
+// v currently, there are only 6 different modes, so this is enough (+1 for \0 end marker)
+#define DEEDEX_SEARCHORDER_INTERNAL_MAXSIZE 7
+static char const _dex_searchorder_default[DEEDEX_SEARCHORDER_INTERNAL_MAXSIZE] = DEEDEX_SEARCHORDER_DEFAULT;
 static char _dex_searchorder[DEEDEX_SEARCHORDER_INTERNAL_MAXSIZE] = "\0";
 static int _dex_searchorder_ro = 1; // Search order is read-only
 static struct DeeAtomicMutex _dex_searchorder_lock = DeeAtomicMutex_INIT();
@@ -869,7 +653,7 @@ static int _dex_searchorder_validate(
   switch (ch) {
    case 'V': case 'D':
    case 'C': case 'X':
-   case 'P': break;
+   case 'P': case 'S': break;
    case 0: goto check_ok;
    default:
     *error_or_end_pos = check_iter-1;
@@ -978,56 +762,34 @@ DEE_A_RET_EXCEPT(-1) int DeeDex_SetSearchOrder(DEE_A_IN_Z_OPT char const *order)
 
 
 
+#define DEE_DEXMODULE_INIT_SUCCESS    0
+#define DEE_DEXMODULE_INIT_NOTFOUND (-1) /*< The specified dex file wasn't found. */
+#define DEE_DEXMODULE_INIT_BROKEN   (-3) /*< The specified dex file is broken (missing non-optional exports) */
+#define DEE_DEXMODULE_INIT_ERROR    (-4) /*< Other, miscellaneous deemon error (s.a.: DeeError_Occurred()) */
 
-static DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_RAWINIT_NOTFOUND) int DeeDexModule_RawInit(
- DEE_A_INOUT DeeDexModuleObject *self,
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *dex_name) {
- char order[DEEDEX_SEARCHORDER_INTERNAL_MAXSIZE];
- char const *iter; int result;
- DeeAtomicMutex_Acquire(&_dex_searchorder_lock);
- memcpy(order,_dex_searchorder,DEEDEX_SEARCHORDER_INTERNAL_MAXSIZE);
- DeeAtomicMutex_Release(&_dex_searchorder_lock);
- iter = order;
-next:
- switch (*iter++) {
-  case 'V':
-#ifndef DEE_PLATFORM_WINDOWS
-   result = DeeDexModule_RawInit_FromVerPath(self,dex_name);
-   if (result == DEE_DEXMODULE_RAWINIT_NOTFOUND) goto next;
-   break;
-#else
-   goto next;
-#endif
-  case 'D': // Search the dex path
-   result = DeeDexModule_RawInit_FromDexPath(self,dex_name);
-   if (result == DEE_DEXMODULE_RAWINIT_NOTFOUND) goto next;
-   break;
-  case 'C':
-   result = DeeDexModule_RawInit_FromCwdPath(self,dex_name);
-   if (result == DEE_DEXMODULE_RAWINIT_NOTFOUND) goto next;
-   break;
-  case 'X':
-   result = DeeDexModule_RawInit_FromExePath(self,dex_name);
-   if (result == DEE_DEXMODULE_RAWINIT_NOTFOUND) goto next;
-   break;
-  case 'P':
-   result = DeeDexModule_RawInit_FromSysPath(self,dex_name);
-   if (result == DEE_DEXMODULE_RAWINIT_NOTFOUND) goto next;
-   break;
-  default: result = DEE_DEXMODULE_RAWINIT_NOTFOUND; break;
- }
- return result;
-}
-
-
+static DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int DeeDexModule_Utf8InitFromName(
+ DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dex_name);
+static DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int DeeDexModule_WideInitFromName(
+ DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DeeWideStringObject) const *dex_name);
 
 static DEE_A_RET_EXCEPT(-1) int DeeDexModule_Init(
  DEE_A_INOUT DeeDexModuleObject *self,
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *dex_name) {
- switch (DeeDexModule_RawInit(self,dex_name)) {
-  case DEE_DEXMODULE_RAWINIT_SUCCESS: return 0;
-  case DEE_DEXMODULE_RAWINIT_ERROR: return -1;
-  case DEE_DEXMODULE_RAWINIT_BROKEN:
+ DeeObject *u8dexname; int error;
+#ifdef DEE_PLATFORM_WINDOWS
+ if (DeeWideString_Check(dex_name)) {
+  error = DeeDexModule_WideInitFromName(self,dex_name);
+ } else
+#endif
+ {
+  if DEE_UNLIKELY((u8dexname = DeeUtf8String_Cast(dex_name)) == NULL) return -1;
+  error = DeeDexModule_Utf8InitFromName(self,u8dexname);
+  Dee_DECREF(u8dexname);
+ }
+ switch (error) {
+  case DEE_DEXMODULE_INIT_SUCCESS: return 0;
+  case DEE_DEXMODULE_INIT_ERROR: return -1;
+  case DEE_DEXMODULE_INIT_BROKEN:
    DeeError_SetStringf(&DeeErrorType_ValueError,
                        "Broken dex: %r",dex_name);
    return -1;
@@ -1614,6 +1376,11 @@ DEE_DECL_END
 #define NATIVE
 #include "dex.import.inl"
 #include "dex.import.inl"
+#ifdef DEE_PLATFORM_WINDOWS
+#define WIDE
+#include "dex.locate.inl"
+#endif
+#include "dex.locate.inl"
 #endif
 
 #endif /* !GUARD_DEEMON_DEX_C */
