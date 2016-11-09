@@ -27,6 +27,7 @@
 // /include/*
 #include <deemon/class.h>
 #include <deemon/dict.h>
+#include <deemon/deemonrun.h>
 #include <deemon/file.h>
 #include <deemon/list.h>
 #include <deemon/compiler/code.h>
@@ -347,6 +348,16 @@ DEPRECATED_EXPORT(int,DeeSystem_GetCPUCount,(Dee_uint64_t *msecs)) { return DeeD
 
 #undef DeeMember_Set
 DEPRECATED_EXPORT(int,DeeMember_Set,(DeeObject *base_ob, struct DeeMemberDef const *def, DeeObject *v)) { return DeeMember_TSet(base_ob,def,Dee_TYPE(v),v); }
+
+#undef Dee_GetArgv
+#undef Dee_SetArgv
+DEPRECATED_EXPORT(DeeObject *,Dee_GetArgv,(void)) { Dee_INCREF(Dee_Argv); return Dee_Argv; }
+DEPRECATED_EXPORT(void,Dee_SetArgv,(DeeObject *ob)) {
+ if (DeeList_AssignSequence(Dee_Argv,ob) != 0) {
+  while (!DeeError_Print("Failed to assign sequence to argv",1));
+ }
+}
+
 
 #endif /* 102 */
 

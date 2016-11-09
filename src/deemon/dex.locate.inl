@@ -23,6 +23,8 @@
 #include "dex.c"
 #define WIDE
 #endif
+#include <deemon/compiler/code.h>
+#include <deemon/runtime/execute.h>
 
 #ifdef WIDE
 #define DEE_CHAR             Dee_WideChar
@@ -139,7 +141,7 @@ DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMOD
  return DEE_DEXMODULE_INIT_NOTFOUND;
 }
 
-DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMODULE_F(InitFromHomeDex)(
+DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMODULE_F(InitFromStdPath)(
  DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *dex_name) {
  DeeObject *dex_file,*homepath; int error;
  DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
@@ -157,7 +159,7 @@ DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMOD
  Dee_DECREF(dex_file);
  return error;
 }
-DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMODULE_F(InitFromHomeDexVerdep)(
+DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMODULE_F(InitFromVerPath)(
  DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *dex_name) {
  DeeObject *dex_file,*homepath; int error;
  DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
@@ -176,7 +178,8 @@ DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMOD
 #else
   ,'.','s','o'
 #endif
-  ,0};
+  ,0
+ };
  if DEE_UNLIKELY((homepath = Dee_GetHome()) == NULL) return DEE_DEXMODULE_INIT_ERROR;
  dex_file = DEESTRING_NEWF(pattern,homepath,dex_name);
  Dee_DECREF(homepath);
@@ -204,7 +207,7 @@ DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMOD
  return DEE_DEXMODULE_INIT_NOTFOUND;
 }
 
-DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMODULE_F(InitFromCwd)(
+DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMODULE_F(InitFromCwdPath)(
  DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *dex_name) {
  DEESTRINGOBJECT *cwd; int error;
  DEE_ASSERT(DeeObject_Check(self) && DeeDexModule_Check(self));
@@ -252,6 +255,25 @@ DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMOD
  Dee_DECREF(syspath);
  return error;
 }
+DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int) DEEDEXMODULE_F(InitFromRunPath)(
+ DEE_A_INOUT DeeDexModuleObject *self, DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *dex_name) {
+ DeeThreadObject *thread_self; int error;
+ struct DeeStackFrame *stack_iter;
+ DeeObject *entry_file,*entry_path;
+ if ((thread_self = DeeThread_SELF()) != NULL) {
+  stack_iter = thread_self->t_frame_last;
+  while (stack_iter) {
+   if ((entry_file = _DeeStackFrame_File(stack_iter)) != NULL) {
+    if ((entry_path = DeeFS_PathHeadObject(entry_file)) == NULL) return DEE_DEXMODULE_INIT_ERROR;
+    error = DEEDEXMODULE_F(InitFromAnyPath)(self,dex_name,entry_path);
+    Dee_DECREF(entry_path);
+    if (error != DEE_DEXMODULE_INIT_NOTFOUND) return error; // Success or error
+   }
+   stack_iter = stack_iter->f_prev;
+  }
+ }
+ return DEE_DEXMODULE_INIT_NOTFOUND;
+}
 
 static DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int DEEDEXMODULE_F(InitFromName)(
  DEE_A_INOUT DeeDexModuleObject *self,
@@ -264,12 +286,13 @@ static DEE_A_RET_NOEXCEPT(DEE_DEXMODULE_INIT_NOTFOUND) int DEEDEXMODULE_F(InitFr
  iter = order;
 next:
  switch (*iter++) {
-  case 'S': error = DEEDEXMODULE_F(InitFromHomeDex)(self,dex_name); break;
-  case 'V': error = DEEDEXMODULE_F(InitFromHomeDexVerdep)(self,dex_name); break;
+  case 'S': error = DEEDEXMODULE_F(InitFromStdPath)(self,dex_name); break;
+  case 'V': error = DEEDEXMODULE_F(InitFromVerPath)(self,dex_name); break;
   case 'D': error = DEEDEXMODULE_F(InitFromDexPath)(self,dex_name); break;
-  case 'C': error = DEEDEXMODULE_F(InitFromCwd)(self,dex_name); break;
+  case 'C': error = DEEDEXMODULE_F(InitFromCwdPath)(self,dex_name); break;
   case 'X': error = DEEDEXMODULE_F(InitFromExePath)(self,dex_name); break;
   case 'P': error = DEEDEXMODULE_F(InitFromSysPath)(self,dex_name); break;
+  case 'R': error = DEEDEXMODULE_F(InitFromRunPath)(self,dex_name); break;
   default: return DEE_DEXMODULE_INIT_NOTFOUND; break;
  }
  if (error == DEE_DEXMODULE_INIT_NOTFOUND) goto next;

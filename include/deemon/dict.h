@@ -31,6 +31,7 @@
 #endif
 #if DEE_DEPRECATED_API_VERSION(100,101,103)
 #include <deemon/object.h> // Required for deprecation-replacement functions
+#include <deemon/type.h>   // Required for deprecation-replacement functions
 #endif
 
 //////////////////////////////////////////////////////////////////////////

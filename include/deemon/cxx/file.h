@@ -105,7 +105,7 @@ struct file: object {
  public: /* public methods */
   inline void print(DEE_A_IN_Z char const *s) const { if (DeeFile_Print(this->ob_ptr,s) != 0) detail::throw_last_error(); }
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
-  inline void printf(DEE_A_IN_PRINTF char const *fmt, ...) const { va_list args; int error; DEE_VA_START(args,fmt); error = DeeFile_VPrintf(this->ob_ptr,fmt,args); DEE_VA_END(args); if (error != 0) detail::throw_last_error(); }
+  inline void printf(DEE_A_IN_PRINTF char const *fmt, ...) const { va_list args; int error; va_start(args,fmt); error = DeeFile_VPrintf(this->ob_ptr,fmt,args); va_end(args); if (error != 0) detail::throw_last_error(); }
   inline void vprintf(DEE_A_IN_PRINTF char const *fmt, DEE_A_INOUT va_list args) const { if (DeeFile_VPrintf(this->ob_ptr,fmt,args) != 0) detail::throw_last_error(); }
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
  public: /* public methods */
@@ -159,7 +159,7 @@ struct file::io: ::deemon::file {
   inline DEE_A_RET_WUNUSED Dee_uint64_t size() const { Dee_uint64_t result; if (::DeeFileIO_Size(this->ob_ptr,&result) != 0) detail::throw_last_error(); return result; }
  public: /* public methods */
   inline DEE_A_RET_WUNUSED file::io tmp() { return file::io(DeeFileIO_NewTemporary(1),detail::tag_ref_or_err()); }
-  inline DEE_A_RET_WUNUSED file::io tmp(DEE_A_IN bool delete_when_closed) { return file::io(DeeFileIO_NewTemporary((int)delete_when_closed),detail::tag_ref_or_err()); }
+  inline DEE_A_RET_WUNUSED file::io tmp(DEE_A_IN bool delete_when_closed) { return file::io(DeeFileIO_NewTemporary((Dee_uint32_t)(delete_when_closed ? DEE_FILEIO_NEWTEMPORARY_FLAG_DELETE_WHEN_CLOSED : DEE_FILEIO_NEWTEMPORARY_FLAG_NONE)),detail::tag_ref_or_err()); }
  public: /* public constructor / destructor */
   inline io(): ::deemon::file(::DeeType_NewInstanceDefault((::DeeTypeObject *)&::DeeFileIO_Type),detail::tag_ref_or_err()) {}
   inline explicit io(DEE_A_IN_Z ::Dee_Utf8Char const *filename): ::deemon::file(::DeeFileIO_Utf8New(filename,"r"),detail::tag_ref_or_err()) {}

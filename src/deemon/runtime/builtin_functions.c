@@ -954,10 +954,8 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_id) {
 #endif /* DEE_DEVEL_BUILD */
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_argv) {
- DeeObject *result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_argv") != 0) return NULL;
- if DEE_UNLIKELY((result = Dee_GetArgv()) == NULL) result = DeeList_New();
- return result;
+ DeeReturn_NEWREF(Dee_Argv);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_swap) {
  DeeObject *a,*b;

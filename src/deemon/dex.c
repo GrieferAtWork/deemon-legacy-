@@ -1292,35 +1292,20 @@ static struct DeeGetSetDef _deedexmodule_tp_class_getsets[] = {
   "\tConfigure the custom search path, as enabled by #('D') in #dexmodule.search_order\n"
   "\tDeleting this attribute will restore the default search path.\n"
   "\tNOTE: The returned list can be modified directly and changes will be applied immediatly.\n"),
-#ifdef DEE_PLATFORM_WINDOWS
  DEE_GETSETDEF_v100("search_order",
   member(&_deedexmoduleclass_search_order_get),
   member(&_deedexmoduleclass_search_order_del),
   member(&_deedexmoduleclass_search_order_set),"-> string\n"
   "\tConfigure the search order for dex modules.\n"
   "\tThe order is a string marker characters, using one of each at most:\n"
-  "\t#('V'): Ignored under windows\n"
-  "\t#('D'): Searches all paths from #dexmodule.search_path\n"
-  "\t#('C'): Searches #(fs::getcwd())\n"
-  "\t#('X'): Searches #(fs::path::head(fs::readlink(\"/proc/self/exe\")))\n"
+  "\t#('S'): Searches the standard dexpath #($" DEE_AUTOCONF_VARNAME_DEEMON_HOME "/dex)\n"
+  "\t#('V'): Searches the version-dependent dexpath #($" DEE_AUTOCONF_VARNAME_DEEMON_HOME "/dex." DEE_PP_STR(DEE_VERSION_API) ")\n"
+  "\t#('D'): Searches all paths from #dexmodule.search_path / #($" DEE_AUTOCONF_VARNAME_DEEMON_DEXPATH ")\n"
+  "\t#('C'): Searches the current directory #(fs::getcwd())\n"
+  "\t#('X'): Searches the hosting exe's directory #(fs::path::head(fs::readlink(\"/proc/self/exe\")))\n"
   "\t#('P'): Searches all paths from #($PATH)\n"
   "\tThe default search order is #(\"" DEEDEX_SEARCHORDER_DEFAULT "\").\n"
   "\tDeleting this attribute will restore the default search order."),
-#else
- DEE_GETSETDEF_v100("search_order",
-  member(&_deedexmoduleclass_search_order_get),
-  member(&_deedexmoduleclass_search_order_del),
-  member(&_deedexmoduleclass_search_order_set),"-> string\n"
-  "\tConfigure the search order for dex modules.\n"
-  "\tThe order is a string marker characters, using one of each at most:\n"
-  "\t#('V'): Searches #(\"" DEE_DEFAULT_HOMEPATH "/dex." DEE_PP_STR(DEE_VERSION_API) "\")\n"
-  "\t#('D'): Searches all paths from #dexmodule.search_path\n"
-  "\t#('C'): Searches #(fs::getcwd())\n"
-  "\t#('X'): Searches #(fs::path::head(fs::readlink(\"/proc/self/exe\")))\n"
-  "\t#('P'): Searches all paths from #($PATH)\n"
-  "\tThe default search order is #(\"" DEEDEX_SEARCHORDER_DEFAULT "\").\n"
-  "\tDeleting this attribute will restore the default search order."),
-#endif
  DEE_GETSETDEF_END_v100
 };
 

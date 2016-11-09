@@ -746,11 +746,10 @@
 
 #ifndef DEE_DEFAULT_HOMEPATH
 #ifdef DEE_PLATFORM_UNIX
-// Only defined under unix: The default value '$DEEMON_HOMEPATH',
-//                          also affecting '$DEEMON_DEXPATH'
-// e.g.: DEE_DEFAULT_HOMEPATH == "/usr/lib/deemon" infers
-//       '$DEEMON_DEXPATH' == '/usr/lib/deemon/dex'
-#define DEE_DEFAULT_HOMEPATH "/usr/lib/deemon"
+// Only defined under unix: The default value '$DEEMON_HOMEPATH'
+// NOTE: The path must be terminated with a '/'
+// >> This is just the default value for 'Dee_GetHome()'
+#define DEE_DEFAULT_HOMEPATH "/usr/lib/deemon/"
 #endif
 #endif
 

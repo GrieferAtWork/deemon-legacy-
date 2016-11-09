@@ -639,7 +639,6 @@ static int _DeeLexer_TryAddPathf(
  return result;
 }
 DEE_A_RET_EXCEPT(-1) int DeeLexer_AddStdInc(DEE_A_INOUT_OBJECT(DeeLexerObject) *self) {
-#if 1
  DeeObject *home; int error;
  if DEE_UNLIKELY((home = Dee_GetHome()) == NULL) return -1;
  error = (_DeeLexer_TryAddPathf(self,"%kinclude",home) != 0
@@ -649,62 +648,6 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_AddStdInc(DEE_A_INOUT_OBJECT(DeeLexerObject) *
        ) ? -1 : 0;
  Dee_DECREF(home);
  return error;
-#else
- DeeObject *exe_file,*search_path; int result; char const *path_begin,*iter,*path_end;
- DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
- // Search in the directory that the executable is located in
- {if ((exe_file = DeeFS_GetDeemonExecutable()) == NULL) return -1;
-  search_path = DeeFS_PathHeadObject(exe_file);
-  DEE_LVERBOSE3("Calculated exe-folder %r from %r\n",search_path,exe_file);
-  Dee_DECREF(exe_file);
-  if (!search_path) return -1;
-  if (_DeeLexer_TryAddPathf(self,"%slib" DEE_FS_SEP_S "include",DeeString_STR(search_path)) != 0 ||
-      _DeeLexer_TryAddPathf(self,"%slib" DEE_FS_SEP_S "include" DEE_FS_SEP_S "cxx",DeeString_STR(search_path)) != 0 ||
-      _DeeLexer_TryAddPathf(self,"%slib" DEE_FS_SEP_S "include" DEE_FS_SEP_S "dex",DeeString_STR(search_path)) != 0 ||
-      _DeeLexer_TryAddPathf(self,"%slib" DEE_FS_SEP_S "include" DEE_FS_SEP_S "tpp",DeeString_STR(search_path)) != 0
-      ) result = -1; else result = 0;
-  Dee_DECREF(search_path);
-  if (result != 0) return result;
- }
-
- // Additional include paths set through an environment variable or default to /usr/lib/deemon on posix
- if ((search_path = DeeFS_TryGetEnv(DEE_AUTOCONF_VARNAME_DEEMON_HOME)) != NULL) {
-  path_end = (iter = path_begin = DeeString_STR(search_path))+DeeString_SIZE(search_path);
-  if (iter != path_end) while (1) {
-   if (iter == path_end || ((iter == path_begin || iter[-1] != '\\') && *iter == DEE_FS_DELIM)) {
-    unsigned int portion_size = (unsigned int)(iter-path_begin);
-    while (DEE_FS_ISSEP(path_begin[portion_size]) && portion_size) --portion_size;
-    if (_DeeLexer_TryAddPathf(self,"%.*s" DEE_FS_SEP_S "include",portion_size,path_begin) != 0 ||
-        _DeeLexer_TryAddPathf(self,"%.*s" DEE_FS_SEP_S "include" DEE_FS_SEP_S "cxx",portion_size,path_begin) != 0 ||
-        _DeeLexer_TryAddPathf(self,"%.*s" DEE_FS_SEP_S "include" DEE_FS_SEP_S "dex",portion_size,path_begin) != 0 ||
-        _DeeLexer_TryAddPathf(self,"%.*s" DEE_FS_SEP_S "include" DEE_FS_SEP_S "tpp",portion_size,path_begin) != 0
-        ) {
-     Dee_DECREF(search_path);
-     return -1;
-    }
-    path_begin = iter+1;
-    if (iter == path_end) break;
-   }
-   ++iter;
-  }
-  Dee_DECREF(search_path);
- }
-#ifdef DEE_DEFAULT_HOMEPATH
- else {
-  // Default posix source paths (there is no equivalent for windows)
-  DeeString_NEW_STATIC(_usr_lib_deemon_include,    DEE_DEFAULT_HOMEPATH "/include");
-  DeeString_NEW_STATIC(_usr_lib_deemon_include_cxx,DEE_DEFAULT_HOMEPATH "/include/cxx");
-  DeeString_NEW_STATIC(_usr_lib_deemon_include_dex,DEE_DEFAULT_HOMEPATH "/include/dex");
-  DeeString_NEW_STATIC(_usr_lib_deemon_include_tpp,DEE_DEFAULT_HOMEPATH "/include/tpp");
-  if (_DeeLexer_TryAddPathObject(self,(DeeObject *)&_usr_lib_deemon_include) != 0 ||
-      _DeeLexer_TryAddPathObject(self,(DeeObject *)&_usr_lib_deemon_include_cxx) != 0 ||
-      _DeeLexer_TryAddPathObject(self,(DeeObject *)&_usr_lib_deemon_include_dex) != 0 ||
-      _DeeLexer_TryAddPathObject(self,(DeeObject *)&_usr_lib_deemon_include_tpp) != 0
-      ) return -1;
- }
-#endif
- return 0;
-#endif
 }
 DEE_A_RET_WUNUSED DEE_A_RET_NEVER_NULL DeeObject *
 DeeLexer_Token(DEE_A_INOUT_OBJECT(DeeLexerObject) *self) {

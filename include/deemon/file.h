@@ -24,6 +24,7 @@
 #include <deemon/__conf.inl>
 #include <deemon/optional/string_forward.h>
 #include <deemon/optional/std/stdarg.h>
+#include <deemon/optional/std/string.h>
 #ifdef DEE_LIMITED_DEX
 #include <deemon/__bswap_intrin.inl>
 #include <deemon/optional/atomic_mutex.h>
@@ -569,7 +570,7 @@ DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int
 #define /*DEE_A_EXEC*/ DeeFile_StdPrintf(printer,...)       DEE_GCC_EXTENSION({int _temp_result;DeeObject*const _temp_fp=DeeFile_Std(printer);_temp_result=DeeFile_Printf(_temp_fp,__VA_ARGS__);Dee_DECREF(_temp_fp);_temp_result;})
 #else /* DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_VStdPrintf(DEE_A_IN enum DeeStdPrinter printer, DEE_A_IN_PRINTF char const *fmt, DEE_A_INOUT va_list args) { int result; DeeObject *const fp = DeeFile_Std(printer); result = DeeFile_VPrintf(fp,fmt,args); Dee_DECREF(fp); return result; }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_StdPrintf(DEE_A_IN enum DeeStdPrinter printer, DEE_A_IN_PRINTF char const *fmt, ...) { int result; va_list args; DeeObject *const fp = DeeFile_Std(printer); DEE_VA_START(args,fmt); result = DeeFile_VPrintf(fp,fmt,args); DEE_VA_END(args); Dee_DECREF(fp); return result; }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_StdPrintf(DEE_A_IN enum DeeStdPrinter printer, DEE_A_IN_PRINTF char const *fmt, ...) { int result; va_list args; DeeObject *const fp = DeeFile_Std(printer); va_start(args,fmt); result = DeeFile_VPrintf(fp,fmt,args); va_end(args); Dee_DECREF(fp); return result; }
 #endif /* !DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 #define /*DEE_A_EXEC*/ DeeFile_STDPRINT(printer,str_) DeeFile_StdWriteAll(printer,str_,(sizeof(str_)/sizeof(char))-1)

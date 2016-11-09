@@ -78,25 +78,7 @@ DEE_DECL_BEGIN
 
 static DeeCompilerConfig const _DeeCompilerConfig_Default = DeeCompilerConfig_INIT();
 DeeCompilerConfig DeeCompilerConfig_Default = DeeCompilerConfig_INIT();
-
-
-static struct DeeAtomicMutex _dee_argv_lock = DeeAtomicMutex_INIT();
-static DeeObject *_dee_argv = NULL;
-DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeListObject) *Dee_GetArgv(void) {
- DeeObject *result;
- DeeAtomicMutex_Acquire(&_dee_argv_lock);
- Dee_XINCREF(result = _dee_argv);
- DeeAtomicMutex_Release(&_dee_argv_lock);
- return result;
-}
-void Dee_SetArgv(DEE_A_INOUT_OBJECT_OPT(DeeListObject) *ob) {
- DeeObject *old_argv;
- DEE_ASSERT(!ob || (DeeObject_Check(ob) && DeeList_Check(ob)));
- DeeAtomicMutex_Acquire(&_dee_argv_lock);
- old_argv = _dee_argv; _dee_argv = ob;
- DeeAtomicMutex_Release(&_dee_argv_lock);
- Dee_XDECREF(old_argv);
-}
+struct DeeListObject _Dee_Argv = DeeList_INIT();
 
 
 #define _Dee_ClearHome()\
@@ -459,8 +441,8 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
   // Cleanup marshal types
   _DeeMarshal_ClearRegisteredTypes();
 
-  // Delete 'sys.argv'
-  Dee_SetArgv(NULL);
+  // Clear 'sys.argv'
+  DeeList_Clear(Dee_Argv);
 
   // Clear free exceptions after they were raised
   DeeError_ClearFreeExceptions();
@@ -1587,23 +1569,15 @@ static char const _dee_help_string[] =
 #endif
 #ifdef DEE_AUTOCONF_VARNAME_DEEMON_DEXORDER
 "\t$" DEE_AUTOCONF_VARNAME_DEEMON_DEXORDER "     \tDefines the order of locations to search for dex modules:\n"
-#ifndef DEE_PLATFORM_WINDOWS
-                         "\t                     \t\tV: Search the version-dependent dex path (\"/usr/lib/deemon/dex." DEE_PP_STR(DEE_VERSION_API) "\")\n"
-#else
-                         "\t                     \t\tV: Ignored\n"
+                         "\t                     \t\tS: Searches the standard dexpath '$" DEE_AUTOCONF_VARNAME_DEEMON_HOME "/dex'\n"
+                         "\t                     \t\tV: Searches the version-dependent dexpath '$" DEE_AUTOCONF_VARNAME_DEEMON_HOME "/dex." DEE_PP_STR(DEE_VERSION_API) "'\n"
+                         "\t                     \t\tD: Search a set of paths provided by '$" DEE_AUTOCONF_VARNAME_DEEMON_DEXPATH "'\n"
+                         "\t                     \t\tC: Search the current working directory '$(pwd)'\n"
+                         "\t                     \t\tX: Search the hosting exe's directory '$(dirname $(readlink /proc/self/exe))'\n"
+                         "\t                     \t\tP: Search all folders from '$PATH'\n"
+                         "\t                     \t\tR: Search the the folders of all usercode files running thread-local\n"
+                         "\t                     \t\tdefault: " DEEDEX_SEARCHORDER_DEFAULT "\n"
 #endif
-                         "\t                     \t\tD: Search a set of paths provided by $DEE_AUTOCONF_VARNAME_DEEMON_DEXPATH\n"
-                         "\t                     \t\tC: Search the current working directory $(pwd)\n"
-                         "\t                     \t\tX: Search the hosting exe's directory $(dirname $(readlink /proc/self/exe))\n"
-                         "\t                     \t\tP: Search all folders from system $PATH variable\n"
-#ifdef DEE_PLATFORM_WINDOWS
-                         "\t                     \t\tdefault: DCXP\n"
-#else
-                         "\t                     \t\tdefault: VD\n"
-#endif
-#endif
-#define DEE_AUTOCONF_VARNAME_DEEMON_DEXPATH       "DEEMON_DEXPATH"
-#define DEE_AUTOCONF_VARNAME_DEEMON_DEXORDER      "DEEMON_DEXORDER"
 #ifdef DEE_AUTOCONF_VARNAME_DEEMON_NOVFS
 "\t$" DEE_AUTOCONF_VARNAME_DEEMON_NOVFS "        \tDisable the virtual file-system used to simulate\n"
                          "\t                     \ta minimal posix-style environment under windows.\n"
@@ -1830,19 +1804,21 @@ static int _dee_print_compiler_flags(struct DeeCompilerConfig *config, DeeObject
 #define PRINT_HELP_SHORT(fp) DeeFile_PRINT(fp,_dee_help_string_short)
 
 static int _dee_pack_args(int argc, char **argv) {
- DeeObject *result,**dst;
+ DeeObject *newargv,**dst;
  DEE_ASSERT(argc >= 0);
- if DEE_UNLIKELY((result = _DeeList_NewUnsafe((Dee_size_t)argc)) == NULL) return -1;
- dst = DeeList_ELEM(result);
+ // TODO: 'newargv' doesn't need to be a heap object (never leaves this function)
+ if DEE_UNLIKELY((newargv = _DeeList_NewUnsafe((Dee_size_t)argc)) == NULL) return -1;
+ dst = DeeList_ELEM(newargv);
  while (argc--) {
   if DEE_UNLIKELY((*dst = DeeString_New(*argv++)) == NULL) {
-   while (dst != DeeList_ELEM(result)) Dee_DECREF(*--dst);
-   _DeeList_FreeUnsafe(result);
+   while (dst != DeeList_ELEM(newargv)) Dee_DECREF(*--dst);
+   _DeeList_FreeUnsafe(newargv);
    return -1;
   }
   ++dst;
  }
- Dee_SetArgv(result);
+ DeeList_MoveAssign(Dee_Argv,newargv);
+ Dee_DECREF(newargv);
  return 0;
 }
 static int _dee_parsearg_I(DeeObject *lexer, char const *arg) {
@@ -2265,8 +2241,8 @@ exec_func2:
   // Execute the compiled code
   if ((flags&DEE_CMD_FLAG_COMPILE_ONLY)==0) {
    // Pack the rest of the cmd as arguments
-   old_args = Dee_GetArgv();
-   if DEE_UNLIKELY(_dee_pack_args(argc,argv) != 0) goto err_2;
+   if DEE_UNLIKELY((old_args = DeeObject_Move(Dee_Argv)) == NULL) goto err_2;
+   if DEE_UNLIKELY(_dee_pack_args(argc,argv) != 0) goto err_3;
    // Call the generated function
    if DEE_UNLIKELY((result_ob = DeeObject_Call(func,Dee_EmptyTuple)) == NULL) goto err_3;
    // We simply cast the code return value to int,
@@ -2276,8 +2252,8 @@ exec_func2:
     goto err_3;
    }
    Dee_DECREF(result_ob);
-   Dee_SetArgv(old_args);
-   Dee_XDECREF(old_args);
+   DeeList_MoveAssign(Dee_Argv,old_args);
+   Dee_DECREF(old_args);
   } else {
    if (retval) *retval = 0;
   }

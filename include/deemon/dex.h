@@ -274,6 +274,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *) DeeDex_Ge
 #define DEEDEX_SEARCHORDER_CWDPATH "C" /*< Search the current working directory (fs::getcwd()). */
 #define DEEDEX_SEARCHORDER_EXEPATH "X" /*< Search the hosting exe's directory (fs::path::head(fs::readlink("/proc/self/exe"))). */
 #define DEEDEX_SEARCHORDER_SYSPATH "P" /*< Search the system's $PATH for extension files (fs::getenv("PATH").split(fs::path::DELIM)). */
+#define DEEDEX_SEARCHORDER_RUNPATH "R" /*< Search the folders of all usercode files running thread-local (NOTE: Requires debug informations). */
 
 //////////////////////////////////////////////////////////////////////////
 // Default dex search configuration

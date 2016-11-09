@@ -53,8 +53,7 @@ struct time: object {
   static DEE_A_RET_WUNUSED time _seconds(DEE_A_IN Dee_uint64_t seconds_) { return time(::DeeTime_NewFromSeconds(seconds_),detail::tag_ref_or_err()); }
   static DEE_A_RET_WUNUSED time _mseconds(DEE_A_IN Dee_uint64_t mseconds_) { return time(::DeeTime_NewFromMSeconds(mseconds_),detail::tag_ref_or_err()); }
  public: /* public methods */
-  inline string format(DEE_A_IN_Z char const *fmt) { return string(::DeeTime_Format(this->ob_ptr,fmt,strlen(fmt)),detail::tag_ref_or_err()); }
-  inline string format(DEE_A_IN_Z char const *fmt, Dee_size_t fmt_len) { return string(::DeeTime_Format(this->ob_ptr,fmt,fmt_len),detail::tag_ref_or_err()); }
+  inline string format(DEE_A_IN_Z char const *fmt) { return string(::DeeTime_Format(this->ob_ptr,fmt),detail::tag_ref_or_err()); }
  private:
   struct _proxy_year; struct _proxy_years;
   struct _proxy_month; struct _proxy_months;

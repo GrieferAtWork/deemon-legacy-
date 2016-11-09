@@ -131,21 +131,30 @@ DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT(0) int) Dee_HasFeatures(DEE_A_IN_Z char const *
 DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT(0) int) Dee_HasWildFeatures(DEE_A_IN_Z char const *wildname);
 
 
+struct DeeListObject;
+
 //////////////////////////////////////////////////////////////////////////
-// Get / Set the '__builtin_argv' (aka. 'sys.argv') object
+// Describes the '__builtin_argv' (aka. 'sys.argv') object
 // NOTES:
 //   - Returns NULL if no argv variable was set
 //   - Must be a list
-//   - These functions are thread-safe.
-//   - This value is automatically set by 'Dee_Main'
-DEE_FUNC_DECL(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeListObject) *) Dee_GetArgv(void);
-DEE_FUNC_DECL(DEE_A_EXEC void) Dee_SetArgv(DEE_A_INOUT_OBJECT_OPT(DeeListObject) *ob);
+//   - This value is automatically initialized by 'Dee_Main'
+#define Dee_Argv ((DeeObject *)&_Dee_Argv)
+DEE_DATA_DECL(struct DeeListObject) _Dee_Argv;
+
+
+#if DEE_DEPRECATED_API_VERSION(100,102,104)
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_DEPRECATED("Use 'Dee_Argv' instead") void) _Dee_GetArgv_is_deprecated(void) {}
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_DEPRECATED("Use 'DeeList_MoveAssign(Dee_Argv,...)' instead") void) _Dee_SetArgv_is_deprecated(void) {}
+#define Dee_GetArgv()   (_Dee_GetArgv_is_deprecated(),_DeeObject_INCREF(Dee_Argv),Dee_Argv)
+#define Dee_SetArgv(ob) (_Dee_SetArgv_is_deprecated(),DeeList_AppendSequence(Dee_Argv,ob)!=0?(void)DeeError_Handled():(void)0)
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Get/Set the globally used deemon home folder, that is the root
 // directory used to search for dexes, as well as the standard library.
 // >> Calling 'Dee_GetHome' will lazily look for an enviroment variable '$DEEMON_HOME',
-//    before defaulting to '/usr/lib/deemon' (on linux), or the hosting exe's directory+'/lib' (on windows)
+//    before defaulting to '/usr/lib/deemon/' (on linux), or the hosting exe's directory+'/lib/' (on windows)
 // NOTE: 'Dee_SetHome' can be called to change the home folder at any time,
 //       though note that the paths of some objects (such as lexers) will not be updated.
 // NOTE: The home path is used by the "S" and "V" dex search modes.

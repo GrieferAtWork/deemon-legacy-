@@ -147,8 +147,8 @@
  public: /* public methods */
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
   static inline DEE_A_RET_WUNUSED DEE_STRING_TYPE_NAME format(DEE_A_IN_PRINTF character const *fmt, ...) {
-   DeeObject *result; va_list args; DEE_VA_START(args,fmt);
-   result = DEE_STRING_MEMBER(VNewf)(fmt,args); DEE_VA_END(args);
+   DeeObject *result; va_list args; va_start(args,fmt);
+   result = DEE_STRING_MEMBER(VNewf)(fmt,args); va_end(args);
    return DEE_STRING_TYPE_NAME(result,detail::tag_ref_or_err());
   }
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
