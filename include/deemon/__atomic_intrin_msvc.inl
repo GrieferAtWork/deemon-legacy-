@@ -379,10 +379,10 @@ _DEE_ATOMIC_INTRIN4(_InterlockedExchange16)
 #define _DeeAtomic16_Exchange_acquire _DEE_ATOMIC_INTRIN_ACQUIRE(_InterlockedExchange16)
 #define _DeeAtomic16_Exchange_release _DEE_ATOMIC_INTRIN_RELEASE(_InterlockedExchange16)
 _DEE_ATOMIC_INTRIN4(_InterlockedCompareExchange16)
-#define _DeeAtomic16_CompareExchangeVal_seq_cst(x,old_v,new_v) _DEE_ATOMIC_INTRIN_SEQ_CST(_InterlockedCompareExchange16)(x,old_v,new_v)
-#define _DeeAtomic16_CompareExchangeVal_relaxed(x,old_v,new_v) _DEE_ATOMIC_INTRIN_RELAXED(_InterlockedCompareExchange16)(x,old_v,new_v)
-#define _DeeAtomic16_CompareExchangeVal_acquire(x,old_v,new_v) _DEE_ATOMIC_INTRIN_ACQUIRE(_InterlockedCompareExchange16)(x,old_v,new_v)
-#define _DeeAtomic16_CompareExchangeVal_release(x,old_v,new_v) _DEE_ATOMIC_INTRIN_RELEASE(_InterlockedCompareExchange16)(x,old_v,new_v)
+#define _DeeAtomic16_CompareExchangeVal_seq_cst(x,old_v,new_v) _DEE_ATOMIC_INTRIN_SEQ_CST(_InterlockedCompareExchange16)(x,new_v,old_v)
+#define _DeeAtomic16_CompareExchangeVal_relaxed(x,old_v,new_v) _DEE_ATOMIC_INTRIN_RELAXED(_InterlockedCompareExchange16)(x,new_v,old_v)
+#define _DeeAtomic16_CompareExchangeVal_acquire(x,old_v,new_v) _DEE_ATOMIC_INTRIN_ACQUIRE(_InterlockedCompareExchange16)(x,new_v,old_v)
+#define _DeeAtomic16_CompareExchangeVal_release(x,old_v,new_v) _DEE_ATOMIC_INTRIN_RELEASE(_InterlockedCompareExchange16)(x,new_v,old_v)
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_CONST int) _DeeAtomic16_CompareExchange_seq_cst(DEE_ATOMIC16_NATIVE_T volatile *x, DEE_ATOMIC16_NATIVE_T old_v, DEE_ATOMIC16_NATIVE_T new_v) { return _DeeAtomic16_CompareExchangeVal_seq_cst(x,old_v,new_v) == old_v; }
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_CONST int) _DeeAtomic16_CompareExchange_relaxed(DEE_ATOMIC16_NATIVE_T volatile *x, DEE_ATOMIC16_NATIVE_T old_v, DEE_ATOMIC16_NATIVE_T new_v) { return _DeeAtomic16_CompareExchangeVal_relaxed(x,old_v,new_v) == old_v; }
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_CONST int) _DeeAtomic16_CompareExchange_acquire(DEE_ATOMIC16_NATIVE_T volatile *x, DEE_ATOMIC16_NATIVE_T old_v, DEE_ATOMIC16_NATIVE_T new_v) { return _DeeAtomic16_CompareExchangeVal_acquire(x,old_v,new_v) == old_v; }

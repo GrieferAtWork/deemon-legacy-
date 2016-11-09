@@ -142,15 +142,29 @@ DEE_COMPILER_MSVC_WARNING_POP
 #define DEE_DEX_TYPECOMPATIBLE(T,ob) (T)(ob)
 #endif
 
-#if DEE_TYPES_SIZEOF_INT == DEE_TYPES_SIZEOF_POINTER
-#define DEE_DEX_PRIVATE_EXPORT_OBJECTINL(name,type,...)\
- {name,DEE_DEX_EXPORT_TYPE_OBJECTINL,{\
- {(void *)(Dee_uintptr_t)(1),(void *)(Dee_uintptr_t)(1),type,__VA_ARGS__}}}
-#elif DEE_TYPES_SIZEOF_INT*2 == DEE_TYPES_SIZEOF_POINTER
-#define DEE_DEX_PRIVATE_EXPORT_OBJECTINL(name,type,...)\
- {name,DEE_DEX_EXPORT_TYPE_OBJECTINL,{\
- {(void *)((Dee_uintptr_t)1|((uintptr_t)1<<(DEE_TYPES_SIZEOF_INT*8))),type,__VA_ARGS__}}}
+
+#if DEE_TYPES_SIZEOF_REFCNT == DEE_TYPES_SIZEOF_POINTER\
+ && DEE_TYPES_SIZEOF_WEAKCNT == DEE_TYPES_SIZEOF_POINTER
+#define DEE_DEX_PRIVATE_EXPORT_OBJECTINL_PREFIX(refcnt,weakcnt)\
+ (void *)(uintptr_t)(refcnt),(void *)(uintptr_t)(weakcnt)
+#elif DEE_TYPES_SIZEOF_REFCNT+DEE_TYPES_SIZEOF_WEAKCNT == DEE_TYPES_SIZEOF_POINTER
+#if DEE_PLATFORM_ENDIAN == 1234
+#define DEE_DEX_PRIVATE_EXPORT_OBJECTINL_PREFIX(refcnt,weakcnt)\
+ (void *)((Dee_uintptr_t)(weakcnt)|((uintptr_t)(refcnt)<<(DEE_TYPES_SIZEOF_WEAKCNT*8)))
+#else
+#define DEE_DEX_PRIVATE_EXPORT_OBJECTINL_PREFIX(refcnt,weakcnt)\
+ (void *)((Dee_uintptr_t)(refcnt)|((uintptr_t)(weakcnt)<<(DEE_TYPES_SIZEOF_REFCNT*8)))
 #endif
+#else
+// ((DEE_TYPES_SIZEOF_REFCNT+DEE_TYPES_SIZEOF_WEAKCNT)%DEE_TYPES_SIZEOF_POINTER) != 0
+#error "Cannot properly align inline-object reference counters"
+#endif
+
+
+
+#define DEE_DEX_PRIVATE_EXPORT_OBJECTINL(name,type,...)\
+ {name,DEE_DEX_EXPORT_TYPE_OBJECTINL,{\
+ {DEE_DEX_PRIVATE_EXPORT_OBJECTINL_PREFIX(1,1),type,__VA_ARGS__}}}
 
 #if defined(DEE_DEX_PRIVATE_EXPORT_OBJECTINL) && !defined(__GNUC__)
 #define DeeDex_EXPORT_FUNCTION(name,func,doc) \
