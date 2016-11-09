@@ -68,8 +68,8 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeClass_DelSlot(
 #endif
    break;
 
-#define HAS_CTOR_SUPERARGS()     GET_OPERATOR_ID(DEE_CLASS_SLOTID_SUPERARGS_CTOR,cs_constructor.ctp_ctor_sargs)
-#define HAS_CTOR_ANYSUPERARGS() GET_OPERATOR_ID(DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR,cs_constructor.ctp_any_ctor_sargs)
+#define HAS_CTOR_SUPERARGS()     GET_OPERATOR_ID(DEE_CLASS_SLOTID_SUPERARGS_CTOR,cs_constructor.ctp_ctor_superargs)
+#define HAS_CTOR_ANYSUPERARGS() GET_OPERATOR_ID(DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR,cs_constructor.ctp_any_ctor_superargs)
 #define TRANSFORM_SLOT(tp_name,from,to)\
  if (DeeType_GET_SLOT(self,tp_name) == (DeeType_SLOT_TYPE(tp_name))(from)) DeeType_GET_SLOT(self,tp_name) = (DeeType_SLOT_TYPE(tp_name))(to); else
 
@@ -287,7 +287,7 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeClass_DelSlot(
 
   // Super constructor arguments (no input arguments)
   case DEE_CLASS_SLOTID_SUPERARGS_CTOR:
-   SET_VSLOT(cs_constructor.ctp_ctor_sargs);
+   SET_VSLOT(cs_constructor.ctp_ctor_superargs);
 #ifdef VALUE
         if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin
          || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin_anysuperargs
@@ -346,7 +346,7 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeClass_DelSlot(
 
   // Super constructor arguments (variadic input arguments)
   case DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR:
-   SET_VSLOT(cs_constructor.ctp_any_ctor_sargs);
+   SET_VSLOT(cs_constructor.ctp_any_ctor_superargs);
 #ifdef VALUE
         if (DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin
          || DeeType_GET_SLOT(self,tp_ctor) == (DeeType_SLOT_TYPE(tp_ctor))&_deeinstance_tp_ctor_builtin_nobase

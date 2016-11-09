@@ -114,12 +114,12 @@ extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeClassDynamicVTableList_SetOperato
 
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
 struct _DeeClassTypeConstructorOperators {
- DEE_A_REF DeeObject *ctp_ctor;           /*< [0..1]. */
- DEE_A_REF DeeObject *ctp_ctor_sargs;     /*< [0..1]. */
- DEE_A_REF DeeObject *ctp_copy_ctor;      /*< [0..1]. */
- DEE_A_REF DeeObject *ctp_move_ctor;      /*< [0..1]. */
- DEE_A_REF DeeObject *ctp_any_ctor;       /*< [0..1]. */
- DEE_A_REF DeeObject *ctp_any_ctor_sargs; /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_ctor;               /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_ctor_superargs;     /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_copy_ctor;          /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_move_ctor;          /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_any_ctor;           /*< [0..1]. */
+ DEE_A_REF DeeObject *ctp_any_ctor_superargs; /*< [0..1]. */
 };
 struct _DeeClassTypeDestructorOperators {
  DEE_A_REF DeeObject *ctp_dtor; /*< [0..1]. */
@@ -260,11 +260,11 @@ do{\
 #define _DeeGenericClassSuffix_ALL(sfx,xcall)\
 do{\
  xcall((sfx)->cs_constructor.ctp_ctor);\
- xcall((sfx)->cs_constructor.ctp_ctor_sargs);\
+ xcall((sfx)->cs_constructor.ctp_ctor_superargs);\
  xcall((sfx)->cs_constructor.ctp_copy_ctor);\
  xcall((sfx)->cs_constructor.ctp_move_ctor);\
  xcall((sfx)->cs_constructor.ctp_any_ctor);\
- xcall((sfx)->cs_constructor.ctp_any_ctor_sargs);\
+ xcall((sfx)->cs_constructor.ctp_any_ctor_superargs);\
  xcall((sfx)->cs_destructor.ctp_dtor);\
  xcall((sfx)->cs_assign.ctp_copy_assign);\
  xcall((sfx)->cs_assign.ctp_move_assign);\

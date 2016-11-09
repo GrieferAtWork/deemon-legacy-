@@ -96,9 +96,8 @@ DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,1) int _DeeClassDynamicVTableList_DelOperato
    new_size = self->dvt_tablec-1;
    old_callback = iter->dvte_callback; // inherit reference
    if (new_size) {
-    while ((iter = (struct _DeeClassDynamicVTableEntry *)realloc_nnz(
-     self->dvt_tablev,new_size*sizeof(struct _DeeClassDynamicVTableEntry))
-     ) == NULL) {
+    while DEE_UNLIKELY((iter = (struct _DeeClassDynamicVTableEntry *)realloc_nnz(
+     self->dvt_tablev,new_size*sizeof(struct _DeeClassDynamicVTableEntry))) == NULL) {
      if DEE_LIKELY(Dee_CollectMemory()) continue;
      DeeError_NoMemory();
      return -1;
@@ -135,7 +134,7 @@ DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeClassDynamicVTableList_SetOperator(
   ++iter;
  }
  new_size = self->dvt_tablec+1;
- while ((iter = (struct _DeeClassDynamicVTableEntry *)realloc_nz(
+ while DEE_UNLIKELY((iter = (struct _DeeClassDynamicVTableEntry *)realloc_nz(
   self->dvt_tablev,new_size*sizeof(struct _DeeClassDynamicVTableEntry))) == NULL) {
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
@@ -161,7 +160,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeInstanceMethodObject) *DeeInstanceMethod_New(
  DeeInstanceMethodObject *result;
  DEE_ASSERT(DeeObject_Check(this_arg));
  DEE_ASSERT(DeeObject_Check(func));
- if ((result = DEE_OBJECTPOOL_ALLOC(instance_method)) != NULL) {
+ if DEE_UNLIKELY((result = DEE_OBJECTPOOL_ALLOC(instance_method)) != NULL) {
   DeeObject_INIT(result,&DeeInstanceMethod_Type);
   Dee_INCREF(result->im_this = this_arg);
   Dee_INCREF(result->im_func = func);
@@ -180,7 +179,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeePropertyObject) *DeeProperty_New(
  DEE_A_IN_OPT DeeObject *getter_, DEE_A_IN_OPT DeeObject *delete_,
  DEE_A_IN_OPT DeeObject *setter_) {
  DeePropertyObject *result;
- if ((result = DeeGC_MALLOC(DeePropertyObject)) != NULL) {
+ if DEE_UNLIKELY((result = DeeGC_MALLOC(DeePropertyObject)) != NULL) {
   DeeObject_INIT(result,&DeeProperty_Type);
   Dee_XINCREF(result->pr_get = getter_);
   Dee_XINCREF(result->pr_del = delete_);
@@ -209,13 +208,12 @@ DeeProperty_Setter(DEE_A_IN_OBJECT(DeePropertyObject) const *self) {
 
 #define DEE_CLASSTYPE_CACHE_SIZE 16
 struct dee_classtype_cache_entry {
- struct dee_classtype_cache_entry       *ob_next;       /*< [0..1][owned] Next cache entry. */
-                    DeeTypeObject const *ob_base_type;  /*< [1..1] The address of the base_type (this is a dangling pointer to a type-type). */
-     DEE_A_WEAK_REF DeeClassTypeObject  *ob_class_type; /*< [1..1] A weak reference to the class type associated with 'ob_base_type'. */
+ struct dee_classtype_cache_entry       *ctce_next;       /*< [0..1][owned] Next cache entry. */
+                    DeeTypeObject const *ctce_base_type;  /*< [1..1] The address of the base_type (this is a dangling pointer to a type-type). */
+     DEE_A_WEAK_REF DeeClassTypeObject  *ctce_class_type; /*< [1..1] A weak reference to the class type associated with 'ob_base_type'. */
 };
 // Index == (Dee_uintptr_t)base_type % DEE_CLASSTYPE_CACHE_SIZE
-static struct dee_classtype_cache_entry *
-dee_classtype_cache[DEE_CLASSTYPE_CACHE_SIZE];
+static struct dee_classtype_cache_entry *dee_classtype_cache[DEE_CLASSTYPE_CACHE_SIZE] = {NULL,};
 static struct DeeAtomicMutex dee_classtype_cache_lock = DeeAtomicMutex_INIT();
 
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF DeeClassTypeObject *)
@@ -233,20 +231,20 @@ DeeClassType_TypeOf(DEE_A_IN DeeTypeObject const *base) {
  DeeAtomicMutex_Acquire(&dee_classtype_cache_lock);
  entry = *(bucket = dee_classtype_cache+((Dee_uintptr_t)base%DEE_CLASSTYPE_CACHE_SIZE));
  prev = NULL; while (entry) {
-  if ((found_type = (DeeClassTypeObject *)DeeObject_LockWeakref((DeeObject *)entry->ob_class_type)) != NULL) {
-   if (entry->ob_base_type == base) {
+  if ((found_type = (DeeClassTypeObject *)DeeObject_LockWeakref((DeeObject *)entry->ctce_class_type)) != NULL) {
+   if (entry->ctce_base_type == base) {
     DeeAtomicMutex_Release(&dee_classtype_cache_lock);
     return found_type; // Inherit reference
    }
    prev = entry;
    Dee_DECREF(found_type);
-   entry = entry->ob_next;
+   entry = entry->ctce_next;
   } else {
    // Dead entry (clean it up)
-   next = entry->ob_next;
-   if (prev) prev->ob_next = next;
+   next = entry->ctce_next;
+   if (prev) prev->ctce_next = next;
    else *bucket = next;
-   Dee_WEAKDECREF(entry->ob_class_type);
+   Dee_WEAKDECREF(entry->ctce_class_type);
    free_nn(entry);
    entry = next;
   }
@@ -259,15 +257,15 @@ aqr_and_search_faster:
  DeeAtomicMutex_Acquire(&dee_classtype_cache_lock);
  entry = *(bucket = dee_classtype_cache+((Dee_uintptr_t)base%DEE_CLASSTYPE_CACHE_SIZE));
  while (entry) {
-  if (entry->ob_base_type == base) {
-   if ((found_type = (DeeClassTypeObject *)DeeObject_LockWeakref((DeeObject *)entry->ob_class_type)) != NULL) {
+  if (entry->ctce_base_type == base) {
+   if ((found_type = (DeeClassTypeObject *)DeeObject_LockWeakref((DeeObject *)entry->ctce_class_type)) != NULL) {
     // Rare case: Someone was faster than us
     DeeAtomicMutex_Release(&dee_classtype_cache_lock);
     Dee_DECREF(result);
     return found_type;
    }
   }
-  entry = entry->ob_next;
+  entry = entry->ctce_next;
  }
  if ((entry = (struct dee_classtype_cache_entry *)malloc_nz(
   sizeof(struct dee_classtype_cache_entry))) == NULL) {
@@ -277,9 +275,9 @@ aqr_and_search_faster:
   Dee_DECREF(result);
   return NULL;
  }
- entry->ob_next = *bucket;
- entry->ob_base_type = base; // Dangling pointer
- Dee_WEAKINCREF(entry->ob_class_type = result); // Weak reference
+ entry->ctce_next = *bucket;
+ entry->ctce_base_type = base; // Dangling pointer
+ Dee_WEAKINCREF(entry->ctce_class_type = result); // Weak reference
  *bucket = entry;
  DeeAtomicMutex_Release(&dee_classtype_cache_lock);
  return result;
@@ -290,8 +288,8 @@ void _DeeClassType_Finalize(void) {
  for (end = (iter = dee_classtype_cache)+DEE_CLASSTYPE_CACHE_SIZE; iter != end; ++iter) {
   entry = *iter;
   while (entry) {
-   next = entry->ob_next;
-   Dee_WEAKDECREF(entry->ob_class_type);
+   next = entry->ctce_next;
+   Dee_WEAKDECREF(entry->ctce_class_type);
    free_nn(entry);
    entry = next;
   }
@@ -560,9 +558,9 @@ static int _deeinstance_tp_ctor_builtin_superargs(
  DeeObject *superargs; int error; DeeTypeObject *base;
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -588,9 +586,9 @@ static int _deeinstance_tp_ctor_builtin_anysuperargs(
  DeeObject *superargs; int error; DeeTypeObject *base;
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_any_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_any_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -635,8 +633,8 @@ static int _deeinstance_tp_copy_ctor_builtin_anysuperargs(
  suffix = DeeClass_SUFFIX(tp);
  if DEE_UNLIKELY((args = DeeTuple_Pack(1,right)) == NULL) return -1;
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
- superargs = DeeObject_Call(suffix->cs_constructor.ctp_any_ctor_sargs,args);
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
+ superargs = DeeObject_Call(suffix->cs_constructor.ctp_any_ctor_superargs,args);
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),args);
@@ -725,9 +723,9 @@ static int _deeinstance_tp_any_ctor_builtin_superargs(
  suffix = DeeClass_SUFFIX(tp);
  level = DeeInstance_MEMBERS_AT(self,suffix->cs_member_offset);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -753,9 +751,9 @@ static int _deeinstance_tp_any_ctor_builtin_anysuperargs( // (superargs from any
  suffix = DeeClass_SUFFIX(tp);
  level = DeeInstance_MEMBERS_AT(self,suffix->cs_member_offset);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_any_ctor_sargs,args)) == NULL) return -1;
+  suffix->cs_constructor.ctp_any_ctor_superargs,args)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),args)) == NULL) return -1;
@@ -781,11 +779,11 @@ static int _deeinstance_tp_any_ctor_builtin_superargsanysuperargs( // (superargs
  suffix = DeeClass_SUFFIX(tp);
  level = DeeInstance_MEMBERS_AT(self,suffix->cs_member_offset);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_sargs));
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_superargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeTuple_CheckEmpty(args)
-  ? suffix->cs_constructor.ctp_ctor_sargs
-  : suffix->cs_constructor.ctp_any_ctor_sargs,args)) == NULL) return -1;
+  ? suffix->cs_constructor.ctp_ctor_superargs
+  : suffix->cs_constructor.ctp_any_ctor_superargs,args)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DeeTuple_CheckEmpty(args) ? DEE_CLASS_SLOTID_SUPERARGS_CTOR
@@ -959,9 +957,9 @@ static int _deeinstance_tp_ctor_default_superargs(
  DEE_ASSERT(DeeObject_Check(self) && DeeInstance_Check(self));
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -994,9 +992,9 @@ static int _deeinstance_tp_ctor_default_anysuperargs(
  DEE_ASSERT(DeeObject_Check(self) && DeeInstance_Check(self));
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_any_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_any_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -1071,9 +1069,9 @@ static int _deeinstance_tp_ctor_callany_superargs(
  DEE_ASSERT(DeeObject_Check(self) && DeeInstance_Check(self));
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -1106,9 +1104,9 @@ static int _deeinstance_tp_ctor_callany_anysuperargs(
  DEE_ASSERT(DeeObject_Check(self) && DeeInstance_Check(self));
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_any_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_any_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -1194,9 +1192,9 @@ static int _deeinstance_tp_copy_ctor_callany_anysuperargs(
  suffix = DeeClass_SUFFIX(tp);
  level = DeeInstance_MEMBERS_AT(self,suffix->cs_member_offset);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_any_ctor_sargs,args)) == NULL) goto err_args;
+  suffix->cs_constructor.ctp_any_ctor_superargs,args)) == NULL) goto err_args;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),args)) == NULL) goto err_args;
@@ -1283,9 +1281,9 @@ static int _deeinstance_tp_move_ctor_callany_anysuperargs(
  if DEE_UNLIKELY((args = DeeTuple_Pack(1,right)) == NULL) return -1;
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_any_ctor_sargs,args)) == NULL) goto err_args;
+  suffix->cs_constructor.ctp_any_ctor_superargs,args)) == NULL) goto err_args;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),args)) == NULL) goto err_args;
@@ -1384,9 +1382,9 @@ static int _deeinstance_tp_any_ctor_default_anysuperargs(
  DEE_ASSERT(DeeObject_Check(self) && DeeInstance_Check(self));
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_any_ctor_sargs,args)) == NULL) return -1;
+  suffix->cs_constructor.ctp_any_ctor_superargs,args)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),args)) == NULL) return -1;
@@ -1479,9 +1477,9 @@ static int _deeinstance_tp_any_ctor_callctor_superargs(
  }
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -1516,9 +1514,9 @@ static int _deeinstance_tp_any_ctor_callctor_or_anysuperargs(
   return _deeinstance_tp_ctor_default(tp,self);
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_any_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_any_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -1553,9 +1551,9 @@ static int _deeinstance_tp_any_ctor_callctor_superargs_or_anysuperargs(
   return _deeinstance_tp_ctor_default_superargs(tp,self);
  suffix = DeeClass_SUFFIX(tp);
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_any_ctor_superargs));
  if DEE_UNLIKELY((superargs = DeeObject_Call(
-  suffix->cs_constructor.ctp_any_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+  suffix->cs_constructor.ctp_any_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
   suffix,DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -1745,7 +1743,7 @@ static int _deeinstance_tp_any_ctor_callctorcopy_superargs(
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
  DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor));
  DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_copy_ctor));
- DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_sargs));
+ DEE_ASSERT(DeeObject_Check(suffix->cs_constructor.ctp_ctor_superargs));
 #endif
  level = DeeInstance_MEMBERS_AT(self,suffix->cs_member_offset);
  _DeeInstanceLevel_Init(level);
@@ -1754,7 +1752,7 @@ static int _deeinstance_tp_any_ctor_callctorcopy_superargs(
  if (DeeTuple_CheckEmpty(args)) {
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
   if DEE_UNLIKELY((superargs = DeeObject_Call(
-   suffix->cs_constructor.ctp_ctor_sargs,Dee_EmptyTuple)) == NULL) return -1;
+   suffix->cs_constructor.ctp_ctor_superargs,Dee_EmptyTuple)) == NULL) return -1;
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
   if DEE_UNLIKELY((superargs = DeeObject_Call(DeeClassSuffix_GetKnownVirtOperator(
    suffix,DEE_CLASS_SLOTID_SUPERARGS_CTOR),Dee_EmptyTuple)) == NULL) return -1;
@@ -3153,7 +3151,7 @@ static void _deeclass_delete_getsets(
  }
  free_nn(getsets);
 }
-static void _deeclass_tp_dtor(DeeClassObject *self) {
+static void DEE_CALL _deeclass_tp_dtor(DeeClassObject *self) {
  struct DeeClassSuffix *suffix;
  struct DeeTypeMarshal *marshal;
  marshal = DeeType_GET_SLOT(self,tp_marshal);
@@ -3170,7 +3168,7 @@ static void _deeclass_tp_dtor(DeeClassObject *self) {
  if (suffix->cs_class_getsets != _deeclass_empty_getsets) _deeclass_delete_getsets(suffix->cs_class_getsets);
  DeeAnyClassSuffix_Quit(Dee_TYPE(self),suffix);
 }
-static void _deeclass_tp_clear(DeeClassObject *self) {
+static void DEE_CALL _deeclass_tp_clear(DeeClassObject *self) {
  struct DeeClassSuffix *suffix;
  DEE_ASSERT(DeeObject_Check(self) && DeeClass_Check(self));
  suffix = DeeClass_SUFFIX(self);
@@ -3201,8 +3199,11 @@ do{\
 
  if (suffix->cs_constructor.ctp_ctor) {
   Dee_CLEAR(suffix->cs_constructor.ctp_ctor);
-  DeeType_GET_SLOT(self,tp_ctor) = (int(*)(DeeTypeObject*,DeeObject*))
-   DeeClass_GetNewInstance_tp_ctor_builtin(DeeType_BASE(self));
+  DeeType_GET_SLOT(self,tp_ctor) = (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_builtin;
+  Dee_XCLEAR(suffix->cs_constructor.ctp_ctor_superargs);
+ } else if (suffix->cs_constructor.ctp_ctor_superargs) {
+  Dee_CLEAR(suffix->cs_constructor.ctp_ctor_superargs);
+  DeeType_GET_SLOT(self,tp_ctor) = (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_builtin;
  }
  if (suffix->cs_constructor.ctp_copy_ctor) {
   Dee_CLEAR(suffix->cs_constructor.ctp_copy_ctor);
@@ -3216,8 +3217,11 @@ do{\
  }
  if (suffix->cs_constructor.ctp_any_ctor) {
   Dee_CLEAR(suffix->cs_constructor.ctp_any_ctor);
-  DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(
-   DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin;
+  DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin;
+  Dee_XCLEAR(suffix->cs_constructor.ctp_any_ctor_superargs);
+ } else if (suffix->cs_constructor.ctp_any_ctor_superargs) {
+  Dee_CLEAR(suffix->cs_constructor.ctp_any_ctor_superargs);
+  DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin;
  }
  if (suffix->cs_destructor.ctp_dtor) {
   Dee_CLEAR(suffix->cs_destructor.ctp_dtor);
@@ -3295,7 +3299,7 @@ do{\
 #undef CLEAR_SLOT
 #else
  _DeeClassDynamicVTableList_Clear(&suffix->cs_vtable);
- DeeType_GET_SLOT(self,tp_ctor) = (int(*)(DeeTypeObject*,DeeObject*))DeeClass_GetNewInstance_tp_ctor_builtin(DeeType_BASE(self));
+ DeeType_GET_SLOT(self,tp_ctor) = (int(*)(DeeTypeObject*,DeeObject*))&_deeinstance_tp_ctor_builtin;
  DeeType_GET_SLOT(self,tp_copy_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_copy_ctor_builtin;
  DeeType_GET_SLOT(self,tp_move_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_move_ctor_builtin;
  DeeType_GET_SLOT(self,tp_any_ctor) = (int(*)(DeeTypeObject*,DeeObject*,DeeObject*))&_deeinstance_tp_any_ctor_builtin;
@@ -3426,7 +3430,7 @@ static struct _DeeClassTypeMethodDef *_DeeClassTypeMethodDef_GetFromFile(
 #endif
  if (!read_size) return _deeclass_empty_methods;
  size = (Dee_size_t)read_size;
- while ((result = (struct _DeeClassTypeMethodDef *)malloc_nz(
+ while DEE_UNLIKELY((result = (struct _DeeClassTypeMethodDef *)malloc_nz(
   (size+1)*sizeof(struct _DeeClassTypeMethodDef))) == NULL) {
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
@@ -3434,7 +3438,7 @@ static struct _DeeClassTypeMethodDef *_DeeClassTypeMethodDef_GetFromFile(
  }
  iter = result;
  while (size--) {
-  if (DeeFile_GetLeSmall64(infile,&read_size) != 0) {
+  if DEE_UNLIKELY(DeeFile_GetLeSmall64(infile,&read_size) != 0) {
 err_r:
    while (iter-- != result) {
     Dee_DECREF(iter->ctmd_name);
@@ -3452,11 +3456,11 @@ err_r:
   }
 #endif
   name_size = (Dee_size_t)read_size;
-  if ((iter->ctmd_name = (DeeStringObject *)DeeString_NewSized(name_size)) == NULL) goto err_r;
-  if (DeeFile_ReadAll(infile,DeeString_STR(iter->ctmd_name),name_size) != 0) {
+  if DEE_UNLIKELY((iter->ctmd_name = (DeeStringObject *)DeeString_NewSized(name_size)) == NULL) goto err_r;
+  if DEE_UNLIKELY(DeeFile_ReadAll(infile,DeeString_STR(iter->ctmd_name),name_size) != 0) {
 err_iter_name_r: Dee_DECREF(iter->ctmd_name); goto err_r;
   }
-  if ((iter->ctmd_func = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) goto err_iter_name_r;
+  if DEE_UNLIKELY((iter->ctmd_func = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) goto err_iter_name_r;
   ++iter;
  }
  iter->ctmd_name = NULL;
@@ -3471,12 +3475,12 @@ static int _DeeClassTypeMethodDef_PutInFile(
  struct _DeeClassTypeMethodDef const *iter; Dee_size_t size;
  size = 0; iter = self;
  while (iter->ctmd_name) ++size,++iter;
- if (DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)size) != 0) return -1;
+ if DEE_UNLIKELY(DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)size) != 0) return -1;
  iter = self; while (iter->ctmd_name) {
   DEE_ASSERT(DeeObject_Check(iter->ctmd_name) && DeeString_Check(iter->ctmd_name));
-  if (DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)DeeString_SIZE(iter->ctmd_name)) != 0) return -1;
-  if (DeeFile_WriteAll(outfile,DeeString_STR(iter->ctmd_name),DeeString_SIZE(iter->ctmd_name)*sizeof(char)) != 0) return -1;
-  if (DeeMarshal_WriteObjectWithMap(outfile,map,iter->ctmd_func) != 0) return -1;
+  if DEE_UNLIKELY(DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)DeeString_SIZE(iter->ctmd_name)) != 0) return -1;
+  if DEE_UNLIKELY(DeeFile_WriteAll(outfile,DeeString_STR(iter->ctmd_name),DeeString_SIZE(iter->ctmd_name)*sizeof(char)) != 0) return -1;
+  if DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,iter->ctmd_func) != 0) return -1;
   ++iter;
  }
  return 0;
@@ -3486,7 +3490,7 @@ static struct _DeeClassTypeGetSetDef *_DeeClassTypeGetSetDef_GetFromFile(
  DeeObject *infile, struct DeeMarshalReadMap *map) {
  struct _DeeClassTypeGetSetDef *result,*iter;
  Dee_uint64_t read_size; Dee_size_t size,name_size;
- if (DeeFile_GetLeSmall64(infile,&read_size) != 0) return NULL;
+ if DEE_UNLIKELY(DeeFile_GetLeSmall64(infile,&read_size) != 0) return NULL;
 #if DEE_TYPES_SIZEOF_SIZE_T < 8
  if DEE_UNLIKELY(read_size > (Dee_uint64_t)((Dee_size_t)-1)) {
   DeeError_SetStringf(&DeeErrorType_ValueError,
@@ -3497,7 +3501,7 @@ static struct _DeeClassTypeGetSetDef *_DeeClassTypeGetSetDef_GetFromFile(
 #endif
  if (!read_size) return _deeclass_empty_getsets;
  size = (Dee_size_t)read_size;
- while ((result = (struct _DeeClassTypeGetSetDef *)malloc_nz(
+ while DEE_UNLIKELY((result = (struct _DeeClassTypeGetSetDef *)malloc_nz(
   (size+1)*sizeof(struct _DeeClassTypeGetSetDef))) == NULL) {
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
@@ -3505,7 +3509,7 @@ static struct _DeeClassTypeGetSetDef *_DeeClassTypeGetSetDef_GetFromFile(
  }
  iter = result;
  while (size--) {
-  if (DeeFile_GetLeSmall64(infile,&read_size) != 0) {
+  if DEE_UNLIKELY(DeeFile_GetLeSmall64(infile,&read_size) != 0) {
 err_r:
    while (iter-- != result) {
     Dee_DECREF(iter->ctgd_name);
@@ -3525,15 +3529,15 @@ err_r:
   }
 #endif
   name_size = (Dee_size_t)read_size;
-  if ((iter->ctgd_name = (DeeStringObject *)DeeString_NewSized(name_size)) == NULL) goto err_r;
-  if (DeeFile_ReadAll(infile,DeeString_STR(iter->ctgd_name),name_size) != 0) {
+  if DEE_UNLIKELY((iter->ctgd_name = (DeeStringObject *)DeeString_NewSized(name_size)) == NULL) goto err_r;
+  if DEE_UNLIKELY(DeeFile_ReadAll(infile,DeeString_STR(iter->ctgd_name),name_size) != 0) {
 err_iter_name_r: Dee_DECREF(iter->ctgd_name); goto err_r;
   }
-  if ((iter->ctgd_get = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) goto err_iter_name_r;
-  if ((iter->ctgd_del = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
+  if DEE_UNLIKELY((iter->ctgd_get = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) goto err_iter_name_r;
+  if DEE_UNLIKELY((iter->ctgd_del = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
 err_iter_get_r: Dee_DECREF(iter->ctgd_get); goto err_iter_name_r;
   }
-  if ((iter->ctgd_set = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
+  if DEE_UNLIKELY((iter->ctgd_set = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
 /*err_iter_del_r:*/ Dee_DECREF(iter->ctgd_del); goto err_iter_get_r;
   }
   if (DeeString_CheckEmpty(iter->ctgd_get)) { Dee_DECREF(iter->ctgd_get); iter->ctgd_get = DeeNone_New(); }
@@ -3554,15 +3558,15 @@ static int _DeeClassTypeGetSetDef_PutInFile(
  struct _DeeClassTypeGetSetDef const *iter; Dee_size_t size;
  size = 0; iter = self;
  while (iter->ctgd_name) ++size,++iter;
- if (DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)size) != 0) return -1;
+ if DEE_UNLIKELY(DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)size) != 0) return -1;
  iter = self;
  while (iter->ctgd_name) {
   DEE_ASSERT(DeeObject_Check(iter->ctgd_name) && DeeString_Check(iter->ctgd_name));
-  if (DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)DeeString_SIZE(iter->ctgd_name)) != 0) return -1;
-  if (DeeFile_WriteAll(outfile,DeeString_STR(iter->ctgd_name),DeeString_SIZE(iter->ctgd_name)*sizeof(char)) != 0) return -1;
-  if (DeeMarshal_WriteObjectWithMap(outfile,map,iter->ctgd_get ? iter->ctgd_get : Dee_EmptyString) != 0) return -1;
-  if (DeeMarshal_WriteObjectWithMap(outfile,map,iter->ctgd_del ? iter->ctgd_del : Dee_EmptyString) != 0) return -1;
-  if (DeeMarshal_WriteObjectWithMap(outfile,map,iter->ctgd_set ? iter->ctgd_set : Dee_EmptyString) != 0) return -1;
+  if DEE_UNLIKELY(DeeFile_PutLeSmall64(outfile,(Dee_uint64_t)DeeString_SIZE(iter->ctgd_name)) != 0) return -1;
+  if DEE_UNLIKELY(DeeFile_WriteAll(outfile,DeeString_STR(iter->ctgd_name),DeeString_SIZE(iter->ctgd_name)*sizeof(char)) != 0) return -1;
+  if DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,iter->ctgd_get ? iter->ctgd_get : Dee_EmptyString) != 0) return -1;
+  if DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,iter->ctgd_del ? iter->ctgd_del : Dee_EmptyString) != 0) return -1;
+  if DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,iter->ctgd_set ? iter->ctgd_set : Dee_EmptyString) != 0) return -1;
   ++iter;
  }
  return 0;
@@ -3582,25 +3586,25 @@ static int DEE_CALL _deeclass_tp_marshal_ctor(
  //       which is response is required because a class can
  //       derive from something like 'DeeFile_Type'.
  //       (an object who's type is larger than 'DeeType_Type')
- if ((suffix->cs_methods = _DeeClassTypeMethodDef_GetFromFile(infile,map)) == NULL) { suffix->cs_methods = _deeclass_empty_methods; return -1; }
- if ((suffix->cs_getsets = _DeeClassTypeGetSetDef_GetFromFile(infile,map)) == NULL) {
+ if DEE_UNLIKELY((suffix->cs_methods = _DeeClassTypeMethodDef_GetFromFile(infile,map)) == NULL) { suffix->cs_methods = _deeclass_empty_methods; return -1; }
+ if DEE_UNLIKELY((suffix->cs_getsets = _DeeClassTypeGetSetDef_GetFromFile(infile,map)) == NULL) {
 err_methods: if (suffix->cs_methods != _deeclass_empty_methods) { _deeclass_delete_methods(suffix->cs_methods); suffix->cs_methods = _deeclass_empty_methods; } return -1;
  }
- if ((suffix->cs_class_methods = _DeeClassTypeMethodDef_GetFromFile(infile,map)) == NULL) {
+ if DEE_UNLIKELY((suffix->cs_class_methods = _DeeClassTypeMethodDef_GetFromFile(infile,map)) == NULL) {
 err_getsets: if (suffix->cs_getsets != _deeclass_empty_getsets) { _deeclass_delete_getsets(suffix->cs_getsets); suffix->cs_getsets = _deeclass_empty_getsets; } goto err_methods;
  }
- if ((suffix->cs_class_getsets = _DeeClassTypeGetSetDef_GetFromFile(infile,map)) == NULL) {
+ if DEE_UNLIKELY((suffix->cs_class_getsets = _DeeClassTypeGetSetDef_GetFromFile(infile,map)) == NULL) {
 err_class_methods: if (suffix->cs_class_methods != _deeclass_empty_methods) { _deeclass_delete_methods(suffix->cs_class_methods); suffix->cs_class_methods = _deeclass_empty_methods; } goto err_getsets;
  }
  while (1) {
-  if (DeeFile_GetLe(infile,slot_id) != 0) {
+  if DEE_UNLIKELY(DeeFile_GetLe(infile,slot_id) != 0) {
 err_class_getsets: if (suffix->cs_class_getsets != _deeclass_empty_getsets) { _deeclass_delete_getsets(suffix->cs_class_getsets); suffix->cs_class_getsets = _deeclass_empty_getsets; } goto err_class_methods;
   }
   if (!slot_id) break; // End marker
-  if ((callback = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) goto err_class_getsets;
+  if DEE_UNLIKELY((callback = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) goto err_class_getsets;
   error = DeeClass_SetSlot((DeeTypeObject *)self,slot_id,callback);
   Dee_DECREF(callback);
-  if (error != 0) goto err_class_getsets;
+  if DEE_UNLIKELY(error != 0) goto err_class_getsets;
  }
  return 0;
 }
@@ -3612,7 +3616,7 @@ static int _DeeClass_XWriteSlot(
  Dee_uint16_t written_slot;
  if (!callback) return 0;
  written_slot = (Dee_uint16_t)slot;
- if (DeeFile_PutLe(outfile,written_slot) != 0) return -1;
+ if DEE_UNLIKELY(DeeFile_PutLe(outfile,written_slot) != 0) return -1;
  return DeeMarshal_WriteObjectWithMap(outfile,map,callback);
 }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
@@ -3623,16 +3627,19 @@ static int DEE_CALL _deeclass_tp_marshal_put(
  struct DeeClassSuffix *suffix;
  static Dee_uint16_t const end_marker = DEE_BUILTIN_LESWAP16_M(0);
  suffix = DeeClass_TSUFFIX(tp_self,self);
- if (_DeeClassTypeMethodDef_PutInFile(suffix->cs_methods,outfile,map) != 0) return -1;
- if (_DeeClassTypeGetSetDef_PutInFile(suffix->cs_getsets,outfile,map) != 0) return -1;
- if (_DeeClassTypeMethodDef_PutInFile(suffix->cs_class_methods,outfile,map) != 0) return -1;
- if (_DeeClassTypeGetSetDef_PutInFile(suffix->cs_class_getsets,outfile,map) != 0) return -1;
+ if DEE_UNLIKELY(_DeeClassTypeMethodDef_PutInFile(suffix->cs_methods,outfile,map) != 0) return -1;
+ if DEE_UNLIKELY(_DeeClassTypeGetSetDef_PutInFile(suffix->cs_getsets,outfile,map) != 0) return -1;
+ if DEE_UNLIKELY(_DeeClassTypeMethodDef_PutInFile(suffix->cs_class_methods,outfile,map) != 0) return -1;
+ if DEE_UNLIKELY(_DeeClassTypeGetSetDef_PutInFile(suffix->cs_class_getsets,outfile,map) != 0) return -1;
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
-#define WRITE_SLOT(id,val) if(_DeeClass_XWriteSlot(DeeType_SLOT_ID(id),val,outfile,map)!=0)return -1
+#define WRITE_SLOT_ID(id,val) if DEE_UNLIKELY(_DeeClass_XWriteSlot(id,val,outfile,map)!=0)return -1
+#define WRITE_SLOT(id,val) WRITE_SLOT_ID(DeeType_SLOT_ID(id),val)
  WRITE_SLOT(tp_ctor,suffix->cs_constructor.ctp_ctor);
+ WRITE_SLOT_ID(DEE_CLASS_SLOTID_SUPERARGS_CTOR,suffix->cs_constructor.ctp_ctor_superargs);
  WRITE_SLOT(tp_copy_ctor,suffix->cs_constructor.ctp_copy_ctor);
  WRITE_SLOT(tp_move_ctor,suffix->cs_constructor.ctp_move_ctor);
  WRITE_SLOT(tp_any_ctor,suffix->cs_constructor.ctp_any_ctor);
+ WRITE_SLOT_ID(DEE_CLASS_SLOTID_SUPERARGS_ANY_CTOR,suffix->cs_constructor.ctp_any_ctor_superargs);
  WRITE_SLOT(tp_dtor,suffix->cs_destructor.ctp_dtor);
  WRITE_SLOT(tp_copy_assign,suffix->cs_assign.ctp_copy_assign);
  WRITE_SLOT(tp_move_assign,suffix->cs_assign.ctp_move_assign);
@@ -3695,6 +3702,7 @@ static int DEE_CALL _deeclass_tp_marshal_put(
  WRITE_SLOT(tp_attr_del,suffix->cs_attr.ctp_attr_del);
  WRITE_SLOT(tp_attr_set,suffix->cs_attr.ctp_attr_set);
 #undef WRITE_SLOT
+#undef WRITE_SLOT_ID
 #else /* DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE */
  {
   struct _DeeClassDynamicVTableEntry *iter,*end;
@@ -3703,8 +3711,8 @@ static int DEE_CALL _deeclass_tp_marshal_put(
    Dee_uint16_t written_slot;
    DEE_ASSERT(DeeObject_Check(iter->dvte_callback));
    written_slot = (Dee_uint16_t)iter->dvte_slot;
-   if (DeeFile_PutLe(outfile,written_slot) != 0) return -1;
-   if (DeeMarshal_WriteObjectWithMap(outfile,map,iter->dvte_callback) != 0) return -1;
+   if DEE_UNLIKELY(DeeFile_PutLe(outfile,written_slot) != 0) return -1;
+   if DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,iter->dvte_callback) != 0) return -1;
    ++iter;
   }
  }
@@ -3719,7 +3727,7 @@ static struct DeeTypeMarshal _deeclass_tp_marshal = DEE_TYPE_MARSHAL_v100(
 
 //////////////////////////////////////////////////////////////////////////
 // ClassType VTable
-static DeeObject *_deeclass___get_slot(
+static DeeObject *DEE_CALL _deeclass___get_slot(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int slot; DeeObject *result;
  if (DeeTuple_Unpack(args,"d:__get_slot",&slot) != 0) return NULL;
@@ -3729,7 +3737,7 @@ static DeeObject *_deeclass___get_slot(
  }
  DeeReturn_NEWREF(result);
 }
-static DeeObject *_deeclass___get_method(
+static DeeObject *DEE_CALL _deeclass___get_method(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *name,*result;
  if (DeeTuple_Unpack(args,"o:__get_method",&name) != 0) return NULL;
@@ -3740,7 +3748,7 @@ static DeeObject *_deeclass___get_method(
  }
  DeeReturn_NEWREF(result);
 }
-static DeeObject *_deeclass___get_class_method(
+static DeeObject *DEE_CALL _deeclass___get_class_method(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *name,*result;
  if (DeeTuple_Unpack(args,"o:__get_class_method",&name) != 0) return NULL;
@@ -3751,7 +3759,7 @@ static DeeObject *_deeclass___get_class_method(
  }
  DeeReturn_NEWREF(result);
 }
-static DeeObject *_deeclass___get_property(
+static DeeObject *DEE_CALL _deeclass___get_property(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *name,*getter_,*delete_,*setter_;
  if (DeeTuple_Unpack(args,"o:__get_property",&name) != 0) return NULL;
@@ -3765,7 +3773,7 @@ static DeeObject *_deeclass___get_property(
   delete_ ? delete_ : Dee_None,
   setter_ ? setter_ : Dee_None);
 }
-static DeeObject *_deeclass___get_class_property(
+static DeeObject *DEE_CALL _deeclass___get_class_property(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *name,*getter_,*delete_,*setter_;
  if (DeeTuple_Unpack(args,"o:__get_class_property",&name) != 0) return NULL;
@@ -3779,95 +3787,95 @@ static DeeObject *_deeclass___get_class_property(
   delete_ ? delete_ : Dee_None,
   setter_ ? setter_ : Dee_None);
 }
-#if DEE_DEVEL_BUILD
-static DeeObject *_deeclass___del_slot(
+#if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
+static DeeObject *DEE_CALL _deeclass___del_slot(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int slot;
- if (DeeTuple_Unpack(args,"d:__set_slot",&slot) != 0) return NULL;
- if (DeeClass_DelSlot((DeeTypeObject *)self,slot) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"d:__set_slot",&slot) != 0) return NULL;
+ if DEE_UNLIKELY(DeeClass_DelSlot((DeeTypeObject *)self,slot) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deeclass___set_slot(
+static DeeObject *DEE_CALL _deeclass___set_slot(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  int slot; DeeObject *v;
- if (DeeTuple_Unpack(args,"do:__set_slot",&slot,&v) != 0) return NULL;
- if (DeeClass_SetSlot((DeeTypeObject *)self,slot,v) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"do:__set_slot",&slot,&v) != 0) return NULL;
+ if DEE_UNLIKELY(DeeClass_SetSlot((DeeTypeObject *)self,slot,v) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deeclass___add_method(
+static DeeObject *DEE_CALL _deeclass___add_method(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *name,*callback = NULL;
- if (DeeTuple_Unpack(args,"o|o:__add_method",&name,&callback) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:__add_method",&name,&callback) != 0) return NULL;
  if (!callback) {
   callback = name;
-  if (DeeFunction_Check(callback)) name = DeeFunction_NAME(callback);
+  if DEE_LIKELY(DeeFunction_Check(callback)) name = DeeFunction_NAME(callback);
   else {missing_name: DeeError_TypeError_ArgCountExpected(2,1); return NULL; }
-  if (!name) goto missing_name;
+  if DEE_UNLIKELY(!name) goto missing_name;
  }
- if (DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return NULL;
- if (DeeClass_HasMethod((DeeTypeObject *)self,name)) {
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return NULL;
+ if DEE_UNLIKELY(DeeClass_HasMethod((DeeTypeObject *)self,name)) {
   DeeError_SetStringf(&DeeErrorType_ValueError,"Class %k already has a method %k",self,name);
   return NULL;
  }
- if (DeeClass_AddMethod((DeeTypeObject *)self,name,callback) != 0) return NULL;
+ if DEE_UNLIKELY(DeeClass_AddMethod((DeeTypeObject *)self,name,callback) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deeclass___add_class_method(
+static DeeObject *DEE_CALL _deeclass___add_class_method(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *name,*callback = NULL;
- if (DeeTuple_Unpack(args,"o|o:__add_class_method",&name,&callback) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|o:__add_class_method",&name,&callback) != 0) return NULL;
  if (!callback) {
   callback = name;
-  if (DeeFunction_Check(callback)) name = DeeFunction_NAME(callback);
+  if DEE_LIKELY(DeeFunction_Check(callback)) name = DeeFunction_NAME(callback);
   else {missing_name: DeeError_TypeError_ArgCountExpected(2,1); return NULL; }
-  if (!name) goto missing_name;
+  if DEE_UNLIKELY(!name) goto missing_name;
  }
- if (DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return NULL;
- if (DeeClass_HasClassMethod((DeeTypeObject *)self,name)) {
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return NULL;
+ if DEE_UNLIKELY(DeeClass_HasClassMethod((DeeTypeObject *)self,name)) {
   DeeError_SetStringf(&DeeErrorType_ValueError,"Class %k already has a class method %k",self,name);
   return NULL;
  }
- if (DeeClass_AddClassMethod((DeeTypeObject *)self,name,callback) != 0) return NULL;
+ if DEE_UNLIKELY(DeeClass_AddClassMethod((DeeTypeObject *)self,name,callback) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deeclass___add_property(
+static DeeObject *DEE_CALL _deeclass___add_property(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *name,*getter_ = Dee_None,*delete_ = Dee_None,*setter_ = Dee_None;
- if (DeeTuple_Unpack(args,"o|ooo:__add_property",&name,&getter_,&delete_,&setter_) != 0) return NULL;
- if (DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return NULL;
- if (DeeClass_HasProperty((DeeTypeObject *)self,name)) {
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|ooo:__add_property",&name,&getter_,&delete_,&setter_) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return NULL;
+ if DEE_UNLIKELY(DeeClass_HasProperty((DeeTypeObject *)self,name)) {
   DeeError_SetStringf(&DeeErrorType_ValueError,"Class %k already has a property %k",self,name);
   return NULL;
  }
- if (DeeClass_AddProperty((DeeTypeObject *)self,name,
+ if DEE_UNLIKELY(DeeClass_AddProperty((DeeTypeObject *)self,name,
   DeeNone_Check(getter_) ? NULL : getter_,
   DeeNone_Check(delete_) ? NULL : delete_,
   DeeNone_Check(setter_) ? NULL : setter_) != 0) return NULL;
  DeeReturn_None;
 }
-static DeeObject *_deeclass___add_class_property(
+static DeeObject *DEE_CALL _deeclass___add_class_property(
  DeeClassObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *name,*getter_ = Dee_None,*delete_ = Dee_None,*setter_ = Dee_None;
- if (DeeTuple_Unpack(args,"o|ooo:__add_class_property",&name,&getter_,&delete_,&setter_) != 0) return NULL;
- if (DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return NULL;
- if (DeeClass_HasClassProperty((DeeTypeObject *)self,name)) {
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|ooo:__add_class_property",&name,&getter_,&delete_,&setter_) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(name,&DeeString_Type) != 0) return NULL;
+ if DEE_UNLIKELY(DeeClass_HasClassProperty((DeeTypeObject *)self,name)) {
   DeeError_SetStringf(&DeeErrorType_ValueError,"Class %k already has a class property %k",self,name);
   return NULL;
  }
- if (DeeClass_AddClassProperty((DeeTypeObject *)self,name,
+ if DEE_UNLIKELY(DeeClass_AddClassProperty((DeeTypeObject *)self,name,
   DeeNone_Check(getter_) ? NULL : getter_,
   DeeNone_Check(delete_) ? NULL : delete_,
   DeeNone_Check(setter_) ? NULL : setter_) != 0) return NULL;
  DeeReturn_None;
 }
-#endif
+#endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
 static struct DeeMethodDef const _deeclass_tp_methods[] = {
  DEE_METHODDEF_v100("__get_slot",member(&_deeclass___get_slot),"__get_slot(int slot) -> object"),
  DEE_METHODDEF_v100("__get_method",member(&_deeclass___get_method),"__get_method(string name) -> object"),
  DEE_METHODDEF_v100("__get_property",member(&_deeclass___get_property),"__get_property(string name) -> (object,object,object)"),
  DEE_METHODDEF_v100("__get_class_method",member(&_deeclass___get_class_method),"__get_class_method(string name) -> object"),
  DEE_METHODDEF_v100("__get_class_property",member(&_deeclass___get_class_property),"__get_class_property(string name) -> (object,object,object)"),
-#if DEE_DEVEL_BUILD
+#if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
  // Pshhht... Classes are supposed to be immutable...
  // >> These are only available in development builds
  //    and are merely meant to be aid in debugging.
@@ -3950,16 +3958,16 @@ _DeeClassType_New(DEE_A_IN DeeTypeObject const *base_type) {
 
 //////////////////////////////////////////////////////////////////////////
 // InstanceMethod VTable
-static DeeInstanceMethodObject *_deeinstancemethod_tp_alloc(DeeTypeObject *tp) {
+static DeeInstanceMethodObject *DEE_CALL _deeinstancemethod_tp_alloc(DeeTypeObject *tp) {
  DeeInstanceMethodObject *result = DEE_OBJECTPOOL_ALLOC(instance_method);
  if (result) DeeObject_INIT(result,tp);
  return result;
 }
-static void _deeinstancemethod_tp_free(
+static void DEE_CALL _deeinstancemethod_tp_free(
  DeeTypeObject *DEE_UNUSED(tp), DeeInstanceMethodObject *ob) {
  DEE_OBJECTPOOL_FREE(instance_method,ob);
 }
-static void _deeinstancemethod_tp_dtor(DeeInstanceMethodObject *self) {
+static void DEE_CALL _deeinstancemethod_tp_dtor(DeeInstanceMethodObject *self) {
  Dee_DECREF(self->im_this);
  Dee_DECREF(self->im_func);
 }
@@ -3967,7 +3975,7 @@ DEE_VISIT_PROC(_deeinstancemethod_tp_visit,DeeInstanceMethodObject *self) {
  Dee_VISIT(self->im_this);
  Dee_VISIT(self->im_func);
 }
-static int _deeinstancemethod_tp_any_ctor(
+static int DEE_CALL _deeinstancemethod_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp), DeeInstanceMethodObject *self, DeeObject *args) {
  DeeObject *this_arg,*func;
  if (DeeTuple_Unpack(args,"oo:instance_method",&this_arg,&func) != 0) return -1;
@@ -3975,16 +3983,16 @@ static int _deeinstancemethod_tp_any_ctor(
  Dee_INCREF(self->im_func = func);
  return 0;
 }
-static int _deeinstancemethod_tp_copy_ctor(
+static int DEE_CALL _deeinstancemethod_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp), DeeInstanceMethodObject *self, DeeInstanceMethodObject *right) {
  Dee_INCREF(self->im_this = right->im_this);
  Dee_INCREF(self->im_func = right->im_func);
  return 0;
 }
-static DeeObject *_deeinstancemethod_tp_str(DeeInstanceMethodObject *self) {
+static DeeObject *DEE_CALL _deeinstancemethod_tp_str(DeeInstanceMethodObject *self) {
  return DeeString_Newf("%k.%k",Dee_TYPE(self->im_this),self->im_func);
 }
-static DeeObject *_deeinstancemethod_tp_repr(DeeInstanceMethodObject *self) {
+static DeeObject *DEE_CALL _deeinstancemethod_tp_repr(DeeInstanceMethodObject *self) {
  return DeeString_Newf("<instance_method: %s(%r) -> %k>",
                        DeeType_NAME(Dee_TYPE(self->im_this)),
                        self->im_this,self->im_func);
@@ -4046,14 +4054,14 @@ DeeTypeObject DeeInstanceMethod_Type = {
 };
 
 
-static int _deeproperty_tp_ctor(
+static int DEE_CALL _deeproperty_tp_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeePropertyObject *self) {
  self->pr_get = NULL;
  self->pr_del = NULL;
  self->pr_set = NULL;
  return 0;
 }
-static int _deeproperty_tp_copy_ctor(
+static int DEE_CALL _deeproperty_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeePropertyObject *self, DeePropertyObject *right) {
  Dee_XINCREF(self->pr_get = right->pr_get);
@@ -4061,7 +4069,7 @@ static int _deeproperty_tp_copy_ctor(
  Dee_XINCREF(self->pr_set = right->pr_set);
  return 0;
 }
-static int _deeproperty_tp_move_ctor(
+static int DEE_CALL _deeproperty_tp_move_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeePropertyObject *self, DeePropertyObject *right) {
  self->pr_get = right->pr_get;
@@ -4072,37 +4080,37 @@ static int _deeproperty_tp_move_ctor(
  right->pr_set = NULL;
  return 0;
 }
-static int _deeproperty_tp_any_ctor(
+static int DEE_CALL _deeproperty_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  DeePropertyObject *self, DeeObject *args) {
  self->pr_get = NULL;
  self->pr_del = NULL;
  self->pr_set = NULL;
- if (DeeTuple_Unpack(args,"|ooo:property",
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"|ooo:property",
   &self->pr_get,&self->pr_del,&self->pr_set) != 0) return -1;
  Dee_XINCREF(self->pr_get);
  Dee_XINCREF(self->pr_del);
  Dee_XINCREF(self->pr_set);
  return 0;
 }
-static DeeObject *_deeproperty_tp_str(DeePropertyObject *self) {
+static DeeObject *DEE_CALL _deeproperty_tp_str(DeePropertyObject *self) {
  return DeeString_Newf("property(%k,%k,%k)",
                        self->pr_get ? self->pr_get : Dee_None,
                        self->pr_del ? self->pr_del : Dee_None,
                        self->pr_set ? self->pr_set : Dee_None);
 }
-static DeeObject *_deeproperty_tp_repr(DeePropertyObject *self) {
+static DeeObject *DEE_CALL _deeproperty_tp_repr(DeePropertyObject *self) {
  return DeeString_Newf("property(%r,%r,%r)",
                        self->pr_get ? self->pr_get : Dee_None,
                        self->pr_del ? self->pr_del : Dee_None,
                        self->pr_set ? self->pr_set : Dee_None);
 }
-static void _deeproperty_tp_dtor(DeePropertyObject *self) {
+static void DEE_CALL _deeproperty_tp_dtor(DeePropertyObject *self) {
  Dee_XDECREF(self->pr_get);
  Dee_XDECREF(self->pr_del);
  Dee_XDECREF(self->pr_set);
 }
-static void _deeproperty_tp_clear(DeePropertyObject *self) {
+static void DEE_CALL _deeproperty_tp_clear(DeePropertyObject *self) {
  Dee_XCLEAR(self->pr_get);
  Dee_XCLEAR(self->pr_del);
  Dee_XCLEAR(self->pr_set);
@@ -4133,17 +4141,17 @@ static int DEE_CALL _deeproperty_tp_marshal_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeePropertyObject *self,
  DeeObject *infile, struct DeeMarshalReadMap *map) {
  Dee_uint8_t flags;
- if (DeeFile_Getc(infile,&flags) != 0) return -1;
+ if DEE_UNLIKELY(DeeFile_Getc(infile,&flags) != 0) return -1;
  if ((flags&DEE_PROPERTY_FILE_FLAG_HAVE_GET)!=0) {
-  if ((self->pr_get = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) return -1;
+  if DEE_UNLIKELY((self->pr_get = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) return -1;
  } else self->pr_get = NULL;
  if ((flags&DEE_PROPERTY_FILE_FLAG_HAVE_DEL)!=0) {
-  if ((self->pr_del = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
+  if DEE_UNLIKELY((self->pr_del = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
 err_get: Dee_XDECREF(self->pr_get); return -1;
   }
  } else self->pr_del = NULL;
  if ((flags&DEE_PROPERTY_FILE_FLAG_HAVE_SET)!=0) {
-  if ((self->pr_set = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
+  if DEE_UNLIKELY((self->pr_set = DeeMarshal_ReadObjectWithMap(infile,map)) == NULL) {
 /*err_del:*/ Dee_XDECREF(self->pr_del); goto err_get;
   }
  } else self->pr_set = NULL;
@@ -4158,9 +4166,9 @@ static int DEE_CALL _deeproperty_tp_marshal_put(
  if (self->pr_del) flags |= DEE_PROPERTY_FILE_FLAG_HAVE_DEL;
  if (self->pr_set) flags |= DEE_PROPERTY_FILE_FLAG_HAVE_SET;
  if (DeeFile_Putc(outfile,flags) != 0) return -1;
- if (self->pr_get && DeeMarshal_WriteObjectWithMap(outfile,map,self->pr_get) != 0) return -1;
- if (self->pr_del && DeeMarshal_WriteObjectWithMap(outfile,map,self->pr_del) != 0) return -1;
- if (self->pr_set && DeeMarshal_WriteObjectWithMap(outfile,map,self->pr_set) != 0) return -1;
+ if (self->pr_get && DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,self->pr_get) != 0)) return -1;
+ if (self->pr_del && DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,self->pr_del) != 0)) return -1;
+ if (self->pr_set && DEE_UNLIKELY(DeeMarshal_WriteObjectWithMap(outfile,map,self->pr_set) != 0)) return -1;
  return 0;
 }
 
