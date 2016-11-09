@@ -113,14 +113,22 @@
 #include <deemon/error.h>
 #include <deemon/deemonrun.h>
 
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_STDLIB_H
+#include <stdlib.h> /*< EXIT_FAILURE. */
+#endif
+
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE 1
+#endif
+
 int main(int argc, char *argv[]) {
 
  int result;
- if (Dee_Initialize() != 0) return 1;
+ if (Dee_Initialize() != 0) return EXIT_FAILURE;
 
  if (Dee_Main(argc,argv,&result) != 0) {
   while (!DeeError_Print((char const *)0,1));
-  result = 1;
+  result = EXIT_FAILURE;
  }
 
  Dee_Finalize();
