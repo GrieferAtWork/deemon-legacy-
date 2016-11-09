@@ -353,7 +353,7 @@ DEPRECATED_EXPORT(int,DeeMember_Set,(DeeObject *base_ob, struct DeeMemberDef con
 #undef Dee_SetArgv
 DEPRECATED_EXPORT(DeeObject *,Dee_GetArgv,(void)) { Dee_INCREF(Dee_Argv); return Dee_Argv; }
 DEPRECATED_EXPORT(void,Dee_SetArgv,(DeeObject *ob)) {
- if (DeeList_AssignSequence(Dee_Argv,ob) != 0) {
+ if (DeeList_CopyAssign(Dee_Argv,ob) != 0) {
   while (!DeeError_Print("Failed to assign sequence to argv",1));
  }
 }
