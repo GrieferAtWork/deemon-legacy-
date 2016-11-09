@@ -44,7 +44,7 @@ DEE_DECL_BEGIN
 
 DEE_COMPILER_MSVC_WARNING_PUSH(4061)
 DEE_A_RET_EXCEPT(NULL) DeeTypeObject *_DeeType_VStructf_Tyname(
- DEE_A_IN_Z char const **fmt_begin, DEE_A_IN va_list *pargs) {
+ DEE_A_IN_Z char const **fmt_begin, DEE_A_INOUT va_list *pargs) {
  DeeTypeObject *result;
  char const *fmt = *fmt_begin;
  int do_atomic = 0;
@@ -125,7 +125,7 @@ len_again:
 }
 
 Dee_size_t _DeeType_VStructf_Intname(
- DEE_A_IN_Z char const **fmt_begin, DEE_A_IN va_list *pargs) {
+ DEE_A_IN_Z char const **fmt_begin, DEE_A_INOUT va_list *pargs) {
  Dee_size_t result;
  char const *fmt = *fmt_begin;
  if (*fmt == '%') {
@@ -186,9 +186,9 @@ Dee_size_t _DeeType_VStructf_Intname(
 }
 
 extern DEE_A_RET_EXCEPT(NULL) DeeTypeObject *_DeeType_VStructOnef(
- DEE_A_IN_Z char const **fmt_begin, DEE_A_IN va_list *pargs);
+ DEE_A_IN_Z char const **fmt_begin, DEE_A_INOUT va_list *pargs);
 DEE_A_RET_EXCEPT(NULL) DeeTypeObject *_DeeType_VStructOnef(
- DEE_A_IN_Z char const **fmt_begin, DEE_A_IN va_list *pargs) {
+ DEE_A_IN_Z char const **fmt_begin, DEE_A_INOUT va_list *pargs) {
  DeeTypeObject *result;
  char const *fmt;
  if ((result = _DeeType_VStructf_Tyname(fmt_begin,pargs)) == NULL) return NULL;
@@ -260,7 +260,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 #define _DeeType_VStructf(fmt,args) _DeeType_VStructOnef(&(fmt),DEE_VA_ARGPTR(args))
 #endif
 DEE_A_RET_EXCEPT(NULL) DeeTypeObject *DeeType_VStructf(
- DEE_A_IN_Z char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_IN_Z char const *fmt, DEE_A_INOUT va_list args) {
 #ifdef DEE_DEBUG
  DeeTypeObject *result;
  result = _DeeType_VStructOnef(&fmt,DEE_VA_ARGPTR(args));
@@ -284,7 +284,7 @@ DEE_A_RET_EXCEPT(NULL) DeeTypeObject *DeeType_Structf(
 
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeStructuredObject) *DeeStructured_VNewFromDataf(
- DEE_A_IN void const *self, DEE_A_IN_Z char const *ty_fmt, DEE_A_IN va_list args) {
+ DEE_A_IN void const *self, DEE_A_IN_Z char const *ty_fmt, DEE_A_INOUT va_list args) {
  DeeTypeObject *struct_ty;
  if ((struct_ty = _DeeType_VStructf(ty_fmt,args)) == NULL) return NULL;
  DEE_ASSERT(DeeObject_Check(struct_ty) && DeeStructuredType_Check(struct_ty));
@@ -301,7 +301,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeStructuredObject) *DeeStructured_NewFromDataf(
 
 #if DEE_CONFIG_LANGUAGE_HAVE_POINTERS
 DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *DeePointer_VNewf(
- void *p, DEE_A_IN_Z char const *ty_fmt, DEE_A_IN va_list args) {
+ void *p, DEE_A_IN_Z char const *ty_fmt, DEE_A_INOUT va_list args) {
  DeeTypeObject *struct_ty;
  if ((struct_ty = _DeeType_VStructf(ty_fmt,args)) == NULL) return NULL;
  if ((struct_ty = DeeType_Pointer(struct_ty)) == NULL) return NULL;
@@ -318,7 +318,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *DeePointer_Newf(
 }
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeLValueObject) *DeeLValue_VNewf(
- DEE_A_IN void *p, DEE_A_IN_Z char const *ty_fmt, DEE_A_IN va_list args) {
+ DEE_A_IN void *p, DEE_A_IN_Z char const *ty_fmt, DEE_A_INOUT va_list args) {
  DeeTypeObject *struct_ty;
  if ((struct_ty = _DeeType_VStructf(ty_fmt,args)) == NULL) return NULL;
  if ((struct_ty = DeeType_LValue(struct_ty)) == NULL) return NULL;
@@ -336,7 +336,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeLValueObject) *DeeLValue_Newf(
 
 DEE_A_RET_EXCEPT(-1) int DeeObject_VTGetPointerExf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
- DEE_A_OUT void **result, DEE_A_IN_Z char const *ty_fmt, DEE_A_IN va_list args) {
+ DEE_A_OUT void **result, DEE_A_IN_Z char const *ty_fmt, DEE_A_INOUT va_list args) {
  DeeTypeObject *ptr_base;
  if ((ptr_base = _DeeType_VStructf(ty_fmt,args)) == NULL) return -1;
  return DeeObject_TGetPointerEx(tp_self,self,ptr_base,result);

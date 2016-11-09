@@ -600,7 +600,7 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(NULL) DeeTypeObject *) DeeType_Structf(
  DEE_A_IN_Z char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((1));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(NULL) DeeTypeObject *) DeeType_VStructf(
- DEE_A_IN_Z char const *fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1));
+ DEE_A_IN_Z char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 //////////////////////////////////////////////////////////////////////////
@@ -610,7 +610,7 @@ DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeStructuredObject) *) DeeStructured_
  DEE_A_IN void const *self, DEE_A_IN_Z char const *ty_fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
 DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeStructuredObject) *) DeeStructured_VNewFromDataf(
- DEE_A_IN void const *self, DEE_A_IN_Z char const *ty_fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_IN void const *self, DEE_A_IN_Z char const *ty_fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 
@@ -626,7 +626,7 @@ DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *) DeePointer_Newf(
  void *p, DEE_A_IN_Z char const *ty_fmt, ...) DEE_ATTRIBUTE_NONNULL((2));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
 DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeePointerObject) *) DeePointer_VNewf(
- void *p, DEE_A_IN_Z char const *ty_fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((2));
+ void *p, DEE_A_IN_Z char const *ty_fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((2));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 //////////////////////////////////////////////////////////////////////////
@@ -637,7 +637,7 @@ DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeLValueObject) *) DeeLValue_Newf(
  DEE_A_IN void *p, DEE_A_IN_Z char const *ty_fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
 DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeLValueObject) *) DeeLValue_VNewf(
- DEE_A_IN void *p, DEE_A_IN_Z char const *ty_fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_IN void *p, DEE_A_IN_Z char const *ty_fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 //////////////////////////////////////////////////////////////////////////
@@ -753,7 +753,7 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeObject_TGetPointerExf(
  DeeObject_VTGetPointerExf(Dee_TYPE(ob),ob,result,ty_fmt,args)
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeObject_VTGetPointerExf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_OUT void **result,
- DEE_A_IN_Z char const *ty_fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
+ DEE_A_IN_Z char const *ty_fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 #define DeeObject_GetVoidPointerEx(ob,result) \

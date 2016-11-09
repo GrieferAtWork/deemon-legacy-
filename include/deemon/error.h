@@ -204,12 +204,12 @@ DEE_FUNC_DECL(DEE_A_REQ_INIT Dee_size_t) DeeError_ClearFreeExceptions(void);
 // CASE A (DeeError_Handle):
 //   This version checks if the latest error is derived from 'Error',
 //   returning '0' if it isn't before moving on to silently discarding
-//   any errors that way also be thrown.
+//   any errors that were thrown as well.
 //   NOTE: Remember the difference between Occurred and Handling here... (this is about Occurred)
 //
 // CASE B (DeeError_HandleOne):
 //   This version will start out just like the first one,
-//   checking whether or not the latest error is derived from 'Error',
+//   checking whether or not the latest error matches the given mask,
 //   only featuring different return values, indicating a failure in
 //   handling with '-1'.
 //   If the occurred error does match, only the entry of that specific
@@ -222,15 +222,15 @@ DEE_FUNC_DECL(DEE_A_REQ_INIT Dee_size_t) DeeError_ClearFreeExceptions(void);
 //   >>   throw "B";
 //   >> }
 //   But if code like that above has caused more than
-//   one error to appear, the function return '1'.
-//   Note through, that in both cases one error has been handled, a fact
+//   one error to appear, the function returns '1'.
+//   Note though, that in both cases one error has been handled, a fact
 //   that the caller may choose to somewhat ignore, but never discard.
 //   Because as long as there are unhandled exceptions, any function
 //   with the capability of handling them may not signal success
-//   to its caller until all errors are handled.
+//   to its caller until all others have been handled, too.
 //   AGAIN: This does not interfere with calls to such functions
-//          from exception handlers, or finally blocks, as
-//          those will temporarily hide active exceptions and restore
+//          from exception handlers, or finally blocks, as those
+//          will temporarily hide active exceptions and restore
 //          them once they come to a close.
 //
 // For a practical example of usercode capable of detecting this
@@ -241,7 +241,7 @@ DEE_FUNC_DECL(DEE_A_REQ_INIT Dee_size_t) DeeError_ClearFreeExceptions(void);
 
 //////////////////////////////////////////////////////////////////////////
 // Signal all errors as handled
-// - Returns 1: if an error was handled
+// - Returns 1: if at least one error was handled
 // - Returns 0: if no error was handled
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_SUCCESS(return != 0) int) DeeError_Handled(void);
 
@@ -250,7 +250,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_SUCCESS(return != 0) int) DeeError_Handled(void);
 // - Returns  1: if more error can be handled
 // - Returns  0: if no more errors must be handled
 // - Returns -1: if no error was handled
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_SUCCESS(return >= 0) int) DeeError_HandledOne(void);
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_SUCCESS(return == 0) int) DeeError_HandledOne(void);
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -259,7 +259,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_SUCCESS(return >= 0) int) DeeError_HandledOne(voi
 // - Returns  0: if an error with the given type was handled
 // - Returns -1: if the top error didn't watch the given type
 // >> Same behavior as a leaving 'catch()' with 'tp' as typing
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_SUCCESS(return >= 0) int) DeeError_HandleOne(
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_SUCCESS(return == 0) int) DeeError_HandleOne(
  DEE_A_IN DeeTypeObject const *tp) DEE_ATTRIBUTE_NONNULL((1));
 
 //////////////////////////////////////////////////////////////////////////
@@ -338,10 +338,10 @@ DEE_FUNC_DECL(DEE_A_EXEC void) DeeError_Display(
 //////////////////////////////////////////////////////////////////////////
 // Returns the active, per-thread error object (NULL if no error occurred)
 // NOTE: Try not to call this too often (it involves a TLS lookup and more stuff...)
+// NOTE: If all you need to know is whether or not an error has occurred,
+//       without needing to know what that error is, use 'DeeError_OCCURRED()'
 DEE_FUNC_DECL(DEE_A_REQ_INIT DEE_A_RET_MAYBE_NULL DEE_A_RET_WUNUSED DeeObject *) DeeError_Occurred(void);
 
-#ifndef DEE_PRIVATE_ERROR_OCCURRED_DEFINED
-#define DEE_PRIVATE_ERROR_OCCURRED_DEFINED
 //////////////////////////////////////////////////////////////////////////
 // Returns true if an error occurred in the calling thread
 // NOTE: Try not to call this too often (it involves a TLS lookup and more stuff...)
@@ -358,7 +358,6 @@ extern DeeThreadObject _DeeThread_Self;
 #define DeeError_OCCURRED() (_DeeThread_Self.ob_exception!=NULL)
 #else
 #define DeeError_OCCURRED    _DeeError_Occurred
-#endif
 #endif
 
 
@@ -433,12 +432,12 @@ do{\
 
 // Better syntax highlighting
 #ifdef __INTELLISENSE__
-//#undef DeeError_PUSH_STATE
-//#undef DeeError_BREAK_STATE
-//#undef DeeError_POP_STATE
-//#define DeeError_PUSH_STATE()  if(1)do
-//#define DeeError_BREAK_STATE() break
-//#define DeeError_POP_STATE()   while(0)
+#undef DeeError_PUSH_STATE
+#undef DeeError_BREAK_STATE
+#undef DeeError_POP_STATE
+#define DeeError_PUSH_STATE()  if(1)do
+#define DeeError_BREAK_STATE() break
+#define DeeError_POP_STATE()   while(0)
 #endif
 
 
@@ -473,15 +472,15 @@ do{\
 //  - DeeError_SetString(x,msg):  Same as calling 'DeeError_Throw(DeeType_NewInstancef(x,"s",msg))' (And also decref-ing the error instance and checking it for an error)
 //  - DeeError_SetStringf(x,...): Same as calling 'DeeError_Throw(DeeType_NewInstancef(x,__VA_ARGS__))' (And also decref-ing the error instance and checking it for an error)
 DEE_FUNC_DECL(DEE_A_EXEC void) DeeError_SetNone(
- DEE_A_IN DeeTypeObject *type_) DEE_ATTRIBUTE_NONNULL((1));
+ DEE_A_INOUT DeeTypeObject *type_) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_A_EXEC void) DeeError_SetString(
- DEE_A_IN DeeTypeObject *type_, DEE_A_IN_Z char const *message) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_INOUT DeeTypeObject *type_, DEE_A_IN_Z char const *message) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC void) DeeError_SetStringf(
- DEE_A_IN DeeTypeObject *type_, DEE_A_IN_PRINTF char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_INOUT DeeTypeObject *type_, DEE_A_IN_PRINTF char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
 DEE_FUNC_DECL(DEE_A_EXEC void) DeeError_VSetStringf(
- DEE_A_IN DeeTypeObject *type_, DEE_A_IN_PRINTF char const *fmt,
- DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_INOUT DeeTypeObject *type_, DEE_A_IN_PRINTF char const *fmt,
+ DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 
@@ -651,8 +650,8 @@ extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeError_CompilerErrorf(DEE_A_IN int 
 extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeError_TPPCompilerError(DEE_A_IN int code, DEE_A_IN struct TPPLexerObject *lexer, DEE_A_IN struct TPPTokenObject *token, DEE_A_IN_Z char const *message) DEE_ATTRIBUTE_NONNULL((2,3,4));
 extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeError_TPPCompilerErrorf(DEE_A_IN int code, DEE_A_IN struct TPPLexerObject *lexer, DEE_A_IN struct TPPTokenObject *token, DEE_A_IN_PRINTF char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((2,3,4));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
-extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeError_VCompilerErrorf(DEE_A_IN int code, DEE_A_IN_OBJECT(DeeLexerObject) *lexer, DEE_A_IN_OBJECT(DeeTokenObject) *token, DEE_A_IN_PRINTF char const *fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((2,3,4));
-extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeError_VTPPCompilerErrorf(DEE_A_IN int code, DEE_A_IN struct TPPLexerObject *lexer, DEE_A_IN struct TPPTokenObject *token, DEE_A_IN_PRINTF char const *fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((2,3,4));
+extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeError_VCompilerErrorf(DEE_A_IN int code, DEE_A_IN_OBJECT(DeeLexerObject) *lexer, DEE_A_IN_OBJECT(DeeTokenObject) *token, DEE_A_IN_PRINTF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((2,3,4));
+extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeError_VTPPCompilerErrorf(DEE_A_IN int code, DEE_A_IN struct TPPLexerObject *lexer, DEE_A_IN struct TPPTokenObject *token, DEE_A_IN_PRINTF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((2,3,4));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 #endif
 

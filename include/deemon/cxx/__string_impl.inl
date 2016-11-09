@@ -163,7 +163,7 @@
   inline explicit DEE_STRING_TYPE_NAME(DEE_A_IN Dee_size_t len, DEE_A_IN_R(len) ::Dee_Utf16Char const *str): object(::DEE_STRING_MEMBER(FromUtf16StringWithLength)(len,str),detail::tag_ref_or_err()) {}
   inline explicit DEE_STRING_TYPE_NAME(DEE_A_IN Dee_size_t len, DEE_A_IN_R(len) ::Dee_Utf32Char const *str): object(::DEE_STRING_MEMBER(FromUtf32StringWithLength)(len,str),detail::tag_ref_or_err()) {}
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
-  inline explicit DEE_STRING_TYPE_NAME(DEE_A_IN_Z character const *fmt, DEE_A_IN va_list args): object(::DEE_STRING_MEMBER(VNewf)(fmt,args),detail::tag_ref_or_err()) {}
+  inline explicit DEE_STRING_TYPE_NAME(DEE_A_IN_Z character const *fmt, DEE_A_INOUT va_list args): object(::DEE_STRING_MEMBER(VNewf)(fmt,args),detail::tag_ref_or_err()) {}
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
   DEE_OBJECT_SUBCLASS_DEFAULT_CTOR(DEE_STRING_TYPE_NAME,object,DEE_STRING_MEMBER(Check))
 

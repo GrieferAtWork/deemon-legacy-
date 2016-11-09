@@ -412,7 +412,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TPutc(DEE_A_IN_TYPEOB
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TPrintf(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN_PRINTF char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2,3));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
 #define DeeFile_VPrintf(fp,fmt,args) DeeFile_VTPrintf(Dee_TYPE(fp),fp,fmt,args)
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_VTPrintf(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN_PRINTF char const *fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_VTPrintf(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN_PRINTF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 #define /*DEE_A_EXEC*/ DeeFile_PRINT(fp,str_)        DeeFile_TPRINT(Dee_TYPE(fp),fp,str_)
 #define /*DEE_A_EXEC*/ DeeFile_TPRINT(tp_fp,fp,str_) DeeFile_TWriteAll(tp_fp,fp,str_,(sizeof(str_)/sizeof(char))-1)
@@ -568,7 +568,7 @@ DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int
 #define /*DEE_A_EXEC*/ DeeFile_VStdPrintf(printer,fmt,args) DEE_GCC_EXTENSION({int _temp_result;DeeObject*const _temp_fp=DeeFile_Std(printer);_temp_result=DeeFile_VPrintf(_temp_fp,fmt,args);Dee_DECREF(_temp_fp);_temp_result;})
 #define /*DEE_A_EXEC*/ DeeFile_StdPrintf(printer,...)       DEE_GCC_EXTENSION({int _temp_result;DeeObject*const _temp_fp=DeeFile_Std(printer);_temp_result=DeeFile_Printf(_temp_fp,__VA_ARGS__);Dee_DECREF(_temp_fp);_temp_result;})
 #else /* DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_VStdPrintf(DEE_A_IN enum DeeStdPrinter printer, DEE_A_IN_PRINTF char const *fmt, DEE_A_IN va_list args) { int result; DeeObject *const fp = DeeFile_Std(printer); result = DeeFile_VPrintf(fp,fmt,args); Dee_DECREF(fp); return result; }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_VStdPrintf(DEE_A_IN enum DeeStdPrinter printer, DEE_A_IN_PRINTF char const *fmt, DEE_A_INOUT va_list args) { int result; DeeObject *const fp = DeeFile_Std(printer); result = DeeFile_VPrintf(fp,fmt,args); Dee_DECREF(fp); return result; }
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_StdPrintf(DEE_A_IN enum DeeStdPrinter printer, DEE_A_IN_PRINTF char const *fmt, ...) { int result; va_list args; DeeObject *const fp = DeeFile_Std(printer); DEE_VA_START(args,fmt); result = DeeFile_VPrintf(fp,fmt,args); DEE_VA_END(args); Dee_DECREF(fp); return result; }
 #endif /* !DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */

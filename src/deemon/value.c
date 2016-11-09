@@ -468,7 +468,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *Dee_BuildValue(
 }
 
 DEE_A_RET_EXCEPT_REF DeeObject *Dee_VBuildValue(
- DEE_A_IN_BUILDVALUEF char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_IN_BUILDVALUEF char const *fmt, DEE_A_INOUT va_list args) {
 #ifdef DEE_DEBUG
  DeeObject *result;
  result = _Dee_VBuildValueOne(&fmt,DEE_VA_ARGPTR(args));
@@ -487,7 +487,7 @@ Dee_BuildTuple(DEE_A_IN_BUILDTUPLEF char const *fmt, ...) {
  return result;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *
-Dee_VBuildTuple(DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) {
+Dee_VBuildTuple(DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) {
  DeeObject *result,*temp; int error;
  Dee_INCREF(result = Dee_EmptyTuple);
  while (*fmt) {

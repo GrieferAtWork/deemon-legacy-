@@ -78,20 +78,20 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TCallAttrStringAndC
 #define /* DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject * */DeeObject_VCallAttrStringf(ob,attr,fmt,args)                          DeeObject_VTCallAttrStringf(Dee_TYPE(ob),ob,attr,fmt,args)
 #define /* DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int         */DeeObject_VCallAttrAndCastf(ob,result,result_fmt,attr,fmt,args)       DeeObject_TCallAttrAndCastf(Dee_TYPE(ob),ob,result,result_fmt,attr,fmt,args)
 #define /* DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int         */DeeObject_VCallAttrStringAndCastf(ob,result,result_fmt,attr,fmt,args) DeeObject_TCallAttrStringAndCastf(Dee_TYPE(ob),ob,result,result_fmt,attr,fmt,args)
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VTCallAttrObjArgs(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VTCallAttrStringObjArgs(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_Z char const *attr, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VTCallAttrf(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VTCallAttrStringf(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_Z char const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VTCallAttrObjArgs(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VTCallAttrStringObjArgs(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_Z char const *attr, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VTCallAttrf(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VTCallAttrStringf(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN_Z char const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_VTCallAttrAndCastf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_OUT_OPT void *result, DEE_A_IN_Z char const *result_fmt,
  DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt,
- DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,4,5,6));
+ DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,4,5,6));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_VTCallAttrStringAndCastf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
  DEE_A_OUT_OPT void *result, DEE_A_IN_Z char const *result_fmt,
  DEE_A_IN_Z char const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt,
- DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,4,5,6));
+ DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,4,5,6));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_PCallAttrString(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_Z char const *attr, DEE_A_INOUT_OBJECT(DeeTupleObject) *args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
@@ -101,10 +101,10 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_PCallAttrSt
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_PCallAttrf(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_PCallAttrStringf(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_Z char const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VPCallAttrObjArgs(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VPCallAttrStringObjArgs(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_Z char const *attr, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VPCallAttrf(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VPCallAttrStringf(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_Z char const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VPCallAttrObjArgs(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VPCallAttrStringObjArgs(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_Z char const *attr, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VPCallAttrf(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_OBJECT(DeeStringObject) const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_VPCallAttrStringf(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN_Z char const *attr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2,3,4));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 

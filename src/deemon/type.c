@@ -482,7 +482,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeType_NewInstance(
 
 
 DEE_A_RET_EXCEPT_REF DeeObject *DeeType_VNewInstancef(
- DEE_A_IN DeeTypeObject const *self, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_IN DeeTypeObject const *self, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) {
  DeeObject *result,*args_ob;
  if ((args_ob = Dee_VBuildTuple(fmt,args)) != NULL) {
   result = DeeType_NewInstance(self,args_ob);
@@ -491,7 +491,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeType_VNewInstancef(
  return result;
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeType_VNewInstanceObjArgs(
- DEE_A_IN DeeTypeObject const *self, DEE_A_IN va_list args) {
+ DEE_A_IN DeeTypeObject const *self, DEE_A_INOUT va_list args) {
  DeeObject *result,*args_ob;
  if ((args_ob = DeeTuple_VNewObjArgs(args)) != NULL) {
   result = DeeType_NewInstance(self,args_ob);

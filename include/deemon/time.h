@@ -379,7 +379,7 @@ DEE_FUNC_DECL(void) DeeTime_SetMonth(DEE_A_INOUT_OBJECT(DeeTimeObject) *self, DE
 
 //////////////////////////////////////////////////////////////////////////
 // Format a given time using a strftime-style format string
-// NOTE: Since I really think that the format modifier for strftime are just total garbage,
+// NOTE: Since I really think that the format modifiers for strftime are just total garbage,
 //       and only designed to be short, but not readable, I've added a new, extended modifier
 //       that is meant to fix this:
 //       >> print time.now().format("%[S:WD], the %[n:D] of %[S:M] %[Y], %[2:H]:%[2:MI]:%[2:S]");

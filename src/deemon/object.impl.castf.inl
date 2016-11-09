@@ -52,7 +52,7 @@ DEE_A_RET_EXCEPT(-1) int DeeObject_TCastf(
 }
 DEE_A_RET_EXCEPT(-1) int DeeObject_VTCastf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
- DEE_A_OUT_OPT void *result, DEE_A_IN_Z char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_OUT_OPT void *result, DEE_A_IN_Z char const *fmt, DEE_A_INOUT va_list args) {
  DeeTypeObject *casted_type;
  struct DeeTypeMarshal const *marshal;
  DEE_ASSERT(DeeObject_Check(self));

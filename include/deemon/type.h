@@ -122,8 +122,8 @@ DEE_FUNC_DECL(DEE_A_DEEMON("self()") DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstancef(DEE_A_IN DeeTypeObject const *self, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstanceObjArgs(DEE_A_IN DeeTypeObject const *self, ...) DEE_ATTRIBUTE_SENTINAL DEE_ATTRIBUTE_NONNULL((1));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_VNewInstancef(DEE_A_IN DeeTypeObject const *self, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_VNewInstanceObjArgs(DEE_A_IN DeeTypeObject const *self, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_VNewInstancef(DEE_A_IN DeeTypeObject const *self, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_VNewInstanceObjArgs(DEE_A_IN DeeTypeObject const *self, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 

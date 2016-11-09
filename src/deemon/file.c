@@ -930,7 +930,7 @@ DEE_A_RET_EXCEPT(-1) int DeeFile_TPrintf(
 DEE_A_RET_EXCEPT(-1) int DeeFile_VTPrintf(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self,
- DEE_A_IN_PRINTF char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_IN_PRINTF char const *fmt, DEE_A_INOUT va_list args) {
  DeeObject *temp; int result;
  if DEE_UNLIKELY((temp = DeeString_VNewf(fmt,args)) == NULL) return -1;
  result = DeeFile_TWriteAll(tp_self,self,DeeString_STR(temp),DeeString_SIZE(temp));

@@ -145,7 +145,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTupleObject) *) D
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *) DeeTuple_TCast(DEE_A_IN DeeTypeObject const *tp_seq, DEE_A_INOUT DeeObject *sequence) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *) DeeTuple_Pack(DEE_A_IN Dee_size_t n, ...); //< Pack a tuple of n "DeeObject*" varargs
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *) _DeeTuple_VPack(DEE_A_IN Dee_size_t n, DEE_A_IN va_list args);
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *) _DeeTuple_VPack(DEE_A_IN Dee_size_t n, DEE_A_INOUT va_list args);
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 
@@ -273,7 +273,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *) DeeTuple
 //////////////////////////////////////////////////////////////////////////
 // Create a tuple from a NULL-terminated vararg-list of 'DeeObject *'
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *) DeeTuple_VNewObjArgs(DEE_A_IN va_list args);
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *) DeeTuple_VNewObjArgs(DEE_A_INOUT va_list args);
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *) _DeeTuple_NewObjArgs(DEE_A_IN int prefix, ...) DEE_ATTRIBUTE_SENTINAL;
 #define DeeTuple_NewObjArgs(...) _DeeTuple_NewObjArgs(0,__VA_ARGS__)
@@ -312,7 +312,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeTuple_Unpack(
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeTuple_VUnpack(
  DEE_A_IN_OBJECT(DeeTupleObject) *self, DEE_A_IN_UNPACKTUPLEF char const *fmt,
- DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 //////////////////////////////////////////////////////////////////////////

@@ -3094,7 +3094,7 @@ DEE_FUNC_DECL(DEE_A_RET_TYPEOBJECT_EXCEPT_REF(DeeClassObject) *) DeeClass_NewObj
  DeeTypeObject *result;
  if (name) {
   DEE_ASSERT(DeeObject_Check(name));
-  if ((name = DeeUtf8String_Cast(name)) == NULL) return NULL;
+  if DEE_UNLIKELY((name = DeeUtf8String_Cast(name)) == NULL) return NULL;
   result = DeeClass_NewEx(base,DeeUtf8String_STR(name),uuid);
   Dee_DECREF(name);
   return result;

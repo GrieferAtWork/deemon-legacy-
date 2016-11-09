@@ -1753,7 +1753,7 @@ DEE_A_RET_EXCEPT(-1) int DeeList_UniquePred(
   args = DeeTuple_Pack(2,first,second);
   Dee_DECREF(second);
   Dee_DECREF(first);
-  if (!args) return -1;
+  if DEE_UNLIKELY(!args) return -1;
   pred_result = DeeObject_Call(pred_eq,args);
   Dee_DECREF(args);
   if (!pred_result) return -1;

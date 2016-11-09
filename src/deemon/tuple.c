@@ -275,7 +275,7 @@ DeeTuple_Pack(DEE_A_IN Dee_size_t n, ...) {
  return result;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *
-_DeeTuple_VPack(DEE_A_IN Dee_size_t n, DEE_A_IN va_list args) {
+_DeeTuple_VPack(DEE_A_IN Dee_size_t n, DEE_A_INOUT va_list args) {
  DeeObject *result,**elem;
  if DEE_UNLIKELY(!n) DeeReturn_EmptyTuple;
  if DEE_LIKELY((result = _DeeTuple_NewUnsafe(n)) != NULL) {
@@ -709,7 +709,7 @@ _DeeTuple_NewObjArgs(DEE_A_IN int prefix, ...) {
  return result;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTupleObject) *
-DeeTuple_VNewObjArgs(DEE_A_IN va_list args) {
+DeeTuple_VNewObjArgs(DEE_A_INOUT va_list args) {
  DeeObject **elem,*result; Dee_size_t n = 0;
  va_list count_copy;
  DEE_VA_COPY(count_copy,args);

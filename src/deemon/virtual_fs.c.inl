@@ -79,7 +79,7 @@ static int DEE_CALL _vfs_fileio_stringmemory_seek(
  struct _vfs_fileio_stringmemory_data *data = (
   struct _vfs_fileio_stringmemory_data *)self->fio_vfs.fio_data;
  char const *new_pos;
- if (!data) {
+ if DEE_UNLIKELY(!data) {
   DeeError_SetStringf(&DeeErrorType_IOError,
                       "Virtual file was closed: %r:%r",
                       DeeFileIO_FILE(self),DeeFileIO_Mode((DeeObject *)self));
@@ -98,11 +98,14 @@ static int DEE_CALL _vfs_fileio_stringmemory_seek(
   default:
    return _deefile_invalid_seek_mode(whence),-1;
  }
- if (new_pos < DeeString_STR(data->ob_string))
+ if (new_pos < DeeString_STR(data->ob_string)) {
   new_pos = DeeString_STR(data->ob_string);
+ }
  data->ob_pos = new_pos;
- if (pos) *pos = (Dee_uint64_t)((Dee_size_t)(
-  data->ob_pos-DeeString_STR(data->ob_string)));
+ if (pos) {
+  *pos = (Dee_uint64_t)((Dee_size_t)(
+   data->ob_pos-DeeString_STR(data->ob_string)));
+ }
  return 0;
 }
 static int DEE_CALL _vfs_fileio_stringmemory_flush(DeeFileIOObject *DEE_UNUSED(self)) {
@@ -129,9 +132,9 @@ static int DEE_CALL _vfs_fileio_open_stringmemory(
  DeeFileIOObject *fp, DeeObject *str) {
  struct _vfs_fileio_stringmemory_data *data;
  DEE_ASSERT(DeeObject_Check(str) && DeeString_Check(str));
- while (DEE_UNLIKELY((data = (struct _vfs_fileio_stringmemory_data *)mallocf_nz(
+ while DEE_UNLIKELY((data = (struct _vfs_fileio_stringmemory_data *)mallocf_nz(
   sizeof(struct _vfs_fileio_stringmemory_data),"vfs-file.io stringmemory: %.*s",
-  (int)DeeString_SIZE(str),DeeString_STR(str))) == NULL)) {
+  (int)DeeString_SIZE(str),DeeString_STR(str))) == NULL) {
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
   return -1;
@@ -156,9 +159,8 @@ static void DEE_CALL _vfserror_cannot_open_mode(
 
 static int DEE_CALL _vfs_open_duphandle(
  DEE_A_INOUT DeeFileIOObject *fp, HANDLE hnd) {
- if (DEE_UNLIKELY(!DuplicateHandle(
-  GetCurrentProcess(),hnd,
-  GetCurrentProcess(),&fp->fio_handle,0,TRUE,DUPLICATE_SAME_ACCESS))) {
+ if DEE_UNLIKELY(!DuplicateHandle(GetCurrentProcess(),hnd,
+  GetCurrentProcess(),&fp->fio_handle,0,TRUE,DUPLICATE_SAME_ACCESS)) {
   DeeError_SetStringf(&DeeErrorType_IOError,
                       "DuplicateHandle() : %K",
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
@@ -169,7 +171,7 @@ static int DEE_CALL _vfs_open_duphandle(
 static int DEE_CALL _vfsdev_stdin_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
- if (DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_READ)) {
+ if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_READ) {
   _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_READ|DEE_FILE_MODE_APPEND);
   return -1;
  }
@@ -179,7 +181,7 @@ static int DEE_CALL _vfsdev_stdin_open(
 static int DEE_CALL _vfsdev_stdout_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
- if (DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_WRITE)) {
+ if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_WRITE) {
   _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_WRITE|DEE_FILE_MODE_APPEND);
   return -1;
  }
@@ -189,7 +191,7 @@ static int DEE_CALL _vfsdev_stdout_open(
 static int DEE_CALL _vfsdev_stderr_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
- if (DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_WRITE)) {
+ if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_WRITE) {
   _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_WRITE|DEE_FILE_MODE_APPEND);
   return -1;
  }
@@ -200,7 +202,7 @@ static int DEE_CALL _vfsdev_null_open(
  DEE_A_IN struct DeeVFSFile const *DEE_UNUSED(self),
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t DEE_UNUSED(mode)) {
  fp->fio_handle = CreateFileA("NUL",GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ,
-                             NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+                              NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
  if DEE_UNLIKELY(fp->fio_handle == DEE_FILEIO_INVALID_HANDLE) {
   DeeError_SetStringf(&DeeErrorType_FileNotFound,
                       "CreateFileA(\"NUL\") : %K",
@@ -215,7 +217,7 @@ static int DEE_CALL _vfsdev_null_open(
 static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsdev_urandom_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
- if (DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_READ)) {
+ if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_READ) {
   _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_READ|DEE_FILE_MODE_APPEND);
   return -1;
  }
@@ -258,8 +260,7 @@ static DEE_A_RET_EXCEPT_FAIL(-1,1) int DEE_CALL _vfsdir_walk(
  end = (iter = self->vf_filev)+self->vf_filec;
  path_len = (Dee_size_t)(path_end-path_begin);
  while (iter != end) {
-  if (iter->vf_name &&
-      strlen(iter->vf_name) == path_len &&
+  if (iter->vf_name && strlen(iter->vf_name) == path_len &&
       memcmp(iter->vf_name,path_begin,path_len*sizeof(char)) == 0) {
    *file = *iter;
    return 0;
@@ -275,8 +276,7 @@ static DEE_A_RET_EXCEPT_FAIL(-1,1) int DEE_CALL _vfsdir_walk_flags(
  end = (iter = self->vf_filev)+self->vf_filec;
  path_len = (Dee_size_t)(path_end-path_begin);
  while (iter != end) {
-  if (iter->vf_name &&
-      strlen(iter->vf_name) == path_len &&
+  if (iter->vf_name && strlen(iter->vf_name) == path_len &&
       memcmp(iter->vf_name,path_begin,path_len*sizeof(char)) == 0) {
    *file = *iter;
    file->vf_flags = self->vf_flags;
@@ -293,7 +293,7 @@ static int DEE_CALL DEE_CALL _vfsdir_enum_yield(
   if (self->di_vfs.div_elemiter == self->di_vfs.div_elemend) return 1;
   file = (*((struct DeeVFSFile **)&self->di_vfs.div_elemiter))++;
  } while (!file->vf_name);
- if ((*result = DeeString_New(file->vf_name)) == NULL) return -1;
+ if DEE_UNLIKELY((*result = DeeString_New(file->vf_name)) == NULL) return -1;
  return 0;
 }
 static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsdir_enum(
@@ -313,20 +313,19 @@ static int DEE_CALL _vfsproc_enum_yield(
  DEE_A_INOUT DeeFSDirIteratorObject *self, DeeObject **result) {
  DeeString_NEW_STATIC(_self,"self");
  DeeString_NEW_STATIC(_uptime,"uptime");
- if (DEE_UNLIKELY((self->di_flags&DEE_FS_DIR_ITERATOR_FLAGS_CTX0)==0)) {
+ if DEE_UNLIKELY((self->di_flags&DEE_FS_DIR_ITERATOR_FLAGS_CTX0)==0) {
   self->di_flags |= DEE_FS_DIR_ITERATOR_FLAGS_CTX0;
   Dee_INCREF(*result = (DeeObject *)&_self);
   return 0;
  }
- if (DEE_UNLIKELY((self->di_flags&DEE_FS_DIR_ITERATOR_FLAGS_CTX1)==0)) {
+ if DEE_UNLIKELY((self->di_flags&DEE_FS_DIR_ITERATOR_FLAGS_CTX1)==0) {
   self->di_flags |= DEE_FS_DIR_ITERATOR_FLAGS_CTX1;
   Dee_INCREF(*result = (DeeObject *)&_uptime);
   return 0;
  }
  if (self->di_vfs.div_elemiter == self->di_vfs.div_elemend) return 1;
- if ((*result = DEE_PP_CAT_2(DeeString_FromUInt,DEE_PP_MUL8(DEE_TYPES_SIZEOF_DEE_PROCESS_ID))(
-  DeeProcess_ID((DeeObject *)(*(*((DeeProcessObject ***)&self->di_vfs.div_elemiter))++)))
-  ) == NULL) return -1;
+ if DEE_UNLIKELY((*result = DEE_PP_CAT_2(DeeString_FromUInt,DEE_PP_MUL8(DEE_TYPES_SIZEOF_DEE_PROCESS_ID))
+  (DeeProcess_ID((DeeObject *)(*(*((DeeProcessObject ***)&self->di_vfs.div_elemiter))++)))) == NULL) return -1;
  return 0;
 }
 
@@ -336,15 +335,15 @@ static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsproc_cmdline_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
  DeeObject *process_ref,*exe_string; int result;
- if (DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE)!=DEE_FILE_MODE_READ)) {
+ if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE)!=DEE_FILE_MODE_READ) {
   _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_READ);
   return -1;
  }
- if ((process_ref = DeeProcess_Win32NewFromID((
+ if DEE_UNLIKELY((process_ref = DeeProcess_Win32NewFromID((
   DeeProcessID)self->vf_flags)) == NULL) return -1;
  exe_string = DeeProcess_Utf8Cmd(process_ref);
  Dee_DECREF(process_ref);
- if (!exe_string) return -1;
+ if DEE_UNLIKELY(!exe_string) return -1;
  result = _vfs_fileio_open_stringmemory(fp,exe_string);
  Dee_DECREF(exe_string);
  return result;
@@ -352,9 +351,8 @@ static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsproc_cmdline_open(
 static DeeObject *DEE_CALL _vfsproc_exe_link(
  DEE_A_IN struct DeeVFSFile const *self) {
  DeeObject *process_ref,*exe_string;
- if (DEE_UNLIKELY((process_ref = 
-  DeeProcess_Win32NewFromID((DeeProcessID)self->vf_flags)
-  ) == NULL)) return NULL;
+ if DEE_UNLIKELY((process_ref =  DeeProcess_Win32NewFromID((
+  DeeProcessID)self->vf_flags)) == NULL) return NULL;
  exe_string = DeeProcess_Utf8Exe(process_ref);
  Dee_DECREF(process_ref);
  return exe_string;
@@ -362,9 +360,8 @@ static DeeObject *DEE_CALL _vfsproc_exe_link(
 static DeeObject *DEE_CALL _vfsproc_cwd_link(
  DEE_A_IN struct DeeVFSFile const *self) {
  DeeObject *process_ref,*exe_string;
- if (DEE_UNLIKELY((process_ref = 
-  DeeProcess_Win32NewFromID((DeeProcessID)self->vf_flags)
-  ) == NULL)) return NULL;
+ if DEE_UNLIKELY((process_ref = DeeProcess_Win32NewFromID((
+  DeeProcessID)self->vf_flags)) == NULL) return NULL;
  exe_string = DeeProcess_Utf8Cwd(process_ref);
  Dee_DECREF(process_ref);
  return exe_string;
@@ -373,12 +370,12 @@ static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsproc_uptime_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
  DeeObject *uptext; Dee_uint64_t uptime; int result;
- if (DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE)!=DEE_FILE_MODE_READ)) {
+ if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE)!=DEE_FILE_MODE_READ) {
   _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_READ);
   return -1;
  }
- if (DeeDex_CallAndCastf(&uptime,"_system.uptime()!I64u") != 0) return -1;
- if ((uptext = DeeString_Newf("%Lf 0.0\n",((long double)uptime)/1000.0L)) == NULL) return -1;
+ if DEE_UNLIKELY(DeeDex_CallAndCastf(&uptime,"_system.uptime()!I64u") != 0) return -1;
+ if DEE_UNLIKELY((uptext = DeeString_Newf("%Lf 0.0\n",((long double)uptime)/1000.0L)) == NULL) return -1;
  result = _vfs_fileio_open_stringmemory(fp,uptext);
  Dee_DECREF(uptext);
  return result;
@@ -411,7 +408,7 @@ static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsproc_walk(
   file->vf_link = NULL;
   return 0;
  } else {
-  if (DeeString_ToUInt64WithLength(path_size,path_begin,&file->vf_flags) == -1) return -1;
+  if DEE_UNLIKELY(DeeString_ToUInt64WithLength(path_size,path_begin,&file->vf_flags) == -1) return -1;
   // FUTURE: Maybe check if this is a valid process id?
  }
  file->vf_name = NULL;
@@ -426,7 +423,7 @@ static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsproc_walk(
 }
 static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsproc_enum(
  DEE_A_IN struct DeeVFSFile const *DEE_UNUSED(self), DEE_A_INOUT DeeFSDirIteratorObject *file) {
- if ((file->di_vfs.div_elemlist = DeeProcess_Enumerate()) == NULL) return -1;
+ if DEE_UNLIKELY((file->di_vfs.div_elemlist = DeeProcess_Enumerate()) == NULL) return -1;
  file->di_vfs.div_yield = &_vfsproc_enum_yield;
  file->di_vfs.div_elemiter = (void *)DeeList_ELEM(file->di_vfs.div_elemlist);
  file->di_vfs.div_elemend = (void *)(
@@ -471,7 +468,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int)\
  utf8_name(DEE_A_IN_Z Dee_Utf8Char const *path)\
 {\
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;\
- if (DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) == -1)) return -1;\
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;\
  if (temp) return 0;\
  if (rfs_path) {\
   temp = real_utf8_fs_check(DeeUtf8String_STR(rfs_path));\
@@ -484,7 +481,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int)\
  wide_name(DEE_A_IN_Z Dee_WideChar const *path)\
 {\
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;\
- if (DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) == -1)) return -1;\
+ if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;\
  if (temp) return 0;\
  if (rfs_path) {\
   temp = real_wide_fs_check(DeeWideString_STR(rfs_path));\
@@ -495,7 +492,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int)\
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8Exists(DEE_A_IN_Z Dee_Utf8Char const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;
- if (DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) == -1)) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_Utf8Exists(DeeUtf8String_STR(rfs_path));
@@ -506,7 +503,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8Exists(DEE_A_IN_Z Dee_Utf8Char const 
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideExists(DEE_A_IN_Z Dee_WideChar const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;
- if (DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) == -1)) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_WideExists(DeeWideString_STR(rfs_path));
@@ -519,7 +516,7 @@ MAKE_VFS_ISXXX_CHECK(DeeVFS_Utf8IsFile,DeeVFS_WideIsFile,_DeeFS_Utf8IsFile,_DeeF
 MAKE_VFS_ISXXX_CHECK(DeeVFS_Utf8IsDir,DeeVFS_WideIsDir,_DeeFS_Utf8IsDir,_DeeFS_WideIsDir,DEE_VFS_FILEATTRIBUTE_PATH)
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsLink(DEE_A_IN_Z Dee_Utf8Char const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;
- if (DEE_UNLIKELY((temp = DeeVFS_Utf8LLocateOrReadReFsLink(path,&file,&rfs_path)) == -1)) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_Utf8IsLink(DeeUtf8String_STR(rfs_path));
@@ -530,7 +527,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsLink(DEE_A_IN_Z 
 }
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsLink(DEE_A_IN_Z Dee_WideChar const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;
- if (DEE_UNLIKELY((temp = DeeVFS_WideLLocateOrReadReFsLink(path,&file,&rfs_path)) == -1)) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_WideLLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_WideIsLink(DeeWideString_STR(rfs_path));
@@ -542,7 +539,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsLink(DEE_A_IN_Z 
 MAKE_VFS_ISXXX_CHECK(DeeVFS_Utf8IsMount,DeeVFS_WideIsMount,_DeeFS_Utf8IsMount,_DeeFS_WideIsMount,DEE_VFS_FILEATTRIBUTE_MONT)
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsHidden(DEE_A_IN_Z Dee_Utf8Char const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path; Dee_Utf8Char const *path_end;
- if (DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) == -1)) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_Utf8IsHidden(DeeUtf8String_STR(rfs_path));
@@ -557,7 +554,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsHidden(DEE_A_IN_
 }
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsHidden(DEE_A_IN_Z Dee_WideChar const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path; Dee_WideChar const *path_end;
- if (DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) == -1)) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_WideIsHidden(DeeWideString_STR(rfs_path));
@@ -582,22 +579,23 @@ static DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeVFS_Locate(
  char const *path_iter,*path_end; struct DeeVFSFile temp_file; int temp;
  *file = _DeeVFS_FileSystemRoot,path_iter = path;
  while (1) {
-  if (DEE_UNLIKELY(file->vf_link)) { // Read vf_link
+  if DEE_UNLIKELY(file->vf_link) { // Read vf_link
    DeeObject *link_dst;
-   if (DEE_UNLIKELY((link_dst = (*file->vf_link)(file)) == NULL)) return -1;
+   if DEE_UNLIKELY((link_dst = (*file->vf_link)(file)) == NULL) return -1;
    temp = DeeVFS_Locate(DeeString_STR(link_dst),file);
    Dee_DECREF(link_dst);
    if (temp != 0) return temp;
   }
   while (IS_SEP(*path_iter)) ++path_iter;
-  if (DEE_UNLIKELY(!*path_iter)) break;
-  if (DEE_UNLIKELY(!file->vf_walk)) {
+  if DEE_UNLIKELY(!*path_iter) break;
+  if DEE_UNLIKELY(!file->vf_walk) {
    DeeError_SetStringf(&DeeErrorType_SystemError,"Not a virtual path: %q",path);
    return -1;
   }
   path_end = path_iter;
   while (*path_end && !IS_SEP(*path_end)) ++path_end;
-  if (DEE_UNLIKELY((temp = (*file->vf_walk)(file,&temp_file,path_iter,path_end)) != 0)) return temp;
+  if DEE_UNLIKELY((temp = (*file->vf_walk)(
+   file,&temp_file,path_iter,path_end)) != 0) return temp;
   path_iter = path_end,*file = temp_file;
  }
  return 0;
@@ -608,23 +606,23 @@ static DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeVFS_LLocate(
  char const *path_iter,*path_end; struct DeeVFSFile temp_file; int temp;
  *file = _DeeVFS_FileSystemRoot,path_iter = path;
  while (1) {
-  if (DEE_UNLIKELY(!*path_iter)) break;
+  if DEE_UNLIKELY(!*path_iter) break;
   if (file->vf_link) { // Read vf_link
    DeeObject *link_dst;
-   if (DEE_UNLIKELY((link_dst = (*file->vf_link)(file)) == NULL)) return -1;
+   if DEE_UNLIKELY((link_dst = (*file->vf_link)(file)) == NULL) return -1;
    temp = DeeVFS_Locate(DeeString_STR(link_dst),file);
    Dee_DECREF(link_dst);
    if (temp != 0) return temp;
   }
   while (IS_SEP(*path_iter)) ++path_iter;
-  if (DEE_UNLIKELY(!*path_iter)) break;
-  if (DEE_UNLIKELY(!file->vf_walk)) {
+  if DEE_UNLIKELY(!*path_iter) break;
+  if DEE_UNLIKELY(!file->vf_walk) {
    DeeError_SetStringf(&DeeErrorType_SystemError,"Not a virtual path: %q",path);
    return -1;
   }
   path_end = path_iter;
   while (*path_end && !IS_SEP(*path_end)) ++path_end;
-  if (DEE_UNLIKELY((temp = (*file->vf_walk)(file,&temp_file,path_iter,path_end)) != 0)) return temp;
+  if DEE_UNLIKELY((temp = (*file->vf_walk)(file,&temp_file,path_iter,path_end)) != 0) return temp;
   path_iter = path_end,*file = temp_file;
  }
  return 0;
@@ -634,8 +632,8 @@ static DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeVFS_LLocate(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeVFS_Utf8ReadLink(DEE_A_IN_Z Dee_Utf8Char const *path) {
  struct DeeVFSFile vfs_file; int temp; DeeObject *rfs_path;
- if ((temp = DeeVFS_Utf8LLocateOrReadReFsLink(path,&vfs_file,&rfs_path)) == -1) return NULL;
- if (temp == 1) {
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LLocateOrReadReFsLink(path,&vfs_file,&rfs_path)) < 0) return NULL;
+ if DEE_UNLIKELY(temp == 1) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Virtual file not found: %q",path);
   return NULL;
@@ -646,7 +644,7 @@ DeeVFS_Utf8ReadLink(DEE_A_IN_Z Dee_Utf8Char const *path) {
   Dee_DECREF(rfs_path);
   return result;
  }
- if (!vfs_file.vf_link) {
+ if DEE_UNLIKELY(!vfs_file.vf_link) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Virtual file is not a vf_link: %q",path);
   return NULL;
@@ -656,8 +654,8 @@ DeeVFS_Utf8ReadLink(DEE_A_IN_Z Dee_Utf8Char const *path) {
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 DeeVFS_WideReadLink(DEE_A_IN_Z Dee_WideChar const *path) {
  struct DeeVFSFile vfs_file; int temp; DeeObject *rfs_path;
- if ((temp = DeeVFS_WideLLocateOrReadReFsLink(path,&vfs_file,&rfs_path)) == -1) return NULL;
- if (temp == 1) {
+ if DEE_UNLIKELY((temp = DeeVFS_WideLLocateOrReadReFsLink(path,&vfs_file,&rfs_path)) < 0) return NULL;
+ if DEE_UNLIKELY(temp == 1) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Virtual file not found: %lq",path);
   return NULL;
@@ -668,7 +666,7 @@ DeeVFS_WideReadLink(DEE_A_IN_Z Dee_WideChar const *path) {
   Dee_DECREF(rfs_path);
   return result;
  }
- if (!vfs_file.vf_link) {
+ if DEE_UNLIKELY(!vfs_file.vf_link) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Virtual file is not a vf_link: %lq",path);
   return NULL;
@@ -679,9 +677,9 @@ DeeVFS_WideReadLink(DEE_A_IN_Z Dee_WideChar const *path) {
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeVFS_Utf8ReadReFsLink(DEE_A_IN_Z Dee_Utf8Char const *path) {
  struct DeeVFSFile file; int temp; DeeObject *result;
- if ((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&result)) == -1) return NULL;
- if (temp == 0) {
-  if (!result) {
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&result)) < 0) return NULL;
+ if DEE_LIKELY(temp == 0) {
+  if DEE_UNLIKELY(!result) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "Didn't expect virtual file %q",path);
   }
@@ -694,9 +692,9 @@ DeeVFS_Utf8ReadReFsLink(DEE_A_IN_Z Dee_Utf8Char const *path) {
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 DeeVFS_WideReadReFsLink(DEE_A_IN_Z Dee_WideChar const *path) {
  struct DeeVFSFile file; int temp; DeeObject *result;
- if ((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&result)) == -1) return NULL;
- if (temp == 0) {
-  if (!result) {
+ if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&result)) < 0) return NULL;
+ if DEE_LIKELY(temp == 0) {
+  if DEE_UNLIKELY(!result) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "Didn't expect virtual file %lq",path);
   }
@@ -718,18 +716,18 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeVFS_Utf8LocateOrReadReFsLink(
   while (IS_SEP(*path_iter)) ++path_iter;
   if (file->vf_link) { // Read vf_link
    DeeObject *link_dst;
-   if ((link_dst = (*file->vf_link)(file)) == NULL) return -1;
+   if DEE_UNLIKELY((link_dst = (*file->vf_link)(file)) == NULL) return -1;
    if ((file->vf_attr&DEE_VFS_FILEATTRIBUTE_REFS)!=0) {
     // Read-filesystem vf_link
     if (path_iter != path && IS_SEP(path_iter[-1])) {
-     if (DeeUtf8String_Append(&link_dst,path_iter-1) == -1) {
+     if DEE_UNLIKELY(DeeUtf8String_Append(&link_dst,path_iter-1) != 0) {
       Dee_DECREF(link_dst);
       return -1;
      }
     } else if (*path_iter) {
      static char const sep_str[] = {SEP,0};
-     if (DeeUtf8String_AppendWithLength(&link_dst,1,sep_str) == -1 ||
-         DeeUtf8String_Append(&link_dst,path_iter) == -1) {
+     if (DEE_UNLIKELY(DeeUtf8String_AppendWithLength(&link_dst,1,sep_str) != 0)
+      || DEE_UNLIKELY(DeeUtf8String_Append(&link_dst,path_iter) != 0)) {
       Dee_DECREF(link_dst);
       return -1;
      }
@@ -739,10 +737,10 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeVFS_Utf8LocateOrReadReFsLink(
    }
    temp = DeeVFS_Locate(DeeString_STR(link_dst),file);
    Dee_DECREF(link_dst);
-   if (temp != 0) return temp;
+   if DEE_UNLIKELY(temp != 0) return temp;
   }
   if (!*path_iter) break;
-  if (!file->vf_walk) {
+  if DEE_UNLIKELY(!file->vf_walk) {
    DeeError_SetStringf(&DeeErrorType_SystemError,"Not a virtual path: %q",path);
    return -1;
   }
@@ -760,9 +758,9 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeVFS_WideLocateOrReadReFsLink(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT struct DeeVFSFile *file,
  DEE_A_REF DEE_A_OUT_OBJECT(DeeWideStringObject) **fs_link) {
  DeeObject *utf8_path; int result;
- if ((utf8_path = DeeUtf8String_FromWideString(path)) == NULL) return -1;
+ if DEE_UNLIKELY((utf8_path = DeeUtf8String_FromWideString(path)) == NULL) return -1;
  result = DeeVFS_Utf8LocateOrReadReFsLink(DeeUtf8String_STR(utf8_path),file,fs_link);
- if (result == 0 && *fs_link && DeeWideString_InplaceCast((DeeObject const **)fs_link) == -1) {
+ if (result == 0 && *fs_link && DEE_UNLIKELY(DeeWideString_InplaceCast((DeeObject const **)fs_link) != 0)) {
   Dee_DECREF(*fs_link);
   return -1;
  }
@@ -780,18 +778,18 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeVFS_Utf8LLocateOrReadReFsLink(
   if (!*path_iter) break;
   if (file->vf_link) { // Read vf_link
    DeeObject *link_dst;
-   if ((link_dst = (*file->vf_link)(file)) == NULL) return -1;
+   if DEE_UNLIKELY((link_dst = (*file->vf_link)(file)) == NULL) return -1;
    if ((file->vf_attr&DEE_VFS_FILEATTRIBUTE_REFS)!=0) {
     // Read-filesystem vf_link
     if (path_iter != path && IS_SEP(path_iter[-1])) {
-     if (DeeUtf8String_Append(&link_dst,path_iter-1) == -1) {
+     if DEE_UNLIKELY(DeeUtf8String_Append(&link_dst,path_iter-1) != 0) {
       Dee_DECREF(link_dst);
       return -1;
      }
     } else if (*path_iter) {
      static char const sep_str[] = {SEP,0};
-     if (DeeUtf8String_AppendWithLength(&link_dst,1,sep_str) == -1 ||
-         DeeUtf8String_Append(&link_dst,path_iter) == -1) {
+     if (DEE_UNLIKELY(DeeUtf8String_AppendWithLength(&link_dst,1,sep_str) != 0)
+      || DEE_UNLIKELY(DeeUtf8String_Append(&link_dst,path_iter) != 0)) {
       Dee_DECREF(link_dst);
       return -1;
      }
@@ -801,9 +799,9 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeVFS_Utf8LLocateOrReadReFsLink(
    }
    temp = DeeVFS_Locate(DeeString_STR(link_dst),file);
    Dee_DECREF(link_dst);
-   if (temp != 0) return temp;
+   if DEE_UNLIKELY(temp != 0) return temp;
   }
-  if (!file->vf_walk) {
+  if DEE_UNLIKELY(!file->vf_walk) {
    DeeError_SetStringf(&DeeErrorType_SystemError,"Not a virtual path: %q",path);
    return -1;
   }
@@ -821,9 +819,10 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeVFS_WideLLocateOrReadReFsLink(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT struct DeeVFSFile *file,
  DEE_A_REF DEE_A_OUT_OBJECT(DeeWideStringObject) **fs_link) {
  DeeObject *utf8_path; int result;
- if ((utf8_path = DeeUtf8String_FromWideString(path)) == NULL) return -1;
+ if DEE_UNLIKELY((utf8_path = DeeUtf8String_FromWideString(path)) == NULL) return -1;
  result = DeeVFS_Utf8LLocateOrReadReFsLink(DeeUtf8String_STR(utf8_path),file,fs_link);
- if (result == 0 && *fs_link && DeeWideString_InplaceCast((DeeObject const **)fs_link) == -1) {
+ if (DEE_UNLIKELY(result == 0) && *fs_link &&
+     DEE_UNLIKELY(DeeWideString_InplaceCast((DeeObject const **)fs_link) != 0)) {
   Dee_DECREF(*fs_link);
   return -1;
  }

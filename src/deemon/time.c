@@ -645,6 +645,7 @@ DeeTime_New(DEE_A_IN Dee_uint64_t ticks) {
 
 DEE_A_RET_WUNUSED Dee_uint64_t DeeTime_GetTotalMonths(
  DEE_A_IN_OBJECT(DeeTimeObject) const *self) {
+ // TODO: What about the current year?
  return DeeTime_Days2Years(DeeTime_GetTotalDays(self))*12;
 }
 DEE_A_RET_WUNUSED unsigned int DeeTime_GetMDay(
@@ -1176,7 +1177,7 @@ static struct DeeMethodDef const _deetime_tp_class_methods[] = {
  DEE_METHODDEF_v100("tick",member(&_deetimeclass_tick),"() -> uint64_t\n"
   "@return: The time since some platform-specific, undefined event in #time.freq / second"),
  DEE_METHODDEF_v100("freq",member(&_deetimeclass_freq),"() -> uint64_t\n"
-  "@return: The amount of ticks passing per second in #time.tick"),
+  "@return: The amount of ticks passing in #time.tick every second"),
  DEE_METHODDEF_v100("from_time_t",member(&_deetimeclass_from_time_t),"(time_t tmt) -> time\n"
   "@return: A time object initialized from a #time_t integral value"),
  DEE_METHODDEF_CONST_v100("time",member(&_deetimeclass_time),"(unsigned int hour = 0, unsigned int minute = 0, unsigned int second = 0, unsigned int msecond = 0) -> time\n"

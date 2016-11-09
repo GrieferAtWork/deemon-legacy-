@@ -336,7 +336,7 @@ void DeeError_Throw(DEE_A_INOUT DeeObject *error) {
  DeeAtomicMutex_Release(&thread_self->t_exception_lock);
 }
 
-DEE_A_SUCCESS(return >= 0) int DeeError_HandledOne(void) {
+DEE_A_SUCCESS(return == 0) int DeeError_HandledOne(void) {
  int result;
  struct DeeRaisedException *entry;
  DeeThreadObject *thread_self;
@@ -376,21 +376,21 @@ DEE_A_SUCCESS(return != 0) int DeeError_Handled(void) {
 }
 
 
-DEE_A_SUCCESS(return < 0) int DeeError_HandleOne(
+DEE_A_SUCCESS(return == 0) int DeeError_HandleOne(
  DEE_A_IN DeeTypeObject const *tp) {
  struct DeeRaisedException *entry,*next;
  DeeThreadObject *thread_self;
  if DEE_UNLIKELY((thread_self = DeeThread_SELF()) == NULL) return -1;
  entry = thread_self->t_exception;
  if DEE_UNLIKELY(!entry) return -1;
- if (DeeObject_InstanceOf(entry->re_error,tp)) {
+ if DEE_LIKELY(DeeObject_InstanceOf(entry->re_error,tp)) {
   next = entry->re_prev;
   DeeAtomicMutex_Acquire(&thread_self->t_exception_lock);
   thread_self->t_exception = next;
   DeeAtomicMutex_Release(&thread_self->t_exception_lock);
   _DeeRaisedException_Quit(entry);
   _DeeRaisedException_Free(entry);
-  return next ? 1 : 0;
+  return DEE_UNLIKELY(next) ? 1 : 0;
  }
  return -1;
 }
@@ -401,7 +401,7 @@ DEE_A_SUCCESS(return != 0) int DeeError_Handle(
  if DEE_UNLIKELY((thread_self = DeeThread_SELF()) == NULL) return 0;
  entry = thread_self->t_exception;
  if DEE_UNLIKELY(!entry) return 0;
- if (DeeObject_InstanceOf(entry->re_error,tp)) {
+ if DEE_LIKELY(DeeObject_InstanceOf(entry->re_error,tp)) {
   // Discard all errors
   DeeAtomicMutex_Acquire(&thread_self->t_exception_lock);
   thread_self->t_exception = NULL;
@@ -410,7 +410,7 @@ DEE_A_SUCCESS(return != 0) int DeeError_Handle(
    next = entry->re_prev;
    _DeeRaisedException_Quit(entry);
    _DeeRaisedException_Free(entry);
-   if (!next) break;
+   if DEE_LIKELY(!next) break;
    entry = next;
   }
   return 1;
@@ -622,7 +622,7 @@ void DeeError_PopState(DEE_A_IN struct DeeErrorStateData const *state) {
 
 
 
-void DeeError_SetNone(DEE_A_IN DeeTypeObject *type_) {
+void DeeError_SetNone(DEE_A_INOUT DeeTypeObject *type_) {
  DeeObject *exc;
  if DEE_LIKELY((exc = DeeType_NewInstanceDefault(type_)) != NULL) {
   DeeError_Throw(exc);
@@ -630,7 +630,7 @@ void DeeError_SetNone(DEE_A_IN DeeTypeObject *type_) {
  }
 }
 
-void DeeError_SetString(DEE_A_IN DeeTypeObject *type_, DEE_A_IN_Z char const *message) {
+void DeeError_SetString(DEE_A_INOUT DeeTypeObject *type_, DEE_A_IN_Z char const *message) {
  DeeObject *error,*ctor_args,*msg_ob;
  if DEE_UNLIKELY((msg_ob = DeeString_New(message)) == NULL) return; // Out of memory
  if DEE_UNLIKELY((ctor_args = _DeeTuple_NewUnsafe(1)) == NULL) { Dee_DECREF(msg_ob); return; }
@@ -642,9 +642,9 @@ end1: Dee_DECREF(ctor_args);
 }
 
 void DeeError_VSetStringf(
- DEE_A_IN DeeTypeObject *type_,
+ DEE_A_INOUT DeeTypeObject *type_,
  DEE_A_IN_PRINTF char const *fmt,
- DEE_A_IN va_list args) {
+ DEE_A_INOUT va_list args) {
  DeeObject *error,*ctor_args,*msg_ob;
  if DEE_UNLIKELY((msg_ob = DeeString_VNewf(fmt,args)) == NULL) return; // Out of memory
  if DEE_UNLIKELY((ctor_args = _DeeTuple_NewUnsafe(1)) == NULL) { Dee_DECREF(msg_ob); return; }
@@ -657,7 +657,7 @@ end1:
 }
 
 void DeeError_SetStringf(
- DEE_A_IN DeeTypeObject *type_,
+ DEE_A_INOUT DeeTypeObject *type_,
  DEE_A_IN_PRINTF char const *fmt, ...) {
  va_list args;
  DEE_VA_START(args,fmt);
@@ -888,7 +888,7 @@ DEE_A_RET_EXCEPT(-1) int DeeError_TPPCompilerErrorf(
 DEE_A_RET_EXCEPT(-1) int DeeError_VTPPCompilerErrorf(
  DEE_A_IN int code, DEE_A_IN struct TPPLexerObject *lexer,
  DEE_A_IN struct TPPTokenObject *token,
- DEE_A_IN_PRINTF char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_IN_PRINTF char const *fmt, DEE_A_INOUT va_list args) {
  DeeObject *message; int result;
  DEE_ASSERT(lexer && token);
  if ((message = DeeString_VNewf(fmt,args)) == NULL) return -1;
@@ -923,7 +923,7 @@ DEE_A_RET_EXCEPT(-1) int DeeError_VCompilerErrorf(
  DEE_A_IN_OBJECT(DeeLexerObject) *lexer,
  DEE_A_IN_OBJECT(DeeTokenObject) *token,
  DEE_A_IN_PRINTF char const *fmt,
- DEE_A_IN va_list args) {
+ DEE_A_INOUT va_list args) {
  DeeObject *message; int result;
  DEE_ASSERT(DeeObject_Check(lexer) && DeeLexer_Check(lexer));
  DEE_ASSERT(DeeObject_Check(token) && DeeToken_Check(token));

@@ -1029,7 +1029,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *Dee##prefix##_##name##f(\
 }\
 DEE_A_RET_EXCEPT_REF DeeObject *Dee##prefix##_V##name##f(\
  DEE_PRIVATE_EXPAND_TUPLE arg_types,\
- DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) {\
+ DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) {\
  DeeObject *result,*args_ob;\
  if DEE_UNLIKELY((args_ob = Dee_VBuildTuple(fmt,args)) == NULL) return NULL;\
  result = Dee##prefix##_##name(DEE_PRIVATE_EXPAND_TUPLE arg_vars,args_ob);\

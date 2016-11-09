@@ -283,7 +283,6 @@ DEPRECATED_EXPORT(void,DeeTime_SetYWeek,(DeeObject *self, int v)) { DeeTime_SetT
 DEPRECATED_EXPORT(void,_DeeTime_SetTimeMSeconds,(DeeObject *self, Dee_uint64_t v)) { DeeTime_SetAfterCurrentDayMSeconds(self,v); }
 DEPRECATED_EXPORT(void,_DeeTime_SetDateMSeconds,(DeeObject *self, Dee_uint64_t v)) { DeeTime_SetBeforeCurrentDayMSeconds(self,v); }
 
-
 #undef DeeSuper_Of
 DEPRECATED_EXPORT(DeeObject *,DeeSuper_Of,(DeeObject *ob)) { return DeeSuper_TOf(Dee_TYPE(ob),ob); }
 

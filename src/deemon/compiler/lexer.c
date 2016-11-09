@@ -1118,7 +1118,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_AddSysIncludePathObject(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
  int temp;
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
- if ((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
+ if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
  temp = _DeeLexer_AddSysIncludePathObject(self,path);
  Dee_DECREF(path);
  return temp;
@@ -1150,7 +1150,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeLexer_AddSysIncludePathObject(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
  int result;
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
- if ((path = DeeUtf8String_Cast(path)) == NULL) return -1;
+ if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
  if (!TPPIncludeList_HasS(&DeeLexer_LEXER(self)->l_sys_include_list,
      DeeUtf8String_STR(path),DeeUtf8String_SIZE(path))) {
   DEE_LVERBOSE3("Adding #include path: %r\n",path);

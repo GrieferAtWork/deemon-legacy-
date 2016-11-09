@@ -253,7 +253,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeInstance_THasAttr
    if ((attr_ob = DeeString_New(attr)) == NULL) return -1;
    args = DeeTuple_Pack(1,attr_ob);
    Dee_DECREF(attr_ob);
-   if (!args) return -1;
+   if DEE_UNLIKELY(!args) return -1;
 #else
    if ((args = DeeTuple_Pack(1,attr)) == NULL) return -1;
 #endif
@@ -311,7 +311,7 @@ DEE_A_RET_EXCEPT(-1) int DeeInstance_TDelAttr
        memcmp(DeeString_STR(managed_getsets->ctgd_name),attr_str,attr_len*sizeof(char)) == 0) {
     if (!managed_getsets->ctgd_del) goto no_del;
     result = DeeObject_ThisCall(managed_getsets->ctgd_del,self,Dee_EmptyTuple);
-    if (!result) return -1;
+    if DEE_UNLIKELY(!result) return -1;
     Dee_DECREF(result);
     return 0;
    }
@@ -359,13 +359,13 @@ no_del: // no_read
    if ((attr_ob = DeeString_New(attr)) == NULL) return -1;
    args = DeeTuple_Pack(1,attr_ob);
    Dee_DECREF(attr_ob);
-   if (!args) return -1;
+   if DEE_UNLIKELY(!args) return -1;
 #else
    if ((args = DeeTuple_Pack(1,attr)) == NULL) return -1;
 #endif
    result = DeeObject_ThisCall(delattr_callback,self,args);
    Dee_DECREF(args);
-   if (!result) return -1;
+   if DEE_UNLIKELY(!result) return -1;
    Dee_DECREF(result);
    return 0;
   }
@@ -421,7 +421,7 @@ DEE_A_RET_EXCEPT(-1) int DeeInstance_TSetAttr
     if ((args = DeeTuple_Pack(1,v)) == NULL) return -1;
     result = DeeObject_ThisCall(managed_getsets->ctgd_set,self,args);
     Dee_DECREF(args);
-    if (!result) return -1;
+    if DEE_UNLIKELY(!result) return -1;
     Dee_DECREF(result);
     return 0;
    }
@@ -486,13 +486,13 @@ no_w: // no_write
    if ((attr_ob = DeeString_New(attr)) == NULL) return -1;
    args = DeeTuple_Pack(2,attr_ob,v);
    Dee_DECREF(attr_ob);
-   if (!args) return -1;
+   if DEE_UNLIKELY(!args) return -1;
 #else
    if ((args = DeeTuple_Pack(2,attr,v)) == NULL) return -1;
 #endif
    result = DeeObject_ThisCall(setattr_callback,self,args);
    Dee_DECREF(args);
-   if (!result) return -1;
+   if DEE_UNLIKELY(!result) return -1;
    Dee_DECREF(result);
    return 0;
   }

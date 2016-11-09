@@ -573,7 +573,7 @@ DeeDex_ImportEx(DEE_A_IN_Z char const *dex_name, DEE_A_IN_Z char const *import_n
 }
 
 DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *
-DeeDex_VCallf(DEE_A_IN_Z char const *name_and_fmt, DEE_A_IN va_list args) {
+DeeDex_VCallf(DEE_A_IN_Z char const *name_and_fmt, DEE_A_INOUT va_list args) {
  char const *name_begin; Dee_size_t name_size; char *name_copy;
  DeeObject *result,*import_ob,*obargs;
  name_begin = name_and_fmt;
@@ -611,7 +611,7 @@ DeeDex_Callf(DEE_A_IN_Z char const *name_and_fmt, ...) {
 }
 
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeDex_VCallAndCastf(
- DEE_A_OUT void *result, DEE_A_IN_Z char const *name_and_fmt_and_result, DEE_A_IN va_list args) {
+ DEE_A_OUT void *result, DEE_A_IN_Z char const *name_and_fmt_and_result, DEE_A_INOUT va_list args) {
  DeeObject *retval; char const *fmt_end;
  char *fmt_begin; Dee_size_t fmt_len; int error;
  DEE_ASSERT(name_and_fmt_and_result);

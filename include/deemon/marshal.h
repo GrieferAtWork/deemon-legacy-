@@ -235,7 +235,7 @@ DEE_FUNC_DECL(DEE_A_RET_WUNUSED int) DeeMarshal_IsSupported(DEE_A_IN DeeMarshalV
 //     - If the actual class type should not be set
 //       the 'DEE_MARSHAL_WRITEFLAG_UUID_REFS' flag and
 //       make sure that the class has the uuid attribute set:
-//       >> class [[uuid("{A1726FAD-102A-4F8A-993F-2675A0947BC7}")]] my_class { ... };
+//       >> class [[uuid("{a1726fad-102a-4f8a-993f-2675a0947bc7}")]] my_class { ... };
 //       >> // doesn't store 'my_class', only writing an instance of it
 //       >> // s.a.: "test/test_serialized_uuid.dee"
 //       >> file.writem(my_class());

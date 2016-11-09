@@ -115,7 +115,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallObjArgs(
  return result;
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_VTCallObjArgs(
- DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN va_list args) {
+ DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_INOUT va_list args) {
  DeeObject *result,*args_tuple;
  if DEE_UNLIKELY((args_tuple = DeeTuple_VNewObjArgs(args)) == NULL) return NULL;
  result = DeeObject_TCall(tp_self,self,args_tuple);
@@ -133,7 +133,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_PCallObjArgs(
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_VPCallObjArgs(
  DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self,
- DEE_A_INOUT void *base_addr, DEE_A_IN va_list args) {
+ DEE_A_INOUT void *base_addr, DEE_A_INOUT va_list args) {
  DeeObject *result,*args_tuple;
  if DEE_UNLIKELY((args_tuple = DeeTuple_VNewObjArgs(args)) == NULL) return NULL;
  result = DeeObject_PCall(tp_self,base_addr,args_tuple);
@@ -155,7 +155,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TCallf(
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_VTCallf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
- DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) {
  DeeObject *result,*args_ob;
  if DEE_UNLIKELY((args_ob = Dee_VBuildTuple(fmt,args)) == NULL) return NULL;
  result = DeeObject_TCall(tp_self,self,args_ob);
@@ -176,7 +176,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_PCallf(
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_VPCallf(
  DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self,
- DEE_A_INOUT void *base_addr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_INOUT void *base_addr, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) {
  DeeObject *result,*args_ob;
  if DEE_UNLIKELY((args_ob = Dee_VBuildTuple(fmt,args)) == NULL) return NULL;
  result = DeeObject_PCall(tp_self,base_addr,args_ob);
@@ -197,7 +197,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_TThisCallf(
 }
 DEE_A_RET_EXCEPT_REF DeeObject *DeeObject_VTThisCallf(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self,
- DEE_A_INOUT DeeObject *this_arg, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_INOUT DeeObject *this_arg, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) {
  DeeObject *result,*args_ob;
  if DEE_UNLIKELY((args_ob = Dee_VBuildTuple(fmt,args)) == NULL) return NULL;
  result = DeeObject_TThisCall(tp_self,self,this_arg,args_ob);

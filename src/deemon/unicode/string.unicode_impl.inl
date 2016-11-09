@@ -346,7 +346,7 @@ DeeString_F(Newf)(DEE_A_IN_PRINTF DEE_CHAR const *fmt, ...) {
  return result;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeString_F(VNewf)(
- DEE_A_IN_PRINTF DEE_CHAR const *fmt, DEE_A_IN va_list args) {
+ DEE_A_IN_PRINTF DEE_CHAR const *fmt, DEE_A_INOUT va_list args) {
  DeeObject *result;
  DEE_STRINGWRITER writer = DEE_STRINGWRITER_INIT();
  if DEE_UNLIKELY(DeeStringWriter_F(VWritef)(&writer,fmt,args) == -1) {
@@ -909,7 +909,7 @@ DEE_A_RET_EXCEPT(-1) int DeeStringWriter_F(Writef)(
 
 DEE_COMPILER_MSVC_WARNING_PUSH(4061)
 DEE_A_RET_EXCEPT(-1) int DeeStringWriter_F(VWritef)(
- DEE_A_INOUT DEE_STRINGWRITER *self, DEE_A_IN_PRINTF DEE_CHAR const *fmt, DEE_A_IN va_list args) {
+ DEE_A_INOUT DEE_STRINGWRITER *self, DEE_A_IN_PRINTF DEE_CHAR const *fmt, DEE_A_INOUT va_list args) {
  DeeStringWriterFormatSpec spec;
  DEE_CHAR ch;
  DEE_CHAR const *flush_start = fmt;

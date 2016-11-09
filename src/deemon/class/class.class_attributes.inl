@@ -195,7 +195,7 @@ DEE_A_RET_EXCEPT(-1) int DeeClass_DelAttr
      return -1;
     }
     result = DeeObject_ThisCall(managed_getsets->ctgd_del,(DeeObject *)self,Dee_EmptyTuple);
-    if (!result) return -1;
+    if DEE_UNLIKELY(!result) return -1;
     Dee_DECREF(result);
     return 0;
    }
@@ -247,7 +247,7 @@ DEE_A_RET_EXCEPT(-1) int DeeClass_SetAttr
     if ((args = DeeTuple_Pack(1,v)) == NULL) return -1;
     result = DeeObject_ThisCall(managed_getsets->ctgd_set,(DeeObject *)self,args);
     Dee_DECREF(args);
-    if (!result) return -1;
+    if DEE_UNLIKELY(!result) return -1;
     Dee_DECREF(result);
     return 0;
    }

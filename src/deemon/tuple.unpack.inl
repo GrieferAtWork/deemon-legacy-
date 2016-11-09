@@ -225,7 +225,7 @@ DEE_A_RET_EXCEPT(-1) int DeeTuple_UnpackInfo(
 
 DEE_A_RET_EXCEPT(-1) int _DeeTuple_VUnpack(
  DEE_A_IN_OBJECT(DeeTupleObject) *self,
- DEE_A_IN_UNPACKTUPLEF char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_IN_UNPACKTUPLEF char const *fmt, DEE_A_INOUT va_list args) {
  DeeTypeObject *obtype; DeeObject *elem,**iter,**end; int opt = 0;
  Dee_size_t argi,minargc,maxargc; char const *func_name;
  char const *fmt_start = fmt; int do_bool;
@@ -501,7 +501,7 @@ end:
  return 0;
 }
 DEE_A_RET_EXCEPT(-1) int _DeeTuple_VUnpack(
- DEE_A_IN_OBJECT(DeeTupleObject) *self, DEE_A_IN_UNPACKTUPLEF char const *fmt, DEE_A_IN va_list args) {
+ DEE_A_IN_OBJECT(DeeTupleObject) *self, DEE_A_IN_UNPACKTUPLEF char const *fmt, DEE_A_INOUT va_list args) {
  DeeObject *arg,**argv,**argv_end; char const *fmt_start = fmt; int opt = 0;
  DEE_ASSERT(DeeObject_Check(self) && DeeTuple_Check(self));
  argv_end = (argv = DeeTuple_ELEM(self))+DeeTuple_SIZE(self);

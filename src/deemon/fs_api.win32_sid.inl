@@ -28,28 +28,28 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 _DeeFS_Utf8Win32SIDName(DEE_A_IN_OPT PSID sid, DEE_A_IN int full_name) {
  DeeObject *result,*user,*domain; DWORD usersize,domainsize;
  SID_NAME_USE use; DWORD error; Dee_Utf8Char *dst;
- if ((user = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME)) == NULL) return NULL;
- if ((domain = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME)) == NULL) { Dee_DECREF(domain); return NULL; }
+ if DEE_UNLIKELY((user = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME)) == NULL) return NULL;
+ if DEE_UNLIKELY((domain = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME)) == NULL) { Dee_DECREF(domain); return NULL; }
  domainsize = usersize = DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME;
  // v we must perform this check ourselves, as 'LookupAccountSid' will otherwise crash
- if (!sid || !IsValidSid(sid)) { error = ERROR_INVALID_PARAMETER; goto syserr; }
- while (!LookupAccountSidA(NULL,sid,
+ if DEE_UNLIKELY(!sid || !IsValidSid(sid)) { error = ERROR_INVALID_PARAMETER; goto syserr; }
+ while DEE_UNLIKELY(!LookupAccountSidA(NULL,sid,
   DeeUtf8String_STR(user),&usersize,
   DeeUtf8String_STR(domain),&domainsize,&use)) {
   error = DeeSystemError_Win32Consume();
-  if (error != ERROR_INSUFFICIENT_BUFFER) {
+  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
 syserr:
    DeeError_SetStringf(&DeeErrorType_SystemError,
                         "LookupAccountSidA(%Iu) : %K",
                         sid,DeeSystemError_Win32ToString(error));
    goto err_r;
   }
-  if (DeeUtf8String_Resize(&user,usersize) == -1) {
+  if DEE_UNLIKELY(DeeUtf8String_Resize(&user,usersize) != 0) {
 err_r: Dee_DECREF(user); Dee_DECREF(domain); return NULL;
   }
  }
  if (full_name) {
-  if ((result = DeeUtf8String_NewSized(usersize+1+domainsize)) == NULL) goto err_r;
+  if DEE_UNLIKELY((result = DeeUtf8String_NewSized(usersize+1+domainsize)) == NULL) goto err_r;
   dst = DeeUtf8String_STR(result);
   memcpy(dst,DeeUtf8String_STR(user),usersize*sizeof(Dee_Utf8Char));
   dst += usersize; *dst = (Dee_Utf8Char)'@';
@@ -58,7 +58,7 @@ err_r: Dee_DECREF(user); Dee_DECREF(domain); return NULL;
   Dee_DECREF(domain);
   return result;
  } else {
-  if (DeeUtf8String_Resize(&user,usersize) == -1) goto err_r;
+  if DEE_UNLIKELY(DeeUtf8String_Resize(&user,usersize) != 0) goto err_r;
   Dee_DECREF(domain);
   return user;
  }
@@ -67,28 +67,28 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 _DeeFS_WideWin32SIDName(DEE_A_IN_OPT PSID sid, DEE_A_IN int full_name) {
  DeeObject *result,*user,*domain; DWORD usersize,domainsize;
  SID_NAME_USE use; DWORD error; Dee_WideChar *dst;
- if ((user = DeeWideString_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME)) == NULL) return NULL;
- if ((domain = DeeWideString_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME)) == NULL) { Dee_DECREF(domain); return NULL; }
+ if DEE_UNLIKELY((user = DeeWideString_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME)) == NULL) return NULL;
+ if DEE_UNLIKELY((domain = DeeWideString_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME)) == NULL) { Dee_DECREF(domain); return NULL; }
  domainsize = usersize = DEE_XCONFIG_FSBUFSIZE_WIN32SIDNAME;
  // v we must perform this check ourselves, as 'LookupAccountSid' will otherwise crash
- if (!sid || !IsValidSid(sid)) { error = ERROR_INVALID_PARAMETER; goto syserr; }
- while (!LookupAccountSidW(NULL,sid,
+ if DEE_UNLIKELY(!sid || !IsValidSid(sid)) { error = ERROR_INVALID_PARAMETER; goto syserr; }
+ while DEE_UNLIKELY(!LookupAccountSidW(NULL,sid,
   DeeWideString_STR(user),&usersize,
   DeeWideString_STR(domain),&domainsize,&use)) {
   error = DeeSystemError_Win32Consume();
-  if (error != ERROR_INSUFFICIENT_BUFFER) {
+  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
 syserr:
    DeeError_SetStringf(&DeeErrorType_SystemError,
                         "LookupAccountSidW(%Iu) : %K",
                         sid,DeeSystemError_Win32ToString(error));
    goto err_r;
   }
-  if (DeeWideString_Resize(&user,usersize) == -1) {
+  if DEE_UNLIKELY(DeeWideString_Resize(&user,usersize) != 0) {
 err_r: Dee_DECREF(user); Dee_DECREF(domain); return NULL;
   }
  }
  if (full_name) {
-  if ((result = DeeWideString_NewSized(usersize+1+domainsize)) == NULL) goto err_r;
+  if DEE_UNLIKELY((result = DeeWideString_NewSized(usersize+1+domainsize)) == NULL) goto err_r;
   dst = DeeWideString_STR(result);
   memcpy(dst,DeeWideString_STR(user),usersize*sizeof(Dee_WideChar));
   dst += usersize; *dst = (Dee_WideChar)'@';
@@ -97,7 +97,7 @@ err_r: Dee_DECREF(user); Dee_DECREF(domain); return NULL;
   Dee_DECREF(domain);
   return result;
  } else {
-  if (DeeWideString_Resize(&user,usersize) == -1) goto err_r;
+  if DEE_UNLIKELY(DeeWideString_Resize(&user,usersize) != 0) goto err_r;
   Dee_DECREF(domain);
   return user;
  }
@@ -135,19 +135,19 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSWin32SIDObject) *DeeFS_Utf8Win32NameToSID(
  DeeObject *result,*domain,*new_result; DWORD resultsize,domainsize;
  SID_NAME_USE use; DWORD error;
  DEE_ASSERT(name);
- if ((result = (DeeObject *)DeeObject_Malloc(
+ if DEE_UNLIKELY((result = (DeeObject *)DeeObject_Malloc(
   Dee_OFFSETOF(DeeFSWin32SIDObject,wsid_data)+
   DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID)) == NULL) return NULL;
- if ((domain = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID)) == NULL) {
+ if DEE_UNLIKELY((domain = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID)) == NULL) {
 err_r: DeeObject_Free(result); return NULL;
  }
  resultsize = DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID,domainsize = DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID;
- while (!LookupAccountNameA(NULL,name,
+ while DEE_UNLIKELY(!LookupAccountNameA(NULL,name,
   DeeFSWin32SID_SID(result),&resultsize,
   DeeUtf8String_STR(domain),&domainsize,&use)) {
   error = DeeSystemError_Win32Consume();
-  if (error != ERROR_INSUFFICIENT_BUFFER) {
-   if (error == ERROR_NONE_MAPPED) {
+  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
+   if DEE_LIKELY(error == ERROR_NONE_MAPPED) {
     Dee_Utf8Char const *iter,*end;
     // This might be a 'user@machine' kind of username
     // >> Convert it into the windows 'machine\user' form
@@ -159,7 +159,7 @@ err_r: DeeObject_Free(result); return NULL;
      Dee_DECREF(domain);
      end = iter+Dee_Utf8StrLen(iter);
      domain_size = (Dee_size_t)(end-iter);
-     if ((win32_username = DeeUtf8String_NewSized(
+     if DEE_UNLIKELY((win32_username = DeeUtf8String_NewSized(
       (Dee_size_t)(end-name))) == NULL) return NULL;
      memcpy(DeeUtf8String_STR(win32_username),iter,domain_size*sizeof(Dee_Utf8Char));
      DeeUtf8String_STR(win32_username)[domain_size] = '\\';
@@ -175,12 +175,12 @@ err_r: DeeObject_Free(result); return NULL;
                        name,DeeSystemError_Win32ToString(error));
 err_dr: Dee_DECREF(domain); goto err_r;
   }
-  if ((new_result = (DeeObject *)DeeObject_Realloc(result,
+  if DEE_UNLIKELY((new_result = (DeeObject *)DeeObject_Realloc(result,
    Dee_OFFSETOF(DeeFSWin32SIDObject,wsid_data)+resultsize)) == NULL) goto err_dr;
-  if (DeeWideString_Resize(&domain,domainsize) == -1) goto err_dr;
+  if DEE_UNLIKELY(DeeWideString_Resize(&domain,domainsize) != 0) goto err_dr;
  }
  Dee_DECREF(domain);
- if (resultsize != DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID && (new_result = (DeeObject *)
+ if DEE_UNLIKELY(resultsize != DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID && (new_result = (DeeObject *)
   DeeObject_Realloc(result,Dee_OFFSETOF(DeeFSWin32SIDObject,wsid_data)+resultsize)) == NULL) goto err_r;
  DeeObject_INIT(result,&DeeFSWin32SID_Type);
  return result;
@@ -189,17 +189,17 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSWin32SIDObject) *DeeFS_WideWin32NameToSID(
  DEE_A_IN_Z Dee_WideChar const *name) {
  DeeObject *result,*domain,*new_result; DWORD resultsize,domainsize;
  SID_NAME_USE use; DWORD error;
- if ((result = (DeeObject *)DeeObject_Malloc(
+ if DEE_UNLIKELY((result = (DeeObject *)DeeObject_Malloc(
   Dee_OFFSETOF(DeeFSWin32SIDObject,wsid_data)+
   DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID)) == NULL) return NULL;
- if ((domain = DeeWideString_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID)) == NULL) {err_r: DeeObject_Free(result); return NULL; }
+ if DEE_UNLIKELY((domain = DeeWideString_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID)) == NULL) {err_r: DeeObject_Free(result); return NULL; }
  resultsize = DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID,domainsize = DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID;
- while (!LookupAccountNameW(NULL,name,
+ while DEE_UNLIKELY(!LookupAccountNameW(NULL,name,
   DeeFSWin32SID_SID(result),&resultsize,
   DeeWideString_STR(domain),&domainsize,&use)) {
   error = DeeSystemError_Win32Consume();
-  if (error != ERROR_INSUFFICIENT_BUFFER) {
-   if (error == ERROR_NONE_MAPPED) {
+  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
+   if DEE_LIKELY(error == ERROR_NONE_MAPPED) {
     Dee_WideChar const *iter,*end;
     // This might be a 'user@machine' kind of username
     // >> Convert it into the windows 'machine\user' form
@@ -211,7 +211,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSWin32SIDObject) *DeeFS_WideWin32NameToSID(
      Dee_DECREF(domain);
      end = iter+Dee_WideStrLen(iter);
      domain_size = (Dee_size_t)(end-iter);
-     if ((win32_username = DeeWideString_NewSized(
+     if DEE_UNLIKELY((win32_username = DeeWideString_NewSized(
       (Dee_size_t)(end-name))) == NULL) return NULL;
      memcpy(DeeWideString_STR(win32_username),iter,domain_size*sizeof(Dee_WideChar));
      DeeWideString_STR(win32_username)[domain_size] = '\\';
@@ -227,12 +227,12 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSWin32SIDObject) *DeeFS_WideWin32NameToSID(
                        name,DeeSystemError_Win32ToString(error));
 err_dr: Dee_DECREF(domain); goto err_r;
   }
-  if ((new_result = (DeeObject *)DeeObject_Realloc(result,
+  if DEE_UNLIKELY((new_result = (DeeObject *)DeeObject_Realloc(result,
    Dee_OFFSETOF(DeeFSWin32SIDObject,wsid_data)+resultsize)) == NULL) goto err_dr;
-  if (DeeWideString_Resize(&domain,domainsize) == -1) goto err_dr;
+  if DEE_UNLIKELY(DeeWideString_Resize(&domain,domainsize) != 0) goto err_dr;
  }
  Dee_DECREF(domain);
- if (resultsize != DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID && (new_result = (DeeObject *)
+ if DEE_UNLIKELY(resultsize != DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID && (new_result = (DeeObject *)
   DeeObject_Realloc(result,Dee_OFFSETOF(DeeFSWin32SIDObject,wsid_data)+resultsize)) == NULL) goto err_r;
  DeeObject_INIT(result,&DeeFSWin32SID_Type);
  return result;
@@ -240,8 +240,8 @@ err_dr: Dee_DECREF(domain); goto err_r;
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSWin32SIDObject) *DeeFS_Win32NameToSIDObject(
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *name) {
  DeeObject *result;
- if (DeeUtf8String_Check(name)) return DeeFS_Utf8Win32NameToSID(DeeUtf8String_STR(name));
- if ((name = DeeWideString_Cast(name)) == NULL) return NULL;
+ if DEE_UNLIKELY(DeeUtf8String_Check(name)) return DeeFS_Utf8Win32NameToSID(DeeUtf8String_STR(name));
+ if DEE_UNLIKELY((name = DeeWideString_Cast(name)) == NULL) return NULL;
  result = DeeFS_WideWin32NameToSID(DeeWideString_STR(name));
  Dee_DECREF(name);
  return result;
@@ -249,17 +249,17 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSWin32SIDObject) *DeeFS_Win32NameToSIDObject(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSWin32SIDObject) *
 DeeFSWin32SID_NewFromSID(/*PSID*/Dee_uintptr_t sid) {
  DWORD error,sid_size; DeeObject *result;
- if (!sid || !IsValidSid((PSID)sid)) {
+ if DEE_UNLIKELY(!sid || !IsValidSid((PSID)sid)) {
   error = ERROR_INVALID_PARAMETER;
   goto syserr;
  }
 retry:
  sid_size = GetLengthSid((PSID)sid);
- if ((result = (DeeObject *)DeeObject_Malloc(
+ if DEE_UNLIKELY((result = (DeeObject *)DeeObject_Malloc(
   Dee_OFFSETOF(DeeFSWin32SIDObject,wsid_data)+sid_size)) == NULL) return NULL;
- if (!CopySid(sid_size,DeeFSWin32SID_SID(result),(PSID)sid)) {
+ if DEE_UNLIKELY(!CopySid(sid_size,DeeFSWin32SID_SID(result),(PSID)sid)) {
   error = DeeSystemError_Win32Consume();
-  if (error == ERROR_INSUFFICIENT_BUFFER) goto retry;
+  if DEE_LIKELY(error == ERROR_INSUFFICIENT_BUFFER) goto retry;
   DeeObject_Free(result);
 syserr:
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -275,16 +275,16 @@ syserr:
 static DeeObject *_deefswin32sid_tp_any_new(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeObject *args) {
  DeeObject *result,*arg0; Dee_uintptr_t sid;
- if (DeeTuple_Unpack(args,"o:win32_sid",&arg0) == -1) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:win32_sid",&arg0) != 0) return NULL;
  if (DeeUtf8String_Check(arg0)) return DeeFS_Utf8Win32NameToSID(DeeUtf8String_STR(arg0));
  if (DeeWideString_Check(arg0)) return DeeFS_WideWin32NameToSID(DeeWideString_STR(arg0));
  if (DeeUtf16String_Check(arg0) || DeeUtf32String_Check(arg0)) {
-  if ((arg0 = DeeWideString_Cast(arg0)) == NULL) return NULL;
+  if DEE_UNLIKELY((arg0 = DeeWideString_Cast(arg0)) == NULL) return NULL;
   result = DeeFS_WideWin32NameToSID(DeeWideString_STR(arg0));
   Dee_DECREF(arg0);
   return result;
  }
- if (DeeObject_Cast(Dee_uintptr_t,arg0,&sid) != 0) return NULL;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_uintptr_t,arg0,&sid) != 0) return NULL;
  return DeeFSWin32SID_NewFromSID(sid);
 }
 static DeeObject *_deefswin32sid_tp_str(DeeFSWin32SIDObject *self) { return _DeeFS_Utf8Win32SIDName(DeeFSWin32SID_SID(self),0); }
@@ -294,14 +294,14 @@ static int _deefswin32sid_tp_int64(DeeFSWin32SIDObject *self, Dee_int64_t *resul
 static int _deefswin32sid_tp_double(DeeFSWin32SIDObject *self, double *result) { *result = (double)(Dee_uintptr_t)DeeFSWin32SID_SID(self); return 0; }
 static DeeObject *_deefswin32sid_cmp_eq(DeeFSWin32SIDObject *self, DeeObject *right) {
  Dee_uid_t rhs_uid;
- if (DeeObject_Cast(Dee_uid_t,right,&rhs_uid) != 0) return NULL;
- if (!rhs_uid || !IsValidSid((PSID)rhs_uid)) DeeReturn_False;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_uid_t,right,&rhs_uid) != 0) return NULL;
+ if DEE_UNLIKELY(!rhs_uid || !IsValidSid((PSID)rhs_uid)) DeeReturn_False;
  DeeReturn_Bool(EqualSid(DeeFSWin32SID_SID(self),(PSID)rhs_uid));
 }
 static DeeObject *_deefswin32sid_cmp_ne(DeeFSWin32SIDObject *self, DeeObject *right) {
  Dee_uid_t rhs_uid;
- if (DeeObject_Cast(Dee_uid_t,right,&rhs_uid) != 0) return NULL;
- if (!rhs_uid || !IsValidSid((PSID)rhs_uid)) DeeReturn_True;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_uid_t,right,&rhs_uid) != 0) return NULL;
+ if DEE_UNLIKELY(!rhs_uid || !IsValidSid((PSID)rhs_uid)) DeeReturn_True;
  DeeReturn_Bool(!EqualSid(DeeFSWin32SID_SID(self),(PSID)rhs_uid));
 }
 

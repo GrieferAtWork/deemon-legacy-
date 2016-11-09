@@ -355,11 +355,11 @@
 #endif
 
 #ifndef DEE_HAVE_SYSCONF
-# if defined(DEE_PLATFORM_UNIX)
-#  define DEE_HAVE_SYSCONF 1
-# else
-#  define DEE_HAVE_SYSCONF 0
-# endif
+#if defined(DEE_PLATFORM_UNIX)
+# define DEE_HAVE_SYSCONF 1
+#else
+# define DEE_HAVE_SYSCONF 0
+#endif
 #endif
 
 #ifndef DEE_HAVE_GETRANDOM
@@ -369,6 +369,23 @@
 #ifndef DEE_HAVE_GETENTROPY
 // TODO: Available since 'OpenBSD 5.6' (how can I detect this?)
 #define DEE_HAVE_GETENTROPY 0
+#endif
+
+#ifndef DEE_HAVE_REMOVE
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
+# define DEE_HAVE_REMOVE 1 /*< Should be part of the c-standard. */
+#else
+# define DEE_HAVE_REMOVE 0
+#endif
+#endif
+
+#ifndef DEE_HAVE_RENAME
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H \
+ || defined(DEE_PLATFORM_UNIX)
+# define DEE_HAVE_RENAME 1
+#else
+# define DEE_HAVE_RENAME 0
+#endif
 #endif
 
 

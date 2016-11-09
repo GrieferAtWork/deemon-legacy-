@@ -323,7 +323,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeDex_Callf(
  DEE_A_IN_Z char const *name_and_fmt, ...) DEE_ATTRIBUTE_NONNULL((1));
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeDex_VCallf(
- DEE_A_IN_Z char const *name_and_fmt, DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1));
+ DEE_A_IN_Z char const *name_and_fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 //////////////////////////////////////////////////////////////////////////
@@ -342,7 +342,7 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeDex_CallAndCastf(
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeDex_VCallAndCastf(
  DEE_A_OUT void *result, DEE_A_IN_Z char const *name_and_fmt_and_result,
- DEE_A_IN va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
+ DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 //////////////////////////////////////////////////////////////////////////

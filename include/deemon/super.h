@@ -87,9 +87,9 @@ DEE_FUNC_DECL(DEE_ATTRIBUTE_ADD_RESULT_REFERENCE DEE_A_RET_WUNUSED DEE_A_RET_NEV
 DEE_FUNC_DECL(Dee_size_t) DeeSuper_ClearPool(void);
 
 #ifdef DEE_LIMITED_API
-extern DeeObject *_deesuper_tp_attr_get(DeeSuperObject *self, DeeObject *attr);
-extern int _deesuper_tp_attr_del(DeeSuperObject *self, DeeObject *attr);
-extern int _deesuper_tp_attr_set(DeeSuperObject *self, DeeObject *attr, DeeObject *v);
+extern DeeObject *DEE_CALL _deesuper_tp_attr_get(DeeSuperObject *self, DeeObject *attr);
+extern int DEE_CALL _deesuper_tp_attr_del(DeeSuperObject *self, DeeObject *attr);
+extern int DEE_CALL _deesuper_tp_attr_set(DeeSuperObject *self, DeeObject *attr, DeeObject *v);
 #elif defined(DEE_LIMITED_DEX)
 #define _deesuper_tp_attr_get  (*DeeType_GET_SLOT(&DeeSuper_Type,tp_attr_get))
 #define _deesuper_tp_attr_del  (*DeeType_GET_SLOT(&DeeSuper_Type,tp_attr_del))

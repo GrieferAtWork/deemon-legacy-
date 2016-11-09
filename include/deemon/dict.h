@@ -71,7 +71,7 @@ DEE_PRIVATE_DECL_DEE_HASH_T
 // Usage rules
 // - 'key' can be anything that supports 'tp_hash' and 'tp_cmp_eq'
 // - 'item' can be anything (no exceptions)
-// - For convenience functions that use strings for keys are provided.
+// - For convenience, functions that use strings for keys are provided.
 //   Please note that those function behave the same as if the regular
 //   counterpart would have been called with the 'DeeString_New'
 //   version of the key.
@@ -399,7 +399,9 @@ DEE_PRIVATE_DECL_DEE_OBJECT_ITERATE_FUNC
 // Traverse a dictionary
 // >> If the "trav" function returns a non-zero value, the function stops and returns that value
 // >> Otherwise the function will call "trav" for all its key-item pairs and return 0
-// NOTE: 'DeeDict_Traverse' never throws an exception itself
+// NOTE: 'DeeDict_Traverse' never throws an exception itself, only forwarding
+//       exceptions thrown by the given 'trav' function.
+//       Though 'DeeDict_TraverseValues' can in fact throw exceptions.
 typedef DEE_A_RET_EXCEPT(-1) int (*DeeDictTraverseFunc)(
  DEE_A_INOUT DeeObject *key, DEE_A_INOUT DeeObject *item, DEE_A_IN_OPT void *closure) /*DEE_ATTRIBUTE_NONNULL((1,2))*/;
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeDict_Traverse(DEE_A_IN_OBJECT(DeeDictObject) const *self, DEE_A_IN DeeDictTraverseFunc trav, DEE_A_IN_OPT void *closure) DEE_ATTRIBUTE_NONNULL((1,2));
