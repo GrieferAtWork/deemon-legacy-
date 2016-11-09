@@ -1310,57 +1310,23 @@ static int AUSLOT(tp_p_ipow)(DeeStructuredTypeObject *DEE_UNUSED(tp_self), uintn
 //////////////////////////////////////////////////////////////////////////
 // tp_hash
 static int SLOT(tp_hash)(DeeIntNObject *self, Dee_hash_t start, Dee_hash_t *result) {
-#if SIZEOF_INTN_T <= DEE_CONFIG_SIZEOF_DEE_HASH_T
- *result = start ^ (Dee_hash_t)self->i_value.u;
-#elif SIZEOF_INTN_T == DEE_CONFIG_SIZEOF_DEE_HASH_T*2
- *result = start ^ ((Dee_hash_t *)&self->i_value.u)[0] ^ ((Dee_hash_t *)&self->i_value.u)[1];
-#elif SIZEOF_INTN_T == DEE_CONFIG_SIZEOF_DEE_HASH_T*4
- *result = start ^ ((Dee_hash_t *)&self->i_value.u)[0] ^ ((Dee_hash_t *)&self->i_value.u)[1] ^
-                   ((Dee_hash_t *)&self->i_value.u)[2] ^ ((Dee_hash_t *)&self->i_value.u)[3];
-#else
-#error "Invalid/Unsupported hash/integer size"
-#endif
+ *result = DeeHash_Integer(uintn_t,start,self->i_value.u);
  return 0;
 }
 static int ASLOT(tp_hash)(DeeIntNObject *self, Dee_hash_t start, Dee_hash_t *result) {
  uintn_t temp = (uintn_t)DeeAtomicIN_Load(self->i_value.s,memory_order_seq_cst);
-#if SIZEOF_INTN_T <= DEE_CONFIG_SIZEOF_DEE_HASH_T
- *result = start ^ (Dee_hash_t)temp;
-#elif SIZEOF_INTN_T == DEE_CONFIG_SIZEOF_DEE_HASH_T*2
- *result = start ^ ((Dee_hash_t *)&temp)[0] ^ ((Dee_hash_t *)&temp)[1];
-#elif SIZEOF_INTN_T == DEE_CONFIG_SIZEOF_DEE_HASH_T*4
- *result = start ^ ((Dee_hash_t *)&temp)[0] ^ ((Dee_hash_t *)&temp)[1] ^
-                   ((Dee_hash_t *)&temp)[2] ^ ((Dee_hash_t *)&temp)[3];
-#else
-#error "Invalid/Unsupported hash/integer size"
-#endif
+ *result = DeeHash_Integer(uintn_t,start,temp);
  return 0;
 }
-static int SLOT(tp_p_hash)(DeeStructuredTypeObject *DEE_UNUSED(tp_self), intn_t *self, Dee_hash_t start, Dee_hash_t *result) {
-#if SIZEOF_INTN_T <= DEE_CONFIG_SIZEOF_DEE_HASH_T
- *result = start ^ (Dee_hash_t)*self;
-#elif SIZEOF_INTN_T == DEE_CONFIG_SIZEOF_DEE_HASH_T*2
- *result = start ^ ((Dee_hash_t *)self)[0] ^ ((Dee_hash_t *)self)[1];
-#elif SIZEOF_INTN_T == DEE_CONFIG_SIZEOF_DEE_HASH_T*4
- *result = start ^ ((Dee_hash_t *)self)[0] ^ ((Dee_hash_t *)self)[1] ^
-                   ((Dee_hash_t *)self)[2] ^ ((Dee_hash_t *)self)[3];
-#else
-#error "Invalid/Unsupported hash/integer size"
-#endif
+static int SLOT(tp_p_hash)(DeeStructuredTypeObject *DEE_UNUSED(tp_self),
+                           uintn_t *self, Dee_hash_t start, Dee_hash_t *result) {
+ *result = DeeHash_Integer(uintn_t,start,*self);
  return 0;
 }
-static int ASLOT(tp_p_hash)(DeeStructuredTypeObject *DEE_UNUSED(tp_self), intn_t *self, Dee_hash_t start, Dee_hash_t *result) {
+static int ASLOT(tp_p_hash)(DeeStructuredTypeObject *DEE_UNUSED(tp_self),
+                            uintn_t *self, Dee_hash_t start, Dee_hash_t *result) {
  uintn_t temp = (uintn_t)DeeAtomicIN_Load(*self,memory_order_seq_cst);
-#if SIZEOF_INTN_T <= DEE_CONFIG_SIZEOF_DEE_HASH_T
- *result = start ^ (Dee_hash_t)temp;
-#elif SIZEOF_INTN_T == DEE_CONFIG_SIZEOF_DEE_HASH_T*2
- *result = start ^ ((Dee_hash_t *)&temp)[0] ^ ((Dee_hash_t *)&temp)[1];
-#elif SIZEOF_INTN_T == DEE_CONFIG_SIZEOF_DEE_HASH_T*4
- *result = start ^ ((Dee_hash_t *)&temp)[0] ^ ((Dee_hash_t *)&temp)[1] ^
-                   ((Dee_hash_t *)&temp)[2] ^ ((Dee_hash_t *)&temp)[3];
-#else
-#error "Invalid/Unsupported hash/integer size"
-#endif
+ *result = DeeHash_Integer(uintn_t,start,temp);
  return 0;
 }
 

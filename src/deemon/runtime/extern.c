@@ -33,7 +33,7 @@
 #include <deemon/error.h>
 #include <deemon/fs_api.h>
 #include <deemon/bool.h>
-#include <deemon/optional/hash.h>
+#include <deemon/optional/object_hash.h>
 #include <deemon/optional/hashmap.h>
 #include <deemon/optional/object_malloc.h>
 #include <deemon/optional/object_visit.h>

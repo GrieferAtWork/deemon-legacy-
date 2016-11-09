@@ -62,7 +62,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include <deemon/memberdef.h>
 #include <deemon/none.h>
 #include <deemon/optional/atomic_once.h>
-#include <deemon/optional/hash.h>
+#include <deemon/optional/object_hash.h>
 #include <deemon/optional/object_malloc.h>
 #include <deemon/optional/type_util.h>
 #include <deemon/string.h>

@@ -46,7 +46,7 @@
 #include <deemon/optional/object_doc.h>
 #include <deemon/optional/object_io.h>
 #include <deemon/optional/object_malloc.h>
-#include <deemon/optional/hash.h>
+#include <deemon/optional/object_hash.h>
 #include <deemon/optional/type_decl.h>
 #include <deemon/optional/std/string.h>
 #include <deemon/runtime/function.h>

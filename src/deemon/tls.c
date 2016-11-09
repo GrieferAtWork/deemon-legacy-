@@ -488,7 +488,7 @@ ret_factory:
 
 
 
-static void _deetls_tp_dtor(DeeTlsObject *self) {
+static void DEE_CALL _deetls_tp_dtor(DeeTlsObject *self) {
 #ifndef DEE_WITHOUT_THREADS
  DEE_ASSERT(self->tls_handle != (Dee_size_t)-1);
  _DeeFreeTlsID(self->tls_handle);
@@ -497,24 +497,24 @@ static void _deetls_tp_dtor(DeeTlsObject *self) {
 #endif /* DEE_WITHOUT_THREADS */
  Dee_DECREF(self->tls_factory);
 }
-static int _deetls_tp_ctor(
+static int DEE_CALL _deetls_tp_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTlsObject *self) {
  return _DeeTls_InitWithFactory(self,Dee_None);
 }
-static int _deetls_tp_copy_ctor(
+static int DEE_CALL _deetls_tp_copy_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTlsObject *self, DeeTlsObject *right) {
  return _DeeTls_InitWithFactory(self,DeeTls_FACTORY(right));
 }
-static int _deetls_tp_any_ctor(
+static int DEE_CALL _deetls_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeTlsObject *self, DeeObject *args) {
- DeeObject *factory;
- if (DeeTuple_Unpack(args,"o:tls",&factory) == -1) return -1;
+ DeeObject *factory = Dee_None;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:tls",&factory) != 0) return -1;
  return _DeeTls_InitWithFactory(self,factory);
 }
-static DeeObject *_deetls_tp_str(DeeTlsObject *self) {
+static DeeObject *DEE_CALL _deetls_tp_str(DeeTlsObject *self) {
  return DeeString_Newf("<tls: %O>",_DeeTls_LazyGet((DeeObject *)self));
 }
-static DeeObject *_deetls_tp_repr(DeeTlsObject *self) {
+static DeeObject *DEE_CALL _deetls_tp_repr(DeeTlsObject *self) {
  return DeeString_Newf("<tls: %k -> %O>",
                        DeeTls_FACTORY(self),
                        _DeeTls_LazyGet((DeeObject *)self));
@@ -523,10 +523,10 @@ DEE_VISIT_PROC(_deetls_tp_visit,DeeTlsObject *self) {
  Dee_VISIT(self->tls_factory);
  Dee_XVISIT(_DeeTls_LazyGet((DeeObject *)self));
 }
-static DeeObject *_deetls_tp_not(DeeTlsObject *self) {
+static DeeObject *DEE_CALL _deetls_tp_not(DeeTlsObject *self) {
  DeeReturn_Bool(!DeeTls_Initialized((DeeObject *)self));
 }
-static int _deetls_tp_copy_assign(DeeTlsObject *self, DeeTlsObject *right) {
+static int DEE_CALL _deetls_tp_copy_assign(DeeTlsObject *self, DeeTlsObject *right) {
  DEE_ASSERT(DeeObject_Check(self) && DeeTls_Check(self));
  DEE_ASSERT(DeeObject_Check(right) && DeeTls_Check(right));
  if (self != right) {
@@ -548,19 +548,24 @@ static int _deetls_tp_copy_assign(DeeTlsObject *self, DeeTlsObject *right) {
 
 
 #ifndef DEE_WITHOUT_THREADS
-static DeeObject *_deetls_tp_cmp_lo(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) < DeeTls_HANDLE(rhs)); }
-static DeeObject *_deetls_tp_cmp_le(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) <= DeeTls_HANDLE(rhs)); }
-static DeeObject *_deetls_tp_cmp_eq(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) == DeeTls_HANDLE(rhs)); }
-static DeeObject *_deetls_tp_cmp_ne(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) != DeeTls_HANDLE(rhs)); }
-static DeeObject *_deetls_tp_cmp_gr(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) > DeeTls_HANDLE(rhs)); }
-static DeeObject *_deetls_tp_cmp_ge(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) >= DeeTls_HANDLE(rhs)); }
+static int DEE_CALL _deetls_tp_hash(
+ DeeTlsObject *self, Dee_hash_t start, Dee_hash_t *result) {
+ *result = DeeHash_Integer(Dee_size_t,start,DeeTls_HANDLE(self));
+ return 0;
+}
+static DeeObject *DEE_CALL _deetls_tp_cmp_lo(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) < DeeTls_HANDLE(rhs)); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_le(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) <= DeeTls_HANDLE(rhs)); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_eq(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) == DeeTls_HANDLE(rhs)); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_ne(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) != DeeTls_HANDLE(rhs)); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_gr(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) > DeeTls_HANDLE(rhs)); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_ge(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(DeeTls_HANDLE(lhs) >= DeeTls_HANDLE(rhs)); }
 #else /* !DEE_WITHOUT_THREADS */
-static DeeObject *_deetls_tp_cmp_lo(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs < rhs); }
-static DeeObject *_deetls_tp_cmp_le(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs <= rhs); }
-static DeeObject *_deetls_tp_cmp_eq(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs == rhs); }
-static DeeObject *_deetls_tp_cmp_ne(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs != rhs); }
-static DeeObject *_deetls_tp_cmp_gr(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs > rhs); }
-static DeeObject *_deetls_tp_cmp_ge(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs >= rhs); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_lo(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs < rhs); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_le(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs <= rhs); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_eq(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs == rhs); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_ne(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs != rhs); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_gr(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs > rhs); }
+static DeeObject *DEE_CALL _deetls_tp_cmp_ge(DeeTlsObject *lhs, DeeTlsObject *rhs) { if (DeeObject_InplaceGetInstance(&rhs,&DeeTls_Type) != 0) return NULL; DeeReturn_Bool(lhs >= rhs); }
 #endif /* DEE_WITHOUT_THREADS */
 
 
@@ -688,7 +693,8 @@ DeeTypeObject DeeTls_Type = {
   member(&DeeTls_Initialized),
   null,null,null,null,null,null,null,null,null,null,
   null,null,null,null,null,null,null,null,null,null,
-  null,null,null,null,null,null,null,null,null,null),
+  null,null,null,null,null,null,null,null,null,
+  member(&_deetls_tp_hash)),
  DEE_TYPE_OBJECT_COMPARE_v100(
   member(&_deetls_tp_cmp_lo),member(&_deetls_tp_cmp_le),
   member(&_deetls_tp_cmp_eq),member(&_deetls_tp_cmp_ne),

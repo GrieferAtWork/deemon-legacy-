@@ -44,7 +44,7 @@
 #include <deemon/mp/thread.h>
 #include <deemon/none.h>
 #include <deemon/object.h>
-#include <deemon/optional/hash.h>
+#include <deemon/optional/object_hash.h>
 #include <deemon/runtime/function.h>
 #include <deemon/structured.h>
 #include <deemon/tuple.h>

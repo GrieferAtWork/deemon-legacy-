@@ -40,20 +40,20 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 #endif
 
 #ifdef DEE_LIMITED_API
-extern int _deegenericsameob_tp_hash(DeeObject *self, Dee_hash_t start, Dee_hash_t *result);
-extern DeeObject *_deegenericsameob_tp_cmp_lo(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericsameob_tp_cmp_le(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericsameob_tp_cmp_eq(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericsameob_tp_cmp_ne(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericsameob_tp_cmp_gr(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericsameob_tp_cmp_ge(DeeObject *lhs, DeeObject *rhs);
-extern int _deegenericmemcmp_tp_hash(DeeObject *self, Dee_hash_t start, Dee_hash_t *result);
-extern DeeObject *_deegenericmemcmp_tp_cmp_lo(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericmemcmp_tp_cmp_le(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericmemcmp_tp_cmp_eq(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericmemcmp_tp_cmp_ne(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericmemcmp_tp_cmp_gr(DeeObject *lhs, DeeObject *rhs);
-extern DeeObject *_deegenericmemcmp_tp_cmp_ge(DeeObject *lhs, DeeObject *rhs);
+extern int DEE_CALL _deegenericsameob_tp_hash(DeeObject *self, Dee_hash_t start, Dee_hash_t *result);
+extern DeeObject *DEE_CALL _deegenericsameob_tp_cmp_lo(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericsameob_tp_cmp_le(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericsameob_tp_cmp_eq(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericsameob_tp_cmp_ne(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericsameob_tp_cmp_gr(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericsameob_tp_cmp_ge(DeeObject *lhs, DeeObject *rhs);
+extern int DEE_CALL _deegenericmemcmp_tp_hash(DeeObject *self, Dee_hash_t start, Dee_hash_t *result);
+extern DeeObject *DEE_CALL _deegenericmemcmp_tp_cmp_lo(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericmemcmp_tp_cmp_le(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericmemcmp_tp_cmp_eq(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericmemcmp_tp_cmp_ne(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericmemcmp_tp_cmp_gr(DeeObject *lhs, DeeObject *rhs);
+extern DeeObject *DEE_CALL _deegenericmemcmp_tp_cmp_ge(DeeObject *lhs, DeeObject *rhs);
 #endif
 
 #ifdef DEE_LIMITED_DEX

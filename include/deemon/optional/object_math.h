@@ -34,10 +34,6 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 #undef DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 #endif
-#ifdef DEE_PRIVATE_DECL_DEE_HASH_T
-DEE_PRIVATE_DECL_DEE_HASH_T
-#undef DEE_PRIVATE_DECL_DEE_HASH_T
-#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Generic object math interface
@@ -72,7 +68,6 @@ DEE_PRIVATE_DECL_DEE_HASH_T
 #define /* DEE_A_EXEC DeeObject * */DeeObject_InplaceOr(lhs,rhs) DeeObject_TInplaceOr(Dee_TYPE(lhs),lhs,rhs)
 #define /* DEE_A_EXEC DeeObject * */DeeObject_InplaceXor(lhs,rhs) DeeObject_TInplaceXor(Dee_TYPE(lhs),lhs,rhs)
 #define /* DEE_A_EXEC DeeObject * */DeeObject_InplacePow(lhs,rhs) DeeObject_TInplacePow(Dee_TYPE(lhs),lhs,rhs)
-#define /* DEE_A_EXEC int */DeeObject_HashEx(ob,start,result) DeeObject_THashEx(Dee_TYPE(ob),ob,start,result)
 
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_TBool(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_TNot(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self) DEE_ATTRIBUTE_NONNULL((1,2));
@@ -105,7 +100,6 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_TInplaceAnd
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_TInplaceOr(DEE_A_IN DeeTypeObject const *tp_lhs, DEE_A_INOUT DeeObject *lhs, DEE_A_INOUT DeeObject *rhs) DEE_ATTRIBUTE_NONNULL((1,2,3));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_TInplaceXor(DEE_A_IN DeeTypeObject const *tp_lhs, DEE_A_INOUT DeeObject *lhs, DEE_A_INOUT DeeObject *rhs) DEE_ATTRIBUTE_NONNULL((1,2,3));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_TInplacePow(DEE_A_IN DeeTypeObject const *tp_lhs, DEE_A_INOUT DeeObject *lhs, DEE_A_INOUT DeeObject *rhs) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_THashEx(DEE_A_IN DeeTypeObject const *tp_self, DEE_A_INOUT DeeObject *self, DEE_A_IN Dee_hash_t start, DEE_A_OUT Dee_hash_t *result) DEE_ATTRIBUTE_NONNULL((1,2,4));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PBool(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_PNot(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeObject_PInv(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr) DEE_ATTRIBUTE_NONNULL((1,2));
@@ -137,9 +131,6 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PInplaceAnd(DEE_A_I
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PInplaceOr(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *lhs_tp_self, DEE_A_INOUT void *lhs_base_addr, DEE_A_INOUT DeeObject *rhs) DEE_ATTRIBUTE_NONNULL((1,2,3));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PInplaceXor(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *lhs_tp_self, DEE_A_INOUT void *lhs_base_addr, DEE_A_INOUT DeeObject *rhs) DEE_ATTRIBUTE_NONNULL((1,2,3));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PInplacePow(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *lhs_tp_self, DEE_A_INOUT void *lhs_base_addr, DEE_A_INOUT DeeObject *rhs) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeObject_PHash(DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *tp_self, DEE_A_INOUT void *base_addr, DEE_A_IN Dee_hash_t start, DEE_A_OUT Dee_hash_t *result) DEE_ATTRIBUTE_NONNULL((1,2,4));
-
-#define DeeObject_HashInplace(ob,hash) DeeObject_HashEx(ob,hash,&(hash))
 
 //////////////////////////////////////////////////////////////////////////
 // These versions of the inplace functions are

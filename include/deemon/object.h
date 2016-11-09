@@ -101,6 +101,7 @@ DEE_DECL_END
 #include <deemon/optional/object_cast.h>
 #include <deemon/optional/object_compare.h>
 #include <deemon/optional/object_copy.h>
+#include <deemon/optional/object_hash.h>
 #include <deemon/optional/object_math.h>
 #include <deemon/optional/object_sequence.h>
 #include <deemon/optional/object_str.h>

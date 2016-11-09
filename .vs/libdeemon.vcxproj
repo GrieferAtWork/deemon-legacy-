@@ -290,7 +290,6 @@
     <ClInclude Include="..\include\deemon\optional\detail\object_callattr.h" />
     <ClInclude Include="..\include\deemon\optional\enum_attributes.h" />
     <ClInclude Include="..\include\deemon\optional\float_decl.h" />
-    <ClInclude Include="..\include\deemon\optional\hash.h" />
     <ClInclude Include="..\include\deemon\optional\hashmap.h" />
     <ClInclude Include="..\include\deemon\optional\hashset.h" />
     <ClInclude Include="..\include\deemon\optional\integer_decl.h" />
@@ -303,6 +302,7 @@
     <ClInclude Include="..\include\deemon\optional\object_copy.h" />
     <ClInclude Include="..\include\deemon\optional\object_decl.h" />
     <ClInclude Include="..\include\deemon\optional\object_doc.h" />
+    <ClInclude Include="..\include\deemon\optional\object_hash.h" />
     <ClInclude Include="..\include\deemon\optional\object_io.h" />
     <ClInclude Include="..\include\deemon\optional\object_malloc.h" />
     <ClInclude Include="..\include\deemon\optional\object_math.h" />

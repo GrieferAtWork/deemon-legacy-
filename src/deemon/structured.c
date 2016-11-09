@@ -38,7 +38,7 @@
 #include <deemon/memberdef.h>
 #include <deemon/mp/thread.h>
 #include <deemon/none.h>
-#include <deemon/optional/hash.h>
+#include <deemon/optional/object_hash.h>
 #include <deemon/optional/object_pool.h>
 #include <deemon/optional/object_visit.h>
 #include <deemon/optional/std/string.h>

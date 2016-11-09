@@ -39,7 +39,7 @@
 #include <deemon/optional/enum_attributes.h>
 #include <deemon/optional/atomic_mutex.h>
 #include <deemon/optional/hashmap.h>
-#include <deemon/optional/hash.h>
+#include <deemon/optional/object_hash.h>
 #include <deemon/optional/object_malloc.h>
 #include <deemon/optional/object_visit.h>
 #include <deemon/type.h>

@@ -33,7 +33,7 @@
 #include <deemon/gc.h>
 #include <deemon/optional/object_malloc.h>
 #include <deemon/optional/object_visit.h>
-#include <deemon/optional/hash.h>
+#include <deemon/optional/object_hash.h>
 #include <deemon/optional/type_util.h>
 #include <deemon/generic_vtable.h>
 #include <deemon/integer.h>

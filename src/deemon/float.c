@@ -33,7 +33,7 @@
 #include <deemon/structured.h>
 #include <deemon/marshal_data.h>
 #include <deemon/optional/object_pool.h>
-#include <deemon/optional/hash.h>
+#include <deemon/optional/object_hash.h>
 #include DEE_INCLUDE_MEMORY_API()
 
 #ifndef __INTELLISENSE__
