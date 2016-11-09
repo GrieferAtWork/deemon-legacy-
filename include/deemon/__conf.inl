@@ -246,8 +246,8 @@ DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AssertionFailedf(char const *exp
 #endif /* !DEE_BUILTIN_BREAKPOINT */
 DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination_d(char const *expr_, char const *file_, int line_);
 DEE_DECL_END
-# define DEE_ABNORMAL_TERMINATION()                 _Dee_AbnormalTermination_d(NULL,__FILE__,__LINE__)
-# define DEE_ABNORMAL_TERMINATION_IF(expr) (!(expr)?_Dee_AbnormalTermination_d(#expr,__FILE__,__LINE__):(void)0)
+# define DEE_ABNORMAL_TERMINATION()                  _Dee_AbnormalTermination_d(NULL,__FILE__,__LINE__)
+# define DEE_ABNORMAL_TERMINATION_IF(expr) (!!(expr)?_Dee_AbnormalTermination_d(#expr,__FILE__,__LINE__):(void)0)
 #ifdef DEE_BUILTIN_BREAKPOINT
 # define DEE_ASSERT(expr)          (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?(_Dee_AssertionFailed(#expr,__FILE__,__LINE__),DEE_BUILTIN_BREAKPOINT()):(void)0)
 # define DEE_ASSERTF(expr,...)     (DEE_UNLIKELY(!(_DeeFlag_NoAssert||(expr)))?(_Dee_AssertionFailedf(#expr,__FILE__,__LINE__,__VA_ARGS__),DEE_BUILTIN_BREAKPOINT()):(void)0)
@@ -268,8 +268,8 @@ DEE_DECL_END
 # define DEE_LDEBUG                 _Dee_DebugOut
 #else /* DEE_DEBUG */
 DEE_DECL_BEGIN DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTermination(void); DEE_DECL_END
-# define DEE_ABNORMAL_TERMINATION                   _Dee_AbnormalTermination
-# define DEE_ABNORMAL_TERMINATION_IF(expr) (!(expr)?_Dee_AbnormalTermination():(void)0)
+# define DEE_ABNORMAL_TERMINATION                    _Dee_AbnormalTermination
+# define DEE_ABNORMAL_TERMINATION_IF(expr) (!!(expr)?_Dee_AbnormalTermination():(void)0)
 # define DEE_ASSERT				             DEE_COMPILER_ASSUME
 # define DEE_ASSERTF(expr,...)				  DEE_COMPILER_ASSUME(expr)
 #if defined(_MSC_VER)

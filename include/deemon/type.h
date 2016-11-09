@@ -33,6 +33,10 @@
 #if DEE_DEPRECATED_API_VERSION(100,101,103)
 #include <deemon/optional/type_slots.h>
 #endif
+#ifdef GUARD_DEEMON_OBJECT_H
+#include <deemon/optional/type_flags.h>
+#include <deemon/optional/type_slots.h>
+#endif
 
 DEE_DECL_BEGIN
 

@@ -121,5 +121,9 @@ DEE_DECL_END
 #include <deemon/optional/cfunction_decl.h>
 #endif
 #endif
+#ifdef GUARD_DEEMON_TYPE_H
+#include <deemon/optional/type_flags.h>
+#include <deemon/optional/type_slots.h>
+#endif
 
 #endif /* !GUARD_DEEMON_OBJECT_H */

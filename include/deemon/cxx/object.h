@@ -23,12 +23,13 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/cxx/__features.inl>
+#include <deemon/error.h>
+#include <deemon/none.h>
 #include <deemon/object.h>
 #include <deemon/sequence.h>
-#include <deemon/none.h>
-#include <deemon/error.h>
 #include <deemon/string.h>
 #include <deemon/traceback.h>
+#include <deemon/type.h>
 
 #if DEE_HAVE_CXX_API
 #include DEE_INCLUDE_MEMORY_API_DISABLE()

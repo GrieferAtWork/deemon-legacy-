@@ -428,6 +428,12 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
    break;
   }
 
+  // Clear 'sys.argv'
+  DeeList_ClearAndShrink(Dee_Argv);
+
+  // NOTE: If the gc-collect below doesn't do anything, no user-level
+  //       code should be allowed to execute after this point.
+
 #ifndef DEE_WITHOUT_THREADS
   // Finalize the thread api (and wait for any threads still running)
   // >> This has to be done first, so we don't have other threads
@@ -440,9 +446,6 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
   
   // Cleanup marshal types
   _DeeMarshal_ClearRegisteredTypes();
-
-  // Clear 'sys.argv'
-  DeeList_Clear(Dee_Argv);
 
   // Clear free exceptions after they were raised
   DeeError_ClearFreeExceptions();

@@ -124,9 +124,9 @@
 int main(int argc, char *argv[]) {
 
  int result;
- if (Dee_Initialize() != 0) return EXIT_FAILURE;
+ if DEE_UNLIKELY(Dee_Initialize() != 0) return EXIT_FAILURE;
 
- if (Dee_Main(argc,argv,&result) != 0) {
+ if DEE_UNLIKELY(Dee_Main(argc,argv,&result) != 0) {
   while (!DeeError_Print((char const *)0,1));
   result = EXIT_FAILURE;
  }
