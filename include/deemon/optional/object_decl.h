@@ -34,21 +34,16 @@ DEE_PRIVATE_DECL_DEE_REFCNT_TYPES
 #undef DEE_PRIVATE_DECL_DEE_REFCNT_TYPES
 #endif
 
-#define DEE_OBJECT_HEAD_INIT(ob_type)                     1,1,ob_type
-#define DEE_OBJECT_HEAD_INIT_REF(ob_type,ref)             ref,1,ob_type
-#define DEE_VAR_OBJECT_HEAD_INIT(ob_type,ob_size)         1,1,ob_type,ob_size
-#define DEE_VAR_OBJECT_HEAD_INIT_REF(ob_type,ref,ob_size) ref,1,ob_type,ob_size
+#define DEE_OBJECT_HEAD_INIT(ob_type)         1,1,ob_type
+#define DEE_OBJECT_HEAD_INIT_REF(ob_type,ref) ref,1,ob_type
 
+#define DEE_OBJECT_HEAD \
+ DEE_OBJECT_HEAD_EX(struct DeeTypeObject)
 #define DEE_OBJECT_HEAD_EX(tyT) \
  Dee_refcnt_t      __ob_refcnt;\
  Dee_weakcnt_t     __ob_weakcnt;\
  /*DEE_A_REF*/tyT *__ob_type;
-#define DEE_VAR_OBJECT_HEAD_EX(tyT) \
- DEE_OBJECT_HEAD_EX(tyT)\
- Dee_size_t __ob_size; /*< [const] Type-defined size value. */
 
-#define DEE_OBJECT_HEAD     DEE_OBJECT_HEAD_EX(DeeTypeObject)
-#define DEE_VAR_OBJECT_HEAD DEE_VAR_OBJECT_HEAD_EX(DeeTypeObject)
 
 //////////////////////////////////////////////////////////////////////////
 // Generic object structures

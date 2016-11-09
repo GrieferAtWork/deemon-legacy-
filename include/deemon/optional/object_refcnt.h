@@ -111,7 +111,7 @@ _DeeObject_IsReallyUnique(DEE_A_IN struct DeeObject const *ob) {
   //          the object is holding a reference to it.
  } while DEE_UNLIKELY(
      !DeeAtomicN_CompareExchangeWeak(DEE_TYPES_SIZEOF_REFCNT,
-      ob->__ob_refcnt,refcnt,refcnt,memory_order_seq_cst,memory_order_seq_cst)
+      ob->__ob_refcnt, refcnt, refcnt, memory_order_seq_cst,memory_order_seq_cst)
   || !DeeAtomicN_CompareExchangeWeak(DEE_TYPES_SIZEOF_WEAKCNT,
       ob->__ob_weakcnt,weakcnt,weakcnt,memory_order_seq_cst,memory_order_seq_cst));
  return 1;

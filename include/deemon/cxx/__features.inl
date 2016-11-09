@@ -64,11 +64,21 @@ public:
    (__has_feature(cxx_noexcept) || \
    (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GNUC__ * 10 + __GNUC_MINOR__ >= 46) || \
    (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 190023026)))
-# define DEE_CXX11_NOEXCEPT noexcept
+# define DEE_CXX11_NOEXCEPT          noexcept
+# define DEE_CXX11_NOEXCEPT_IS(expr) noexcept(expr)
+# define DEE_CXX11_NOEXCEPT_IF(expr) noexcept(noexcept(expr))
 #elif defined(__cplusplus) && (!defined(_HAS_EXCEPTIONS) || _HAS_EXCEPTIONS)
-# define DEE_CXX11_NOEXCEPT throw()
+# define DEE_CXX11_NOEXCEPT          throw()
+# define DEE_CXX11_NOEXCEPT_IS(expr) false
+# define DEE_CXX11_NOEXCEPT_IF(expr) /* nothing */
 #else
-# define DEE_CXX11_NOEXCEPT /* nothing */
+# define DEE_CXX11_NOEXCEPT          /* nothing */
+# define DEE_CXX11_NOEXCEPT_IF(expr) /* nothing */
+#ifdef __cplusplus
+# define DEE_CXX11_NOEXCEPT_IS(expr) false
+#else
+# define DEE_CXX11_NOEXCEPT_IS(expr) 1 /* C doesn't have exceptions... */
+#endif
 #endif
 #endif /* !DEE_CXX11_NOEXCEPT */
 

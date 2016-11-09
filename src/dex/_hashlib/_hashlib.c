@@ -34,6 +34,7 @@
 #include <deemon/list.h>
 #include <deemon/none.h>
 #include <deemon/memberdef.h>
+#include <deemon/generic_vtable.h>
 #include <deemon/integer.h>
 #include <deemon/structured.h>
 #include <deemon/type.h>
@@ -1356,6 +1357,18 @@ static int DEE_CALL _deecrcalgorithm_tp_any_ctor(
 }
 
 
+#if 1
+static DeeCRCAlgorithmIteratorObject *DEE_CALL _deecrcalgorithmclass_enum(
+ DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeCRCAlgorithmIteratorObject *result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":enum") != 0) return NULL;
+ if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeCRCAlgorithmIteratorObject)) == NULL) return NULL;
+ DeeObject_INIT(result,&DeeCRCAlgorithmIterator_Type);
+ result->cai_pos = _crc_algorithms;
+ result->cai_end = _crc_algorithms+(sizeof(_crc_algorithms)/sizeof(*_crc_algorithms));
+ return result;
+}
+#else
 static int DEE_CALL _deecrcalgorithm_enum_callback(
  DEE_A_IN struct DeeCRCAlgorithm const *algo,
  DEE_A_IN Dee_uint32_t DEE_UNUSED(flags),
@@ -1372,12 +1385,13 @@ static DeeObject *DEE_CALL _deecrcalgorithmclass_enum(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":enum") != 0) return NULL;
- if DEE_UNLIKELY((result = DeeList_New()) == NULL) return result;
+ if DEE_UNLIKELY((result = DeeList_New()) == NULL) return NULL;
  if DEE_UNLIKELY(DeeCRCAlgorithm_Enum(DEE_CRCALGORITHM_ENUM_FLAG_NONE,
   (DeeEnumCrcAlgorithmsFunc)&_deecrcalgorithm_enum_callback,
   result) != 0) Dee_CLEAR(result);
  return result;
 }
+#endif
 static DeeObject *DEE_CALL _deecrcalgorithm_tp_str(DeeCRCAlgorithmObject *self) {
  return DeeString_New(self->ca_algo->crc_name);
 }
@@ -1532,6 +1546,76 @@ DeeTypeObject DeeCRCAlgorithm_Type = {
   member(_deecrcalgorithm_tp_class_methods)),
  DEE_TYPE_OBJECT_FOOTER_v100
 };
+
+
+static int _deecrcalgorithmiterator_tp_copy_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self),
+ DeeCRCAlgorithmIteratorObject *self,
+ DeeCRCAlgorithmIteratorObject *right) {
+ self->cai_pos = (struct DeeCRCAlgorithm const *const *)
+  DeeAtomicPtr_Load(right->cai_pos,memory_order_seq_cst);
+ self->cai_end = right->cai_end;
+ return 0;
+}
+static int _deecrcalgorithmiterator_tp_seq_iter_next(
+ DeeCRCAlgorithmIteratorObject *self, DeeCRCAlgorithmObject **result) {
+ struct DeeCRCAlgorithm const *const *iterpos;
+ iterpos = (struct DeeCRCAlgorithm const *const *)DeeAtomicPtr_FetchAdd(
+  self->cai_pos,sizeof(struct DeeCRCAlgorithm const *),memory_order_seq_cst);
+ if (iterpos >= self->cai_end) {
+  DeeAtomicPtr_SubFetch(self->cai_pos,
+                        sizeof(struct DeeCRCAlgorithm const *),
+                        memory_order_seq_cst);
+  return 1;
+ }
+ if DEE_UNLIKELY((*result = DeeObject_MALLOC(DeeCRCAlgorithmObject)) == NULL) return -1;
+ DeeObject_INIT(*result,&DeeCRCAlgorithm_Type);
+ (*result)->ca_algo = *iterpos;
+ return 0;
+}
+
+static struct DeeMethodDef const _deecrcalgorithmiterator_tp_methods[] = {
+ DEE_METHODDEF_CONST_v100("at",member(&_deegenericiterable_at),NULL),
+ DEE_METHODDEF_CONST_v100("back",member(&_deegenericiterable_back),NULL),
+ DEE_METHODDEF_CONST_v100("contains",member(&_deegenericiterable_contains),NULL),
+ DEE_METHODDEF_CONST_v100("count",member(&_deegenericiterable_count),NULL),
+ DEE_METHODDEF_CONST_v100("empty",member(&_deegenericiterable_empty),NULL),
+ DEE_METHODDEF_CONST_v100("find",member(&_deegenericiterable_find),NULL),
+ DEE_METHODDEF_CONST_v100("front",member(&_deegenericiterable_front),NULL),
+ DEE_METHODDEF_CONST_v100("index",member(&_deegenericiterable_index),NULL),
+ DEE_METHODDEF_CONST_v100("locate",member(&_deegenericiterable_locate),NULL),
+ DEE_METHODDEF_CONST_v100("locate_all",member(&_deegenericiterable_locate_all),NULL),
+ DEE_METHODDEF_CONST_v100("non_empty",member(&_deegenericiterable_non_empty),NULL),
+ DEE_METHODDEF_CONST_v100("reversed",member(&_deegenericiterable_reversed),NULL),
+ DEE_METHODDEF_CONST_v100("rfind",member(&_deegenericiterable_rfind),NULL),
+ DEE_METHODDEF_CONST_v100("rindex",member(&_deegenericiterable_rindex),NULL),
+ DEE_METHODDEF_CONST_v100("rlocate",member(&_deegenericiterable_rlocate),NULL),
+ DEE_METHODDEF_CONST_v100("segments",member(&_deegenericiterable_segments),NULL),
+ DEE_METHODDEF_CONST_v100("sorted",member(&_deegenericiterable_sorted),NULL),
+ DEE_METHODDEF_CONST_v100("transform",member(&_deegenericiterable_transform),NULL),
+ DEE_METHODDEF_END_v100
+};
+DeeTypeObject DeeCRCAlgorithmIterator_Type = {
+ DEE_TYPE_OBJECT_HEAD_v100(member("crc_algorithm.enum.iterator"),null,null,null),
+ DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeCRCAlgorithmIteratorObject),null,
+  null,member(&_deecrcalgorithmiterator_tp_copy_ctor),null,null),
+ DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,null),
+ DEE_TYPE_OBJECT_ASSIGN_v100(null,null,null),
+ DEE_TYPE_OBJECT_CAST_v101(null,null,null,null,null),
+ DEE_TYPE_OBJECT_OBJECT_v100(null,null),
+ DEE_TYPE_OBJECT_MATH_v101(
+  null,null,null,null,null,null,null,null,null,null,null,
+  null,null,null,null,null,null,null,null,null,null,null,
+  null,null,null,null,null,null,null,null,null,null),
+ DEE_TYPE_OBJECT_COMPARE_v100(null,null,null,null,null,null),
+ DEE_TYPE_OBJECT_SEQ_v101(null,null,null,null,null,null,null,null,
+  member(&DeeObject_Copy),member(&_deecrcalgorithmiterator_tp_seq_iter_next)),
+ DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,null,null,
+  member(_deecrcalgorithmiterator_tp_methods),null,null,null),
+ DEE_TYPE_OBJECT_FOOTER_v100
+};
+
+
 DeeTypeObject DeeCRCHasher_Type = {
  DEE_TYPE_OBJECT_HEAD_v100(member("crc_hasher"),member(
   "Helper object for creating hashes of raw data\n"

@@ -143,8 +143,17 @@ struct DeeCRCAlgorithmObject {
 #define DeeCRCAlgorithm_Algo(ob) ((DeeCRCAlgorithmObject *)Dee_REQUIRES_POINTER(ob))->ca_algo
 
 extern DeeTypeObject DeeCRCAlgorithm_Type;
-#define DeeCRCAlgorithm_Check(ob)      DeeObject_InstanceOf(ob,&DeeCRCAlgorithm_Type)
-#define DeeCRCAlgorithm_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeCRCAlgorithm_Type)
+#define DeeCRCAlgorithm_Check(ob)              DeeObject_InstanceOf(ob,&DeeCRCAlgorithm_Type)
+#define DeeCRCAlgorithm_CheckExact(ob)         DeeObject_InstanceOfExact(ob,&DeeCRCAlgorithm_Type)
+
+struct DeeCRCAlgorithmIteratorObject {
+ DEE_OBJECT_HEAD
+ /*atomic*/struct DeeCRCAlgorithm const *const *cai_pos; /*< [1..1] Current iterator position. */
+           struct DeeCRCAlgorithm const *const *cai_end; /*< [1..1][const] Iterator end position. */
+};
+extern DeeTypeObject DeeCRCAlgorithmIterator_Type;
+#define DeeCRCAlgorithmIterator_Check(ob)      DeeObject_InstanceOf(ob,&DeeCRCAlgorithmIterator_Type)
+#define DeeCRCAlgorithmIterator_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeCRCAlgorithmIterator_Type)
 
 
 DEE_OBJECT_DEF(DeeCRCHasherObject);
