@@ -179,8 +179,8 @@
 #define OP_LOAD_ARG               (Dee_uint8_t)(OPFLAG_ARG|0x08) // push args slot unsigned(ARG) onto the stack
 #define OP_STORE_LOC              (Dee_uint8_t)(OPFLAG_ARG|0x09) // store top in local slot unsigned(ARG) (don't pop it though)
 #define OP_STORE_LOC_POP          (Dee_uint8_t)(OPFLAG_ARG|0x0A) // store top in local slot unsigned(ARG) (and pop it)
-#define OP_STORE_ARG              (Dee_uint8_t)(OPFLAG_ARG|0x0B) // store top in args slot unsigned(ARG) (don't pop it though)
-#define OP_STORE_ARG_POP          (Dee_uint8_t)(OPFLAG_ARG|0x0C) // store top in args slot unsigned(ARG) (and pop it)
+//UNUSED:                         (Dee_uint8_t)(OPFLAG_ARG|0x0B) // Formerly: OP_STORE_ARG
+//UNUSED:                         (Dee_uint8_t)(OPFLAG_ARG|0x0C) // Formerly: OP_STORE_ARG_POP
 #define OP_STORE_CST              (Dee_uint8_t)(OPFLAG_ARG|0x0D) // store top in const slot unsigned(ARG) (don't pop it though)
 #define OP_STORE_CST_POP          (Dee_uint8_t)(OPFLAG_ARG|0x0E) // store top in const slot unsigned(ARG) (and pop it)
 #define OP_DEL_LOCAL              (Dee_uint8_t)(OPFLAG_ARG|0x0F) // delete local slot unsigned(ARG)
@@ -371,6 +371,8 @@
 
 #ifdef DEE_OUTDATED_OPCODES
 #if DEE_OUTDATED_OPCODES >= 101
+#define v101_OP_STORE_ARG             (Dee_uint8_t)(OPFLAG_ARG|0x0B) /*< Converted to locals now. */
+#define v101_OP_STORE_ARG_POP         (Dee_uint8_t)(OPFLAG_ARG|0x0C) /*< Converted to locals now. */
 #define v101_OP_DEBUG_FILE            (Dee_uint8_t)(OPFLAG_ARG|0x24) /*< Uses a different system now. */
 #endif
 #if DEE_OUTDATED_OPCODES >= 100

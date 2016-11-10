@@ -1283,30 +1283,6 @@ EXTERN_END;
   }
 #endif
 
-#ifdef OP_STORE_ARG
-  TARGET(OP_STORE_ARG) {
-   RT_DEBUG_CHECK_STACK(1);
-   rt_arg = RT_READ_ARG();
-   RT_DEBUG_CHECK_VALID_ARG(rt_arg);
-   rt_temp = frame.f_argv[rt_arg];
-   Dee_INCREF(frame.f_argv[rt_arg] = RT_TOP);
-   Dee_DECREF(rt_temp); // Always assigned
-   DISPATCH();
-  }
-#endif
-
-#ifdef OP_STORE_ARG_POP
-  TARGET(OP_STORE_ARG_POP) {
-   RT_DEBUG_CHECK_STACK(1);
-   rt_arg = RT_READ_ARG();
-   RT_DEBUG_CHECK_VALID_ARG(rt_arg);
-   Dee_DECREF(frame.f_argv[rt_arg]); // Always assigned
-   Dee_INHERIT_REF(frame.f_argv[rt_arg],RT_TOP);
-   RT_POP_1();
-   DISPATCH();
-  }
-#endif
-
 #ifdef OP_STORE_CST
   TARGET(OP_STORE_CST) {
    RT_DEBUG_CHECK_STACK(1);
@@ -2750,29 +2726,6 @@ EXTERN_END;
      RT_DEBUG_CHECK_VALID_LOCAL32(rt_arg32);
      rt_temp = frame.f_localv[rt_arg32];
      Dee_INHERIT_REF(frame.f_localv[rt_arg32],RT_TOP);
-     Dee_XDECREF(rt_temp);
-     RT_POP_1();
-     break;
-#endif
-
-#ifdef OP_STORE_ARG
-    case OP_STORE_ARG:
-     RT_DEBUG_CHECK_STACK(1);
-     rt_arg32 = RT_READ_ARG32();
-     RT_DEBUG_CHECK_VALID_ARG32(rt_arg32);
-     rt_temp = frame.f_argv[rt_arg32];
-     Dee_INCREF(frame.f_argv[rt_arg32] = RT_TOP);
-     Dee_XDECREF(rt_temp);
-     break;
-#endif
-
-#ifdef OP_STORE_ARG_POP
-    case OP_STORE_ARG_POP:
-     RT_DEBUG_CHECK_STACK(1);
-     rt_arg32 = RT_READ_ARG32();
-     RT_DEBUG_CHECK_VALID_ARG32(rt_arg32);
-     rt_temp = frame.f_argv[rt_arg32];
-     Dee_INHERIT_REF(frame.f_argv[rt_arg32],RT_TOP);
      Dee_XDECREF(rt_temp);
      RT_POP_1();
      break;

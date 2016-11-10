@@ -75,9 +75,9 @@
 #define OPGROUP_LOAD_CST      (OP_LOAD_CST|OP_LOAD_CST_COPY|OP_LOAD_CST_DCOPY|OP_LOAD_CST_LOCKED)
 #define OPGROUP_LOAD_ARG      (OPGROUP_LOAD_CST|OP_LOAD_LOC|OP_LOAD_ARG|OP_LOAD_BLTIN)
 #define OPGROUP_STORE         (OP_STORE_RET)
-#define OPGROUP_STORE_ARG     (OP_STORE_LOC|OP_STORE_ARG|OP_STORE_CST)
+#define OPGROUP_STORE_ARG     (OP_STORE_LOC|OP_STORE_CST)
 #define OPGROUP_STORE_POP     (OP_STORE_RET_POP)
-#define OPGROUP_STORE_ARG_POP (OP_STORE_LOC_POP|OP_STORE_ARG_POP|OP_STORE_CST_POP)
+#define OPGROUP_STORE_ARG_POP (OP_STORE_LOC_POP|OP_STORE_CST_POP)
 
 //////////////////////////////////////////////////////////////////////////
 // Stack-effect opgroups
@@ -171,7 +171,6 @@ RULE({OP_RROT_N,$shift,OP_LROT_N,$shift} --> {});
 //////////////////////////////////////////////////////////////////////////
 // Optimize store + pop --> store_pop
 RULE({OP_STORE_LOC,$locid,OP_POP} --> {OP_STORE_LOC_POP,$locid});
-RULE({OP_STORE_ARG,$argid,OP_POP} --> {OP_STORE_ARG_POP,$argid});
 RULE({OP_STORE_CST,$cstid,OP_POP} --> {OP_STORE_CST_POP,$cstid});
 RULE({OP_STORE_RET,OP_POP} --> {OP_STORE_RET_POP});
 
@@ -190,18 +189,15 @@ RULE({OP_SET,$size,OP_CAST_SET} --> {OP_SET,$size});
 //////////////////////////////////////////////////////////////////////////
 // Optimize store_pop + load --> store
 RULE({OP_STORE_LOC_POP,$locid,OP_LOAD_LOC,$locid} --> {OP_STORE_LOC,$locid});
-RULE({OP_STORE_ARG_POP,$argid,OP_LOAD_ARG,$argid} --> {OP_STORE_ARG,$argid});
 RULE({OP_STORE_CST_POP,$cstid,OPGROUP_LOAD_CST,$cstid} --> {OP_STORE_CST,$cstid});
 RULE({OP_STORE_RET_POP,OP_LOAD_RET} --> {OP_STORE_RET});
 
 //////////////////////////////////////////////////////////////////////////
 // Optimize pop_store x + s+1 + load x  --> store x + s+1 + rot 2
 RULE({OP_STORE_LOC_POP,$locid,OPGROUP_SE_P1,OP_LOAD_LOC,$locid} --> {OP_STORE_LOC,$locid,*,OP_ROT_2});
-RULE({OP_STORE_ARG_POP,$locid,OPGROUP_SE_P1,OP_LOAD_ARG,$locid} --> {OP_STORE_ARG,$locid,*,OP_ROT_2});
 RULE({OP_STORE_CST_POP,$locid,OPGROUP_SE_P1,OPGROUP_LOAD_CST,$locid} --> {OP_STORE_CST,$locid,*,OP_ROT_2});
 RULE({OP_STORE_RET_POP,OPGROUP_SE_P1,OP_LOAD_RET} --> {OP_STORE_RET,*,OP_ROT_2});
 RULE({OP_STORE_LOC_POP,$locid,OPGROUP_SE_P1_ARG,$searg1,OP_LOAD_LOC,$locid} --> {OP_STORE_LOC,$locid,*,$searg1,OP_ROT_2});
-RULE({OP_STORE_ARG_POP,$locid,OPGROUP_SE_P1_ARG,$searg1,OP_LOAD_ARG,$locid} --> {OP_STORE_ARG,$locid,*,$searg1,OP_ROT_2});
 RULE({OP_STORE_CST_POP,$locid,OPGROUP_SE_P1_ARG,$searg1,OPGROUP_LOAD_CST,$locid} --> {OP_STORE_CST,$locid,*,$searg1,OP_ROT_2});
 RULE({OP_STORE_RET_POP,OPGROUP_SE_P1_ARG,$searg1,OP_LOAD_RET} --> {OP_STORE_RET,*,$searg1,OP_ROT_2});
 

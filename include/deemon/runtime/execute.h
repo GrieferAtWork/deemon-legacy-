@@ -56,7 +56,7 @@ DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeStackFrame {
  /*readonly*/struct DeeStackFrame   *f_prev;       /*< [0..1] Prev stack frame. */
  /*readonly*/struct DeeCodeObject   *f_code;       /*< [1..1] Code being executed in this frame. */
- /*readonly*/DeeObject             **f_argv;       /*< [1..1][0..f_argc] Vector of arguments (NOTE: Elements are read/write). */
+ /*readonly*/DeeObject       *const *f_argv;       /*< [1..1][0..f_argc] Vector of arguments (NOTE: Elements are read-only). */
 #ifdef DEE_DEBUG
  /*readonly*/Dee_size_t              f_argc;       /*< Actual amount of argument (Only available in debug builds; used in assertions). */
 #endif

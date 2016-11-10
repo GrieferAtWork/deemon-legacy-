@@ -57,6 +57,7 @@ DEE_A_RET_EXCEPT(-1) int DeeSAst_CompileStrongScopeRoot(
  DEE_A_INOUT DeeSAstObject *self, DEE_COMPILER_PARAMS) {
  DEE_ASSERT(DeeObject_Check(scope) && DeeScope_Check(scope));
  DEE_ASSERTF(DeeScope_IS_STRONG(scope),"DeeSAst_CompileStrongScopeRoot() expects a strong scope");
+ if DEE_UNLIKELY(DeeCodeWriter_EnterStrongScope(writer,scope,lexer,compiler_flags) != 0) return -1;
  if (self->ast_kind == DEE_SASTKIND_BLOCK) {
   if DEE_UNLIKELY(DeeSAst_CompileLabelEndpoints(&self->ast_common.ast_labels,
    self->ast_common.ast_token,DEE_COMPILER_ARGS) != 0) return -1;
@@ -66,7 +67,7 @@ DEE_A_RET_EXCEPT(-1) int DeeSAst_CompileStrongScopeRoot(
   if DEE_UNLIKELY(DeeSAst_Compile(self,DEE_COMPILER_ARGS) != 0) return -1;
  }
  // Finalize labels in the scope
- return DeeCodeWriter_FinalizeStrongScope(writer,scope,lexer,compiler_flags);
+ return DeeCodeWriter_LeaveStrongScope(writer,scope,lexer,compiler_flags);
 }
 
 DEE_A_RET_EXCEPT(-1) int DeeSAst_CompileBlockWithoutLocalCleanup(
@@ -145,7 +146,7 @@ no_debug:
    if DEE_UNLIKELY(DeeSAst_CompileBlockWithoutLocalCleanup(
     self->ast_block.b_astc,self->ast_block.b_astv,
     DEE_COMPILER_ARGS_SCOPE(self->ast_block.b_scope)) != 0) return -1;
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,self->ast_block.b_scope,lexer,compiler_flags) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_block.b_scope,lexer,compiler_flags) != 0) return -1;
   } break;
 
   case DEE_SASTKIND_RETURN: {
@@ -448,7 +449,7 @@ empty_print_data:
    if (self->ast_if.if_succ_block) {
     if DEE_UNLIKELY(DeeSAst_Compile(self->ast_if.if_succ_block,DEE_COMPILER_ARGS_SCOPE_EX(
      self->ast_if.if_succ_scope,compiler_flags)) != 0) return -1;
-    if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,self->ast_if.if_succ_scope,lexer,compiler_flags) != 0) return -1;
+    if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_if.if_succ_scope,lexer,compiler_flags) != 0) return -1;
    } else if (ret_used && DEE_UNLIKELY(DeeCodeWriter_PushNone(writer) != 0)) return -1;
 
    if (self->ast_if.if_fail_block || ret_used) {
@@ -461,7 +462,7 @@ empty_print_data:
     if (self->ast_if.if_fail_block) { // else branch exists
      if DEE_UNLIKELY(DeeSAst_Compile(self->ast_if.if_fail_block,DEE_COMPILER_ARGS_SCOPE_EX(
      self->ast_if.if_fail_scope,compiler_flags)) != 0) return -1;
-     if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,self->ast_if.if_fail_scope,lexer,compiler_flags) != 0) return -1;
+     if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_if.if_fail_scope,lexer,compiler_flags) != 0) return -1;
     } else {
      DEE_ASSERT(ret_used);
      // In case of a missing else branch and a requested return value,
@@ -477,7 +478,7 @@ empty_print_data:
      (Dee_size_t)(DeeCodeWriter_ADDR(writer)-succ_pos)) != 0) return -1;
    }
    // Cleanup the condition scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_if.if_cond_scope,lexer,compiler_flags) != 0) return -1;
   } break;
 
@@ -526,8 +527,8 @@ empty_print_data:
      DEE_COMPILER_FLAG_USED))) != 0) goto err_for;
    }
    // Cleanup the block scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,self->ast_for.f_scope,lexer,compiler_flags) != 0) return -1;
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,self->ast_for.f_head_cond_scope,lexer,compiler_flags) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_for.f_scope,lexer,compiler_flags) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_for.f_head_cond_scope,lexer,compiler_flags) != 0) return -1;
    // Jump back to 'cont'
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSSizeArg(writer,OP_JUMP,
     -(Dee_ssize_t)(DeeCodeWriter_ADDR(writer)-for_cond_pos)) != 0) {
@@ -542,7 +543,7 @@ err_for: DeeCodeWriter_FAIL_LOOP(writer); return -1;
      Dee_size_t)(DeeCodeWriter_ADDR(writer)-for_end_origin)) != 0) return -1;
    }
    // Cleanup the head scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_for.f_head_init_scope,lexer,compiler_flags) != 0) return -1;
    goto push_none;
   } break;
@@ -573,7 +574,7 @@ err_for: DeeCodeWriter_FAIL_LOOP(writer); return -1;
     self->ast_forin.fi_scope,(compiler_flags|DEE_COMPILER_FLAG_ALLOW_BREAK_CONTINUE
     )&~(DEE_COMPILER_FLAG_USED))) != 0) goto err_for_in;
    // Cleanup the for scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_forin.fi_scope,lexer,compiler_flags) != 0) return -1;
    // Jump back to collect the next iterator value
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSSizeArg(writer,OP_JUMP,
@@ -587,7 +588,7 @@ err_for_in:
    if DEE_UNLIKELY(DeeCodeWriter_SetFutureSizeArg(writer,forin_jmparg,
     (Dee_size_t)(DeeCodeWriter_ADDR(writer)-forin_pos)) != 0) return -1;
    // Cleanup the sequence scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,self->ast_forin.fi_seq_scope,lexer,compiler_flags) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_forin.fi_seq_scope,lexer,compiler_flags) != 0) return -1;
    // Finally pop the finished iterator from the stack (if we aren't supposed to return a value)
    if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
   } break;
@@ -610,7 +611,7 @@ err_for_in:
    if DEE_UNLIKELY(DeeSAst_Compile(self->ast_while.w_block,DEE_COMPILER_ARGS_SCOPE_EX(
     self->ast_while.w_scope,(compiler_flags|DEE_COMPILER_FLAG_ALLOW_BREAK_CONTINUE)&~(DEE_COMPILER_FLAG_USED))) != 0) goto err_while;
    // Cleanup the loop scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_while.w_scope,lexer,compiler_flags) != 0) return -1;
    // Jump back to the condition
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSSizeArg(writer,OP_JUMP,
@@ -624,7 +625,7 @@ err_while:
    if DEE_UNLIKELY(DeeCodeWriter_SetFutureSizeArg(writer,end_jmparg,
     (Dee_size_t)(DeeCodeWriter_ADDR(writer)-block_pos)) != 0) return -1;
    // Cleanup the condition scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_while.w_cond_scope,lexer,compiler_flags) != 0) return -1;
    goto push_none;
   } break;
@@ -638,7 +639,7 @@ err_while:
    if DEE_UNLIKELY(DeeSAst_Compile(self->ast_dowhile.w_block,DEE_COMPILER_ARGS_SCOPE_EX(
     self->ast_dowhile.w_scope,(compiler_flags|DEE_COMPILER_FLAG_ALLOW_BREAK_CONTINUE)&~(DEE_COMPILER_FLAG_USED))) != 0) goto err_do_while;
    // Cleanup the loop scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_dowhile.w_scope,lexer,compiler_flags) != 0) return -1;
    // Cleanup the condition
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_dowhile.w_cond,DEE_COMPILER_ARGS_SCOPE_EX(
@@ -653,7 +654,7 @@ err_do_while: DeeCodeWriter_FAIL_LOOP(writer); return -1;
    // This is where we end up if the condition fails
    DeeCodeWriter_POP_LOOP(writer,DeeCodeWriter_ADDR(writer),{return -1;});
    // Cleanup the condition scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_dowhile.w_cond_scope,lexer,compiler_flags) != 0) return -1;
    goto push_none;
   } break;
@@ -668,7 +669,7 @@ err_do_while: DeeCodeWriter_FAIL_LOOP(writer); return -1;
     self->ast_loopever.sl_scope,(compiler_flags&~(DEE_COMPILER_FLAG_USED))|
     DEE_COMPILER_FLAG_ALLOW_BREAK_CONTINUE)) != 0) { DeeCodeWriter_FAIL_LOOP(writer); return -1; }
    // Cleanup the loop scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,self->ast_loopever.sl_scope,lexer,compiler_flags) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_loopever.sl_scope,lexer,compiler_flags) != 0) return -1;
    if DEE_UNLIKELY(DeeCodeWriter_JmpAbs(writer,block_pos) != 0) return -1;
    DeeCodeWriter_POP_LOOP(writer,DeeCodeWriter_ADDR(writer),{return -1;});
    goto push_none;
@@ -684,7 +685,7 @@ err_do_while: DeeCodeWriter_FAIL_LOOP(writer); return -1;
     self->ast_looponce.sl_scope,(compiler_flags&~(DEE_COMPILER_FLAG_USED))|
     DEE_COMPILER_FLAG_ALLOW_BREAK_CONTINUE)) != 0) { DeeCodeWriter_FAIL_LOOP(writer); return -1; }
    // Cleanup the loop scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,self->ast_looponce.sl_scope,lexer,compiler_flags) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_looponce.sl_scope,lexer,compiler_flags) != 0) return -1;
    DeeCodeWriter_POP_LOOP(writer,DeeCodeWriter_ADDR(writer),{return -1;});
    goto push_none;
   } break;
@@ -701,7 +702,7 @@ err_do_while: DeeCodeWriter_FAIL_LOOP(writer); return -1;
     DEE_COMPILER_FLAG_ALLOW_BREAK_CONTINUE)) != 0) {
 err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
    }
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,self->ast_loopnone.sl_scope,lexer,compiler_flags) != 0) goto err_loopnone_failloop;
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_loopnone.sl_scope,lexer,compiler_flags) != 0) goto err_loopnone_failloop;
    if DEE_UNLIKELY(DeeCodeWriter_SetFutureSizeArg(writer,dead_jump,
     (Dee_size_t)(DeeCodeWriter_ADDR(writer)-jmp_start)) != 0) return -1;
    DeeCodeWriter_POP_LOOP(writer,DeeCodeWriter_ADDR(writer),{return -1;});
@@ -750,7 +751,7 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
    // Compile the protected code
    if DEE_UNLIKELY(DeeSAst_Compile(self->ast_try.t_block,DEE_COMPILER_ARGS_SCOPE_EX(
     self->ast_try.t_scope,compiler_flags&~(DEE_COMPILER_FLAG_USED))) != 0) return -1;
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_try.t_scope,lexer,compiler_flags) != 0) return -1;
    // End all the exception handler blocks
    begin = self->ast_try.t_handlerv;
@@ -929,7 +930,7 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
      // If the handler is noexcept and always returns, we can skip the additional finally-block protecting it
      if DEE_UNLIKELY(DeeSAst_Compile(begin->th_block,DEE_COMPILER_ARGS_SCOPE_EX(
       begin->th_scope,compiler_flags&~(DEE_COMPILER_FLAG_USED))) != 0) return -1;
-     if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,begin->th_scope,lexer,compiler_flags) != 0) return -1;
+     if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,begin->th_scope,lexer,compiler_flags) != 0) return -1;
      if DEE_UNLIKELY(DeeCodeWriter_WriteOp(writer,(Dee_uint8_t)(is_finally ? OP_FINALLY_END : OP_EXCEPT_END)) != 0) return -1;
     } else {
      Dee_size_t handler_finally_id;
@@ -942,7 +943,7 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
      // can make sure to always remove the exception from the list of handled exceptions
      if DEE_UNLIKELY(DeeSAst_Compile(begin->th_block,DEE_COMPILER_ARGS_SCOPE_EX(
       begin->th_scope,compiler_flags&~(DEE_COMPILER_FLAG_USED))) != 0) return -1;
-     if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,begin->th_scope,lexer,compiler_flags) != 0) return -1;
+     if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,begin->th_scope,lexer,compiler_flags) != 0) return -1;
      // End the try block and initialize the finally block at the end of the catch
      if DEE_UNLIKELY(DeeCodeWriter_TryEnd(writer) != 0) return -1;
      // Skip the finally block once try_end returned
@@ -985,7 +986,7 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
     }
    }
    // Finalize the root scope of the try-block
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,
     self->ast_try.t_rootscope,lexer,compiler_flags) != 0) return -1;
    goto push_none;
   } break;
@@ -1067,7 +1068,7 @@ err_switch_loop:
     DEE_COMPILER_ARGS_SCOPE_EX(self->ast_switch.sw_scope,(compiler_flags|
     DEE_COMPILER_FLAG_ALLOW_BREAK_CONTINUE)&~(DEE_COMPILER_FLAG_USED))) != 0) goto err_switch_loop;
    // Cleanup the switch scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_switch.sw_scope,lexer,compiler_flags) != 0) return -1;
    DeeCodeWriter_POP_LOOP(writer,DeeCodeWriter_ADDR(writer),{return -1;});
    weak_root->sc_cases = old_cases;
@@ -1075,7 +1076,7 @@ err_switch_loop:
    if DEE_UNLIKELY(DeeCodeWriter_FinalizeLabels(
     writer,&self->ast_switch.sw_cases,lexer) != 0) return -1;
    // Cleanup the switch expression scope
-   if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(
+   if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(
     writer,self->ast_switch.sw_expr_scope,lexer,compiler_flags) != 0) return -1;
    // Pop the switch condition expression
    if (!ret_used && DEE_UNLIKELY(DeeCodeWriter_Pop(writer) != 0)) return -1;
@@ -1102,7 +1103,7 @@ err_switch_loop:
     dead_start = DeeCodeWriter_ADDR(writer);
     if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithFutureSizeArg(writer,OP_JUMP,&dead_jump) != 0) return -1;
     if DEE_UNLIKELY(DeeSAst_Compile(dead_block,DEE_COMPILER_ARGS_SCOPE(dead_scope)) != 0) return -1;
-    if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,dead_scope,lexer,compiler_flags) != 0) return -1;
+    if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,dead_scope,lexer,compiler_flags) != 0) return -1;
     if (live_block || ret_used) {
      // Setup the jump to skip the live block
      dead_end = DeeCodeWriter_ADDR(writer);
@@ -1113,7 +1114,7 @@ err_switch_loop:
    }
    if (live_block) {
     if DEE_UNLIKELY(DeeSAst_Compile(live_block,DEE_COMPILER_ARGS_SCOPE(live_scope)) != 0) return -1;
-    if DEE_UNLIKELY(DeeCodeWriter_FinalizeWeakScope(writer,live_scope,lexer,compiler_flags) != 0) return -1;
+    if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,live_scope,lexer,compiler_flags) != 0) return -1;
     if (dead_block) {
      // This is where the dead block jumps when skipping the live block
      if DEE_UNLIKELY(DeeCodeWriter_SetFutureSizeArg(writer,live_jump,(

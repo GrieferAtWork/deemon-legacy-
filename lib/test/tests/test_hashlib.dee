@@ -33,10 +33,12 @@ function hex(x) {
 
 function check_crc(name,check) {
 	res = crc(name,"123456789");
-	if (res != check)
-		print "[-] Invalid hash for %-20s: %s != %s" % (name,hex(res),hex(check));
-	//else
-	//	print "[+] Correct hash for %-20s: %s == %s" % (name,hex(res),hex(check));
+	assert res == check :
+		"Invalid hash for {name}: {res} != {check}".format({
+			.name = name,
+			.res = hex(res),
+			.check = hex(check),
+		});
 }
 
 

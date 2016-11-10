@@ -357,6 +357,16 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriterDebugVarNames_PutVarname(
  Dee_INHERIT_REF(*iter,name_ob);
  return 0;
 }
+DEE_A_RET_Z_OPT char const *DeeCodeWriterDebugVarNames_GetVarname(
+ DEE_A_INOUT struct DeeCodeWriterDebugVarNames *self, DEE_A_IN Dee_size_t id) {
+ DeeObject *elem;
+ DEE_ASSERT(self);
+ DEE_ASSERT(!self->cwdvn_names || (DeeObject_Check(
+  self->cwdvn_names) && DeeTuple_Check(self->cwdvn_names)));
+ if (!self->cwdvn_names || id >= DeeTuple_SIZE(self->cwdvn_names)) return NULL;
+ elem = DeeTuple_GET(self->cwdvn_names,id);
+ return DeeString_CheckEmpty(elem) ? NULL : DeeString_STR(elem);
+}
 
 
 
@@ -1201,6 +1211,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVar(
              lexer ? TPPLexer_TokenIDStr(DeeLexer_LEXER(lexer),var->lv_name) : "?");
  DEE_ASSERTF(self->cw_stack_size != 0,"No value given that could be stored");
  DEE_ASSERTF(DeeLocalVar_KIND(var) != DEE_LOCALVAR_KIND_THIS,"Can't store in 'this'");
+ DEE_ASSERTF(DeeLocalVar_KIND(var) != DEE_LOCALVAR_KIND_PARAM,"Can't store in parameter variables (convert to local beforehand)");
  if ((var->lv_flags&(DEE_LOCALVAR_FLAG_INITIALIZED))==(DEE_LOCALVAR_FLAG_INITIALIZED) &&
      (var->lv_flags&(DEE_LOCALVAR_FLAG_INSTBOUNDC|DEE_LOCALVAR_FLAG_INSTBOUNDM))!=0) {
   // Initialized, instance-bound variable (compile as move-assign)
@@ -1223,11 +1234,6 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVar(
     var->lv_flags |= DEE_LOCALVAR_FLAG_INITIALIZED;
    }
    return DeeCodeWriter_WriteOpWithSizeArg(self,OP_STORE_LOC,var->lv_loc_id);
-  }
-
-  case DEE_LOCALVAR_KIND_PARAM: { // Argument variable
-   DEE_ASSERTF(DeeLocalVar_IS_COMPILERINIT(var),"Argument variable not initialized");
-   return DeeCodeWriter_WriteOpWithSizeArg(self,OP_STORE_ARG,var->lv_loc_id);
   }
 
   case DEE_LOCALVAR_KIND_RETVAL: { // Return value variable
@@ -1262,6 +1268,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVarPop(
  DEE_A_IN_OPT struct DeeLexerObject const *lexer) {
  DEE_ASSERT(DeeObject_Check(var) && DeeLocalVar_Check(var));
  DEE_ASSERTF(DeeLocalVar_KIND(var) != DEE_LOCALVAR_KIND_THIS,"Can't store in 'this'");
+ DEE_ASSERTF(DeeLocalVar_KIND(var) != DEE_LOCALVAR_KIND_PARAM,"Can't store in parameter variables (convert to local beforehand)");
  DEE_ASSERTF(DeeCodeWriter_IsVarLocal(self,var),
              "Can't store in variable %q from different strong scope",
              lexer ? TPPLexer_TokenIDStr(DeeLexer_LEXER(lexer),var->lv_name) : "?");
@@ -1289,11 +1296,6 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVarPop(
     var->lv_flags |= DEE_LOCALVAR_FLAG_INITIALIZED;
    }
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(self,OP_STORE_LOC_POP,var->lv_loc_id) != 0) return -1;
-   break;
-
-  case DEE_LOCALVAR_KIND_PARAM: // Argument variable
-   DEE_ASSERTF(DeeLocalVar_IS_COMPILERINIT(var),"Argument variable not initialized");
-   if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(self,OP_STORE_ARG_POP,var->lv_loc_id) != 0) return -1;
    break;
 
   case DEE_LOCALVAR_KIND_RETVAL: // Return value variable
@@ -1590,7 +1592,32 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_YieldExit(
  return DeeCodeWriter_WriteOp(self,OP_YIELDSTOP);
 }
 
-DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_FinalizeStrongScope(
+DEE_A_RET_EXCEPT(-1) int _DeeCodeWriter_EnterStrongScope_impl(
+ DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeScopeObject *scope) {
+ struct _DeeScopeEntry *iter,*begin; DeeLocalVarObject *entry;
+ DEE_ASSERT(DeeObject_Check(scope) && DeeScope_Check(scope));
+ DEE_ASSERT(DeeScope_IS_STRONG(scope));
+ iter = (begin = scope->sc_namesv)+scope->sc_namesc;
+ while (iter != begin) {
+  entry = (--iter)->se_local;
+  DEE_ASSERT(DeeObject_Check(entry));
+  if (DeeLocalVar_Check(entry) &&
+      DEE_LOCALVARFLAGS_KIND(entry->lv_flags) == DEE_LOCALVAR_KIND_PARAM &&
+      DeeLocalVar_IS_INIT(entry)) {
+   Dee_size_t new_id; // Convert parameters that are being initialized to *real* local variables
+   if DEE_UNLIKELY((new_id = DeeCodeWriter_AllocLocal(self,
+    DeeCodeWriter_GetArgName(self,entry->lv_loc_id))) == (Dee_size_t)-1) return -1;
+   // Generate code for storing the argument in the newly allocated local
+   if DEE_UNLIKELY(DeeCodeWriter_LoadArgID(self,entry->lv_loc_id) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_StoreLocPopID(self,new_id) != 0) return -1;
+   // Update the variable kind
+   entry->lv_loc_id = new_id;
+   entry->lv_flags = DEE_LOCALVARFLAGS_FLAGS(entry->lv_flags)|DEE_LOCALVAR_KIND_LOCAL;
+  }
+ }
+ return 0;
+}
+DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_LeaveStrongScope(
  DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeScopeObject *scope,
  DEE_A_IN struct DeeLexerObject *lexer, DEE_A_IN Dee_uint32_t compiler_flags) {
  struct _DeeScopeEntry *iter,*begin;
@@ -1610,7 +1637,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_FinalizeStrongScope(
  }
  return DeeCodeWriter_FinalizeLabels(self,&scope->sc_labels,lexer);
 }
-DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_FinalizeWeakScope(
+DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_LeaveWeakScope(
  DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeScopeObject *scope,
  DEE_A_IN struct DeeLexerObject *lexer, DEE_A_IN Dee_uint32_t compiler_flags) {
  struct _DeeScopeEntry *iter,*begin;

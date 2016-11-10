@@ -225,6 +225,8 @@ do{ Dee_XDECREF((ob)->cwdvn_names); }while(0)
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriterDebugVarNames_PutVarname(
  DEE_A_INOUT struct DeeCodeWriterDebugVarNames *self,
  DEE_A_IN Dee_size_t id, DEE_A_IN_Z char const *name) DEE_ATTRIBUTE_NONNULL((1,3));
+extern DEE_A_RET_Z_OPT char const *DeeCodeWriterDebugVarNames_GetVarname(
+ DEE_A_INOUT struct DeeCodeWriterDebugVarNames *self, DEE_A_IN Dee_size_t id) DEE_ATTRIBUTE_NONNULL((1));
 
 struct DeeCodeWriterDebug {
  char const                       *cwd_file;   /*< [0..1] Last written filename. */
@@ -444,13 +446,25 @@ extern DEE_A_RET_EXCEPT(-1) Dee_size_t DeeCodeWriter_AllocOrGetReference(DEE_A_I
 #define DeeCodeWriter_AddConstName(ob,id,name) DeeCodeWriterDebugVarNames_PutVarname(&(ob)->cw_debug.cwd_consts,id,name)
 #define DeeCodeWriter_AddRefName(ob,id,name)   DeeCodeWriterDebugVarNames_PutVarname(&(ob)->cw_debug.cwd_refs,id,name)
 #define DeeCodeWriter_AddArgName(ob,id,name)   DeeCodeWriterDebugVarNames_PutVarname(&(ob)->cw_debug.cwd_args,id,name)
+#define DeeCodeWriter_GetLocalName(ob,id)      DeeCodeWriterDebugVarNames_GetVarname(&(ob)->cw_debug.cwd_locals,id)
+#define DeeCodeWriter_GetConstName(ob,id)      DeeCodeWriterDebugVarNames_GetVarname(&(ob)->cw_debug.cwd_consts,id)
+#define DeeCodeWriter_GetRefName(ob,id)        DeeCodeWriterDebugVarNames_GetVarname(&(ob)->cw_debug.cwd_refs,id)
+#define DeeCodeWriter_GetArgName(ob,id)        DeeCodeWriterDebugVarNames_GetVarname(&(ob)->cw_debug.cwd_args,id)
 
 // Generate variable class operations (NOTE: operations illegal in certain classes are asserted)
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DelVar(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN Dee_uint32_t compiler_flags) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_LoadVar(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN_OPT struct DeeLexerObject const *lexer) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVar(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN_OPT struct DeeLexerObject const *lexer) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVarPop(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN_OPT struct DeeLexerObject const *lexer) DEE_ATTRIBUTE_NONNULL((1,2));
-#define DeeCodeWriter_LoadThis(ob) (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOp(ob,OP_LOAD_THIS))
+#define DeeCodeWriter_LoadThis(ob)         (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOp(ob,OP_LOAD_THIS))
+#define DeeCodeWriter_LoadRet(ob)          (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOp(ob,OP_LOAD_RET))
+#define DeeCodeWriter_LoadArgID(ob,id)     (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOpWithSizeArg(ob,OP_LOAD_ARG,id))
+#define DeeCodeWriter_LoadRefID(ob,id)     (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOpWithSizeArg(ob,OP_LOAD_REF,id))
+#define DeeCodeWriter_LoadLocID(ob,id)     (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOpWithSizeArg(ob,OP_LOAD_LOC,id))
+#define DeeCodeWriter_StoreRet(ob)          DeeCodeWriter_WriteOp(ob,OP_STORE_RET)
+#define DeeCodeWriter_StoreLocID(ob,id)     DeeCodeWriter_WriteOpWithSizeArg(ob,OP_STORE_LOC,id)
+#define DeeCodeWriter_StoreRetPop(ob)      (DeeCodeWriter_DECSTACK(ob),DeeCodeWriter_WriteOp(ob,OP_STORE_RET_POP))
+#define DeeCodeWriter_StoreLocPopID(ob,id) (DeeCodeWriter_DECSTACK(ob),DeeCodeWriter_WriteOpWithSizeArg(ob,OP_STORE_LOC_POP,id))
 
 //////////////////////////////////////////////////////////////////////////
 // 1. Pop stack(stack_id) from the tack
@@ -512,10 +526,14 @@ extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_Ret(
 
 //////////////////////////////////////////////////////////////////////////
 // Write code to cleanup local variables from "scope"
-extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_FinalizeStrongScope(
+#define DeeCodeWriter_EnterStrongScope(self,scope,lexer,compiler_flags) \
+ ((void)(lexer,compiler_flags),_DeeCodeWriter_EnterStrongScope_impl(self,scope))
+extern DEE_A_RET_EXCEPT(-1) int _DeeCodeWriter_EnterStrongScope_impl(
+ DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeScopeObject *scope) DEE_ATTRIBUTE_NONNULL((1,2));
+extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_LeaveStrongScope(
  DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeScopeObject *scope,
  DEE_A_IN struct DeeLexerObject *lexer, DEE_A_IN Dee_uint32_t compiler_flags) DEE_ATTRIBUTE_NONNULL((1,2));
-extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_FinalizeWeakScope(
+extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_LeaveWeakScope(
  DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeScopeObject *scope,
  DEE_A_IN struct DeeLexerObject *lexer, DEE_A_IN Dee_uint32_t compiler_flags) DEE_ATTRIBUTE_NONNULL((1,2));
 

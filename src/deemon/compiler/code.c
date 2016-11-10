@@ -496,12 +496,6 @@ wrt_tmp: putf("push %s{%r}",prefix,temp);
 #ifdef OP_STORE_LOC_POP
    case OP_STORE_LOC_POP      : uarg = RT_READ_ARG(); putf("pop store @local %s@%u",_DeeCode_LocalName(self,uarg),(unsigned)uarg); break;
 #endif
-#ifdef OP_STORE_ARG
-   case OP_STORE_ARG          : uarg = RT_READ_ARG(); putf("store @arg %s@%u",_DeeCode_ArgName(self,uarg),(unsigned)uarg); break;
-#endif
-#ifdef OP_STORE_ARG_POP
-   case OP_STORE_ARG_POP      : uarg = RT_READ_ARG(); putf("pop locked store @arg %s@%u",_DeeCode_ArgName(self,uarg),(unsigned)uarg); break;
-#endif
 #ifdef OP_STORE_CST
    case OP_STORE_CST          : uarg = RT_READ_ARG(); putf("locked store @const %s@%u",_DeeCode_ConstName(self,uarg),(unsigned)uarg); break;
 #endif

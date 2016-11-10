@@ -532,9 +532,7 @@ static Dee_size_t _DeeCode_GetArgc(DeeCodeObject *code) {
  Dee_size_t result = 0;
  code_end = (code_iter = DeeCode_CODE(code))+DeeCode_SIZE(code);
  while (code_iter < code_end) switch ((op = *code_iter++)) {
-  case OP_LOAD_ARG:
-  case OP_STORE_ARG:
-  case OP_STORE_ARG_POP: {
+  case OP_LOAD_ARG: {
    Dee_uint16_t var16 = *(Dee_uint16_t *)code_iter;
    if ((Dee_size_t)var16 >= result) result = (Dee_size_t)var16+1;
    code_iter += 2;
@@ -546,8 +544,6 @@ static Dee_size_t _DeeCode_GetArgc(DeeCodeObject *code) {
    op = *code_iter++;
    switch (op) {
     case OP_LOAD_ARG:
-    case OP_STORE_ARG:
-    case OP_STORE_ARG_POP:
      var32 = ((Dee_uint32_t)significant_work << 16) |
               (Dee_uint32_t)*(Dee_uint16_t *)code_iter;
      if ((Dee_size_t)var32 >= result) result = (Dee_size_t)var32;
@@ -657,7 +653,7 @@ DEE_A_RET_EXCEPT(-1) int DeeStackFrame_EnumLocalsEx(
  DEE_A_IN DeeStackFrame_LocalsIterFunc func, void *closure,
  DEE_A_OUT_OPT Dee_size_t *total_count, DEE_A_IN Dee_uint16_t valid_types) {
  DeeCodeObject *code; struct DeeCodeDebugInfoObject *debuginfo;
- DeeObject *local_value,**begin,**iter,**end,**namev,*name;
+ DeeObject *local_value,*const *begin,*const *iter,*const *end,**namev,*name;
  DeeTupleObject *names; Dee_size_t id,namec,count = 0; int error;
  DEE_ASSERT(self && func);
  code = self->f_code;
@@ -1084,20 +1080,6 @@ DEE_A_RET_EXCEPT(-1) int DeeStackFrame_SetLocalID(
    Dee_XDECREF(old_value);
    break;
 
-  case DEE_STACKFRAME_VARTYPE_ARGS:
-   if (id >= _DeeCode_GetArgc(self->f_code)) {
-    DeeError_SetStringf(&DeeErrorType_AttributeError,
-                        "Unknown Variable: a:%I16u",id);
-    return -1;
-   }
-   Dee_INCREF(value);
-   DeeAtomicMutex_Acquire(&self->f_lock);
-   old_value = self->f_argv[id];
-   self->f_argv[id] = value;
-   DeeAtomicMutex_Release(&self->f_lock);
-   Dee_DECREF(old_value);
-   break;
-
   case DEE_STACKFRAME_VARTYPE_REFS:
    if (id >= _DeeCode_GetRefc(self->f_code)) {
     DeeError_SetStringf(&DeeErrorType_AttributeError,
@@ -1128,7 +1110,7 @@ DEE_A_RET_EXCEPT(-1) int DeeStackFrame_SetLocalID(
 
   default:
    DeeError_SET_STRING(&DeeErrorType_AttributeError,
-                       "Unsupported Variable Type for 'get'");
+                       "Unsupported Variable Type for 'set'");
    return -1;
  }
  return 0;
