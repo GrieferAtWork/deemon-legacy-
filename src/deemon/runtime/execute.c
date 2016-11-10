@@ -1121,17 +1121,24 @@ DEE_A_RET_EXCEPT(-1) int DeeStackFrame_SetLocalID(
 
 DEE_A_RET_EXCEPT(-1) int DeeStackFrame_InteractiveDebugger(void) {
  DeeThreadObject *thread_self;
- if ((thread_self = DeeThread_SELF()) == NULL) return -1;
- if (!thread_self->t_frame_last) {
+ if DEE_UNLIKELY((thread_self = DeeThread_SELF()) == NULL) return -1;
+ if DEE_UNLIKELY(!thread_self->t_frame_last) {
   DeeError_SET_STRING(&DeeErrorType_ValueError,
                       "Can't enter debugger: No execution frame found");
   return -1;
  }
- return DeeStackFrame_InteractiveDebuggerEx((
+ return _DeeStackFrame_InteractiveDebugger_impl((
   DeeObject *)thread_self,thread_self->t_frame_last);
 }
-
 DEE_A_RET_EXCEPT(-1) int DeeStackFrame_InteractiveDebuggerEx(
+ DEE_A_INOUT struct DeeStackFrame *_frame) {
+ DeeThreadObject *thread_self;
+ if DEE_UNLIKELY((thread_self = DeeThread_SELF()) == NULL) return -1;
+ return _DeeStackFrame_InteractiveDebugger_impl((DeeObject *)thread_self,_frame);
+}
+
+
+DEE_A_RET_EXCEPT(-1) int _DeeStackFrame_InteractiveDebugger_impl(
  DEE_A_INOUT_OBJECT(DeeThreadObject) *thread_self,
  DEE_A_INOUT struct DeeStackFrame *_frame) {
  typedef int (DEE_CALL *PDEEDEBUGGERRUN)(
@@ -1144,15 +1151,12 @@ DEE_A_RET_EXCEPT(-1) int DeeStackFrame_InteractiveDebuggerEx(
  DEE_ASSERTF((DeeThreadObject *)thread_self == DeeThread_SELF(),
              "thread_self must be equal to DeeThread_SELF()");
  if DEE_UNLIKELY((debugger_dex = DeeDex_Open("_debugger")) == NULL) return -1;
-DEE_COMPILER_MSVC_WARNING_PUSH(4055)
- PDeeDebugger_Run = (PDEEDEBUGGERRUN)DeeDexModule_GetNativeAddress(debugger_dex,"DeeDebugger_Run");
-DEE_COMPILER_MSVC_WARNING_POP
+ *(void **)&PDeeDebugger_Run = DeeDexModule_TryGetNativeAddress(debugger_dex,"DeeDebugger_Run");
  if DEE_LIKELY(PDeeDebugger_Run) {
   error = (*PDeeDebugger_Run)((DeeThreadObject *)thread_self,_frame);
   Dee_DECREF(debugger_dex);
   return error;
  }
- DeeError_HandledOne();
  // So far, so bad... (This might be a custom debugger that doesn't implement the native run function)
  // >> Lets try again by calling the deemon-style version that should also be present
  result = DeeObject_CallAttrStringf(debugger_dex,"breakpoint","");

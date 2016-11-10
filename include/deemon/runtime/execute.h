@@ -62,8 +62,8 @@ struct DeeStackFrame {
 #endif
 #ifndef DEE_WITHOUT_THREADS
              struct DeeAtomicMutex   f_lock;       /*< Lock for everything below. */
-#endif
              Dee_uint8_t             f_padding;    /*< Padding data. */
+#endif
 #define DEE_STACKFRAME_FLAG_NONE    DEE_UINT16_C(0x0000)
 #define DEE_STACKFRAME_FLAG_SANDBOX DEE_UINT16_C(0x0001) /*< Sandbox-ed stackframe. */
              Dee_uint16_t            f_flags;      /*< Frame flags. */
@@ -226,6 +226,8 @@ extern DEE_A_RET_EXCEPT_REF DeeObject *DeeCode_Run(
 
 #ifdef DEE_LIMITED_API
 struct DeeThreadObject;
+// IN: _frame->f_lock is locked
+// OUT: _frame->f_lock is unlocked
 extern DEE_A_RET_EXCEPT(-1) int _DeeStackFrame_RunLocked_AndUnlock(
  DEE_A_INOUT struct DeeThreadObject *thread_self,
  DEE_A_INOUT struct DeeStackFrame *_frame)
@@ -238,17 +240,23 @@ extern DEE_A_RET_EXCEPT(-1) int _DeeStackFrame_RunLocked_AndUnlock(
 // NOTE: '_frame' must be a thread-local stackframe
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeStackFrame_InteractiveDebugger(void);
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeStackFrame_InteractiveDebuggerEx(
+ DEE_A_INOUT struct DeeStackFrame *_frame) DEE_ATTRIBUTE_NONNULL((1));
+
+#ifdef DEE_LIMITED_API
+extern DEE_A_RET_EXCEPT(-1) int _DeeStackFrame_InteractiveDebugger_impl(
  DEE_A_INOUT_OBJECT(DeeThreadObject) *thread_self,
  DEE_A_INOUT struct DeeStackFrame *_frame) DEE_ATTRIBUTE_NONNULL((1,2));
+#endif
 
 
+//////////////////////////////////////////////////////////////////////////
 // Known local variables kinds
 #define DEE_STACKFRAME_VARTYPE_NONE   DEE_UINT16_C(0x0000)
-#define DEE_STACKFRAME_VARTYPE_LOCALS DEE_UINT16_C(0x0001) // prefix: "L:" / "l:" / ""
-#define DEE_STACKFRAME_VARTYPE_STATIC DEE_UINT16_C(0x0002) // prefix: "C:" / "c:"
-#define DEE_STACKFRAME_VARTYPE_ARGS   DEE_UINT16_C(0x0004) // prefix: "A:" / "a:"
-#define DEE_STACKFRAME_VARTYPE_REFS   DEE_UINT16_C(0x0008) // prefix: "R:" / "r:"
-#define DEE_STACKFRAME_VARTYPE_THIS   DEE_UINT16_C(0x0010)
+#define DEE_STACKFRAME_VARTYPE_LOCALS DEE_UINT16_C(0x0001) // [rw] prefix: "L:" / "l:" / ""
+#define DEE_STACKFRAME_VARTYPE_STATIC DEE_UINT16_C(0x0002) // [rw] prefix: "C:" / "c:"
+#define DEE_STACKFRAME_VARTYPE_ARGS   DEE_UINT16_C(0x0004) // [r]  prefix: "A:" / "a:"
+#define DEE_STACKFRAME_VARTYPE_REFS   DEE_UINT16_C(0x0008) // [r]  prefix: "R:" / "r:"
+#define DEE_STACKFRAME_VARTYPE_THIS   DEE_UINT16_C(0x0010) // [r]
 #define DEE_STACKFRAME_VARTYPE_ANY    DEE_UINT16_C(0x00FF)
 
 typedef Dee_uint16_t DeeVarType;
@@ -288,8 +296,8 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeStackFrame_EnumLocalsEx(
 // @throw Error.ValueError:                Unknown id prefix / Ambigious variable name
 // @throw Error.RuntimeError.UnboundLocal: The variable isn't assigned
 // @throw Error.AttributeError:            The variable doesn't exist
-// NOTE: If 'id' is a string, it may describe a number that is used as id instead
-// NOTE: If it is a string, it may also be preceded by one of the prefixed as
+// NOTE: @name may describe a number that is used as name instead
+// NOTE: If it is a string, it may also be preceded by one of the prefixes as
 //       listed in the comments of the 'Known local variables kinds' above.
 // NOTE: This is only allowed if the associated type is part of 'valid_types'
 //       e.g.: >> DeeStackFrame_GetLocal(frame,"L:foobar")
@@ -309,8 +317,8 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT_REF DeeObject *) DeeStackFrame_GetLocalID(
 // @throw Error.TypeError:      This type of variable can't be deleted
 // @throw Error.AttributeError: The variable doesn't exist
 // Returns -1 on error, 1 if the variable was already unbound deleted
-// NOTE: If 'id' is a string, it may describe a number that is used as id instead
-// NOTE: If it is a string, it may also be preceded by one of the prefixed as
+// NOTE: @name may describe a number that is used as name instead
+// NOTE: If it is a string, it may also be preceded by one of the prefixes as
 //       listed in the comments of the 'Known local variables kinds' above.
 // NOTE: This is only allowed if the associated type is part of 'valid_types'
 //       e.g.: >> DeeStackFrame_DelLocal(frame,"L:foobar")
@@ -328,8 +336,8 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT_FAIL(-1,1) int) DeeStackFrame_DelLocalID(
 // >> Checks if a given variable exists.
 // @throw Error.ValueError: Unknown id prefix / Ambigious variable name
 // Returns -1 on error, 1 if the variable doesn't exist
-// NOTE: If 'id' is a string, it may describe a number that is used as id instead
-// NOTE: If it is a string, it may also be preceded by one of the prefixed as
+// NOTE: @name may describe a number that is used as name instead
+// NOTE: If it is a string, it may also be preceded by one of the prefixes as
 //       listed in the comments of the 'Known local variables kinds' above.
 // NOTE: This is only allowed if the associated type is part of 'valid_types'
 //       e.g.: >> DeeStackFrame_HasLocal(frame,"L:foobar")
@@ -348,9 +356,8 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT_FAIL(-1,1) int) DeeStackFrame_HasLocalID(
 // @throw Error.ValueError:     Unknown id prefix / Ambigious variable name
 // @throw Error.TypeError:      Can't assign to this type of variable
 // @throw Error.AttributeError: The variable doesn't exist
-// NOTE: If 'name' is a string, it may describe a number that is used as name instead
-// NOTE: If 'id' is a string, it may describe a number that is used as id instead
-// NOTE: If it is a string, it may also be preceded by one of the prefixed as
+// NOTE: @name may describe a number that is used as name instead
+// NOTE: If it is a string, it may also be preceded by one of the prefixes as
 //       listed in the comments of the 'Known local variables kinds' above.
 // NOTE: This is only allowed if the associated type is part of 'valid_types'
 //       e.g.: >> DeeStackFrame_SetLocal(frame,"L:foobar",value)
@@ -376,7 +383,7 @@ DEE_FUNC_DECL(DEE_A_RET_WUNUSED DEE_A_RET_MAYBE_NULL struct DeeStackFrame *)
 // Returns the calling frame of a given stack frame
 //  - Returns NULL if the given stack frame has no caller
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED DEE_A_RET_MAYBE_NULL struct DeeStackFrame *)
- DeeStackFrame_Prev(DEE_A_IN struct DeeStackFrame const *self)DEE_ATTRIBUTE_NONNULL((1));
+ DeeStackFrame_Prev(DEE_A_IN struct DeeStackFrame const *self) DEE_ATTRIBUTE_NONNULL((1));
 
 //////////////////////////////////////////////////////////////////////////
 // Returns debug information about a given stackframe.
