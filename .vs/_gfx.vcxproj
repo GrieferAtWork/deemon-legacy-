@@ -22,7 +22,11 @@
     <ClCompile Include="..\src\dex\_gfx\_gfx.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\dex\_gfx\lodepng\lodepng.h" />
     <ClInclude Include="..\src\dex\_gfx\_gfx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\dex\_gfx\lodepng\lodepng.c.inl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{304F9867-4AF0-4C70-BAA9-DEF4E7F5C0E1}</ProjectGuid>

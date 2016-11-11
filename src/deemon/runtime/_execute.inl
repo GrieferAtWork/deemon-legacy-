@@ -3321,7 +3321,7 @@ EXTERN_END;
     case OPEXT_BREAKPOINT: {
 #if DEE_CONFIG_RUNTIME_HAVE_BUILTIN_BREAKPOINT
 EXTERN_BEGIN;
-     rt_itemp = DeeStackFrame_InteractiveDebuggerEx((DeeObject *)thread_self,&frame);
+     rt_itemp = _DeeStackFrame_InteractiveDebugger_impl((DeeObject *)thread_self,&frame);
 EXTERN_END;
      if DEE_UNLIKELY(rt_itemp != 0) RT_HANDLE_EXCEPTION;
 #else /* DEE_CONFIG_RUNTIME_HAVE_BUILTIN_BREAKPOINT */
