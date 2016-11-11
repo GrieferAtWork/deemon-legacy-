@@ -211,6 +211,8 @@ void DeeRandomNumberGenerator_Randomize(
   }
  }
 
+
+/*
  // Add some more entropy using our platform-given thread-id
  ((DeeThreadID *)&new_seed)[new_seed % (8-sizeof(DeeThreadID))] ^= DeeThread_SelfID();
 
@@ -219,6 +221,7 @@ void DeeRandomNumberGenerator_Randomize(
  ADD_POINTER(new_seed,(Dee_uintptr_t)GetCurrentProcess());
  ((DWORD *)&new_seed)[new_seed % (8-sizeof(DWORD))] ^= GetCurrentProcessId();
 #endif
+*/
 
  // Note how we even take advantage of possible dangling data... (twice if urandom failed) ;)
  self->rng_seed ^= new_seed;

@@ -191,6 +191,7 @@ DEE_OBJECT_DEF(DeeSurfaceTypeObject);
 DEE_OBJECT_DEF(DeeSurfaceObject);
 
 struct DeePixel { Dee_uint8_t r,g,b,a; };
+#define DeePixel_EQUALS(a,b) (*(Dee_uint32_t const *)(a) == *(Dee_uint32_t const *)(b))
 
 //////////////////////////////////////////////////////////////////////////
 // Selection of standard colors
@@ -211,6 +212,46 @@ struct DeePixel { Dee_uint8_t r,g,b,a; };
 #define DeePixel_TEAL    ((struct DeePixel const *)"\x00\x80\x80\xff")
 #define DeePixel_WHITE   ((struct DeePixel const *)"\xff\xff\xff\xff")
 #define DeePixel_EMPTY   ((struct DeePixel const *)"\xff\xff\xff\x00")
+
+//////////////////////////////////////////////////////////////////////////
+// Returns the name of a builtin pixel color, or NULL if unknown/custom
+// NOTE: The names match the class attributes of '_gfx.pixel', which are the
+//       lowercase variants of the * in the 'DeePixel_*' constants above.
+extern DEE_A_RET_Z_OPT char const *DeePixel_Name(DEE_A_IN struct DeePixel const *pixel);
+extern DEE_A_RET_MAYBE_NULL struct DeePixel const *DeePixel_FromName(DEE_A_IN_Z char const *name);
+
+
+struct DeePixelObject {
+ DEE_OBJECT_HEAD
+ // Immutable representation object for pixels
+ // NOTE: This one has its own cache!
+ struct DeePixel p_pixel; /*< [const] Pixel */
+};
+#define DeePixel_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeePixel_Type)
+#define DeePixel_Check          DeePixel_CheckExact
+extern DeeTypeObject DeePixel_Type;
+extern DEE_A_RET_EXCEPT_REF DeePixelObject *DeePixel_New(
+ DEE_A_IN struct DeePixel const *pixel);
+
+extern DeePixelObject DeePixel_AquaObject;
+extern DeePixelObject DeePixel_BlackObject;
+extern DeePixelObject DeePixel_BlueObject;
+extern DeePixelObject DeePixel_FuchsiaObject;
+extern DeePixelObject DeePixel_GrayObject;
+extern DeePixelObject DeePixel_GreenObject;
+extern DeePixelObject DeePixel_LimeObject;
+extern DeePixelObject DeePixel_MaroonObject;
+extern DeePixelObject DeePixel_NavyObject;
+extern DeePixelObject DeePixel_OliveObject;
+extern DeePixelObject DeePixel_PurpleObject;
+extern DeePixelObject DeePixel_RedObject;
+extern DeePixelObject DeePixel_YellowObject;
+extern DeePixelObject DeePixel_SilverObject;
+extern DeePixelObject DeePixel_TealObject;
+extern DeePixelObject DeePixel_WhiteObject;
+extern DeePixelObject DeePixel_EmptyObject;
+
+
 
 
 typedef Dee_uint64_t Dee_blendinfo_t;
@@ -260,7 +301,7 @@ typedef Dee_uint64_t Dee_blendinfo_t;
 
 //////////////////////////////////////////////////////////////////////////
 // Override blending mode (simply override 'dst' with 'src')
-#define DEE_BLENDINFO_OVERRIDE  DEE_BLENDINFO(DEE_BLENDMODE_ZERO,DEE_BLENDMODE_ONE,DEE_BLENDFUNC_ADD)
+#define DEE_BLENDINFO_OVERRIDE  DEE_BLENDINFO(DEE_BLENDMODE_ONE,DEE_BLENDMODE_ZERO,DEE_BLENDFUNC_ADD)
 
 
 
@@ -402,7 +443,22 @@ extern DeeTypeObject DeeSurfaceType_Type;
 #define DeeSurfaceType_FORMAT(ob) ((DeeSurfaceTypeObject *)Dee_REQUIRES_POINTER(ob))->st_format
 #define DeeSurfaceType_KIND(ob)   DEE_SURFACETYPE_FORMAT_KIND(DeeSurfaceType_FORMAT(ob))
 
+extern DeeSurfaceTypeObject DeeSurface_Type; /*< Base class for all surfaces. */
+#if 1
+#define DeeSurface_CheckExact(ob) DeeSurfaceType_Check(Dee_TYPE(ob))
+#else
+#define DeeSurface_CheckExact(ob) DeeObject_InstanceOf(ob,(DeeTypeObject *)&DeeSurface_Type)
+#endif
+#define DeeSurface_Check       DeeSurface_CheckExact
 
+//////////////////////////////////////////////////////////////////////////
+// Some hard-coded surface types (with special optimizations)
+//extern DeeSurfaceTypeObject DeeSurfaceType_RGB888;
+extern DeeSurfaceTypeObject DeeSurfaceType_RGBA8888;
+
+
+//////////////////////////////////////////////////////////////////////////
+// === Surface Object ===
 struct DeeSurfaceObject {
  DEE_OBJECT_HEAD_EX(DeeSurfaceTypeObject)
  Dee_size_t s_sizex; /*< Surface size in x (aka. width). */
@@ -425,14 +481,6 @@ struct DeeSurfaceObject {
  };
 };
 
-// v Base type for all surfaces
-extern DeeSurfaceTypeObject DeeSurface_Type;
-#if 1
-#define DeeSurface_CheckExact(ob) DeeSurfaceType_Check(Dee_TYPE(ob))
-#else
-#define DeeSurface_CheckExact(ob) DeeObject_InstanceOf(ob,(DeeTypeObject *)&DeeSurface_Type)
-#endif
-#define DeeSurface_Check       DeeSurface_CheckExact
 #define DeeSurface_TYPE(ob)  ((DeeSurfaceTypeObject *)Dee_TYPE(ob))
 #define DeeSurface_SIZEX(ob) ((DeeSurfaceObject *)Dee_REQUIRES_POINTER(ob))->s_sizex
 #define DeeSurface_SIZEY(ob) ((DeeSurfaceObject *)Dee_REQUIRES_POINTER(ob))->s_sizey
@@ -562,19 +610,12 @@ extern DEE_A_RET_EXCEPT_REF DeeSurfaceTypeObject *
 
 
 
-//////////////////////////////////////////////////////////////////////////
-// Some hard-coded surface types (with special optimizations)
-//extern DeeSurfaceTypeObject DeeSurfaceType_RGB888;
-extern DeeSurfaceTypeObject DeeSurfaceType_RGBA8888;
-
-
-
-
-
 
 
 //////////////////////////////////////////////////////////////////////////
 // Implementation of inline functions
+
+// TODO: This function should take signed arguments
 DEE_STATIC_INLINE(void) DeeSurface_XLine(
  DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_size_t x1, DEE_A_IN Dee_size_t x2, DEE_A_IN Dee_size_t y,
@@ -597,6 +638,8 @@ DEE_STATIC_INLINE(void) DeeSurface_XLine(
   }
  }
 }
+
+// TODO: This function should take signed arguments
 DEE_STATIC_INLINE(void) DeeSurface_YLine(
  DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_size_t x, DEE_A_IN Dee_size_t y1, DEE_A_IN Dee_size_t y2,
@@ -620,6 +663,8 @@ DEE_STATIC_INLINE(void) DeeSurface_YLine(
  }
 }
 
+
+// TODO: This function should take signed arguments
 DEE_STATIC_INLINE(void) DeeSurface_Line(
  DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_size_t x1, DEE_A_IN Dee_size_t y1,
@@ -655,15 +700,15 @@ DEE_STATIC_INLINE(void) DeeSurface_Line(
 #undef used_yend
 #undef used_ybegin
  } else if (used_y2 < used_y1) { // lh --> hl
-  --used_y2;
+  ++used_y1;
 #define used_ybegin used_y1 // beginy_hi
 #define used_yend   used_y2 // endy_lo
   if (used_xend > sizex) {
    used_yend -= ((used_xend-sizex)*(used_ybegin-used_yend))/(used_xend-used_xbegin);
    used_xend  = sizex;
-  } else if (used_yend > sizey) {
-   used_xend -= ((used_yend-sizey)*(used_xend-used_xbegin))/(used_ybegin-used_yend);
-   used_yend  = sizey;
+  } else if (used_ybegin >= sizey) {
+   used_xbegin += ((used_ybegin-sizey)*(used_xend-used_xbegin))/(used_ybegin-used_yend);
+   used_ybegin  = sizey-1;
   }
   (*DeeSurface_TYPE(dst)->st_linelhhl)(dst,used_xbegin,used_ybegin,used_xend,used_yend,color,blend);
 #undef used_yend
@@ -674,7 +719,8 @@ DEE_STATIC_INLINE(void) DeeSurface_Line(
  }
 }
 
-void DeeSurface_Blit(
+// TODO: This function should take signed arguments
+DEE_STATIC_INLINE(void) DeeSurface_Blit(
  DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_size_t dx, DEE_A_IN Dee_size_t dy,
  DEE_A_IN DeeSurfaceObject const *src,
@@ -693,6 +739,7 @@ void DeeSurface_Blit(
 }
 
 
+// TODO: This function should take signed arguments
 DEE_STATIC_INLINE(void) DeeSurface_FillRect(
  DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_size_t x1, DEE_A_IN Dee_size_t y1,
@@ -711,6 +758,7 @@ DEE_STATIC_INLINE(void) DeeSurface_FillRect(
                                       used_x2,used_y2,color,blend);
 }
 
+// TODO: This function should take signed arguments
 DEE_STATIC_INLINE(void) DeeSurface_BlitArea(
  DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_size_t dx, DEE_A_IN Dee_size_t dy,
@@ -734,6 +782,7 @@ DEE_STATIC_INLINE(void) DeeSurface_BlitArea(
                                   blend);
 }
 
+// TODO: This function should take signed arguments
 DEE_STATIC_INLINE(void) DeeSurface_StretchBlitArea(
  DEE_A_INOUT DeeSurfaceObject    *dst, DEE_A_IN Dee_size_t dx, DEE_A_IN Dee_size_t dy, DEE_A_IN Dee_size_t dsx, DEE_A_IN Dee_size_t dsy,
  DEE_A_IN DeeSurfaceObject const *src, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy, DEE_A_IN Dee_size_t ssx, DEE_A_IN Dee_size_t ssy,

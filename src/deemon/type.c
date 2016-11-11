@@ -472,6 +472,8 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeType_NewInstance(
   return (*DeeType_GET_SLOT(self,tp_any_new))((DeeTypeObject *)self,args);
  }
  if ((result = (*DeeType_GET_SLOT(self,tp_alloc))((DeeTypeObject *)self)) != NULL) {
+  DEE_ASSERT(DeeObject_Check(result));
+  DEE_ASSERT(DeeObject_InstanceOf(result,self));
   if (DeeObject_Construct(result,args) != 0) {
    _DeeObject_DELETE(self,result);
    return NULL;

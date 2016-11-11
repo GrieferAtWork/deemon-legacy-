@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_DEX_ZLIB_C
-#define GUARD_DEEMON_DEX_ZLIB_C 1
+#ifndef GUARD_DEEMON_DEX_GFX__GFX_C
+#define GUARD_DEEMON_DEX_GFX__GFX_C 1
 #define DEE_EXTENSION 1
 
 //@ dex.name = _gfx
@@ -41,6 +41,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include <deemon/optional/object_malloc.h>
 #include <deemon/__bswap_intrin.inl>
 #include DEE_INCLUDE_MEMORY_API()
+#include "pixelobject.inl"
 
 DEE_DECL_BEGIN
 
@@ -51,21 +52,27 @@ void DeePixel_FillStandardIndexMap(
 }
 
 
-#define blend_zero(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)                   /* lhs* */0
-#define blend_one(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)                       lhs
-#define blend_src_color(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)                ((Dee_uint32_t)lhs*csrc)/0xFF
-#define blend_one_minus_src_color(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)      ((Dee_uint32_t)lhs*(0xFF-csrc))/0xFF
-#define blend_dst_color(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)                ((Dee_uint32_t)lhs*cdst)/0xFF
-#define blend_one_minus_dst_color(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)      ((Dee_uint32_t)lhs*(0xFF-cdst))/0xFF
-#define blend_src_alpha(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)                ((Dee_uint32_t)lhs*asrc)/0xFF
-#define blend_one_minus_src_alpha(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)      ((Dee_uint32_t)lhs*(0xFF-asrc))/0xFF
-#define blend_dst_alpha(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)                ((Dee_uint32_t)lhs*adst)/0xFF
-#define blend_one_minus_dst_alpha(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)      ((Dee_uint32_t)lhs*(0xFF-adst))/0xFF
-#define blend_src_alpha_saturate(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)       ((Dee_uint32_t)lhs*Dee_MIN(asrc,0xFF-adst))/0xFF
-#define blend_constant_color(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)           ((Dee_uint32_t)lhs*cc)/0xFF
-#define blend_one_minus_constant_color(lhs,rhs,cdst,csrc,adst,asrc,cc,ac) ((Dee_uint32_t)lhs*(0xFF-cc))/0xFF
-#define blend_constant_alpha(lhs,rhs,cdst,csrc,adst,asrc,cc,ac)           ((Dee_uint32_t)lhs*ac)/0xFF
-#define blend_one_minus_constant_alpha(lhs,rhs,cdst,csrc,adst,asrc,cc,ac) ((Dee_uint32_t)lhs*(0xFF-ac))/0xFF
+#if 1
+#define div256(x) ((x)+0xfe)/0xff
+#else
+#define div256(x) (x)/0xff
+#endif
+
+#define blend_zero(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)                                       /* lhs* */0
+#define blend_one(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)                                           lhs
+#define blend_src_color(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)                div256((Dee_uint32_t)lhs*csrc)
+#define blend_one_minus_src_color(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)      div256((Dee_uint32_t)lhs*(0xFF-csrc))
+#define blend_dst_color(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)                div256((Dee_uint32_t)lhs*cdst)
+#define blend_one_minus_dst_color(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)      div256((Dee_uint32_t)lhs*(0xFF-cdst))
+#define blend_src_alpha(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)                div256((Dee_uint32_t)lhs*asrc)
+#define blend_one_minus_src_alpha(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)      div256((Dee_uint32_t)lhs*(0xFF-asrc))
+#define blend_dst_alpha(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)                div256((Dee_uint32_t)lhs*adst)
+#define blend_one_minus_dst_alpha(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)      div256((Dee_uint32_t)lhs*(0xFF-adst))
+#define blend_src_alpha_saturate(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)       div256((Dee_uint32_t)lhs*Dee_MIN(asrc,0xFF-adst))
+#define blend_constant_color(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)           div256((Dee_uint32_t)lhs*cc)
+#define blend_one_minus_constant_color(lhs,rhs,csrc,cdst,asrc,adst,cc,ac) div256((Dee_uint32_t)lhs*(0xFF-cc))
+#define blend_constant_alpha(lhs,rhs,csrc,cdst,asrc,adst,cc,ac)           div256((Dee_uint32_t)lhs*ac)
+#define blend_one_minus_constant_alpha(lhs,rhs,csrc,cdst,asrc,adst,cc,ac) div256((Dee_uint32_t)lhs*(0xFF-ac))
 
 #define BLEND_SWITCH(kind,callback)\
 do{\
@@ -107,22 +114,22 @@ void DeePixel_Blend(
  DEE_A_IN struct DeePixel const *src,
  DEE_A_IN Dee_blendinfo_t info) {
  struct DeePixel new_lhs,new_rhs;
-#define blend_rgb_dst(fun)\
-{ new_lhs.r = (Dee_uint8_t)(fun(dst->r,src->r,src->r,dst->r,src->a,dst->a,DEE_BLENDINFO_GET_CR(info),DEE_BLENDINFO_GET_CA(info))); \
-  new_lhs.g = (Dee_uint8_t)(fun(dst->g,src->g,src->g,dst->g,src->a,dst->a,DEE_BLENDINFO_GET_CG(info),DEE_BLENDINFO_GET_CA(info))); \
-  new_lhs.b = (Dee_uint8_t)(fun(dst->b,src->b,src->b,dst->b,src->a,dst->a,DEE_BLENDINFO_GET_CB(info),DEE_BLENDINFO_GET_CA(info))); }
-#define blend_a_dst(fun)\
-{ new_lhs.a = (Dee_uint8_t)(fun(dst->a,src->a,src->a,dst->a,src->a,dst->a,DEE_BLENDINFO_GET_CA(info),DEE_BLENDINFO_GET_CA(info))); }
 #define blend_rgb_src(fun)\
-{ new_rhs.r = (Dee_uint8_t)(fun(src->r,dst->r,src->r,dst->r,src->a,dst->a,DEE_BLENDINFO_GET_CR(info),DEE_BLENDINFO_GET_CA(info))); \
-  new_rhs.g = (Dee_uint8_t)(fun(src->g,dst->g,src->g,dst->g,src->a,dst->a,DEE_BLENDINFO_GET_CG(info),DEE_BLENDINFO_GET_CA(info))); \
-  new_rhs.b = (Dee_uint8_t)(fun(src->b,dst->b,src->b,dst->b,src->a,dst->a,DEE_BLENDINFO_GET_CB(info),DEE_BLENDINFO_GET_CA(info))); }
+{ new_lhs.r = (Dee_uint8_t)(fun(src->r,dst->r,src->r,dst->r,src->a,dst->a,DEE_BLENDINFO_GET_CR(info),DEE_BLENDINFO_GET_CA(info))); \
+  new_lhs.g = (Dee_uint8_t)(fun(src->g,dst->g,src->g,dst->g,src->a,dst->a,DEE_BLENDINFO_GET_CG(info),DEE_BLENDINFO_GET_CA(info))); \
+  new_lhs.b = (Dee_uint8_t)(fun(src->b,dst->b,src->b,dst->b,src->a,dst->a,DEE_BLENDINFO_GET_CB(info),DEE_BLENDINFO_GET_CA(info))); }
 #define blend_a_src(fun)\
-{ new_rhs.a = (Dee_uint8_t)(fun(src->a,dst->a,src->a,dst->a,src->a,dst->a,DEE_BLENDINFO_GET_CA(info),DEE_BLENDINFO_GET_CA(info))); }
- BLEND_SWITCH(DEE_BLENDINFO_GET_RGBSRC(info),blend_rgb_dst);
- BLEND_SWITCH(DEE_BLENDINFO_GET_ASRC(info),blend_a_dst);
- BLEND_SWITCH(DEE_BLENDINFO_GET_RGBDST(info),blend_rgb_src);
- BLEND_SWITCH(DEE_BLENDINFO_GET_ADST(info),blend_a_src);
+{ new_lhs.a = (Dee_uint8_t)(fun(src->a,dst->a,src->a,dst->a,src->a,dst->a,DEE_BLENDINFO_GET_CA(info),DEE_BLENDINFO_GET_CA(info))); }
+#define blend_rgb_dst(fun)\
+{ new_rhs.r = (Dee_uint8_t)(fun(dst->r,src->r,src->r,dst->r,src->a,dst->a,DEE_BLENDINFO_GET_CR(info),DEE_BLENDINFO_GET_CA(info))); \
+  new_rhs.g = (Dee_uint8_t)(fun(dst->g,src->g,src->g,dst->g,src->a,dst->a,DEE_BLENDINFO_GET_CG(info),DEE_BLENDINFO_GET_CA(info))); \
+  new_rhs.b = (Dee_uint8_t)(fun(dst->b,src->b,src->b,dst->b,src->a,dst->a,DEE_BLENDINFO_GET_CB(info),DEE_BLENDINFO_GET_CA(info))); }
+#define blend_a_dst(fun)\
+{ new_rhs.a = (Dee_uint8_t)(fun(dst->a,src->a,src->a,dst->a,src->a,dst->a,DEE_BLENDINFO_GET_CA(info),DEE_BLENDINFO_GET_CA(info))); }
+ BLEND_SWITCH(DEE_BLENDINFO_GET_RGBSRC(info),blend_rgb_src);
+ BLEND_SWITCH(DEE_BLENDINFO_GET_ASRC(info),blend_a_src);
+ BLEND_SWITCH(DEE_BLENDINFO_GET_RGBDST(info),blend_rgb_dst);
+ BLEND_SWITCH(DEE_BLENDINFO_GET_ADST(info),blend_a_dst);
 #undef blend_a_dst
 #undef blend_rgb_dst
 #undef blend_a_src
@@ -228,13 +235,14 @@ static struct DeeMemberDef const _deesurface_tp_members[] = {
 
 static DeeObject *DEE_CALL _deesurface_line(
  DeeSurfaceObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- Dee_ssize_t x1,y1,x2,y2; // TODO: color
- Dee_size_t used_x1,used_y1,used_x2,used_y2;
- if (DeeTuple_Unpack(args,"IdIdIdId:line",&x1,&y1,&x2,&y2) != 0) return NULL;
+ Dee_ssize_t x1,y1,x2,y2; DeePixelObject *color = &DeePixel_BlackObject;
+ Dee_size_t used_x1,used_y1,used_x2,used_y2; Dee_uint64_t blend = DEE_BLENDINFO_NORMAL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"IdIdIdId|oI64u:line",&x1,&y1,&x2,&y2,&color,&blend) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)color,&DeePixel_Type) != 0) return NULL;
  used_x1 = (Dee_size_t)x1,used_y1 = (Dee_size_t)y1;
  used_x2 = (Dee_size_t)x2,used_y2 = (Dee_size_t)y2;
  DeeSurface_Line(self,used_x1,used_y1,used_x2,used_y2,
-                 DeePixel_BLACK,DEE_BLENDINFO_NORMAL);
+                 &color->p_pixel,blend);
  DeeReturn_None;
 }
 static DeeObject *DEE_CALL _deesurface_save_png(
@@ -295,8 +303,8 @@ DeeTypeObject DeeSurfaceType_Type = {
 DeeSurfaceTypeObject DeeSurface_Type = {
  {DEE_TYPE_OBJECT_HEAD_EX_v100(member(&DeeSurfaceType_Type),member("surface"),member(
    "\tBase class for all surface objects (Not constructable)."),null,null),
-  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(
-   Dee_OFFSETOF(DeeSurfaceObject,s_pixeldata),null,null,null,null,null),
+  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(Dee_OFFSETOF(
+   DeeSurfaceObject,s_pixeldata),null,null,null,null,null),
   DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,null),
   DEE_TYPE_OBJECT_ASSIGN_v100(null,null,null),
   DEE_TYPE_OBJECT_CAST_v101(null,null,null,null,null),
@@ -351,9 +359,10 @@ DeeSurfaceTypeObject DeeSurface_Type = {
 
 static DeeSurfaceObject *DEE_CALL _deepixelsurface_tp_any_new(
  DeeSurfaceTypeObject *tp_self, DeeObject *args) {
- Dee_size_t sx,sy;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"IuIu:surface_rgba8888",&sx,&sy) != 0) return NULL;
- return DeeSurface_NewEmpty(tp_self,sx,sy);
+ Dee_size_t sx,sy; DeePixelObject *filler = &DeePixel_EmptyObject;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"IuIu|o:surface",&sx,&sy,&filler) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)filler,&DeePixel_Type) != 0) return NULL;
+ return DeeSurface_NewFilled(tp_self,sx,sy,&filler->p_pixel);
 }
 static DeeSurfaceObject *DEE_CALL _deepixelsurface_tp_copy_new(
  DeeSurfaceTypeObject *tp_self, DeeSurfaceObject *self) {
@@ -482,7 +491,7 @@ static void DEE_CALL _deesurface_generic_st_linelhhl(
  step = 0; --endy_lo;
  if (sizex > sizey) {
   relation = (double)sizey/(double)sizex;
-  do (*setter)(self,xbegin+step,endy_lo-(Dee_size_t)(relation*step),color,blend);
+  do (*setter)(self,xbegin+step,beginy_hi-(Dee_size_t)(relation*step),color,blend);
   while (++step != sizex);
  } else if (sizex < sizey) {
   relation = (double)sizex/(double)sizey;
@@ -639,10 +648,26 @@ DeeSurfaceType_Get(DEE_A_IN Dee_uint64_t format) {
 //////////////////////////////////////////////////////////////////////////
 // Module exports
 struct DeeDexExportDef DeeDex_Exports[] = {
+ DeeDex_EXPORT_OBJECT("pixel",&DeePixel_Type),
  DeeDex_EXPORT_OBJECT("surface",&DeeSurface_Type),
+ DeeDex_EXPORT_OBJECT("surface_type",&DeeSurfaceType_Type),
  DeeDex_EXPORT_OBJECT("surface_rgba8888",&DeeSurfaceType_RGBA8888),
  DeeDex_EXPORT_END
 };
+
+int DeeDex_Main(DEE_A_INOUT DeeDexContext *context) {
+ switch (context->dc_kind) {
+  case DEE_DEXCONTEXTKIND_COLLECTMEM:
+   context->dc_collectmem.ccm_total += DEE_OBJECTPOOL_CLEAR(pixelpool);
+   break;
+  case DEE_DEXCONTEXTKIND_FINALIZE:
+   DEE_OBJECTPOOL_CLEAR(pixelpool);
+   break;
+  default: break;
+ }
+ return 0;
+}
+
 
 
 DEE_DECL_END
@@ -655,4 +680,4 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 #endif
 
-#endif /* !GUARD_DEEMON_DEX_ZLIB_C */
+#endif /* !GUARD_DEEMON_DEX_GFX__GFX_C */
