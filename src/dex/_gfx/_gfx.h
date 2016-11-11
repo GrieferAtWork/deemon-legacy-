@@ -210,7 +210,7 @@ struct DeePixel { Dee_uint8_t r,g,b,a; };
 #define DeePixel_SILVER  ((struct DeePixel const *)"\xc0\xc0\xc0\xff")
 #define DeePixel_TEAL    ((struct DeePixel const *)"\x00\x80\x80\xff")
 #define DeePixel_WHITE   ((struct DeePixel const *)"\xff\xff\xff\xff")
-#define DeePixel_EMPTY   ((struct DeePixel const *)"\x00\x00\x00\x00")
+#define DeePixel_EMPTY   ((struct DeePixel const *)"\xff\xff\xff\x00")
 
 
 typedef Dee_uint64_t Dee_blendinfo_t;
@@ -246,7 +246,7 @@ typedef Dee_uint64_t Dee_blendinfo_t;
 #define DEE_BLENDINFO_GET_CB(info)     ((Dee_uint8_t)(((info)>>40)&0xff))
 #define DEE_BLENDINFO_GET_CA(info)     ((Dee_uint8_t)(((info)>>32)&0xff))
 
-#define DEE_BLENDINFO(in,out,func) DEE_BLENDINFO_EX(in,in,out,out,func,func,0,0,0,0)
+#define DEE_BLENDINFO(src,dst,func) DEE_BLENDINFO_EX(src,src,dst,dst,func,func,0,0,0,0)
 #define DEE_BLENDINFO_EX(rgb_src,a_src,rgb_dst,a_dst,rgb_fun,a_fun,cr,cg,cb,ca)\
  ((Dee_uint64_t)((rgb_src)&0xf)       |((Dee_uint64_t)((a_src)&0xf) <<  4)\
 |((Dee_uint64_t)((rgb_dst)&0xf) <<  8)|((Dee_uint64_t)((a_dst)&0xf) << 12)\
@@ -442,9 +442,9 @@ extern DeeSurfaceTypeObject DeeSurface_Type;
 // Create a new surface of a given type and dimensions
 extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_New(
  DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy);
-#define DeeSurface_NewFilled(stype,sx,sy) \
- DeeSurface_NewFilledEx(stype,sx,sy,DeePixel_EMPTY)
-extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFilledEx(
+#define DeeSurface_NewEmpty(stype,sx,sy) \
+ DeeSurface_NewFilled(stype,sx,sy,DeePixel_EMPTY)
+extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFilled(
  DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_IN Dee_size_t sx,
  DEE_A_IN Dee_size_t sy, DEE_A_IN struct DeePixel const *color);
 

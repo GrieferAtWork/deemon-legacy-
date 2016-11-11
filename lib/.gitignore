@@ -1,5 +1,6 @@
 *.dee
 *.out
+*.png
 !future.dee
 !fixme.dee
 !*/*.dee
