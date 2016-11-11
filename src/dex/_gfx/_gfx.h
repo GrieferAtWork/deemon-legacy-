@@ -459,11 +459,11 @@ extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_Convert(
 
 
 #define DeeSurface_GetPixel(self,x,y,pixel) \
- ((x) < DeeSurface_SIZEX(self) && (y) < DeeSurface_SIZEY(self)\
- ? _DeeSurface_GetPixel(self,x,y,pixel) : (void)(*(pixel) = *DeePixel_EMPTY))
+((x) < DeeSurface_SIZEX(self) && (y) < DeeSurface_SIZEY(self)\
+  ? _DeeSurface_GetPixel(self,x,y,pixel) : (void)(*(pixel) = *DeePixel_EMPTY))
 #define DeeSurface_SetPixel(self,x,y,pixel,blend) \
- ((x) < DeeSurface_SIZEX(self) && (y) < DeeSurface_SIZEY(self)\
- ? _DeeSurface_SetPixel(self,x,y,pixel,blend) : (void)0)
+((x) < DeeSurface_SIZEX(self) && (y) < DeeSurface_SIZEY(self)\
+  ? _DeeSurface_SetPixel(self,x,y,pixel,blend) : (void)0)
 #define _DeeSurface_GetPixel(self,x,y,pixel) (*DeeSurface_TYPE(self)->st_getpixel)(self,x,y,pixel)
 #define _DeeSurface_SetPixel(self,x,y,pixel,blend) (*DeeSurface_TYPE(self)->st_setpixel)(self,x,y,pixel,blend)
 
@@ -532,18 +532,27 @@ DEE_STATIC_INLINE(void) DeeSurface_Blit(
 // >> |                 |    |                  |
 // >> +-----------------+    +------------------+
 //////////////////////////////////////////////////////////////////////////
-#define DeeSurface_BlitArea(dst,dx,dy,src,sx,sy,ssx,ssy) \
-(((dx) <= DeeSurface_SIZEX(dst) && (dy) <= DeeSurface_SIZEY(dst) &&\
-  (sx) <= DeeSurface_SIZEX(src) && (sy) <= DeeSurface_SIZEY(src))\
-? _DeeSurface_BlitArea(dst,dx,dy,src,sx,sy,Dee_MIN(ssx,DeeSurface_SIZEX(src)-(sx)),\
-                                           Dee_MIN(ssy,DeeSurface_SIZEY(src)-(sy)))\
-: (void)0)
-#define _DeeSurface_BlitArea(dst,dx,dy,src,sx,sy,ssx,ssy) \
- (*DeeSurface_TYPE(dst)->st_blit)(dst,dx,dy,(DeeSurfaceObject *)Dee_REQUIRES_POINTER(src),sx,sy,ssx,ssy)
+DEE_STATIC_INLINE(void) DeeSurface_BlitArea(
+ DEE_A_INOUT DeeSurfaceObject *dst,
+ DEE_A_IN Dee_size_t dx, DEE_A_IN Dee_size_t dy,
+ DEE_A_IN DeeSurfaceObject const *src,
+ DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy,
+ DEE_A_IN Dee_size_t ssx, DEE_A_IN Dee_size_t ssy,
+ DEE_A_IN Dee_blendinfo_t blend);
+#define _DeeSurface_BlitArea(dst,dx,dy,src,sx,sy,ssx,ssy,blend) \
+ (*DeeSurface_TYPE(dst)->st_blit)(dst,dx,dy,(DeeSurfaceObject *)Dee_REQUIRES_POINTER(src),sx,sy,ssx,ssy,blend)
 
 
-#define DeeSurface_StretchBlit(dst,dx,dy,dsx,dsy,src,sx,sy,ssx,ssy) \
- (*DeeSurface_TYPE(dst)->st_stretchblit)(dst,dx,dy,dsx,dsy,(DeeSurfaceObject *)(src),sx,sy,ssx,ssy)
+//////////////////////////////////////////////////////////////////////////
+// Stretch-blits a given area from 'src' onto 'dst' 'dx-dy'
+// NOTE: Nearest-neighbor interpolation is used
+DEE_STATIC_INLINE(void) DeeSurface_StretchBlitArea(
+ DEE_A_INOUT DeeSurfaceObject    *dst, DEE_A_IN Dee_size_t dx, DEE_A_IN Dee_size_t dy, DEE_A_IN Dee_size_t dsx, DEE_A_IN Dee_size_t dsy,
+ DEE_A_IN DeeSurfaceObject const *src, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy, DEE_A_IN Dee_size_t ssx, DEE_A_IN Dee_size_t ssy,
+ DEE_A_IN Dee_blendinfo_t blend);
+#define _DeeSurface_StretchBlit(dst,dx,dy,dsx,dsy,src,sx,sy,ssx,ssy,blend) \
+ (*DeeSurface_TYPE(dst)->st_stretchblit)(dst,dx,dy,dsx,dsy,\
+ (DeeSurfaceObject *)Dee_REQUIRES_POINTER(src),sx,sy,ssx,ssy,blend)
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -700,6 +709,53 @@ DEE_STATIC_INLINE(void) DeeSurface_FillRect(
  if (++used_y2 > sizey) used_y2 = sizey;
  (*DeeSurface_TYPE(dst)->st_fillrect)(dst,used_x1,used_y1,
                                       used_x2,used_y2,color,blend);
+}
+
+DEE_STATIC_INLINE(void) DeeSurface_BlitArea(
+ DEE_A_INOUT DeeSurfaceObject *dst,
+ DEE_A_IN Dee_size_t dx, DEE_A_IN Dee_size_t dy,
+ DEE_A_IN DeeSurfaceObject const *src,
+ DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy,
+ DEE_A_IN Dee_size_t ssx, DEE_A_IN Dee_size_t ssy,
+ DEE_A_IN Dee_blendinfo_t blend) {
+ Dee_size_t dstsx,dstsy,srcsx,srcsy,maxblitsx,maxblitsy;
+ DEE_ASSERT(DeeObject_Check(dst) && DeeSurface_Check(dst));
+ DEE_ASSERT(DeeObject_Check(src) && DeeSurface_Check(src));
+ if (dx >= (dstsx = DeeSurface_SIZEX(dst))) return;
+ if (dy >= (dstsy = DeeSurface_SIZEY(dst))) return;
+ if (sx >= (srcsx = DeeSurface_SIZEX(src))) return;
+ if (sy >= (srcsy = DeeSurface_SIZEY(src))) return;
+ dstsx -= dx,dstsy -= dy,srcsx -= sx,srcsy -= sy;
+ maxblitsx = Dee_MIN(dstsx,srcsx);
+ maxblitsy = Dee_MIN(dstsy,srcsy);
+ (*DeeSurface_TYPE(dst)->st_blit)(dst,dx,dy,src,sx,sy,
+                                  Dee_MIN(ssx,maxblitsx),
+                                  Dee_MIN(ssy,maxblitsy),
+                                  blend);
+}
+
+DEE_STATIC_INLINE(void) DeeSurface_StretchBlitArea(
+ DEE_A_INOUT DeeSurfaceObject    *dst, DEE_A_IN Dee_size_t dx, DEE_A_IN Dee_size_t dy, DEE_A_IN Dee_size_t dsx, DEE_A_IN Dee_size_t dsy,
+ DEE_A_IN DeeSurfaceObject const *src, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy, DEE_A_IN Dee_size_t ssx, DEE_A_IN Dee_size_t ssy,
+ DEE_A_IN Dee_blendinfo_t blend) {
+ Dee_size_t dstsx,dstsy,srcsx,srcsy,used_dsx,used_dsy,used_ssx,used_ssy;
+ DEE_ASSERT(DeeObject_Check(dst) && DeeSurface_Check(dst));
+ DEE_ASSERT(DeeObject_Check(src) && DeeSurface_Check(src));
+ if (dx >= (dstsx = DeeSurface_SIZEX(dst))) return;
+ if (dy >= (dstsy = DeeSurface_SIZEY(dst))) return;
+ if (sx >= (srcsx = DeeSurface_SIZEX(src))) return;
+ if (sy >= (srcsy = DeeSurface_SIZEY(src))) return;
+ dstsx -= dx,dstsy -= dy;
+ srcsx -= sx,srcsy -= sy;
+ used_dsx = dsx,used_dsy = dsy;
+ used_ssx = ssx,used_ssy = ssy;
+ if (dstsx < used_dsx) { used_ssx = (used_ssx*(used_dsx-dstsx))/used_dsx; used_dsx = dstsx; }
+ if (dstsy < used_dsy) { used_ssy = (used_ssy*(used_dsy-dstsy))/used_dsy; used_dsy = dstsy; }
+ if (srcsx < used_ssx) { used_dsx = (used_dsx*(used_ssx-srcsx))/used_ssx; used_ssx = srcsx; }
+ if (srcsy < used_ssy) { used_dsy = (used_dsy*(used_ssy-srcsy))/used_ssy; used_ssy = srcsy; }
+ (*DeeSurface_TYPE(dst)->st_stretchblit)(dst,dx,dy,used_dsx,used_dsy,
+                                         src,sx,sy,used_ssx,used_ssy,
+                                         blend);
 }
 
 

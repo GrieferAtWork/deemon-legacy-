@@ -486,10 +486,10 @@ static void DEE_CALL _deesurface_generic_st_linelhhl(
   while (++step != sizex);
  } else if (sizex < sizey) {
   relation = (double)sizex/(double)sizey;
-  do (*setter)(self,xbegin+(Dee_size_t)(relation*step),endy_lo-step,color,blend);
+  do (*setter)(self,xbegin+(Dee_size_t)(relation*step),beginy_hi-step,color,blend);
   while (++step != sizex);
  } else {
-  do (*setter)(self,xbegin+step,endy_lo-step,color,blend);
+  do (*setter)(self,xbegin+step,beginy_hi-step,color,blend);
   while (++step != sizex);
  }
 }
@@ -639,6 +639,7 @@ DeeSurfaceType_Get(DEE_A_IN Dee_uint64_t format) {
 //////////////////////////////////////////////////////////////////////////
 // Module exports
 struct DeeDexExportDef DeeDex_Exports[] = {
+ DeeDex_EXPORT_OBJECT("surface",&DeeSurface_Type),
  DeeDex_EXPORT_OBJECT("surface_rgba8888",&DeeSurfaceType_RGBA8888),
  DeeDex_EXPORT_END
 };
