@@ -27,6 +27,7 @@
 #include <deemon/__conf.inl>
 #include <deemon/optional/object_decl.h>
 #include <deemon/optional/type_decl.h>
+#include <deemon/optional/object_refcnt.h>
 #include <deemon/type.h>
 
 DEE_DECL_BEGIN
@@ -242,6 +243,9 @@ struct DeePixel { Dee_uint8_t r,g,b,a; };
 //       lowercase variants of the * in the 'DeePixel_*' constants above.
 extern DEE_A_RET_Z_OPT char const *DeePixel_Name(DEE_A_IN struct DeePixel const *pixel);
 extern DEE_A_RET_MAYBE_NULL struct DeePixel const *DeePixel_FromName(DEE_A_IN_Z char const *name);
+extern DEE_A_RET_NOEXCEPT(0) int DeePixel_InitFromHTML(
+ DEE_A_OUT struct DeePixel *self, DEE_A_IN_Z char const *text_after_hash,
+ DEE_A_ON_FAILURE(DEE_A_OUT) char const **error_pos);
 
 
 struct DeePixelObject {
@@ -346,57 +350,93 @@ extern void DeePixel_Blend(
  DEE_A_IN Dee_blendinfo_t info);
 
 
+
+
+struct DeeFontCharacter {
+ Dee_uint8_t fc_sizex;    /*< [0..8] Size of the character in x. */
+ Dee_uint8_t fc_sizey;    /*< [0..8] Size of the character in y. */
+ Dee_uint8_t fc_lines[8]; /*< 8x8 mask of used pixels (in msb format). */
+};
+struct DeeFont {
+ Dee_uint8_t             f_spacex;   /*< Space between characters in x. */
+ Dee_uint8_t             f_spacey;   /*< Space between characters in y. */
+ struct DeeFontCharacter f_chr[256]; /*< Array of character descriptors. */
+};
+
+extern struct DeeFont DeeFont_Default;
+
+
+
+
+
 typedef void (DEE_CALL *PDeeSurfaceGetPixel)(
- DEE_A_IN DeeSurfaceObject const *self, DEE_A_IN Dee_size_t x,
+ DEE_A_IN DeeSurfaceObject const *dst, DEE_A_IN Dee_size_t x,
  DEE_A_IN Dee_size_t y, DEE_A_OUT struct DeePixel *pixel);
 typedef void (DEE_CALL *PDeeSurfaceSetPixel)(
- DEE_A_INOUT DeeSurfaceObject *self, DEE_A_IN Dee_size_t x,
+ DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t x,
  DEE_A_IN Dee_size_t y, DEE_A_IN struct DeePixel const *pixel,
  DEE_A_IN Dee_blendinfo_t info);
 typedef void (DEE_CALL *PDeeSurfaceFill)(
- DEE_A_INOUT DeeSurfaceObject *self, DEE_A_IN struct DeePixel const *color,
+ DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN struct DeePixel const *color,
  DEE_A_IN Dee_blendinfo_t blend);
 typedef void (DEE_CALL *PDeeSurfaceFillRect)(
- DEE_A_INOUT DeeSurfaceObject *self, DEE_A_IN Dee_size_t xbegin,
+ DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t xbegin,
  DEE_A_IN Dee_size_t ybegin, DEE_A_IN Dee_size_t xend, DEE_A_IN Dee_size_t yend,
  DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
 typedef void (DEE_CALL *PDeeSurfaceLineLLHH)(
- DEE_A_INOUT DeeSurfaceObject *self, DEE_A_IN Dee_size_t x,
+ DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t x,
  DEE_A_IN Dee_size_t y, DEE_A_IN Dee_size_t sizex, DEE_A_IN Dee_size_t sizey,
  DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
 typedef void (DEE_CALL *PDeeSurfaceLineLHHL)(
- DEE_A_INOUT DeeSurfaceObject *self, DEE_A_IN Dee_size_t x,
+ DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t x,
  DEE_A_IN Dee_size_t y, DEE_A_IN Dee_size_t sizex, DEE_A_IN Dee_size_t sizey,
  DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
 typedef void (DEE_CALL *PDeeSurfaceHLine)(
- DEE_A_INOUT DeeSurfaceObject *self, DEE_A_IN Dee_size_t xbegin, DEE_A_IN Dee_size_t xend,
+ DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t xbegin, DEE_A_IN Dee_size_t xend,
  DEE_A_IN Dee_size_t y, DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
 typedef void (DEE_CALL *PDeeSurfaceVLine)(
- DEE_A_INOUT DeeSurfaceObject *self, DEE_A_IN Dee_size_t x, DEE_A_IN Dee_size_t beginy,
+ DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t x, DEE_A_IN Dee_size_t beginy,
  DEE_A_IN Dee_size_t endy, DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
 typedef void (DEE_CALL *PDeeSurfaceBlit)(
- DEE_A_INOUT DeeSurfaceObject *self,
- DEE_A_IN Dee_size_t dst_x, DEE_A_IN Dee_size_t dst_y, // Destination coords in 'self'
+ DEE_A_INOUT DeeSurfaceObject *dst,
+ DEE_A_IN Dee_size_t dst_x, DEE_A_IN Dee_size_t dst_y, // Destination coords in 'dst'
  DEE_A_IN DeeSurfaceObject const *src,
  DEE_A_IN Dee_size_t src_x, DEE_A_IN Dee_size_t src_y, // Source coords in 'src'
  DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy, // Pixel copy dimensions (must fit in src-srccoord)
  DEE_A_IN Dee_blendinfo_t blend);
 typedef void (DEE_CALL *PDeeSurfaceStretchBlit)(
- DEE_A_INOUT DeeSurfaceObject *self,
- DEE_A_IN Dee_size_t dst_x, DEE_A_IN Dee_size_t dst_y, // Destination coords in 'self'
- DEE_A_IN Dee_size_t dstsx, DEE_A_IN Dee_size_t dstsy, // Destination dimensions in 'self'
+ DEE_A_INOUT DeeSurfaceObject *dst,
+ DEE_A_IN Dee_size_t dst_x, DEE_A_IN Dee_size_t dst_y, // Destination coords in 'dst'
+ DEE_A_IN Dee_size_t dstsx, DEE_A_IN Dee_size_t dstsy, // Destination dimensions in 'dst'
  DEE_A_IN DeeSurfaceObject const *src,
  DEE_A_IN double src_x, DEE_A_IN double src_y, // Source coords in 'src'
  DEE_A_IN double srcsx, DEE_A_IN double srcsy, // Source dimensions in 'src'
  DEE_A_IN Dee_blendinfo_t blend);
 typedef void (DEE_CALL *PDeeSurfaceFlipX)(
- DEE_A_INOUT DeeSurfaceObject *self,
+ DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_size_t xbegin, DEE_A_IN Dee_size_t ybegin,
  DEE_A_IN Dee_size_t xend, DEE_A_IN Dee_size_t yend);
 typedef void (DEE_CALL *PDeeSurfaceFlipY)(
- DEE_A_INOUT DeeSurfaceObject *self,
+ DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_size_t xbegin, DEE_A_IN Dee_size_t ybegin,
  DEE_A_IN Dee_size_t xend, DEE_A_IN Dee_size_t yend);
+
+//////////////////////////////////////////////////////////////////////////
+// Blit a mask of bits, only printing pixels with a 1-bit
+// NOTE: MSB: Most significant bit first (in data)
+// NOTE: LSB: Least significant bit first (in data)
+typedef void (DEE_CALL *PDeeSurfacePixelMaskMSB)(
+ DEE_A_INOUT DeeSurfaceObject *dst,
+ DEE_A_IN Dee_size_t x, DEE_A_IN Dee_size_t y,
+ DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy,
+ DEE_A_IN Dee_size_t line_bytes, DEE_A_IN_RB(in_bytes) void const *data,
+ DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
+typedef void (DEE_CALL *PDeeSurfacePixelMaskLSB)(
+ DEE_A_INOUT DeeSurfaceObject *dst,
+ DEE_A_IN Dee_size_t x, DEE_A_IN Dee_size_t y,
+ DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy,
+ DEE_A_IN Dee_size_t line_bytes, DEE_A_IN_RB(in_bytes) void const *data,
+ DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
 
 struct DeeSurfaceTypeObject {
  DeeTypeObject                   st_base;
@@ -432,25 +472,35 @@ struct DeeSurfaceTypeObject {
    Dee_size_t    st_mapsize;   /*< Size of the index map (entry count). */
   } st_indexspec;
  };
- PDeeSurfaceGetPixel    st_getpixel;    /*< [1..1]. */
- PDeeSurfaceSetPixel    st_setpixel;    /*< [1..1]. */
- PDeeSurfaceFill        st_fill;        /*< [1..1]. */
- PDeeSurfaceFillRect    st_fillrect;    /*< [1..1]. */
- PDeeSurfaceHLine       st_xline;       /*< [1..1]. */
- PDeeSurfaceVLine       st_yline;       /*< [1..1]. */
- PDeeSurfaceLineLLHH    st_linellhh;    /*< [1..1]. */
- PDeeSurfaceLineLHHL    st_linelhhl;    /*< [1..1]. */
- PDeeSurfaceBlit        st_blit;        /*< [1..1]. */
- PDeeSurfaceStretchBlit st_stretchblit; /*< [1..1]. */
- PDeeSurfaceFlipX       st_flipx;       /*< [1..1]. */
- PDeeSurfaceFlipY       st_flipy;       /*< [1..1]. */
+ PDeeSurfaceGetPixel     st_getpixel;     /*< [1..1]. */
+ PDeeSurfaceSetPixel     st_setpixel;     /*< [1..1]. */
+ PDeeSurfaceFill         st_fill;         /*< [1..1]. */
+ PDeeSurfaceFillRect     st_fillrect;     /*< [1..1]. */
+ PDeeSurfaceHLine        st_xline;        /*< [1..1]. */
+ PDeeSurfaceVLine        st_yline;        /*< [1..1]. */
+ PDeeSurfaceLineLLHH     st_linellhh;     /*< [1..1]. */
+ PDeeSurfaceLineLHHL     st_linelhhl;     /*< [1..1]. */
+ PDeeSurfaceBlit         st_blit;         /*< [1..1]. */
+ PDeeSurfaceStretchBlit  st_stretchblit;  /*< [1..1]. */
+ PDeeSurfaceFlipX        st_flipx;        /*< [1..1]. */
+ PDeeSurfaceFlipY        st_flipy;        /*< [1..1]. */
+ PDeeSurfacePixelMaskMSB st_pixelmaskmsb; /*< [1..1]. */
+ PDeeSurfacePixelMaskLSB st_pixelmasklsb; /*< [1..1]. */
 };
 
-#define DeeInt24_Get(p) \
- (((Dee_uint32_t)*(Dee_uint16_t *)(p) << 8) | ((Dee_uint8_t *)(p))[2])
-#define DeeInt24_Set(p,v) \
-(*(Dee_uint16_t *)(p) = (Dee_uint16_t)((v) >> 8),\
-  ((Dee_uint8_t *)(p))[2] = (Dee_uint8_t)(v))
+#ifdef DEE_PLATFORM_LIL_ENDIAN
+#define DeeUInt24_Get(p) \
+ (((Dee_uint32_t)*(Dee_uint16_t *)(p) << 8) | (Dee_uint32_t)((Dee_uint8_t *)(p))[2])
+#define DeeUInt24_Set(p,v) \
+ (*(Dee_uint16_t *)(p) = (Dee_uint16_t)((v) >> 8),\
+   ((Dee_uint8_t *)(p))[2] = (Dee_uint8_t)(v))
+#else
+#define DeeUInt24_Get(p) \
+ ((Dee_uint32_t)*(Dee_uint16_t *)((Dee_uintptr_t)(p)+1) | (Dee_uint32_t)(*(Dee_uint8_t *)(p)) << 16)
+#define DeeUInt24_Set(p,v) \
+ (*(Dee_uint16_t *)((Dee_uintptr_t)(p)+1) = (Dee_uint16_t)(v),\
+  *((Dee_uint8_t *)(p)) = (Dee_uint8_t)((Dee_uint32_t)(v) >> 16))
+#endif
 
 #define DeeSurfaceType_PIXEL_GETPIXEL(ty,datap,result)\
 do{\
@@ -458,14 +508,14 @@ do{\
  switch ((ty)->st_pixelspec.st_pixelbytes) {\
   case 1:  data = (Dee_uint32_t)*(Dee_uint8_t *)(datap); break;\
   case 2:  data = (Dee_uint32_t)*(Dee_uint16_t *)(datap); break;\
-  case 3:  data = DeeInt24_Get(datap); break;\
+  case 3:  data = DeeUInt24_Get(datap); break;\
   default: data = *(Dee_uint32_t *)(datap); break;\
  }\
- (result)->r = (Dee_uint8_t)(((((data)&(ty)->st_pixelspec.st_rmask) >> (ty)->st_pixelspec.st_rshift)*256)/(ty)->st_pixelspec.st_rmod);\
- (result)->g = (Dee_uint8_t)(((((data)&(ty)->st_pixelspec.st_gmask) >> (ty)->st_pixelspec.st_gshift)*256)/(ty)->st_pixelspec.st_gmod);\
- (result)->b = (Dee_uint8_t)(((((data)&(ty)->st_pixelspec.st_bmask) >> (ty)->st_pixelspec.st_bshift)*256)/(ty)->st_pixelspec.st_bmod);\
+ (result)->r = (Dee_uint8_t)(((Dee_uint16_t)(((data)&(ty)->st_pixelspec.st_rmask) >> (ty)->st_pixelspec.st_rshift)*256)/(ty)->st_pixelspec.st_rmod);\
+ (result)->g = (Dee_uint8_t)(((Dee_uint16_t)(((data)&(ty)->st_pixelspec.st_gmask) >> (ty)->st_pixelspec.st_gshift)*256)/(ty)->st_pixelspec.st_gmod);\
+ (result)->b = (Dee_uint8_t)(((Dee_uint16_t)(((data)&(ty)->st_pixelspec.st_bmask) >> (ty)->st_pixelspec.st_bshift)*256)/(ty)->st_pixelspec.st_bmod);\
  (result)->a = (ty)->st_pixelspec.st_abits\
-             ? (Dee_uint8_t)(((((data)&(ty)->st_pixelspec.st_amask) >> (ty)->st_pixelspec.st_ashift)*256)/(ty)->st_pixelspec.st_amod)\
+             ? (Dee_uint8_t)(((Dee_uint16_t)(((data)&(ty)->st_pixelspec.st_amask) >> (ty)->st_pixelspec.st_ashift)*256)/(ty)->st_pixelspec.st_amod)\
              : (Dee_uint8_t)0xFF;\
 }while(0)
 #define DeeSurfaceType_PIXEL_SETPIXEL(ty,datap,val)\
@@ -476,10 +526,10 @@ do{\
          | (((Dee_uint32_t)((val)->b/(ty)->st_pixelspec.st_binvmod) << (ty)->st_pixelspec.st_bshift) & (ty)->st_pixelspec.st_bmask)\
          | (((Dee_uint32_t)((val)->a/(ty)->st_pixelspec.st_ainvmod) << (ty)->st_pixelspec.st_ashift) & (ty)->st_pixelspec.st_amask);\
  switch ((ty)->st_pixelspec.st_pixelbytes) {\
-  case 1: *(Dee_uint8_t *)(datap)     = (Dee_uint8_t)newdata; break;\
-  case 2: *(Dee_uint16_t *)(datap)    = (Dee_uint16_t)newdata; break;\
-  case 3: DeeInt24_Set(datap,newdata); break;\
-  default: *(Dee_uint32_t *)(datap)   = newdata; break;\
+  case 1: *(Dee_uint8_t *)(datap) = (Dee_uint8_t)newdata; break;\
+  case 2: *(Dee_uint16_t *)(datap) = (Dee_uint16_t)newdata; break;\
+  case 3: DeeUInt24_Set(datap,newdata); break;\
+  default: *(Dee_uint32_t *)(datap) = newdata; break;\
  }\
 }while(0)
 
@@ -498,10 +548,13 @@ extern DeeSurfaceTypeObject DeeSurface_Type; /*< Base class for all surfaces. */
 #endif
 #define DeeSurface_Check       DeeSurface_CheckExact
 
+
+#ifdef DEE_LIMITED_DEX_GFX
 //////////////////////////////////////////////////////////////////////////
 // Some hard-coded surface types (with special optimizations)
 //extern DeeSurfaceTypeObject DeeSurfaceType_RGB888;
 extern DeeSurfaceTypeObject DeeSurfaceType_RGBA8888;
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -536,13 +589,20 @@ struct DeeSurfaceObject {
 
 //////////////////////////////////////////////////////////////////////////
 // Create a new surface of a given type and dimensions
-extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_New(
- DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy);
 #define DeeSurface_NewEmpty(stype,sx,sy) \
  DeeSurface_NewFilled(stype,sx,sy,DeePixel_EMPTY)
-extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFilled(
+#ifdef DEE_LIMITED_DEX_GFX
+extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_New(
+ DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy);
+#else
+#define DeeSurface_New(stype,sx,sy) \
+ ((DeeSurfaceObject *)DeeType_NewInstancef((DeeTypeObject *)(stype),"IuIu",sx,sy))
+#endif
+DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF DeeSurfaceObject *) DeeSurface_NewFilled(
  DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_IN Dee_size_t sx,
  DEE_A_IN Dee_size_t sy, DEE_A_IN struct DeePixel const *color);
+
+
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -550,7 +610,7 @@ extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFilled(
 // >> Same as creating a new surface, the size of 'self' and format 'ty',
 //    then proceeding to blit 'self' onto that new surface.
 // NOTE: Returns 'self' if 'ty' is the format of 'self'
-extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_Convert(
+DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF DeeSurfaceObject *) DeeSurface_Convert(
  DEE_A_IN DeeSurfaceObject const *self, DEE_A_IN DeeSurfaceTypeObject const *ty);
 
 
@@ -626,6 +686,11 @@ DEE_STATIC_INLINE(void) DeeSurface_Line(
  DEE_A_IN Dee_ssize_t x1, DEE_A_IN Dee_ssize_t y1,
  DEE_A_IN Dee_ssize_t x2, DEE_A_IN Dee_ssize_t y2,
  DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
+DEE_STATIC_INLINE(void) DeeSurface_Box(
+ DEE_A_INOUT DeeSurfaceObject *dst,
+ DEE_A_IN Dee_ssize_t x, DEE_A_IN Dee_ssize_t y,
+ DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy,
+ DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -683,10 +748,14 @@ DEE_STATIC_INLINE(void) DeeSurface_StretchBlitArea(
 
 //////////////////////////////////////////////////////////////////////////
 // Returns the surface type associated with a given format
+#ifdef DEE_LIMITED_DEX_GFX
 extern DEE_A_RET_EXCEPT_REF DeeSurfaceTypeObject *
  DeeSurfaceType_Get(DEE_A_IN Dee_uint64_t format);
 extern DEE_A_RET_EXCEPT_REF DeeSurfaceTypeObject *
  DeeSurfaceType_New(DEE_A_IN Dee_uint64_t format);
+#else
+#define DeeSurfaceType_Get(format) DeeDex_Callf("_gfx.__surface_formatid(I64u)",format)
+#endif
 
 
 
@@ -694,6 +763,27 @@ extern DEE_A_RET_EXCEPT_REF DeeSurfaceTypeObject *
 
 //////////////////////////////////////////////////////////////////////////
 // Implementation of inline functions
+DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF DeeSurfaceObject *) DeeSurface_NewFilled(
+ DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_IN Dee_size_t sx,
+ DEE_A_IN Dee_size_t sy, DEE_A_IN struct DeePixel const *color) {
+ DeeSurfaceObject *result;
+ if DEE_LIKELY((result = DeeSurface_New(stype,sx,sy)) != NULL) {
+  DeeSurface_Fill(result,color,DEE_BLENDINFO_OVERRIDE);
+ }
+ return result;
+}
+
+DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF DeeSurfaceObject *) DeeSurface_Convert(
+ DEE_A_IN DeeSurfaceObject const *self, DEE_A_IN DeeSurfaceTypeObject const *ty) {
+ DeeSurfaceObject *result;
+ DEE_ASSERT(DeeObject_Check(self) && DeeSurface_Check(self));
+ DEE_ASSERT(DeeObject_Check(ty) && DeeSurfaceType_Check(ty));
+ if (DeeSurface_TYPE(self) == ty) { Dee_INCREF(self); return (DeeSurfaceObject *)self; }
+ if DEE_UNLIKELY((result = DeeSurface_New(
+  ty,DeeSurface_SIZEX(self),DeeSurface_SIZEY(self))) == NULL) return NULL;
+ _DeeSurface_Blit(result,0,0,self,DEE_BLENDINFO_OVERRIDE);
+ return result;
+}
 
 DEE_STATIC_INLINE(void) DeeSurface_GetPixel(
  DEE_A_INOUT DeeSurfaceObject *dst,
@@ -841,6 +931,36 @@ do{\
 #undef COHSUTH_YMAX
 }
 
+DEE_STATIC_INLINE(void) DeeSurface_Box(
+ DEE_A_INOUT DeeSurfaceObject *dst,
+ DEE_A_IN Dee_ssize_t x, DEE_A_IN Dee_ssize_t y,
+ DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy,
+ DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend) {
+ Dee_size_t fixed_x,fixed_y,fixed_sx,fixed_sy,dsx,dsy,offset; int features;
+#define SURFACEBOX_HAVE_LINE_XMIN 0x1
+#define SURFACEBOX_HAVE_LINE_XMAX 0x2
+#define SURFACEBOX_HAVE_LINE_YMIN 0x4
+#define SURFACEBOX_HAVE_LINE_YMAX 0x8
+ dsx = DeeSurface_SIZEX(dst); if DEE_UNLIKELY(x >= 0 && (Dee_size_t)x >= dsx) return;
+ dsy = DeeSurface_SIZEY(dst); if DEE_UNLIKELY(y >= 0 && (Dee_size_t)y >= dsy) return;
+ features = 0xF;
+ if (x < 0) { if (sx <= (offset = (Dee_size_t)(-x))) return; fixed_x = 0,fixed_sx = sx-offset; features &= ~(SURFACEBOX_HAVE_LINE_XMIN); }
+ else { fixed_x = (Dee_size_t)x; fixed_sx = (fixed_x+sx > dsx) ? (features &= ~(SURFACEBOX_HAVE_LINE_XMAX),dsx-fixed_x) : sx; }
+ if (y < 0) { if (sy <= (offset = (Dee_size_t)(-y))) return; fixed_y = 0,fixed_sy = sy-offset; features &= ~(SURFACEBOX_HAVE_LINE_YMIN); }
+ else { fixed_y = (Dee_size_t)y; fixed_sy = (fixed_y+sy > dsy) ? (features &= ~(SURFACEBOX_HAVE_LINE_YMAX),dsy-fixed_y) : sy; }
+ if DEE_UNLIKELY(!fixed_sx || !fixed_sy) return;
+ // NOTE: Leave out the ending two pixels on y-lines
+ // >> The reverse would produce the same results,
+ //    but for most surface types this way is faster
+ if ((features&SURFACEBOX_HAVE_LINE_YMIN)!=0) _DeeSurface_XLine(dst,fixed_x,fixed_x+fixed_sx,fixed_y,             color,blend); // YMin line
+ if ((features&SURFACEBOX_HAVE_LINE_YMAX)!=0) _DeeSurface_XLine(dst,fixed_x,fixed_x+fixed_sx,fixed_y+(fixed_sy-1),color,blend); // YMax line
+ if (fixed_sy >= 2 && fixed_y+1 != dsy) {
+  if ((features&SURFACEBOX_HAVE_LINE_XMIN)!=0) _DeeSurface_YLine(dst,fixed_x,             fixed_y+1,fixed_y+(fixed_sy-1),color,blend); // XMin line
+  if ((features&SURFACEBOX_HAVE_LINE_XMAX)!=0) _DeeSurface_YLine(dst,fixed_x+(fixed_sx-1),fixed_y+1,fixed_y+(fixed_sy-1),color,blend); // XMax line
+ }
+}
+
+
 
 DEE_STATIC_INLINE(void) DeeSurface_Blit(
  DEE_A_INOUT DeeSurfaceObject *dst,
@@ -955,7 +1075,11 @@ DEE_STATIC_INLINE(void) DeeSurface_FillRect(
  if DEE_LIKELY(y >= 0) used_y = (Dee_size_t)y,used_sy = sy; else { if DEE_UNLIKELY((off = (Dee_size_t)(-y)) >= sy) return; used_y = 0; used_sy = sy-off; }
  if DEE_UNLIKELY(used_x+used_sx >= (sizex = DeeSurface_SIZEX(dst))) { if (used_x >= sizex) return; used_sx = sizex-used_x; }
  if DEE_UNLIKELY(used_x+used_sy >= (sizey = DeeSurface_SIZEY(dst))) { if (used_y >= sizey) return; used_sy = sizey-used_y; }
- (*DeeSurface_TYPE(dst)->st_fillrect)(dst,used_x,used_y,used_x+sizex,used_y+sizey,color,blend);
+ if (used_x == 0 && used_y == 0 && sx == sizex && sy == sizex) {
+  (*DeeSurface_TYPE(dst)->st_fill)(dst,color,blend);
+ } else {
+  (*DeeSurface_TYPE(dst)->st_fillrect)(dst,used_x,used_y,used_x+sizex,used_y+sizey,color,blend);
+ }
 }
 
 

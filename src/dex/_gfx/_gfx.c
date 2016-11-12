@@ -21,6 +21,7 @@
 #ifndef GUARD_DEEMON_DEX_GFX__GFX_C
 #define GUARD_DEEMON_DEX_GFX__GFX_C 1
 #define DEE_EXTENSION 1
+#define DEE_LIMITED_DEX_GFX 1
 
 //@ dex.name = _gfx
 
@@ -168,30 +169,6 @@ void DeePixel_Blend(
 
 
 
-DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFilled(
- DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_IN Dee_size_t sx,
- DEE_A_IN Dee_size_t sy, DEE_A_IN struct DeePixel const *color) {
- DeeSurfaceObject *result;
- if DEE_LIKELY((result = DeeSurface_New(stype,sx,sy)) != NULL) {
-  DeeSurface_Fill(result,color,DEE_BLENDINFO_OVERRIDE);
- }
- return result;
-}
-DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_Convert(
- DEE_A_IN DeeSurfaceObject const *self, DEE_A_IN DeeSurfaceTypeObject const *ty) {
- DeeSurfaceObject *result;
- DEE_ASSERT(DeeObject_Check(self) && DeeSurface_Check(self));
- DEE_ASSERT(DeeObject_Check(ty) && DeeSurfaceType_Check(ty));
- if (DeeSurface_TYPE(self) == ty) {
-  Dee_INCREF(self);
-  return (DeeSurfaceObject *)self;
- }
- if DEE_UNLIKELY((result = DeeSurface_New(
-  ty,DeeSurface_SIZEX(self),DeeSurface_SIZEY(self))) == NULL) return NULL;
- DeeSurface_Blit(result,0,0,self,DEE_BLENDINFO_OVERRIDE);
- return result;
-}
-
 DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_New(
  DEE_A_IN DeeSurfaceTypeObject const *stype,
  DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy) {
@@ -249,6 +226,15 @@ static DeeObject *DEE_CALL _deesurface_fill(
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|IdIdIuIuoI64u:fill",&x,&y,&sx,&sy,&color,&blend) != 0) return NULL;
  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)color,&DeePixel_Type) != 0) return NULL;
  DeeSurface_FillRect(dst,x,y,sx,sy,&color->p_pixel,blend);
+ DeeReturn_None;
+}
+static DeeObject *DEE_CALL _deesurface_box(
+ DeeSurfaceObject *dst, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_ssize_t x,y; Dee_size_t sx,sy;
+ DeePixelObject *color = &DeePixel_BlackObject; Dee_uint64_t blend = DEE_BLENDINFO_NORMAL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"IdIdIuIu|oI64u:box",&x,&y,&sx,&sy,&color,&blend) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)color,&DeePixel_Type) != 0) return NULL;
+ DeeSurface_Box(dst,x,y,sx,sy,&color->p_pixel,blend);
  DeeReturn_None;
 }
 static DeeObject *DEE_CALL _deesurface_blit(
@@ -351,6 +337,8 @@ static struct DeeMethodDef const _deesurface_tp_methods[] = {
   "(ssize_t x1, ssize_t y1, ssize_t x2, ssize_t y2, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none\n"),
  DEE_METHODDEF_v100("fill",member(&_deesurface_fill),
   "(ssize_t x, ssize_t y, size_t sx, size_t sy, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none"),
+ DEE_METHODDEF_v100("box",member(&_deesurface_box),
+  "(ssize_t x, ssize_t y, size_t sx, size_t sy, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none"),
  DEE_METHODDEF_v100("blit",member(&_deesurface_blit),
   "(ssize_t dx, ssize_t dy, surface src, size_t sx = 0, size_t sy = 0, size_t ssx = size_t(-1), size_t ssy = size_t(-1), uint64_t blend = DEE_BLENDINFO_NORMAL) -> none"),
  DEE_METHODDEF_v100("stretch",member(&_deesurface_stretch),
@@ -375,6 +363,8 @@ static void DEE_CALL _deenoopsurface_st_blit(DeeSurfaceObject *DEE_UNUSED(self),
 static void DEE_CALL _deenoopsurface_st_stretchblit(DeeSurfaceObject *DEE_UNUSED(self), Dee_size_t DEE_UNUSED(dst_x), Dee_size_t DEE_UNUSED(dst_y), Dee_size_t DEE_UNUSED(dstsx), Dee_size_t DEE_UNUSED(dstsy), DeeSurfaceObject const *DEE_UNUSED(src), double DEE_UNUSED(src_x), double DEE_UNUSED(src_y), double DEE_UNUSED(srcsx), double DEE_UNUSED(srcsy), Dee_blendinfo_t DEE_UNUSED(blend)) {}
 static void DEE_CALL _deenoopsurface_st_flipx(DeeSurfaceObject *DEE_UNUSED(self), Dee_size_t DEE_UNUSED(xbegin), Dee_size_t DEE_UNUSED(ybegin), Dee_size_t DEE_UNUSED(xend), Dee_size_t DEE_UNUSED(yend)) {}
 #define _deenoopsurface_st_flipy _deenoopsurface_st_flipx
+static void DEE_CALL _deenoopsurface_st_pixelmaskmsb(DeeSurfaceObject *DEE_UNUSED(self), Dee_size_t DEE_UNUSED(x), Dee_size_t DEE_UNUSED(y), Dee_size_t DEE_UNUSED(sx), Dee_size_t DEE_UNUSED(sy), Dee_size_t DEE_UNUSED(line_bytes), void const *DEE_UNUSED(data), struct DeePixel const *DEE_UNUSED(color), Dee_blendinfo_t DEE_UNUSED(blend)) {}
+#define _deenoopsurface_st_pixelmasklsb _deenoopsurface_st_pixelmaskmsb
 
 DeeTypeObject DeeSurfaceType_Type = {
  DEE_TYPE_OBJECT_HEAD_v100(member("surface_type"),null,null,member(&DeeType_Type)),
@@ -442,18 +432,20 @@ DeeSurfaceTypeObject DeeSurface_Type = {
   0, // st_binvmod
   0, // st_ainvmod
  }},
- &_deenoopsurface_st_getpixel,    // st_getpixel
- &_deenoopsurface_st_setpixel,    // st_setpixel
- &_deenoopsurface_st_fill,        // st_fill
- &_deenoopsurface_st_fillrect,    // st_fillrect
- &_deenoopsurface_st_xline,       // st_xline
- &_deenoopsurface_st_yline,       // st_yline
- &_deenoopsurface_st_linellhh,    // st_linellhh
- &_deenoopsurface_st_linelhhl,    // st_linelhhl
- &_deenoopsurface_st_blit,        // st_blit
- &_deenoopsurface_st_stretchblit, // st_stretchblit
- &_deenoopsurface_st_flipx,       // st_flipx
- &_deenoopsurface_st_flipy,       // st_flipy
+ &_deenoopsurface_st_getpixel,     // st_getpixel
+ &_deenoopsurface_st_setpixel,     // st_setpixel
+ &_deenoopsurface_st_fill,         // st_fill
+ &_deenoopsurface_st_fillrect,     // st_fillrect
+ &_deenoopsurface_st_xline,        // st_xline
+ &_deenoopsurface_st_yline,        // st_yline
+ &_deenoopsurface_st_linellhh,     // st_linellhh
+ &_deenoopsurface_st_linelhhl,     // st_linelhhl
+ &_deenoopsurface_st_blit,         // st_blit
+ &_deenoopsurface_st_stretchblit,  // st_stretchblit
+ &_deenoopsurface_st_flipx,        // st_flipx
+ &_deenoopsurface_st_flipy,        // st_flipy
+ &_deenoopsurface_st_pixelmaskmsb, // st_pixelmaskmsb
+ &_deenoopsurface_st_pixelmasklsb, // st_pixelmasklsb
 };
 
 
@@ -534,16 +526,18 @@ static void DEE_CALL _deesurface_pixel_st_setpixel(
  DeeSurfaceType_PIXEL_SETPIXEL(dst_type,datap,&pix);
 }
 
-#define _deesurface_pixel_st_fill        _deesurface_generic_st_fill
-#define _deesurface_pixel_st_fillrect    _deesurface_generic_st_fillrect
-#define _deesurface_pixel_st_xline       _deesurface_generic_st_xline
-#define _deesurface_pixel_st_yline       _deesurface_generic_st_yline
-#define _deesurface_pixel_st_linellhh    _deesurface_generic_st_linellhh
-#define _deesurface_pixel_st_linelhhl    _deesurface_generic_st_linelhhl
-#define _deesurface_pixel_st_blit        _deesurface_generic_st_blit
-#define _deesurface_pixel_st_stretchblit _deesurface_generic_st_stretchblit
-#define _deesurface_pixel_st_flipx       _deesurface_generic_st_flipx
-#define _deesurface_pixel_st_flipy       _deesurface_generic_st_flipy
+#define _deesurface_pixel_st_fill           _deesurface_generic_st_fill
+#define _deesurface_pixel_st_fillrect       _deesurface_generic_st_fillrect
+#define _deesurface_pixel_st_xline          _deesurface_generic_st_xline
+#define _deesurface_pixel_st_yline          _deesurface_generic_st_yline
+#define _deesurface_pixel_st_linellhh       _deesurface_generic_st_linellhh
+#define _deesurface_pixel_st_linelhhl       _deesurface_generic_st_linelhhl
+#define _deesurface_pixel_st_blit           _deesurface_generic_st_blit
+#define _deesurface_pixel_st_stretchblit    _deesurface_generic_st_stretchblit
+#define _deesurface_pixel_st_flipx          _deesurface_generic_st_flipx
+#define _deesurface_pixel_st_flipy          _deesurface_generic_st_flipy
+#define _deesurface_pixel_st_pixelmaskmsb   _deesurface_generic_st_pixelmaskmsb
+#define _deesurface_pixel_st_pixelmasklsb   _deesurface_generic_st_pixelmasklsb
 
 //////////////////////////////////////////////////////////////////////////
 // Generic surface operators (very slow, but work in all situations)
@@ -721,23 +715,66 @@ static void DEE_CALL _deesurface_generic_st_flipy(
   }
  }
 }
-
-
-
-
-// TODO: Optimized versions for these
-#define _deesurface_rgba8888_st_getpixel   _deesurface_pixel_st_getpixel
-#define _deesurface_rgba8888_st_setpixel   _deesurface_pixel_st_setpixel
-#define _deesurface_rgba8888_st_fill        _deesurface_pixel_st_fill
-#define _deesurface_rgba8888_st_fillrect    _deesurface_pixel_st_fillrect
-#define _deesurface_rgba8888_st_linellhh    _deesurface_pixel_st_linellhh
-#define _deesurface_rgba8888_st_linelhhl    _deesurface_pixel_st_linelhhl
-#define _deesurface_rgba8888_st_xline       _deesurface_pixel_st_xline
-#define _deesurface_rgba8888_st_yline       _deesurface_pixel_st_yline
-#define _deesurface_rgba8888_st_blit        _deesurface_pixel_st_blit
-#define _deesurface_rgba8888_st_stretchblit _deesurface_pixel_st_stretchblit
-#define _deesurface_rgba8888_st_flipx       _deesurface_pixel_st_flipx
-#define _deesurface_rgba8888_st_flipy       _deesurface_pixel_st_flipy
+static void DEE_CALL _deesurface_generic_st_pixelmaskmsb(
+ DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y,
+ Dee_size_t sx, Dee_size_t sy, Dee_size_t line_bytes,
+ void const *data, struct DeePixel const *color, Dee_blendinfo_t blend) {
+ Dee_size_t diff,myy,ix,iy; Dee_uint8_t *line,b;
+ PDeeSurfaceSetPixel setter;
+ DEE_ASSERT(sx); DEE_ASSERT(sy);
+ DEE_ASSERT(x+sx < dst->s_sizex);
+ DEE_ASSERT(y+sy < dst->s_sizey);
+ DEE_ASSERT(data); DEE_ASSERT(line_bytes);
+ setter = DeeSurface_TYPE(dst)->st_setpixel;
+ for (iy = 0; iy < sy; ++iy) {
+  line = (Dee_uint8_t *)data+iy*line_bytes;
+  myy = y+iy,ix = 0; while (1) {
+   b = *line++;
+   switch ((diff = (sx-ix))) {
+    default: if (b&(1 << 0)) (*setter)(dst,(x+ix)+7,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 7:  if (b&(1 << 1)) (*setter)(dst,(x+ix)+6,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 6:  if (b&(1 << 2)) (*setter)(dst,(x+ix)+5,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 5:  if (b&(1 << 3)) (*setter)(dst,(x+ix)+4,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 4:  if (b&(1 << 4)) (*setter)(dst,(x+ix)+3,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 3:  if (b&(1 << 5)) (*setter)(dst,(x+ix)+2,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 2:  if (b&(1 << 6)) (*setter)(dst,(x+ix)+1,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 1:  if (b&(1 << 7)) (*setter)(dst,(x+ix)+0,myy,color,blend); break;
+   }
+   if (diff <= 8) break;
+   ix += 8;
+  }
+ }
+}
+static void DEE_CALL _deesurface_generic_st_pixelmasklsb(
+ DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y,
+ Dee_size_t sx, Dee_size_t sy, Dee_size_t line_bytes,
+ void const *data, struct DeePixel const *color, Dee_blendinfo_t blend) {
+ Dee_size_t diff,myy,ix,iy; Dee_uint8_t *line,b;
+ PDeeSurfaceSetPixel setter;
+ DEE_ASSERT(sx); DEE_ASSERT(sy);
+ DEE_ASSERT(x+sx < dst->s_sizex);
+ DEE_ASSERT(y+sy < dst->s_sizey);
+ DEE_ASSERT(data); DEE_ASSERT(line_bytes);
+ setter = DeeSurface_TYPE(dst)->st_setpixel;
+ for (iy = 0; iy < sy; ++iy) {
+  line = (Dee_uint8_t *)data+iy*line_bytes;
+  myy = y+iy,ix = 0; while (1) {
+   b = *line++;
+   switch ((diff = (sx-ix))) {
+    default: if (b&(1 << 7)) (*setter)(dst,(x+ix)+7,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 7:  if (b&(1 << 6)) (*setter)(dst,(x+ix)+6,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 6:  if (b&(1 << 5)) (*setter)(dst,(x+ix)+5,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 5:  if (b&(1 << 4)) (*setter)(dst,(x+ix)+4,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 4:  if (b&(1 << 3)) (*setter)(dst,(x+ix)+3,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 3:  if (b&(1 << 2)) (*setter)(dst,(x+ix)+2,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 2:  if (b&(1 << 1)) (*setter)(dst,(x+ix)+1,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
+    case 1:  if (b&(1 << 0)) (*setter)(dst,(x+ix)+0,myy,color,blend); break;
+   }
+   if (diff <= 8) break;
+   ix += 8;
+  }
+ }
+}
 
 
 #if DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS
@@ -751,80 +788,6 @@ static char const *_deesurface_doc =
 #else
 #define _deesurface_doc NULL
 #endif
-
-
-DeeSurfaceTypeObject DeeSurfaceType_RGBA8888 = {
- {DEE_TYPE_OBJECT_HEAD_EX_v100(
-   member(&DeeSurfaceType_Type),member("surface_rgba8888"),
-   member(_deesurface_doc),
-   member(DEE_TYPE_FLAG_VAR_OBJECT|DEE_TYPE_FLAG_NO_SUBCLASS),
-   member((DeeTypeObject *)&DeeSurface_Type)),
-  DEE_TYPE_OBJECT_VAR_CONSTRUCTOR_v101(null,
-   member(&_deepixelsurface_tp_copy_new),null,
-   member(&_deepixelsurface_tp_any_new)),
-  DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,null),
-  DEE_TYPE_OBJECT_ASSIGN_v100(null,null,null),
-  DEE_TYPE_OBJECT_CAST_v101(null,null,null,null,null),
-  DEE_TYPE_OBJECT_OBJECT_v100(null,null),
-  DEE_TYPE_OBJECT_MATH_v101(
-   null,null,null,null,null,null,null,null,null,null,null,
-   null,null,null,null,null,null,null,null,null,null,null,
-   null,null,null,null,null,null,null,null,null,null),
-  DEE_TYPE_OBJECT_COMPARE_v100(null,null,null,null,null,null),
-  DEE_TYPE_OBJECT_SEQ_v101(null,null,null,null,null,null,null,null,null,null),
-  DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,null,null,null,null,null,null),
-  DEE_TYPE_OBJECT_FOOTER_v100
- },
- format_rgba8888, // st_format
- NULL,            // st_next
- {{
-  32, // st_pixelbits
-  4,  // st_pixelbytes
-#ifdef DEE_PLATFORM_LIL_ENDIAN
-  0x000000FF, // st_rmask
-  0x0000FF00, // st_gmask
-  0x00FF0000, // st_bmask
-  0xFF000000, // st_amask
-  0,          // st_rshift
-  8,          // st_gshift
-  16,         // st_bshift
-  24,         // st_ashift
-#else
-  0xFF000000, // st_rmask
-  0x00FF0000, // st_gmask
-  0x0000FF00, // st_bmask
-  0x000000FF, // st_amask
-  24,         // st_rshift
-  16,         // st_gshift
-  8,          // st_bshift
-  0,          // st_ashift
-#endif
-  8,          // st_rbits
-  8,          // st_gbits
-  8,          // st_bbits
-  8,          // st_abits
-  256,        // st_rmod
-  256,        // st_gmod
-  256,        // st_bmod
-  256,        // st_amod
-  1,          // st_rinvmod
-  1,          // st_ginvmod
-  1,          // st_binvmod
-  1,          // st_ainvmod
- }},
- &_deesurface_rgba8888_st_getpixel,    // st_getpixel
- &_deesurface_rgba8888_st_setpixel,    // st_setpixel
- &_deesurface_rgba8888_st_fill,        // st_fill
- &_deesurface_rgba8888_st_fillrect,    // st_fillrect
- &_deesurface_rgba8888_st_xline,       // st_xline
- &_deesurface_rgba8888_st_yline,       // st_yline
- &_deesurface_rgba8888_st_linellhh,    // st_linellhh
- &_deesurface_rgba8888_st_linelhhl,    // st_linelhhl
- &_deesurface_rgba8888_st_blit,        // st_blit
- &_deesurface_rgba8888_st_stretchblit, // st_stretchblit
- &_deesurface_rgba8888_st_flipx,       // st_flipx
- &_deesurface_rgba8888_st_flipy,       // st_flipy
-};
 
 
 #define DEESURFACETYPE_CACHE_SIZE 16
@@ -995,10 +958,7 @@ DeeSurfaceType_New(DEE_A_IN Dee_uint64_t format) {
    result->st_setpixel = &_deesurface_pixel_st_setpixel;
    DeeType_GET_SLOT(result,tp_copy_new) = (DeeType_SLOT_TYPE(tp_copy_new))&_deepixelsurface_tp_copy_new;
    DeeType_GET_SLOT(result,tp_any_new) = (DeeType_SLOT_TYPE(tp_any_new))&_deepixelsurface_tp_any_new;
-   if DEE_UNLIKELY((new_name = DeeString_Newf(
-    "surface_type<%#.8I32x,%#.8I32x,%#.8I32x,%#.8I32x>",
-    result->st_pixelspec.st_rmask,result->st_pixelspec.st_gmask,
-    result->st_pixelspec.st_bmask,result->st_pixelspec.st_amask)) == NULL) goto err_r;
+   if DEE_UNLIKELY((new_name = DeeString_Newf("surface_type<%#I64x>",format)) == NULL) goto err_r;
    error = DeeType_SetName((DeeTypeObject *)result,DeeString_STR(new_name));
    Dee_DECREF(new_name);
    if (error != 0) goto err_r;
@@ -1021,16 +981,18 @@ err_r:
    return NULL;
  }
  // Fill missing slots with generic functions
- if (!result->st_fill       ) result->st_fill        = &_deesurface_generic_st_fill;
- if (!result->st_fillrect   ) result->st_fillrect    = &_deesurface_generic_st_fillrect;
- if (!result->st_xline      ) result->st_xline       = &_deesurface_generic_st_xline;
- if (!result->st_yline      ) result->st_yline       = &_deesurface_generic_st_yline;
- if (!result->st_linellhh   ) result->st_linellhh    = &_deesurface_generic_st_linellhh;
- if (!result->st_linelhhl   ) result->st_linelhhl    = &_deesurface_generic_st_linelhhl;
- if (!result->st_blit       ) result->st_blit        = &_deesurface_generic_st_blit;
- if (!result->st_stretchblit) result->st_stretchblit = &_deesurface_generic_st_stretchblit;
- if (!result->st_flipx      ) result->st_flipx       = &_deesurface_generic_st_flipx;
- if (!result->st_flipy      ) result->st_flipy       = &_deesurface_generic_st_flipy;
+ if (!result->st_fill        ) result->st_fill         = &_deesurface_generic_st_fill;
+ if (!result->st_fillrect    ) result->st_fillrect     = &_deesurface_generic_st_fillrect;
+ if (!result->st_xline       ) result->st_xline        = &_deesurface_generic_st_xline;
+ if (!result->st_yline       ) result->st_yline        = &_deesurface_generic_st_yline;
+ if (!result->st_linellhh    ) result->st_linellhh     = &_deesurface_generic_st_linellhh;
+ if (!result->st_linelhhl    ) result->st_linelhhl     = &_deesurface_generic_st_linelhhl;
+ if (!result->st_blit        ) result->st_blit         = &_deesurface_generic_st_blit;
+ if (!result->st_stretchblit ) result->st_stretchblit  = &_deesurface_generic_st_stretchblit;
+ if (!result->st_flipx       ) result->st_flipx        = &_deesurface_generic_st_flipx;
+ if (!result->st_flipy       ) result->st_flipy        = &_deesurface_generic_st_flipy;
+ if (!result->st_pixelmaskmsb) result->st_pixelmaskmsb = &_deesurface_generic_st_pixelmaskmsb;
+ if (!result->st_pixelmasklsb) result->st_pixelmasklsb = &_deesurface_generic_st_pixelmasklsb;
  return result;
 }
 
@@ -1054,6 +1016,11 @@ static DeeSurfaceTypeObject *DEE_CALL _deegfx_surface_format(DeeObject *args) {
 #endif
  return DeeSurfaceType_Get(format_id);
 }
+static DeeSurfaceTypeObject *DEE_CALL _deegfx___surface_formatid(DeeObject *args) {
+ Dee_uint64_t format_id;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u:__surface_formatid",&format_id) != 0) return NULL;
+ return DeeSurfaceType_Get(format_id);
+}
 
 //////////////////////////////////////////////////////////////////////////
 // Module exports
@@ -1064,6 +1031,7 @@ struct DeeDexExportDef DeeDex_Exports[] = {
   "(uint8_t bits, uint32_t rmask, uint32_t gmask, uint32_t bmask, uint32_t amask = 0) -> surface_type\n"
   "@return: The surface-type describing a pixelformat compatible with the given arguments\n"
   "\tNOTE: The mask arguments are written in big-endian, meaning that a mask of 0xff000000 describes the first of 4 bytes"),
+ DeeDex_EXPORT_FUNCTION("__surface_formatid",&_deegfx___surface_formatid,"(uint64_t id) -> surface_type"),
  DeeDex_EXPORT_OBJECT("surface_type",&DeeSurfaceType_Type),
  DeeDex_EXPORT_OBJECT("surface_rgba8888",&DeeSurfaceType_RGBA8888),
  DeeDex_EXPORT_END
@@ -1094,6 +1062,7 @@ DEE_COMPILER_MSVC_WARNING_PUSH(4365 4242)
 #include "lodepng/lodepng.c.inl"
 DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
+#include "surface.rgba8888.inl"
 #endif
 
 #endif /* !GUARD_DEEMON_DEX_GFX__GFX_C */

@@ -29,6 +29,9 @@
 #include <deemon/optional/object_malloc.h>
 #include <deemon/optional/object_pool.h>
 #include <deemon/optional/std/string.h>
+#include <deemon/string.h>
+#include <deemon/tuple.h>
+#include <deemon/error.h>
 
 DEE_DECL_BEGIN
 DEE_OBJECTPOOL_DEFINE(pixelpool,DeePixelObject)
@@ -100,6 +103,30 @@ DeePixel_FromName(DEE_A_IN_Z char const *name) {
  return NULL;
 }
 
+DEE_STATIC_INLINE(int) _dee_2hs2ui8(char a, char b, Dee_uint8_t *r) {
+      if (a >= '0' && a <= '9') *r  = (Dee_uint8_t)((a-'0') << 4);
+ else if (a >= 'a' && a <= 'f') *r  = (Dee_uint8_t)(((a-'a')+10) << 4);
+ else if (a >= 'A' && a <= 'F') *r  = (Dee_uint8_t)(((a-'A')+10) << 4);
+ else return 0;
+      if (b >= '0' && b <= '9') *r |= (Dee_uint8_t)(b-'0');
+ else if (b >= 'a' && b <= 'f') *r |= (Dee_uint8_t)((b-'a')+10);
+ else if (b >= 'A' && b <= 'F') *r |= (Dee_uint8_t)((b-'A')+10);
+ else return 0;
+ return 1;
+}
+
+DEE_A_RET_NOEXCEPT(0) int DeePixel_InitFromHTML(
+ DEE_A_OUT struct DeePixel *self, DEE_A_IN_Z char const *text_after_hash,
+ DEE_A_ON_FAILURE(DEE_A_OUT) char const **error_pos) {
+ char const *iter = text_after_hash;
+ if (!_dee_2hs2ui8(*iter++,*iter++,&self->r)) { *error_pos = iter-2; return 0; }
+ if (!_dee_2hs2ui8(*iter++,*iter++,&self->g)) { *error_pos = iter-2; return 0; }
+ if (!_dee_2hs2ui8(*iter++,*iter++,&self->b)) { *error_pos = iter-2; return 0; }
+ if (*iter) { if (!_dee_2hs2ui8(*iter++,*iter++,&self->a)) { *error_pos = iter-2; return 0; } } else self->a = 0xff;
+ return 1;
+}
+
+
 
 DEE_A_RET_EXCEPT_REF DeePixelObject *DeePixel_New(
  DEE_A_IN struct DeePixel const *pixel) {
@@ -150,31 +177,61 @@ static void DEE_CALL _deepixel_tp_free(
 }
 static int DEE_CALL _deepixel_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeePixelObject *self, DeeObject *args) {
- if (DeeTuple_SIZE(args) == 1) {
-  struct DeePixel const *named_pixel;
-  DeeObject *pixel_name = DeeString_Cast(DeeTuple_GET(args,0));
-  if DEE_UNLIKELY(!pixel_name) return -1;
-  named_pixel = DeePixel_FromName(DeeString_STR(pixel_name));
-  if (!named_pixel) {
-   DeeError_SetStringf(&DeeErrorType_ValueError,
-                       "Unknown pixel name: %q",
-                       DeeString_STR(pixel_name));
+ struct DeePixel const *named_pixel; DeeObject *pixel_name;
+ switch (DeeTuple_SIZE(args)) {
+  case 1: case 2:
+   pixel_name = DeeString_Cast(DeeTuple_GET(args,0));
+   if DEE_UNLIKELY(!pixel_name) return -1;
+   if (DeeString_STR(pixel_name)[0] == '#') {
+    char const *error_pos; // HTML-style color code
+    if (!DeePixel_InitFromHTML(&self->p_pixel,DeeString_STR(pixel_name)+1,&error_pos)) {
+     DeeError_SetStringf(&DeeErrorType_ValueError,
+                         "Invalid HTML color code: %q (near %.1q)",
+                         DeeString_STR(pixel_name),error_pos);
+     goto err_pixel_name;
+    }
+    goto end_pixelname;
+   }
+   named_pixel = DeePixel_FromName(DeeString_STR(pixel_name));
+   if (!named_pixel) {
+    DeeError_SetStringf(&DeeErrorType_ValueError,
+                        "Unknown pixel name: %q",
+                        DeeString_STR(pixel_name));
+err_pixel_name:
+    Dee_DECREF(pixel_name);
+    return -1;
+   }
+   self->p_pixel = *named_pixel;
+end_pixelname:
    Dee_DECREF(pixel_name);
+   if (DeeTuple_SIZE(args) == 2) {
+    return DeeObject_Cast(Dee_uint8_t,DeeTuple_GET(args,1),&self->p_pixel.a);
+   }
+   return 0;
+  case 4:
+   if DEE_UNLIKELY(DeeObject_Cast(Dee_uint8_t,DeeTuple_GET(args,3),&self->p_pixel.a) != 0) return -1;
+   if (0) {case 3: self->p_pixel.a = 0xff; }
+   if DEE_UNLIKELY(DeeObject_Cast(Dee_uint8_t,DeeTuple_GET(args,0),&self->p_pixel.r) != 0) return -1;
+   if DEE_UNLIKELY(DeeObject_Cast(Dee_uint8_t,DeeTuple_GET(args,1),&self->p_pixel.g) != 0) return -1;
+   if DEE_UNLIKELY(DeeObject_Cast(Dee_uint8_t,DeeTuple_GET(args,2),&self->p_pixel.b) != 0) return -1;
+   break;
+  default:
+   DeeError_SetStringf(&DeeErrorType_TypeError,
+                       "pixel requires at 1 ... 4 argument(s) (%Iu given)",
+                       DeeTuple_SIZE(args));
    return -1;
-  }
-  Dee_DECREF(pixel_name);
-  self->p_pixel = *named_pixel;
-  return 0;
  }
- self->p_pixel.a = 0xFF;
- return DeeTuple_Unpack(args,"I8uI8uI8u|I8u:pixel",
-                        &self->p_pixel.r,&self->p_pixel.g,
-                        &self->p_pixel.b,&self->p_pixel.a);
+ return 0;
 }
 static DeeObject *DEE_CALL _deepixel_tp_str(DeePixelObject *self) {
  char const *pixelname;
  if ((pixelname = DeePixel_Name(&self->p_pixel)) != NULL)
   return DeeString_New(pixelname);
+ if (self->p_pixel.a == 0xFF) {
+  return DeeString_Newf("#%.2I8x%.2I8x%.2I8x",
+                        self->p_pixel.r,self->p_pixel.g,
+                        self->p_pixel.b);
+ }
  return DeeString_Newf("#%.2I8x%.2I8x%.2I8x%.2I8x",
                        self->p_pixel.r,self->p_pixel.g,
                        self->p_pixel.b,self->p_pixel.a);
@@ -198,7 +255,10 @@ static struct DeeMemberDef const _deepixel_tp_members[] = {
 
 
 DeeTypeObject DeePixel_Type = {
- DEE_TYPE_OBJECT_HEAD_v100(member("pixel"),null,
+ DEE_TYPE_OBJECT_HEAD_v100(member("pixel"),member(
+  "(string name)\n"
+  "(string name, uint8_t alpha)\n"
+  "(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff)\n"),
   member(DEE_TYPE_FLAG_NO_SUBCLASS|DEE_TYPE_FLAG_DONT_COPY|
          DEE_TYPE_FLAG_NO_LIFETIME_EFFECT),null),
  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeePixelObject),
