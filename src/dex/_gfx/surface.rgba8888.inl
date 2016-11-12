@@ -91,19 +91,19 @@ static void DEE_CALL _deesurface_rgba8888_st_blit(
  Dee_size_t sx, Dee_size_t sy, Dee_blendinfo_t blend) {
  struct DeePixel pixel,*begin,*iter; Dee_size_t x,y;
  PDeeSurfaceGetPixel getter;
- PDeeSurfaceSetPixel setter;
  DEE_ASSERT(dst_x+sx <= dst->s_sizex);
  DEE_ASSERT(dst_y+sy <= dst->s_sizey);
  DEE_ASSERT(src_x+sx <= src->s_sizex);
  DEE_ASSERT(src_y+sy <= src->s_sizey);
  DEE_ASSERT(sx != 0);
  DEE_ASSERT(sy != 0);
- setter = DeeSurface_TYPE(dst)->st_setpixel;
  getter = DeeSurface_TYPE(src)->st_getpixel;
  begin = DeeSurface_RGBA8888_PIXELADDR(dst,dst_x,dst_y);
  for (y = 0; y != sy; ++y) {
-  for (iter = begin,x = 0; x != sx; ++x)
+  for (iter = begin,x = 0; x != sx; ++x) {
+   (*getter)(src,x,y,&pixel);
    DeePixel_Blend(iter++,&pixel,blend);
+  }
   *(Dee_uintptr_t *)&begin += dst->s_pixeldata.s_scanline;
  }
 }
