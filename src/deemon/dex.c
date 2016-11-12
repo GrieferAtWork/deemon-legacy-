@@ -417,6 +417,27 @@ void _DeeDex_ShutdownApi(void) {
  DeeList_ClearAndShrink(DeeDex_SearchPath);
 
  DeeAtomicMutex_AcquireRelaxed(&_dex_init_list_lock);
+ load_order = _dex_init_list;
+ while (load_order) {
+  load_next = load_order->dm_initprev;
+  if (load_order->dm_main &&
+      DeeDexModule_TryAcquire(load_order) == DEE_DEX_TRYACQUIRE_SUCCESS) {
+   DeeDexContext ctx;
+   DeeAtomicMutex_Release(&_dex_init_list_lock);
+   ctx.dc_kind = DEE_DEXCONTEXTKIND_SHUTDOWN;
+   if DEE_UNLIKELY((*load_order->dm_main)(&ctx) != 0) {
+    while (!DeeError_Print("Error during dex shutdown",1));
+   }
+   DeeAtomicMutex_AcquireRelaxed(&_dex_init_list_lock);
+   DeeDexModule_Release(load_order);
+  }
+  load_order = load_next;
+ }
+ DeeAtomicMutex_Release(&_dex_init_list_lock);
+}
+void _DeeDex_FinalizeApi(void) {
+ struct DeeDexModuleObject *load_order,*load_next;
+ DeeAtomicMutex_AcquireRelaxed(&_dex_init_list_lock);
  load_order = _dex_init_list; _dex_init_list = NULL;
  DeeAtomicMutex_Release(&_dex_init_list_lock);
  while (load_order) {
@@ -427,8 +448,8 @@ void _DeeDex_ShutdownApi(void) {
   DEE_ASSERT(!_dex_init_list);
   load_order = load_next;
  }
-
 }
+
 void _DeeDex_QuitApi(void) {
  // Here, we clear the search path one last time
  DeeList_ClearAndShrink(DeeDex_SearchPath);

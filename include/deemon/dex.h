@@ -506,9 +506,10 @@ typedef union DeeDexContext DeeDexContext;
 union DeeDexContext {
 #define DEE_DEXCONTEXTKIND_NONE       0 /*< Unknown context kind. */
 #define DEE_DEXCONTEXTKIND_INITIALIZE 1 /*< Module initialization event (guarantied to be the first event, if any). */
-#define DEE_DEXCONTEXTKIND_FINALIZE   2 /*< Module finalization event (guarantied to be the last event, if any). */
-#define DEE_DEXCONTEXTKIND_COLLECTMEM 3 /*< Memory has run low and must be collected (called from 'Dee_CollectMemory()'). */
-#define DEE_DEXCONTEXTKIND_VISIT      4 /*< The module is being visited (run the given callback on all global object references you currently own). */
+#define DEE_DEXCONTEXTKIND_SHUTDOWN   2 /*< Module shutdown event (May be called multiple times, or not at all; clear any global references, such as cached types). */
+#define DEE_DEXCONTEXTKIND_FINALIZE   3 /*< Module finalization event (guarantied to be the last event, if any). */
+#define DEE_DEXCONTEXTKIND_COLLECTMEM 4 /*< Memory has run low and must be collected (called from 'Dee_CollectMemory()'). */
+#define DEE_DEXCONTEXTKIND_VISIT      5 /*< The module is being visited (run the given callback on all global object references you currently own). */
  Dee_uint32_t                    dc_kind;        /*< The kind of context event (one of 'DEE_DEXCONTEXTKIND_*'). */
  struct DeeDexContext_Common     dc_common;      /*< Data shared between all event types. */
  struct DeeDexContext_Initialize dc_initialize;  /*< DEE_DEXCONTEXTKIND_INITIALIZE. */
