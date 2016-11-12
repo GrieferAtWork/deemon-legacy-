@@ -139,7 +139,7 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 //  - Set a given mask to 0 to disable that channel
 #define DEE_SURFACETYPE_FORMAT_PIXEL(color_bits,rmask,gmask,bmask,amask)\
 (DEE_SURFACETYPE_FORMAT_KIND_PIXEL\
-|((Dee_uint64_t)((((color_bits)/8)-1)&0x3) << 36)\
+|((Dee_uint64_t)((((color_bits)/8)-1)&0x3) << 44)\
 |((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(rmask)) << 33\
 |((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(gmask)) << 22\
 |((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(bmask)) << 11\
@@ -149,7 +149,7 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 #define DEE_PRIVATE_SURFACETYPE_FORMAT_PIXEL_B(fmt)    ((fmt) >> 11)
 #define DEE_PRIVATE_SURFACETYPE_FORMAT_PIXEL_A         /* nothing */
 
-#define DEE_SURFACETYPE_FORMAT_PIXEL_BYTES(fmt)  ((((fmt) >> 36)&0x3)+1)
+#define DEE_SURFACETYPE_FORMAT_PIXEL_BYTES(fmt)  ((((fmt) >> 44)&0x3)+1)
 #define DEE_SURFACETYPE_FORMAT_PIXEL_BITS(fmt)   (DEE_SURFACETYPE_FORMAT_PIXEL_BYTES(fmt)*8)
 #define DEE_SURFACETYPE_FORMAT_PIXEL_HAS_R(fmt)  DEE_PRIVATE_CHANNEL_HAS(DEE_PRIVATE_SURFACETYPE_FORMAT_PIXEL_R(fmt))
 #define DEE_SURFACETYPE_FORMAT_PIXEL_HAS_G(fmt)  DEE_PRIVATE_CHANNEL_HAS(DEE_PRIVATE_SURFACETYPE_FORMAT_PIXEL_G(fmt))
@@ -188,7 +188,7 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 
 
 #if 1
-static Dee_uint64_t const format_rgba8888 = DEE_UINT64_C(0x1000003F1E2F85F8);
+static Dee_uint64_t const format_rgba8888 = DEE_UINT64_C(0x1000300F1E2F85F8);
 #else
 static Dee_uint64_t const format_rgba8888 = DEE_SURFACETYPE_FORMAT_PIXEL(32,0xFF000000,0x00FF0000,0x0000FF00,0x000000FF);
 #endif
@@ -492,7 +492,8 @@ struct DeeSurfaceObject {
    Dee_size_t  s_scanline;     /*< Amount of bytes per scanline (== s_sizex*s_pixlsize). */
    Dee_uint8_t s_pixels[4096]; /*< Raw pixeldata (pixeladdr = x*s_pixlsize+y*s_scanline) */
 #define DeeSurface_PIXELADDR(self,x,y) \
- (void *)((self)->s_pixeldata.s_pixels+(x)*(self)->s_pixeldata.s_pixlsize+(y)*(self)->s_pixeldata.s_scanline)
+ (void *)((self)->s_pixeldata.s_pixels+(x)*(self)->s_pixeldata.s_pixlsize+\
+                                       (y)*(self)->s_pixeldata.s_scanline)
 #define DeeSurface_PIXELBASESIZE Dee_OFFSETOF(DeeSurfaceObject,s_pixeldata.s_pixels)
   } s_pixeldata;
   struct {
@@ -610,6 +611,9 @@ DEE_STATIC_INLINE(void) DeeSurface_Blit(
  DEE_A_IN Dee_ssize_t dx, DEE_A_IN Dee_ssize_t dy,
  DEE_A_IN DeeSurfaceObject const *src,
  DEE_A_IN Dee_blendinfo_t blend);
+#define _DeeSurface_Blit(dst,dx,dy,src,blend)\
+ (*DeeSurface_TYPE(dst)->st_blit)(dst,dx,dy,src,0,0,\
+   DeeSurface_SIZEX(src),DeeSurface_SIZEY(src),blend);
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -639,7 +643,7 @@ DEE_STATIC_INLINE(void) DeeSurface_BlitArea(
  DEE_A_IN Dee_size_t ssx, DEE_A_IN Dee_size_t ssy,
  DEE_A_IN Dee_blendinfo_t blend);
 #define _DeeSurface_BlitArea(dst,dx,dy,src,sx,sy,ssx,ssy,blend) \
- (*DeeSurface_TYPE(dst)->st_blit)(dst,dx,dy,(DeeSurfaceObject *)Dee_REQUIRES_POINTER(src),sx,sy,ssx,ssy,blend)
+ (*DeeSurface_TYPE(dst)->st_blit)(dst,dx,dy,src,sx,sy,ssx,ssy,blend)
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -650,8 +654,7 @@ DEE_STATIC_INLINE(void) DeeSurface_StretchBlitArea(
  DEE_A_IN DeeSurfaceObject const *src, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy, DEE_A_IN Dee_size_t ssx, DEE_A_IN Dee_size_t ssy,
  DEE_A_IN Dee_blendinfo_t blend);
 #define _DeeSurface_StretchBlit(dst,dx,dy,dsx,dsy,src,sx,sy,ssx,ssy,blend) \
- (*DeeSurface_TYPE(dst)->st_stretchblit)(dst,dx,dy,dsx,dsy,\
- (DeeSurfaceObject *)Dee_REQUIRES_POINTER(src),sx,sy,ssx,ssy,blend)
+ (*DeeSurface_TYPE(dst)->st_stretchblit)(dst,dx,dy,dsx,dsy,src,sx,sy,ssx,ssy,blend)
 
 
 //////////////////////////////////////////////////////////////////////////

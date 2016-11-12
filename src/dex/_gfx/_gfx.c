@@ -459,10 +459,37 @@ DeeSurfaceTypeObject DeeSurface_Type = {
 
 static DeeSurfaceObject *DEE_CALL _deepixelsurface_tp_any_new(
  DeeSurfaceTypeObject *tp_self, DeeObject *args) {
- Dee_size_t sx,sy; DeePixelObject *filler = &DeePixel_EmptyObject;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"IuIu|o:surface",&sx,&sy,&filler) != 0) return NULL;
- if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)filler,&DeePixel_Type) != 0) return NULL;
- return DeeSurface_NewFilled(tp_self,sx,sy,&filler->p_pixel);
+ Dee_size_t sx,sy; DeeObject *arg0,*arg1 = NULL,*arg2 = NULL;
+ DeeSurfaceObject *result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|oo:surface",&arg0,&arg1,&arg2) != 0) return NULL;
+ if (DeeSurface_Check(arg0)) {
+  // Cast operation (w/ optional resize/stretch)
+  if (!arg1) sx = DeeSurface_SIZEX(arg0); else if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,arg1,&sx) != 0) return NULL;
+  if (!arg2) sy = DeeSurface_SIZEY(arg0); else if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,arg2,&sy) != 0) return NULL;
+  if DEE_UNLIKELY((result = DeeSurface_New(tp_self,sx,sy)) == NULL) return NULL;
+  if (sx == DeeSurface_SIZEX(arg0) && sy == DeeSurface_SIZEY(arg0)) {
+   // Simple blit (no stretch required)
+   _DeeSurface_Blit(result,0,0,(DeeSurfaceObject *)arg0,DEE_BLENDINFO_OVERRIDE);
+  } else { // Advanced blit (stretch is required)
+   _DeeSurface_StretchBlit(result,0,0,sx,sy,(DeeSurfaceObject *)arg0,0,0,
+                           DeeSurface_SIZEX(arg0),DeeSurface_SIZEY(arg0),
+                           DEE_BLENDINFO_OVERRIDE);
+  }
+ } else {
+  // Create new surface
+  if DEE_UNLIKELY(!arg1) {
+   DeeError_SetStringf(&DeeErrorType_TypeError,
+                       "surface requires at 2 ... 3 argument(s) (%Iu given)",
+                       DeeTuple_SIZE(args));
+   return NULL;
+  }
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,arg0,&sx) != 0) return NULL;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,arg1,&sy) != 0) return NULL;
+  if (!arg2) arg2 = (DeeObject *)&DeePixel_EmptyObject;
+  else if (DeeError_TypeError_CheckTypeExact(arg2,&DeePixel_Type) != 0) return NULL;
+  result = DeeSurface_NewFilled(tp_self,sx,sy,&((DeePixelObject *)arg2)->p_pixel);
+ }
+ return result;
 }
 static DeeSurfaceObject *DEE_CALL _deepixelsurface_tp_copy_new(
  DeeSurfaceTypeObject *tp_self, DeeSurfaceObject *self) {
@@ -713,10 +740,23 @@ static void DEE_CALL _deesurface_generic_st_flipy(
 #define _deesurface_rgba8888_st_flipy       _deesurface_pixel_st_flipy
 
 
+#if DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS
+static char const *_deesurface_doc =
+"(size_t sx, size_t sy, pixel filler = pixel.empty)\n"
+"@return: A new surface with the given dimensions @sx|@sy and all pixels set to @filler\n"
+"(surface other, size_t sx = other.sizex, size_t sy = other.sizey)\n"
+"@return: A new surface with the given dimensions @sx|@sy and containing the same pixels as @other\n"
+"\tNOTE: During the conversion operation data may be lost if the new surface type can't represent the data from @other\n"
+;
+#else
+#define _deesurface_doc NULL
+#endif
+
 
 DeeSurfaceTypeObject DeeSurfaceType_RGBA8888 = {
  {DEE_TYPE_OBJECT_HEAD_EX_v100(
-   member(&DeeSurfaceType_Type),member("surface_rgba8888"),null,
+   member(&DeeSurfaceType_Type),member("surface_rgba8888"),
+   member(_deesurface_doc),
    member(DEE_TYPE_FLAG_VAR_OBJECT|DEE_TYPE_FLAG_NO_SUBCLASS),
    member((DeeTypeObject *)&DeeSurface_Type)),
   DEE_TYPE_OBJECT_VAR_CONSTRUCTOR_v101(null,
@@ -962,6 +1002,9 @@ DeeSurfaceType_New(DEE_A_IN Dee_uint64_t format) {
    error = DeeType_SetName((DeeTypeObject *)result,DeeString_STR(new_name));
    Dee_DECREF(new_name);
    if (error != 0) goto err_r;
+#if DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS
+   DeeType_SetStaticDoc((DeeTypeObject *)result,_deesurface_doc);
+#endif
    break;
   case DEE_SURFACETYPE_FORMAT_KIND_INDEX:
    result->st_indexspec.st_indexbits = DEE_SURFACETYPE_FORMAT_INDEX_INDEXBITS(format);
@@ -995,10 +1038,10 @@ err_r:
 
 
 static DeeSurfaceTypeObject *DEE_CALL _deegfx_surface_format(DeeObject *args) {
- Dee_uint8_t bits; Dee_uint32_t rmask,gmask,bmask,amask;
+ Dee_uint8_t bits; Dee_uint32_t rmask,gmask,bmask,amask = 0;
  Dee_uint64_t format_id;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,
-  "I8uI32uI32uI32uI32u:surface_format",
+  "I8uI32uI32uI32u|I32u:surface_format",
   &bits,&rmask,&gmask,&bmask,&amask) != 0) return NULL;
  if (!bits || (bits%8)!=0) {
   DeeError_SetStringf(&DeeErrorType_ValueError,
@@ -1018,7 +1061,7 @@ struct DeeDexExportDef DeeDex_Exports[] = {
  DeeDex_EXPORT_OBJECT("pixel",&DeePixel_Type),
  DeeDex_EXPORT_OBJECT("surface",&DeeSurface_Type),
  DeeDex_EXPORT_FUNCTION("surface_format",&_deegfx_surface_format,
-  "(uint8_t bits, uint32_t rmask, uint32_t gmask, uint32_t bmask, uint32_t amask) -> surface_type\n"
+  "(uint8_t bits, uint32_t rmask, uint32_t gmask, uint32_t bmask, uint32_t amask = 0) -> surface_type\n"
   "@return: The surface-type describing a pixelformat compatible with the given arguments\n"
   "\tNOTE: The mask arguments are written in big-endian, meaning that a mask of 0xff000000 describes the first of 4 bytes"),
  DeeDex_EXPORT_OBJECT("surface_type",&DeeSurfaceType_Type),
