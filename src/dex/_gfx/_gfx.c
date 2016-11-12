@@ -1009,9 +1009,7 @@ static DeeSurfaceTypeObject *DEE_CALL _deegfx_surface_format(DeeObject *args) {
                       bits);
   return NULL;
  }
-#ifndef __INTELLISENSE__
- format_id = DEE_SURFACETYPE_FORMAT_PIXEL(bits,rmask,gmask,bmask,amask);
-#endif
+ format_id = DEE_SURFACETYPE_FORMAT_PIXEL_(bits,rmask,gmask,bmask,amask);
  return DeeSurfaceType_Get(format_id);
 }
 static DeeSurfaceTypeObject *DEE_CALL _deegfx___surface_formatid(DeeObject *args) {

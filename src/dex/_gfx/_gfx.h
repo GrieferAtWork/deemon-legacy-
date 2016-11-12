@@ -164,13 +164,37 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 //////////////////////////////////////////////////////////////////////////
 // Generates a surfacetype ID from a given set of channel masks.
 //  - Set a given mask to 0 to disable that channel
+// WARNING: You really shouldn't use the macro.
+//          It does work, but you wouldn't believe how much code it expands into...
+//          Use the inline-function below whenever possible.
 #define DEE_SURFACETYPE_FORMAT_PIXEL(color_bits,rmask,gmask,bmask,amask)\
-(DEE_SURFACETYPE_FORMAT_KIND_PIXEL\
-|((Dee_uint64_t)((((color_bits)/8)-1)&0x3) << 44)\
-|((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(rmask)) << 33\
-|((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(gmask)) << 22\
-|((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(bmask)) << 11\
-|((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(amask)))
+ (DEE_SURFACETYPE_FORMAT_KIND_PIXEL\
+ |((Dee_uint64_t)((((color_bits)/8)-1)&0x3) << 44)\
+ |((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(rmask)) << 33\
+ |((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(gmask)) << 22\
+ |((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(bmask)) << 11\
+ |((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE_MASK(amask)))
+DEE_STATIC_INLINE(DEE_A_RET_WUNUSED Dee_uint64_t) DEE_SURFACETYPE_FORMAT_PIXEL_(
+ DEE_A_IN Dee_uint8_t color_bits,
+ DEE_A_IN Dee_uint32_t rmask, DEE_A_IN Dee_uint32_t gmask,
+ DEE_A_IN Dee_uint32_t bmask, DEE_A_IN Dee_uint32_t amask) {
+ Dee_uint8_t off,bit; Dee_uint32_t aligned_mask;
+ Dee_uint64_t result = DEE_SURFACETYPE_FORMAT_KIND_PIXEL;
+ result |= (Dee_uint64_t)((((color_bits)/8)-1)&0x3) << 44;
+#define DEE_GFX_ENCODE_CHANNEL(mask,offset)\
+do{\
+ off = (Dee_uint8_t)DEE_FIRSTBIT32(mask);\
+ aligned_mask = (mask) >> (Dee_uint8_t)DEE_LASTBIT32(mask);\
+ bit = (Dee_uint8_t)DEE_PRIVATE_CHANNEL_MASKSIZE2(aligned_mask);\
+ result |= ((Dee_uint64_t)DEE_PRIVATE_CHANNEL_ENCODE(off,bit)) << (offset);\
+}while(0)
+ DEE_GFX_ENCODE_CHANNEL(rmask,33);
+ DEE_GFX_ENCODE_CHANNEL(gmask,22);
+ DEE_GFX_ENCODE_CHANNEL(bmask,11);
+ DEE_GFX_ENCODE_CHANNEL(amask, 0);
+#undef DEE_GFX_ENCODE_CHANNEL
+ return result;
+}
 #define DEE_PRIVATE_SURFACETYPE_FORMAT_PIXEL_R(fmt)    ((fmt) >> 33)
 #define DEE_PRIVATE_SURFACETYPE_FORMAT_PIXEL_G(fmt)    ((fmt) >> 22)
 #define DEE_PRIVATE_SURFACETYPE_FORMAT_PIXEL_B(fmt)    ((fmt) >> 11)
