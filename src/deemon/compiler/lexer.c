@@ -2467,7 +2467,10 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoSafeFormatFileStreamEx(
   if DEE_UNLIKELY((temp_fp = DeeFileIO_NewTemporary(DEE_FILEIO_NEWTEMPORARY_FLAG_NONE)) == NULL) return -1;
   if DEE_UNLIKELY((_DeeLexer_DoFormatFileStreamEx(self,in,temp_fp,config)) != 0) {
    DeeFile_Close(temp_fp);
-   if DEE_UNLIKELY(_DeeFS_RmFileObject(DeeFileIO_FILE(temp_fp)) != 0) DeeError_Handled();
+   DeeError_PUSH_STATE() {
+    if DEE_UNLIKELY(_DeeFS_RmFileObject(DeeFileIO_FILE(temp_fp)) != 0)
+     DeeError_Handled();
+   } DeeError_POP_STATE();
    Dee_DECREF(temp_fp);
    return -1;
   }
