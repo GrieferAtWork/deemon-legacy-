@@ -29,8 +29,13 @@
 #include <deemon/optional/type_decl.h>
 #include <deemon/optional/object_refcnt.h>
 #include <deemon/type.h>
+#include <deemon/__bswap_intrin.inl>
 
 DEE_DECL_BEGIN
+
+DEE_OBJECT_DEF(DeePixelObject);
+DEE_OBJECT_DEF(DeeSurfaceTypeObject);
+DEE_OBJECT_DEF(DeeSurfaceObject);
 
 #define DEE_SIZE_C  DEE_PP_CAT_3(DEE_UINT,DEE_PP_MUL8(DEE_TYPES_SIZEOF_SIZE_T),_C)
 #define DEE_SSIZE_C  DEE_PP_CAT_3(DEE_INT,DEE_PP_MUL8(DEE_TYPES_SIZEOF_SIZE_T),_C)
@@ -80,6 +85,24 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
  ((mask)&0x04000000) ? 26 : ((mask)&0x08000000) ? 27 : \
  ((mask)&0x10000000) ? 28 : ((mask)&0x20000000) ? 29 : \
  ((mask)&0x40000000) ? 30 : ((mask)&0x80000000) ? 31 : 0)
+
+//////////////////////////////////////////////////////////////////////////
+// Get/Set a 24-bit unsigned integer value (required for 3-channel pixelformats)
+#ifdef DEE_PLATFORM_LIL_ENDIAN
+#define DeeUInt24_Get(p) \
+ (((Dee_uint32_t)*(Dee_uint16_t *)(p) << 8) | (Dee_uint32_t)((Dee_uint8_t *)(p))[2])
+#define DeeUInt24_Set(p,v) \
+ (*(Dee_uint16_t *)(p) = (Dee_uint16_t)((v) >> 8),\
+   ((Dee_uint8_t *)(p))[2] = (Dee_uint8_t)(v))
+#else
+#define DeeUInt24_Get(p) \
+ ((Dee_uint32_t)*(Dee_uint16_t *)((Dee_uintptr_t)(p)+1) | (Dee_uint32_t)(*(Dee_uint8_t *)(p)) << 16)
+#define DeeUInt24_Set(p,v) \
+ (*(Dee_uint16_t *)((Dee_uintptr_t)(p)+1) = (Dee_uint16_t)(v),\
+  *((Dee_uint8_t *)(p)) = (Dee_uint8_t)((Dee_uint32_t)(v) >> 16))
+#endif
+
+
 
 //////////////////////////////////////////////////////////////////////////
 // Encode/Decode the offset/bits of a given color channel into 11 bits to data
@@ -192,13 +215,10 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 
 
 #if 1
-static Dee_uint64_t const format_rgba8888 = DEE_UINT64_C(0x1000300F1E2F85F8);
+#define DeeSurfaceTypeFormat_RGBA8888    DEE_UINT64_C(0x1000300F1E2F85F8)
 #else
-static Dee_uint64_t const format_rgba8888 = DEE_SURFACETYPE_FORMAT_PIXEL(32,0xFF000000,0x00FF0000,0x0000FF00,0x000000FF);
+static Dee_uint64_t const DeeSurfaceTypeFormat_RGBA8888 = DEE_SURFACETYPE_FORMAT_PIXEL(32,0xFF000000,0x00FF0000,0x0000FF00,0x000000FF);
 #endif
-
-DEE_OBJECT_DEF(DeeSurfaceTypeObject);
-DEE_OBJECT_DEF(DeeSurfaceObject);
 
 struct DeePixel { Dee_uint8_t r,g,b,a; };
 #define DeePixel_EQUALS(a,b) (*(Dee_uint32_t const *)(a) == *(Dee_uint32_t const *)(b))
@@ -438,40 +458,86 @@ typedef void (DEE_CALL *PDeeSurfacePixelMaskLSB)(
  DEE_A_IN Dee_size_t line_bytes, DEE_A_IN_RB(in_bytes) void const *data,
  DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
 
+struct DeeSurfacePixelSpec {
+ Dee_uint8_t   st_pixelbits;  /*< Size of a single pixel (in bits). */
+ Dee_uint8_t   st_pixelbytes; /*< Size of a single pixel. */
+ Dee_uint32_t  st_rmask;      /*< 32-bit mask for the red channel. */
+ Dee_uint32_t  st_gmask;      /*< 32-bit mask for the green channel. */
+ Dee_uint32_t  st_bmask;      /*< 32-bit mask for the blue channel. */
+ Dee_uint32_t  st_amask;      /*< 32-bit mask for the alpha channel. */
+ Dee_uint8_t   st_rshift;     /*< [0..31] Required shift for reading/writing the red channel. */
+ Dee_uint8_t   st_gshift;     /*< [0..31] Required shift for reading/writing the green channel. */
+ Dee_uint8_t   st_bshift;     /*< [0..31] Required shift for reading/writing the blue channel. */
+ Dee_uint8_t   st_ashift;     /*< [0..31] Required shift for reading/writing the alpha channel. */
+ Dee_uint8_t   st_rbits;      /*< [0..8] Amount of bits used by the red channel. */
+ Dee_uint8_t   st_gbits;      /*< [0..8] Amount of bits used by the green channel. */
+ Dee_uint8_t   st_bbits;      /*< [0..8] Amount of bits used by the blue channel. */
+ Dee_uint8_t   st_abits;      /*< [0..8] Amount of bits used by the alpha channel. */
+ Dee_uint16_t  st_rmod;       /*< == (1 << st_rbits). */
+ Dee_uint16_t  st_gmod;       /*< == (1 << st_gbits). */
+ Dee_uint16_t  st_bmod;       /*< == (1 << st_bbits). */
+ Dee_uint16_t  st_amod;       /*< == (1 << st_abits). */
+ Dee_uint16_t  st_rinvmod;    /*< == (1 << (8-st_rbits)). */
+ Dee_uint16_t  st_ginvmod;    /*< == (1 << (8-st_gbits)). */
+ Dee_uint16_t  st_binvmod;    /*< == (1 << (8-st_bbits)). */
+ Dee_uint16_t  st_ainvmod;    /*< == (1 << (8-st_abits)). */
+};
+#define DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_MASK(mask,shift,bits)     mask
+#define DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_SHIFT(mask,shift,bits)    shift
+#define DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS(mask,shift,bits)     bits
+#define DEE_PRIVATE_SURFACE_PIXELSPEC_GENMASK DEE_BUILTIN_BESWAP32_M
+#ifdef DEE_PLATFORM_LIL_ENDIAN
+#define DEE_PRIVATE_SURFACE_PIXELSPEC_GENSHIFT(total_bits,shift,bits) (total_bits)-((shift)+(bits))
+#else
+#define DEE_PRIVATE_SURFACE_PIXELSPEC_GENSHIFT(total_bits,shift,bits) bits
+#endif
+#define DeeSurfacePixelSpec_INIT32(_r,_g,_b,_a) DeeSurfacePixelSpec_INIT(32,_r,_g,_b,_a)
+#define DeeSurfacePixelSpec_INIT(bits,_r,_g,_b,_a)\
+{/* st_pixelbits  */(bits)\
+,/* st_pixelbytes */(bits)/8\
+,/* st_rmask      */DEE_PRIVATE_SURFACE_PIXELSPEC_GENMASK(DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_MASK _r) \
+,/* st_gmask      */DEE_PRIVATE_SURFACE_PIXELSPEC_GENMASK(DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_MASK _g) \
+,/* st_bmask      */DEE_PRIVATE_SURFACE_PIXELSPEC_GENMASK(DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_MASK _b) \
+,/* st_amask      */DEE_PRIVATE_SURFACE_PIXELSPEC_GENMASK(DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_MASK _a) \
+,/* st_rshift     */DEE_PRIVATE_SURFACE_PIXELSPEC_GENSHIFT(bits,DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_SHIFT _r,DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _r) \
+,/* st_gshift     */DEE_PRIVATE_SURFACE_PIXELSPEC_GENSHIFT(bits,DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_SHIFT _g,DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _g) \
+,/* st_bshift     */DEE_PRIVATE_SURFACE_PIXELSPEC_GENSHIFT(bits,DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_SHIFT _b,DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _b) \
+,/* st_ashift     */DEE_PRIVATE_SURFACE_PIXELSPEC_GENSHIFT(bits,DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_SHIFT _a,DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _a) \
+,/* st_rbits      */DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _r \
+,/* st_gbits      */DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _g \
+,/* st_bbits      */DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _b \
+,/* st_abits      */DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _a \
+,/* st_rmod       */DEE_UINT16_C(1) << DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _r \
+,/* st_gmod       */DEE_UINT16_C(1) << DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _g \
+,/* st_bmod       */DEE_UINT16_C(1) << DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _b \
+,/* st_amod       */DEE_UINT16_C(1) << DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _a \
+,/* st_rinvmod    */DEE_UINT16_C(1) << (8-DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _r) \
+,/* st_ginvmod    */DEE_UINT16_C(1) << (8-DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _g) \
+,/* st_binvmod    */DEE_UINT16_C(1) << (8-DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _b) \
+,/* st_ainvmod    */DEE_UINT16_C(1) << (8-DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _a) \
+}
+
+
+struct DeeSurfaceIndexSpec {
+ Dee_uint8_t st_indexbits; /*< Amount of index bits / pixel (also the size of a pixel; may not be byte aligned). */
+ Dee_size_t  st_mapsize;   /*< Size of the index map (entry count). */
+};
+
+
 struct DeeSurfaceTypeObject {
  DeeTypeObject                   st_base;
  Dee_uint64_t                    st_format;
- DEE_A_REF DeeSurfaceTypeObject *st_next;   /*< [0..1] Next entry in the global cache of surface types. */
+ DEE_A_REF DeeSurfaceTypeObject *st_next; /*< [0..1] Next entry in the global cache of surface types. */
  union{ /*< DEE_SURFACETYPE_FORMAT_KIND(st_format). */
-  struct { /*< DEE_SURFACETYPE_FORMAT_KIND_PIXEL >*/
-   Dee_uint8_t   st_pixelbits;  /*< Size of a single pixel (in bits). */
-   Dee_uint8_t   st_pixelbytes; /*< Size of a single pixel. */
-   Dee_uint32_t  st_rmask;      /*< 32-bit mask for the red channel. */
-   Dee_uint32_t  st_gmask;      /*< 32-bit mask for the green channel. */
-   Dee_uint32_t  st_bmask;      /*< 32-bit mask for the blue channel. */
-   Dee_uint32_t  st_amask;      /*< 32-bit mask for the alpha channel. */
-   Dee_uint8_t   st_rshift;     /*< [0..31] Required shift for reading/writing the red channel. */
-   Dee_uint8_t   st_gshift;     /*< [0..31] Required shift for reading/writing the green channel. */
-   Dee_uint8_t   st_bshift;     /*< [0..31] Required shift for reading/writing the blue channel. */
-   Dee_uint8_t   st_ashift;     /*< [0..31] Required shift for reading/writing the alpha channel. */
-   Dee_uint8_t   st_rbits;      /*< [0..8] Amount of bits used by the red channel. */
-   Dee_uint8_t   st_gbits;      /*< [0..8] Amount of bits used by the green channel. */
-   Dee_uint8_t   st_bbits;      /*< [0..8] Amount of bits used by the blue channel. */
-   Dee_uint8_t   st_abits;      /*< [0..8] Amount of bits used by the alpha channel. */
-   Dee_uint16_t  st_rmod;       /*< == (1 << st_rbits). */
-   Dee_uint16_t  st_gmod;       /*< == (1 << st_gbits). */
-   Dee_uint16_t  st_bmod;       /*< == (1 << st_bbits). */
-   Dee_uint16_t  st_amod;       /*< == (1 << st_abits). */
-   Dee_uint16_t  st_rinvmod;    /*< == (1 << (8-st_rbits)). */
-   Dee_uint16_t  st_ginvmod;    /*< == (1 << (8-st_gbits)). */
-   Dee_uint16_t  st_binvmod;    /*< == (1 << (8-st_bbits)). */
-   Dee_uint16_t  st_ainvmod;    /*< == (1 << (8-st_abits)). */
-  } st_pixelspec;
-  struct { /*< DEE_SURFACETYPE_FORMAT_KIND_INDEX >*/
-   Dee_uint8_t   st_indexbits; /*< Amount of index bits / pixel (also the size of a pixel; may not be byte aligned). */
-   Dee_size_t    st_mapsize;   /*< Size of the index map (entry count). */
-  } st_indexspec;
- };
+  struct DeeSurfacePixelSpec st_pixelspec;
+  struct DeeSurfaceIndexSpec st_indexspec;
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define st_pixelspec _st_spec.st_pixelspec
+#define st_indexspec _st_spec.st_indexspec
+ _st_spec
+#endif
+ ;
  PDeeSurfaceGetPixel     st_getpixel;     /*< [1..1]. */
  PDeeSurfaceSetPixel     st_setpixel;     /*< [1..1]. */
  PDeeSurfaceFill         st_fill;         /*< [1..1]. */
@@ -487,20 +553,6 @@ struct DeeSurfaceTypeObject {
  PDeeSurfacePixelMaskMSB st_pixelmaskmsb; /*< [1..1]. */
  PDeeSurfacePixelMaskLSB st_pixelmasklsb; /*< [1..1]. */
 };
-
-#ifdef DEE_PLATFORM_LIL_ENDIAN
-#define DeeUInt24_Get(p) \
- (((Dee_uint32_t)*(Dee_uint16_t *)(p) << 8) | (Dee_uint32_t)((Dee_uint8_t *)(p))[2])
-#define DeeUInt24_Set(p,v) \
- (*(Dee_uint16_t *)(p) = (Dee_uint16_t)((v) >> 8),\
-   ((Dee_uint8_t *)(p))[2] = (Dee_uint8_t)(v))
-#else
-#define DeeUInt24_Get(p) \
- ((Dee_uint32_t)*(Dee_uint16_t *)((Dee_uintptr_t)(p)+1) | (Dee_uint32_t)(*(Dee_uint8_t *)(p)) << 16)
-#define DeeUInt24_Set(p,v) \
- (*(Dee_uint16_t *)((Dee_uintptr_t)(p)+1) = (Dee_uint16_t)(v),\
-  *((Dee_uint8_t *)(p)) = (Dee_uint8_t)((Dee_uint32_t)(v) >> 16))
-#endif
 
 #define DeeSurfaceType_PIXEL_GETPIXEL(ty,datap,result)\
 do{\
@@ -579,7 +631,13 @@ struct DeeSurfaceObject {
    struct DeePixel s_map[256];     /*< [__ob_type->st_indexspec.st_mapsize] Index map (Actual size depends on surface type). */
    Dee_uint8_t     s_pixels[4096]; /*< Raw pixeldata (pixeladdr = x*s_pixlsize+y*s_scanline) */
   } s_indexdata;
- };
+ }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define s_pixeldata _s_data.s_pixeldata
+#define s_indexdata _s_data.s_indexdata
+ _s_data
+#endif
+ ;
 };
 
 #define DeeSurface_TYPE(ob)  ((DeeSurfaceTypeObject *)Dee_TYPE(ob))

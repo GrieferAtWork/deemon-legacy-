@@ -26,6 +26,10 @@
 
 DEE_DECL_BEGIN
 
+DEE_OBJECT_DEF(DeeCRCAlgorithmIteratorObject);
+DEE_OBJECT_DEF(DeeCRCAlgorithmObject);
+DEE_OBJECT_DEF(DeeCRCHasherObject);
+
 #ifdef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 #undef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
@@ -135,7 +139,6 @@ extern void DeeCRCHasher_AddString(DEE_A_INOUT struct DeeCRCHasher *self, DEE_A_
 
 //////////////////////////////////////////////////////////////////////////
 // Deemon wrapper objects
-DEE_OBJECT_DEF(DeeCRCAlgorithmObject);
 struct DeeCRCAlgorithmObject {
  DEE_OBJECT_HEAD
  struct DeeCRCAlgorithm const *ca_algo; /*< [1..1] CRC Algorithm. */
@@ -156,7 +159,6 @@ extern DeeTypeObject DeeCRCAlgorithmIterator_Type;
 #define DeeCRCAlgorithmIterator_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeCRCAlgorithmIterator_Type)
 
 
-DEE_OBJECT_DEF(DeeCRCHasherObject);
 struct DeeCRCHasherObject {
  DEE_OBJECT_HEAD
  struct DeeCRCHasher ch_hasher;

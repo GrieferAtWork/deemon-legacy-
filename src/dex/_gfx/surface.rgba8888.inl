@@ -87,43 +87,13 @@ DeeSurfaceTypeObject DeeSurfaceType_RGBA8888 = {
   DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,null,null,null,null,null,null),
   DEE_TYPE_OBJECT_FOOTER_v100
  },
- format_rgba8888, // st_format
+ DeeSurfaceTypeFormat_RGBA8888, // st_format
  NULL,            // st_next
- {{
-  32, // st_pixelbits
-  4,  // st_pixelbytes
-#ifdef DEE_PLATFORM_LIL_ENDIAN
-  0x000000FF, // st_rmask
-  0x0000FF00, // st_gmask
-  0x00FF0000, // st_bmask
-  0xFF000000, // st_amask
-  0,          // st_rshift
-  8,          // st_gshift
-  16,         // st_bshift
-  24,         // st_ashift
-#else
-  0xFF000000, // st_rmask
-  0x00FF0000, // st_gmask
-  0x0000FF00, // st_bmask
-  0x000000FF, // st_amask
-  24,         // st_rshift
-  16,         // st_gshift
-  8,          // st_bshift
-  0,          // st_ashift
-#endif
-  8,          // st_rbits
-  8,          // st_gbits
-  8,          // st_bbits
-  8,          // st_abits
-  256,        // st_rmod
-  256,        // st_gmod
-  256,        // st_bmod
-  256,        // st_amod
-  1,          // st_rinvmod
-  1,          // st_ginvmod
-  1,          // st_binvmod
-  1,          // st_ainvmod
- }},
+ {DeeSurfacePixelSpec_INIT32(
+   (0xFF000000,24,8),
+   (0x00FF0000,16,8),
+   (0x0000FF00, 8,8),
+   (0x000000FF, 0,8))},
  &_deesurface_rgba8888_st_getpixel,     // st_getpixel
  &_deesurface_rgba8888_st_setpixel,     // st_setpixel
  &_deesurface_rgba8888_st_fill,         // st_fill

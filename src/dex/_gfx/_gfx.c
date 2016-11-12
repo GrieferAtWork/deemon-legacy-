@@ -778,13 +778,12 @@ static void DEE_CALL _deesurface_generic_st_pixelmasklsb(
 
 
 #if DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS
-static char const *_deesurface_doc =
-"(size_t sx, size_t sy, pixel filler = pixel.empty)\n"
-"@return: A new surface with the given dimensions @sx|@sy and all pixels set to @filler\n"
-"(surface other, size_t sx = other.sizex, size_t sy = other.sizey)\n"
-"@return: A new surface with the given dimensions @sx|@sy and containing the same pixels as @other\n"
-"\tNOTE: During the conversion operation data may be lost if the new surface type can't represent the data from @other\n"
-;
+#define _deesurface_doc \
+ "(size_t sx, size_t sy, pixel filler = pixel.empty)\n" \
+ "@return: A new surface with the given dimensions @sx|@sy and all pixels set to @filler\n" \
+ "(surface other, size_t sx = other.sizex, size_t sy = other.sizey)\n" \
+ "@return: A new surface with the given dimensions @sx|@sy and containing the same pixels as @other\n" \
+ "\tNOTE: During the conversion operation data may be lost if the new surface type can't represent the data from @other\n"
 #else
 #define _deesurface_doc NULL
 #endif
@@ -816,10 +815,9 @@ DEE_A_RET_EXCEPT_REF DeeSurfaceTypeObject *
 DeeSurfaceType_Get(DEE_A_IN Dee_uint64_t format) {
  DeeSurfaceTypeObject *result,*newresult;
  Dee_uint8_t cache_id;
- switch (format) {
-  case format_rgba8888: result = &DeeSurfaceType_RGBA8888; break;
-  default: goto no_builtin;
- }
+ if (format == DeeSurfaceTypeFormat_RGBA8888) {
+  result = &DeeSurfaceType_RGBA8888;
+ } else goto no_builtin;
 ret_result:
  Dee_INCREF(result);
  return result;
