@@ -31,7 +31,7 @@
 #undef uptime
 #undef cpucount
 #undef system
-module system {
+__module system {
 	__unused local __system = __builtin_dex("_system");
 
 	//////////////////////////////////////////////////////////////////////////

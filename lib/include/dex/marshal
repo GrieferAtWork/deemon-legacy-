@@ -35,7 +35,7 @@
 #undef write_compiled_file_header
 #undef is_compiled_file
 #undef marshal
-module marshal {
+__module marshal {
 	__unused local __marshal = __builtin_dex("_marshal");
 
 	//////////////////////////////////////////////////////////////////////////

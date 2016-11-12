@@ -435,12 +435,12 @@ typedef void (DEE_CALL *PDeeSurfaceLineLHHL)(
  DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t x,
  DEE_A_IN Dee_size_t y, DEE_A_IN Dee_size_t sizex, DEE_A_IN Dee_size_t sizey,
  DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
-typedef void (DEE_CALL *PDeeSurfaceHLine)(
+typedef void (DEE_CALL *PDeeSurfaceXLine)(
  DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t xbegin, DEE_A_IN Dee_size_t xend,
  DEE_A_IN Dee_size_t y, DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
-typedef void (DEE_CALL *PDeeSurfaceVLine)(
- DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t x, DEE_A_IN Dee_size_t beginy,
- DEE_A_IN Dee_size_t endy, DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
+typedef void (DEE_CALL *PDeeSurfaceYLine)(
+ DEE_A_INOUT DeeSurfaceObject *dst, DEE_A_IN Dee_size_t x, DEE_A_IN Dee_size_t ybegin,
+ DEE_A_IN Dee_size_t yend, DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
 typedef void (DEE_CALL *PDeeSurfaceBlit)(
  DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_size_t dst_x, DEE_A_IN Dee_size_t dst_y, // Destination coords in 'dst'
@@ -481,6 +481,7 @@ typedef void (DEE_CALL *PDeeSurfacePixelMaskLSB)(
  DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy,
  DEE_A_IN Dee_size_t line_bytes, DEE_A_IN_RB(in_bytes) void const *data,
  DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
+
 
 struct DeeSurfacePixelSpec {
  Dee_uint8_t   st_pixelbits;  /*< Size of a single pixel (in bits). */
@@ -566,8 +567,8 @@ struct DeeSurfaceTypeObject {
  PDeeSurfaceSetPixel     st_setpixel;     /*< [1..1]. */
  PDeeSurfaceFill         st_fill;         /*< [1..1]. */
  PDeeSurfaceFillRect     st_fillrect;     /*< [1..1]. */
- PDeeSurfaceHLine        st_xline;        /*< [1..1]. */
- PDeeSurfaceVLine        st_yline;        /*< [1..1]. */
+ PDeeSurfaceXLine        st_xline;        /*< [1..1]. */
+ PDeeSurfaceYLine        st_yline;        /*< [1..1]. */
  PDeeSurfaceLineLLHH     st_linellhh;     /*< [1..1]. */
  PDeeSurfaceLineLHHL     st_linelhhl;     /*< [1..1]. */
  PDeeSurfaceBlit         st_blit;         /*< [1..1]. */
@@ -750,8 +751,8 @@ DEE_STATIC_INLINE(void) DeeSurface_FillRect(
 // Draw Line parallel to the x/y axis
 #define _DeeSurface_XLine(dst,xbegin,xend,y,color,blend)\
  (*DeeSurface_TYPE(dst)->st_xline)(dst,xbegin,xend,y,color,blend)
-#define _DeeSurface_YLine(dst,x,beginy,endy,color,blend)\
- (*DeeSurface_TYPE(dst)->st_yline)(dst,x,beginy,endy,color,blend)
+#define _DeeSurface_YLine(dst,x,ybegin,yend,color,blend)\
+ (*DeeSurface_TYPE(dst)->st_yline)(dst,x,ybegin,yend,color,blend)
 DEE_STATIC_INLINE(void) DeeSurface_XLine(
  DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_ssize_t x1, DEE_A_IN Dee_ssize_t x2, DEE_A_IN Dee_ssize_t y,
@@ -768,11 +769,22 @@ DEE_STATIC_INLINE(void) DeeSurface_Line(
  DEE_A_IN Dee_ssize_t x1, DEE_A_IN Dee_ssize_t y1,
  DEE_A_IN Dee_ssize_t x2, DEE_A_IN Dee_ssize_t y2,
  DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
+
+//////////////////////////////////////////////////////////////////////////
+// Draw A box, that is a non-filled rectangle
 DEE_STATIC_INLINE(void) DeeSurface_Box(
  DEE_A_INOUT DeeSurfaceObject *dst,
  DEE_A_IN Dee_ssize_t x, DEE_A_IN Dee_ssize_t y,
  DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy,
  DEE_A_IN struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend);
+
+//////////////////////////////////////////////////////////////////////////
+// Draw A filled triangle between 3 points
+DEE_STATIC_INLINE(void) DEE_CALL DeeSurface_Triangle(
+ DeeSurfaceObject *dst, Dee_ssize_t dx1, Dee_ssize_t dy1,
+ /* ................ */ Dee_ssize_t dx2, Dee_ssize_t dy2,
+ /* ................ */ Dee_ssize_t dx3, Dee_ssize_t dy3,
+ struct DeePixel const *color, Dee_blendinfo_t blend);
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -955,9 +967,9 @@ DEE_STATIC_INLINE(void) DeeSurface_Line(
  int outcode0,outcode1,outcodeOut;
 #define COHSUTH_INSIDE 0 // 0000
 #define COHSUTH_XMIN   1 // 0001
-#define COHSUTH_XMAX  2 // 0010
-#define COHSUTH_YMIN 4 // 0100
-#define COHSUTH_YMAX    8 // 1000
+#define COHSUTH_XMAX   2 // 0010
+#define COHSUTH_YMIN   4 // 0100
+#define COHSUTH_YMAX   8 // 1000
  xmax = (Dee_ssize_t)(DeeSurface_SIZEX(dst)-1);
  ymax = (Dee_ssize_t)(DeeSurface_SIZEY(dst)-1);
 #define COHSUTH_COMPUTEOUTCODE(x,y,result)\
@@ -1161,6 +1173,41 @@ DEE_STATIC_INLINE(void) DeeSurface_FillRect(
   (*DeeSurface_TYPE(dst)->st_fill)(dst,color,blend);
  } else {
   (*DeeSurface_TYPE(dst)->st_fillrect)(dst,used_x,used_y,used_x+sizex,used_y+sizey,color,blend);
+ }
+}
+
+
+DEE_STATIC_INLINE(void) DEE_CALL DeeSurface_Triangle(
+ DeeSurfaceObject *dst, Dee_ssize_t dx1, Dee_ssize_t dy1,
+ /* ................ */ Dee_ssize_t dx2, Dee_ssize_t dy2,
+ /* ................ */ Dee_ssize_t dx3, Dee_ssize_t dy3,
+ struct DeePixel const *color, Dee_blendinfo_t blend) {
+ Dee_ssize_t temp,y,ymax,xbegin,xend,sx,sy;
+ double dx_far,dx_upper,dx_low,xff,xtt;
+ PDeeSurfaceXLine xline;
+#define swap(a,b) (temp = (a),(a) = (b),(b) = temp)
+ if (dy2 > dy3) swap(dx2,dx3),swap(dy2,dy3);
+ if (dy1 > dy2) swap(dx1,dx2),swap(dy1,dy2);
+ if (dy2 > dy3) swap(dx2,dx3),swap(dy2,dy3);
+#undef swap
+ dx_far = (double)(dx3-dx1)/(dy3-dy1+1);
+ dx_upper = (double)(dx2-dx1)/(dy2-dy1+1);
+ dx_low = (double)(dx3-dx2)/(dy3-dy2+1);
+ xff = dx1,xtt = dx1+dx_upper;
+ sx = (Dee_ssize_t)dst->s_sizex,sy = (Dee_ssize_t)dst->s_sizey;
+ xline = DeeSurface_TYPE(dst)->st_xline;
+ ymax = (dy3 >= sy ? sy-1 : dy3);
+ for (y = dy1; y <= ymax; ++y) {
+  if (y >= 0) {
+   xbegin = (xff > 0 ? (Dee_ssize_t)xff : 0);
+   xend = (xtt < sx ? (Dee_ssize_t)xtt+1 : sx);
+   if (xbegin < xend) (*xline)(dst,(Dee_size_t)xbegin,(Dee_size_t)xend,(Dee_size_t)y,color,blend);
+   xbegin = (xtt > 0 ? (Dee_ssize_t)xtt : 0);
+   xend = (xff < sx ? (Dee_ssize_t)(xff+1) : sx);
+   if (xbegin < xend) (*xline)(dst,(Dee_size_t)xbegin,(Dee_size_t)xend,(Dee_size_t)y,color,blend);
+  }
+  xff += dx_far;
+  xtt += (y < dy2) ? dx_upper : dx_low;
  }
 }
 

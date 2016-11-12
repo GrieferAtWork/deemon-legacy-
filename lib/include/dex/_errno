@@ -35,7 +35,7 @@
 #undef win32_errnoname
 #undef win32_errnotext
 #undef errno
-module errno {
+__module errno {
 	__unused local __errno = __builtin_dex("_errno");
 
 	//////////////////////////////////////////////////////////////////////////

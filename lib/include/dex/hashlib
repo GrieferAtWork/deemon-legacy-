@@ -33,7 +33,7 @@
 #undef crc_hasher
 #undef crc
 #undef hashlib
-module hashlib {
+__module hashlib {
 	__unused local __hashlib = __builtin_dex("_hashlib");
 
 	//////////////////////////////////////////////////////////////////////////

@@ -43,7 +43,7 @@
 #undef Z_DEFAULT_COMPRESSION
 #undef Z_UBER_COMPRESSION
 #undef zlib
-module zlib {
+__module zlib {
 	__unused local __zlib = __builtin_dex("_zlib");
 
 	//////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,172 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+#pragma once
+
+#include <__stddef.dee>
+
+#pragma push_macro("__gfx")
+#pragma push_macro("pixel")
+#pragma push_macro("surface")
+#pragma push_macro("surface_format")
+#pragma push_macro("__surface_formatid")
+#pragma push_macro("surface_type")
+#pragma push_macro("surface_rgba8888")
+#pragma push_macro("gfx")
+#undef __gfx
+#undef pixel
+#undef surface
+#undef surface_format
+#undef __surface_formatid
+#undef surface_type
+#undef surface_rgba8888
+#undef gfx
+__module gfx {
+	__unused local __gfx = __builtin_dex("_gfx");
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> class pixel extends object { ... };
+	// >> class pixel(string name) -> pixel;
+	// >> class pixel(string name, uint8_t alpha) -> pixel;
+	// >> class pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff) -> pixel;
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> class const aqua -> pixel;
+	//
+	// >> class const black -> pixel;
+	//
+	// >> class const blue -> pixel;
+	//
+	// >> class const empty -> pixel;
+	//
+	// >> class const fuchsia -> pixel;
+	//
+	// >> class const gray -> pixel;
+	//
+	// >> class const green -> pixel;
+	//
+	// >> class const lime -> pixel;
+	//
+	// >> class const maroon -> pixel;
+	//
+	// >> class const navy -> pixel;
+	//
+	// >> class const olive -> pixel;
+	//
+	// >> class const purple -> pixel;
+	//
+	// >> class const red -> pixel;
+	//
+	// >> class const silver -> pixel;
+	//
+	// >> class const teal -> pixel;
+	//
+	// >> class const white -> pixel;
+	//
+	// >> class const yellow -> pixel;
+	//
+	// >> property r -> uint8_t = { get() };
+	//    @return: The red color channel.
+	//
+	// >> property g -> uint8_t = { get() };
+	//    @return: The green color channel.
+	//
+	// >> property b -> uint8_t = { get() };
+	//    @return: The blue color channel.
+	//
+	// >> property a -> uint8_t = { get() };
+	//    @return: The alpha channel.
+	//
+	__unused local pixel = __gfx.pixel;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> class surface extends object { ... };
+	//        - Base class for all surface objects (Not constructable).
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> function save_png(string filename) -> none;
+	//
+	// >> function line(ssize_t x1, ssize_t y1, ssize_t x2, ssize_t y2, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none;
+	//
+	// >> function fill(ssize_t x, ssize_t y, size_t sx, size_t sy, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none;
+	//
+	// >> function box(ssize_t x, ssize_t y, size_t sx, size_t sy, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none;
+	//
+	// >> function blit(ssize_t dx, ssize_t dy, surface src, size_t sx = 0, size_t sy = 0, size_t ssx = size_t(-1), size_t ssy = size_t(-1), uint64_t blend = DEE_BLENDINFO_NORMAL) -> none;
+	//
+	// >> function stretch(ssize_t dx, ssize_t dy, size_t dsx, size_t dsy, surface src, size_t sx = 0, size_t sy = 0, size_t ssx = src.sizex, size_t ssy = src.sizey, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none;
+	//
+	// >> function flipx(ssize_t dx, ssize_t dy, size_t dsx, size_t dsy) -> none;
+	//
+	// >> function flipy(ssize_t dx, ssize_t dy, size_t dsx, size_t dsy) -> none;
+	//
+	// >> property sizex -> size_t = { get() };
+	//
+	// >> property sizey -> size_t = { get() };
+	//
+	// >> property width -> size_t	Alias for #sizex = { get() };
+	//
+	// >> property height -> size_t	Alias for #sizey = { get() };
+	//
+	__unused local surface = __gfx.surface;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function surface_format(uint8_t bits, uint32_t rmask, uint32_t gmask, uint32_t bmask, uint32_t amask = 0) -> surface_type;
+	//    @return: The surface-type describing a pixelformat compatible with
+	//             the given arguments.
+	//        - NOTE: The mask arguments are written in big-endian, meaning
+	//          that a mask of 0xff000000 describes the first of 4 bytes
+	__unused local surface_format = __gfx.surface_format;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> function __surface_formatid(uint64_t id) -> surface_type;
+	__unused local __surface_formatid = __gfx.__surface_formatid;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> class surface_type extends type { ... };
+	//////////////////////////////////////////////////////////////////////////
+	//
+	__unused local surface_type = __gfx.surface_type;
+
+	//////////////////////////////////////////////////////////////////////////
+	// >> class surface_rgba8888 extends surface { ... };
+	// >> class surface_rgba8888(size_t sx, size_t sy, pixel filler = pixel.empty) -> surface_rgba8888;
+	//    @return: A new surface with the given dimensions sx|sy and all
+	//             pixels set to filler.
+	// >> class surface_rgba8888(surface other, size_t sx = other.sizex, size_t sy = other.sizey) -> surface_rgba8888;
+	//    @return: A new surface with the given dimensions sx|sy and
+	//             containing the same pixels as other.
+	//        - NOTE: During the conversion operation data may be lost if the
+	//          new surface type can't represent the data from other
+	//////////////////////////////////////////////////////////////////////////
+	//
+	__unused local surface_rgba8888 = __gfx.surface_rgba8888;
+
+}
+#pragma pop_macro("__gfx")
+#pragma pop_macro("pixel")
+#pragma pop_macro("surface")
+#pragma pop_macro("surface_format")
+#pragma pop_macro("__surface_formatid")
+#pragma pop_macro("surface_type")
+#pragma pop_macro("surface_rgba8888")
+#pragma pop_macro("gfx")
+

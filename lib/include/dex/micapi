@@ -29,7 +29,7 @@
 #undef __micapi
 #undef mic
 #undef micapi
-module micapi {
+__module micapi {
 	__unused local __micapi = __builtin_dex("_micapi");
 
 	//////////////////////////////////////////////////////////////////////////

@@ -43,6 +43,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include <deemon/__bswap_intrin.inl>
 #include DEE_INCLUDE_MEMORY_API()
 #include "pixelobject.inl"
+#include "surface.generic.inl"
 
 DEE_DECL_BEGIN
 
@@ -237,6 +238,15 @@ static DeeObject *DEE_CALL _deesurface_box(
  DeeSurface_Box(dst,x,y,sx,sy,&color->p_pixel,blend);
  DeeReturn_None;
 }
+static DeeObject *DEE_CALL _deesurface_triangle(
+ DeeSurfaceObject *dst, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_ssize_t dx1,dy1,dx2,dy2,dx3,dy3;
+ DeePixelObject *color = &DeePixel_BlackObject; Dee_uint64_t blend = DEE_BLENDINFO_NORMAL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"IdIdIdIdIdId|oI64u:box",&dx1,&dy1,&dx2,&dy2,&dx3,&dy3,&color,&blend) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)color,&DeePixel_Type) != 0) return NULL;
+ DeeSurface_Triangle(dst,dx1,dy1,dx2,dy2,dx3,dy3,&color->p_pixel,blend);
+ DeeReturn_None;
+}
 static DeeObject *DEE_CALL _deesurface_blit(
  DeeSurfaceObject *dst, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_ssize_t dx,dy; DeeSurfaceObject *src;
@@ -339,6 +349,9 @@ static struct DeeMethodDef const _deesurface_tp_methods[] = {
   "(ssize_t x, ssize_t y, size_t sx, size_t sy, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none"),
  DEE_METHODDEF_v100("box",member(&_deesurface_box),
   "(ssize_t x, ssize_t y, size_t sx, size_t sy, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none"),
+ DEE_METHODDEF_v100("triangle",member(&_deesurface_triangle),
+  "(ssize_t dx1, ssize_t dy1, ssize_t dx2, ssize_t dy2, ssize_t dx3, ssize_t dy3, "
+   "pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none"),
  DEE_METHODDEF_v100("blit",member(&_deesurface_blit),
   "(ssize_t dx, ssize_t dy, surface src, size_t sx = 0, size_t sy = 0, size_t ssx = size_t(-1), size_t ssy = size_t(-1), uint64_t blend = DEE_BLENDINFO_NORMAL) -> none"),
  DEE_METHODDEF_v100("stretch",member(&_deesurface_stretch),
@@ -539,242 +552,6 @@ static void DEE_CALL _deesurface_pixel_st_setpixel(
 #define _deesurface_pixel_st_pixelmaskmsb   _deesurface_generic_st_pixelmaskmsb
 #define _deesurface_pixel_st_pixelmasklsb   _deesurface_generic_st_pixelmasklsb
 
-//////////////////////////////////////////////////////////////////////////
-// Generic surface operators (very slow, but work in all situations)
-static void DEE_CALL _deesurface_generic_st_fill(
- DeeSurfaceObject *dst, struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend) {
- Dee_size_t x,sx,y,sy; PDeeSurfaceSetPixel setter;
- sx = dst->s_sizex,sy = dst->s_sizey;
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- for (y = 0; y < sy; ++y) for (x = 0; x < sx; ++x) {
-  (*setter)(dst,x,y,color,blend);
- }
-}
-static void DEE_CALL _deesurface_generic_st_fillrect(
- DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t ybegin, Dee_size_t xend,
- Dee_size_t yend, struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend) {
- Dee_size_t x,y; PDeeSurfaceSetPixel setter;
- DEE_ASSERT(xbegin < xend); DEE_ASSERT(ybegin < yend);
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- for (y = ybegin; y < yend; ++y) for (x = xbegin; x < xend; ++x) {
-  (*setter)(dst,x,y,color,blend);
- }
-}
-static void DEE_CALL _deesurface_generic_st_xline(
- DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t xend,
- Dee_size_t y, struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend) {
- Dee_size_t x; PDeeSurfaceSetPixel setter;
- DEE_ASSERT(xbegin < xend);
- x = xbegin; setter = DeeSurface_TYPE(dst)->st_setpixel;
- do (*setter)(dst,x,y,color,blend);
- while (++x != xend);
-}
-static void DEE_CALL _deesurface_generic_st_yline(
- DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t beginy,
- Dee_size_t endy, struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend) {
- Dee_size_t y; PDeeSurfaceSetPixel setter;
- DEE_ASSERT(beginy < endy);
- y = beginy; setter = DeeSurface_TYPE(dst)->st_setpixel;
- do (*setter)(dst,x,y,color,blend);
- while (++y != endy);
-}
-static void DEE_CALL _deesurface_generic_st_linellhh(
- DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sizex,
- Dee_size_t sizey, struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend) {
- double relation; PDeeSurfaceSetPixel setter;
- Dee_size_t step;
- DEE_ASSERT(sizex != 0);
- DEE_ASSERT(sizey != 0);
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- step = 0;
- if (sizex > sizey) {
-  relation = (double)sizey/(double)sizex;
-  do (*setter)(dst,x+step,y+(Dee_size_t)(relation*step),color,blend);
-  while (++step != sizex);
- } else if (sizex < sizey) {
-  relation = (double)sizex/(double)sizey;
-  do (*setter)(dst,x+(Dee_size_t)(relation*step),y+step,color,blend);
-  while (++step != sizex);
- } else {
-  do (*setter)(dst,x+step,y+step,color,blend);
-  while (++step != sizex);
- }
-}
-static void DEE_CALL _deesurface_generic_st_linelhhl(
- DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sizex,
- Dee_size_t sizey, struct DeePixel const *color, DEE_A_IN Dee_blendinfo_t blend) {
- double relation; PDeeSurfaceSetPixel setter;
- Dee_size_t step;
- DEE_ASSERT(sizex != 0),DEE_ASSERT(sizey != 0);
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- step = 0;
- if (sizex > sizey) {
-  relation = (double)sizey/(double)sizex;
-  do (*setter)(dst,x+step,y-(Dee_size_t)(relation*step),color,blend);
-  while (++step != sizex);
- } else if (sizex < sizey) {
-  relation = (double)sizex/(double)sizey;
-  do (*setter)(dst,x+(Dee_size_t)(relation*step),y-step,color,blend);
-  while (++step != sizex);
- } else {
-  do (*setter)(dst,x+step,y-step,color,blend);
-  while (++step != sizex);
- }
-}
-
-static void DEE_CALL _deesurface_generic_st_blit(
- DeeSurfaceObject *dst, Dee_size_t dst_x, Dee_size_t dst_y,
- DeeSurfaceObject const *src, Dee_size_t src_x, Dee_size_t src_y,
- Dee_size_t sx, Dee_size_t sy, Dee_blendinfo_t blend) {
- struct DeePixel pixel; Dee_size_t x,y;
- PDeeSurfaceGetPixel getter;
- PDeeSurfaceSetPixel setter;
- DEE_ASSERT(dst_x+sx <= dst->s_sizex);
- DEE_ASSERT(dst_y+sy <= dst->s_sizey);
- DEE_ASSERT(src_x+sx <= src->s_sizex);
- DEE_ASSERT(src_y+sy <= src->s_sizey);
- DEE_ASSERT(sx != 0);
- DEE_ASSERT(sy != 0);
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- getter = DeeSurface_TYPE(src)->st_getpixel;
- for (y = 0; y < sy; ++y) for (x = 0; x < sx; ++x) {
-  (*getter)(src,src_x+x,src_y+y,&pixel);
-  (*setter)(dst,dst_x+x,dst_y+y,&pixel,blend);
- }
-}
-static void DEE_CALL _deesurface_generic_st_stretchblit(
- DeeSurfaceObject *dst, Dee_size_t dst_x, Dee_size_t dst_y, Dee_size_t dstsx, Dee_size_t dstsy,
- DeeSurfaceObject const *src, double src_x, double src_y, double srcsx, double srcsy,
- Dee_blendinfo_t blend) {
- struct DeePixel pixel; Dee_size_t x,y,srcx,srcy;
- PDeeSurfaceGetPixel getter;
- PDeeSurfaceSetPixel setter;
- double srcfacx,srcfacy;
- DEE_ASSERT(dst_x+dstsx <= dst->s_sizex); DEE_ASSERT(dstsx != 0);
- DEE_ASSERT(dst_y+dstsy <= dst->s_sizey); DEE_ASSERT(dstsy != 0);
- DEE_ASSERT(src_x >= 0);
- DEE_ASSERT(src_y >= 0);
- DEE_ASSERT((Dee_size_t)(src_x+srcsx) <= src->s_sizex);
- DEE_ASSERT((Dee_size_t)(src_y+srcsy) <= src->s_sizey);
- srcfacx = srcsx/(double)dstsx;
- srcfacy = srcsy/(double)dstsy;
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- getter = DeeSurface_TYPE(src)->st_getpixel;
- for (y = 0; y < dstsy; ++y) {
-  srcy = (Dee_size_t)(src_y+((double)y*srcfacy));
-  for (x = 0; x < dstsx; ++x) {
-   srcx = (Dee_size_t)(src_x+((double)x*srcfacx));
-   (*getter)(src,srcx,srcy,&pixel);
-   (*setter)(dst,dst_x+x,dst_y+y,&pixel,blend);
-  }
- }
-}
-static void DEE_CALL _deesurface_generic_st_flipx(
- DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t ybegin,
- Dee_size_t xend, Dee_size_t yend) {
- struct DeePixel pixel1,pixel2; Dee_size_t x,y,half_xend,invdiff;
- PDeeSurfaceGetPixel getter;
- PDeeSurfaceSetPixel setter;
- DEE_ASSERT(xbegin < xend);
- DEE_ASSERT(ybegin < yend);
- DEE_ASSERT(xend <= dst->s_sizex);
- DEE_ASSERT(yend <= dst->s_sizey);
- half_xend = xbegin+(xend-xbegin)/2;
- invdiff = xend+xbegin;
- getter = DeeSurface_TYPE(dst)->st_getpixel;
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- for (y = ybegin; y != yend; ++y) {
-  for (x = xbegin; x != half_xend; ++x) {
-   (*getter)(dst,x,y,&pixel1);
-   (*getter)(dst,invdiff-x,y,&pixel2);
-   (*setter)(dst,invdiff-x,y,&pixel1,DEE_BLENDINFO_OVERRIDE);
-   (*setter)(dst,x,y,&pixel2,DEE_BLENDINFO_OVERRIDE);
-  }
- }
-}
-static void DEE_CALL _deesurface_generic_st_flipy(
- DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t ybegin,
- Dee_size_t xend, Dee_size_t yend) {
- struct DeePixel pixel1,pixel2; Dee_size_t x,y,half_yend,invdiff;
- PDeeSurfaceGetPixel getter;
- PDeeSurfaceSetPixel setter;
- DEE_ASSERT(xbegin < xend);
- DEE_ASSERT(ybegin < yend);
- DEE_ASSERT(xend <= dst->s_sizex);
- DEE_ASSERT(yend <= dst->s_sizey);
- half_yend = ybegin+(yend-ybegin)/2;
- invdiff = yend+ybegin;
- getter = DeeSurface_TYPE(dst)->st_getpixel;
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- for (x = xbegin; x != xend; ++x) {
-  for (y = ybegin; y != half_yend; ++y) {
-   (*getter)(dst,x,y,&pixel1);
-   (*getter)(dst,x,invdiff-y,&pixel2);
-   (*setter)(dst,x,invdiff-y,&pixel1,DEE_BLENDINFO_OVERRIDE);
-   (*setter)(dst,x,y,&pixel2,DEE_BLENDINFO_OVERRIDE);
-  }
- }
-}
-static void DEE_CALL _deesurface_generic_st_pixelmaskmsb(
- DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y,
- Dee_size_t sx, Dee_size_t sy, Dee_size_t line_bytes,
- void const *data, struct DeePixel const *color, Dee_blendinfo_t blend) {
- Dee_size_t diff,myy,ix,iy; Dee_uint8_t *line,b;
- PDeeSurfaceSetPixel setter;
- DEE_ASSERT(sx); DEE_ASSERT(sy);
- DEE_ASSERT(x+sx < dst->s_sizex);
- DEE_ASSERT(y+sy < dst->s_sizey);
- DEE_ASSERT(data); DEE_ASSERT(line_bytes);
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- for (iy = 0; iy < sy; ++iy) {
-  line = (Dee_uint8_t *)data+iy*line_bytes;
-  myy = y+iy,ix = 0; while (1) {
-   b = *line++;
-   switch ((diff = (sx-ix))) {
-    default: if (b&(1 << 0)) (*setter)(dst,(x+ix)+7,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 7:  if (b&(1 << 1)) (*setter)(dst,(x+ix)+6,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 6:  if (b&(1 << 2)) (*setter)(dst,(x+ix)+5,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 5:  if (b&(1 << 3)) (*setter)(dst,(x+ix)+4,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 4:  if (b&(1 << 4)) (*setter)(dst,(x+ix)+3,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 3:  if (b&(1 << 5)) (*setter)(dst,(x+ix)+2,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 2:  if (b&(1 << 6)) (*setter)(dst,(x+ix)+1,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 1:  if (b&(1 << 7)) (*setter)(dst,(x+ix)+0,myy,color,blend); break;
-   }
-   if (diff <= 8) break;
-   ix += 8;
-  }
- }
-}
-static void DEE_CALL _deesurface_generic_st_pixelmasklsb(
- DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y,
- Dee_size_t sx, Dee_size_t sy, Dee_size_t line_bytes,
- void const *data, struct DeePixel const *color, Dee_blendinfo_t blend) {
- Dee_size_t diff,myy,ix,iy; Dee_uint8_t *line,b;
- PDeeSurfaceSetPixel setter;
- DEE_ASSERT(sx); DEE_ASSERT(sy);
- DEE_ASSERT(x+sx < dst->s_sizex);
- DEE_ASSERT(y+sy < dst->s_sizey);
- DEE_ASSERT(data); DEE_ASSERT(line_bytes);
- setter = DeeSurface_TYPE(dst)->st_setpixel;
- for (iy = 0; iy < sy; ++iy) {
-  line = (Dee_uint8_t *)data+iy*line_bytes;
-  myy = y+iy,ix = 0; while (1) {
-   b = *line++;
-   switch ((diff = (sx-ix))) {
-    default: if (b&(1 << 7)) (*setter)(dst,(x+ix)+7,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 7:  if (b&(1 << 6)) (*setter)(dst,(x+ix)+6,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 6:  if (b&(1 << 5)) (*setter)(dst,(x+ix)+5,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 5:  if (b&(1 << 4)) (*setter)(dst,(x+ix)+4,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 4:  if (b&(1 << 3)) (*setter)(dst,(x+ix)+3,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 3:  if (b&(1 << 2)) (*setter)(dst,(x+ix)+2,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 2:  if (b&(1 << 1)) (*setter)(dst,(x+ix)+1,myy,color,blend); DEE_ATTRIBUTE_FALLTHROUGH
-    case 1:  if (b&(1 << 0)) (*setter)(dst,(x+ix)+0,myy,color,blend); break;
-   }
-   if (diff <= 8) break;
-   ix += 8;
-  }
- }
-}
 
 
 #if DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS

@@ -246,10 +246,10 @@ static DeeObject *DEE_CALL _deepixel_tp_repr(DeePixelObject *self) {
 }
 
 static struct DeeMemberDef const _deepixel_tp_members[] = {
- DEE_MEMBERDEF_NAMED_RO_v100("r",DeePixelObject,p_pixel.r,Dee_uint8_t),
- DEE_MEMBERDEF_NAMED_RO_v100("g",DeePixelObject,p_pixel.g,Dee_uint8_t),
- DEE_MEMBERDEF_NAMED_RO_v100("b",DeePixelObject,p_pixel.b,Dee_uint8_t),
- DEE_MEMBERDEF_NAMED_RO_v100("a",DeePixelObject,p_pixel.a,Dee_uint8_t),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("r",DeePixelObject,p_pixel.r,Dee_uint8_t,"-> uint8_t\n@return: The red color channel"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("g",DeePixelObject,p_pixel.g,Dee_uint8_t,"-> uint8_t\n@return: The green color channel"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("b",DeePixelObject,p_pixel.b,Dee_uint8_t,"-> uint8_t\n@return: The blue color channel"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("a",DeePixelObject,p_pixel.a,Dee_uint8_t,"-> uint8_t\n@return: The alpha channel"),
  DEE_MEMBERDEF_END_v100
 };
 
