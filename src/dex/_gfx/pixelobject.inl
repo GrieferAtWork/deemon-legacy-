@@ -20,6 +20,9 @@
  */
 #ifndef GUARD_DEEMON_DEX_GFX_PIXEL_INL
 #define GUARD_DEEMON_DEX_GFX_PIXEL_INL 1
+#ifdef __DEEMON__
+#pragma warning(disable: 16)
+#endif
 
 #include "_gfx.h"
 #include <deemon/memberdef.h>
@@ -32,6 +35,12 @@ DEE_OBJECTPOOL_DEFINE(pixelpool,DeePixelObject)
 
 
 static struct DeeMemberDef const _deepixel_tp_class_members[] = {
+/*[[[deemon
+#include <file>
+for (local name,r,g,b,a: COLLECT_PIXEL_NAMES()) {
+  print " DEE_MEMBERDEF_CONST_v100("+repr name.lower()+",object,&DeePixel_"+name.capitalize()+"Object),";
+}
+]]]*/
  DEE_MEMBERDEF_CONST_v100("aqua",object,&DeePixel_AquaObject),
  DEE_MEMBERDEF_CONST_v100("black",object,&DeePixel_BlackObject),
  DEE_MEMBERDEF_CONST_v100("blue",object,&DeePixel_BlueObject),
@@ -49,6 +58,7 @@ static struct DeeMemberDef const _deepixel_tp_class_members[] = {
  DEE_MEMBERDEF_CONST_v100("teal",object,&DeePixel_TealObject),
  DEE_MEMBERDEF_CONST_v100("white",object,&DeePixel_WhiteObject),
  DEE_MEMBERDEF_CONST_v100("empty",object,&DeePixel_EmptyObject),
+//[[[end]]]
  DEE_MEMBERDEF_END_v100
 };
 
@@ -101,23 +111,31 @@ DEE_A_RET_EXCEPT_REF DeePixelObject *DeePixel_New(
  return result;
 }
 
-DeePixelObject DeePixel_AquaObject    = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0xff,0xff,0xff}};
-DeePixelObject DeePixel_BlackObject   = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x00,0x00,0xff}};
-DeePixelObject DeePixel_BlueObject    = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x00,0xff,0xff}};
+                     
+/*[[[deemon
+#include <file>
+for (local name,r,g,b,a: COLLECT_PIXEL_NAMES()) {
+  print "DeePixelObject DeePixel_"+name.capitalize()+"Object = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x"+r+",0x"+g+",0x"+b+",0x"+a+"}};";
+}
+]]]*/
+DeePixelObject DeePixel_AquaObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0xff,0xff,0xff}};
+DeePixelObject DeePixel_BlackObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x00,0x00,0xff}};
+DeePixelObject DeePixel_BlueObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x00,0xff,0xff}};
 DeePixelObject DeePixel_FuchsiaObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0x00,0xff,0xff}};
-DeePixelObject DeePixel_GrayObject    = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x80,0x80,0xff}};
-DeePixelObject DeePixel_GreenObject   = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x80,0x00,0xff}};
-DeePixelObject DeePixel_LimeObject    = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0xff,0x00,0xff}};
-DeePixelObject DeePixel_MaroonObject  = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x00,0x00,0xff}};
-DeePixelObject DeePixel_NavyObject    = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x00,0x80,0xff}};
-DeePixelObject DeePixel_OliveObject   = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x80,0x00,0xff}};
-DeePixelObject DeePixel_PurpleObject  = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x00,0x80,0xff}};
-DeePixelObject DeePixel_RedObject     = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0x00,0x00,0xff}};
-DeePixelObject DeePixel_YellowObject  = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0x00,0xff}};
-DeePixelObject DeePixel_SilverObject  = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xc0,0xc0,0xc0,0xff}};
-DeePixelObject DeePixel_TealObject    = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x80,0x80,0xff}};
-DeePixelObject DeePixel_WhiteObject   = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0xff,0xff}};
-DeePixelObject DeePixel_EmptyObject   = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0xff,0x00}};
+DeePixelObject DeePixel_GrayObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x80,0x80,0xff}};
+DeePixelObject DeePixel_GreenObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x80,0x00,0xff}};
+DeePixelObject DeePixel_LimeObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0xff,0x00,0xff}};
+DeePixelObject DeePixel_MaroonObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x00,0x00,0xff}};
+DeePixelObject DeePixel_NavyObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x00,0x80,0xff}};
+DeePixelObject DeePixel_OliveObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x80,0x00,0xff}};
+DeePixelObject DeePixel_PurpleObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x00,0x80,0xff}};
+DeePixelObject DeePixel_RedObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0x00,0x00,0xff}};
+DeePixelObject DeePixel_YellowObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0x00,0xff}};
+DeePixelObject DeePixel_SilverObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xc0,0xc0,0xc0,0xff}};
+DeePixelObject DeePixel_TealObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x80,0x80,0xff}};
+DeePixelObject DeePixel_WhiteObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0xff,0xff}};
+DeePixelObject DeePixel_EmptyObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0xff,0x00}};
+//[[[end]]]
 
 
 static DeePixelObject *DEE_CALL _deepixel_tp_alloc(

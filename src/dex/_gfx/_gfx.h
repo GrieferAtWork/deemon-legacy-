@@ -201,6 +201,9 @@ struct DeePixel { Dee_uint8_t r,g,b,a; };
 
 //////////////////////////////////////////////////////////////////////////
 // Selection of standard colors
+// NOTE: After adding more colors here, make sure to run:
+//     $ deemon -F _gfx.h
+//     $ deemon -F pixelobject.inl
 #define DeePixel_AQUA    ((struct DeePixel const *)"\x00\xff\xff\xff")
 #define DeePixel_BLACK   ((struct DeePixel const *)"\x00\x00\x00\xff")
 #define DeePixel_BLUE    ((struct DeePixel const *)"\x00\x00\xff\xff")
@@ -218,6 +221,17 @@ struct DeePixel { Dee_uint8_t r,g,b,a; };
 #define DeePixel_TEAL    ((struct DeePixel const *)"\x00\x80\x80\xff")
 #define DeePixel_WHITE   ((struct DeePixel const *)"\xff\xff\xff\xff")
 #define DeePixel_EMPTY   ((struct DeePixel const *)"\xff\xff\xff\x00")
+#ifdef __DEEMON__
+// Used for autoformat: Returns a sequence of all builtin pixel names
+#define COLLECT_PIXEL_NAMES()\
+(for (local line: file.io("_gfx.h")) ({\
+  local name,r,g,b,a;\
+  try name,r,g,b,a = line.scanf(" # define DeePixel_%[A-Za-z0-9] ( ( struct DeePixel const * ) \"\\x%[a-fA-F0-9]\\x%[a-fA-F0-9]\\x%[a-fA-F0-9]\\x%[a-fA-F0-9]\" )")...;\
+  catch (e...) continue;\
+  pack name,r,g,b,a;\
+}))
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////
 // Returns the name of a builtin pixel color, or NULL if unknown/custom
@@ -239,9 +253,15 @@ extern DeeTypeObject DeePixel_Type;
 extern DEE_A_RET_EXCEPT_REF DeePixelObject *DeePixel_New(
  DEE_A_IN struct DeePixel const *pixel);
 
+/*[[[deemon
+#include <file>
+for (local name,r,g,b,a: COLLECT_PIXEL_NAMES()) {
+  print "extern DeePixelObject DeePixel_"+name.capitalize()+"Object;";
+}
+]]]*/
 extern DeePixelObject DeePixel_AquaObject;
-extern DeePixelObject DeePixel_BlackObject;
 extern DeePixelObject DeePixel_BlueObject;
+extern DeePixelObject DeePixel_BlackObject;
 extern DeePixelObject DeePixel_FuchsiaObject;
 extern DeePixelObject DeePixel_GrayObject;
 extern DeePixelObject DeePixel_GreenObject;
@@ -256,6 +276,7 @@ extern DeePixelObject DeePixel_SilverObject;
 extern DeePixelObject DeePixel_TealObject;
 extern DeePixelObject DeePixel_WhiteObject;
 extern DeePixelObject DeePixel_EmptyObject;
+//[[[end]]]
 
 
 
