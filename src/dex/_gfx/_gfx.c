@@ -277,6 +277,20 @@ static DeeObject *DEE_CALL _deesurface_stretch(
                             src,sx,sy,ssx,ssy,blend);
  DeeReturn_None;
 }
+static DeeObject *DEE_CALL _deesurface_flipx(
+ DeeSurfaceObject *dst, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_ssize_t dx,dy; Dee_size_t dsx,dsy;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"IdIdIuIu:flipx",&dx,&dy,&dsx,&dsy) != 0) return NULL;
+ DeeSurface_FlipXRect(dst,dx,dy,dsx,dsy);
+ DeeReturn_None;
+}
+static DeeObject *DEE_CALL _deesurface_flipy(
+ DeeSurfaceObject *dst, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_ssize_t dx,dy; Dee_size_t dsx,dsy;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"IdIdIuIu:flipy",&dx,&dy,&dsx,&dsy) != 0) return NULL;
+ DeeSurface_FlipYRect(dst,dx,dy,dsx,dsy);
+ DeeReturn_None;
+}
 static DeeObject *DEE_CALL _deesurface_save_png(
  DeeSurfaceObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  char const *filename; DeeSurfaceObject *rgba8888; unsigned error;
@@ -295,6 +309,42 @@ static DeeObject *DEE_CALL _deesurface_save_png(
  DeeReturn_None;
 }
 
+//////////////////////////////////////////////////////////////////////////
+// We (ab)use the seq-range operators for pixel access
+// >> my_surface = surface_rgba8888(16,16);
+// >> print my_surface[0:0]; // Get pixel color
+// >> my_surface[0:0] = pixel.green; // Set pixel color
+// >> del my_surface[0:0]; // Same as set with 'pixel.empty'
+// NOTE: Pixels outside of the surface are empty/blank
+// NOTE: Writing pixels is always performed with 'DEE_BLENDINFO_OVERRIDE'
+static DeePixelObject *DEE_CALL _deesurface_tp_seq_range_get(
+ DeeSurfaceObject *self, DeeObject *xob, DeeObject *yob) {
+ DeePixelObject *result; Dee_ssize_t x,y;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,xob,&x) != 0) return NULL;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,yob,&y) != 0) return NULL;
+ if DEE_UNLIKELY((result = DEE_OBJECTPOOL_ALLOC(pixelpool)) == NULL) return NULL;
+ DeeObject_INIT(result,&DeePixel_Type);
+ DeeSurface_GetPixel(self,x,y,&result->p_pixel);
+ return result;
+}
+static int DEE_CALL _deesurface_tp_seq_range_del(
+ DeeSurfaceObject *self, DeeObject *xob, DeeObject *yob) {
+ Dee_ssize_t x,y;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,xob,&x) != 0) return -1;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,yob,&y) != 0) return -1;
+ DeeSurface_SetPixel(self,x,y,DeePixel_EMPTY,DEE_BLENDINFO_OVERRIDE);
+ return 0;
+}
+static int DEE_CALL _deesurface_tp_seq_range_set(
+ DeeSurfaceObject *self, DeeObject *xob, DeeObject *yob, DeePixelObject *v) {
+ Dee_ssize_t x,y;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,xob,&x) != 0) return -1;
+ if DEE_UNLIKELY(DeeObject_Cast(Dee_ssize_t,yob,&y) != 0) return -1;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)v,&DeePixel_Type) != 0) return -1;
+ DeeSurface_SetPixel(self,x,y,&v->p_pixel,DEE_BLENDINFO_OVERRIDE);
+ return 0;
+}
+
 static struct DeeMethodDef const _deesurface_tp_methods[] = {
  DEE_METHODDEF_v100("save_png",member(&_deesurface_save_png),"(string filename) -> none"),
  DEE_METHODDEF_v100("line",member(&_deesurface_line),
@@ -305,6 +355,10 @@ static struct DeeMethodDef const _deesurface_tp_methods[] = {
   "(ssize_t dx, ssize_t dy, surface src, size_t sx = 0, size_t sy = 0, size_t ssx = size_t(-1), size_t ssy = size_t(-1), uint64_t blend = DEE_BLENDINFO_NORMAL) -> none"),
  DEE_METHODDEF_v100("stretch",member(&_deesurface_stretch),
   "(ssize_t dx, ssize_t dy, size_t dsx, size_t dsy, surface src, size_t sx = 0, size_t sy = 0, size_t ssx = src.sizex, size_t ssy = src.sizey, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none"),
+ DEE_METHODDEF_v100("flipx",member(&_deesurface_flipx),
+  "(ssize_t dx, ssize_t dy, size_t dsx, size_t dsy) -> none"),
+ DEE_METHODDEF_v100("flipy",member(&_deesurface_flipy),
+  "(ssize_t dx, ssize_t dy, size_t dsx, size_t dsy) -> none"),
  DEE_METHODDEF_END_v100
 };
 
@@ -353,7 +407,10 @@ DeeSurfaceTypeObject DeeSurface_Type = {
    null,null,null,null,null,null,null,null,null,null,null,
    null,null,null,null,null,null,null,null,null,null),
   DEE_TYPE_OBJECT_COMPARE_v100(null,null,null,null,null,null),
-  DEE_TYPE_OBJECT_SEQ_v101(null,null,null,null,null,null,null,null,null,null),
+  DEE_TYPE_OBJECT_SEQ_v101(null,null,null,null,null,
+   member(&_deesurface_tp_seq_range_get),
+   member(&_deesurface_tp_seq_range_del),
+   member(&_deesurface_tp_seq_range_set),null,null),
   DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,
    member(_deesurface_tp_members),null,
    member(_deesurface_tp_methods),null,null,null),
