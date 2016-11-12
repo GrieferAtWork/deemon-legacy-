@@ -169,7 +169,8 @@ DEE_A_RET_EXCEPT(-1) int _DeeFileIO_Utf8InitObjectEx
   // Make it readonly if there are no write permissions
   if ((permissions&0444)==0) attr |= FILE_ATTRIBUTE_READONLY;
   self->fio_handle = WIN32_F(CreateFile)(DEE_STRING_STR(file),access,
-                                         FILE_SHARE_READ,NULL,disposition,attr,NULL);
+                                         FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                         NULL,disposition,attr,NULL);
   if (self->fio_handle == DEE_FILEIO_INVALID_HANDLE) {
    int temp,error = (int)DeeSystemError_Win32Consume();
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC

@@ -20,6 +20,9 @@
  */
 #ifndef GUARD_DEEMON_DEX_GFX__GFX_H
 #define GUARD_DEEMON_DEX_GFX__GFX_H 1
+#ifdef __DEEMON__
+#pragma warning(disable: 16)
+#endif
  
 #include <deemon/__conf.inl>
 #include <deemon/optional/object_decl.h>
@@ -207,6 +210,7 @@ struct DeePixel { Dee_uint8_t r,g,b,a; };
 #define DeePixel_AQUA    ((struct DeePixel const *)"\x00\xff\xff\xff")
 #define DeePixel_BLACK   ((struct DeePixel const *)"\x00\x00\x00\xff")
 #define DeePixel_BLUE    ((struct DeePixel const *)"\x00\x00\xff\xff")
+#define DeePixel_EMPTY   ((struct DeePixel const *)"\xff\xff\xff\x00")
 #define DeePixel_FUCHSIA ((struct DeePixel const *)"\xff\x00\xff\xff")
 #define DeePixel_GRAY    ((struct DeePixel const *)"\x80\x80\x80\xff")
 #define DeePixel_GREEN   ((struct DeePixel const *)"\x00\x80\x00\xff")
@@ -216,11 +220,10 @@ struct DeePixel { Dee_uint8_t r,g,b,a; };
 #define DeePixel_OLIVE   ((struct DeePixel const *)"\x80\x80\x00\xff")
 #define DeePixel_PURPLE  ((struct DeePixel const *)"\x80\x00\x80\xff")
 #define DeePixel_RED     ((struct DeePixel const *)"\xff\x00\x00\xff")
-#define DeePixel_YELLOW  ((struct DeePixel const *)"\xff\xff\x00\xff")
 #define DeePixel_SILVER  ((struct DeePixel const *)"\xc0\xc0\xc0\xff")
 #define DeePixel_TEAL    ((struct DeePixel const *)"\x00\x80\x80\xff")
 #define DeePixel_WHITE   ((struct DeePixel const *)"\xff\xff\xff\xff")
-#define DeePixel_EMPTY   ((struct DeePixel const *)"\xff\xff\xff\x00")
+#define DeePixel_YELLOW  ((struct DeePixel const *)"\xff\xff\x00\xff")
 #ifdef __DEEMON__
 // Used for autoformat: Returns a sequence of all builtin pixel names
 #define COLLECT_PIXEL_NAMES()\
@@ -260,8 +263,9 @@ for (local name,r,g,b,a: COLLECT_PIXEL_NAMES()) {
 }
 ]]]*/
 extern DeePixelObject DeePixel_AquaObject;
-extern DeePixelObject DeePixel_BlueObject;
 extern DeePixelObject DeePixel_BlackObject;
+extern DeePixelObject DeePixel_BlueObject;
+extern DeePixelObject DeePixel_EmptyObject;
 extern DeePixelObject DeePixel_FuchsiaObject;
 extern DeePixelObject DeePixel_GrayObject;
 extern DeePixelObject DeePixel_GreenObject;
@@ -271,11 +275,10 @@ extern DeePixelObject DeePixel_NavyObject;
 extern DeePixelObject DeePixel_OliveObject;
 extern DeePixelObject DeePixel_PurpleObject;
 extern DeePixelObject DeePixel_RedObject;
-extern DeePixelObject DeePixel_YellowObject;
 extern DeePixelObject DeePixel_SilverObject;
 extern DeePixelObject DeePixel_TealObject;
 extern DeePixelObject DeePixel_WhiteObject;
-extern DeePixelObject DeePixel_EmptyObject;
+extern DeePixelObject DeePixel_YellowObject;
 //[[[end]]]
 
 

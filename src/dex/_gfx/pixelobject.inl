@@ -44,6 +44,7 @@ for (local name,r,g,b,a: COLLECT_PIXEL_NAMES()) {
  DEE_MEMBERDEF_CONST_v100("aqua",object,&DeePixel_AquaObject),
  DEE_MEMBERDEF_CONST_v100("black",object,&DeePixel_BlackObject),
  DEE_MEMBERDEF_CONST_v100("blue",object,&DeePixel_BlueObject),
+ DEE_MEMBERDEF_CONST_v100("empty",object,&DeePixel_EmptyObject),
  DEE_MEMBERDEF_CONST_v100("fuchsia",object,&DeePixel_FuchsiaObject),
  DEE_MEMBERDEF_CONST_v100("gray",object,&DeePixel_GrayObject),
  DEE_MEMBERDEF_CONST_v100("green",object,&DeePixel_GreenObject),
@@ -53,11 +54,10 @@ for (local name,r,g,b,a: COLLECT_PIXEL_NAMES()) {
  DEE_MEMBERDEF_CONST_v100("olive",object,&DeePixel_OliveObject),
  DEE_MEMBERDEF_CONST_v100("purple",object,&DeePixel_PurpleObject),
  DEE_MEMBERDEF_CONST_v100("red",object,&DeePixel_RedObject),
- DEE_MEMBERDEF_CONST_v100("yellow",object,&DeePixel_YellowObject),
  DEE_MEMBERDEF_CONST_v100("silver",object,&DeePixel_SilverObject),
  DEE_MEMBERDEF_CONST_v100("teal",object,&DeePixel_TealObject),
  DEE_MEMBERDEF_CONST_v100("white",object,&DeePixel_WhiteObject),
- DEE_MEMBERDEF_CONST_v100("empty",object,&DeePixel_EmptyObject),
+ DEE_MEMBERDEF_CONST_v100("yellow",object,&DeePixel_YellowObject),
 //[[[end]]]
  DEE_MEMBERDEF_END_v100
 };
@@ -121,6 +121,7 @@ for (local name,r,g,b,a: COLLECT_PIXEL_NAMES()) {
 DeePixelObject DeePixel_AquaObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0xff,0xff,0xff}};
 DeePixelObject DeePixel_BlackObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x00,0x00,0xff}};
 DeePixelObject DeePixel_BlueObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x00,0xff,0xff}};
+DeePixelObject DeePixel_EmptyObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0xff,0x00}};
 DeePixelObject DeePixel_FuchsiaObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0x00,0xff,0xff}};
 DeePixelObject DeePixel_GrayObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x80,0x80,0xff}};
 DeePixelObject DeePixel_GreenObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x80,0x00,0xff}};
@@ -130,11 +131,10 @@ DeePixelObject DeePixel_NavyObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00
 DeePixelObject DeePixel_OliveObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x80,0x00,0xff}};
 DeePixelObject DeePixel_PurpleObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x80,0x00,0x80,0xff}};
 DeePixelObject DeePixel_RedObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0x00,0x00,0xff}};
-DeePixelObject DeePixel_YellowObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0x00,0xff}};
 DeePixelObject DeePixel_SilverObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xc0,0xc0,0xc0,0xff}};
 DeePixelObject DeePixel_TealObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0x00,0x80,0x80,0xff}};
 DeePixelObject DeePixel_WhiteObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0xff,0xff}};
-DeePixelObject DeePixel_EmptyObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0xff,0x00}};
+DeePixelObject DeePixel_YellowObject = {DEE_OBJECT_HEAD_INIT(&DeePixel_Type),{0xff,0xff,0x00,0xff}};
 //[[[end]]]
 
 
