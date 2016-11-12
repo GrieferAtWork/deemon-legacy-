@@ -74,6 +74,8 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include <deemon/compiler/xast.h>
 #include <deemon/compiler/sast.h>
 
+// */ (nano...)
+
 DEE_DECL_BEGIN
 
 static DeeCompilerConfig const _DeeCompilerConfig_Default = DeeCompilerConfig_INIT();
@@ -1578,7 +1580,7 @@ static char const _dee_help_string[] =
                          "\t                     \t\tC: Search the current working directory '$(pwd)'\n"
                          "\t                     \t\tX: Search the hosting exe's directory '$(dirname $(readlink /proc/self/exe))'\n"
                          "\t                     \t\tP: Search all folders from '$PATH'\n"
-                         "\t                     \t\tR: Search the the folders of all usercode files running thread-local\n"
+                         "\t                     \t\tR: Searches the directories of all uses-level source files (requires debug informations)\n"
                          "\t                     \t\tdefault: " DEEDEX_SEARCHORDER_DEFAULT "\n"
 #endif
 #ifdef DEE_AUTOCONF_VARNAME_DEEMON_NOVFS

@@ -102,7 +102,7 @@
 #if __API_VERSION__ < 101
 module __future
 #endif
-module util {
+__module util {
 
 	//////////////////////////////////////////////////////////////////////////
 	// constexpr function min(object args...) -> object
@@ -621,7 +621,7 @@ module util {
 }
 
 
-
+#ifndef __DEEMON_MODULE__
 #if 1 // __API_VERSION__ < ??? // deprecations no longer supported (enable once we get collisions)
 #if __API_VERSION__ >= 101
 #define __DEPRECATED_UTIL(name)\
@@ -658,6 +658,7 @@ import
 	__DEPRECATED_UTIL_SEQ(reversed);
 #undef __DEPRECATED_UTIL
 #undef __DEPRECATED_UTIL_SEQ
+#endif
 #endif
 
 

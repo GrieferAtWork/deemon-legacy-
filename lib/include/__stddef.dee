@@ -92,6 +92,11 @@
 #define __DEEMON_INT8 __int64
 #define __DEEMON_INT(sizeof) __CAT2(__DEEMON_INT,sizeof)
 
+#if __has_attribute(__root_)
+#define __module __declspec(__root_) module
+#else
+#define __module module
+#endif
 
 #define __unused         __declspec(__unused_)
 

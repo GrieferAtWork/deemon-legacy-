@@ -178,7 +178,7 @@
 #undef tgamma
 #undef truncf
 
-module math {
+__module math {
 
 	//////////////////////////////////////////////////////////////////////////
 	// constexpr function math::sin(float x) -> float
