@@ -702,7 +702,9 @@ DeeObject *const _DeeBuiltin_ID2Type[] = {
  /*0x01A6*/(DeeObject *)&DeeErrorType_UnicodeError,
  /*0x01A7*/(DeeObject *)&DeeErrorType_ReferenceError,
  /*0x01A8*/(DeeObject *)&DeeErrorType_NetError,
- /*0x01A9*/(DeeObject *)Dee_None, // [UNUSED] Used-to-bo: DeeClassDecl_Type
+#if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
+ /*0x01A9*/(DeeObject *)&DeeBuiltinFunction___builtin_varray_add, // Used-to-bo: DeeClassDecl_Type
+#endif /* DEE_CONFIG_RUNTIME_HAVE_ARRAYS */
  /*0x01AA*/(DeeObject *)&_DeeErrorInstance_IterDone,
  /*0x01AB*/(DeeObject *)&_DeeErrorInstance_OutOfMemory,
  /*0x01AC*/(DeeObject *)&_DeeErrorInstance_NotImplemented,
@@ -925,6 +927,9 @@ DeeObject *const _DeeBuiltin_ConstantFunctions[] = {
  (DeeObject *)&DeeBuiltinFunction___builtin_lvalue_add,
  (DeeObject *)&DeeBuiltinFunction___builtin_lvalue_rem,
 #endif
+#if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
+ (DeeObject *)&DeeBuiltinFunction___builtin_varray_add,
+#endif /* DEE_CONFIG_RUNTIME_HAVE_ARRAYS */
  (DeeObject *)&DeeBuiltinFunction___dual_posoradd__,
  (DeeObject *)&DeeBuiltinFunction___dual_negorsub__,
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS

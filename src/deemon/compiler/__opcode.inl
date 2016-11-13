@@ -354,7 +354,7 @@
 #define OPEXT_TYPEFLAGS_HI        0x0027 // w/prefix or the argument to the type flags in top (high word: 0xFFFF0000)
 #define OPEXT_SEQ_ITER_NEXT       0x0028 // Simple operator __iternext__ w/o a conditional jump (throws a Signal.StopIteration if the iterator is done)
 #define OPEXT_TRY_CMP_EQ          0x0029 // try { push(pop(1) == pop(0)); } catch (Error.RuntimeError.NotImplemented) { push(false); }
-#define OPEXT_VARRAYOF            0x002A // push(pop(0)[])
+//UNUSED:                         0x002A // Formerly: OPEXT_VARRAYOF
 // File Operators
 #define OPEXT_IO_WRITEP           0x002B // push(pop(2).operator __write__(pop(1),pop(0)))
 #define OPEXT_IO_WRITENP          0x002C // push(pop(1).operator __write__(pop(0)))

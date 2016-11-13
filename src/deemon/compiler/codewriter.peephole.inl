@@ -247,6 +247,9 @@ second_pass:
     //       in both situations.
     // NOTE: As this rule would otherwise create uncountable different rules, combining
     //       any load with an other load, special handling should be performed for it.
+    // TODO: OP_DUP should be handled as equivalent to the previous opcode,
+    //       but don't count it if the dup is the last opcode in the chain
+    //      (it and its previous opcode must stay together).
     case OP_LOAD_LOC: case OP_LOAD_REF:
     case OP_LOAD_CST: case OP_LOAD_CST_COPY:
     case OP_LOAD_CST_DCOPY: case OP_LOAD_CST_LOCKED:

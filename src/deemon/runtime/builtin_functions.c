@@ -610,6 +610,16 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_lvalue_rem) {
  return (DeeObject *)temp;
 }
 #endif
+#if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_varray_add) {
+ DeeTypeObject *temp;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:__builtin_varray_add",&temp) != 0) return NULL;
+ Dee_XINCREF(temp = DeeType_VArray(temp));
+ return (DeeObject *)temp;
+}
+#endif
+
+
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_assertion_failed) {
  DeeThreadObject *thread_self; char const *file; Dee_int32_t line;
  DeeObject *expr = Dee_None,*msg = Dee_None;

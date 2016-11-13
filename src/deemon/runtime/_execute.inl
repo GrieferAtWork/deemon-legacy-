@@ -3632,22 +3632,6 @@ EXTERN_END;
     } break;
 #endif
 
-#ifdef OPEXT_VARRAYOF
-    case OPEXT_VARRAYOF: {
-     RT_DEBUG_CHECK_STACK(1);
-#if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
-EXTERN_BEGIN;
-     rt_temp = (DeeObject *)DeeType_VArray((DeeTypeObject *)RT_TOP);
-EXTERN_END;
-     if DEE_UNLIKELY(!rt_temp) RT_HANDLE_EXCEPTION;
-     Dee_DECREF(RT_TOP);
-     Dee_INCREF(RT_TOP = rt_temp);
-#else /* DEE_CONFIG_RUNTIME_HAVE_ARRAYS */
-     goto on_unreachable;
-#endif /* !DEE_CONFIG_RUNTIME_HAVE_ARRAYS */
-    } break;
-#endif
-
 #ifdef OPEXT_IO_WRITEP
     case OPEXT_IO_WRITEP: {
      RT_DEBUG_CHECK_STACK(3);

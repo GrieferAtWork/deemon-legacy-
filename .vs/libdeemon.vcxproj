@@ -448,6 +448,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\class\class.instance_attributes.inl" />
     <None Include="..\src\deemon\class\class.operators.inl" />
     <None Include="..\src\deemon\class\class.slot_linker.inl" />
+    <None Include="..\src\deemon\compiler\code.asmrepr.inl" />
     <None Include="..\src\deemon\compiler\code.marshal_read.inl" />
     <None Include="..\src\deemon\compiler\codewriter.delnoop.inl" />
     <None Include="..\src\deemon\compiler\codewriter.peephole.inl" />

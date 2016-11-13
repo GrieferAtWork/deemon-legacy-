@@ -878,6 +878,9 @@ writer_attr_operator: {
    if (0) { case DEE_XASTKIND_PTROF: builtin_function = (DeeObject *)&DeeBuiltinFunction___builtin_pointer_add; }
    if (0) { case DEE_XASTKIND_LVALOF: builtin_function = (DeeObject *)&DeeBuiltinFunction___builtin_lvalue_add; }
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_POINTERS */
+#if DEE_CONFIG_LANGUAGE_HAVE_ARRAYS
+   if (0) { case DEE_XASTKIND_VARRAYOF: builtin_function = (DeeObject *)&DeeBuiltinFunction___builtin_varray_add; }
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_ARRAYS */
    if (ret_used && DEE_UNLIKELY(DeeCodeWriter_PushConstNoCopy(writer,builtin_function,compiler_flags) != 0)) return -1;
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_a,DEE_COMPILER_ARGS) != 0) return -1;
    if (ret_used) {
@@ -915,9 +918,6 @@ unary_operator:
   // TODO
   //case DEE_XASTKIND_NEW: oparg = ...; goto unary_operator_ext;
   //case DEE_XASTKIND_DELETE: oparg = ...; goto unary_operator_ext;
-#if DEE_CONFIG_LANGUAGE_HAVE_ARRAYS
-  case DEE_XASTKIND_VARRAYOF: oparg = OPEXT_VARRAYOF; goto unary_operator_ext;
-#endif /* DEE_CONFIG_LANGUAGE_HAVE_ARRAYS */
   case DEE_XASTKIND_ITERNEXT: oparg = OPEXT_SEQ_ITER_NEXT; goto unary_operator_ext;
   case DEE_XASTKIND_SEQ_ANY: oparg = OPEXT_SEQ_ANY; goto unary_operator_ext;
   case DEE_XASTKIND_SEQ_ALL: oparg = OPEXT_SEQ_ALL; goto unary_operator_ext;

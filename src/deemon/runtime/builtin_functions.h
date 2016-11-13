@@ -137,6 +137,9 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_pointer_rem);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_lvalue_add);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_lvalue_rem);
 #endif
+#if DEE_CONFIG_RUNTIME_HAVE_ARRAYS
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_varray_add);
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////
