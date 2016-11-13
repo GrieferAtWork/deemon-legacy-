@@ -22,8 +22,6 @@
 #define GUARD_DEEMON_DEX_DOCGEN_C 1
 #define DEE_EXTENSION 1
 
-//@ dex.name = _docgen
-
 #include "_docgen.h"
 #include <deemon/dex.h>
 #include <deemon/super.h>

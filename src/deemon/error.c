@@ -109,7 +109,7 @@ DeeSystemError_ToString(DEE_A_IN Dee_errno_t code) {
  if DEE_UNLIKELY((errno_dex = DeeDex_Open("_errno")) == NULL) {
 err:
   // Fallback if the dex is missing / defect
-  if DEE_UNLIKELY(DeeError_Catch(&DeeErrorType_AttributeError))
+  if DEE_UNLIKELY(DeeError_Catch(&DeeErrorType_DexError))
    return DeeString_Newf("0x%.8X(%d)",code,code);
   return NULL;
  }
@@ -131,7 +131,7 @@ DeeSystemError_Win32ToString(DEE_A_IN unsigned long code) {
  if DEE_UNLIKELY((errno_dex = DeeDex_Open("_errno")) == NULL) {
 err:
   // Fallback if the dex is missing / defect
-  if (DeeError_Catch(&DeeErrorType_AttributeError))
+  if (DeeError_Catch(&DeeErrorType_DexError))
    return DeeString_Newf("0x%.8X(%d)",code,code);
   return NULL;
  }

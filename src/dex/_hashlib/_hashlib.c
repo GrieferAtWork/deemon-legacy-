@@ -25,8 +25,6 @@
 #pragma warning(disable: 16)
 #endif
 
-//@ dex.name = _hashlib
-
 #include "_hashlib.h"
 #include <deemon/__conf.inl>
 #include <deemon/dex.h>

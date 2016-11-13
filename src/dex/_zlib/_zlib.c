@@ -22,8 +22,6 @@
 #define GUARD_DEEMON_DEX_ZLIB_C 1
 #define DEE_EXTENSION 1
 
-//@ dex.name = _zlib
-
 #include "_zlib.h"
 #include <deemon/error.h>
 #include <deemon/dex.h>

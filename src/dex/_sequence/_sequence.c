@@ -22,8 +22,6 @@
 #define GUARD_DEEMON_DEX_SEQUENCE_C 1
 #define DEE_EXTENSION 1
 
-//@ dex.name = _sequence
-
 #include "_sequence.h"
 #include <deemon/dex.h>
 #include <deemon/bool.h>

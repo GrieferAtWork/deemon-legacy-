@@ -565,7 +565,7 @@ exec_make() {
 	fi
 
 	echo "Compiling extensions"
-	bash "$root_path/make.sh" run "$source_path/makedex.dee"
+	bash "$root_path/make.sh" run "$source_path/dex/make.dee"
 
 	return 0
 }

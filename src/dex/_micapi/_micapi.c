@@ -22,8 +22,6 @@
 #define GUARD_DEEMON_DEX_MICAPI_C 1
 #define DEE_EXTENSION 1
 
-//@ dex.name = _micapi
-
 #include "_micapi.h"
 #include <deemon/none.h>
 #include <deemon/mp/thread.h>

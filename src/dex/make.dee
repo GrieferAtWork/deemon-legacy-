@@ -1,0 +1,443 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+
+
+
+#include <fs>
+#include <sys>
+#include <file>
+#include <pipe>
+#include <error>
+#include <sys>
+#include <process>
+
+fs::chdir(fs::path::head(sys::argv[0]));
+
+#include "../../include/deemon/version.h"
+
+
+// List of recognized attributes
+local const ATTRIBUTE_REQUIRE   = "require";          // [dexconfig|source] Specify a required header
+local const ATTRIBUTE_COMFLAGS  = "compiler_flags";   // [dexconfig|source] Set of additional flags passed to the compiler
+local const ATTRIBUTE_INCPATH   = "compiler_incpath"; // [dexconfig|source] List of paths added to the include search path of the compiler
+local const ATTRIBUTE_COMDEFINE = "compiler_define";  // [dexconfig|source] Specify an additional pre-defined #define value
+local const ATTRIBUTE_LIBRARAY  = "linker_lib";       // [dexconfig] library to link against
+local const ATTRIBUTE_LIBPATH   = "linker_libpath";   // [dexconfig] List of paths to link against
+local const ATTRIBUTE_LIBFLAGS  = "linker_flags";     // [dexconfig] Set of additional flags passed to the linker
+
+
+local const COMPILER_EXECUTABLE       = "gcc";
+local const LINKER_EXECUTABLE         = "gcc";
+local const DEXCONFIG_FILENAME        = ".dexconfig";
+local const OUTPUT_OBJECTPATH         = "../../build/{dex}/gcc/{filename}.o";
+local const OUTPUT_DEPDENCYPATH       = "../../build/{dex}/gcc/{filename}.mf";
+local const OUTPUT_LIBRARYPATH        = "../../lib/dex";
+local const OUTPUT_LIBRARYVERSIONPATH = "../../lib/dex."+DEE_VERSION_API;
+local const DEFAULT_SOURCEPATTERN     = "*.c";
+#ifdef __WINDOWS__
+local const OUTPUT_LIBRARYEXTENSION   = ".dll";
+#else
+local const OUTPUT_LIBRARYEXTENSION   = ".so";
+#endif
+local const list DEFAULT_INCLUDEPATHS = { "../../include", "../debug_new", ".." };
+local const dict ADDITIONAL_FLAGS = {
+	// NOTE: Key is bool: debug-enabled
+	false: list {"-O3","-DNDEBUG"},
+	true:  list {"-g","-D_DEBUG"},
+};
+#ifdef __WINDOWS__
+local const DEEMON_LIBFILE = "../../libdeemon.dll";
+#else
+local const DEEMON_LIBFILE = "../../libdeemon.so."+DEE_VERSION_API+"."+DEE_VERSION_COMPILER;
+#endif
+
+
+function makedirtree(path) {
+	path = fs::path::abs(path);
+	if (fs::isdir(path)) return;
+	local head = fs::path::head(fs::path::exctrail(path));
+	if (!fs::isdir(head)) makedirtree(head);
+	fs::mkdir(path);
+}
+
+function collect_wmatches(path,pattern) {
+	pattern = pattern.replace("\\","/");
+	if ("*" !in pattern && "?" !in pattern) {
+		yield fs::path::join(path,pattern);
+	} else {
+		if (!path) path = ".";
+		for (local name: fs::dir(path)) {
+			name = fs::path::join(path,name).replace("\\","/").lsstrip("./");
+			if (fs::isdir(name)) {
+				yield collect_wmatches(name,pattern)...;
+			} else if (name.wmatch(pattern)) {
+				yield name;
+			}
+		}
+	}
+}
+
+function objectfile_for(dex,filename) ->
+	OUTPUT_OBJECTPATH.format({ .dex = dex, .filename = fs::path::tail(filename) });
+function dependencyfile_for(dex,filename) ->
+	OUTPUT_DEPDENCYPATH.format({ .dex = dex, .filename = fs::path::tail(filename) });
+function libraryfile_for(dex,version_dependent) -> version_dependent
+	? fs::path::join(OUTPUT_LIBRARYVERSIONPATH,dex+OUTPUT_LIBRARYEXTENSION)
+	: fs::path::join(OUTPUT_LIBRARYPATH,       dex+OUTPUT_LIBRARYEXTENSION);
+
+dict _global_mtime_cache;
+function fast_getmtime(filename) {
+	filename = fs::path::abs(filename);
+	if (filename in _global_mtime_cache)
+		return _global_mtime_cache[filename];
+	local result = fs::getmtime(filename);
+	_global_mtime_cache[filename] = result;
+	return result;
+}
+
+function read_dependencyfile(filename) {
+	try {
+		local text = file.io(filename,"r").read();
+		text = text.replace("\r\n","\n").replace("\r","\n");
+		text = text.replace("\\\n","").replace("\n"," ");
+		text = text.partition(":")[2];
+		for (local part: text.split(" ")) {
+			if (part) yield part;
+		}
+	} catch (Error.IOError.FileNotFound) {
+	}
+}
+
+class InvalidDexError: Error {};
+class MissingDependencyDexError: InvalidDexError {};
+
+
+class SourceFile {
+
+	this(dex,filename) {
+		this.dex = dex;
+		this.sourcename = filename;
+		this.objectfile = objectfile_for(dex,filename);
+		this.dependencyfile = dependencyfile_for(dex,filename);
+		this.last_modified = fast_getmtime(filename);
+	}
+
+	// Returns true if this source file was changed and should be recompiled
+	function changed() {
+		local output_modified;
+		try output_modified = fast_getmtime(this.objectfile);
+		catch (...) return true; // Not object file
+		if (fast_getmtime(this.sourcename) > output_modified) return true; // Source file was modified
+		for (local dep: read_dependencyfile(this.dependencyfile)) {
+			local dep_changed;
+			try dep_changed = fast_getmtime(this.objectfile);
+			catch (...) return true; // Dependency removed
+			if (dep_changed > output_modified) return true; // Dependency was modified
+		}
+		return false;
+	}
+
+	operator str()  -> this.sourcename;
+	operator repr() -> "SourceFile("+
+		repr this.dex+","+
+		repr this.sourcename+","+
+		repr this.objectfile+","+
+		repr this.dependencyfile+","+
+		repr this.last_modified+")";
+
+};
+
+function read_config(filename) {
+	dict config;
+	try {
+		for (local line: file.io(filename)) {
+			line = line.strip();
+			if (!line || line.startswith("#")) continue;
+			line = line.replace("\t"," ");
+			local key,none,value = line.partition(" ")...;
+			key = key.strip(),value = value.strip();
+			if (key && value) {
+				local key_list = config.setdefault(key,list());
+				// Decode value
+				if (value.startswith("\"") && value.endswith("\"")) {
+					key_list.append(value[1:#value-1]);
+				} else {
+					// Wildcard-style filename matching
+					key_list.extend(collect_wmatches(
+						fs::path::head(filename),value));
+				}
+			}
+		}
+	} catch (Error.IOError.FileNotFound) {
+	}
+	local config_path = fs::path::head(filename);
+	if ("name" !in config) config["name"] = [fs::path::tail(fs::path::exctrail(config_path))];
+	if ("source" !in config) config["source"] = [collect_wmatches(config_path,DEFAULT_SOURCEPATTERN)...];
+	local const single_value_keys = ["name"];
+	// Fix single-value attributes
+	for (local key: single_value_keys) {
+		if (#config[key] != 1)
+			throw InvalidDexError("Dexconfig: "+repr filename+" more than one "+repr key+" attribute specified");
+		config[key] = config[key].front();
+	}
+
+	// Generate a list of changed files
+	return config;
+}
+
+function read_sourcefileconfig(sourcefilename) {
+	dict config;
+	local filestream = file.io(sourcefilename,"r");
+	function getline(): result {
+		local old_pos = filestream.tell();
+		filestream.rewind();
+		result = filestream.read(old_pos).count("\n");
+	}
+	for (local line: filestream) {
+		line = line.strip();
+		if (!line.startswith("//@")) continue;
+		line = line[3:].lstrip();
+		local key,none,name = line.partition(" ")...;
+		key = key.strip().rsstrip("=").rstrip().replace("::",".");
+		name = name.strip().lsstrip("=").lstrip();
+		if (key && name) {
+			switch (key) {
+				// Warn about names no longer in use
+				case "dex.name":
+				case "dex.version_dependent":
+				case "linker.libpath":
+				case "linker.lib":
+				case "linker.pthread":
+					print sourcefilename+"("+getline()+") : Ignored attribute : "+repr key;
+					break;
+				// Convert old names to the new ones
+				case "dex.require": key = ATTRIBUTE_REQUIRE; break;
+				case "compiler.incpath": key = ATTRIBUTE_INCPATH; break;
+				default: break;
+			}
+			config.setdefault(key,list()).append(name);
+		}
+	}
+	return config;
+}
+
+
+function has_c_header(header_name) {
+	static cpp_include_paths = ({
+		// Static initializers are only executed once
+		// >> So they're perfect for lazy initialization
+		// NOTE: When used with multiple threads, only the first
+		//       thread will enter the initialization, while all
+		//       other threads wait until the first one is done.
+		local compiler_includepath = [];
+		local inpaths = false;
+		local p = process("cpp -Wp,-v /dev/null");
+		local or,ow = pipe.new()...;
+		p.stdout = ow; p.stderr = ow;
+		p.start(); ow.close();
+		for (local line: or) {
+			line = line.strip();
+			if (inpaths) {
+				if (line.startswith("End")) inpaths = false;
+				else //if (fs::isdir(line))
+				{
+					compiler_includepath.append(line);
+				}
+			} else {
+				if ("#include" in line) inpaths = true;
+			}
+		}
+		p.join();
+		compiler_includepath;
+	});
+	for (local inc: cpp_include_paths) {
+		local full_pathname = fs::path::join(inc,header_name);
+		if (fs::exists(full_pathname)) return true;
+	}
+	return false;
+}
+
+function get_default_include_paths(sourcefilepath) {
+	for (local path: DEFAULT_INCLUDEPATHS)
+		yield fs::path::rel(fs::path::abs(path),sourcefilepath);
+}
+
+function check_dependencies(depname,deps) {
+	for (local dependency: deps) {
+		local header_name = dependency.scanf(" <%[^>]>")...;
+		if (!has_c_header(header_name)) {
+			local message = "Missing header for "+
+				repr depname+" : "+repr(header_name)+"\n";
+			local fix_command = none;
+			try none,fix_command = dependency.scanf(" <%[^>]> (%[^)])")...;
+			catch (...);
+			if (fix_command !is none) {
+				fix_command = fix_command.strip();
+				if (fix_command.startswith("$")) {
+					fix_command = fix_command[1:].strip();
+					message += "To fix this, run: '"+fix_command+"'";
+				} else {
+					message += ">> "+fix_command;
+				}
+			}
+			throw MissingDependencyDexError(message);
+		}
+	}
+}
+
+function compile_sourcefile(sourcefile,dexconfig,globalconfig) {
+	assert sourcefile is SourceFile;
+	local config = read_sourcefileconfig(sourcefile.sourcename);
+	check_dependencies(sourcefile.sourcename,config.get(ATTRIBUTE_REQUIRE,[]));
+	sourcepath = fs::path::head(sourcefile.sourcename);
+	function scriptrel_tp_sourcerel(path) ->
+		fs::path::rel(fs::path::abs(path),sourcepath);
+	local compiler_call = process(COMPILER_EXECUTABLE,[
+		"-c",
+#ifndef __WINDOWS__
+		"-fPIC", // Position independent image
+#endif
+		"-DDEE_EXTENSION",
+		config.get(ATTRIBUTE_COMFLAGS,[])...,
+		dexconfig.get(ATTRIBUTE_COMFLAGS,[])...,
+		ADDITIONAL_FLAGS[globalconfig.get("debug",true)]...,
+		(for (local path: get_default_include_paths(sourcepath)) "-I "+path)...,
+		(for (local path: config.get(ATTRIBUTE_INCPATH)) "-I "+path)...,
+		(for (local path: dexconfig.get(ATTRIBUTE_INCPATH)) "-I "+path)...,
+		(for (local arg: [dexconfig.get(ATTRIBUTE_COMDEFINE)...,config.get(ATTRIBUTE_COMDEFINE)...]) "-D"+({
+			local key,none,value = arg.partition(" ")...;
+			key.strip()+"="+value.strip();
+		}))...,
+		"-MMD "+scriptrel_tp_sourcerel(sourcefile.sourcename),
+		"-o "+scriptrel_tp_sourcerel(sourcefile.objectfile),
+		"-MF "+scriptrel_tp_sourcerel(sourcefile.dependencyfile),
+	]);
+	makedirtree(fs::path::head(sourcefile.objectfile));
+	makedirtree(fs::path::head(sourcefile.dependencyfile));
+	// Run from the folder of the sourcefile
+	compiler_call.cwd = sourcepath;
+	print "Compiling:",repr sourcefile.sourcename;
+	compiler_call.start();
+	if (compiler_call.join() != 0) {
+		throw InvalidDexError("Failed to compile "+repr str sourcefile);
+	}
+}
+
+function compile_dex(path,globalconfig) {
+	local dexname = fs::path::tail(path);
+	local dexconfig = read_config(fs::path::join(path,DEXCONFIG_FILENAME));
+	check_dependencies(dexname,dexconfig.get(ATTRIBUTE_REQUIRE,[]));
+	local sources = [(for (local x: dexconfig["source"]) SourceFile(dexname,x))...];
+	local has_changes = false;
+	local force_compile = globalconfig.get("force",false);
+	// Re-compile all changed sources
+	for (local s: sources) {
+		if (force_compile || s.changed()) {
+			has_changes = true;
+			compile_sourcefile(s,dexconfig,globalconfig);
+		}
+	}
+	libraryfile = libraryfile_for(dexname,(bool)dexconfig.get("version_dependent","false"));
+	if (force_compile || has_changes || !fs::exists(libraryfile)) {
+		// Re-link the dex if it has changed
+		local linker_call = process(LINKER_EXECUTABLE,[
+			dexconfig.get(ATTRIBUTE_LIBFLAGS,[])...,
+			(for (local libpath: dexconfig.get(ATTRIBUTE_LIBPATH)) "-I "+libpath)...,
+			ADDITIONAL_FLAGS[globalconfig.get("debug",true)]...,
+			"-o "+fs::path::rel(fs::path::abs(libraryfile),path),
+			"-shared",
+			//"-Wl,-soname,"+fs::path::file(libname),
+			fs::path::rel(fs::path::abs(DEEMON_LIBFILE),path),
+			(for (local lib: dexconfig.get(ATTRIBUTE_LIBRARAY)) "-l"+lib)...,
+		]);
+		linker_call.cwd = path;
+		print "  Linking:",repr dexname,"->",repr libraryfile;
+		linker_call.start();
+		if (linker_call.join() != 0) {
+			throw InvalidDexError("Failed to link "+repr path);
+		}
+	}
+}
+
+
+dict globalconfig;
+
+sys.argv.pop_front();
+while (sys.argv && sys.argv.front().startswith("-")) {
+	local arg = sys.argv.pop_front();
+	switch (arg) {
+		case "-f":
+		case "--force":
+			globalconfig["force"] = true;
+			break;
+		case "-debug":
+		case "--debug":
+			globalconfig["debug"] = true;
+			break;
+		case "-ndebug":
+		case "--no-debug":
+			globalconfig["debug"] = false;
+			break;
+		case "--skip-unsupported":
+			globalconfig["skip_unsupported"] = true;
+			break;
+		default:
+			print "Unknown argument:",repr arg;
+	}
+}
+
+
+for (local path: fs::dir(".")) {
+	if (fs::isdir(path)) {
+		try {
+			compile_dex(path,globalconfig);
+		} catch (InvalidDexError e) {
+			if (e !is MissingDependencyDexError
+			|| !globalconfig.get("skip_unsupported",false)) {
+				print "=============== ERROR ===============";
+				print e;
+				print;
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

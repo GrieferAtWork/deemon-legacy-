@@ -25,9 +25,7 @@
 #pragma warning(disable: 4365)
 #endif
 
-//@ dex.name = _curses
-//@ dex.require = <ncursesw/curses.h> ($ sudo apt-get install libncurses5-dev && sudo apt-get install libncursesw5-dev)
-//@ linker.lib = ncurses
+//@require  <ncursesw/curses.h> ($ sudo apt-get install libncurses5-dev && sudo apt-get install libncursesw5-dev)
 
 #include "_curses.h"
 #include <deemon/bool.h>

@@ -22,8 +22,6 @@
 #define GUARD_DEEMON_DEX_ERRNO_C 1
 #define DEE_EXTENSION 1
 
-//@ dex.name = _errno
-
 #include "_errno.h"
 #include <deemon/dex.h>
 #include <deemon/string.h>

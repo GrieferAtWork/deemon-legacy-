@@ -397,7 +397,7 @@ print out: "		make_frontend || return $?";
 print out: "	fi";
 print out:;
 print out: "	echo \"Compiling extensions\"";
-print out: "	bash \"$root_path/make.sh\" run \"$source_path/makedex.dee\"";
+print out: "	bash \"$root_path/make.sh\" run \"$source_path/dex/make.dee\"";
 print out:;
 print out: "	return 0";
 print out: "}";

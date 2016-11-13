@@ -22,9 +22,7 @@
 #define GUARD_DEEMON_DEX_DEBUGGER_C 1
 #define DEE_EXTENSION 1
 
-//@ dex.name              = _debugger
-//@ dex.require           = <ncursesw/curses.h> ($ sudo apt-get install libncurses5-dev && sudo apt-get install libncursesw5-dev)
-//@ dex.version_dependent = true
+//@require <ncursesw/curses.h> ($ sudo apt-get install libncurses5-dev && sudo apt-get install libncursesw5-dev)
 
 #include "_debugger.h"
 #include <deemon/none.h>

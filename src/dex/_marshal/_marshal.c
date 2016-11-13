@@ -22,8 +22,6 @@
 #define GUARD_DEEMON_DEX_MARSHAL_C 1
 #define DEE_EXTENSION 1
 
-//@ dex.name = _marshal
-
 #include "_marshal.h"
 #include <deemon/bool.h>
 #include <deemon/dex.h>

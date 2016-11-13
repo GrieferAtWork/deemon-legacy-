@@ -1,0 +1,5 @@
+
+
+# The curses module must be linked against 'ncurses'
+linker_lib "ncurses"
+

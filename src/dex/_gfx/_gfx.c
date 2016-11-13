@@ -23,8 +23,6 @@
 #define DEE_EXTENSION 1
 #define DEE_LIMITED_DEX_GFX 1
 
-//@ dex.name = _gfx
-
 #include <deemon/__conf.inl>
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4820 4350)
