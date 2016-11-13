@@ -841,7 +841,7 @@ extern DEE_A_RET_EXCEPT(-1) int DeeSAst_Optimize(
 
 //////////////////////////////////////////////////////////////////////////
 // Removes unused and uninitialized variables from 'self' as well as all constants
-// Returns the about of removed entires
+// Returns the amount of removed entires
 extern Dee_size_t DeeScope_OptimizeRemoveUnusedNames(
  DEE_A_INOUT DeeScopeObject *self);
 #define DeeScope_OPTIMIZE(self)\

@@ -257,7 +257,7 @@ err_r: Dee_DECREF(result); goto err;
     DeeObject *key,*item;
     DEE_ASSERT(*fmt);
     if DEE_UNLIKELY((key = _Dee_VBuildValueOne(&fmt,args)) == NULL) goto err_r;
-    DEE_ASSERT(*fmt && *fmt != '}' && "Incorrect about of elements in dict (requires 2*x)");
+    DEE_ASSERTF(*fmt && *fmt != '}',"Incorrect amount of elements in dict (requires 2*x)");
     if DEE_UNLIKELY((item = _Dee_VBuildValueOne(&fmt,args)) == NULL) { Dee_DECREF(key); goto err_r; }
     error = DeeDict_SetItem(result,key,item);
     Dee_DECREF(item);

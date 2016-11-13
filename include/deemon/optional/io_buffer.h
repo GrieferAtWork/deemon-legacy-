@@ -46,11 +46,11 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 
 #ifdef DEE_LIMITED_DEX
 struct DeeIOBuffer {
-#define DEE_IOBUFFER_FLAG_CLOSED 0x10000000 /*< Buffer was closed. */
  struct DeeNativeSemaphore iob_sem;   /*< Semaphore signaled when data becomes available (access requires an 'iob_uses' ticket). */
  struct DeeAtomicMutex     iob_lock;  /*< Read/write lock for the buffer. */
  // Everything below is protected by 'iob_lock'
  Dee_uint32_t              iob_uses;  /*< Amount of threads using the semaphore. */
+#define DEE_IOBUFFER_FLAG_CLOSED DEE_UINT32_C(0x10000000) /*< Buffer was closed. */
  Dee_uint32_t              iob_flags; /*< Buffer flags. */
  Dee_uint8_t              *iob_rpos;  /*< [0..1][iob_buf..+iob_size] Read position. */
  Dee_uint8_t              *iob_wpos;  /*< [0..1][iob_buf..+iob_size] Write position. */
@@ -74,9 +74,9 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeIOBuffer_InitEx(
 DEE_FUNC_DECL(void) DeeIOBuffer_Quit(DEE_A_IN struct DeeIOBuffer *self);
 #endif
 
-#define DEE_IOBUFFER_FLAG_NONE           0x00000000
-#define DEE_IOBUFFER_FLAG_MINBUF         0x00000001 /*< Always reallocate to the smallest possible buffersize. */
-#define DEE_IOBUFFER_FLAG_NOEXCEPT_WRITE 0x00000002 /*< Write will never cause an exception. */
+#define DEE_IOBUFFER_FLAG_NONE           DEE_UINT32_C(0x00000000)
+#define DEE_IOBUFFER_FLAG_MINBUF         DEE_UINT32_C(0x00000001) /*< Always reallocate to the smallest possible buffersize. */
+#define DEE_IOBUFFER_FLAG_NOEXCEPT_WRITE DEE_UINT32_C(0x00000002) /*< Write will never cause an exception. */
 
 #define DeeIOBuffer_New() DeeIOBuffer_NewEx(0,DEE_IOBUFFER_FLAG_NONE)
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(NULL) struct DeeIOBuffer *)
@@ -108,7 +108,7 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeIOBuffer_Write(
 // - 'off' must be positive
 // - If no data was available, wait until some is
 // - If not enough data is available, only skip what we can get
-// - Sets '*pos' to the about of skipped data
+// - Sets '*pos' to the amount of skipped data
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeIOBuffer_Seek(
  DEE_A_INOUT struct DeeIOBuffer *self, DEE_A_IN Dee_int64_t off,
  DEE_A_IN int whence, DEE_A_OUT_OPT Dee_uint64_t *pos) DEE_ATTRIBUTE_NONNULL((1));
