@@ -652,11 +652,15 @@ compile_default_vardecl:
     (Dee_size_t)(DeeCodeWriter_ADDR(writer)-succ_pos)) != 0) return -1;
    // Write the false branch
    if (self->ast_if.if_fail) {
+    // NOTE: The stack-effect of the true-branch isn't present here
+    if (ret_used) DeeCodeWriter_DECSTACK(writer);
     if DEE_UNLIKELY(DeeXAst_Compile(self->ast_if.if_fail,DEE_COMPILER_ARGS) != 0) return -1;
-   } else if (ret_used && DEE_UNLIKELY(DeeCodeWriter_PushNone(writer) != 0)) return -1;
+   } else if (ret_used) {
+    if (DEE_UNLIKELY(DeeCodeWriter_PushNone(writer) != 0)) return -1;
+    DeeCodeWriter_DECSTACK(writer); // Only one branch remains on the stack
+   }
    if DEE_UNLIKELY(DeeCodeWriter_SetFutureSizeArg(writer,fail_jmparg,
     (Dee_size_t)(DeeCodeWriter_ADDR(writer)-fail_pos)) != 0) return -1;
-   if (ret_used) DeeCodeWriter_DECSTACK(writer); // Only one branch remains on the stack
   } break;
 
   case DEE_XASTKIND_FUNCTION:

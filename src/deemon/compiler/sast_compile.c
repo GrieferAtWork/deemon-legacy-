@@ -437,8 +437,6 @@ empty_print_data:
    Dee_size_t fail_pos,fail_jmparg;
    DEE_ASSERT((self->ast_if.if_succ_block != NULL) == (self->ast_if.if_succ_scope != NULL));
    DEE_ASSERT((self->ast_if.if_fail_block != NULL) == (self->ast_if.if_fail_scope != NULL));
-   // TODO: We can optimize the jumps, if the 'then' or 'else'
-   //       block only contains a 'goto' statement
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_if.if_cond,DEE_COMPILER_ARGS_SCOPE_EX(
     self->ast_if.if_cond_scope,compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    succ_pos = DeeCodeWriter_ADDR(writer); // setup the jump if the check fails
@@ -460,6 +458,7 @@ empty_print_data:
      (Dee_size_t)(DeeCodeWriter_ADDR(writer)-succ_pos)) != 0) return -1;
     // Write the else (fail) branch
     if (self->ast_if.if_fail_block) { // else branch exists
+     if (ret_used) DeeCodeWriter_DECSTACK(writer); // Only one branch is on the stack
      if DEE_UNLIKELY(DeeSAst_Compile(self->ast_if.if_fail_block,DEE_COMPILER_ARGS_SCOPE_EX(
      self->ast_if.if_fail_scope,compiler_flags)) != 0) return -1;
      if DEE_UNLIKELY(DeeCodeWriter_LeaveWeakScope(writer,self->ast_if.if_fail_scope,lexer,compiler_flags) != 0) return -1;
@@ -468,10 +467,10 @@ empty_print_data:
      // In case of a missing else branch and a requested return value,
      // we use 'none' at that return value.
      if DEE_UNLIKELY(DeeCodeWriter_PushNone(writer) != 0) return -1;
+     DeeCodeWriter_DECSTACK(writer); // Only one branch is on the stack
     }
     if DEE_UNLIKELY(DeeCodeWriter_SetFutureSizeArg(writer,fail_jmparg,
      (Dee_size_t)(DeeCodeWriter_ADDR(writer)-fail_pos)) != 0) return -1;
-    if (ret_used) DeeCodeWriter_DECSTACK(writer); // Only one branch is on the stack
    } else {
     // Then block is skipped (we end up after the expression)
     if DEE_UNLIKELY(DeeCodeWriter_SetFutureSizeArg(writer,succ_jmparg,
