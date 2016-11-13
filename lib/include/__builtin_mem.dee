@@ -20,6 +20,9 @@
  */
 #pragma once
 #include <__stddef.dee>
+#if __API_VERSION__ >= 102
+#	warning Deprecated Header: use <mem> instead
+#endif
 
 #if __has_feature(__pointers__)
 const __builtin_memcpy = __builtin_object(0x00C5);

@@ -20,5 +20,8 @@
  */
 #pragma once
 #include <__stddef.dee>
+#if __API_VERSION__ >= 102
+#	warning Deprecated Header: use 'extern ...;' instead
+#endif
 
 const __builtin_extern = __builtin_object(0x01E0);

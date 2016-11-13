@@ -22,8 +22,8 @@
 #include <__stddef.dee>
 
 #if __has_feature(__pointers__)
-	const __builtin_pointer_add = __builtin_object(0x0086);
-	const __builtin_pointer_rem = __builtin_object(0x0087);
-	const __builtin_lvalule_add = __builtin_object(0x0088);
-	const __builtin_lvalule_rem = __builtin_object(0x0089);
+const __builtin_pointer_add = __builtin_object(0x0086);
+const __builtin_pointer_rem = __builtin_object(0x0087);
+const __builtin_lvalule_add = __builtin_object(0x0088);
+const __builtin_lvalule_rem = __builtin_object(0x0089);
 #endif

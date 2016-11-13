@@ -20,6 +20,9 @@
  */
 #pragma once
 #include <__stddef.dee>
+#if __API_VERSION__ >= 102
+#	warning Deprecated Header: use <math> instead
+#endif
 
 const __builtin_sin = __builtin_object(0x0119);
 const __builtin_cos = __builtin_object(0x011A);

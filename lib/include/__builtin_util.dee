@@ -20,6 +20,9 @@
  */
 #pragma once
 #include <__stddef.dee>
+#if __API_VERSION__ >= 102
+#	warning Deprecated Header: use <util> instead
+#endif
 
 const __builtin_avg = __builtin_object(0x0104);
 const __builtin_all = __builtin_object(0x0105);
