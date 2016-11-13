@@ -136,8 +136,8 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
                      "%s(%I64d) : PEEPHOLE : +%.4Ix : %#.2I8x : See reference to return opcode destination\n",
                      DeeCodeWriter_Addr2File(self,(Dee_size_t)(code-code_begin)),
                      DeeCodeWriter_Addr2Line(self,(Dee_size_t)(code-code_begin))+1,
-                     (Dee_size_t)(code-code_begin),*code,(Dee_size_t)((code-code_begin)+(jmp_dst-code)),
-                     *jmp_dst == OP_RET ? "OP_RET" : "OP_RETNONE",
+                     (Dee_size_t)(code-code_begin),*code,*jmp_dst == OP_RET ? "OP_RET" : "OP_RETNONE",
+                     (Dee_size_t)((code-code_begin)+(jmp_dst-code)),
                      DeeCodeWriter_Addr2File(self,(Dee_size_t)((code-code_begin)+(jmp_dst-code))),
                      DeeCodeWriter_Addr2Line(self,(Dee_size_t)((code-code_begin)+(jmp_dst-code)))+1,
                      (Dee_size_t)((code-code_begin)+(jmp_dst-code)),*jmp_dst);
