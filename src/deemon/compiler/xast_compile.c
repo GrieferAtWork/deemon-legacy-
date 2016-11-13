@@ -282,11 +282,13 @@ DEE_A_RET_EXCEPT(-1) int DeeXAst_CompileSequence(
   if (elem->ast_kind == DEE_XASTKIND_EXPAND) {
    expand_ast = elem->ast_operator.op_a;
    // Pack everything we've got so far
-   if (active_seq_size && DEE_UNLIKELY(_DeeCodeWriter_MakeSequence(writer,seq_op,active_seq_size) != 0)) return -1;
-   if (is_expand_construct && DEE_UNLIKELY(DeeCodeWriter_BinaryOp(writer,seq_concat_op) != 0)) return -1;
+   if (active_seq_size) {
+    if (DEE_UNLIKELY(_DeeCodeWriter_MakeSequence(writer,seq_op,active_seq_size) != 0)) return -1;
+    if (is_expand_construct && DEE_UNLIKELY(DeeCodeWriter_BinaryOp(writer,seq_concat_op) != 0)) return -1;
+   }
    // Compile the new portion that should be expanded
    if DEE_UNLIKELY(DeeXAst_Compile(expand_ast,DEE_COMPILER_ARGS) != 0) return -1;
-   if (active_seq_size) {
+   if (active_seq_size || is_expand_construct) {
     // Concat the two portions
     if DEE_UNLIKELY(DeeCodeWriter_BinaryOp(writer,seq_concat_op) != 0) return -1;
    } else {

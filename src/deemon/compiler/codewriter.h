@@ -527,7 +527,7 @@ extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_Ret(
 //////////////////////////////////////////////////////////////////////////
 // Write code to cleanup local variables from "scope"
 #define DeeCodeWriter_EnterStrongScope(self,scope,lexer,compiler_flags) \
- ((void)(lexer,compiler_flags),_DeeCodeWriter_EnterStrongScope_impl(self,scope))
+ (/*(void)(lexer,compiler_flags),*/_DeeCodeWriter_EnterStrongScope_impl(self,scope))
 extern DEE_A_RET_EXCEPT(-1) int _DeeCodeWriter_EnterStrongScope_impl(
  DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeScopeObject *scope) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_LeaveStrongScope(
