@@ -397,9 +397,10 @@ extern void DeePixel_Blend(
 
 
 struct DeeFontCharacter {
- Dee_uint8_t fc_sizex;    /*< [0..8] Size of the character in x. */
- Dee_uint8_t fc_sizey;    /*< [0..8] Size of the character in y. */
- Dee_uint8_t fc_lines[8]; /*< 8x8 mask of used pixels (in msb format). */
+ Dee_uint8_t fc_size;     /*< Size of the character in x/y. */
+#define DeeFontCharacter_SIZEX(ob) ((Dee_uint8_t)( (ob)->fc_size&0x0f)    )
+#define DeeFontCharacter_SIZEY(ob) ((Dee_uint8_t)(((ob)->fc_size&0xf0)>>4))
+ Dee_uint8_t fc_lines[8]; /*< 8x8 bitmask of used pixels (in msb format). */
 };
 struct DeeFont {
  Dee_uint8_t             f_spacex;   /*< Space between characters in x. */
@@ -677,6 +678,17 @@ struct DeeSurfaceObject {
 #ifdef DEE_LIMITED_DEX_GFX
 extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_New(
  DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy);
+extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFromStream(
+ DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_INOUT DeeObject *fp);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeSurface_TryNewFromPNGStream(
+ DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_INOUT DeeObject *fp,
+ DEE_A_REF DEE_A_OUT DeeSurfaceObject **result);
+extern DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFromFilename(
+ DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_INOUT DeeObject *filename);
+extern DEE_A_RET_EXCEPT(-1) int DeeSurface_SavePNGStream(
+ DEE_A_IN DeeSurfaceObject const *self, DEE_A_INOUT DeeObject *fp);
+extern DEE_A_RET_EXCEPT(-1) int DeeSurface_SavePNGFile(
+ DEE_A_IN DeeSurfaceObject const *self, DEE_A_INOUT DeeObject *filename);
 #else
 #define DeeSurface_New(stype,sx,sy) \
  ((DeeSurfaceObject *)DeeType_NewInstancef((DeeTypeObject *)(stype),"IuIu",sx,sy))

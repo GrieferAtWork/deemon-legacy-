@@ -37,6 +37,8 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include <deemon/bool.h>
 #include <deemon/none.h>
 #include <deemon/error.h>
+#include <deemon/file.h>
+#include <deemon/deemonrun.h>
 #include <deemon/memberdef.h>
 #include <deemon/tuple.h>
 #include <deemon/optional/object_malloc.h>
@@ -195,6 +197,122 @@ DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_New(
  return result;
 }
 
+DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFromStream(
+ DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_INOUT DeeObject *fp) {
+ DeeSurfaceObject *result; int error;
+ error = DeeSurface_TryNewFromPNGStream(stype,fp,&result);
+ if (error == 0) return result;
+ if (error < 0) return NULL;
+ DeeError_SetStringf(&DeeErrorType_ValueError,
+                     "Not an image file: %k",fp);
+ return NULL;
+}
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeSurface_TryNewFromPNGStream(
+ DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_INOUT DeeObject *fp,
+ DEE_A_REF DEE_A_OUT DeeSurfaceObject **result) {
+ Dee_uint64_t old_pos,max_size; Dee_size_t file_buffer_size;
+ void *file_buffer; unsigned char *pixels; unsigned w,h,error;
+ DeeSurfaceObject *read_image;
+ if (DeeFile_Tell(fp,&old_pos) != 0) return -1;
+ if (DeeFile_Seek(fp,0,DEE_SEEK_END,&max_size) != 0) return -1;
+ if (max_size <= old_pos) return 1; // empty file
+#if DEE_TYPES_SIZEOF_POINTER < 8
+ if ((max_size-old_pos) > (Dee_size_t)-1) return 1; // File too large
+#endif
+ file_buffer_size = (Dee_size_t)(max_size-old_pos);
+ DEE_ASSERT(file_buffer_size != 0);
+ // Allocate a buffer large enough to hold the entire file
+ while DEE_UNLIKELY((file_buffer = malloc_nz(file_buffer_size)) == NULL) {
+  if (Dee_CollectMemory()) continue;
+  DeeError_NoMemory();
+  return -1;
+ }
+ if (DeeFile_SetPos(fp,old_pos) != 0) {err_filebuffer: free_nn(file_buffer); return -1; }
+ if (DeeFile_ReadAll(fp,file_buffer,file_buffer_size) != 0) {
+  DeeError_PUSH_STATE() {
+   if (DeeFile_SetPos(fp,old_pos) != 0) DeeError_Handled();
+  } DeeError_POP_STATE();
+  goto err_filebuffer;
+ }
+ // TODO: Select the proper encoding based on stype (may help to skip a cast below)
+ error = lodepng_decode_memory(&pixels,&w,&h,
+                               (unsigned char const *)file_buffer,
+                               file_buffer_size,LCT_RGBA,8);
+ free_nn(file_buffer);
+ switch (error) {
+  case 0: break;
+  case 27: case 28: return 1; // Not a PNG file
+  default:
+   DeeError_SetStringf(&DeeErrorType_ValueError,
+                       "Invalid PNG file : %d : %s",
+                       lodepng_error_text(error));
+   return -1;
+ }
+ // Convert the read data into the requested pixel format
+ read_image = DeeSurface_New(&DeeSurfaceType_RGBA8888,w,h);
+ if DEE_UNLIKELY(!read_image) { free_nn(pixels); return -1; }
+ memcpy(read_image->s_pixeldata.s_pixels,pixels,w*h*4);
+ free_nn(pixels);
+ // NOTE: This if 'stype' is rgba8888, this
+ //       function does not allocate a new surface.
+ *result = DeeSurface_Convert(read_image,stype);
+ Dee_DECREF(read_image);
+ if DEE_UNLIKELY(!*result) return -1;
+ return 0;
+}
+
+
+DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFromFilename(
+ DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_INOUT DeeObject *filename) {
+ DeeObject *fp; DeeSurfaceObject *result;
+ if DEE_UNLIKELY((fp = DeeFileIO_NewObject(filename,"r")) == NULL) return NULL;
+ result = DeeSurface_NewFromStream(stype,fp);
+ Dee_DECREF(fp);
+ return result;
+}
+
+DEE_A_RET_EXCEPT(-1) int DeeSurface_SavePNGStream(
+ DEE_A_IN DeeSurfaceObject const *self, DEE_A_INOUT DeeObject *fp) {
+ DeeSurfaceObject *rgba8888; unsigned error; int error2;
+ unsigned char *buffer; size_t buffersize;
+ if DEE_UNLIKELY((rgba8888 = DeeSurface_Convert(self,&DeeSurfaceType_RGBA8888)) == NULL) return -1;
+ error = lodepng_encode_memory(&buffer,&buffersize,
+                               (unsigned char const *)rgba8888->s_pixeldata.s_pixels,
+                               rgba8888->s_sizex,rgba8888->s_sizey,LCT_RGBA,8);
+ Dee_DECREF(rgba8888);
+ if (error != 0) {
+  DeeError_SetStringf(&DeeErrorType_ValueError,
+                      "Failed to save png : %d : %s",
+                      error,lodepng_error_text(error));
+  return -1;
+ }
+ error2 = DeeFile_WriteAll(fp,buffer,buffersize);
+ free_nn(buffer);
+ return error2;
+}
+DEE_A_RET_EXCEPT(-1) int DeeSurface_SavePNGFile(
+ DEE_A_IN DeeSurfaceObject const *self, DEE_A_INOUT DeeObject *filename) {
+ DeeSurfaceObject *rgba8888; unsigned error; int error2;
+ unsigned char *buffer; size_t buffersize; DeeObject *fp;
+ if DEE_UNLIKELY((rgba8888 = DeeSurface_Convert(self,&DeeSurfaceType_RGBA8888)) == NULL) return -1;
+ error = lodepng_encode_memory(&buffer,&buffersize,
+                               (unsigned char const *)rgba8888->s_pixeldata.s_pixels,
+                               rgba8888->s_sizex,rgba8888->s_sizey,LCT_RGBA,8);
+ Dee_DECREF(rgba8888);
+ if (error != 0) {
+  DeeError_SetStringf(&DeeErrorType_ValueError,
+                      "Failed to save png : %d : %s",
+                      error,lodepng_error_text(error));
+  return -1;
+ }
+ if DEE_UNLIKELY((fp = DeeFileIO_NewObject(filename,"w")) == NULL) {
+/*err_buffer:*/ free_nn(buffer); return -1;
+ }
+ error2 = DeeFile_WriteAll(fp,buffer,buffersize);
+ free_nn(buffer);
+ Dee_DECREF(fp);
+ return error2;
+}
 
 
 
@@ -289,19 +407,11 @@ static DeeObject *DEE_CALL _deesurface_flipy(
 }
 static DeeObject *DEE_CALL _deesurface_save_png(
  DeeSurfaceObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- char const *filename; DeeSurfaceObject *rgba8888; unsigned error;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"s:save_png",&filename) != 0) return NULL;
- if DEE_UNLIKELY((rgba8888 = DeeSurface_Convert(self,&DeeSurfaceType_RGBA8888)) == NULL) return NULL;
- error = lodepng_encode32_file(filename,rgba8888->s_pixeldata.s_pixels,
-                               (unsigned)rgba8888->s_sizex,
-                               (unsigned)rgba8888->s_sizey);
- Dee_DECREF(rgba8888);
- if (error != 0) {
-  DeeError_SetStringf(&DeeErrorType_ValueError,
-                      "Failed to save png : %d : %s",
-                      error,lodepng_error_text(error));
-  return NULL;
- }
+ DeeObject *filename;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:save_png",&filename) != 0) return NULL;
+ if DEE_UNLIKELY((DeeFile_Check(filename)
+  ? DeeSurface_SavePNGStream(self,filename)
+  : DeeSurface_SavePNGFile(self,filename)) != 0) return NULL;
  DeeReturn_None;
 }
 
@@ -483,6 +593,13 @@ static DeeSurfaceObject *DEE_CALL _deepixelsurface_tp_any_new(
  } else {
   // Create new surface
   if DEE_UNLIKELY(!arg1) {
+   if (DeeFile_Check(arg0)) {
+    // Load a picture from a stream (currently only supports PNG)
+    return DeeSurface_NewFromStream(tp_self,arg0);
+   } else if (DeeAnyString_Check(arg0)) {
+    // Load a picture from a file
+    return DeeSurface_NewFromFilename(tp_self,arg0);
+   }
    DeeError_SetStringf(&DeeErrorType_TypeError,
                        "surface requires at 2 ... 3 argument(s) (%Iu given)",
                        DeeTuple_SIZE(args));
@@ -830,11 +947,9 @@ int DeeDex_Main(DEE_A_INOUT DeeDexContext *context) {
 DEE_DECL_END
 
 #ifndef __INTELLISENSE__
-#include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4365 4242)
 #include "lodepng/lodepng.c.inl"
 DEE_COMPILER_MSVC_WARNING_POP
-#include DEE_INCLUDE_MEMORY_API_ENABLE()
 #include "surface.rgba8888.inl"
 #endif
 

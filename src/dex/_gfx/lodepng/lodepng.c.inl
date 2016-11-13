@@ -28,11 +28,14 @@ The manual and changelog are in the header file "lodepng.h"
 Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for C.
 */
 
+#include <deemon/__conf.inl>
 #include "lodepng.h"
 
+#include DEE_INCLUDE_MEMORY_API_DISABLE()
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include DEE_INCLUDE_MEMORY_API_ENABLE()
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) /*Visual Studio: A few warning types are not desired here.*/
 #pragma warning( disable : 4244 ) /*implicit conversions: not warned by gcc -Wall -Wextra and requires too much casts*/
@@ -59,7 +62,12 @@ define them in your own project's source files without needing to change
 lodepng source code. Don't forget to remove "static" if you copypaste them
 from here.*/
 
-#ifdef LODEPNG_COMPILE_ALLOCATORS
+#if 1
+#include DEE_INCLUDE_MEMORY_API()
+#define lodepng_malloc  malloc
+#define lodepng_realloc realloc
+#define lodepng_free    free
+#elif defined(LODEPNG_COMPILE_ALLOCATORS)
 static void* lodepng_malloc(size_t size)
 {
   return malloc(size);
