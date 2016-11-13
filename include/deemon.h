@@ -391,6 +391,7 @@
 //     - Fixed calls to foreign_functions where the called function throws a deemon error
 //     - Fixed an incorrect assertion error that could have occurred when generating a set
 //     - Fixed a bug that could have caused an assertion when trying to delete noop bytecode.
+//     - Fixed a bug that caused invalid stack-offsets in conditional expressions/statements
 //     
 //   Optimized:
 //     - Generating an iterator with util::range is now faster

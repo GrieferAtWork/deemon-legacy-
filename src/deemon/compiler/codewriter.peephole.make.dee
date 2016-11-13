@@ -291,7 +291,18 @@ for (local i,oprules: util::enumerate(main_switch)) {
 		print indent+indent+indent+"DISPATCH_OPTIMIZED();";
 		print indent+indent+"}";
 	}
-	print indent+indent+"DISPATCH();";
+	if (i_name in [
+		"OP_LOAD_LOC","OP_LOAD_REF",
+		"OP_LOAD_CST","OP_LOAD_CST_COPY",
+		"OP_LOAD_CST_DCOPY","OP_LOAD_CST_LOCKED",
+		"OP_LOAD_BLTIN","OP_LOAD_ARG",
+		"OP_LOAD_RET","OP_LOAD_THIS",
+		"OP_LOAD_NONE",
+	]) {
+		print indent+indent+"DISPATCH_AFTERLOAD();";
+	} else {
+		print indent+indent+"DISPATCH();";
+	}
 	print indent+"}";
 	print "#endif /*",i_name,"*/";
 	print;

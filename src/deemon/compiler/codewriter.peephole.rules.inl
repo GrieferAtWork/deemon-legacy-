@@ -167,6 +167,11 @@ RULE({OP_LROT_4,OP_RROT_4} --> {});
 RULE({OP_RROT_4,OP_LROT_4} --> {});
 RULE({OP_LROT_N,$shift,OP_RROT_N,$shift} --> {});
 RULE({OP_RROT_N,$shift,OP_LROT_N,$shift} --> {});
+RULE({OP_ROT_2,OP_POP,OP_POP} --> {OP_POP,OP_POP});
+RULE({OP_LROT_3,OP_POP,OP_POP,OP_POP} --> {OP_POP,OP_POP,OP_POP});
+RULE({OP_RROT_3,OP_POP,OP_POP,OP_POP} --> {OP_POP,OP_POP,OP_POP});
+RULE({OP_LROT_4,OP_POP,OP_POP,OP_POP,OP_POP} --> {OP_POP,OP_POP,OP_POP,OP_POP});
+RULE({OP_RROT_4,OP_POP,OP_POP,OP_POP,OP_POP} --> {OP_POP,OP_POP,OP_POP,OP_POP});
 
 //////////////////////////////////////////////////////////////////////////
 // Optimize store + pop --> store_pop
@@ -223,13 +228,4 @@ RULE({OP_EXTENDED[OPEXT_CLASS_NEW],OP_POP} --> {OP_POP,OP_POP});
 RULE({OP_EXTENDED[OPEXT_CLASS_NEW_UUID],OP_POP} --> {OP_POP,OP_POP,OP_POP});
 RULE({OP_EXTENDED[OPEXT_ALLOCA],OP_POP} --> {OP_POP,OP_POP});
 
-
-// TODO: RULE:
-// >> load a + load b + rot 2 --> load b + load a
-// NOTE: Still OK when considering the side-effects of loading a local variable (unbound local errors)
-//       Because if one of the variables is unbound, the error will be thrown the same way
-//       in both situations.
-// NOTE: As this rule would otherwise create uncountable different rules, combining
-//       any load with an other load, special handling should be performed for it.
-//RULE({OP_LOAD_CST_COPY,$cst1,OP_LOAD_CST_COPY,$cst2,OP_ROT_2} --> {OP_LOAD_CST_COPY,$cst2,OP_LOAD_CST_COPY,$cst1});
 

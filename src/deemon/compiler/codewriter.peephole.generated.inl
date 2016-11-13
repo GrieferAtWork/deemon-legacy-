@@ -39,7 +39,7 @@
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_NONE */
 
@@ -214,6 +214,17 @@
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
+  RULE("OP_ROT_2,OP_POP,OP_POP",
+       "OP_POP,OP_POP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_SKIPOP();
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
   DISPATCH();
  }
 #endif /* OP_ROT_2 */
@@ -226,6 +237,19 @@
    if (RT_PROTECTED() || (RT_GET_OP() != OP_RROT_3)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_LROT_3,OP_POP,OP_POP,OP_POP",
+       "OP_POP,OP_POP,OP_POP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_SKIPOP();
+   RT_WRITE_SKIPOP();
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
@@ -259,7 +283,7 @@ local_label_0:
    RT_WRITE_OP(OP_DUP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_RET */
 
@@ -353,7 +377,7 @@ local_label_1:
    RT_WRITE_OP(OP_DUP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_THIS */
 
@@ -417,6 +441,21 @@ local_label_1:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
+  RULE("OP_LROT_4,OP_POP,OP_POP,OP_POP,OP_POP",
+       "OP_POP,OP_POP,OP_POP,OP_POP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_SKIPOP();
+   RT_WRITE_SKIPOP();
+   RT_WRITE_SKIPOP();
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
   DISPATCH();
  }
 #endif /* OP_LROT_4 */
@@ -432,6 +471,19 @@ local_label_1:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
+  RULE("OP_RROT_3,OP_POP,OP_POP,OP_POP",
+       "OP_POP,OP_POP,OP_POP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_SKIPOP();
+   RT_WRITE_SKIPOP();
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
   DISPATCH();
  }
 #endif /* OP_RROT_3 */
@@ -444,6 +496,21 @@ local_label_1:
    if (RT_PROTECTED() || (RT_GET_OP() != OP_LROT_4)) RULE_BREAK();
    RT_WRITE_BEGIN();
    RT_WRITE_OP(OP_NOOP);
+   RT_WRITE_OP(OP_NOOP);
+   DISPATCH_OPTIMIZED();
+  }
+  RULE("OP_RROT_4,OP_POP,OP_POP,OP_POP,OP_POP",
+       "OP_POP,OP_POP,OP_POP,OP_POP,OP_NOOP") {
+   RT_SEEK_FIRST_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK(); RT_NEXT_OP();
+   if (RT_PROTECTED() || (RT_GET_OP() != OP_POP)) RULE_BREAK();
+   RT_WRITE_BEGIN();
+   RT_WRITE_OP(OP_POP);
+   RT_WRITE_SKIPOP();
+   RT_WRITE_SKIPOP();
+   RT_WRITE_SKIPOP();
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
@@ -486,7 +553,7 @@ local_label_2:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_LOC */
 
@@ -525,7 +592,7 @@ local_label_3:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_REF */
 
@@ -564,7 +631,7 @@ local_label_4:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_CST */
 
@@ -603,7 +670,7 @@ local_label_5:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_CST_COPY */
 
@@ -642,7 +709,7 @@ local_label_6:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_CST_DCOPY */
 
@@ -681,7 +748,7 @@ local_label_7:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_BLTIN */
 
@@ -720,7 +787,7 @@ local_label_8:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_ARG */
 
@@ -993,7 +1060,7 @@ local_label_9:
    RT_WRITE_OP(OP_NOOP);
    DISPATCH_OPTIMIZED();
   }
-  DISPATCH();
+  DISPATCH_AFTERLOAD();
  }
 #endif /* OP_LOAD_CST_LOCKED */
 

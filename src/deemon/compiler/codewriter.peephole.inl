@@ -48,6 +48,34 @@ DEE_STATIC_INLINE(Dee_uint8_t *) _dee_after_noop(Dee_uint8_t *start) {
  return start;
 }
 
+//////////////////////////////////////////////////////////////////////////
+// Rotate 'n' given OP_LOAD* opcodes left/right by 1
+DEE_STATIC_INLINE(void) _dee_loadops_lrot(Dee_uint8_t *start, Dee_size_t n);
+DEE_STATIC_INLINE(void) _dee_loadops_rrot(Dee_uint8_t *start, Dee_size_t n);
+DEE_STATIC_INLINE(void) _dee_loadops_lrot(Dee_uint8_t *start, Dee_size_t n) {
+ Dee_uint8_t *rotend = start; Dee_size_t i,bufsize;
+ Dee_uint8_t buffer[3]; DEE_ASSERT(n);
+ if ((*start&OPFLAG_ARG)!=0) { memcpy(buffer,start,3); bufsize = 3; }
+ else bufsize = 1,buffer[0] = *start;
+ for (i = 0; i != n; IS_NOOP(*rotend) ? 0 : ++i) if ((*rotend++&OPFLAG_ARG)!=0) rotend += 2;
+ memmove(start,start+bufsize,(Dee_size_t)(rotend-(start+bufsize)));
+ memcpy(rotend-bufsize,buffer,bufsize);
+}
+DEE_STATIC_INLINE(void) _dee_loadops_rrot(Dee_uint8_t *start, Dee_size_t n) {
+ Dee_uint8_t *rotend = start; Dee_size_t i,bufsize;
+ Dee_uint8_t buffer[3]; DEE_ASSERT(n);
+ for (i = 0; i != n-1; IS_NOOP(*rotend) ? 0 : ++i) if ((*rotend++&OPFLAG_ARG)!=0) rotend += 2;
+ if ((*rotend&OPFLAG_ARG)!=0) { memcpy(buffer,rotend,3); bufsize = 3; rotend += 3; }
+ else bufsize = 1,buffer[0] = *rotend++;
+ memmove(start+bufsize,start,(Dee_size_t)(rotend-(start+bufsize)));
+ memcpy(start,buffer,bufsize);
+}
+DEE_STATIC_INLINE(Dee_uint8_t *) _dee_advance_opptr(Dee_uint8_t *p, Dee_size_t n) {
+ Dee_size_t i; Dee_uint8_t *result = p;
+ for (i = 0; i != n; IS_NOOP(*result) ? 0 : ++i) if ((*result++&OPFLAG_ARG)!=0) result += 2;
+ return result;
+}
+
 DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrList(
  DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_INOUT Dee_uint32_t *performed_optimizations,
  DEE_A_IN struct DeeCodeReachableAddrList const *protected_addr) {
@@ -101,6 +129,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
 #endif
 #define RULE_BREAK()         break
 #define DISPATCH()           goto next
+#define DISPATCH_AFTERLOAD() goto second_pass
 #define DISPATCH_OPTIMIZED() goto next_after_optimize
 #ifndef __INTELLISENSE__
 #include "codewriter.peephole.generated.inl"
@@ -194,6 +223,76 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
      }
      DISPATCH();
     }
+    default: goto next;
+   }
+   // Second pass
+second_pass:
+#define IS_LOAD_ARG(op)\
+ ((op)==OP_LOAD_LOC||(op)==OP_LOAD_REF\
+||(op)==OP_LOAD_CST||(op)==OP_LOAD_CST_COPY\
+||(op)==OP_LOAD_CST_DCOPY||(op)==OP_LOAD_CST_LOCKED\
+||(op)==OP_LOAD_BLTIN||(op)==OP_LOAD_ARG)
+#define IS_LOAD_NOARG(op)\
+ ((op)==OP_LOAD_RET\
+||(op)==OP_LOAD_THIS\
+||(op)==OP_LOAD_NONE)
+   switch (before_opcode) {
+    {
+     Dee_uint8_t op,*dstp,*startreadpos;
+     Dee_size_t n_load_operations;
+    // RULE:
+    // >> load a + load b + rot 2 --> load b + load a
+    // NOTE: Still OK when considering the side-effects of loading a local variable (unbound local errors)
+    //       Because if one of the variables is unbound, the error will be thrown the same way
+    //       in both situations.
+    // NOTE: As this rule would otherwise create uncountable different rules, combining
+    //       any load with an other load, special handling should be performed for it.
+    case OP_LOAD_LOC: case OP_LOAD_REF:
+    case OP_LOAD_CST: case OP_LOAD_CST_COPY:
+    case OP_LOAD_CST_DCOPY: case OP_LOAD_CST_LOCKED:
+    case OP_LOAD_BLTIN: case OP_LOAD_ARG:
+     startreadpos = code+3;
+     if (0) {case OP_LOAD_RET: case OP_LOAD_THIS: case OP_LOAD_NONE: startreadpos = code+1; }
+     // Optimize load operations followed by a rotation
+     readpos = startreadpos; RT_SEEK_FIRST_OP();
+     n_load_operations = 1;
+     while (1) {
+      if (RT_PROTECTED()) goto next; op = RT_GET_OP();
+      if (IS_LOAD_ARG(op)) RT_SKIP_ARG();
+      else if (IS_LOAD_NOARG(op));
+      else break;
+      ++n_load_operations;
+      RT_NEXT_OP();
+     }
+     switch (op) {
+      {
+       int          rotate_left;
+       Dee_uint32_t rotation_size;
+       if (0) { case OP_ROT_2:  rotate_left = 1,rotation_size = 2; }
+       if (0) { case OP_LROT_3: rotate_left = 1,rotation_size = 3; }
+       if (0) { case OP_LROT_4: rotate_left = 1,rotation_size = 4; }
+       if (0) { case OP_RROT_3: rotate_left = 0,rotation_size = 3; }
+       if (0) { case OP_RROT_4: rotate_left = 0,rotation_size = 4; }
+       if (0) { case OP_LROT_N: rotate_left = 1,rotation_size = *(Dee_uint16_t *)readpos; }
+       if (0) { case OP_RROT_N: rotate_left = 0,rotation_size = *(Dee_uint16_t *)readpos; }
+       // Rotate the load operations
+       if (n_load_operations >= rotation_size) {
+        DEE_LVERBOSE1R("%s(%I64d) : PEEPHOLE : +%.4Ix : %#.2I8x : Hard rotate %I32u opcodes %s\n",
+                       DeeCodeWriter_Addr2File(self,(Dee_size_t)(code-code_begin)),
+                       DeeCodeWriter_Addr2Line(self,(Dee_size_t)(code-code_begin))+1,
+                       (Dee_size_t)(code-code_begin),*code,rotation_size,rotate_left ? "left" : "right");
+        dstp = _dee_advance_opptr(code,n_load_operations-rotation_size);
+        if (rotate_left) _dee_loadops_lrot(dstp,rotation_size); else _dee_loadops_rrot(dstp,rotation_size);
+        if ((op&OPFLAG_ARG)!=0) readpos[1] = OP_NOOP,readpos[2] = OP_NOOP;
+        readpos[0] = OP_NOOP;
+        DISPATCH_OPTIMIZED();
+       }
+      } break;
+     }
+    } break;
+
+    default: break;
+   }
 #undef TARGET
 #undef RT_DO_READ_BEGIN
 #undef RT_DO_WRITE_BEGIN
@@ -213,9 +312,9 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
 #undef RULE
 #undef RULE_BREAK
 #undef DISPATCH
+#undef DISPATCH_AFTERLOAD
 #undef DISPATCH_OPTIMIZED
-    default: goto next;
-   }
+   goto next;
 next_after_optimize:
    ++*performed_optimizations;
    if ((*code++&OPFLAG_ARG)!=0) code += 2;
