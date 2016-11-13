@@ -351,7 +351,7 @@ DeeCode_AsmRepr(DEE_A_IN_OBJECT(DeeCodeObject) const *self) {
     }
     break;
   }
-  if (DeeStringWriter_WriteChar(&writer,'\n') == -1) goto err;
+  if DEE_UNLIKELY(DeeStringWriter_WriteChar(&writer,'\n') != 0) goto err;
  }
 #undef putf
 #undef put

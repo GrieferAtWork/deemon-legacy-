@@ -20,6 +20,11 @@
  * SOFTWARE.                                                                      *
  */
 
+// Dex compiler (works on windows and linux)
+// NOTES:
+//  - On windows you still need the gcc compiler installed, though
+//  - And it is recomended to simply use visual studio for compiling dex modules.
+//    Though you can mix-and-match module compilers, as they are linked at runtime.
 
 
 #include <fs>
