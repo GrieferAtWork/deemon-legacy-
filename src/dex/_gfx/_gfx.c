@@ -784,28 +784,44 @@ DeeSurfaceType_New(DEE_A_IN Dee_uint64_t format) {
    result->st_pixelspec.st_pixelbytes = (Dee_uint8_t)(result->st_pixelspec.st_pixelbits/8);
    if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_R(format)) {
     result->st_pixelspec.st_rbits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_R(format);
+#ifdef DEE_PLATFORM_LIL_ENDIAN
     result->st_pixelspec.st_rshift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_R(format);
+#else
+    result->st_pixelspec.st_rshift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_R(format);
+#endif
    } else {
     result->st_pixelspec.st_rbits = 0;
     result->st_pixelspec.st_rshift = 0;
    }
    if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_G(format)) {
     result->st_pixelspec.st_gbits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_G(format);
+#ifdef DEE_PLATFORM_LIL_ENDIAN
     result->st_pixelspec.st_gshift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_G(format);
+#else
+    result->st_pixelspec.st_gshift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_G(format);
+#endif
    } else {
     result->st_pixelspec.st_gbits = 0;
     result->st_pixelspec.st_gshift = 0;
    }
    if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_B(format)) {
     result->st_pixelspec.st_bbits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_B(format);
+#ifdef DEE_PLATFORM_LIL_ENDIAN
     result->st_pixelspec.st_bshift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_B(format);
+#else
+    result->st_pixelspec.st_bshift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_B(format);
+#endif
    } else {
     result->st_pixelspec.st_bbits = 0;
     result->st_pixelspec.st_bshift = 0;
    }
    if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_A(format)) {
     result->st_pixelspec.st_abits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_A(format);
+#ifdef DEE_PLATFORM_LIL_ENDIAN
     result->st_pixelspec.st_ashift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_A(format);
+#else
+    result->st_pixelspec.st_ashift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_A(format);
+#endif
    } else {
     result->st_pixelspec.st_abits = 0;
     result->st_pixelspec.st_ashift = 0;
