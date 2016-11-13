@@ -268,7 +268,7 @@ next_op:
 #endif
 #if defined(DEE_DEBUG) && 0
 #define TARGET_DEBUG(op_str,op)\
- EXTERN_BEGIN; DEE_LVERBOSE4("Stack %d [" op_str ":" #op "]\n",(int)(frame.f_stackv_end-frame.f_stackv)); EXTERN_END;
+ EXTERN_BEGIN; DEE_LDEBUG("Stack %d [" op_str ":" #op "]\n",(int)(frame.f_stackv_end-frame.f_stackv)); EXTERN_END;
 #else
 #define TARGET_DEBUG(op_str,op)
 #endif

@@ -468,7 +468,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int)\
  utf8_name(DEE_A_IN_Z Dee_Utf8Char const *path)\
 {\
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;\
- if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;\
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;\
  if (temp) return 0;\
  if (rfs_path) {\
   temp = real_utf8_fs_check(DeeUtf8String_STR(rfs_path));\
@@ -481,7 +481,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int)\
  wide_name(DEE_A_IN_Z Dee_WideChar const *path)\
 {\
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;\
- if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;\
+ if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;\
  if (temp) return 0;\
  if (rfs_path) {\
   temp = real_wide_fs_check(DeeWideString_STR(rfs_path));\
@@ -492,7 +492,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int)\
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8Exists(DEE_A_IN_Z Dee_Utf8Char const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;
- if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_Utf8Exists(DeeUtf8String_STR(rfs_path));
@@ -503,7 +503,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8Exists(DEE_A_IN_Z Dee_Utf8Char const 
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideExists(DEE_A_IN_Z Dee_WideChar const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;
- if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_WideExists(DeeWideString_STR(rfs_path));
@@ -516,7 +516,7 @@ MAKE_VFS_ISXXX_CHECK(DeeVFS_Utf8IsFile,DeeVFS_WideIsFile,_DeeFS_Utf8IsFile,_DeeF
 MAKE_VFS_ISXXX_CHECK(DeeVFS_Utf8IsDir,DeeVFS_WideIsDir,_DeeFS_Utf8IsDir,_DeeFS_WideIsDir,DEE_VFS_FILEATTRIBUTE_PATH)
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsLink(DEE_A_IN_Z Dee_Utf8Char const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;
- if DEE_UNLIKELY((temp = DeeVFS_Utf8LLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LLocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_Utf8IsLink(DeeUtf8String_STR(rfs_path));
@@ -527,7 +527,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsLink(DEE_A_IN_Z 
 }
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsLink(DEE_A_IN_Z Dee_WideChar const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path;
- if DEE_UNLIKELY((temp = DeeVFS_WideLLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_WideLLocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_WideIsLink(DeeWideString_STR(rfs_path));
@@ -539,7 +539,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsLink(DEE_A_IN_Z 
 MAKE_VFS_ISXXX_CHECK(DeeVFS_Utf8IsMount,DeeVFS_WideIsMount,_DeeFS_Utf8IsMount,_DeeFS_WideIsMount,DEE_VFS_FILEATTRIBUTE_MONT)
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsHidden(DEE_A_IN_Z Dee_Utf8Char const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path; Dee_Utf8Char const *path_end;
- if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_Utf8IsHidden(DeeUtf8String_STR(rfs_path));
@@ -554,7 +554,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_Utf8IsHidden(DEE_A_IN_
 }
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsHidden(DEE_A_IN_Z Dee_WideChar const *path) {
  struct DeeVFSFile file; int temp; DeeObject *rfs_path; Dee_WideChar const *path_end;
- if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) != 0) return -1;
+ if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;
  if (temp) return 0;
  if (rfs_path) {
   temp = _DeeFS_WideIsHidden(DeeWideString_STR(rfs_path));
