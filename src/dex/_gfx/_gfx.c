@@ -45,6 +45,10 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include "pixelobject.inl"
 #include "surface.generic.inl"
 
+#ifdef DEE_PLATFORM_WINDOWS
+#include "window/window.h"
+#endif
+
 DEE_DECL_BEGIN
 
 
@@ -756,9 +760,100 @@ no_builtin:
 }
 
 
+DEE_A_RET_EXCEPT(-1) int DeeSurfacePixelSpec_Init(
+ DEE_A_OUT struct DeeSurfacePixelSpec *self, DEE_A_IN Dee_uint64_t formatid) {
+ Dee_uint32_t pixel_mask;
+ self->st_pixelbits = DEE_SURFACETYPE_FORMAT_PIXEL_BITS(formatid);
+ self->st_pixelbytes = (Dee_uint8_t)(self->st_pixelbits/8);
+ if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_R(formatid)) {
+  self->st_rbits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_R(formatid);
+#ifdef DEE_PLATFORM_LIL_ENDIAN
+  self->st_rshift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_R(formatid);
+#else
+  self->st_rshift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_R(formatid);
+#endif
+ } else {
+  self->st_rbits = 0;
+  self->st_rshift = 0;
+ }
+ if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_G(formatid)) {
+  self->st_gbits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_G(formatid);
+#ifdef DEE_PLATFORM_LIL_ENDIAN
+  self->st_gshift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_G(formatid);
+#else
+  self->st_gshift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_G(formatid);
+#endif
+ } else {
+  self->st_gbits = 0;
+  self->st_gshift = 0;
+ }
+ if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_B(formatid)) {
+  self->st_bbits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_B(formatid);
+#ifdef DEE_PLATFORM_LIL_ENDIAN
+  self->st_bshift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_B(formatid);
+#else
+  self->st_bshift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_B(formatid);
+#endif
+ } else {
+  self->st_bbits = 0;
+  self->st_bshift = 0;
+ }
+ if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_A(formatid)) {
+  self->st_abits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_A(formatid);
+#ifdef DEE_PLATFORM_LIL_ENDIAN
+  self->st_ashift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_A(formatid);
+#else
+  self->st_ashift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_A(formatid);
+#endif
+ } else {
+  self->st_abits = 0;
+  self->st_ashift = 0;
+ }
+#ifdef DEE_PLATFORM_LIL_ENDIAN
+ {
+  Dee_uint8_t max_shift,temp;
+  max_shift = (Dee_uint8_t)(self->st_rshift+self->st_rbits);
+       temp = (Dee_uint8_t)(self->st_gshift+self->st_gbits); if (temp > max_shift) max_shift = temp;
+       temp = (Dee_uint8_t)(self->st_bshift+self->st_bbits); if (temp > max_shift) max_shift = temp;
+       temp = (Dee_uint8_t)(self->st_ashift+self->st_abits); if (temp > max_shift) max_shift = temp;
+  if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_R(formatid)) self->st_rshift = (Dee_uint8_t)((max_shift-self->st_rbits)-self->st_rshift);
+  if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_G(formatid)) self->st_gshift = (Dee_uint8_t)((max_shift-self->st_gbits)-self->st_gshift);
+  if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_B(formatid)) self->st_bshift = (Dee_uint8_t)((max_shift-self->st_bbits)-self->st_bshift);
+  if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_A(formatid)) self->st_ashift = (Dee_uint8_t)((max_shift-self->st_abits)-self->st_ashift);
+ }
+#endif
+ self->st_rmask = ((Dee_uint32_t)DEE_BITS(self->st_rbits)) << self->st_rshift;
+ self->st_gmask = ((Dee_uint32_t)DEE_BITS(self->st_gbits)) << self->st_gshift;
+ self->st_bmask = ((Dee_uint32_t)DEE_BITS(self->st_bbits)) << self->st_bshift;
+ self->st_amask = ((Dee_uint32_t)DEE_BITS(self->st_abits)) << self->st_ashift;
+ if (self->st_pixelbits != 32) {
+  pixel_mask = ~(Dee_uint32_t)DEE_BITS(self->st_pixelbits);
+  // Make sure all the masks fit into the given bitsize
+  if ((self->st_rmask&pixel_mask)!=0
+   || (self->st_gmask&pixel_mask)!=0
+   || (self->st_bmask&pixel_mask)!=0
+   || (self->st_amask&pixel_mask)!=0) {
+   DeeError_SET_STRING(&DeeErrorType_ValueError,
+                       "Invalid pixelformat: A channel mask exceeds the maximum bitindex");
+   return -1;
+  }
+ }
+
+ self->st_rmod = (Dee_uint16_t)(DEE_UINT16_C(1) << self->st_rbits);
+ self->st_gmod = (Dee_uint16_t)(DEE_UINT16_C(1) << self->st_gbits);
+ self->st_bmod = (Dee_uint16_t)(DEE_UINT16_C(1) << self->st_bbits);
+ self->st_amod = (Dee_uint16_t)(DEE_UINT16_C(1) << self->st_abits);
+ self->st_rinvmod = (Dee_uint16_t)(DEE_UINT16_C(1) << (8-self->st_rbits));
+ self->st_ginvmod = (Dee_uint16_t)(DEE_UINT16_C(1) << (8-self->st_gbits));
+ self->st_binvmod = (Dee_uint16_t)(DEE_UINT16_C(1) << (8-self->st_bbits));
+ self->st_ainvmod = (Dee_uint16_t)(DEE_UINT16_C(1) << (8-self->st_abits));
+ return 0;
+}
+
+
 DEE_A_RET_EXCEPT_REF DeeSurfaceTypeObject *
 DeeSurfaceType_New(DEE_A_IN Dee_uint64_t format) {
- DeeSurfaceTypeObject *result; Dee_uint32_t pixel_mask;
+ DeeSurfaceTypeObject *result;
  DeeObject *new_name; int error;
  if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeSurfaceTypeObject)) == NULL) return NULL;
  DeeObject_INIT(result,&DeeSurfaceType_Type);
@@ -778,88 +873,7 @@ DeeSurfaceType_New(DEE_A_IN Dee_uint64_t format) {
         (Dee_OFFSETOF(DeeSurfaceTypeObject,st_pixelspec)+sizeof(result->st_pixelspec)));
  switch (DEE_SURFACETYPE_FORMAT_KIND(format)) {
   case DEE_SURFACETYPE_FORMAT_KIND_PIXEL:
-   result->st_pixelspec.st_pixelbits = DEE_SURFACETYPE_FORMAT_PIXEL_BITS(format);
-   result->st_pixelspec.st_pixelbytes = (Dee_uint8_t)(result->st_pixelspec.st_pixelbits/8);
-   if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_R(format)) {
-    result->st_pixelspec.st_rbits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_R(format);
-#ifdef DEE_PLATFORM_LIL_ENDIAN
-    result->st_pixelspec.st_rshift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_R(format);
-#else
-    result->st_pixelspec.st_rshift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_R(format);
-#endif
-   } else {
-    result->st_pixelspec.st_rbits = 0;
-    result->st_pixelspec.st_rshift = 0;
-   }
-   if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_G(format)) {
-    result->st_pixelspec.st_gbits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_G(format);
-#ifdef DEE_PLATFORM_LIL_ENDIAN
-    result->st_pixelspec.st_gshift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_G(format);
-#else
-    result->st_pixelspec.st_gshift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_G(format);
-#endif
-   } else {
-    result->st_pixelspec.st_gbits = 0;
-    result->st_pixelspec.st_gshift = 0;
-   }
-   if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_B(format)) {
-    result->st_pixelspec.st_bbits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_B(format);
-#ifdef DEE_PLATFORM_LIL_ENDIAN
-    result->st_pixelspec.st_bshift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_B(format);
-#else
-    result->st_pixelspec.st_bshift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_B(format);
-#endif
-   } else {
-    result->st_pixelspec.st_bbits = 0;
-    result->st_pixelspec.st_bshift = 0;
-   }
-   if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_A(format)) {
-    result->st_pixelspec.st_abits = DEE_SURFACETYPE_FORMAT_PIXEL_BIT_A(format);
-#ifdef DEE_PLATFORM_LIL_ENDIAN
-    result->st_pixelspec.st_ashift = 32-DEE_SURFACETYPE_FORMAT_PIXEL_OFF_A(format);
-#else
-    result->st_pixelspec.st_ashift = DEE_SURFACETYPE_FORMAT_PIXEL_OFF_A(format);
-#endif
-   } else {
-    result->st_pixelspec.st_abits = 0;
-    result->st_pixelspec.st_ashift = 0;
-   }
-#ifdef DEE_PLATFORM_LIL_ENDIAN
-   {
-    Dee_uint8_t max_shift,temp;
-    max_shift = (Dee_uint8_t)(result->st_pixelspec.st_rshift+result->st_pixelspec.st_rbits);
-         temp = (Dee_uint8_t)(result->st_pixelspec.st_gshift+result->st_pixelspec.st_gbits); if (temp > max_shift) max_shift = temp;
-         temp = (Dee_uint8_t)(result->st_pixelspec.st_bshift+result->st_pixelspec.st_bbits); if (temp > max_shift) max_shift = temp;
-         temp = (Dee_uint8_t)(result->st_pixelspec.st_ashift+result->st_pixelspec.st_abits); if (temp > max_shift) max_shift = temp;
-    if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_R(format)) result->st_pixelspec.st_rshift = (Dee_uint8_t)((max_shift-result->st_pixelspec.st_rbits)-result->st_pixelspec.st_rshift);
-    if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_G(format)) result->st_pixelspec.st_gshift = (Dee_uint8_t)((max_shift-result->st_pixelspec.st_gbits)-result->st_pixelspec.st_gshift);
-    if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_B(format)) result->st_pixelspec.st_bshift = (Dee_uint8_t)((max_shift-result->st_pixelspec.st_bbits)-result->st_pixelspec.st_bshift);
-    if (DEE_SURFACETYPE_FORMAT_PIXEL_HAS_A(format)) result->st_pixelspec.st_ashift = (Dee_uint8_t)((max_shift-result->st_pixelspec.st_abits)-result->st_pixelspec.st_ashift);
-   }
-#endif
-   result->st_pixelspec.st_rmask = ((Dee_uint32_t)DEE_BITS(result->st_pixelspec.st_rbits)) << result->st_pixelspec.st_rshift;
-   result->st_pixelspec.st_gmask = ((Dee_uint32_t)DEE_BITS(result->st_pixelspec.st_gbits)) << result->st_pixelspec.st_gshift;
-   result->st_pixelspec.st_bmask = ((Dee_uint32_t)DEE_BITS(result->st_pixelspec.st_bbits)) << result->st_pixelspec.st_bshift;
-   result->st_pixelspec.st_amask = ((Dee_uint32_t)DEE_BITS(result->st_pixelspec.st_abits)) << result->st_pixelspec.st_ashift;
-   pixel_mask = ~(Dee_uint32_t)DEE_BITS(result->st_pixelspec.st_pixelbits);
-   // Make sure all the masks fit into the given bitsize
-   if ((result->st_pixelspec.st_rmask&pixel_mask)!=0
-    || (result->st_pixelspec.st_gmask&pixel_mask)!=0
-    || (result->st_pixelspec.st_bmask&pixel_mask)!=0
-    || (result->st_pixelspec.st_amask&pixel_mask)!=0) {
-    DeeError_SET_STRING(&DeeErrorType_ValueError,
-                        "Invalid pixelformat: A channel mask exceeds the maximum bitindex");
-    goto err_r;
-   }
-
-   result->st_pixelspec.st_rmod = (Dee_uint16_t)(DEE_UINT16_C(1) << result->st_pixelspec.st_rbits);
-   result->st_pixelspec.st_gmod = (Dee_uint16_t)(DEE_UINT16_C(1) << result->st_pixelspec.st_gbits);
-   result->st_pixelspec.st_bmod = (Dee_uint16_t)(DEE_UINT16_C(1) << result->st_pixelspec.st_bbits);
-   result->st_pixelspec.st_amod = (Dee_uint16_t)(DEE_UINT16_C(1) << result->st_pixelspec.st_abits);
-   result->st_pixelspec.st_rinvmod = (Dee_uint16_t)(DEE_UINT16_C(1) << (8-result->st_pixelspec.st_rbits));
-   result->st_pixelspec.st_ginvmod = (Dee_uint16_t)(DEE_UINT16_C(1) << (8-result->st_pixelspec.st_gbits));
-   result->st_pixelspec.st_binvmod = (Dee_uint16_t)(DEE_UINT16_C(1) << (8-result->st_pixelspec.st_bbits));
-   result->st_pixelspec.st_ainvmod = (Dee_uint16_t)(DEE_UINT16_C(1) << (8-result->st_pixelspec.st_abits));
+   if (DeeSurfacePixelSpec_Init(&result->st_pixelspec,format) != 0) goto err_r;
    result->st_getpixel = &_deesurface_pixel_st_getpixel;
    result->st_setpixel = &_deesurface_pixel_st_setpixel;
    DeeType_GET_SLOT(result,tp_copy_new) = (DeeType_SLOT_TYPE(tp_copy_new))&_deepixelsurface_tp_copy_new;
@@ -938,6 +952,9 @@ struct DeeDexExportDef DeeDex_Exports[] = {
  DeeDex_EXPORT_FUNCTION("__surface_formatid",&_deegfx___surface_formatid,"(uint64_t id) -> surface_type"),
  DeeDex_EXPORT_OBJECT("surface_type",&DeeSurfaceType_Type),
  DeeDex_EXPORT_OBJECT("surface_rgba8888",&DeeSurfaceType_RGBA8888),
+#ifdef DEE_PLATFORM_WINDOWS
+ DeeDex_EXPORT_OBJECT("window",&DeeWindow_Type),
+#endif
  DeeDex_EXPORT_END
 };
 
@@ -961,9 +978,6 @@ int DeeDex_Main(DEE_A_INOUT DeeDexContext *context) {
 DEE_DECL_END
 
 #ifndef __INTELLISENSE__
-DEE_COMPILER_MSVC_WARNING_PUSH(4365 4242)
-#include "lodepng/lodepng.c.inl"
-DEE_COMPILER_MSVC_WARNING_POP
 #include "surface.rgba8888.inl"
 #endif
 

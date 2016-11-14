@@ -30,6 +30,7 @@
 #pragma push_macro("__surface_formatid")
 #pragma push_macro("surface_type")
 #pragma push_macro("surface_rgba8888")
+#pragma push_macro("window")
 #pragma push_macro("gfx")
 #undef __gfx
 #undef pixel
@@ -38,6 +39,7 @@
 #undef __surface_formatid
 #undef surface_type
 #undef surface_rgba8888
+#undef window
 #undef gfx
 __module gfx {
 	__unused local __gfx = __builtin_dex("_gfx");
@@ -110,6 +112,8 @@ __module gfx {
 	//
 	// >> function box(ssize_t x, ssize_t y, size_t sx, size_t sy, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none;
 	//
+	// >> function triangle(ssize_t dx1, ssize_t dy1, ssize_t dx2, ssize_t dy2, ssize_t dx3, ssize_t dy3, pixel color = pixel.black, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none;
+	//
 	// >> function blit(ssize_t dx, ssize_t dy, surface src, size_t sx = 0, size_t sy = 0, size_t ssx = size_t(-1), size_t ssy = size_t(-1), uint64_t blend = DEE_BLENDINFO_NORMAL) -> none;
 	//
 	// >> function stretch(ssize_t dx, ssize_t dy, size_t dsx, size_t dsy, surface src, size_t sx = 0, size_t sy = 0, size_t ssx = src.sizex, size_t ssy = src.sizey, uint64_t blend = DEE_BLENDINFO_NORMAL) -> none;
@@ -160,6 +164,17 @@ __module gfx {
 	//
 	__unused local surface_rgba8888 = __gfx.surface_rgba8888;
 
+	//////////////////////////////////////////////////////////////////////////
+	// >> class window extends object { ... };
+	// >> class window(object) -> window;
+	//////////////////////////////////////////////////////////////////////////
+	//
+	// >> function update() -> none;
+	//
+	// >> property surface -> window_surface = { get() };
+	//
+	__unused local window = __gfx.window;
+
 }
 #pragma pop_macro("__gfx")
 #pragma pop_macro("pixel")
@@ -168,5 +183,6 @@ __module gfx {
 #pragma pop_macro("__surface_formatid")
 #pragma pop_macro("surface_type")
 #pragma pop_macro("surface_rgba8888")
+#pragma pop_macro("window")
 #pragma pop_macro("gfx")
 

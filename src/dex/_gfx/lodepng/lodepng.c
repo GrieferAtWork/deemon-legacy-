@@ -29,6 +29,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 */
 
 #include <deemon/__conf.inl>
+DEE_COMPILER_MSVC_WARNING_PUSH(4365 4242 4820)
 #include "lodepng.h"
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
@@ -6230,3 +6231,4 @@ unsigned encode(const std::string& filename,
 #endif /* LODEPNG_COMPILE_PNG */
 } /* namespace lodepng */
 #endif /*LODEPNG_COMPILE_CPP*/
+DEE_COMPILER_MSVC_WARNING_POP

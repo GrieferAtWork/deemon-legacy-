@@ -29,7 +29,7 @@
 // Generic surface operators (very slow, but work in all situations)
 DEE_DECL_BEGIN
 
-static void DEE_CALL _deesurface_generic_st_fill(
+void DEE_CALL _deesurface_generic_st_fill(
  DeeSurfaceObject *dst, struct DeePixel const *color, Dee_blendinfo_t blend) {
  Dee_size_t x,sx,y,sy; PDeeSurfaceSetPixel setter;
  sx = dst->s_sizex,sy = dst->s_sizey;
@@ -38,7 +38,7 @@ static void DEE_CALL _deesurface_generic_st_fill(
   (*setter)(dst,x,y,color,blend);
  }
 }
-static void DEE_CALL _deesurface_generic_st_fillrect(
+void DEE_CALL _deesurface_generic_st_fillrect(
  DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t ybegin, Dee_size_t xend,
  Dee_size_t yend, struct DeePixel const *color, Dee_blendinfo_t blend) {
  Dee_size_t x,y; PDeeSurfaceSetPixel setter;
@@ -48,7 +48,7 @@ static void DEE_CALL _deesurface_generic_st_fillrect(
   (*setter)(dst,x,y,color,blend);
  }
 }
-static void DEE_CALL _deesurface_generic_st_xline(
+void DEE_CALL _deesurface_generic_st_xline(
  DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t xend,
  Dee_size_t y, struct DeePixel const *color, Dee_blendinfo_t blend) {
  Dee_size_t x; PDeeSurfaceSetPixel setter;
@@ -57,7 +57,7 @@ static void DEE_CALL _deesurface_generic_st_xline(
  do (*setter)(dst,x,y,color,blend);
  while (++x != xend);
 }
-static void DEE_CALL _deesurface_generic_st_yline(
+void DEE_CALL _deesurface_generic_st_yline(
  DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t ybegin,
  Dee_size_t yend, struct DeePixel const *color, Dee_blendinfo_t blend) {
  Dee_size_t y; PDeeSurfaceSetPixel setter;
@@ -66,7 +66,7 @@ static void DEE_CALL _deesurface_generic_st_yline(
  do (*setter)(dst,x,y,color,blend);
  while (++y != yend);
 }
-static void DEE_CALL _deesurface_generic_st_linellhh(
+void DEE_CALL _deesurface_generic_st_linellhh(
  DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sizex,
  Dee_size_t sizey, struct DeePixel const *color, Dee_blendinfo_t blend) {
  double relation; PDeeSurfaceSetPixel setter;
@@ -88,7 +88,7 @@ static void DEE_CALL _deesurface_generic_st_linellhh(
   while (++step != sizex);
  }
 }
-static void DEE_CALL _deesurface_generic_st_linelhhl(
+void DEE_CALL _deesurface_generic_st_linelhhl(
  DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sizex,
  Dee_size_t sizey, struct DeePixel const *color, Dee_blendinfo_t blend) {
  double relation; PDeeSurfaceSetPixel setter;
@@ -110,7 +110,7 @@ static void DEE_CALL _deesurface_generic_st_linelhhl(
  }
 }
 
-static void DEE_CALL _deesurface_generic_st_blit(
+void DEE_CALL _deesurface_generic_st_blit(
  DeeSurfaceObject *dst, Dee_size_t dst_x, Dee_size_t dst_y,
  DeeSurfaceObject const *src, Dee_size_t src_x, Dee_size_t src_y,
  Dee_size_t sx, Dee_size_t sy, Dee_blendinfo_t blend) {
@@ -130,7 +130,7 @@ static void DEE_CALL _deesurface_generic_st_blit(
   (*setter)(dst,dst_x+x,dst_y+y,&pixel,blend);
  }
 }
-static void DEE_CALL _deesurface_generic_st_stretchblit(
+void DEE_CALL _deesurface_generic_st_stretchblit(
  DeeSurfaceObject *dst, Dee_size_t dst_x, Dee_size_t dst_y, Dee_size_t dstsx, Dee_size_t dstsy,
  DeeSurfaceObject const *src, double src_x, double src_y, double srcsx, double srcsy,
  Dee_blendinfo_t blend) {
@@ -157,7 +157,7 @@ static void DEE_CALL _deesurface_generic_st_stretchblit(
   }
  }
 }
-static void DEE_CALL _deesurface_generic_st_flipx(
+void DEE_CALL _deesurface_generic_st_flipx(
  DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t ybegin,
  Dee_size_t xend, Dee_size_t yend) {
  struct DeePixel pixel1,pixel2; Dee_size_t x,y,half_xend,invdiff;
@@ -180,7 +180,7 @@ static void DEE_CALL _deesurface_generic_st_flipx(
   }
  }
 }
-static void DEE_CALL _deesurface_generic_st_flipy(
+void DEE_CALL _deesurface_generic_st_flipy(
  DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t ybegin,
  Dee_size_t xend, Dee_size_t yend) {
  struct DeePixel pixel1,pixel2; Dee_size_t x,y,half_yend,invdiff;
@@ -203,7 +203,7 @@ static void DEE_CALL _deesurface_generic_st_flipy(
   }
  }
 }
-static void DEE_CALL _deesurface_generic_st_pixelmaskmsb(
+void DEE_CALL _deesurface_generic_st_pixelmaskmsb(
  DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y,
  Dee_size_t sx, Dee_size_t sy, Dee_size_t line_bytes,
  void const *data, struct DeePixel const *color, Dee_blendinfo_t blend) {
@@ -233,7 +233,7 @@ static void DEE_CALL _deesurface_generic_st_pixelmaskmsb(
   }
  }
 }
-static void DEE_CALL _deesurface_generic_st_pixelmasklsb(
+void DEE_CALL _deesurface_generic_st_pixelmasklsb(
  DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y,
  Dee_size_t sx, Dee_size_t sy, Dee_size_t line_bytes,
  void const *data, struct DeePixel const *color, Dee_blendinfo_t blend) {

@@ -19,14 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\dex\_gfx\lodepng\lodepng.c" />
+    <ClCompile Include="..\src\dex\_gfx\window\event.c" />
+    <ClCompile Include="..\src\dex\_gfx\window\window.c" />
     <ClCompile Include="..\src\dex\_gfx\_gfx.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\dex\_gfx\lodepng\lodepng.h" />
+    <ClInclude Include="..\src\dex\_gfx\window\event.h" />
+    <ClInclude Include="..\src\dex\_gfx\window\window.h" />
     <ClInclude Include="..\src\dex\_gfx\_gfx.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\dex\_gfx\lodepng\lodepng.c.inl" />
     <None Include="..\src\dex\_gfx\pixelobject.inl" />
     <None Include="..\src\dex\_gfx\surface.generic.inl" />
     <None Include="..\src\dex\_gfx\surface.rgba8888.inl" />

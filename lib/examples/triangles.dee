@@ -18,47 +18,57 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
- */
+*/
 
-
-#include <fs>
-#include <sys>
+#include <gfx>
 #include <file>
-#include <process>
+#include <thread>
+#include <random>
 
-function run_and_output_to_file(cmd,outfile_filename) {
-	print "CMD:",cmd,">",outfile_filename;
-	local p = process(cmd);
-	p.stdout = file.io(outfile_filename,"w");
-	p.start();
-	return p.join();
+import gfx.*;
+
+local stop = <false>;
+
+function border_triangle(dst,x1,y1,x2,y2,x3,y3,args1,args2) {
+	dst.triangle(x1,y1,x2,y2,x3,y3,args2...);
+	dst.line(x1,y1,x2,y2,args1...);
+	dst.line(x2,y2,x3,y3,args1...);
+	dst.line(x3,y3,x1,y1,args1...);
 }
 
-fs::chdir(fs::path::head(sys.argv[0]));
+local wait_thread = thread([]{
+	print "Press [RETURN] to stop";
+	file.io.stdin.readline();
+	stop.set(true);
+});
+wait_thread.start();
 
+wnd = window(100,100,800,600,"MyWindow");
+//wnd.surface.fill(0,0,-1,-1,pixel.green);
 
-#ifdef __WINDOWS__
-run_and_output_to_file("deemon gen_dex_header.dee _micapi micapi","../../lib/include/dex/micapi");
-#endif
-run_and_output_to_file("deemon gen_dex_header.dee _errno errno","../../lib/include/dex/_errno");
-run_and_output_to_file("deemon gen_dex_header.dee _marshal marshal","../../lib/include/dex/marshal");
-run_and_output_to_file("deemon gen_dex_header.dee _zlib zlib","../../lib/include/dex/zlib");
-run_and_output_to_file("deemon gen_dex_header.dee _hashlib hashlib","../../lib/include/dex/hashlib");
-run_and_output_to_file("deemon gen_dex_header.dee _system system","../../lib/include/dex/system");
-run_and_output_to_file("deemon gen_dex_header.dee _gfx gfx","../../lib/include/dex/gfx");
+local color = [0,0,0];
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+while (!stop.get()) {
+	const step = 10;
+	if ((color[2] += step) >= 256) {
+		color[2] = 0;
+		if ((color[1] += step) >= 256) {
+			color[1] = 0;
+			if ((color[0] += step) >= 256) {
+				color[0] = 0;
+			}
+		}
+	}
+	local sx = wnd.surface.sizex;
+	local sy = wnd.surface.sizey;
+	border_triangle(wnd.surface,
+		random()(unsigned) % sx,random()(unsigned) % sy,
+		random()(unsigned) % sx,random()(unsigned) % sy,
+		random()(unsigned) % sx,random()(unsigned) % sy,
+		//10,10,150,31,89,200,
+		pack(pixel("#00FF00")),
+		pack(pixel(color[0],color[1],color[2],120)),
+	);
+	wnd.update();
+}
 

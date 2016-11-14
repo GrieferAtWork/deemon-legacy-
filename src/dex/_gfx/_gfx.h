@@ -542,6 +542,8 @@ struct DeeSurfacePixelSpec {
 ,/* st_binvmod    */DEE_UINT16_C(1) << (8-DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _b) \
 ,/* st_ainvmod    */DEE_UINT16_C(1) << (8-DEE_PRIVATE_SURFACE_PIXELSPEC_BLOCK_BITS _a) \
 }
+extern DEE_A_RET_EXCEPT(-1) int DeeSurfacePixelSpec_Init(
+ DEE_A_OUT struct DeeSurfacePixelSpec *self, DEE_A_IN Dee_uint64_t formatid);
 
 
 struct DeeSurfaceIndexSpec {
@@ -580,36 +582,41 @@ struct DeeSurfaceTypeObject {
  PDeeSurfacePixelMaskLSB st_pixelmasklsb; /*< [1..1]. */
 };
 
-#define DeeSurfaceType_PIXEL_GETPIXEL(ty,datap,result)\
+#define DEEPIXELSURFACE_GENERIC_GETPIXEL(pixelspec,datap,result)\
 do{\
  Dee_uint32_t data;\
- switch ((ty)->st_pixelspec.st_pixelbytes) {\
+ switch ((pixelspec)->st_pixelbytes) {\
   case 1:  data = (Dee_uint32_t)*(Dee_uint8_t *)(datap); break;\
   case 2:  data = (Dee_uint32_t)*(Dee_uint16_t *)(datap); break;\
   case 3:  data = DeeUInt24_Get(datap); break;\
   default: data = *(Dee_uint32_t *)(datap); break;\
  }\
- (result)->r = (Dee_uint8_t)(((Dee_uint16_t)(((data)&(ty)->st_pixelspec.st_rmask) >> (ty)->st_pixelspec.st_rshift)*256)/(ty)->st_pixelspec.st_rmod);\
- (result)->g = (Dee_uint8_t)(((Dee_uint16_t)(((data)&(ty)->st_pixelspec.st_gmask) >> (ty)->st_pixelspec.st_gshift)*256)/(ty)->st_pixelspec.st_gmod);\
- (result)->b = (Dee_uint8_t)(((Dee_uint16_t)(((data)&(ty)->st_pixelspec.st_bmask) >> (ty)->st_pixelspec.st_bshift)*256)/(ty)->st_pixelspec.st_bmod);\
- (result)->a = (ty)->st_pixelspec.st_abits\
-             ? (Dee_uint8_t)(((Dee_uint16_t)(((data)&(ty)->st_pixelspec.st_amask) >> (ty)->st_pixelspec.st_ashift)*256)/(ty)->st_pixelspec.st_amod)\
+ (result)->r = (Dee_uint8_t)(((Dee_uint16_t)(((data)&(pixelspec)->st_rmask) >> (pixelspec)->st_rshift)*256)/(pixelspec)->st_rmod);\
+ (result)->g = (Dee_uint8_t)(((Dee_uint16_t)(((data)&(pixelspec)->st_gmask) >> (pixelspec)->st_gshift)*256)/(pixelspec)->st_gmod);\
+ (result)->b = (Dee_uint8_t)(((Dee_uint16_t)(((data)&(pixelspec)->st_bmask) >> (pixelspec)->st_bshift)*256)/(pixelspec)->st_bmod);\
+ (result)->a = (pixelspec)->st_abits\
+             ? (Dee_uint8_t)(((Dee_uint16_t)(((data)&(pixelspec)->st_amask) >> (pixelspec)->st_ashift)*256)/(pixelspec)->st_amod)\
              : (Dee_uint8_t)0xFF;\
 }while(0)
-#define DeeSurfaceType_PIXEL_SETPIXEL(ty,datap,val)\
+#define DEEPIXELSURFACE_GENERIC_SETPIXEL(pixelspec,datap,val)\
 do{\
  Dee_uint32_t newdata;\
- newdata = (((Dee_uint32_t)((val)->r/(ty)->st_pixelspec.st_rinvmod) << (ty)->st_pixelspec.st_rshift) & (ty)->st_pixelspec.st_rmask)\
-         | (((Dee_uint32_t)((val)->g/(ty)->st_pixelspec.st_ginvmod) << (ty)->st_pixelspec.st_gshift) & (ty)->st_pixelspec.st_gmask)\
-         | (((Dee_uint32_t)((val)->b/(ty)->st_pixelspec.st_binvmod) << (ty)->st_pixelspec.st_bshift) & (ty)->st_pixelspec.st_bmask)\
-         | (((Dee_uint32_t)((val)->a/(ty)->st_pixelspec.st_ainvmod) << (ty)->st_pixelspec.st_ashift) & (ty)->st_pixelspec.st_amask);\
- switch ((ty)->st_pixelspec.st_pixelbytes) {\
+ newdata = (((Dee_uint32_t)((val)->r/(pixelspec)->st_rinvmod) << (pixelspec)->st_rshift) & (pixelspec)->st_rmask)\
+         | (((Dee_uint32_t)((val)->g/(pixelspec)->st_ginvmod) << (pixelspec)->st_gshift) & (pixelspec)->st_gmask)\
+         | (((Dee_uint32_t)((val)->b/(pixelspec)->st_binvmod) << (pixelspec)->st_bshift) & (pixelspec)->st_bmask)\
+         | (((Dee_uint32_t)((val)->a/(pixelspec)->st_ainvmod) << (pixelspec)->st_ashift) & (pixelspec)->st_amask);\
+ switch ((pixelspec)->st_pixelbytes) {\
   case 1: *(Dee_uint8_t *)(datap) = (Dee_uint8_t)newdata; break;\
   case 2: *(Dee_uint16_t *)(datap) = (Dee_uint16_t)newdata; break;\
   case 3: DeeUInt24_Set(datap,newdata); break;\
   default: *(Dee_uint32_t *)(datap) = newdata; break;\
  }\
 }while(0)
+
+#define DeeSurfaceType_PIXEL_GETPIXEL(ty,datap,result)\
+ DEEPIXELSURFACE_GENERIC_GETPIXEL(&(ty)->st_pixelspec,datap,result)
+#define DeeSurfaceType_PIXEL_SETPIXEL(ty,datap,val)\
+ DEEPIXELSURFACE_GENERIC_SETPIXEL(&(ty)->st_pixelspec,datap,val)
 
 
 #define DeeSurfaceType_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeSurfaceType_Type)
@@ -637,10 +644,12 @@ extern DeeSurfaceTypeObject DeeSurfaceType_RGBA8888;
 
 //////////////////////////////////////////////////////////////////////////
 // === Surface Object ===
-struct DeeSurfaceObject {
- DEE_OBJECT_HEAD_EX(DeeSurfaceTypeObject)
- Dee_size_t s_sizex; /*< Surface size in x (aka. width). */
+#define DEE_SURFACE_HEAD \
+ DEE_OBJECT_HEAD_EX(DeeSurfaceTypeObject)\
+ Dee_size_t s_sizex; /*< Surface size in x (aka. width). */\
  Dee_size_t s_sizey; /*< Surface size in y (aka. height). */
+struct DeeSurfaceObject {
+ DEE_SURFACE_HEAD
  union{
   struct{
    Dee_size_t  s_pixlsize;     /*< Size of a single pixel (== __ob_type->st_pixelspec.st_pixelbytes). */
@@ -1223,6 +1232,25 @@ DEE_STATIC_INLINE(void) DEE_CALL DeeSurface_Triangle(
  }
 }
 
+
+
+
+
+
+#ifdef DEE_LIMITED_DEX_GFX
+extern void DEE_CALL _deesurface_generic_st_fill(DeeSurfaceObject *dst, struct DeePixel const *color, Dee_blendinfo_t blend);
+extern void DEE_CALL _deesurface_generic_st_fillrect(DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t ybegin, Dee_size_t xend, Dee_size_t yend, struct DeePixel const *color, Dee_blendinfo_t blend);
+extern void DEE_CALL _deesurface_generic_st_xline(DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t xend, Dee_size_t y, struct DeePixel const *color, Dee_blendinfo_t blend);
+extern void DEE_CALL _deesurface_generic_st_yline(DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t ybegin, Dee_size_t yend, struct DeePixel const *color, Dee_blendinfo_t blend);
+extern void DEE_CALL _deesurface_generic_st_linellhh(DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sizex, Dee_size_t sizey, struct DeePixel const *color, Dee_blendinfo_t blend);
+extern void DEE_CALL _deesurface_generic_st_linelhhl(DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sizex, Dee_size_t sizey, struct DeePixel const *color, Dee_blendinfo_t blend);
+extern void DEE_CALL _deesurface_generic_st_blit(DeeSurfaceObject *dst, Dee_size_t dst_x, Dee_size_t dst_y, DeeSurfaceObject const *src, Dee_size_t src_x, Dee_size_t src_y, Dee_size_t sx, Dee_size_t sy, Dee_blendinfo_t blend);
+extern void DEE_CALL _deesurface_generic_st_stretchblit(DeeSurfaceObject *dst, Dee_size_t dst_x, Dee_size_t dst_y, Dee_size_t dstsx, Dee_size_t dstsy, DeeSurfaceObject const *src, double src_x, double src_y, double srcsx, double srcsy, Dee_blendinfo_t blend);
+extern void DEE_CALL _deesurface_generic_st_flipx(DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t ybegin, Dee_size_t xend, Dee_size_t yend);
+extern void DEE_CALL _deesurface_generic_st_flipy(DeeSurfaceObject *dst, Dee_size_t xbegin, Dee_size_t ybegin, Dee_size_t xend, Dee_size_t yend);
+extern void DEE_CALL _deesurface_generic_st_pixelmaskmsb(DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sx, Dee_size_t sy, Dee_size_t line_bytes, void const *data, struct DeePixel const *color, Dee_blendinfo_t blend);
+extern void DEE_CALL _deesurface_generic_st_pixelmasklsb(DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sx, Dee_size_t sy, Dee_size_t line_bytes, void const *data, struct DeePixel const *color, Dee_blendinfo_t blend);
+#endif /* DEE_LIMITED_DEX_GFX */
 
 
 DEE_DECL_END

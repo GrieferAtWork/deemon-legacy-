@@ -1,4 +1,3 @@
-#!/usr/bin/deemon
 /* Copyright (c) 2016 - deemon by Griefer@Work                                    *
  *                                                                                *
  * Permission is hereby granted, free of charge, to any person obtaining a copy   *
@@ -19,46 +18,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
+#ifndef GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_C
+#define GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_C 1
+#define DEE_EXTENSION 1
 
+#include <deemon/__conf.inl>
+#include "window.h"
 
-#include <fs>
-#include <sys>
-#include <file>
-#include <process>
+DEE_DECL_BEGIN
 
-function run_and_output_to_file(cmd,outfile_filename) {
-	print "CMD:",cmd,">",outfile_filename;
-	local p = process(cmd);
-	p.stdout = file.io(outfile_filename,"w");
-	p.start();
-	return p.join();
-}
+DEE_DECL_END
 
-fs::chdir(fs::path::head(sys.argv[0]));
-
-
-#ifdef __WINDOWS__
-run_and_output_to_file("deemon gen_dex_header.dee _micapi micapi","../../lib/include/dex/micapi");
-#endif
-run_and_output_to_file("deemon gen_dex_header.dee _errno errno","../../lib/include/dex/_errno");
-run_and_output_to_file("deemon gen_dex_header.dee _marshal marshal","../../lib/include/dex/marshal");
-run_and_output_to_file("deemon gen_dex_header.dee _zlib zlib","../../lib/include/dex/zlib");
-run_and_output_to_file("deemon gen_dex_header.dee _hashlib hashlib","../../lib/include/dex/hashlib");
-run_and_output_to_file("deemon gen_dex_header.dee _system system","../../lib/include/dex/system");
-run_and_output_to_file("deemon gen_dex_header.dee _gfx gfx","../../lib/include/dex/gfx");
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif /* !GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_C */
