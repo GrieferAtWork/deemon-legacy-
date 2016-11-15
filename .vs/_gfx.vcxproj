@@ -21,12 +21,14 @@
   <ItemGroup>
     <ClCompile Include="..\src\dex\_gfx\lodepng\lodepng.c" />
     <ClCompile Include="..\src\dex\_gfx\window\event.c" />
+    <ClCompile Include="..\src\dex\_gfx\window\keyboard.c" />
     <ClCompile Include="..\src\dex\_gfx\window\window.c" />
     <ClCompile Include="..\src\dex\_gfx\_gfx.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\dex\_gfx\lodepng\lodepng.h" />
     <ClInclude Include="..\src\dex\_gfx\window\event.h" />
+    <ClInclude Include="..\src\dex\_gfx\window\keyboard.h" />
     <ClInclude Include="..\src\dex\_gfx\window\window.h" />
     <ClInclude Include="..\src\dex\_gfx\_gfx.h" />
   </ItemGroup>

@@ -22,16 +22,16 @@
 #define GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_H 1
  
 #include <deemon/__conf.inl>
-
-DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
-#include <Windows.h>
-DEE_COMPILER_MSVC_WARNING_POP
+#include "window.h"
 
 DEE_DECL_BEGIN
 
+
+#define DEE_EVENTKIND_
+
+
 struct DeeEvent {
- WPARAM ev_win32_wparam;
- LPARAM ev_win32_lparam;
+ DEE_A_REF DeeWindowObject *ev_window;
 };
 
 

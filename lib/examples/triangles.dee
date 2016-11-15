@@ -65,10 +65,9 @@ while (!stop.get()) {
 		random()(unsigned) % sx,random()(unsigned) % sy,
 		random()(unsigned) % sx,random()(unsigned) % sy,
 		random()(unsigned) % sx,random()(unsigned) % sy,
-		//10,10,150,31,89,200,
 		pack(pixel("#00FF00")),
 		pack(pixel(color[0],color[1],color[2],120)),
 	);
-	wnd.update();
+	wnd.refresh();
 }
 

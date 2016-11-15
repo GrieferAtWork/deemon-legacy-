@@ -26,6 +26,7 @@
 #include <deemon/__conf.inl>
 #include "window.h"
 #include <deemon/string.h>
+#include <deemon/bool.h>
 #include <deemon/none.h>
 #include <deemon/deemonrun.h>
 #include <deemon/memberdef.h>
@@ -36,6 +37,17 @@
 #include DEE_INCLUDE_MEMORY_API()
 
 DEE_DECL_BEGIN
+
+DEE_A_RET_EXCEPT(-1) int DeeWin32Window_PumpEventsNoInterrupt(void) {
+ DWORD start_ticks = GetTickCount(); MSG msg;
+ while (PeekMessageW(&msg,0,0,0,PM_REMOVE)) {
+  TranslateMessage(&msg);
+  DispatchMessageW(&msg);
+  // Don't continue handling events that occurred after we've started
+  if (start_ticks < msg.time) break;
+ }
+ return 0;
+}
 
 DEE_A_RET_EXCEPT(-1) int
 DeeWin32Window_SetWindowStyle(DEE_A_IN HWND hwnd, DEE_A_IN LONG value) {
@@ -71,8 +83,9 @@ DEE_A_RET_WUNUSED BOOL _DeeWin32Window_TryEnterFullscreen_impl(DEE_A_IN HWND hwn
  MONITORINFO mi; mi.cbSize = sizeof(mi);
  if DEE_UNLIKELY(!GetMonitorInfoW(MonitorFromWindow(hwnd,MONITOR_DEFAULTTOPRIMARY),&mi)) return FALSE;
  SetLastError(0);
- if DEE_UNLIKELY(SetWindowLongW(hwnd,GWL_STYLE,GetWindowLongW(hwnd,GWL_STYLE)&~(
-  WS_OVERLAPPEDWINDOW)) == 0 && GetLastError() != 0) return FALSE;
+ if DEE_UNLIKELY(SetWindowLongW(hwnd,GWL_STYLE,(LONG)((GetWindowLongW(hwnd,GWL_STYLE)
+  &~(WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX))
+  | (WS_POPUP))) == 0 && GetLastError() != 0) return FALSE;
  return SetWindowPos(hwnd,HWND_TOPMOST,
                      mi.rcMonitor.left,mi.rcMonitor.top,
                      mi.rcMonitor.right-mi.rcMonitor.left,
@@ -232,7 +245,7 @@ DEE_A_RET_EXCEPT(-1) int DeeWin32Window_EnterFullscreen(
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return -1;
  }
- newstyle = GetWindowLongW(hwnd,GWL_STYLE)&~(WS_OVERLAPPEDWINDOW);
+ newstyle = (LONG)((GetWindowLongW(hwnd,GWL_STYLE)&~(WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX))|(WS_POPUP));
  if DEE_UNLIKELY(DeeWin32Window_SetWindowStyle(hwnd,newstyle) != 0) return -1;
  if DEE_UNLIKELY(!SetWindowPos(hwnd,HWND_TOPMOST,
   mi.rcMonitor.left,mi.rcMonitor.top,
@@ -251,15 +264,16 @@ DEE_A_RET_EXCEPT(-1) int DeeWin32Window_EnterFullscreen(
 }
 DEE_A_RET_EXCEPT(-1) int DeeWin32Window_LeaveFullscreen(
  DEE_A_IN HWND hwnd, DEE_A_IN WINDOWPLACEMENT const *oldplace) {
- LONG newstyle;
- newstyle = DeeWin32Window_GetStyle(hwnd)|WS_OVERLAPPEDWINDOW;
+ LONG newstyle,oldstyle;
+ oldstyle = DeeWin32Window_GetStyle(hwnd);
+ newstyle = (LONG)((oldstyle&~(WS_POPUP))|(WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX));
  if DEE_UNLIKELY(DeeWin32Window_SetWindowStyle(hwnd,newstyle) != 0) return -1;
  if DEE_UNLIKELY(!SetWindowPlacement(hwnd,oldplace)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "SetWindowPlacement(%p,...) : %K",hwnd,
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   // Try to undo the style change
-  SetWindowLongW(hwnd,GWL_STYLE,newstyle&~(WS_OVERLAPPEDWINDOW));
+  SetWindowLongW(hwnd,GWL_STYLE,oldstyle);
   return -1;
  }
  if DEE_UNLIKELY(!SetWindowPos(hwnd,NULL,0,0,0,0,
@@ -429,49 +443,61 @@ DEE_A_RET_EXCEPT(-1) int DeeWin32Window_SetIcon(
 
 
 
-DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Show(DEE_A_INOUT struct DeeWindow *self) {
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Show(DEE_A_INOUT struct DeeWindowObject *self) {
  if (DeeWindow_IsVisible(self)) return 1;
  if (DeeWindow_DoShow(self) != 0) return -1;
  self->w_flags &= ~(DEE_WINDOWFLAG_HIDDEN);
  return 0;
 }
-DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Hide(DEE_A_INOUT struct DeeWindow *self) {
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Hide(DEE_A_INOUT struct DeeWindowObject *self) {
  if (DeeWindow_IsHidden(self)) return 1;
  if (DeeWindow_DoHide(self) != 0) return -1;
  self->w_flags |= DEE_WINDOWFLAG_HIDDEN;
  return 0;
 }
-DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Minimize(DEE_A_INOUT struct DeeWindow *self) {
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Minimize(DEE_A_INOUT struct DeeWindowObject *self) {
  if (DeeWindow_IsMinimized(self)) return 1;
  if (DeeWindow_DoMinimize(self) != 0) return -1;
  self->w_flags = (self->w_flags|DEE_WINDOWFLAG_MINIMIZED)&~(DEE_WINDOWFLAG_MAXIMIZED);
  return 0;
 }
-DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Maximize(DEE_A_INOUT struct DeeWindow *self) {
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Maximize(DEE_A_INOUT struct DeeWindowObject *self) {
  if (DeeWindow_IsMaximized(self)) return 1;
  if (DeeWindow_DoMaximize(self) != 0) return -1;
  self->w_flags = (self->w_flags|DEE_WINDOWFLAG_MAXIMIZED)&~(DEE_WINDOWFLAG_MINIMIZED);
  return 0;
 }
-DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Restore(DEE_A_INOUT struct DeeWindow *self) {
- if ((DeeWindow_Flags(self)&(DEE_WINDOWFLAG_MINIMIZED|DEE_WINDOWFLAG_MAXIMIZED))==0) return 1;
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Restore(DEE_A_INOUT struct DeeWindowObject *self) {
+ if ((_DeeWindow_Flags(self)&(DEE_WINDOWFLAG_MINIMIZED|DEE_WINDOWFLAG_MAXIMIZED))==0) return 1;
  if (DeeWindow_DoRestore(self) != 0) return -1;
  self->w_flags &= ~(DEE_WINDOWFLAG_MINIMIZED|DEE_WINDOWFLAG_MAXIMIZED);
  return 0;
 }
-DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Focus(DEE_A_INOUT struct DeeWindow *self) {
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Focus(DEE_A_INOUT struct DeeWindowObject *self) {
  if (DeeWindow_IsFocused(self)) return 1;
  if (DeeWindow_DoFocus(self) != 0) return -1;
  self->w_flags |= DEE_WINDOWFLAG_FOCUSED;
  return 0;
 }
-DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_EnterFullscreen(DEE_A_INOUT struct DeeWindow *self) {
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_AllowResizeable(DEE_A_INOUT struct DeeWindowObject *self) {
+ if (DeeWindow_IsResizeable(self)) return 1;
+ if (DeeWindow_DoAllowResizeable(self) != 0) return -1;
+ self->w_flags |= DEE_WINDOWFLAG_RESIZEABLE;
+ return 0;
+}
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_PreventResizeable(DEE_A_INOUT struct DeeWindowObject *self) {
+ if (!DeeWindow_IsResizeable(self)) return 1;
+ if (DeeWindow_DoPreventResizeable(self) != 0) return -1;
+ self->w_flags &= ~(DEE_WINDOWFLAG_RESIZEABLE);
+ return 0;
+}
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_EnterFullscreen(DEE_A_INOUT struct DeeWindowObject *self) {
  if (DeeWindow_IsFullscreen(self)) return 1;
  if (DeeWindow_DoEnterFullscreen(self) != 0) return -1;
  self->w_flags |= DEE_WINDOWFLAG_FULLSCREEN;
  return 0;
 }
-DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_LeaveFullscreen(DEE_A_INOUT struct DeeWindow *self) {
+DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_LeaveFullscreen(DEE_A_INOUT struct DeeWindowObject *self) {
  if (!DeeWindow_IsFullscreen(self)) return 1;
  if (DeeWindow_DoLeaveFullscreen(self) != 0) return -1;
  self->w_flags |= DEE_WINDOWFLAG_FULLSCREEN;
@@ -545,8 +571,8 @@ DeeSurfaceTypeObject DeeWindowSurface_Type = {
 };
 
 
-struct DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowSurface(
- struct DeeWindow *self, Dee_size_t sx, Dee_size_t sy) {
+struct DEE_A_RET_EXCEPT_REF DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowSurface(
+ DEE_A_IN HDC hdc, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy) {
  struct InfoData { BITMAPINFOHEADER bmiHeader; RGBQUAD bmiColors[256]; };
  struct DeeWindowSurfaceObject *result; Dee_uint64_t format;
  struct InfoData info; HBITMAP hbitmap;
@@ -554,9 +580,9 @@ struct DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowSurface(
  DeeObject_INIT(result,(DeeTypeObject *)&DeeWindowSurface_Type);
  memset(&info,0,sizeof(info));
  info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
- hbitmap = CreateCompatibleBitmap(self->w_normal.nw_w32hdc, 1, 1);
- GetDIBits(self->w_normal.nw_w32hdc,hbitmap,0,0,NULL,(LPBITMAPINFO)&info,DIB_RGB_COLORS);
- GetDIBits(self->w_normal.nw_w32hdc,hbitmap,0,0,NULL,(LPBITMAPINFO)&info,DIB_RGB_COLORS);
+ hbitmap = CreateCompatibleBitmap(hdc, 1, 1);
+ GetDIBits(hdc,hbitmap,0,0,NULL,(LPBITMAPINFO)&info,DIB_RGB_COLORS);
+ GetDIBits(hdc,hbitmap,0,0,NULL,(LPBITMAPINFO)&info,DIB_RGB_COLORS);
  if (!DeleteObject(hbitmap)) SetLastError(0);
  if (info.bmiHeader.biCompression == BI_BITFIELDS) {
   int bpp; Dee_uint32_t *masks;
@@ -591,23 +617,20 @@ err_r: _DeeObject_DELETE(&DeeWindowSurface_Type,result);
  info.bmiHeader.biWidth = (LONG)sx;
  info.bmiHeader.biHeight = -(LONG)sy;
  info.bmiHeader.biSizeImage = (LONG)sy*result->ws_scanline;
- result->nw_w32mdc = CreateCompatibleDC(self->w_normal.nw_w32hdc);
+ result->nw_w32mdc = CreateCompatibleDC(hdc);
  if DEE_UNLIKELY(!result->nw_w32mdc) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "CreateCompatibleDC(%p) : %K",self->w_normal.nw_w32hdc,
+                      "CreateCompatibleDC(%p) : %K",hdc,
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   goto err_r;
  }
- result->nw_w32hbm = CreateDIBSection(self->w_normal.nw_w32hdc,
-                                      (BITMAPINFO const *)&info,
-                                      DIB_RGB_COLORS,
-                                      (void **)&result->ws_pixels,
+ result->nw_w32hbm = CreateDIBSection(hdc,(BITMAPINFO const *)&info,
+                                      DIB_RGB_COLORS,(void **)&result->ws_pixels,
                                       NULL,0);
  if DEE_UNLIKELY(!result->nw_w32hbm) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "CreateDIBSection(%p,...,DIB_RGB_COLORS,...,NULL,0) : Can't create DIB : %K",
-                      self->w_normal.nw_w32hdc,
-                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
+                      hdc,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   if (result->nw_w32mdc && !DeleteDC(result->nw_w32mdc)) SetLastError(0);
   goto err_r;
  }
@@ -616,36 +639,101 @@ err_r: _DeeObject_DELETE(&DeeWindowSurface_Type,result);
 }
 
 
+static LRESULT CALLBACK DeeWindow_Win32Main(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+
+static Dee_Utf8Char const _DeeWindow_ClassNameA[] = {'D','E','E','M','O','N','_','W','I','N','D','O','W',0};
+static Dee_WideChar const _DeeWindow_ClassNameW[] = {'D','E','E','M','O','N','_','W','I','N','D','O','W',0};
+static /*atomic*/Dee_uint16_t _DeeWindow_ClassInitialized = 0;
+
+static DEE_A_RET_EXCEPT(-1) int _DeeWindow_Win32InitClass(HMODULE class_module) {
+ WNDCLASSW class_;
+ if (DeeAtomic16_FetchInc(_DeeWindow_ClassInitialized,memory_order_seq_cst) != 0) return 0;
+ class_.hCursor = 0;
+ class_.hIcon = NULL;
+ class_.lpszMenuName = NULL;
+ class_.lpszClassName = _DeeWindow_ClassNameW;
+ class_.hbrBackground = NULL;
+ class_.hInstance = class_module;
+ class_.style = 0;
+ class_.lpfnWndProc = &DeeWindow_Win32Main;
+ class_.cbWndExtra = 0;
+ class_.cbClsExtra = 0;
+ if (!RegisterClassW(&class_)) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "RegisterClassW(%lq) : %K",_DeeWindow_ClassNameW,
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
+  return -1;
+ }
+ DEE_LVERBOSE2("Created Window Class: %lq\n",_DeeWindow_ClassNameW);
+ return 0;
+}
+static void _DeeWindow_Win32QuitClass(void) {
+ HMODULE class_module;
+ if (DeeAtomic16_DecFetch(_DeeWindow_ClassInitialized,memory_order_seq_cst) != 0) return;
+ class_module = GetModuleHandleW(NULL);
+ if (!UnregisterClassW(_DeeWindow_ClassNameW,class_module)) SetLastError(0);
+ DEE_LVERBOSE2("Destroyed Window Class: %lq\n",_DeeWindow_ClassNameW);
+}
+
+
 DEE_A_RET_EXCEPT(-1) int DeeWindow_Init(
- DEE_A_OUT struct DeeWindow *self, DEE_A_IN struct DeeWindowRect const *rect,
+ DEE_A_OUT struct DeeWindowObject *self, DEE_A_IN struct DeeWindowRect const *rect,
  DEE_A_IN Dee_windowflag_t flags, DEE_A_IN_Z_OPT char const *title,
  DEE_A_IN_OPT DeeSurfaceObject *icon) {
- RECT adjusted_rect; DWORD used_style; HINSTANCE window_module;
- int window_width,window_height;
- used_style = (WS_CLIPSIBLINGS|WS_CLIPCHILDREN);
- if (DEE_WINDOWFLAG_ISVISIBLE   (flags)) used_style |= (WS_VISIBLE);
- if (DEE_WINDOWFLAG_ISRESIZEABLE(flags)) used_style |= (WS_THICKFRAME|WS_MAXIMIZEBOX);
- switch (flags&(DEE_WINDOWFLAG_MINIMIZED|DEE_WINDOWFLAG_MAXIMIZED|DEE_WINDOWFLAG_FULLSCREEN)) {
-  case DEE_WINDOWFLAG_FULLSCREEN: used_style |= (WS_OVERLAPPEDWINDOW); break;
-  case DEE_WINDOWFLAG_MAXIMIZED:  used_style |= (WS_MAXIMIZE); break;
-  case DEE_WINDOWFLAG_MINIMIZED:  used_style |= (WS_MINIMIZE); break;
-  default: break;
+ RECT adjusted_rect; DWORD used_style,used_styleex;
+ HINSTANCE window_module; int window_width,window_height;
+ used_style = DEE_WINDOWFLAG_W32GETSTYLE(flags);
+ used_styleex = DEE_WINDOWFLAG_W32GETSTYLEEX(flags);
+ if (DEE_WINDOWFLAG_ISFULLSCREEN(flags)) {
+  MONITORINFO mi; HMONITOR used_monitor;
+  POINT monitor_center;
+  // Adjust to fill the entire monitor
+  // NOTE: We prefer to use the monitor at the center of the given windowrect
+  monitor_center.x = rect->w32_rect.left+(rect->w32_rect.right-rect->w32_rect.left)/2;
+  monitor_center.y = rect->w32_rect.top+(rect->w32_rect.bottom-rect->w32_rect.top)/2;
+  used_monitor = MonitorFromPoint(monitor_center,MONITOR_DEFAULTTONEAREST);
+  mi.cbSize = sizeof(mi);
+  if DEE_UNLIKELY(!GetMonitorInfoW(used_monitor,&mi)) {
+   DeeError_SetStringf(&DeeErrorType_SystemError,
+                       "GetMonitorInfoW(%q) : %K",used_monitor,
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
+   return -1;
+  }
+  adjusted_rect = mi.rcMonitor;
+  // Calculate the window position when fullscreen is left
+  self->w_w32oldplace.length = sizeof(self->w_w32oldplace);
+  self->w_w32oldplace.flags = 0;
+  self->w_w32oldplace.showCmd = SW_SHOWNORMAL;
+  self->w_w32oldplace.ptMinPosition.x = 0;
+  self->w_w32oldplace.ptMinPosition.y = 0;
+  self->w_w32oldplace.ptMaxPosition.x = 0;
+  self->w_w32oldplace.ptMaxPosition.y = 0;
+  self->w_w32oldplace.rcNormalPosition = rect->w32_rect;
+  AdjustWindowRectEx(&self->w_w32oldplace.rcNormalPosition,
+                     DEE_WINDOWFLAG_W32GETSTYLE(flags)&~(DEE_WINDOWFLAG_FULLSCREEN),FALSE,
+                     DEE_WINDOWFLAG_W32GETSTYLEEX(flags)&~(DEE_WINDOWFLAG_FULLSCREEN));
+#ifdef _MAC /* ??? */
+  memset(&self->w_w32oldplace.rcDevice,0,sizeof(self->w_w32oldplace.rcDevice));
+#endif
+ } else {
+  adjusted_rect = rect->w32_rect;
+  AdjustWindowRectEx(&adjusted_rect,used_style,FALSE,used_styleex);
  }
- adjusted_rect = rect->w32_rect;
- AdjustWindowRectEx(&adjusted_rect,used_style,FALSE,0);
- window_module = GetModuleHandleW(NULL);
  if (adjusted_rect.right <= adjusted_rect.left) adjusted_rect.right = adjusted_rect.left+1;
  if (adjusted_rect.bottom <= adjusted_rect.top) adjusted_rect.bottom = adjusted_rect.top+1;
  window_width = (int)(adjusted_rect.right-adjusted_rect.left);
  window_height = (int)(adjusted_rect.bottom-adjusted_rect.top);
- self->w_w32hwnd = CreateWindowA("BUTTON",title,used_style,
-                                 adjusted_rect.left,adjusted_rect.top,
-                                 window_width,window_height,
-                                 NULL,NULL,window_module,NULL);
+ window_module = GetModuleHandleW(NULL);
+ if (_DeeWindow_Win32InitClass(window_module) != 0) return -1;
+ self->w_w32hwnd = CreateWindowExA(used_styleex,_DeeWindow_ClassNameA,title,used_style,
+                                   adjusted_rect.left,adjusted_rect.top,
+                                   window_width,window_height,
+                                   NULL,NULL,window_module,NULL);
  if DEE_UNLIKELY(!self->w_w32hwnd) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "CreateWindowA(\"BUTTON\",%s,%lu,%d,%d,%d,%d,NULL,NULL,%p,NULL) : %K",
-                      title,used_style,(int)adjusted_rect.left,
+                      "CreateWindowA(%q,%s,%lu,%d,%d,%d,%d,NULL,NULL,%p,NULL) : %K",
+                      _DeeWindow_ClassNameA,title,used_style,(int)adjusted_rect.left,
                       (int)adjusted_rect.top,window_width,window_height,
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return -1;
@@ -655,33 +743,46 @@ err_hwnd:
   if DEE_UNLIKELY(!DestroyWindow(self->w_w32hwnd)) SetLastError(0);
   return -1;
  }
- self->w_normal.nw_w32hdc = GetDC(self->w_w32hwnd);
+ self->w_w32hdc = GetDC(self->w_w32hwnd);
+ if (!GetClientRect(self->w_w32hwnd,&adjusted_rect)) {
+  adjusted_rect.left = 0;
+  adjusted_rect.top = 0;
+  adjusted_rect.right = window_width;
+  adjusted_rect.bottom = window_height;
+ }
+ DEE_LVERBOSE1("Created window %p: %Iu x %Iu\n",self->w_w32hwnd,
+               (Dee_size_t)(adjusted_rect.right-adjusted_rect.left),
+               (Dee_size_t)(adjusted_rect.bottom-adjusted_rect.top));
  if ((self->w_normal.nw_surface = DeeWindow_Win32CreateWindowSurface(
-  self,(Dee_size_t)window_width,(Dee_size_t)window_height)) == NULL) {
+  self->w_w32hdc,(Dee_size_t)(adjusted_rect.right-adjusted_rect.left),
+  (Dee_size_t)(adjusted_rect.bottom-adjusted_rect.top))) == NULL) {
+err_dc:
+  ReleaseDC(self->w_w32hwnd,self->w_w32hdc);
   goto err_hwnd;
  }
- if (icon && DeeWindow_SetIcon(self,icon) != 0) {
+ if (icon && DEE_UNLIKELY(DeeWindow_SetIcon(self,icon) != 0)) {
   Dee_DECREF(self->w_normal.nw_surface);
-  goto err_hwnd;
+  goto err_dc;
  }
  return 0;
 }
 
-void DeeWindow_Quit(DEE_A_IN struct DeeWindow *self) {
- // TODO
+void DeeWindow_Quit(DEE_A_IN struct DeeWindowObject *self) {
+ ReleaseDC(self->w_w32hwnd,self->w_w32hdc);
  if (!DestroyWindow(self->w_w32hwnd)) SetLastError(0);
  Dee_DECREF(self->w_normal.nw_surface);
+ _DeeWindow_Win32QuitClass();
 }
 
 
-DEE_A_RET_EXCEPT(-1) int DeeWindow_Update(DEE_A_INOUT struct DeeWindow *self) {
+DEE_A_RET_EXCEPT(-1) int DeeWindow_Update(DEE_A_INOUT struct DeeWindowObject *self) {
  struct DeeWindowSurfaceObject *windowsurface = self->w_normal.nw_surface;
- if (!BitBlt(self->w_normal.nw_w32hdc,0,0,
+ if (!BitBlt(self->w_w32hdc,0,0,
   (int)windowsurface->s_sizex,(int)windowsurface->s_sizey,
   windowsurface->nw_w32mdc,0,0,SRCCOPY)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "BitBlt(%p,0,0,%d,%d,%p,0,0,SRCCOPY) : %K",
-                      self->w_normal.nw_w32hdc,windowsurface->s_sizex,
+                      self->w_w32hdc,windowsurface->s_sizex,
                       windowsurface->s_sizey,windowsurface->nw_w32mdc,
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return -1;
@@ -689,12 +790,26 @@ DEE_A_RET_EXCEPT(-1) int DeeWindow_Update(DEE_A_INOUT struct DeeWindow *self) {
  return 0;
 }
 DEE_A_RET_EXCEPT(-1) int DeeWindow_UpdateRects(
- DEE_A_INOUT struct DeeWindow *self, DEE_A_IN Dee_size_t rectc,
+ DEE_A_INOUT struct DeeWindowObject *self, DEE_A_IN Dee_size_t rectc,
  DEE_A_IN_R(rectc) struct DeeWindowRect const *rectv) {
  (void)rectc,rectv;
  return DeeWindow_Update(self); // TODO
 }
 
+
+
+static LRESULT CALLBACK DeeWindow_Win32Main(
+ HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+ DEE_LVERBOSE4("DeeWindow_Win32Main(%p,%u,%u,%Iu)\n",hWnd,msg,wParam,lParam);
+ switch (msg) {
+  case WM_SIZE:
+   DEE_LVERBOSE1("WM_SIZE --> %d*%d\n",
+                 LOWORD(lParam),HIWORD(lParam));
+   break;
+  default: break;
+ }
+ return CallWindowProcW(DefWindowProcW,hWnd,msg,wParam,lParam);
+}
 
 
 
@@ -716,41 +831,208 @@ static int DEE_CALL _deewindow_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeWindowObject *self, DeeObject *args) {
  Dee_ssize_t x = -1,y = -1; Dee_size_t w = 800,h = 600; struct DeeWindowRect rect;
  DeeObject *title = NULL; DeeSurfaceObject *icon = NULL; int error;
- Dee_windowflag_t flags = DEE_WINDOWFLAG_NORMAL|DEE_WINDOWFLAG_RESIZEABLE;
- if (DeeTuple_Unpack(args,"|IdIdIuIuooI32u:window",&x,&y,&w,&h,&title,&icon,&flags) != 0) return -1;
- if (icon && DeeError_TypeError_CheckType((DeeObject *)icon,(DeeTypeObject *)&DeeSurface_Type) != 0) return -1;
- if (title && (title = DeeString_Cast(title)) == NULL) return -1;
+ Dee_windowflag_t flags = DEE_WINDOWFLAG_NORMAL|DEE_WINDOWFLAG_RESIZEABLE/*|DEE_WINDOWFLAG_FULLSCREEN*/;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"|IdIdIuIuooI32u:window",&x,&y,&w,&h,&title,&icon,&flags) != 0) return -1;
+ if (icon && DEE_UNLIKELY(DeeError_TypeError_CheckType((DeeObject *)icon,(DeeTypeObject *)&DeeSurface_Type) != 0)) return -1;
+ if (title && DEE_UNLIKELY((title = DeeString_Cast(title)) == NULL)) return -1;
  DeeWindowRect_Init(&rect,x,y,x+w,y+h);
- error = DeeWindow_Init(&self->w_window,&rect,flags,
+ error = DeeWindow_Init(self,&rect,flags,
                         title ? DeeString_STR(title) : NULL,icon);
  Dee_XDECREF(title);
  return error;
 }
-static void DEE_CALL _deewindow_tp_dtor(DeeWindowObject *self) { DeeWindow_Quit(&self->w_window); }
-DEE_VISIT_PROC(_deewindow_tp_visit,DeeWindowObject *self) { Dee_VISIT(self->w_window.w_normal.nw_surface); }
-
+static void DEE_CALL _deewindow_tp_dtor(DeeWindowObject *self) { DeeWindow_Quit(self); }
+DEE_VISIT_PROC(_deewindow_tp_visit,DeeWindowObject *self) { Dee_VISIT(self->w_normal.nw_surface); }
 
 
 
 static DeeWindowSurfaceObject *DEE_CALL _deewindow_surface_get(
  DeeWindowObject *self, void *DEE_UNUSED(closure)) {
- Dee_INCREF(self->w_window.w_normal.nw_surface);
- return self->w_window.w_normal.nw_surface;
+ Dee_INCREF(self->w_normal.nw_surface);
+ return self->w_normal.nw_surface;
+}
+static DeeObject *DEE_CALL _deewindow_minimized_get(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ DeeReturn_Bool(DeeWindow_IsMinimized(self));
+}
+static int DEE_CALL _deewindow_minimized_del(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ int error = DeeWindow_Restore(self);
+ return error < 0 ? error : 0;
+}
+static int DEE_CALL _deewindow_minimized_set(
+ DeeWindowObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+ int new_state,error;
+ if DEE_UNLIKELY((new_state = DeeObject_Bool(v)) < 0) return -1;
+ error = new_state ? DeeWindow_Minimize(self) : DeeWindow_Restore(self);
+ return error < 0 ? error : 0;
+}
+static DeeObject *DEE_CALL _deewindow_maximized_get(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ DeeReturn_Bool(DeeWindow_IsMaximized(self));
+}
+#define _deewindow_maximized_del _deewindow_minimized_del
+static int DEE_CALL _deewindow_maximized_set(
+ DeeWindowObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+ int new_state,error;
+ if DEE_UNLIKELY((new_state = DeeObject_Bool(v)) < 0) return -1;
+ error = new_state ? DeeWindow_Maximize(self) : DeeWindow_Restore(self);
+ return error < 0 ? error : 0;
+}
+static DeeObject *DEE_CALL _deewindow_visible_get(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ DeeReturn_Bool(DeeWindow_IsVisible(self));
+}
+static int DEE_CALL _deewindow_visible_del(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ int error = DeeWindow_Hide(self);
+ return error < 0 ? error : 0;
+}
+static int DEE_CALL _deewindow_visible_set(
+ DeeWindowObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+ int new_state,error;
+ if DEE_UNLIKELY((new_state = DeeObject_Bool(v)) < 0) return -1;
+ error = new_state ? DeeWindow_Show(self) : DeeWindow_Hide(self);
+ return error < 0 ? error : 0;
+}
+static DeeObject *DEE_CALL _deewindow_hidden_get(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ DeeReturn_Bool(DeeWindow_IsHidden(self));
+}
+static int DEE_CALL _deewindow_hidden_del(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ int error = DeeWindow_Show(self);
+ return error < 0 ? error : 0;
+}
+static int DEE_CALL _deewindow_hidden_set(
+ DeeWindowObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+ int new_state,error;
+ if DEE_UNLIKELY((new_state = DeeObject_Bool(v)) < 0) return -1;
+ error = new_state ? DeeWindow_Hide(self) : DeeWindow_Show(self);
+ return error < 0 ? error : 0;
+}
+static DeeObject *DEE_CALL _deewindow_resizeable_get(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ DeeReturn_Bool(DeeWindow_IsResizeable(self));
+}
+static int DEE_CALL _deewindow_resizeable_del(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ int error = DeeWindow_PreventResizeable(self);
+ return error < 0 ? error : 0;
+}
+static int DEE_CALL _deewindow_resizeable_set(
+ DeeWindowObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+ int new_state,error;
+ if DEE_UNLIKELY((new_state = DeeObject_Bool(v)) < 0) return -1;
+ error = new_state ? DeeWindow_AllowResizeable(self) : DeeWindow_PreventResizeable(self);
+ return error < 0 ? error : 0;
+}
+static DeeObject *DEE_CALL _deewindow_focused_get(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ DeeReturn_Bool(DeeWindow_IsFocused(self));
+}
+static int DEE_CALL _deewindow_focused_set(
+ DeeWindowObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+ int new_state,error;
+ if DEE_UNLIKELY((new_state = DeeObject_Bool(v)) < 0) return -1;
+ error = new_state ? DeeWindow_Focus(self) : 0;
+ return error < 0 ? error : 0;
+}
+static DeeObject *DEE_CALL _deewindow_fullscreen_get(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ DeeReturn_Bool(DeeWindow_IsFullscreen(self));
+}
+static int DEE_CALL _deewindow_fullscreen_del(
+ DeeWindowObject *self, void *DEE_UNUSED(closure)) {
+ int error = DeeWindow_LeaveFullscreen(self);
+ return error < 0 ? error : 0;
+}
+static int DEE_CALL _deewindow_fullscreen_set(
+ DeeWindowObject *self, DeeObject *v, void *DEE_UNUSED(closure)) {
+ int new_state,error;
+ if DEE_UNLIKELY((new_state = DeeObject_Bool(v)) < 0) return -1;
+ error = new_state ? DeeWindow_EnterFullscreen(self) : DeeWindow_LeaveFullscreen(self);
+ return error < 0 ? error : 0;
 }
 
-static DeeObject *DEE_CALL _deewindow_update(
+
+
+static DeeObject *DEE_CALL _deewindow_refresh(
  DeeWindowObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- if (DeeTuple_Unpack(args,":update") != 0) return NULL;
- if (DeeWindow_Update(&self->w_window) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":refresh") != 0) return NULL;
+ if DEE_UNLIKELY(DeeWindow_Update(self) != 0) return NULL;
  DeeReturn_None;
 }
+static DeeObject *DEE_CALL _deewindow_pump(
+ DeeWindowObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":pump") != 0) return NULL;
+ if DEE_UNLIKELY(DeeWin32Window_PumpEvents() != 0) return NULL;
+ DeeReturn_None;
+}
+static DeeObject *DEE_CALL _deewindow_show(
+ DeeWindowObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int error;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":show") != 0) return NULL;
+ if DEE_UNLIKELY((error = DeeWindow_Show(self)) < 0) return NULL;
+ DeeReturn_Bool(!error);
+}
+static DeeObject *DEE_CALL _deewindow_hide(
+ DeeWindowObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int error;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":hide") != 0) return NULL;
+ if DEE_UNLIKELY((error = DeeWindow_Hide(self)) < 0) return NULL;
+ DeeReturn_Bool(!error);
+}
+static DeeObject *DEE_CALL _deewindow_minimize(
+ DeeWindowObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int error;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":minimize") != 0) return NULL;
+ if DEE_UNLIKELY((error = DeeWindow_Minimize(self)) < 0) return NULL;
+ DeeReturn_Bool(!error);
+}
+static DeeObject *DEE_CALL _deewindow_maximize(
+ DeeWindowObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int error;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":maximize") != 0) return NULL;
+ if DEE_UNLIKELY((error = DeeWindow_Maximize(self)) < 0) return NULL;
+ DeeReturn_Bool(!error);
+}
+static DeeObject *DEE_CALL _deewindow_restore(
+ DeeWindowObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int error;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":restore") != 0) return NULL;
+ if DEE_UNLIKELY((error = DeeWindow_Restore(self)) < 0) return NULL;
+ DeeReturn_Bool(!error);
+}
+static DeeObject *DEE_CALL _deewindow_focus(
+ DeeWindowObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int error;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":focus") != 0) return NULL;
+ if DEE_UNLIKELY((error = DeeWindow_Focus(self)) < 0) return NULL;
+ DeeReturn_Bool(!error);
+}
+
 
 static struct DeeGetSetDef const _deewindow_tp_getsets[] = {
  DEE_GETSETDEF_v100("surface",member(&_deewindow_surface_get),null,null,"-> window_surface"),
+ DEE_GETSETDEF_v100("minimized",member(&_deewindow_minimized_get),member(&_deewindow_minimized_del),member(&_deewindow_minimized_set),"-> bool"),
+ DEE_GETSETDEF_v100("maximized",member(&_deewindow_maximized_get),member(&_deewindow_maximized_del),member(&_deewindow_maximized_set),"-> bool"),
+ DEE_GETSETDEF_v100("visible",member(&_deewindow_visible_get),member(&_deewindow_visible_del),member(&_deewindow_visible_set),"-> bool"),
+ DEE_GETSETDEF_v100("hidden",member(&_deewindow_hidden_get),member(&_deewindow_hidden_del),member(&_deewindow_hidden_set),"-> bool"),
+ DEE_GETSETDEF_v100("resizeable",member(&_deewindow_resizeable_get),member(&_deewindow_resizeable_del),member(&_deewindow_resizeable_set),"-> bool"),
+ DEE_GETSETDEF_v100("focused",member(&_deewindow_focused_get),null,member(&_deewindow_focused_set),"-> bool"),
+ DEE_GETSETDEF_v100("fullscreen",member(&_deewindow_fullscreen_get),member(&_deewindow_fullscreen_del),member(&_deewindow_fullscreen_set),"-> bool"),
  DEE_GETSETDEF_END_v100
 };
 static struct DeeMethodDef const _deewindow_tp_methods[] = {
- DEE_METHODDEF_v100("update",member(&_deewindow_update),"() -> none"),
+ DEE_METHODDEF_v100("refresh",member(&_deewindow_refresh),"() -> none"),
+ DEE_METHODDEF_v100("pump",member(&_deewindow_pump),"() -> none"),
+ DEE_METHODDEF_v100("show",member(&_deewindow_show),"() -> bool"),
+ DEE_METHODDEF_v100("hide",member(&_deewindow_hide),"() -> bool"),
+ DEE_METHODDEF_v100("minimize",member(&_deewindow_minimize),"() -> bool"),
+ DEE_METHODDEF_v100("maximize",member(&_deewindow_maximize),"() -> bool"),
+ DEE_METHODDEF_v100("restore",member(&_deewindow_restore),"() -> bool"),
+ DEE_METHODDEF_v100("focus",member(&_deewindow_focus),"() -> bool"),
  DEE_METHODDEF_END_v100
 };
 

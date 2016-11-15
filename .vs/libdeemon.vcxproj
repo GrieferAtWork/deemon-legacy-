@@ -576,6 +576,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\structured.get_pointer_impl.inl" />
     <None Include="..\src\deemon\structured.typef.inl" />
     <None Include="..\src\deemon\tuple.unpack.inl" />
+    <None Include="..\src\deemon\unicode\char_traits.inl" />
     <None Include="..\src\deemon\unicode\string.cast.escapecode.inl" />
     <None Include="..\src\deemon\unicode\string.cast.escapecode.previewsize.impl.inl" />
     <None Include="..\src\deemon\unicode\string.cast.escapecode.previewsize.inl" />

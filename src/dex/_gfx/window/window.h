@@ -34,6 +34,9 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 DEE_DECL_BEGIN
 
+DEE_OBJECT_DEF(DeeWindowObject);
+DEE_OBJECT_DEF(DeeWindowSurfaceObject);
+
 #ifdef DEE_PLATFORM_WINDOWS
 #define DeeWindowPCoord LONG
 #define DeeWindowSCoord LONG
@@ -55,7 +58,7 @@ struct DeeWindowSize { POINT w32_size; };
 struct DeeWindowRect { RECT w32_rect; };
 #define DeeWindowRect_Init(ob,xbegin,ybegin,xend,yend) \
  ((ob)->w32_rect.left = (LONG)(xbegin),(ob)->w32_rect.top = (LONG)(ybegin)\
- ,(ob)->w32_rect.right = (LONG)(xend),(ob)->w32_rect.bottom = (LONG)(xend),(void)0)
+ ,(ob)->w32_rect.right = (LONG)(xend),(ob)->w32_rect.bottom = (LONG)(yend),(void)0)
 #define DeeWindowRect_INIT(xbegin,ybegin,xend,yend) {{(LONG)(xbegin),(LONG)(ybegin),(LONG)(xend),(LONG)(yend)}}
 #define DeeWindowRect_XBEGIN(ob) (ob)->w32_rect.left
 #define DeeWindowRect_YBEGIN(ob) (ob)->w32_rect.top
@@ -74,7 +77,7 @@ struct DeeWindowRect { RECT w32_rect; };
 #define DeeWin32Window_IsVisible(hwnd)           ((DeeWin32Window_GetStyle(hwnd)&(WS_VISIBLE))!=0)
 #define DeeWin32Window_IsResizeable(hwnd)        ((DeeWin32Window_GetStyle(hwnd)&(WS_THICKFRAME))!=0)
 #define DeeWin32Window_IsFocused(hwnd)           ((hwnd) == GetFocus())
-#define DeeWin32Window_IsFullscreen(hwnd)        ((DeeWin32Window_GetStyle(hwnd)&(WS_OVERLAPPEDWINDOW))==0)
+#define DeeWin32Window_IsFullscreen(hwnd)        ((DeeWin32Window_GetStyle(hwnd)&(WS_POPUP|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX))==(WS_POPUP))
 #endif /* DEE_PLATFORM_WINDOWS */
 
 #ifdef DEE_PLATFORM_WINDOWS
@@ -91,13 +94,15 @@ extern DEE_A_RET_WUNUSED BOOL DeeWin32Window_TryGetSize(DEE_A_IN HWND hwnd, DEE_
 #define DeeWin32Window_TryMaximize(hwnd)                  ShowWindow(hwnd,SW_MAXIMIZE)
 #define DeeWin32Window_TryRestore(hwnd)                   ShowWindow(hwnd,SW_NORMAL)
 #define DeeWin32Window_TryFocus(hwnd)                     SetFocus(hwnd)
+#define DeeWin32Window_TryAllowResizeable(hwnd)           SetWindowLongW(hwnd,GWL_STYLE,DeeWin32Window_GetStyle(hwnd)|(WS_SIZEBOX))
+#define DeeWin32Window_TryPreventResizeable(hwnd)         SetWindowLongW(hwnd,GWL_STYLE,DeeWin32Window_GetStyle(hwnd)&~(WS_SIZEBOX))
 extern DEE_A_RET_WUNUSED BOOL _DeeWin32Window_TryEnterFullscreen_impl(DEE_A_IN HWND hwnd);
 #define DeeWin32Window_TryEnterFullscreen(hwnd,oldplace) \
  (GetWindowPlacement(hwnd,oldplace) && _DeeWin32Window_TryEnterFullscreen_impl(hwnd))
 #define DeeWin32Window_TryLeaveFullscreen(hwnd,oldplace) \
- (DeeWin32Window_SetWindowLong(hwnd,GWL_STYLE,DeeWin32Window_GetStyle(hwnd)|WS_OVERLAPPEDWINDOW) && \
+ (DeeWin32Window_SetWindowLong(hwnd,GWL_STYLE,(DeeWin32Window_GetStyle(hwnd)&~(WS_POPUP))|(WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX)) && \
  (SetWindowPlacement(hwnd,oldplace) ? TRUE : (SetWindowLongW(hwnd,GWL_STYLE,\
-  DeeWin32Window_GetStyle(hwnd)&~(WS_OVERLAPPEDWINDOW)),FALSE)) && \
+  (DeeWin32Window_GetStyle(hwnd)&~(WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX))|(WS_POPUP)),FALSE)) && \
   SetWindowPos(hwnd,NULL,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|\
                SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_FRAMECHANGED))
 #define DeeWin32Window_TryFlip(hwnd)                      UpdateWindow(hwnd)
@@ -107,6 +112,8 @@ extern DEE_A_RET_WUNUSED BOOL _DeeWin32Window_TryEnterFullscreen_impl(DEE_A_IN H
 #define DeeWin32Window_TryWideSetTitle(hwnd,title)        SetWindowTextW(hwnd,title)
 
 #define DeeWin32Window_SetWindowLong(hwnd,id,v)   (SetLastError(0),(SetWindowLongW(hwnd,id,v) != 0) || GetLastError() == 0)
+#define DeeWin32Window_PumpEvents() (DeeThread_CheckInterrupt() != 0 ? -1 : DeeWin32Window_PumpEventsNoInterrupt())
+extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_PumpEventsNoInterrupt(void);
 extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_SetWindowStyle(DEE_A_IN HWND hwnd, DEE_A_IN LONG value);
 extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_GetRect(DEE_A_IN HWND hwnd, DEE_A_OUT struct DeeWindowRect *result);
 extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_GetPos(DEE_A_IN HWND hwnd, DEE_A_OUT struct DeeWindowPos *result);
@@ -121,6 +128,8 @@ extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_Minimize(DEE_A_IN HWND hwnd);
 extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_Maximize(DEE_A_IN HWND hwnd);
 extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_Restore(DEE_A_IN HWND hwnd);
 extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_Focus(DEE_A_IN HWND hwnd);
+#define DeeWin32Window_AllowResizeable(hwnd) DeeWin32Window_SetWindowStyle(hwnd,DeeWin32Window_GetStyle(hwnd)|(WS_SIZEBOX))
+#define DeeWin32Window_PreventResizeable(hwnd) DeeWin32Window_SetWindowStyle(hwnd,DeeWin32Window_GetStyle(hwnd)&~(WS_SIZEBOX))
 extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_EnterFullscreen(DEE_A_IN HWND hwnd, DEE_A_OUT WINDOWPLACEMENT *oldplace);
 extern DEE_A_RET_EXCEPT(-1) int DeeWin32Window_LeaveFullscreen(DEE_A_IN HWND hwnd, DEE_A_IN WINDOWPLACEMENT const *oldplace);
 #define DeeWin32Window_GetAttr(hwnd,attr,result) (*(result)=DeeWin32Window_TryGetAttr(hwnd,attr),0)
@@ -146,6 +155,7 @@ typedef Dee_uint32_t Dee_windowflag_t;
 #define DEE_WINDOWFLAG_MAXIMIZED  DEE_UINT32_C(0x00000010) /*< Window is maximized. */
 #define DEE_WINDOWFLAG_FULLSCREEN DEE_UINT32_C(0x00000030) /*< Window is fullscreen (implies maximized). */
 #define DEE_WINDOWFLAG_FOCUSED    DEE_UINT32_C(0x00000040) /*< Window is focused. */
+#define DEE_WINDOWFLAG_PUBLICMASK DEE_UINT32_C(0x0FFFFFFF) /*< Mask of public window flags. */
 
 #define DEE_WINDOWFLAG_ISNORMAL(flags)     (((flags)&DEE_WINDOWFLAG_OPENGL)==DEE_WINDOWFLAG_NORMAL)
 #define DEE_WINDOWFLAG_ISOPENGL(flags)     (((flags)&DEE_WINDOWFLAG_OPENGL)==DEE_WINDOWFLAG_OPENGL)
@@ -157,6 +167,26 @@ typedef Dee_uint32_t Dee_windowflag_t;
 #define DEE_WINDOWFLAG_ISMAXIMIZED(flags)  (((flags)&(DEE_WINDOWFLAG_MINIMIZED|DEE_WINDOWFLAG_MAXIMIZED))==DEE_WINDOWFLAG_MAXIMIZED)
 #define DEE_WINDOWFLAG_ISFULLSCREEN(flags) (((flags)&DEE_WINDOWFLAG_FULLSCREEN)==DEE_WINDOWFLAG_FULLSCREEN)
 #define DEE_WINDOWFLAG_ISFOCUSED(flags)    (((flags)&DEE_WINDOWFLAG_FOCUSED)==DEE_WINDOWFLAG_FOCUSED)
+
+#ifdef DEE_PLATFORM_WINDOWS
+DEE_STATIC_INLINE(DWORD) DEE_WINDOWFLAG_W32GETSTYLE(Dee_windowflag_t flags) {
+ DWORD result = (WS_CLIPSIBLINGS|WS_CLIPCHILDREN);
+ if (DEE_WINDOWFLAG_ISVISIBLE   (flags)) result |= (WS_VISIBLE);
+ if (DEE_WINDOWFLAG_ISRESIZEABLE(flags)) result |= (WS_THICKFRAME|WS_SIZEBOX|WS_MAXIMIZEBOX);
+ switch (flags&(DEE_WINDOWFLAG_MINIMIZED|DEE_WINDOWFLAG_MAXIMIZED|DEE_WINDOWFLAG_FULLSCREEN)) {
+  case DEE_WINDOWFLAG_FULLSCREEN: result |= (WS_POPUP); break;
+  case DEE_WINDOWFLAG_MAXIMIZED:  result |= (WS_MAXIMIZE); DEE_ATTRIBUTE_FALLTHROUGH
+  case DEE_WINDOWFLAG_MINIMIZED:  result |= (WS_MINIMIZE); DEE_ATTRIBUTE_FALLTHROUGH
+  default: result |= (WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX); break;
+ }
+ return result;
+}
+DEE_STATIC_INLINE(DWORD) DEE_WINDOWFLAG_W32GETSTYLEEX(Dee_windowflag_t flags) {
+ DWORD result = 0;
+ if ((flags&DEE_WINDOWFLAG_FULLSCREEN)!=0) result |= WS_EX_TOPMOST;
+ return result;
+}
+#endif /* DEE_PLATFORM_WINDOWS */
 
 
 extern DeeSurfaceTypeObject DeeWindowSurface_Type;
@@ -178,13 +208,14 @@ struct DeeWindowSurfaceObject {
 };
 struct DeeNormalWindowData {
  DEE_A_REF struct DeeWindowSurfaceObject *nw_surface; /*< [1..1] Surface surface. */
-           HDC                            nw_w32hdc;
 };
 struct DeeOpenGLWindowData { int placeholder; };
-struct DeeWindow {
+struct DeeWindowObject {
+ DEE_OBJECT_HEAD
 #ifdef DEE_PLATFORM_WINDOWS
  HWND             w_w32hwnd;     /*< Window HWND handle. */
  WINDOWPLACEMENT  w_w32oldplace; /*< Old window placement (before fullscreen was entered). */
+ HDC              w_w32hdc;
 #endif /* DEE_PLATFORM_WINDOWS */
  Dee_windowflag_t w_flags;       /*< Active window flags. */
  union{
@@ -192,10 +223,13 @@ struct DeeWindow {
   struct DeeOpenGLWindowData w_opengl; /*< OpenGL window data. */
  };
 };
+extern DeeTypeObject DeeWindow_Type;
+#define DeeWindow_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeWindow_Type)
+#define DeeWindow_Check          DeeWindow_CheckExact
 
 #ifdef DEE_PLATFORM_WINDOWS
-extern struct DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowSurface(
- struct DeeWindow *self, Dee_size_t sx, Dee_size_t sy);
+extern DEE_A_RET_EXCEPT_REF struct DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowSurface(
+ DEE_A_IN HDC hdc, DEE_A_IN Dee_size_t sx, DEE_A_IN Dee_size_t sy);
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -215,6 +249,8 @@ extern struct DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowSurface(
 #define /* DEE_A_RET_NOEXCEPT(0) */DeeWindow_DoTryMaximize(ob)        DeeWin32Window_TryMaximize(DeeWindow_Win32HWND(ob))
 #define /* DEE_A_RET_NOEXCEPT(0) */DeeWindow_DoTryRestore(ob)         DeeWin32Window_TryRestore(DeeWindow_Win32HWND(ob))
 #define /* DEE_A_RET_NOEXCEPT(0) */DeeWindow_DoTryFocus(ob)           DeeWin32Window_TryFocus(DeeWindow_Win32HWND(ob))
+#define /* DEE_A_RET_NOEXCEPT(0) */DeeWindow_DoTryAllowResizeable(ob) DeeWin32Window_TryAllowResizeable(DeeWindow_Win32HWND(ob))
+#define /* DEE_A_RET_NOEXCEPT(0) */DeeWindow_DoTryPreventResizeable(ob) DeeWin32Window_TryPreventResizeable(DeeWindow_Win32HWND(ob))
 #define /* DEE_A_RET_NOEXCEPT(0) */DeeWindow_DoTryEnterFullscreen(ob) DeeWin32Window_TryEnterFullscreen(DeeWindow_Win32HWND(ob),&(ob)->w_w32oldplace)
 #define /* DEE_A_RET_NOEXCEPT(0) */DeeWindow_DoTryLeaveFullscreen(ob) DeeWin32Window_TryLeaveFullscreen(DeeWindow_Win32HWND(ob),&(ob)->w_w32oldplace)
 #define /* DEE_A_RET_EXCEPT(-1)  */DeeWindow_DoShow(ob)               DeeWin32Window_Show(DeeWindow_Win32HWND(ob))
@@ -223,6 +259,8 @@ extern struct DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowSurface(
 #define /* DEE_A_RET_EXCEPT(-1)  */DeeWindow_DoMaximize(ob)           DeeWin32Window_Maximize(DeeWindow_Win32HWND(ob))
 #define /* DEE_A_RET_EXCEPT(-1)  */DeeWindow_DoRestore(ob)            DeeWin32Window_Restore(DeeWindow_Win32HWND(ob))
 #define /* DEE_A_RET_EXCEPT(-1)  */DeeWindow_DoFocus(ob)              DeeWin32Window_Focus(DeeWindow_Win32HWND(ob))
+#define /* DEE_A_RET_EXCEPT(-1)  */DeeWindow_DoAllowResizeable(ob)    DeeWin32Window_AllowResizeable(DeeWindow_Win32HWND(ob))
+#define /* DEE_A_RET_EXCEPT(-1)  */DeeWindow_DoPreventResizeable(ob)  DeeWin32Window_PreventResizeable(DeeWindow_Win32HWND(ob))
 #define /* DEE_A_RET_EXCEPT(-1)  */DeeWindow_DoEnterFullscreen(ob)    DeeWin32Window_EnterFullscreen(DeeWindow_Win32HWND(ob),&(ob)->w_w32oldplace)
 #define /* DEE_A_RET_EXCEPT(-1)  */DeeWindow_DoLeaveFullscreen(ob)    DeeWin32Window_LeaveFullscreen(DeeWindow_Win32HWND(ob),&(ob)->w_w32oldplace)
 #endif /* DEE_PLATFORM_WINDOWS */
@@ -244,16 +282,19 @@ extern struct DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowSurface(
 #define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TryMaximize(ob)        (((ob)->w_flags&DEE_WINDOWFLAG_MAXIMIZED)==0 ? ((ob)->w_flags = (DeeWindow_DoTryMaximize(ob) ? ((ob)->w_flags|DEE_WINDOWFLAG_MAXIMIZED)&~(DEE_WINDOWFLAG_MINIMIZED),1) : 0) : 0)
 #define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TryRestore(ob)         (((ob)->w_flags&(DEE_WINDOWFLAG_MINIMIZED|DEE_WINDOWFLAG_MAXIMIZED))!=0 ? (DeeWindow_DoTryRestore(ob) ? ((ob)->w_flags &= ~(DEE_WINDOWFLAG_MINIMIZED|DEE_WINDOWFLAG_MAXIMIZED),1) : 0) : 0)
 #define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TryFocus(ob)           (((ob)->w_flags&DEE_WINDOWFLAG_FOCUSED)==0 ? (DeeWindow_DoTryFocus(ob) ? ((ob)->w_flags |= DEE_WINDOWFLAG_FOCUSED,1) : 0) : 0)
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TryAllowResizeable(ob) (((ob)->w_flags&DEE_WINDOWFLAG_RESIZEABLE)==0 ? (DeeWindow_DoTryAllowResizeable(ob) ? ((ob)->w_flags |= DEE_WINDOWFLAG_RESIZEABLE,1) : 0) : 0)
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TryPreventResizeable(ob) (((ob)->w_flags&DEE_WINDOWFLAG_RESIZEABLE)!=0 ? (DeeWindow_DoTryPreventResizeable(ob) ? ((ob)->w_flags &= ~(DEE_WINDOWFLAG_RESIZEABLE),1) : 0) : 0)
 #define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TryEnterFullscreen(ob) (((ob)->w_flags&DEE_WINDOWFLAG_FULLSCREEN)==0 ? (DeeWindow_DoTryEnterFullscreen(ob) ? ((ob)->w_flags |=   DEE_WINDOWFLAG_FULLSCREEN ,1) : 0) : 0)
 #define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TryLeaveFullscreen(ob) (((ob)->w_flags&DEE_WINDOWFLAG_FULLSCREEN)!=0 ? (DeeWindow_DoTryLeaveFullscreen(ob) ? ((ob)->w_flags &= ~(DEE_WINDOWFLAG_FULLSCREEN),1) : 0) : 0)
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_Flags(ob)                (ob)->w_flags
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsMinimized(ob)           DEE_WINDOWFLAG_ISMINIMIZED(DeeWindow_Flags(ob))
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsMaximized(ob)           DEE_WINDOWFLAG_ISMAXIMIZED(DeeWindow_Flags(ob))
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsVisible(ob)             DEE_WINDOWFLAG_ISVISIBLE(DeeWindow_Flags(ob))
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsHidden(ob)              DEE_WINDOWFLAG_ISHIDDEN(DeeWindow_Flags(ob))
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsResizeable(ob)          DEE_WINDOWFLAG_ISRESIZEABLE(DeeWindow_Flags(ob))
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsFocused(ob)             DEE_WINDOWFLAG_ISFOCUSED(DeeWindow_Flags(ob))
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsFullscreen(ob)          DEE_WINDOWFLAG_ISFULLSCREEN(DeeWindow_Flags(ob))
+#define /* DEE_A_RET_NOEXCEPT(0)    */_DeeWindow_Flags(ob)               (ob)->w_flags
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_Flags(ob)               ((ob)->w_flags&DEE_WINDOWFLAG_PUBLICMASK)
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsMinimized(ob)           DEE_WINDOWFLAG_ISMINIMIZED(_DeeWindow_Flags(ob))
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsMaximized(ob)           DEE_WINDOWFLAG_ISMAXIMIZED(_DeeWindow_Flags(ob))
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsVisible(ob)             DEE_WINDOWFLAG_ISVISIBLE(_DeeWindow_Flags(ob))
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsHidden(ob)              DEE_WINDOWFLAG_ISHIDDEN(_DeeWindow_Flags(ob))
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsResizeable(ob)          DEE_WINDOWFLAG_ISRESIZEABLE(_DeeWindow_Flags(ob))
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsFocused(ob)             DEE_WINDOWFLAG_ISFOCUSED(_DeeWindow_Flags(ob))
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_IsFullscreen(ob)          DEE_WINDOWFLAG_ISFULLSCREEN(_DeeWindow_Flags(ob))
 #ifdef DEE_PLATFORM_WINDOWS
 #define /* DEE_A_RET_NOEXCEPT(NULL) */DeeWindow_TryGetAttr(ob,attr)       DeeWin32Window_TryGetAttr(DeeWindow_Win32HWND(ob),attr)
 #define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TrySetAttr(ob,attr,v)     DeeWin32Window_TrySetAttr(DeeWindow_Win32HWND(ob),attr,v)
@@ -270,14 +311,16 @@ extern struct DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowSurface(
 #define /* DEE_A_RET_EXCEPT(-1) */DeeWindow_SetRect(ob,rect)        DeeWin32Window_SetRect(DeeWindow_Win32HWND(ob),rect)
 #define /* DEE_A_RET_EXCEPT(-1) */DeeWindow_Raise(ob)               DeeWin32Window_Raise(DeeWindow_Win32HWND(ob))
 #endif /* DEE_PLATFORM_WINDOWS */
-extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Show(DEE_A_INOUT struct DeeWindow *self);
-extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Hide(DEE_A_INOUT struct DeeWindow *self);
-extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Minimize(DEE_A_INOUT struct DeeWindow *self);
-extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Maximize(DEE_A_INOUT struct DeeWindow *self);
-extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Restore(DEE_A_INOUT struct DeeWindow *self);
-extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Focus(DEE_A_INOUT struct DeeWindow *self);
-extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_EnterFullscreen(DEE_A_INOUT struct DeeWindow *self);
-extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_LeaveFullscreen(DEE_A_INOUT struct DeeWindow *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Show(DEE_A_INOUT struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Hide(DEE_A_INOUT struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Minimize(DEE_A_INOUT struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Maximize(DEE_A_INOUT struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Restore(DEE_A_INOUT struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_Focus(DEE_A_INOUT struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_AllowResizeable(DEE_A_INOUT struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_PreventResizeable(DEE_A_INOUT struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_EnterFullscreen(DEE_A_INOUT struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_LeaveFullscreen(DEE_A_INOUT struct DeeWindowObject *self);
 #ifdef DEE_PLATFORM_WINDOWS
 #define /* DEE_A_RET_EXCEPT(-1) */DeeWindow_GetAttr(ob,attr,result) DeeWin32Window_GetAttr(DeeWindow_Win32HWND(ob),attr,result)
 #define /* DEE_A_RET_EXCEPT(-1) */DeeWindow_SetAttr(ob,attr,v)      DeeWin32Window_SetAttr(DeeWindow_Win32HWND(ob),attr,v)
@@ -290,25 +333,15 @@ extern DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeWindow_LeaveFullscreen(DEE_A_INOUT str
 
 
 extern DEE_A_RET_EXCEPT(-1) int DeeWindow_Init(
- DEE_A_OUT struct DeeWindow *self, DEE_A_IN struct DeeWindowRect const *rect,
+ DEE_A_OUT struct DeeWindowObject *self, DEE_A_IN struct DeeWindowRect const *rect,
  DEE_A_IN Dee_windowflag_t flags, DEE_A_IN_Z_OPT char const *title,
  DEE_A_IN_OPT DeeSurfaceObject *icon);
-extern void DeeWindow_Quit(DEE_A_IN struct DeeWindow *self);
-extern DEE_A_RET_EXCEPT(-1) int DeeWindow_Update(DEE_A_INOUT struct DeeWindow *self);
+extern void DeeWindow_Quit(DEE_A_IN struct DeeWindowObject *self);
+extern DEE_A_RET_EXCEPT(-1) int DeeWindow_Update(DEE_A_INOUT struct DeeWindowObject *self);
 extern DEE_A_RET_EXCEPT(-1) int DeeWindow_UpdateRects(
- DEE_A_INOUT struct DeeWindow *self, DEE_A_IN Dee_size_t rectc,
+ DEE_A_INOUT struct DeeWindowObject *self, DEE_A_IN Dee_size_t rectc,
  DEE_A_IN_R(rectc) struct DeeWindowRect const *rectv);
 
-
-
-
-
-struct DeeWindowObject {
- DEE_OBJECT_HEAD
- struct DeeWindow w_window; /*< Stored window object. */
-};
-
-extern DeeTypeObject DeeWindow_Type;
 
                                                            
 DEE_DECL_END
