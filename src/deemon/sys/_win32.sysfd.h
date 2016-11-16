@@ -27,7 +27,6 @@
 #include <deemon/deemonrun.h>
 #include <deemon/file.h>
 #include <deemon/type.h>
-#include <deemon/optional/atomic_mutex.h>
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
@@ -57,6 +56,20 @@ struct DeeWin32SysFD { DEE_WIN32_SYSFD_HEAD };
 
 #define DeeWin32SysFD_Quit(self) \
  (DEE_LIKELY(CloseHandle((self)->w32_handle)) ? (void)0 : SetLastError(0))
+
+#define DeeWin32SysFD_TryInitCopy(self,right) \
+ DuplicateHandle(GetCurrentProcess(),(right)->w32_handle,\
+                 GetCurrentProcess(),&(self)->w32_handle,\
+                 0,TRUE,DUPLICATE_SAME_ACCESS)
+#define DeeWin32SysFD_InitCopy(self,right,...) \
+do{\
+ if DEE_UNLIKELY(!DeeWin32SysFD_TryInitCopy(self,right)) {\
+  DeeError_SetStringf(&DeeErrorType_IOError,\
+                      "DuplicateHandle(GetCurrentProcess(),%p,GetCurrentProcess(),...,0,TRUE,DUPLICATE_SAME_ACCESS) : %K",\
+                      (right)->w32_handle,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
 
 #if DEE_TYPES_SIZEOF_SIZE_T > SIZEOF_DWORD
 static BOOL DeeWin32SysFD_LargeRead64(HANDLE hFile, void *p, Dee_uint64_t s, Dee_uint64_t *rs) {
@@ -374,18 +387,20 @@ do{\
 #define DEE_SYSFD_SEEK_CUR  DEE_WIN32_SYSFD_SEEK_CUR
 #define DEE_SYSFD_SEEK_END  DEE_WIN32_SYSFD_SEEK_END
 
-#define DeeSysFD            DeeWin32SysFD
-#define DeeSysFD_Quit       DeeWin32SysFD_Quit
-#define DeeSysFD_TryRead    DeeWin32SysFD_TryRead
-#define DeeSysFD_TryWrite   DeeWin32SysFD_TryWrite
-#define DeeSysFD_TrySeek    DeeWin32SysFD_TrySeek
-#define DeeSysFD_Read       DeeWin32SysFD_Read
-#define DeeSysFD_Write      DeeWin32SysFD_Write
-#define DeeSysFD_Seek       DeeWin32SysFD_Seek
-#define DeeSysFD_TryFlush   DeeWin32SysFD_TryFlush
-#define DeeSysFD_Flush      DeeWin32SysFD_Flush
-#define DeeSysFD_TryTrunc   DeeWin32SysFD_TryTrunc
-#define DeeSysFD_Trunc      DeeWin32SysFD_Trunc
+#define DeeSysFD             DeeWin32SysFD
+#define DeeSysFD_TryInitCopy DeeWin32SysFD_TryInitCopy
+#define DeeSysFD_InitCopy    DeeWin32SysFD_InitCopy
+#define DeeSysFD_Quit        DeeWin32SysFD_Quit
+#define DeeSysFD_TryRead     DeeWin32SysFD_TryRead
+#define DeeSysFD_TryWrite    DeeWin32SysFD_TryWrite
+#define DeeSysFD_TrySeek     DeeWin32SysFD_TrySeek
+#define DeeSysFD_Read        DeeWin32SysFD_Read
+#define DeeSysFD_Write       DeeWin32SysFD_Write
+#define DeeSysFD_Seek        DeeWin32SysFD_Seek
+#define DeeSysFD_TryFlush    DeeWin32SysFD_TryFlush
+#define DeeSysFD_Flush       DeeWin32SysFD_Flush
+#define DeeSysFD_TryTrunc    DeeWin32SysFD_TryTrunc
+#define DeeSysFD_Trunc       DeeWin32SysFD_Trunc
 
 #define DeeSysStdFD            DeeWin32SysStdFD
 #define DeeSysStdFD_GET_STDIN  DeeWin32SysStdFD_GET_STDIN

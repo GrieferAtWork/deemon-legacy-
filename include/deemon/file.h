@@ -196,6 +196,63 @@ DEE_PRIVATE_DECL_DEE_FILEDESCR_T
 #undef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
 #endif
 
+#ifdef DEE_LIMITED_DEX
+#define DEE_PRIVATE_FILEFLAG_FD_VALID      DEE_UINT32_C(0x10000000) /*< The stored file descriptor is valid. */
+#define DEE_PRIVATE_FILEFLAG_FD_OWNED      DEE_UINT32_C(0x20000000) /*< The stored file descriptor is owned. */
+#define DEE_PRIVATE_FILEFD_DESCRITOR_SIZE  DEE_TYPES_SIZEOF_DEE_FILEDESCR_T
+struct DeeFileFDObject {
+ DEE_FILE_OBJECT_HEAD
+ Dee_uint32_t fd_users; /*< [atomic,inc:lock(fo_lock)] Amount of threads currently using this file-descriptor (incrementing requires a lock to 'fo_lock'). */
+ Dee_uint8_t  fd_data[DEE_PRIVATE_FILEFD_DESCRITOR_SIZE]; /*< File descriptor data (only writable when 'fo_lock' is owned and 'fd_users' is '0') */
+};
+
+#define DeeFileFD_InitBasic(ob,flags)\
+ (DeeAtomicMutex_Init(&(ob)->fo_lock)\
+ ,(ob)->fo_flags = (flags),(ob)->fd_users = 0)
+
+//////////////////////////////////////////////////////////////////////////
+// Acquire shared access to a given file descriptor
+// >> You, and any other thread is allowed to execute any system-operation
+//    on the descriptor, knowing that the descriptor will not just randomly
+//    be closed before you release the your ticket.
+// >> The provided block of code is executed if the descriptor is (no longer) valid.
+#define DeeFileFD_ACQUIRE_SHARED(ob,...)\
+do{\
+ DeeFile_ACQUIRE(ob);\
+ if (((ob)->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID)==0)\
+ { DeeFile_RELEASE(ob); {__VA_ARGS__;} } else {\
+  DeeAtomic32_FetchInc((ob)->fd_users,memory_order_seq_cst);\
+  DeeFile_RELEASE(ob);\
+ }\
+}while(0)
+#define DeeFileFD_RELEASE_SHARED(ob)\
+ DeeAtomic32_FetchDec((ob)->fd_users,memory_order_seq_cst)
+
+//////////////////////////////////////////////////////////////////////////
+// Acquire exclusive access to a given file descriptor
+// >> Only you are allowed to operate on a given descriptor.
+//    Such a ticket is required for closing a descriptor.
+// >> The provided block of code is executed if the descriptor is (no longer) valid.
+#define DeeFileFD_ACQUIRE_EXCLUSIVE(ob,...)\
+do{\
+ DeeFile_ACQUIRE(ob);\
+ while (1) {\
+  if (((ob)->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID)==0)\
+  { DeeFile_RELEASE(ob); {__VA_ARGS__;} break; }\
+  /* NOTE: No need for atomically loading 'fd_users' \
+           here (compare against 0 - quirk) */\
+  if ((ob)->fd_users == 0) break; /*< We did it! */\
+  DeeFile_RELEASE(ob);\
+  /* Sleep a bit while waiting for other threads \
+     to finish (and hope this isn't a deadlock...). */\
+  DeeThread_SleepNoInterrupt(1);\
+  DeeFile_ACQUIRE(ob);\
+ }\
+}while(0)
+#define DeeFileFD_RELEASE_EXCLUSIVE(ob) DeeFile_RELEASE(ob)
+
+#endif
+
 #if DEE_PLATFORM_HAVE_IO
 #ifdef DEE_LIMITED_DEX
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
@@ -327,6 +384,7 @@ struct DeeFileJoinedObject {
 
                                                      // -read- -write- -seek- -trunc-
 DEE_DATA_DECL(DeeFileTypeObject) DeeFile_Type;       // yes     yes     yes    yes
+DEE_DATA_DECL(DeeFileTypeObject) DeeFileFD_Type;     // maybe   maybe   maybe  maybe
 #if DEE_PLATFORM_HAVE_IO
 DEE_DATA_DECL(DeeFileTypeObject) DeeFileIO_Type;     // maybe   maybe   maybe  maybe
 #endif

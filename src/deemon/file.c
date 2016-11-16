@@ -4057,6 +4057,49 @@ DeeFileTypeObject DeeFile_Type = {
  DEE_FILE_TYPE_OBJECT_FOOTER_v100
 };
 
+DeeFileTypeObject DeeFileFD_Type = {
+ {DEE_TYPE_OBJECT_HEAD_EX_v100(
+   member(&DeeFileType_Type),member("file.fd"),member(
+    "The generalized root-type of all filedescriptor-based file types"),
+   null,member((DeeTypeObject *)&DeeFile_Type)),
+  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeFileFDObject),null,
+   null,null,member(&_deefileio_tp_move_ctor),
+   member(&_deefileio_tp_any_ctor)),
+  DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,
+   member(&_deefileio_tp_dtor)),
+  DEE_TYPE_OBJECT_ASSIGN_v100(null,
+   member(&_deefileio_tp_move_assign),null),
+  DEE_TYPE_OBJECT_CAST_v101(
+   member(&_deefileio_tp_str),
+   member(&_deefileio_tp_str),null,null,null),
+  DEE_TYPE_OBJECT_OBJECT_v100(null,
+   member(&_deefileio_tp_visit)),
+  DEE_TYPE_OBJECT_MATH_v101(
+   member(&_deefileio_tp_not),
+   member(&_deefileio_tp_bool),
+   null,null,null,null,null,null,null,null,null,null,
+   null,null,null,null,null,null,null,null,null,null,
+   null,null,null,null,null,null,null,null,null,null),
+  DEE_TYPE_OBJECT_COMPARE_v100(null,null,null,null,null,null),
+  DEE_TYPE_OBJECT_SEQ_v101(null,null,null,null,null,null,null,null,null,null),
+  DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,
+   member(_deefileio_tp_members),
+   member(_deefileio_tp_getsets),
+   member(_deefileio_tp_methods),null,
+   member(_deefileio_tp_class_getsets),
+   member(_deefileio_tp_class_methods)),
+  DEE_TYPE_OBJECT_FOOTER_v100
+ },
+ DEE_FILE_TYPE_OBJECT_IO_v100(
+  member(&_deefileio_tp_io_read),
+  member(&_deefileio_tp_io_write),
+  member(&_deefileio_tp_io_seek),
+  member(&_deefileio_tp_io_flush),
+  member(&_deefileio_tp_io_trunc),
+  member(&_deefileio_tp_io_close))
+ DEE_FILE_TYPE_OBJECT_FOOTER_v100
+};
+
 #if DEE_PLATFORM_HAVE_IO
 DeeFileTypeObject DeeFileIO_Type = {
  {DEE_TYPE_OBJECT_HEAD_EX_v100(

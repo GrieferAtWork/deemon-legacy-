@@ -30,7 +30,9 @@
 // >> #define DEE_SYSFD_SEEK_END <implementation_dependent>
 //
 // >> struct DeeSysFD { ... };
-// >> void DeeSysFD_Quit(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] void DeeSysFD_Quit(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFD_TryInitCopy(DEE_A_INOUT struct DeeSysFD *self, DEE_A_INOUT struct DeeSysFD *right);
+// >> [[optional]] void DeeSysFD_InitCopy(DEE_A_INOUT struct DeeSysFD *self, DEE_A_INOUT struct DeeSysFD *right, CODE on_error);
 // >> bool DeeSysFD_TryRead(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN size_t s, DEE_A_OUT size_t *rs);
 // >> bool DeeSysFD_TryWrite(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN_RB(*ws) void const *p, DEE_A_IN size_t s, DEE_A_OUT size_t *ws);
 // >> void DeeSysFD_Read(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN size_t s, DEE_A_OUT size_t *rs, CODE on_error);
