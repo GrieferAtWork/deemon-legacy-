@@ -64,7 +64,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 DEE_DECL_BEGIN
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeePipeObject) *
-_DeePipeReader_NewFromInheritedHandle(DEE_A_IN DeeIOHandle handle) {
+_DeePipeReader_NewFromInheritedHandle(DEE_A_IN Dee_filedescr_t handle) {
  DeePipeObject *result;
  if ((result = DeeObject_MALLOCF(DeePipeObject,
   "pipe.reader (handle = %lu)",(unsigned long)handle)) != NULL) {
@@ -75,7 +75,7 @@ _DeePipeReader_NewFromInheritedHandle(DEE_A_IN DeeIOHandle handle) {
  return (DeeObject *)result;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeePipeObject) *
-_DeePipeWriter_NewFromInheritedHandle(DEE_A_IN DeeIOHandle handle) {
+_DeePipeWriter_NewFromInheritedHandle(DEE_A_IN Dee_filedescr_t handle) {
  DeePipeObject *result;
  if ((result = DeeObject_MALLOCF(DeePipeObject,
   "pipe.writer (handle = %lu)",(unsigned long)handle)) != NULL) {
@@ -159,7 +159,7 @@ static int DEE_CALL _deepipe_tp_move_assign(
  DeePipeObject *self, DeePipeObject *right) {
  if DEE_LIKELY(self != right) {
   Dee_uint32_t new_flags;
-  DeeIOHandle new_handle;
+  Dee_filedescr_t new_handle;
   DeeFile_ACQUIRE(right);
   new_flags = right->fo_flags;
   new_handle = right->p_handle;
@@ -209,7 +209,7 @@ static void DEE_CALL _deepipe_tp_io_close(DeePipeObject *self) {
 //////////////////////////////////////////////////////////////////////////
 // Pipe reader VTable
 static DeeObject *DEE_CALL _deepipereader_tp_str(DeePipeObject *self) {
- DeeIOHandle handle;
+ Dee_filedescr_t handle;
  DeeFile_ACQUIRE(self);
  handle = self->p_handle;
  DeeFile_RELEASE(self);
@@ -312,7 +312,7 @@ static int DEE_CALL _deepipereader_tp_io_trunc(DeePipeObject *DEE_UNUSED(self)) 
 //////////////////////////////////////////////////////////////////////////
 // Pipe writer VTable
 static DeeObject *DEE_CALL _deepipewriter_tp_str(DeePipeObject *self) {
- DeeIOHandle handle;
+ Dee_filedescr_t handle;
  DeeFile_ACQUIRE(self);
  handle = self->p_handle;
  DeeFile_RELEASE(self);
@@ -413,12 +413,12 @@ static DeeObject *DEE_CALL _deepipeclass_new(
 }
 static DeeObject *DEE_CALL _deepipe_fileno(
  DeePipeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeIOHandle handle;
+ Dee_filedescr_t handle;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":fileno") != 0) return NULL;
  DeeFile_ACQUIRE(self);
  handle = DeePipe_HANDLE(self);
  DeeFile_RELEASE(self);
- return DeeObject_New(DeeIOHandle,handle);
+ return DeeObject_New(Dee_filedescr_t,handle);
 }
 
 static struct DeeMemberDef const _deepipe_tp_class_members[] = {
@@ -437,7 +437,7 @@ static struct DeeMethodDef const _deepipe_tp_class_methods[] = {
 #define _deepipe_tp_members DeeType_DEFAULT_SLOT(tp_members)
 #else /* !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
 static struct DeeMemberDef const _deepipe_tp_members[] = {
- DEE_MEMBERDEF_NAMED_RO_v100("__p_handle",DeePipeObject,p_handle,DeeIOHandle),
+ DEE_MEMBERDEF_NAMED_RO_v100("__p_handle",DeePipeObject,p_handle,Dee_filedescr_t),
  DEE_MEMBERDEF_END_v100
 };
 #endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */

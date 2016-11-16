@@ -927,6 +927,18 @@
 #endif
 #endif /* !DEE_ATTRIBUTE_DEPRECATED */
 
+#ifndef DEE_MACRO_DEPRECATED
+#if defined(_MSC_VER) || defined(__DEEMON__)
+# define DEE_MACRO_DEPRECATED(new)\
+  DEE_COMPILER_PRAGMA(message(__FILE__ "(" DEE_PP_STR(__LINE__) ") : Warning : Deprecated macro. Use " DEE_PP_STR(#new) " instead!")) new
+#elif defined(__GNUC__)
+# define DEE_MACRO_DEPRECATED(new)\
+  DEE_COMPILER_PRAGMA(message __FILE__ ":" DEE_PP_STR(__LINE__) ": Warning : Deprecated macro. Use " DEE_PP_STR(#new) " instead!")) new
+#else
+# define DEE_MACRO_DEPRECATED(new)
+#endif
+#endif
+
 
 #ifndef DEE_BUILTIN_BREAKPOINT
 #if __has_builtin(__builtin_breakpoint)

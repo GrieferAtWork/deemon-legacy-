@@ -606,7 +606,7 @@ struct DEE_A_RET_EXCEPT_REF DeeWindowSurfaceObject *DeeWindow_Win32CreateWindowS
   info.bmiHeader.biCompression = BI_RGB;
  }
  // Calculate the pixel specifications
- if (DeeSurfacePixelSpec_Init(&result->ws_spec,format) != 0) {
+ if DEE_UNLIKELY(DeeSurfacePixelSpec_Init(&result->ws_spec,format) != 0) {
 err_r: _DeeObject_DELETE(&DeeWindowSurface_Type,result);
   return NULL;
  }

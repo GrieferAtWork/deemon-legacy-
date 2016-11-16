@@ -48,9 +48,9 @@ DEE_PRIVATE_DECL_DEE_REFCNT_TYPES
 //////////////////////////////////////////////////////////////////////////
 // Generic object structures
 struct DeeObject {
- Dee_refcnt_t                    __ob_refcnt;  /*< Reference counter. */
- Dee_weakcnt_t                   __ob_weakcnt; /*< Weak reference counter. */
- DEE_A_REF struct DeeTypeObject *__ob_type;    /*< [1..1][const] Object type. */
+               Dee_refcnt_t          __ob_refcnt;  /*< Reference counter. */
+               Dee_weakcnt_t         __ob_weakcnt; /*< Weak reference counter. */
+ /*DEE_A_REF*/ struct DeeTypeObject *__ob_type;    /*< [1..1][const] Object type. */
  // more data...
 };
 

@@ -24,6 +24,7 @@
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
 #include <deemon/virtual_fs.h.inl>
+#include <deemon/string.h>
 
 //////////////////////////////////////////////////////////////////////////
 // === Win32 ===
@@ -70,8 +71,8 @@ DEE_STATIC_INLINE(HMODULE) _fixed_LoadLibraryW(Dee_WideChar const *filename) {
  Dee_size_t filename_size; DWORD saved_error;
  filename_size = Dee_WideStrLen(filename);
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
- if (filename[0] == '\\' && filename[1] == '\\' &&
-     filename[2] == '?' && filename[2] == '\\')
+ if (filename[0] == '\\' && filename[1] == '\\'
+  && filename[2] == '?' && filename[2] == '\\')
 #endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
  {
   // Already a UNC filename

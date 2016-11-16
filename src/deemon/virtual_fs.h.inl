@@ -23,6 +23,7 @@
 
 #include <deemon/fs_api.h>
 #include <deemon/file.h>
+#include <deemon/runtime_flags.h>
 
 DEE_DECL_BEGIN
 

@@ -149,13 +149,13 @@ DEE_A_RET_EXCEPT(-1) int _DeeFileIO_Utf8InitObjectEx
 #ifdef DEE_PLATFORM_WINDOWS
   DWORD disposition,access,attr;
   DEE_STATIC_ASSERT(DEE_FILEIO_INVALID_HANDLE == (void *)INVALID_HANDLE_VALUE);
-  switch (self->fio_mode&DEE_FILE_MASK_BASIC_MODE) {
-   case DEE_FILE_MODE_READ: disposition = OPEN_EXISTING; access = GENERIC_READ; break;
-   case DEE_FILE_MODE_WRITE: disposition = CREATE_ALWAYS; access = GENERIC_WRITE; break;
-   case DEE_FILE_MODE_APPEND: disposition = OPEN_ALWAYS; access = GENERIC_WRITE; break;
-   case DEE_FILE_MODE_READ|DEE_FILE_FLAG_UPDATE: disposition = OPEN_EXISTING; access = GENERIC_READ|GENERIC_WRITE; break;
-   case DEE_FILE_MODE_WRITE|DEE_FILE_FLAG_UPDATE: disposition = CREATE_ALWAYS; access = GENERIC_READ|GENERIC_WRITE; break;
-   case DEE_FILE_MODE_APPEND|DEE_FILE_FLAG_UPDATE: disposition = OPEN_ALWAYS; access = GENERIC_READ|GENERIC_WRITE; break;
+  switch (self->fio_mode&DEE_OPENMODE_MASKBASIC) {
+   case DEE_OPENMODE_READ: disposition = OPEN_EXISTING; access = GENERIC_READ; break;
+   case DEE_OPENMODE_WRITE: disposition = CREATE_ALWAYS; access = GENERIC_WRITE; break;
+   case DEE_OPENMODE_APPEND: disposition = OPEN_ALWAYS; access = GENERIC_WRITE; break;
+   case DEE_OPENMODE_READ|DEE_OPENMODE_FLAG_UPDATE: disposition = OPEN_EXISTING; access = GENERIC_READ|GENERIC_WRITE; break;
+   case DEE_OPENMODE_WRITE|DEE_OPENMODE_FLAG_UPDATE: disposition = CREATE_ALWAYS; access = GENERIC_READ|GENERIC_WRITE; break;
+   case DEE_OPENMODE_APPEND|DEE_OPENMODE_FLAG_UPDATE: disposition = OPEN_ALWAYS; access = GENERIC_READ|GENERIC_WRITE; break;
    default: DEE_BUILTIN_UNREACHABLE();
   }
   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
@@ -227,13 +227,13 @@ no_err:
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
   int open_mode;
-  switch (self->fio_mode&DEE_FILE_MASK_BASIC_MODE) {
-   case DEE_FILE_MODE_READ: open_mode = O_RDONLY; break;
-   case DEE_FILE_MODE_WRITE: open_mode = O_WRONLY|O_CREAT|O_TRUNC; break;
-   case DEE_FILE_MODE_APPEND: open_mode = O_WRONLY|O_CREAT|O_APPEND; break;
-   case DEE_FILE_MODE_READ|DEE_FILE_FLAG_UPDATE: open_mode = O_RDWR; break;
-   case DEE_FILE_MODE_WRITE|DEE_FILE_FLAG_UPDATE: open_mode = O_RDWR|O_CREAT|O_TRUNC; break;
-   case DEE_FILE_MODE_APPEND|DEE_FILE_FLAG_UPDATE: open_mode = O_RDWR|O_CREAT|O_APPEND; break;
+  switch (self->fio_mode&DEE_OPENMODE_MASKBASIC) {
+   case DEE_OPENMODE_READ: open_mode = O_RDONLY; break;
+   case DEE_OPENMODE_WRITE: open_mode = O_WRONLY|O_CREAT|O_TRUNC; break;
+   case DEE_OPENMODE_APPEND: open_mode = O_WRONLY|O_CREAT|O_APPEND; break;
+   case DEE_OPENMODE_READ|DEE_OPENMODE_FLAG_UPDATE: open_mode = O_RDWR; break;
+   case DEE_OPENMODE_WRITE|DEE_OPENMODE_FLAG_UPDATE: open_mode = O_RDWR|O_CREAT|O_TRUNC; break;
+   case DEE_OPENMODE_APPEND|DEE_OPENMODE_FLAG_UPDATE: open_mode = O_RDWR|O_CREAT|O_APPEND; break;
    default: DEE_BUILTIN_UNREACHABLE();
   }
   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
@@ -260,13 +260,13 @@ no_err:
 #elif DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
   char const *open_mode;
   (void)permissions;
-  switch (self->fio_mode&DEE_FILE_MASK_BASIC_MODE) {
-   case DEE_FILE_MODE_READ: open_mode = "r"; break;
-   case DEE_FILE_MODE_WRITE: open_mode = "w"; break;
-   case DEE_FILE_MODE_APPEND: open_mode = "a"; break;
-   case DEE_FILE_MODE_READ|DEE_FILE_FLAG_UPDATE: open_mode = "r+"; break;
-   case DEE_FILE_MODE_WRITE|DEE_FILE_FLAG_UPDATE: open_mode = "w+"; break;
-   case DEE_FILE_MODE_APPEND|DEE_FILE_FLAG_UPDATE: open_mode = "a+"; break;
+  switch (self->fio_mode&DEE_OPENMODE_MASKBASIC) {
+   case DEE_OPENMODE_READ: open_mode = "r"; break;
+   case DEE_OPENMODE_WRITE: open_mode = "w"; break;
+   case DEE_OPENMODE_APPEND: open_mode = "a"; break;
+   case DEE_OPENMODE_READ|DEE_OPENMODE_FLAG_UPDATE: open_mode = "r+"; break;
+   case DEE_OPENMODE_WRITE|DEE_OPENMODE_FLAG_UPDATE: open_mode = "w+"; break;
+   case DEE_OPENMODE_APPEND|DEE_OPENMODE_FLAG_UPDATE: open_mode = "a+"; break;
    default: DEE_BUILTIN_UNREACHABLE();
   }
   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
@@ -3514,7 +3514,7 @@ expand:
 #endif
 
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_F(ChmodStringToModeWithHandle)(
- DEE_A_IN_Z DEE_CHAR const *filename, DEE_A_IN DeeIOHandle file,
+ DEE_A_IN_Z DEE_CHAR const *filename, DEE_A_IN Dee_filedescr_t file,
  DEE_A_IN_Z char const *mode_str, DEE_A_OUT Dee_mode_t *mode) {
  int opkind = 0; char const *mode_iter = mode_str;
  Dee_uint32_t channels = 0;

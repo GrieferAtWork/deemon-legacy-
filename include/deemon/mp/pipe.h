@@ -57,13 +57,13 @@ DEE_PRIVATE_DECL_DEE_FILE_TYPEOBJECT
 DEE_OBJECT_DEF(DeePipeObject);
 
 #ifdef DEE_LIMITED_API
-#ifdef DEE_PRIVATE_DECL_DEE_IO_HANDLE
-DEE_PRIVATE_DECL_DEE_IO_HANDLE
-#undef DEE_PRIVATE_DECL_DEE_IO_HANDLE
+#ifdef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
+DEE_PRIVATE_DECL_DEE_FILEDESCR_T
+#undef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
 #endif
 struct DeePipeObject {
  DEE_FILE_OBJECT_HEAD
- DeeIOHandle p_handle;
+ Dee_filedescr_t p_handle;
 };
 #define DeePipe_HANDLE(ob)  ((DeePipeObject *)Dee_REQUIRES_POINTER(ob))->p_handle
 #endif
@@ -87,8 +87,8 @@ DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1) int) DeePipe_New(
  DEE_A_IN Dee_size_t size_hint) DEE_ATTRIBUTE_NONNULL((1,2));
 
 #ifdef DEE_LIMITED_API
-extern DEE_A_RET_OBJECT_EXCEPT_REF(DeePipeObject) *_DeePipeReader_NewFromInheritedHandle(DEE_A_IN DeeIOHandle handle);
-extern DEE_A_RET_OBJECT_EXCEPT_REF(DeePipeObject) *_DeePipeWriter_NewFromInheritedHandle(DEE_A_IN DeeIOHandle handle);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeePipeObject) *_DeePipeReader_NewFromInheritedHandle(DEE_A_IN Dee_filedescr_t handle);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeePipeObject) *_DeePipeWriter_NewFromInheritedHandle(DEE_A_IN Dee_filedescr_t handle);
 #endif
 
 DEE_DECL_END

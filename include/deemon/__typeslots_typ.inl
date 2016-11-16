@@ -260,3 +260,7 @@ typedef int (DEE_CALL *_DeeType_SlotType_tp_io_trunc)(struct DeeFileObject *self
 typedef int (DEE_CALL *_DeeType_SlotType___trunc)(struct DeeFileObject *self);
 typedef void (DEE_CALL *_DeeType_SlotType_tp_io_close)(struct DeeFileObject *self);
 typedef void (DEE_CALL *_DeeType_SlotType___close)(struct DeeFileObject *self);
+typedef int (DEE_CALL *_DeeType_SlotType_tp_io_readat)(struct DeeFileObject *self, Dee_uint64_t pos, void *p, Dee_size_t s, Dee_size_t *rs);
+typedef int (DEE_CALL *_DeeType_SlotType___readat)(struct DeeFileObject *self, Dee_uint64_t pos, void *p, Dee_size_t s, Dee_size_t *rs);
+typedef int (DEE_CALL *_DeeType_SlotType_tp_io_writeat)(struct DeeFileObject *self, Dee_uint64_t pos, void const *p, Dee_size_t s, Dee_size_t *ws);
+typedef int (DEE_CALL *_DeeType_SlotType___writeat)(struct DeeFileObject *self, Dee_uint64_t pos, void const *p, Dee_size_t s, Dee_size_t *ws);

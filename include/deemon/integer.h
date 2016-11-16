@@ -305,11 +305,11 @@ extern DeeErrorObject _DeeError_ValueError_RangeZeroStep;
 
 #if DEE_PLATFORM_HAVE_IO_HANDLE
 #if defined(DEE_PLATFORM_UNIX)
-#define DEE_PRIVATE_OBJECT_NEW_DeeIOHandle  DEE_PRIVATE_OBJECT_NEW_int
-#define DEE_PRIVATE_OBJECT_TYPE_DeeIOHandle DEE_PRIVATE_OBJECT_TYPE_int
+# define DEE_PRIVATE_OBJECT_NEW_Dee_filedescr_t    DEE_PRIVATE_OBJECT_NEW_int
+# define DEE_PRIVATE_OBJECT_TYPE_Dee_filedescr_t   DEE_PRIVATE_OBJECT_TYPE_int
 #elif !DEE_CONFIG_RUNTIME_HAVE_POINTERS
-#define DEE_PRIVATE_OBJECT_NEW_DeeIOHandle(x) DEE_PRIVATE_OBJECT_NEW_uintptr_t((uintptr_t)(x))
-#define DEE_PRIVATE_OBJECT_TYPE_DeeIOHandle   DEE_PRIVATE_OBJECT_TYPE_uintptr_t
+# define DEE_PRIVATE_OBJECT_NEW_Dee_filedescr_t(x) DEE_PRIVATE_OBJECT_NEW_uintptr_t((uintptr_t)(x))
+# define DEE_PRIVATE_OBJECT_TYPE_Dee_filedescr_t   DEE_PRIVATE_OBJECT_TYPE_uintptr_t
 #endif /* ... */
 #endif /* DEE_PLATFORM_HAVE_IO_HANDLE */
 

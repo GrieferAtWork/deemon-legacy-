@@ -261,4 +261,8 @@ enum{
  DeeType_SlotID___trunc__ = 3004,
  DeeType_SlotID_tp_io_close = 3005,
  DeeType_SlotID___close__ = 3005,
+ DeeType_SlotID_tp_io_readat = 3006,
+ DeeType_SlotID___readat__ = 3006,
+ DeeType_SlotID_tp_io_writeat = 3007,
+ DeeType_SlotID___writeat__ = 3007,
 };

@@ -31,33 +31,50 @@ DEE_DECL_BEGIN
 #error "Must define 'BUFFERED_BUFSIZE' before including this file"
 #endif
 
+
+#ifdef AT
+#ifdef ALL
+static DeeObject *DEE_PP_CAT_2(_deefile_buffered_read_all_data_at_,BUFFERED_BUFSIZE)
+#else
+static DeeObject *DEE_PP_CAT_2(_deefile_buffered_read_data_at_,BUFFERED_BUFSIZE)
+#endif
+#else
 #ifdef ALL
 static DeeObject *DEE_PP_CAT_2(_deefile_buffered_read_all_data_,BUFFERED_BUFSIZE)
 #else
 static DeeObject *DEE_PP_CAT_2(_deefile_buffered_read_data_,BUFFERED_BUFSIZE)
 #endif
-(DeeFileObject *self, Dee_size_t max_bytes) {
+#endif
+(DeeFileObject *self,
+#ifdef AT
+ Dee_uint64_t pos,
+#endif
+ Dee_size_t max_bytes) {
  Dee_size_t do_read,did_read,total_read = 0; char *buf; DeeObject *result;
  DeeStringWriter writer = DeeStringWriter_INIT();
  while (1) {
   do_read = BUFFERED_BUFSIZE < max_bytes ? BUFFERED_BUFSIZE : max_bytes;
-  if ((buf = DeeStringWriter_Require(&writer,do_read)) == NULL) goto err;
-  if (DeeFile_Read((DeeObject *)self,buf,do_read*sizeof(Dee_Char),&did_read) == -1) goto err;
+  if DEE_UNLIKELY((buf = DeeStringWriter_Require(&writer,do_read)) == NULL) goto err;
+#ifdef AT
+  if DEE_UNLIKELY(DeeFile_ReadAt((DeeObject *)self,pos,buf,do_read*sizeof(Dee_Char),&did_read) != 0) goto err;
+#else
+  if DEE_UNLIKELY(DeeFile_Read((DeeObject *)self,buf,do_read*sizeof(Dee_Char),&did_read) != 0) goto err;
+#endif
   writer.sw_len = (total_read += did_read/sizeof(Dee_Char)); // Trim the writer to the total amount read
 #ifdef ALL
   if (!did_read) break; // End of file (no more data)
 #else
   if (did_read/sizeof(Dee_Char) != do_read) break; // End of file (not enough data)
 #endif
-  if ((max_bytes -= did_read/sizeof(Dee_Char)) == 0) break;
+  if ((max_bytes -= (did_read/sizeof(Dee_Char))) == 0) break;
+#ifdef AT
+  pos += did_read;
+#endif
  }
  result = DeeStringWriter_Pack(&writer);
-end:
- DeeStringWriter_Quit(&writer);
+end: DeeStringWriter_Quit(&writer);
  return result;
-err:
- result = NULL;
- goto end;
+err: result = NULL; goto end;
 }
 #undef BUFFERED_BUFSIZE
 

@@ -71,7 +71,7 @@
 #if defined(DEE_PLATFORM_WINDOWS)
 # include <deemon/sys/_win32.sysdynlib.h>
 #elif defined(DEE_PLATFORM_UNIX)
-# include <deemon/sys/_posix.sysdynlib.h>
+# include <deemon/sys/_unix.sysdynlib.h>
 #elif defined(__HAIKU__)
 # include <deemon/sys/_haiku.sysdynlib.h>
 #elif 1

@@ -270,6 +270,10 @@ s(3003,"int (DEE_CALL *)(struct DeeFileObject *self)","tp_io.tp_io_flush","NULL"
 s(3004,"int (DEE_CALL *)(struct DeeFileObject *self)","tp_io.tp_io_trunc","NULL","__trunc__");
 s(3005,"void (DEE_CALL *)(struct DeeFileObject *self)","tp_io.tp_io_close","NULL","__close__");
 
+// New file operators added in v102
+s(3006,"int (DEE_CALL *)(struct DeeFileObject *self, Dee_uint64_t pos, void *p, Dee_size_t s, Dee_size_t *rs)","tp_io.tp_io_readat","NULL","__readat__");
+s(3007,"int (DEE_CALL *)(struct DeeFileObject *self, Dee_uint64_t pos, void const *p, Dee_size_t s, Dee_size_t *ws)","tp_io.tp_io_writeat","NULL","__writeat__");
+
 print f_stx: "};";
 print f_ids: "};";
 

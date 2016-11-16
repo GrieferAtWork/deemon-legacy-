@@ -33,7 +33,7 @@ function foo(x) {{
 		// Yet when being executed after return is
 		// encountered, the stack will already be cleared,
 		// causing an internal assertion fault at runtime.
-		print "In finally";
+		print "In finally",x;
 	}
 }}
 

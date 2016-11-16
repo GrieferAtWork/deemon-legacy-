@@ -148,9 +148,9 @@ enum{
  DeeMemberType_DeeAtomicMutex = DeeMemberType_ATOMIC|DeeMemberType_uint8_t,
 #if DEE_PLATFORM_HAVE_IO_HANDLE
 #if defined(DEE_PLATFORM_WINDOWS)
- DeeMemberType_DeeIOHandle = DeeMemberType_POINTER(DeeMemberType_void),
+ DeeMemberType_Dee_filedescr_t = DeeMemberType_POINTER(DeeMemberType_void),
 #elif defined(DEE_PLATFORM_UNIX)
- DeeMemberType_DeeIOHandle = DeeMemberType_int,
+ DeeMemberType_Dee_filedescr_t = DeeMemberType_int,
 #endif
 #endif
 

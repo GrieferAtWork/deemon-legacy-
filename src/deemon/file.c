@@ -52,6 +52,12 @@
 #include <deemon/posix_features.inl>
 #include DEE_INCLUDE_MEMORY_API()
 
+#ifndef __INTELLISENSE__
+#ifdef DEE_PLATFORM_WINDOWS
+#include <deemon/sys/_win32.sysfd.filename.c.inl>
+#endif /* DEE_PLATFORM_WINDOWS */
+#endif /* ... */
+
 #if DEE_PLATFORM_HAVE_IO
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
@@ -82,6 +88,20 @@ DEE_COMPILER_MSVC_WARNING_POP
 #endif /* DEE_PLATFORM_HAVE_IO */
 
 DEE_DECL_BEGIN
+
+int _DeeGenericContext_tp_io_readat_from_tp_io_readseek(
+ struct DeeFileObject *self, Dee_uint64_t pos, void *p, Dee_size_t s, Dee_size_t *rs) {
+ if (DeeFile_Seek((DeeObject *)self,*(Dee_int64_t*)&pos,DEE_SEEK_SET,NULL) != 0) return -1;
+ return DeeFile_Read((DeeObject *)self,p,s,rs);
+}
+int _DeeGenericContext_tp_io_writeat_from_tp_io_writeseek(
+ struct DeeFileObject *self, Dee_uint64_t pos, void const *p, Dee_size_t s, Dee_size_t *ws) {
+ if (DeeFile_Seek((DeeObject *)self,*(Dee_int64_t*)&pos,DEE_SEEK_SET,NULL) != 0) return -1;
+ return DeeFile_Write((DeeObject *)self,p,s,ws);
+}
+
+
+
 
 //////////////////////////////////////////////////////////////////////////
 // File-fs hybrid functions
@@ -224,23 +244,23 @@ DEE_A_RET_EXCEPT(-1) int DeeFile_ParseMode(
  DEE_A_IN_Z char const *mode, DEE_A_OUT Dee_uint16_t *result) {
  DEE_ASSERT(mode && result);
  switch (*mode++) {
-  case 'r': *result = DEE_FILE_MODE_READ; break;
-  case 'w': *result = DEE_FILE_MODE_WRITE; break;
-  case 'a': *result = DEE_FILE_MODE_APPEND; break;
+  case 'r': *result = DEE_OPENMODE_READ; break;
+  case 'w': *result = DEE_OPENMODE_WRITE; break;
+  case 'a': *result = DEE_OPENMODE_APPEND; break;
   default: return -1; // Invalid mode
  }
- if (*mode == '+') ++mode,*result |= DEE_FILE_FLAG_UPDATE;
+ if (*mode == '+') ++mode,*result |= DEE_OPENMODE_FLAG_UPDATE;
  if (*mode) return -1; // expected string end
  return 0;
 }
 DEE_A_RET_OBJECT(DeeStringObject) *DeeFile_ModeToString(DEE_A_IN Dee_uint16_t mode) {
- switch (mode&DEE_FILE_MASK_BASIC_MODE) {
-  case DEE_FILE_MODE_READ: DeeReturn_STATIC_STRING_NOREF("r");
-  case DEE_FILE_MODE_WRITE: DeeReturn_STATIC_STRING_NOREF("w");
-  case DEE_FILE_MODE_APPEND: DeeReturn_STATIC_STRING_NOREF("a");
-  case DEE_FILE_MODE_READ|DEE_FILE_FLAG_UPDATE: DeeReturn_STATIC_STRING_NOREF("r+");
-  case DEE_FILE_MODE_WRITE|DEE_FILE_FLAG_UPDATE: DeeReturn_STATIC_STRING_NOREF("w+");
-  case DEE_FILE_MODE_APPEND|DEE_FILE_FLAG_UPDATE: DeeReturn_STATIC_STRING_NOREF("a+");
+ switch (mode&DEE_OPENMODE_MASKBASIC) {
+  case DEE_OPENMODE_READ: DeeReturn_STATIC_STRING_NOREF("r");
+  case DEE_OPENMODE_WRITE: DeeReturn_STATIC_STRING_NOREF("w");
+  case DEE_OPENMODE_APPEND: DeeReturn_STATIC_STRING_NOREF("a");
+  case DEE_OPENMODE_READ|DEE_OPENMODE_FLAG_UPDATE: DeeReturn_STATIC_STRING_NOREF("r+");
+  case DEE_OPENMODE_WRITE|DEE_OPENMODE_FLAG_UPDATE: DeeReturn_STATIC_STRING_NOREF("w+");
+  case DEE_OPENMODE_APPEND|DEE_OPENMODE_FLAG_UPDATE: DeeReturn_STATIC_STRING_NOREF("a+");
   default: break;
  }
  DeeReturn_EmptyString; // fallback
@@ -517,21 +537,21 @@ static Dee_size_t const _deefile_std_printers_offset[] = {
 static struct _DeeFileStdObjects _deefile_std_printers = {
  // NOTE: We initialize these with 2 references, as each stores a second one in '_deefile_std_overrides'
 #if defined(DEE_PLATFORM_UNIX)
- {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stdout_name},DEE_FILE_MODE_APPEND,STDOUT_FILENO},
- {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stderr_name},DEE_FILE_MODE_APPEND,STDERR_FILENO},
- {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stdin_name}, DEE_FILE_MODE_READ,  STDIN_FILENO},
+ {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stdout_name},DEE_OPENMODE_APPEND,STDOUT_FILENO},
+ {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stderr_name},DEE_OPENMODE_APPEND,STDERR_FILENO},
+ {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stdin_name}, DEE_OPENMODE_READ,  STDIN_FILENO},
 #else
- {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stdout_name},DEE_FILE_MODE_APPEND,DEE_FILEIO_INVALID_HANDLE},
- {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stderr_name},DEE_FILE_MODE_APPEND,DEE_FILEIO_INVALID_HANDLE},
- {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stdin_name}, DEE_FILE_MODE_READ,  DEE_FILEIO_INVALID_HANDLE},
+ {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stdout_name},DEE_OPENMODE_APPEND,DEE_FILEIO_INVALID_HANDLE},
+ {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stderr_name},DEE_OPENMODE_APPEND,DEE_FILEIO_INVALID_HANDLE},
+ {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stdin_name}, DEE_OPENMODE_READ,  DEE_FILEIO_INVALID_HANDLE},
 #endif
  {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFile_Type,2)},
 #ifdef DEE_PLATFORM_WINDOWS
  {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileWin32Dbg_Type,2)},
 #elif defined(DEE_PLATFORM_UNIX)
- {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stderr_name},DEE_FILE_MODE_APPEND,STDERR_FILENO},
+ {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stderr_name},DEE_OPENMODE_APPEND,STDERR_FILENO},
 #else
- {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stderr_name},DEE_FILE_MODE_APPEND,DEE_FILEIO_INVALID_HANDLE},
+ {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFileIO_Type,2),{(DeeStringObject *)&_deefileio_stderr_name},DEE_OPENMODE_APPEND,DEE_FILEIO_INVALID_HANDLE},
 #endif
 };
 
@@ -732,30 +752,57 @@ DEE_A_RET_EXCEPT(-1) int DeeFile_TRead(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_OUT_WB(*rs) void *p,
  DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs) {
+ DeeTypeObject const *tp_iter;
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
  DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
- DeeType_FIND_SLOT(tp_self,tp_io_read);
- return (*DeeType_GET_SLOT(tp_self,tp_io_read))((DeeFileObject *)self,p,s,rs);
+ tp_iter = tp_self; DeeType_FIND_SLOT(tp_iter,tp_io_read);
+ return (*DeeType_GET_SLOT(tp_iter,tp_io_read))((DeeFileObject *)self,p,s,rs);
 }
 DEE_A_RET_EXCEPT(-1) int DeeFile_TWrite(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN_RB(s) void const *p,
  DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *ws) {
+ DeeTypeObject const *tp_iter;
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
  DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
- DeeType_FIND_SLOT(tp_self,tp_io_write);
- return (*DeeType_GET_SLOT(tp_self,tp_io_write))((DeeFileObject *)self,p,s,ws);
+ tp_iter = tp_self; DeeType_FIND_SLOT(tp_iter,tp_io_write);
+ return (*DeeType_GET_SLOT(tp_iter,tp_io_write))((DeeFileObject *)self,p,s,ws);
+}
+DEE_A_RET_EXCEPT(-1) int DeeFile_TReadAt(
+ DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
+ DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos,
+ DEE_A_OUT_WB(*rs) void *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs) {
+ DeeTypeObject const *tp_iter;
+ DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
+ DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
+ DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
+ tp_iter = tp_self; DeeType_FIND_SLOT(tp_iter,tp_io_readat);
+ return (*DeeType_GET_SLOT(tp_iter,tp_io_readat))((DeeFileObject *)self,pos,p,s,rs);
+}
+DEE_A_RET_EXCEPT(-1) int DeeFile_TWriteAt(
+ DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
+ DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos,
+ DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *ws) {
+ DeeTypeObject const *tp_iter;
+ DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
+ DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
+ DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
+ tp_iter = tp_self; DeeType_FIND_SLOT(tp_iter,tp_io_writeat);
+ return (*DeeType_GET_SLOT(tp_iter,tp_io_writeat))((DeeFileObject *)self,pos,p,s,ws);
 }
 DEE_A_RET_EXCEPT(-1) int DeeFile_TReadAll(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_OUT_WB(s) void *p, DEE_A_IN Dee_size_t s) {
+ DeeTypeObject const *tp_iter;
  Dee_size_t temp; DeeType_SLOT_TYPE(tp_io_read) read_func;
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
  DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
- while DEE_UNLIKELY((read_func = DeeType_GET_SLOT(tp_self,tp_io_read)) == NULL) tp_self = DeeType_BASE(tp_self);
+ tp_iter = tp_self;
+ while DEE_UNLIKELY((read_func = DeeType_GET_SLOT(tp_iter,tp_io_read)) == NULL)
+  tp_iter = DeeType_BASE(tp_iter);
  if DEE_LIKELY(s) while (1) {
   if DEE_UNLIKELY((*read_func)((DeeFileObject *)self,p,s,&temp) != 0) return -1;
   if DEE_UNLIKELY((s -= temp) == 0) break; // Most likely case on the first run: everything was read
@@ -771,11 +818,13 @@ DEE_A_RET_EXCEPT(-1) int DeeFile_TWriteAll(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self,
  DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s) {
+ DeeTypeObject const *tp_iter;
  Dee_size_t temp; DeeType_SLOT_TYPE(tp_io_write) write_func;
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
- DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
- while DEE_UNLIKELY((write_func = DeeType_GET_SLOT(tp_self,tp_io_write)) == NULL) tp_self = DeeType_BASE(tp_self);
+ DEE_ASSERT(DeeObject_InstanceOf(self,tp_self)); tp_iter = tp_self;
+ while DEE_UNLIKELY((write_func = DeeType_GET_SLOT(tp_iter,tp_io_write)) == NULL)
+  tp_iter = DeeType_BASE(tp_iter);
  if DEE_LIKELY(s) while (1) {
   if DEE_UNLIKELY((*write_func)((DeeFileObject *)self,p,s,&temp) != 0) return -1;
   if DEE_UNLIKELY((s -= temp) == 0) break; // Most likely case on the first run: everything was written
@@ -787,53 +836,104 @@ err:
  DeeError_Throw(DeeErrorInstance_FileCantWrite);
  return -1;
 }
+DEE_A_RET_EXCEPT(-1) int DeeFile_TReadAllAt(
+ DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
+ DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos,
+ DEE_A_OUT_WB(s) void *p, DEE_A_IN Dee_size_t s) {
+ DeeTypeObject const *tp_iter;
+ Dee_size_t temp; DeeType_SLOT_TYPE(tp_io_readat) read_func;
+ DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
+ DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
+ DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
+ tp_iter = tp_self;
+ while DEE_UNLIKELY((read_func = DeeType_GET_SLOT(tp_iter,tp_io_readat)) == NULL)
+  tp_iter = DeeType_BASE(tp_iter);
+ if DEE_LIKELY(s) while (1) {
+  if DEE_UNLIKELY((*read_func)((DeeFileObject *)self,pos,p,s,&temp) != 0) return -1;
+  if DEE_UNLIKELY((s -= temp) == 0) break; // Most likely case on the first run: everything was read
+  if DEE_UNLIKELY(!temp) goto err; // Second likely case: Can't read at all
+  (*(char **)&p) += temp; // rare case: only read a bit (remainder must be read next)
+  pos += temp;
+ }
+ return 0;
+err:
+ DeeError_Throw(DeeErrorInstance_FileCantRead);
+ return -1;
+}
+DEE_A_RET_EXCEPT(-1) int DeeFile_TWriteAllAt(
+ DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
+ DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos,
+ DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s) {
+ DeeTypeObject const *tp_iter;
+ Dee_size_t temp; DeeType_SLOT_TYPE(tp_io_writeat) write_func;
+ DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
+ DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
+ DEE_ASSERT(DeeObject_InstanceOf(self,tp_self)); tp_iter = tp_self;
+ while DEE_UNLIKELY((write_func = DeeType_GET_SLOT(tp_iter,tp_io_writeat)) == NULL)
+  tp_iter = DeeType_BASE(tp_iter);
+ if DEE_LIKELY(s) while (1) {
+  if DEE_UNLIKELY((*write_func)((DeeFileObject *)self,pos,p,s,&temp) != 0) return -1;
+  if DEE_UNLIKELY((s -= temp) == 0) break; // Most likely case on the first run: everything was written
+  if DEE_UNLIKELY(!temp) goto err; // Second likely case: Can't write at all
+  (*(char **)&p) += temp; // rare case: only written a bit (remainder must be written next)
+  pos += temp;
+ }
+ return 0;
+err:
+ DeeError_Throw(DeeErrorInstance_FileCantWrite);
+ return -1;
+}
 
 DEE_A_RET_EXCEPT(-1) int DeeFile_TSeek(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_int64_t off,
  DEE_A_IN int whence, DEE_A_OUT_OPT Dee_uint64_t *pos) {
+ DeeTypeObject const *tp_iter;
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
  DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
- DeeType_FIND_SLOT(tp_self,tp_io_seek);
- return (*DeeType_GET_SLOT(tp_self,tp_io_seek))((DeeFileObject *)self,off,whence,pos);
+ tp_iter = tp_self; DeeType_FIND_SLOT(tp_iter,tp_io_seek);
+ return (*DeeType_GET_SLOT(tp_iter,tp_io_seek))((DeeFileObject *)self,off,whence,pos);
 }
 DEE_A_RET_EXCEPT(-1) int DeeFile_TFlush(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self) {
+ DeeTypeObject const *tp_iter;
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
  DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
- DeeType_FIND_SLOT(tp_self,tp_io_flush);
- return (*DeeType_GET_SLOT(tp_self,tp_io_flush))((DeeFileObject *)self);
+ tp_iter = tp_self; DeeType_FIND_SLOT(tp_iter,tp_io_flush);
+ return (*DeeType_GET_SLOT(tp_iter,tp_io_flush))((DeeFileObject *)self);
 }
 DEE_A_RET_EXCEPT(-1) int DeeFile_TTrunc(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self) {
+ DeeTypeObject const *tp_iter;
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
  DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
- DeeType_FIND_SLOT(tp_self,tp_io_trunc);
- return (*DeeType_GET_SLOT(tp_self,tp_io_trunc))((DeeFileObject *)self);
+ tp_iter = tp_self; DeeType_FIND_SLOT(tp_iter,tp_io_trunc);
+ return (*DeeType_GET_SLOT(tp_iter,tp_io_trunc))((DeeFileObject *)self);
 }
 void DeeFile_TClose(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self) {
+ DeeTypeObject const *tp_iter;
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeFileType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(self) && DeeFile_Check(self));
  DEE_ASSERT(DeeObject_InstanceOf(self,tp_self));
- DeeType_FIND_SLOT(tp_self,tp_io_close);
- (*DeeType_GET_SLOT(tp_self,tp_io_close))((DeeFileObject *)self);
+ tp_iter = tp_self; DeeType_FIND_SLOT(tp_iter,tp_io_close);
+ (*DeeType_GET_SLOT(tp_iter,tp_io_close))((DeeFileObject *)self);
 }
 
 
-DEE_A_RET_EXCEPT(-1) int DeeFile_TWriteObject(
+DEE_A_RET_EXCEPT(-1) int DeeFile_TWriteStructuredObject(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN DeeObject const *ob) {
  if DEE_UNLIKELY((ob = DeeObject_GetInstance((DeeObject *)ob,(DeeTypeObject *)&DeeStructured_Type)) == NULL) return -1;
  return DeeFile_TWriteAll(tp_self,self,DeeStructured_DATA(ob),DeeStructured_SIZE(ob));
 }
-DEE_A_RET_EXCEPT_REF DeeObject *DeeFile_TReadObject(
+DEE_A_RET_EXCEPT_REF DeeObject *DeeFile_TReadStructuredObject(
  DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN DeeTypeObject const *tp) {
  DeeObject *result;
@@ -845,6 +945,11 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeFile_TReadObject(
 
 
 #ifndef __INTELLISENSE__
+#define AT
+#define ALL
+#include "file.impl.read.inl"
+#define AT
+#include "file.impl.read.inl"
 #define ALL
 #include "file.impl.read.inl"
 #include "file.impl.read.inl"
@@ -1339,7 +1444,7 @@ DEE_STATIC_INLINE(DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1) int) DeeFileIO_WideInitOb
 #endif
 #endif
 
-static int _deefileio_tp_io_read(DeeFileIOObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
+static int DEE_CALL _deefileio_tp_io_read(DeeFileIOObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeFile_ACQUIRE(self);
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
@@ -1416,7 +1521,7 @@ static int _deefileio_tp_io_read(DeeFileIOObject *self, void *p, Dee_size_t s, D
  }
 }
 
-static int _deefileio_tp_io_write(DeeFileIOObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
+static int DEE_CALL _deefileio_tp_io_write(DeeFileIOObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeFile_ACQUIRE(self);
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
@@ -1435,7 +1540,7 @@ static int _deefileio_tp_io_write(DeeFileIOObject *self, void const *p, Dee_size
  {
 #if defined(DEE_PLATFORM_WINDOWS)
   // Move the file pointer to the end of the file in append mode
-  if ((self->fio_mode&DEE_FILE_MASK_MODE)==DEE_FILE_MODE_APPEND) {
+  if ((self->fio_mode&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_APPEND) {
    if DEE_UNLIKELY(SetFilePointer((HANDLE)self->fio_handle,0,NULL,DEE_SEEK_END
     ) == INVALID_SET_FILE_POINTER) SetLastError(0);
   }
@@ -1494,7 +1599,7 @@ static int _deefileio_tp_io_write(DeeFileIOObject *self, void const *p, Dee_size
   return 0;
  }
 }
-static int _deefileio_tp_io_seek(DeeFileIOObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) {
+static int DEE_CALL _deefileio_tp_io_seek(DeeFileIOObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) {
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeFile_ACQUIRE(self);
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
@@ -1629,7 +1734,7 @@ static int _deefileio_tp_io_seek(DeeFileIOObject *self, Dee_int64_t off, int whe
   return 0;
  }
 }
-static int _deefileio_tp_io_flush(DeeFileIOObject *self) {
+static int DEE_CALL _deefileio_tp_io_flush(DeeFileIOObject *self) {
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeFile_ACQUIRE(self);
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
@@ -1683,7 +1788,7 @@ static int _deefileio_tp_io_flush(DeeFileIOObject *self) {
   return 0;
  }
 }
-static int _deefileio_tp_io_trunc(DeeFileIOObject *self) {
+static int DEE_CALL _deefileio_tp_io_trunc(DeeFileIOObject *self) {
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeFile_ACQUIRE(self);
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
@@ -1789,7 +1894,7 @@ DEE_STATIC_INLINE(void) _DeeFileIO_CloseAlreadyLocked(DeeFileIOObject *self) {
   }
  }
 }
-static void _deefileio_tp_io_close(DeeFileIOObject *self) {
+static void DEE_CALL _deefileio_tp_io_close(DeeFileIOObject *self) {
  DeeFile_ACQUIRE(self);
  _DeeFileIO_CloseAlreadyLocked(self);
  DeeFile_RELEASE(self);
@@ -1916,7 +2021,7 @@ static int _deefileio_tp_ctor(DeeTypeObject *DEE_UNUSED(tp_self), DeeFileIOObjec
  _DeeFile_Init(self);
  self->fio_handle = DEE_FILEIO_INVALID_HANDLE;
  Dee_INCREF(self->fio_utf8file = (DeeUtf8StringObject *)Dee_EmptyUtf8String);
- self->fio_mode = DEE_FILE_MODE_READ;
+ self->fio_mode = DEE_OPENMODE_READ;
  return 0;
 }
 static DeeObject *_deefileio_tp_str(DeeFileIOObject *self) {
@@ -1985,7 +2090,7 @@ static int _deefileio_tp_move_ctor(
  struct DeeFileIOObject new_file;
  DeeFile_ACQUIRE(right);
  new_file = *right;
- right->fio_mode = DEE_FILE_MODE_READ;
+ right->fio_mode = DEE_OPENMODE_READ;
  right->fio_handle = DEE_FILEIO_INVALID_HANDLE;
  Dee_INCREF(right->fio_utf8file = (DeeUtf8StringObject *)Dee_EmptyUtf8String);
  right->fo_flags = DEE_FILE_FLAG_NONE;
@@ -2002,7 +2107,7 @@ static int _deefileio_tp_move_assign(
   DeeUtf8StringObject *old_filename;
   DeeFile_ACQUIRE(right);
   new_file = *right;
-  right->fio_mode = DEE_FILE_MODE_READ;
+  right->fio_mode = DEE_OPENMODE_READ;
   right->fio_handle = DEE_FILEIO_INVALID_HANDLE;
   Dee_INCREF(right->fio_utf8file = (DeeUtf8StringObject *)Dee_EmptyUtf8String);
   right->fo_flags = DEE_FILE_FLAG_NONE;
@@ -2871,6 +2976,96 @@ static DeeObject *_deefile_maybe_read(
  }
 #endif /* !DEE_CONFIG_RUNTIME_HAVE_POINTERS */
 }
+static DeeObject *_deefile_readat(
+ DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
+ Dee_uint64_t pos; DeeObject *data = NULL,*size = NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u|oo:readat",&pos,&data,&size) != 0) return NULL;
+ if (data == NULL) {
+  return DeeFile_ReadData(self,(Dee_size_t)-1);
+ } else if (size == NULL) {
+  Dee_size_t max_read;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,data,&max_read) != 0) return NULL;
+  return DeeFile_ReadDataAt(self,pos,max_read);
+ } else {
+  void *p; Dee_size_t s;
+  if DEE_UNLIKELY(DeeObject_GetVoidPointerEx(data,&p) != 0 || 
+                  DeeObject_Cast(Dee_size_t,size,&s) != 0) return NULL;
+  if DEE_UNLIKELY(DeeFile_ReadAllAt(self,pos,p,s) != 0) return NULL;
+  DeeReturn_None;
+ }
+#else
+ Dee_uint64_t pos; DeeObject *size = NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u|o:read",&pos,&size) != 0) return NULL;
+ if (size == NULL) {
+  return DeeFile_ReadDataAt(self,pos,(Dee_size_t)-1);
+ } else {
+  Dee_size_t max_read;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,size,&max_read) != 0) return NULL;
+  return DeeFile_ReadDataAt(self,pos,max_read);
+ }
+#endif
+}
+static DeeObject *_deefile_readallat(
+ DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
+ Dee_uint64_t pos; DeeObject *data = NULL,*size = NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u|oo:readallat",&pos,&data,&size) != 0) return NULL;
+ if (data == NULL) {
+  return DeeFile_ReadAllDataAt(self,pos,(Dee_size_t)-1);
+ } else if (size == NULL) {
+  Dee_size_t max_read;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,data,&max_read) != 0) return NULL;
+  return DeeFile_ReadAllDataAt(self,pos,max_read);
+ } else {
+  void *p; Dee_size_t s;
+  if DEE_UNLIKELY(DeeObject_GetVoidPointerEx(data,&p) != 0 ||
+                  DeeObject_Cast(Dee_size_t,size,&s) != 0) return NULL;
+  if DEE_UNLIKELY(DeeFile_ReadAllAt(self,pos,p,s) != 0) return NULL;
+  DeeReturn_None;
+ }
+#else
+ Dee_uint64_t pos; DeeObject *size = NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u|o:readall",&pos,&size) != 0) return NULL;
+ if (size == NULL) {
+  return DeeFile_ReadAllDataAt(self,pos,(Dee_size_t)-1);
+ } else {
+  Dee_size_t max_read;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,size,&max_read) != 0) return NULL;
+  return DeeFile_ReadAllDataAt(self,pos,max_read);
+ }
+#endif
+}
+static DeeObject *_deefile_maybe_readat(
+ DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
+ Dee_uint64_t pos; DeeObject *data = NULL,*size = NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u|oo:maybe_readat",&pos,&data,&size) != 0) return NULL;
+ if (data == NULL) {
+  return DeeFile_ReadDataAt(self,pos,(Dee_size_t)-1);
+ } else if (size == NULL) {
+  Dee_size_t max_read;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,data,&max_read) != 0) return NULL;
+  return DeeFile_ReadDataAt(self,pos,max_read);
+ } else {
+  void *p; Dee_size_t s,result;
+  if DEE_UNLIKELY(DeeObject_GetVoidPointerEx(data,&p) != 0 ||
+                  DeeObject_Cast(Dee_size_t,size,&s) != 0) return NULL;
+  if DEE_UNLIKELY(DeeFile_ReadAt(self,pos,p,s,&result) != 0) return NULL;
+  return DeeObject_New(Dee_size_t,result);
+ }
+#else /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+ Dee_uint64_t pos; DeeObject *size = NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64u|o:maybe_read",&pos,&size) != 0) return NULL;
+ if (size == NULL) {
+  return DeeFile_ReadDataAt(self,pos,(Dee_size_t)-1);
+ } else {
+  Dee_size_t max_read;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,size,&max_read) != 0) return NULL;
+  return DeeFile_ReadDataAt(self,pos,max_read);
+ }
+#endif /* !DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+}
 static DeeObject *_deefile_write(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  DeeObject *data,*size = NULL;
@@ -2894,35 +3089,6 @@ static DeeObject *_deefile_write(
   if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(data,&DeeString_Type) != 0) return NULL;
   if DEE_UNLIKELY(DeeFile_WriteAll(self,DeeString_STR(data),DeeString_SIZE(data)) != 0) return NULL;
  }
- DeeReturn_None;
-}
-static DeeObject *_deefile_reado(
- DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeTypeObject *tp = DeeObject_TYPE(int);
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:reado",&tp) != 0) return NULL;
- return DeeFile_ReadObject(self,tp);
-}
-static DeeObject *_deefile_writeo(
- DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeObject **iter,**end;
- end = (iter = DeeTuple_ELEM(args))+DeeTuple_SIZE(args);
- while DEE_LIKELY(iter != end) {
-  if DEE_UNLIKELY(DeeFile_WriteObject(self,*iter) != 0) return NULL;
-  ++iter;
- }
- DeeReturn_None;
-}
-static DeeObject *_deefile_readm(
- DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeMarshalVersion ver = DEE_MARSHAL_VERSION;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"|I16u:readm",&ver) != 0) return NULL;
- return DeeMarshal_ReadObject(self,ver);
-}
-static DeeObject *_deefile_writem(
- DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeObject *ob; Dee_uint32_t flags = DEE_MARSHAL_WRITEFLAG_DEFAULT;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|I32u:writem",&ob,&flags) != 0) return NULL;
- if DEE_UNLIKELY(DeeMarshal_WriteObjectEx(self,ob,flags) != 0) return NULL;
  DeeReturn_None;
 }
 static DeeObject *_deefile_maybe_write(
@@ -2949,6 +3115,85 @@ static DeeObject *_deefile_maybe_write(
   if DEE_UNLIKELY(DeeFile_Write(self,DeeString_STR(data),DeeString_SIZE(data),&result) != 0) return NULL;
  }
  return DeeObject_New(Dee_size_t,result);
+}
+static DeeObject *_deefile_writeat(
+ DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_uint64_t pos; DeeObject *data,*size = NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64uo|o:write",&pos,&data,&size) != 0) return NULL;
+ if (size) {
+  void *p; Dee_size_t s,max_size;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,size,&s) != 0) return NULL;
+#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
+  if (!DeeString_Check(data)) {
+   if DEE_UNLIKELY(DeeObject_GetVoidPointerEx(data,&p) != 0) return NULL;
+  } else
+#else /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(data,&DeeString_Type) != 0) return NULL;
+#endif /* !DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+  {
+   p = DeeString_STR(data);
+   if ((max_size = DeeString_SIZE(data)) > s) s = max_size;
+  }
+  if DEE_UNLIKELY(DeeFile_WriteAllAt(self,pos,p,s) != 0) return NULL;
+ } else {
+  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(data,&DeeString_Type) != 0) return NULL;
+  if DEE_UNLIKELY(DeeFile_WriteAllAt(self,pos,DeeString_STR(data),DeeString_SIZE(data)) != 0) return NULL;
+ }
+ DeeReturn_None;
+}
+static DeeObject *_deefile_maybe_writeat(
+ DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_uint64_t pos; DeeObject *data,*size = NULL; Dee_size_t result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"I64uo|o:maybe_writeat",&pos,&data,&size) != 0) return NULL;
+ if (size) {
+  void *p; Dee_size_t s,max_size;
+  if DEE_UNLIKELY(DeeObject_Cast(Dee_size_t,size,&s) != 0) return NULL;
+#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
+  if (!DeeString_Check(data)) {
+   if DEE_UNLIKELY(DeeObject_GetVoidPointerEx(data,&p) != 0) return NULL;
+  } else
+#else /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(data,&DeeString_Type) != 0) return NULL;
+#endif /* !DEE_CONFIG_RUNTIME_HAVE_POINTERS */
+  {
+   p = DeeString_STR(data);
+   if ((max_size = DeeString_SIZE(data)) > s) s = max_size;
+  }
+  if DEE_UNLIKELY(DeeFile_WriteAt(self,pos,p,s,&result) != 0) return NULL;
+ } else {
+  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(data,&DeeString_Type) != 0) return NULL;
+  if DEE_UNLIKELY(DeeFile_WriteAt(self,pos,DeeString_STR(data),DeeString_SIZE(data),&result) != 0) return NULL;
+ }
+ return DeeObject_New(Dee_size_t,result);
+}
+static DeeObject *_deefile_reado(
+ DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeTypeObject *tp = DeeObject_TYPE(int);
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:reado",&tp) != 0) return NULL;
+ return DeeFile_ReadStructuredObject(self,tp);
+}
+static DeeObject *_deefile_writeo(
+ DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject **iter,**end;
+ end = (iter = DeeTuple_ELEM(args))+DeeTuple_SIZE(args);
+ while DEE_LIKELY(iter != end) {
+  if DEE_UNLIKELY(DeeFile_WriteStructuredObject(self,*iter) != 0) return NULL;
+  ++iter;
+ }
+ DeeReturn_None;
+}
+static DeeObject *_deefile_readm(
+ DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeMarshalVersion ver = DEE_MARSHAL_VERSION;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"|I16u:readm",&ver) != 0) return NULL;
+ return DeeMarshal_ReadObject(self,ver);
+}
+static DeeObject *_deefile_writem(
+ DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *ob; Dee_uint32_t flags = DEE_MARSHAL_WRITEFLAG_DEFAULT;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|I32u:writem",&ob,&flags) != 0) return NULL;
+ if DEE_UNLIKELY(DeeMarshal_WriteObjectEx(self,ob,flags) != 0) return NULL;
+ DeeReturn_None;
 }
 static DeeObject *_deefile_readline(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
@@ -3358,41 +3603,89 @@ static struct DeeMethodDef const _deefile_tp_methods[] = {
   "@throws object: Error occurred in implementation of #(this.operator __read__)\n"
   "@return: The read data, or none\n"
   "\tReads @size bytes into @p, or at most @max bytes from a stream and returns the read data as a string.\n"
-  "\tSimilar to #(this.read()), but keeps trying if data can only be read a piece at a time"),
+  "\tSimilar to #(file.read), but keeps trying if data can only be read a piece at a time"),
  DEE_METHODDEF_v100("write",member(&_deefile_write),
   "(string s) -> none\n"
   "(none *p, size_t size) -> none\n"
   "@throws object: Error occurred in implementation of #(this.operator __write__)\n"
   "@throws Error.IOError: Not all data could be written.\n"
   "\tWrites @s to the stream.\n"
-  "\tSame as #(this.maybe_write()), but retires until no more data is written and raises an #(Error.IOError)"),
+  "\tSame as #(file.maybe_write), but retires until no more data is written and raises an #(Error.IOError)"),
  DEE_METHODDEF_v100("maybe_read",member(&_deefile_maybe_read),
   "(size_t max = size_t(-1)) -> string\n"
   "(none *p, size_t size) -> size_t\n"
   "@throws object: Error occurred in implementation of #(this.operator __read__)\n"
-  "\tReads at most @max bytes from a stream. Reads at most @size bytes into @p (returns actual amount read)"),
+  "\tReads at most @max bytes from a stream, returning actual amount of bytes read."),
  DEE_METHODDEF_v100("maybe_write",member(&_deefile_maybe_write),
   "(string s) -> size_t\n"
   "(none *p, size_t size) -> size_t\n"
   "@throws object: Error occurred in implementation of #(this.operator __write__)\n"
-  "\tWrites @s or @size bytes starting at @p to the stream, but returns the actual amount of bytes written"),
+  "\tWrites @s or @size bytes starting at @p to the stream, returning the actual amount of bytes written."),
+ DEE_METHODDEF_v100("readat",member(&_deefile_readat),
+  "(uint64_t pos, size_t max = size_t(-1)) -> string\n"
+  "(uint64_t pos, none *p, size_t size) -> none\n"
+  "@throws object: Error occurred in implementation of #(this.operator __readat__)\n"
+  "@return: The read data, or none\n"
+  "\tReads @size bytes into @p or at most @max bytes from a stream at the given offset @pos and returns the read data as a string.\n"),
+ DEE_METHODDEF_v100("readallat",member(&_deefile_readallat),
+  "(uint64_t pos, size_t max = size_t(-1)) -> string\n"
+  "(uint64_t pos, none *p, size_t size) -> none\n"
+  "@throws object: Error occurred in implementation of #(this.operator __readat__)\n"
+  "@return: The read data, or none\n"
+  "\tReads @size bytes into @p, or at most @max bytes from a stream at the given offset @pos and returns the read data as a string.\n"
+  "\tSimilar to #(file.readat), but keeps trying if data can only be read a piece at a time"),
+ DEE_METHODDEF_v100("writeat",member(&_deefile_writeat),
+  "(uint64_t pos, string s) -> none\n"
+  "(uint64_t pos, none *p, size_t size) -> none\n"
+  "@throws object: Error occurred in implementation of #(this.operator __writeat__)\n"
+  "@throws Error.IOError: Not all data could be written.\n"
+  "\tWrites @s to the stream at the given offset @(pos).\n"
+  "\tSame as #(file.maybe_writeat), but retires until no more data is written and raises an #(Error.IOError)"),
+ DEE_METHODDEF_v100("maybe_readat",member(&_deefile_maybe_readat),
+  "(uint64_t pos, size_t max = size_t(-1)) -> string\n"
+  "(uint64_t pos, none *p, size_t size) -> size_t\n"
+  "@throws object: Error occurred in implementation of #(this.operator __readat__)\n"
+  "\tReads at most @max bytes from a stream at the given offset @(pos), returning actual amount of bytes read."),
+ DEE_METHODDEF_v100("maybe_writeat",member(&_deefile_maybe_writeat),
+  "(uint64_t pos, string s) -> size_t\n"
+  "(uint64_t pos, none *p, size_t size) -> size_t\n"
+  "@throws object: Error occurred in implementation of #(this.operator __writeat__)\n"
+  "\tWrites @s or @size bytes starting at @p to the stream at the given offset @(pos), returning the actual amount of bytes written."),
 #else /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
  DEE_METHODDEF_v100("read",member(&_deefile_read),"(size_t max = size_t(-1)) -> string\n"
   "@throws object: Error occurred in implementation of #(this.operator __read__)\n"
   "\tReads at most @max bytes from a stream."),
  DEE_METHODDEF_v100("readall",member(&_deefile_readall),"(size_t max = size_t(-1)) -> string\n"
   "@throws object: Error occurred in implementation of #(this.operator __read__)\n"
-  "\tSimilar to #(this.read), but keeps trying if data can only be read a piece at a time"),
+  "\tSimilar to #(file.read), but keeps trying if data can only be read a piece at a time"),
  DEE_METHODDEF_v100("write",member(&_deefile_write),"(string s) -> none\n"
   "@throws object: Error occurred in implementation of #(this.operator __write__)\n"
   "@throws Error.IOError: Not all data could be written.\n"
-  "\tWrites @s to the stream\n"
-  "\tSame as maybe_write, but retires until no more data is written and raises an #(Error.IOError)"),
+  "\tWrites @s to the stream.\n"
+  "\tSame as maybe_write, but retires until no more data is written and raises an #(Error.IOError)."),
  DEE_METHODDEF_v100("maybe_read",member(&_deefile_maybe_read),"(size_t max = size_t(-1)) -> string\n"
-  "@throws object: Error occurred in implementation of #(this.operator __write__)\n"
+  "@throws object: Error occurred in implementation of #(this.operator __read__)\n"
   "\tReads at most @max bytes from a stream."),
  DEE_METHODDEF_v100("maybe_write",member(&_deefile_maybe_write),"(string s) -> size_t\n"
+  "@throws object: Error occurred in implementation of #(this.operator __write__)\n"
   "\tWrites @s to the stream, but returns the actual amount of bytes written"),
+ DEE_METHODDEF_v100("readat",member(&_deefile_readat),"(uint64_t pos, size_t max = size_t(-1)) -> string\n"
+  "@throws object: Error occurred in implementation of #(this.operator __readat__)\n"
+  "\tReads at most @max bytes from a stream at the given offset @(pos)."),
+ DEE_METHODDEF_v100("readallat",member(&_deefile_readallat),"(uint64_t pos, size_t max = size_t(-1)) -> string\n"
+  "@throws object: Error occurred in implementation of #(this.operator __readat__)\n"
+  "\tSimilar to #(file.readat), but keeps trying if data can only be read a piece at a time"),
+ DEE_METHODDEF_v100("writeat",member(&_deefile_writeat),"(uint64_t pos, string s) -> none\n"
+  "@throws object: Error occurred in implementation of #(this.operator __writeat__)\n"
+  "@throws Error.IOError: Not all data could be written.\n"
+  "\tWrites @s to the stream at the given offset @(pos).\n"
+  "\tSame as maybe_write, but retires until no more data is written and raises an #(Error.IOError)."),
+ DEE_METHODDEF_v100("maybe_readat",member(&_deefile_maybe_readat),"(uint64_t pos, size_t max = size_t(-1)) -> string\n"
+  "@throws object: Error occurred in implementation of #(this.operator __readat__)\n"
+  "\tReads at most @max bytes from a stream at the given offset @(pos)."),
+ DEE_METHODDEF_v100("maybe_writeat",member(&_deefile_maybe_writeat),"(uint64_t pos, string s) -> size_t\n"
+  "@throws object: Error occurred in implementation of #(this.operator __writeat__)\n"
+  "\tWrites @s to the stream at the given offset @(pos), but returns the actual amount of bytes written"),
 #endif /* !DEE_CONFIG_RUNTIME_HAVE_POINTERS */
  DEE_METHODDEF_v100("reado",member(&_deefile_reado),"(type object ty = int) -> ty\n"
   "\tReads a structured object from binary data and returns it.\n"
@@ -3416,7 +3709,7 @@ static struct DeeMethodDef const _deefile_tp_methods[] = {
   "\tTruncates the file to end at the current r/w pointer position"),
  DEE_METHODDEF_v100("tell",member(&_deefile_tell),"() -> uint64_t\n"
   "\tReturns the current position of the r/w pointer position\n"
-  "\tSame as calling #(this.seek(0,file.SEEK_CUR))"),
+  "\tSame as calling #(file.seek(0,file.SEEK_CUR))"),
  DEE_METHODDEF_v100("size",member(&_deefile_size),"() -> uint64_t\n"
   "\tReturns the size of the file"),
  DEE_METHODDEF_v100("flush",member(&_deefile_flush),"() -> none\n"

@@ -138,8 +138,8 @@ DEPRECATED_EXPORT(int,DeeFile_PrintOne,(DeeObject *self, DeeObject *v)) { return
 DEPRECATED_EXPORT(int,DeeFile_PrintAll,(DeeObject *self, DeeObject *v)) { return DeeFile_TPrintAll(Dee_TYPE(self),self,Dee_TYPE(v),v); }
 #undef DeeFile_ReadObject
 #undef DeeFile_WriteObject
-DEPRECATED_EXPORT(DeeObject *,DeeFile_ReadObject,(DeeObject *self, DeeTypeObject *tp)) { return DeeFile_TReadObject(Dee_TYPE(self),self,tp); }
-DEPRECATED_EXPORT(int,DeeFile_WriteObject,(DeeObject *self, DeeObject *v)) { return DeeFile_TWriteObject(Dee_TYPE(self),self,v); }
+DEPRECATED_EXPORT(DeeObject *,DeeFile_ReadObject,(DeeObject *self, DeeTypeObject *tp)) { return DeeFile_TReadStructuredObject(Dee_TYPE(self),self,tp); }
+DEPRECATED_EXPORT(int,DeeFile_WriteObject,(DeeObject *self, DeeObject *v)) { return DeeFile_TWriteStructuredObject(Dee_TYPE(self),self,v); }
 
 #undef DeeList_NewFromSequence
 #undef DeeList_AssignSequence

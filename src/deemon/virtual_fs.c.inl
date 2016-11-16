@@ -171,31 +171,31 @@ static int DEE_CALL _vfs_open_duphandle(
 static int DEE_CALL _vfsdev_stdin_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
- if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_READ) {
-  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_READ|DEE_FILE_MODE_APPEND);
+ if DEE_UNLIKELY((mode&DEE_OPENMODE_MASKMODE) != DEE_OPENMODE_READ) {
+  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_OPENMODE_READ);
   return -1;
  }
- fp->fio_mode = DEE_FILE_MODE_READ|DEE_FILE_MODE_APPEND;
+ fp->fio_mode = DEE_OPENMODE_READ;
  return _vfs_open_duphandle(fp,GetStdHandle(STD_INPUT_HANDLE));
 }
 static int DEE_CALL _vfsdev_stdout_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
- if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_WRITE) {
-  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_WRITE|DEE_FILE_MODE_APPEND);
+ if DEE_UNLIKELY((mode&DEE_OPENMODE_MASKMODE) != DEE_OPENMODE_APPEND) {
+  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_OPENMODE_APPEND);
   return -1;
  }
- fp->fio_mode = DEE_FILE_MODE_WRITE|DEE_FILE_MODE_APPEND;
+ fp->fio_mode = DEE_OPENMODE_APPEND;
  return _vfs_open_duphandle(fp,GetStdHandle(STD_OUTPUT_HANDLE));
 }
 static int DEE_CALL _vfsdev_stderr_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
- if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_WRITE) {
-  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_WRITE|DEE_FILE_MODE_APPEND);
+ if DEE_UNLIKELY((mode&DEE_OPENMODE_MASKMODE) != DEE_OPENMODE_APPEND) {
+  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_OPENMODE_APPEND);
   return -1;
  }
- fp->fio_mode = DEE_FILE_MODE_WRITE|DEE_FILE_MODE_APPEND;
+ fp->fio_mode = DEE_OPENMODE_APPEND;
  return _vfs_open_duphandle(fp,GetStdHandle(STD_ERROR_HANDLE));
 }
 static int DEE_CALL _vfsdev_null_open(
@@ -209,7 +209,7 @@ static int DEE_CALL _vfsdev_null_open(
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return -1;
  }
- fp->fio_mode = DEE_FILE_MODE_READ|DEE_FILE_FLAG_UPDATE;
+ fp->fio_mode = DEE_OPENMODE_READ|DEE_OPENMODE_FLAG_UPDATE;
  return 0;
 }
 
@@ -217,8 +217,8 @@ static int DEE_CALL _vfsdev_null_open(
 static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsdev_urandom_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
- if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE) != DEE_FILE_MODE_READ) {
-  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_READ|DEE_FILE_MODE_APPEND);
+ if DEE_UNLIKELY((mode&DEE_OPENMODE_MASKMODE) != DEE_OPENMODE_READ) {
+  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_OPENMODE_READ);
   return -1;
  }
  {
@@ -335,8 +335,8 @@ static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsproc_cmdline_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
  DeeObject *process_ref,*exe_string; int result;
- if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE)!=DEE_FILE_MODE_READ) {
-  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_READ);
+ if DEE_UNLIKELY((mode&DEE_OPENMODE_MASKMODE)!=DEE_OPENMODE_READ) {
+  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_OPENMODE_READ);
   return -1;
  }
  if DEE_UNLIKELY((process_ref = DeeProcess_Win32NewFromID((
@@ -370,8 +370,8 @@ static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsproc_uptime_open(
  DEE_A_IN struct DeeVFSFile const *self,
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t mode) {
  DeeObject *uptext; Dee_uint64_t uptime; int result;
- if DEE_UNLIKELY((mode&DEE_FILE_MASK_MODE)!=DEE_FILE_MODE_READ) {
-  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_FILE_MODE_READ);
+ if DEE_UNLIKELY((mode&DEE_OPENMODE_MASKMODE)!=DEE_OPENMODE_READ) {
+  _vfserror_cannot_open_mode(self->vf_name,mode,DEE_OPENMODE_READ);
   return -1;
  }
  if DEE_UNLIKELY(DeeDex_CallAndCastf(&uptime,"_system.uptime()!I64u") != 0) return -1;

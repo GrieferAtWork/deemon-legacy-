@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__POSIX_SYSDYNLIB_H
-#define GUARD_DEEMON_SYS__POSIX_SYSDYNLIB_H 1
+#ifndef GUARD_DEEMON_SYS__UNIX_SYSDYNLIB_H
+#define GUARD_DEEMON_SYS__UNIX_SYSDYNLIB_H 1
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
@@ -281,4 +281,4 @@ do{\
 DEE_DECL_END
 
 
-#endif /* !GUARD_DEEMON_SYS__POSIX_SYSDYNLIB_H */
+#endif /* !GUARD_DEEMON_SYS__UNIX_SYSDYNLIB_H */

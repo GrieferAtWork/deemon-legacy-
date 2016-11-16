@@ -200,6 +200,12 @@
 #ifndef DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID
 #define DEE_XCONFIG_FSBUFSIZE_WIN32NAMETOSID                 256
 #endif
+#ifndef DEE_XCONFIG_FSBUFSIZE_WIN32_GETFINALPATHBYHANDLE
+#define DEE_XCONFIG_FSBUFSIZE_WIN32_GETFINALPATHBYHANDLE     256
+#endif
+#ifndef DEE_XCONFIG_FSBUFSIZE_WIN32_GETMAPPEDFILENAME
+#define DEE_XCONFIG_FSBUFSIZE_WIN32_GETMAPPEDFILENAME        256
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Allow the use of win32 SEH (aka. '__try')

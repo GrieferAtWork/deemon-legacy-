@@ -18,23 +18,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_H
-#define GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_H 1
- 
-#include <deemon/__conf.inl>
-#include "window.h"
+#ifndef GUARD_DEEMON_SYS__WIN32_SYSFD_FILENAME_C_INL
+#define GUARD_DEEMON_SYS__WIN32_SYSFD_FILENAME_C_INL 1
 
-DEE_DECL_BEGIN
+#include <deemon/sys/_win32.sysfd.h>
 
+// NOTE: This file is part of the /src/deemon/file.c compilation unit
 
-#define DEE_EVENTKIND_NONE  0
+#ifndef __INTELLISENSE__
+#define WIDE
+#include "_win32.sysfd.filename.impl.inl"
+#include "_win32.sysfd.filename.impl.inl"
+#endif
 
-
-struct DeeEvent {
- DEE_A_REF DeeWindowObject *ev_window;
-};
-
-
-DEE_DECL_END
-
-#endif /* !GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_H */
+#endif /* !GUARD_DEEMON_SYS__WIN32_SYSFD_FILENAME_C_INL */

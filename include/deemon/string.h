@@ -249,7 +249,7 @@ struct _DeeUtf8StringCharacterObject { DEE_OBJECT_HEAD Dee_size_t s_len; Dee_Utf
 #define DeeWideString_STR(ob)         ((Dee_WideChar*)((DeeWideStringObject*)Dee_REQUIRES_POINTER(ob))->s_str)
 #define DeeWideString_SIZE(ob)        ((Dee_size_t)((DeeWideStringObject*)Dee_REQUIRES_POINTER(ob))->s_len)
 #else
-#define DeeWideString_STR(ob)         (Dee_WideChar*)DeeWideString_Str((DeeObject*)Dee_REQUIRES_POINTER(ob))
+#define DeeWideString_STR(ob)         ((Dee_WideChar*)DeeWideString_Str((DeeObject*)Dee_REQUIRES_POINTER(ob)))
 #define DeeWideString_SIZE(ob)        DeeWideString_Size((DeeObject*)Dee_REQUIRES_POINTER(ob))
 #endif
 #define DeeWideString_EMPTY           DeeWideString_CheckEmpty
@@ -263,7 +263,7 @@ struct _DeeUtf8StringCharacterObject { DEE_OBJECT_HEAD Dee_size_t s_len; Dee_Utf
 #define DeeUtf8String_STR(ob)         ((Dee_Utf8Char*)((DeeUtf8StringObject*)Dee_REQUIRES_POINTER(ob))->s_str)
 #define DeeUtf8String_SIZE(ob)        ((Dee_size_t)((DeeUtf8StringObject*)Dee_REQUIRES_POINTER(ob))->s_len)
 #else
-#define DeeUtf8String_STR(ob)         (Dee_Utf8Char*)DeeUtf8String_Str((DeeObject*)Dee_REQUIRES_POINTER(ob))
+#define DeeUtf8String_STR(ob)         ((Dee_Utf8Char*)DeeUtf8String_Str((DeeObject*)Dee_REQUIRES_POINTER(ob)))
 #define DeeUtf8String_SIZE(ob)        DeeUtf8String_Size((DeeObject*)Dee_REQUIRES_POINTER(ob))
 #endif
 #define DeeUtf8String_EMPTY           DeeUtf8String_CheckEmpty
@@ -277,7 +277,7 @@ struct _DeeUtf8StringCharacterObject { DEE_OBJECT_HEAD Dee_size_t s_len; Dee_Utf
 #define DeeUtf16String_STR(ob)         ((Dee_Utf16Char*)((DeeUtf16StringObject*)Dee_REQUIRES_POINTER(ob))->s_str)
 #define DeeUtf16String_SIZE(ob)        ((Dee_size_t)((DeeUtf16StringObject*)Dee_REQUIRES_POINTER(ob))->s_len)
 #else
-#define DeeUtf16String_STR(ob)         (Dee_Utf16Char*)DeeUtf16String_Str((DeeObject*)Dee_REQUIRES_POINTER(ob))
+#define DeeUtf16String_STR(ob)         ((Dee_Utf16Char*)DeeUtf16String_Str((DeeObject*)Dee_REQUIRES_POINTER(ob)))
 #define DeeUtf16String_SIZE(ob)        DeeUtf16String_Size((DeeObject*)Dee_REQUIRES_POINTER(ob))
 #endif
 #define DeeUtf16String_EMPTY           DeeUtf16String_CheckEmpty
@@ -291,7 +291,7 @@ struct _DeeUtf8StringCharacterObject { DEE_OBJECT_HEAD Dee_size_t s_len; Dee_Utf
 #define DeeUtf32String_STR(ob)         ((Dee_Utf32Char*)((DeeUtf32StringObject*)Dee_REQUIRES_POINTER(ob))->s_str)
 #define DeeUtf32String_SIZE(ob)        ((Dee_size_t)((DeeUtf32StringObject*)Dee_REQUIRES_POINTER(ob))->s_len)
 #else
-#define DeeUtf32String_STR(ob)         (Dee_Utf32Char*)DeeUtf32String_Str((DeeObject*)Dee_REQUIRES_POINTER(ob))
+#define DeeUtf32String_STR(ob)         ((Dee_Utf32Char*)DeeUtf32String_Str((DeeObject*)Dee_REQUIRES_POINTER(ob)))
 #define DeeUtf32String_SIZE(ob)        DeeUtf32String_Size((DeeObject*)Dee_REQUIRES_POINTER(ob))
 #endif
 #define DeeUtf32String_EMPTY           DeeUtf32String_CheckEmpty

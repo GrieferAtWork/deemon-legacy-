@@ -260,3 +260,7 @@
 #define _DeeType_SlotDefault___trunc__ NULL
 #define _DeeType_SlotDefault_tp_io_close NULL
 #define _DeeType_SlotDefault___close__ NULL
+#define _DeeType_SlotDefault_tp_io_readat NULL
+#define _DeeType_SlotDefault___readat__ NULL
+#define _DeeType_SlotDefault_tp_io_writeat NULL
+#define _DeeType_SlotDefault___writeat__ NULL

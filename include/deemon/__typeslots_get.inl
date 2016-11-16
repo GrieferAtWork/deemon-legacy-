@@ -260,3 +260,7 @@
 #define _DeeType_SlotGet___trunc__ _DeeType_SlotGet_tp_io_trunc
 #define _DeeType_SlotGet_tp_io_close(ob) ((DeeFileTypeObject *)ob)->tp_io.tp_io_close
 #define _DeeType_SlotGet___close__ _DeeType_SlotGet_tp_io_close
+#define _DeeType_SlotGet_tp_io_readat(ob) ((DeeFileTypeObject *)ob)->tp_io.tp_io_readat
+#define _DeeType_SlotGet___readat__ _DeeType_SlotGet_tp_io_readat
+#define _DeeType_SlotGet_tp_io_writeat(ob) ((DeeFileTypeObject *)ob)->tp_io.tp_io_writeat
+#define _DeeType_SlotGet___writeat__ _DeeType_SlotGet_tp_io_writeat

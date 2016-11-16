@@ -1082,4 +1082,24 @@ enum{
  // Internal: tp_io_close
  // Deemon:   __close
  __close__ = 3005,
+
+ // >> DeeFileTypeObject >> int (DEE_CALL *tp_io_readat)(struct DeeFileObject *self, Dee_uint64_t pos, void *p, Dee_size_t s, Dee_size_t *rs) = NULL;
+ // Internal: tp_io_readat
+ // Deemon:   __readat
+ tp_io_readat = 3006,
+
+ // >> DeeFileTypeObject >> int (DEE_CALL *__readat)(struct DeeFileObject *self, Dee_uint64_t pos, void *p, Dee_size_t s, Dee_size_t *rs) = NULL;
+ // Internal: tp_io_readat
+ // Deemon:   __readat
+ __readat__ = 3006,
+
+ // >> DeeFileTypeObject >> int (DEE_CALL *tp_io_writeat)(struct DeeFileObject *self, Dee_uint64_t pos, void const *p, Dee_size_t s, Dee_size_t *ws) = NULL;
+ // Internal: tp_io_writeat
+ // Deemon:   __writeat
+ tp_io_writeat = 3007,
+
+ // >> DeeFileTypeObject >> int (DEE_CALL *__writeat)(struct DeeFileObject *self, Dee_uint64_t pos, void const *p, Dee_size_t s, Dee_size_t *ws) = NULL;
+ // Internal: tp_io_writeat
+ // Deemon:   __writeat
+ __writeat__ = 3007,
 };

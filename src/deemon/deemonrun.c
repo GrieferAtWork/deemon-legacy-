@@ -1942,6 +1942,24 @@ DEE_A_RET_NOEXCEPT(0) int Dee_HasWildFeatures(
 }
 
 
+#define HAVE_TEST_CALLBACK
+
+#ifdef HAVE_TEST_CALLBACK
+DEE_DECL_END
+#include <deemon/sys/sysfd.h>
+DEE_DECL_BEGIN
+static void _dee_test(int argc, char **argv) {
+ struct DeeSysFileFD fd;
+ DeeSysFileFD_Utf8Init(&fd,"file.txt",DEE_OPENMODE('w',0),0644,goto end);
+ DEE_LDEBUG("Opened file: %R",DeeSysFileFD_Utf8Filename(&fd));
+ DeeSysFD_Quit(&fd);
+ (void)argc,argv;
+end:
+ while (!DeeError_Print("Error during testing\n",1));
+}
+#endif
+
+
 DEE_A_RET_EXCEPT(-1) int Dee_Main(
  DEE_A_IN int argc, DEE_A_IN_R(argc) char **argv, DEE_A_OUT_OPT int *retval) {
 #define DEE_CMD_MODE_DEFAULT      0
@@ -1965,11 +1983,13 @@ DEE_A_RET_EXCEPT(-1) int Dee_Main(
  DeeObject *fp,*lexer,*func,*script_file;
  struct DeeCompilerConfig config;
  struct DeePreprocessConfig pp_config = {NULL,1,0,0,0,0};
+#ifdef HAVE_TEST_CALLBACK
+ _dee_test(argc,argv);
+#endif
  ++argv,--argc; // consume the exe file argument
  // Setup the compiler
  if DEE_UNLIKELY((lexer = DeeLexer_New()) == NULL) goto err_always;
  config = DeeCompilerConfig_Default;
-
  while (argc && **argv == '-') {
   char *arg = (*argv++)+1; --argc;
 #define CHECK_S(short)    (strcmp(arg,short)==0)

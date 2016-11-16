@@ -174,6 +174,67 @@ DEE_A_RET_WUNUSED Dee_keycode_t DeeScancode_ToKeycode(DEE_A_IN Dee_scancode_t sc
 }
 
 
+#ifdef DEE_PLATFORM_WINDOWS
+DEE_A_RET_WUNUSED Dee_scancode_t DeeScancode_FromWin32ScanCode(
+ DEE_A_IN LPARAM lParam, DEE_A_IN WPARAM wParam) {
+ Dee_scancode_t result; int w32scancode = (lParam >> 16) & 0xFF;
+ if (w32scancode == 0 || w32scancode == 0x45) switch (wParam) {
+  case VK_CLEAR: return DEE_SCANCODE_CLEAR;
+  case VK_SELECT: return DEE_SCANCODE_SELECT;
+  case VK_EXECUTE: return DEE_SCANCODE_EXECUTE;
+  case VK_HELP: return DEE_SCANCODE_HELP;
+  case VK_PAUSE: return DEE_SCANCODE_PAUSE;
+  case VK_NUMLOCK: return DEE_SCANCODE_NUMLOCK;
+  case VK_F13: return DEE_SCANCODE_F13;
+  case VK_F14: return DEE_SCANCODE_F14;
+  case VK_F15: return DEE_SCANCODE_F15;
+  case VK_F16: return DEE_SCANCODE_F16;
+  case VK_F17: return DEE_SCANCODE_F17;
+  case VK_F18: return DEE_SCANCODE_F18;
+  case VK_F19: return DEE_SCANCODE_F19;
+  case VK_F20: return DEE_SCANCODE_F20;
+  case VK_F21: return DEE_SCANCODE_F21;
+  case VK_F22: return DEE_SCANCODE_F22;
+  case VK_F23: return DEE_SCANCODE_F23;
+  case VK_F24: return DEE_SCANCODE_F24;
+  case VK_OEM_NEC_EQUAL: return DEE_SCANCODE_KP_EQUALS;
+  case VK_OEM_102: return DEE_SCANCODE_NONUSBACKSLASH;
+  case VK_ATTN: return DEE_SCANCODE_SYSREQ;
+  case VK_CRSEL: return DEE_SCANCODE_CRSEL;
+  case VK_EXSEL: return DEE_SCANCODE_EXSEL;
+  case VK_OEM_CLEAR: return DEE_SCANCODE_CLEAR;
+  default: return DEE_SCANCODE_NONE;
+ }
+ if (w32scancode > 127) return DEE_SCANCODE_NONE;
+ result = DeeMap_Win32Scancode2Scancode[w32scancode];
+ // Fix extended scancodes
+ if ((lParam & (1 << 24)) == 0) switch (result) {
+  case DEE_SCANCODE_INSERT  : result = DEE_SCANCODE_KP_0;      break;
+  case DEE_SCANCODE_PRINT   : result = DEE_SCANCODE_KP_MUL;    break;
+  case DEE_SCANCODE_HOME    : result = DEE_SCANCODE_KP_7;      break;
+  case DEE_SCANCODE_PAGEUP  : result = DEE_SCANCODE_KP_9;      break;
+  case DEE_SCANCODE_DELETE  : result = DEE_SCANCODE_KP_PERIOD; break;
+  case DEE_SCANCODE_END     : result = DEE_SCANCODE_KP_1;      break;
+  case DEE_SCANCODE_PAGEDOWN: result = DEE_SCANCODE_KP_3;      break;
+  case DEE_SCANCODE_RIGHT   : result = DEE_SCANCODE_KP_6;      break;
+  case DEE_SCANCODE_LEFT    : result = DEE_SCANCODE_KP_4;      break;
+  case DEE_SCANCODE_DOWN    : result = DEE_SCANCODE_KP_2;      break;
+  case DEE_SCANCODE_UP      : result = DEE_SCANCODE_KP_8;      break;
+  default: break;
+ } else switch (result) {
+  case DEE_SCANCODE_SLASH   : result = DEE_SCANCODE_KP_DIV;   break;
+  case DEE_SCANCODE_CAPSLOCK: result = DEE_SCANCODE_KP_ADD;   break;
+  case DEE_SCANCODE_RETURN  : result = DEE_SCANCODE_KP_ENTER; break;
+  case DEE_SCANCODE_LALT    : result = DEE_SCANCODE_RALT;     break;
+  case DEE_SCANCODE_LCTRL   : result = DEE_SCANCODE_RCTRL;    break;
+  default: break;
+ }
+ return result;
+}
+#endif
+
+
+
 
 
 DEE_DECL_END
