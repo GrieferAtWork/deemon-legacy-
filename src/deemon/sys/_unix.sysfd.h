@@ -200,20 +200,12 @@ do{\
 
 
 
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////
-// === DeeUnixSysStdFD ===
-struct DeeUnixSysStdFD { DEE_UNIX_SYSFD_HEAD };
-#define DeeUnixSysStdFD_INIT_STDIN()     {STDOUT_FILENO}
-#define DeeUnixSysStdFD_INIT_STDOUT()    {STDERR_FILENO}
-#define DeeUnixSysStdFD_INIT_STDERR()    {STDIN_FILENO}
-#define DeeUnixSysStdFD_GET_STDIN(self)  (void)((self)->unx_fd = GetStdHandle(STD_INPUT_HANDLE))
-#define DeeUnixSysStdFD_GET_STDOUT(self) (void)((self)->unx_fd = GetStdHandle(STD_OUTPUT_HANDLE))
-#define DeeUnixSysStdFD_GET_STDERR(self) (void)((self)->unx_fd = GetStdHandle(STD_ERROR_HANDLE))
+#define DeeUnixSysFD_INIT_STDIN()     {STDOUT_FILENO}
+#define DeeUnixSysFD_INIT_STDOUT()    {STDERR_FILENO}
+#define DeeUnixSysFD_INIT_STDERR()    {STDIN_FILENO}
+#define DeeUnixSysFD_GET_STDIN(self)  (void)((self)->unx_fd = GetStdHandle(STD_INPUT_HANDLE))
+#define DeeUnixSysFD_GET_STDOUT(self) (void)((self)->unx_fd = GetStdHandle(STD_OUTPUT_HANDLE))
+#define DeeUnixSysFD_GET_STDERR(self) (void)((self)->unx_fd = GetStdHandle(STD_ERROR_HANDLE))
 
 
 
@@ -381,13 +373,12 @@ do{\
 #define DeeSysFD_Trunc      DeeUnixSysFD_Trunc
 #endif
 
-#define DeeSysStdFD             DeeUnixSysStdFD
-#define DeeSysStdFD_INIT_STDIN  DeeUnixSysStdFD_INIT_STDIN
-#define DeeSysStdFD_INIT_STDOUT DeeUnixSysStdFD_INIT_STDOUT
-#define DeeSysStdFD_INIT_STDERR DeeUnixSysStdFD_INIT_STDERR
-#define DeeSysStdFD_GET_STDIN   DeeUnixSysStdFD_GET_STDIN
-#define DeeSysStdFD_GET_STDOUT  DeeUnixSysStdFD_GET_STDOUT
-#define DeeSysStdFD_GET_STDERR  DeeUnixSysStdFD_GET_STDERR
+#define DeeSysFD_INIT_STDIN  DeeUnixSysFD_INIT_STDIN
+#define DeeSysFD_INIT_STDOUT DeeUnixSysFD_INIT_STDOUT
+#define DeeSysFD_INIT_STDERR DeeUnixSysFD_INIT_STDERR
+#define DeeSysFD_GET_STDIN   DeeUnixSysFD_GET_STDIN
+#define DeeSysFD_GET_STDOUT  DeeUnixSysFD_GET_STDOUT
+#define DeeSysFD_GET_STDERR  DeeUnixSysFD_GET_STDERR
 
 #define DeeSysFileFD                   DeeUnixSysFileFD
 #define DeeSysFileFD_Utf8TryInit       DeeUnixSysFileFD_Utf8TryInit

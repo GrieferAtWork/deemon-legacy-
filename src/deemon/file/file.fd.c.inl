@@ -18,46 +18,74 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FILE_FD_INL
-#define GUARD_DEEMON_FILE_FD_INL 1
+#ifndef GUARD_DEEMON_FILE_FD_C_INL
+#define GUARD_DEEMON_FILE_FD_C_INL 1
 #define DEE_LIMITED_API 1
 
+#include "file.fd.h"
 #include <deemon/__conf.inl>
-
-// /include/*
+#include <deemon/__xconf.inl>
 #include <deemon/bool.h>
 #include <deemon/file.h>
-
-// /src/*
+#include <deemon/none.h>
+#include <deemon/memberdef.h>
+#include <deemon/integer.h>
+#include <deemon/structured.h>
 #include <deemon/sys/sysfd.h>
-
-// */ (nano...)
 
 DEE_DECL_BEGIN
 
-DEE_STATIC_ASSERT(DEE_PRIVATE_FILEFD_DESCRITOR_SIZE == sizeof(struct DeeSysFD));
+#ifdef DEE_PLATFORM_WINDOWS
+DEE_A_RET_NOEXCEPT(1) int DeeFileFD_Win32AcquireHandle(
+ DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT /*PHANDLE*/ void **result) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeFileFD_Check(self));
+ DEE_ASSERT(result);
+ DeeFileFD_ACQUIRE_SHARED((DeeFileFDObject *)self,return 1);
+ *(PHANDLE)result = ((DeeFileFDObject *)self)->fd_descr.w32_handle;
+ return 0;
+}
+#endif
 
-#define DeeFileFD_FD(ob) ((struct DeeSysFD *)((DeeFileFDObject *)Dee_REQUIRES_POINTER(ob))->fd_data)
+#ifdef DEE_PLATFORM_UNIX
+DEE_A_RET_NOEXCEPT(1) int DeeFileFD_PosixAcquireFileno(
+ DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT int **result) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeFileFD_Check(self));
+ DEE_ASSERT(result);
+ DeeFileFD_ACQUIRE_SHARED((DeeFileFDObject *)self,return 1);
+ *result = ((DeeFileFDObject *)self)->fd_descr.unx_fd;
+ return 0;
+}
+#endif
 
-static int _deefilefd_tp_ctor(
+#if defined(DEE_PLATFORM_WINDOWS) || defined(DEE_PLATFORM_UNIX)
+void _DeeFileFD_PrivateReleaseTicket(
+ DEE_A_INOUT_OBJECT(DeeFileFDObject) *self) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeFileFD_Check(self));
+ DeeFileFD_RELEASE_SHARED((DeeFileFDObject *)self);
+}
+#endif
+
+
+
+int DEE_CALL _deefilefd_tp_ctor(
  DeeFileTypeObject *DEE_UNUSED(tp_self), DeeFileFDObject *self) {
  // Don't set the 'DEE_PRIVATE_FILEFLAG_FD_VALID' flag here.
- DeeFileFD_InitBasic(self,DEE_FILE_FLAG_NONE);
+ DeeFileFD_InitBasic(self,DEE_PRIVATE_FILEFLAG_NONE);
  return 0;
 }
 
 #ifdef DeeSysFD_InitCopy /*< The system supports fd duplication. */
 #define _pdeefilefd_tp_copy_ctor &_deefilefd_tp_copy_ctor
-static int _deefilefd_tp_copy_ctor(
+int DEE_CALL _deefilefd_tp_copy_ctor(
  DeeFileTypeObject *DEE_UNUSED(tp_self),
  DeeFileFDObject *self, DeeFileFDObject *right) {
  Dee_uint32_t newflags;
  // In here, we always copy the file-descriptor
  DeeFileFD_ACQUIRE_SHARED(right,{
-  DeeFileFD_InitBasic(self,DEE_FILE_FLAG_NONE);
+  DeeFileFD_InitBasic(self,DEE_PRIVATE_FILEFLAG_NONE);
   return 0;
  });
- DeeSysFD_InitCopy(DeeFileFD_FD(self),DeeFileFD_FD(right),{
+ DeeSysFD_InitCopy(&self->fd_descr,&right->fd_descr,{
   DeeFileFD_RELEASE_SHARED(right);
   return -1;
  });
@@ -70,14 +98,14 @@ static int _deefilefd_tp_copy_ctor(
 #define _pdeefilefd_tp_copy_ctor DeeType_DEFAULT_SLOT(tp_copy_ctor)
 #endif
 
-static int _deefilefd_tp_move_ctor(
+int DEE_CALL _deefilefd_tp_move_ctor(
  DeeFileTypeObject *DEE_UNUSED(tp_self),
  DeeFileFDObject *self, DeeFileFDObject *right) {
  Dee_uint32_t newflags;
  DeeFileFD_ACQUIRE_EXCLUSIVE(right,{});
  newflags = right->fo_flags;
- *DeeFileFD_FD(self) = *DeeFileFD_FD(right);
- right->fo_flags = DEE_FILE_FLAG_NONE;
+ *&self->fd_descr = *&right->fd_descr;
+ right->fo_flags = DEE_PRIVATE_FILEFLAG_NONE;
  DeeFileFD_RELEASE_EXCLUSIVE(right);
  DeeFileFD_InitBasic(self,newflags);
  return 0;
@@ -86,16 +114,16 @@ static int _deefilefd_tp_move_ctor(
 #if defined(DEE_PLATFORM_WINDOWS)\
  || defined(DEE_PLATFORM_UNIX)
 #define _pdeefilefd_tp_any_ctor &_deefilefd_tp_any_ctor
-static int _deefilefd_tp_any_ctor(
+int DEE_CALL _deefilefd_tp_any_ctor(
  DeeFileTypeObject *DEE_UNUSED(tp_self),
  DeeFileFDObject *self, DeeObject *args) {
  Dee_filedescr_t new_fd;
 #ifdef DEE_PLATFORM_WINDOWS
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"p:file.fd",&new_fd) != 0) return -1;
- DeeFileFD_FD(self)->w32_handle = (HANDLE)new_fd;
+ self->fd_descr.w32_handle = (HANDLE)new_fd;
 #else
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"d:file.fd",&new_fd) != 0) return -1;
- DeeFileFD_FD(self)->unx_fd = new_fd;
+ self->fd_descr.unx_fd = new_fd;
 #endif
  // XXX: Validate handle?
  DeeFileFD_InitBasic(self,DEE_PRIVATE_FILEFLAG_FD_VALID);
@@ -107,10 +135,10 @@ static int _deefilefd_tp_any_ctor(
 
 #ifdef DeeSysFD_Quit
 #define _pdeefilefd_tp_dtor &_deefilefd_tp_dtor
-static void _deefilefd_tp_dtor(DeeFileFDObject *self) {
+void DEE_CALL _deefilefd_tp_dtor(DeeFileFDObject *self) {
  if ((self->fo_flags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) == 
                      (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
-  DeeSysFD_Quit(DeeFileFD_FD(self));
+  DeeSysFD_Quit(&self->fd_descr);
  }
 }
 #else
@@ -118,21 +146,21 @@ static void _deefilefd_tp_dtor(DeeFileFDObject *self) {
 #endif
 
 
-static int _deefilefd_tp_move_assign(
+int DEE_CALL _deefilefd_tp_move_assign(
  DeeFileFDObject *self, DeeFileFDObject *right) {
  struct DeeSysFD new_fd,old_fd;
  Dee_uint32_t newflags,oldflags;
  if (self != right) {
   DeeFileFD_ACQUIRE_EXCLUSIVE(right);
-  new_fd = *DeeFileFD_FD(right);
+  new_fd = *&right->fd_descr;
   newflags = right->fo_flags;
-  right->fo_flags = DEE_FILE_FLAG_NONE;
+  right->fo_flags = DEE_PRIVATE_FILEFLAG_NONE;
   DeeFileFD_RELEASE_EXCLUSIVE(right);
   DeeFileFD_ACQUIRE_EXCLUSIVE(self);
   oldflags = self->fo_flags;
-  old_fd = *DeeFileFD_FD(self);
+  old_fd = *&self->fd_descr;
   self->fo_flags = newflags;
-  *DeeFileFD_FD(self) = new_fd;
+  *&self->fd_descr = new_fd;
   DeeFileFD_RELEASE_EXCLUSIVE(self);
   if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
                 (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
@@ -144,7 +172,8 @@ static int _deefilefd_tp_move_assign(
 
 #ifdef DeeSysFD_InitCopy
 #define _pdeefilefd_tp_copy_assign &_deefilefd_tp_copy_assign
-static int _deefilefd_tp_copy_assign(
+DEE_COMPILER_MSVC_WARNING_PUSH(4701)
+int DEE_CALL _deefilefd_tp_copy_assign(
  DeeFileFDObject *self, DeeFileFDObject *right) {
  struct DeeSysFD new_fd,old_fd;
  Dee_uint32_t newflags,oldflags;
@@ -158,20 +187,20 @@ static int _deefilefd_tp_copy_assign(
   // NOTE: Unlike within the copy-constructor, here we
   //       inherit the ownership attribute from 'right', too.
   if ((newflags&DEE_PRIVATE_FILEFLAG_FD_OWNED)!=0) {
-   DeeSysFD_InitCopy(&new_fd,DeeFileFD_FD(right),{
+   DeeSysFD_InitCopy(&new_fd,&right->fd_descr,{
     DeeFileFD_RELEASE_SHARED(right);
     return -1;
    });
   } else {
-   new_fd = *DeeFileFD_FD(right);
+   new_fd = *&right->fd_descr;
   }
   DeeFileFD_RELEASE_SHARED(right);
 after_copy:
   DeeFileFD_ACQUIRE_EXCLUSIVE(self);
   oldflags = self->fo_flags;
-  old_fd = *DeeFileFD_FD(self);
+  old_fd = *&self->fd_descr;
   self->fo_flags = newflags;
-  *DeeFileFD_FD(self) = new_fd;
+  *&self->fd_descr = new_fd;
   DeeFileFD_RELEASE_EXCLUSIVE(self);
   if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
                 (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
@@ -180,6 +209,7 @@ after_copy:
  }
  return 0;
 }
+DEE_COMPILER_MSVC_WARNING_POP
 #else
 #define _pdeefilefd_tp_copy_assign DeeType_DEFAULT_SLOT(tp_copy_assign)
 #endif
@@ -187,21 +217,21 @@ after_copy:
 
 #ifdef DEE_PLATFORM_UNIX
 #define _pdeefilefd_tp_str &_deefilefd_tp_str
-static DeeObject *_deefilefd_tp_str(DeeFileFDObject *self) {
- return DeeUnixSysFD_DoGetUtf8Name(DeeFileFD_FD(self)->unx_fd);
+DeeObject *DEE_CALL _deefilefd_tp_str(DeeFileFDObject *self) {
+ return DeeUnixSysFD_DoGetUtf8Name(&self->fd_descr->unx_fd);
 }
 #else
 #define _pdeefilefd_tp_str DeeType_DEFAULT_SLOT(tp_str)
 #endif
 
-static int _deefilefd_tp_bool(DeeFileFDObject *self) {
+int DEE_CALL _deefilefd_tp_bool(DeeFileFDObject *self) {
  int result;
  DeeFile_ACQUIRE(self);
  result = ((self->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID) != 0);
  DeeFile_RELEASE(self);
  return result;
 }
-static DeeObject *_deefilefd_tp_not(DeeFileFDObject *self) {
+DeeObject *DEE_CALL _deefilefd_tp_not(DeeFileFDObject *self) {
  int result;
  DeeFile_ACQUIRE(self);
  result = ((self->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID) == 0);
@@ -210,68 +240,105 @@ static DeeObject *_deefilefd_tp_not(DeeFileFDObject *self) {
 }
 
 
-DeeError_NEW_STATIC(_error_file_closed,&DeeErrorType_IOError,
-                    "Invalid file descriptor");
-#define throw_error_file_closed() DeeError_Throw((DeeObject *)&_error_file_closed)
-
 static int DEE_CALL _deefilefd_tp_io_read(
  DeeFileFDObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
+#ifdef DeeSysFD_Read
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- DeeFileFD_ACQUIRE_SHARED(self,{throw_error_file_closed(); return -1;});
- DeeSysFD_Read(DeeFileFD_FD(self),p,s,rs,return -1);
- DeeFileFD_RELEASE_SHARED(self);
- return 0;
-}
-static int DEE_CALL _deefilefd_tp_io_write(
- DeeFileFDObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- DeeFileFD_ACQUIRE_SHARED(self,{throw_error_file_closed(); return -1;});
- DeeSysFD_Write(DeeFileFD_FD(self),p,s,ws,return -1);
- DeeFileFD_RELEASE_SHARED(self);
- return 0;
-}
-static int DEE_CALL _deefilefd_tp_io_seek(
- DeeFileFDObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) {
- // If the sysfd seek modes differ from deemon's static codes, fix the differences
- // NOTE: This is mearly meant as a precausion.
- //       Both windows and linux use 0,1,2 for these modes, just like deemon does.
-#if DEE_SYSFD_SEEK_SET != DEE_SEEK_SET
- if (whence == DEE_SEEK_SET) whence = DEE_SYSFD_SEEK_SET; else
-#endif
-#if DEE_SYSFD_SEEK_CUR != DEE_SEEK_CUR
- if (whence == DEE_SEEK_CUR) whence = DEE_SYSFD_SEEK_CUR; else
-#endif
-#if DEE_SYSFD_SEEK_END != DEE_SEEK_END
- if (whence == DEE_SEEK_END) whence = DEE_SYSFD_SEEK_END; else
-#endif
- ;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- DeeFileFD_ACQUIRE_SHARED(self,{throw_error_file_closed(); return -1;});
- DeeSysFD_Seek(DeeFileFD_FD(self),off,whence,pos,return -1);
- DeeFileFD_RELEASE_SHARED(self);
- return 0;
-}
-static int DEE_CALL _deefilefd_tp_io_flush(DeeFileFDObject *self) {
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
-#ifdef DeeSysFD_Flush
- DeeFileFD_ACQUIRE_SHARED(self,{throw_error_file_closed(); return -1;});
- DeeSysFD_Flush(DeeFileFD_FD(self),return -1);
+ DeeFileFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysFD_Read(&self->fd_descr,p,s,rs,{
+  DeeFileFD_RELEASE_SHARED(self);
+  return -1;
+ });
  DeeFileFD_RELEASE_SHARED(self);
  return 0;
 #else
- DeeError_NotImplemented_str("file.fp.flush");
+ (void)self,p,s,rs;
+ DeeError_NotImplemented_str("file.fd.read");
+ return -1;
+#endif
+}
+static int DEE_CALL _deefilefd_tp_io_write(
+ DeeFileFDObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
+#ifdef DeeSysFD_Write
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeeFileFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysFD_Write(&self->fd_descr,p,s,ws,{
+  DeeFileFD_RELEASE_SHARED(self);
+  return -1;
+ });
+ DeeFileFD_RELEASE_SHARED(self);
+ return 0;
+#else
+ (void)self,p,s,ws;
+ DeeError_NotImplemented_str("file.fd.write");
+ return -1;
+#endif
+}
+static int DEE_CALL _deefilefd_tp_io_seek(
+ DeeFileFDObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) {
+#ifdef DeeSysFD_Seek
+ // If the sysfd seek modes differ from deemon's static codes, fix the differences
+ // NOTE: This is mearly meant as a precausion.
+ //       Both windows and linux use 0,1,2 for these modes, just like deemon does.
+ DEE_FILEFD_FIX_SEEKWHENCE(whence);
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeeFileFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysFD_Seek(&self->fd_descr,off,whence,pos,{
+  DeeFileFD_RELEASE_SHARED(self);
+  return -1;
+ });
+ DeeFileFD_RELEASE_SHARED(self);
+ return 0;
+#else
+ (void)self,off,whence,pos;
+ DeeError_NotImplemented_str("file.fd.seek");
+ return -1;
+#endif
+}
+static int DEE_CALL _deefilefd_tp_io_flush(DeeFileFDObject *self) {
+#ifdef DeeSysFD_Flush
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeeFileFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysFD_Flush(&self->fd_descr,{
+  DeeFileFD_RELEASE_SHARED(self);
+  return -1;
+ });
+ DeeFileFD_RELEASE_SHARED(self);
+ return 0;
+#else
+ (void)self;
+ DeeError_NotImplemented_str("file.fd.flush");
  return -1;
 #endif
 }
 static int DEE_CALL _deefilefd_tp_io_trunc(DeeFileFDObject *self) {
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
 #ifdef DeeSysFD_Trunc
- DeeFileFD_ACQUIRE_SHARED(self,{throw_error_file_closed(); return -1;});
- DeeSysFD_Trunc(DeeFileFD_FD(self),return -1);
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeeFileFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysFD_Trunc(&self->fd_descr,{
+  DeeFileFD_RELEASE_SHARED(self);
+  return -1;
+ });
  DeeFileFD_RELEASE_SHARED(self);
  return 0;
 #else
- DeeError_NotImplemented_str("file.fp.trunc");
+ (void)self;
+ DeeError_NotImplemented_str("file.fd.trunc");
  return -1;
 #endif
 }
@@ -279,12 +346,71 @@ static int DEE_CALL _deefilefd_tp_io_trunc(DeeFileFDObject *self) {
 #define _pdeefilefd_tp_io_close &_deefilefd_tp_io_close
 static void DEE_CALL _deefilefd_tp_io_close(DeeFileFDObject *self) {
  DeeFileFD_ACQUIRE_EXCLUSIVE(self,return);
- DeeSysFD_Quit(DeeFileFD_FD(self));
+ DeeSysFD_Quit(&self->fd_descr);
  self->fo_flags &= ~DEE_PRIVATE_FILEFLAG_FD_VALID;
  DeeFileFD_RELEASE_EXCLUSIVE(self);
 }
 #else
 #define _pdeefilefd_tp_io_close DeeType_DEFAULT_SLOT(tp_io_close)
+#endif
+
+
+#ifdef DeeSysFD_GetSize
+#define _deefilefd_size _deefilefd_size
+static DeeObject *DEE_CALL _deefilefd_size(
+ DeeFileFDObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ Dee_uint64_t fp_size;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":size") != 0) return NULL;
+ DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
+ DeeSysFD_GetSize(&self->fd_descr,&fp_size,{ DeeFileFD_RELEASE_SHARED(self); return NULL; });
+ DeeFileFD_RELEASE_SHARED(self);
+ return DeeObject_New(Dee_uint64_t,fp_size);
+}
+#endif /* DeeSysFileFD_GetSize */
+
+#ifdef DEE_PLATFORM_WINDOWS
+#define _deefilefd_win32_handle _deefilefd_win32_handle
+static DeeObject *DEE_CALL _deefilefd_win32_handle(
+ DeeFileFDObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ HANDLE result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":win32_handle") != 0) return NULL;
+ DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
+ result = self->fd_descr.w32_handle;
+ DeeFileFD_RELEASE_SHARED(self);
+ return DeeVoidPointer_New(result);
+}
+#endif
+
+#ifdef DEE_PLATFORM_UNIX
+#define _deefilefd_posix_fileno _deefilefd_posix_fileno
+static DeeObject *DEE_CALL _deefilefd_posix_fileno(
+ DeeFileFDObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ int result;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":posix_fileno") != 0) return NULL;
+ DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
+ result = self->fd_descr.unx_fd;
+ DeeFileFD_RELEASE_SHARED(self);
+ return DeeObject_New(int,result);
+}
+#endif
+
+#if defined(_deefilefd_size)\
+ || defined(_deefilefd_win32_handle)\
+ || defined(_deefilefd_posix_fileno)
+static struct DeeMethodDef const _deefilefd_tp_methods[] = {
+#ifdef _deefilefd_win32_handle
+ DEE_METHODDEF_v100("win32_handle",member(&_deefilefd_win32_handle),"() -> HANDLE"),
+#endif
+#ifdef _deefilefd_posix_fileno
+ DEE_METHODDEF_v100("posix_fileno",member(&_deefileio_fileno),"() -> int"),
+#endif
+#ifdef _deefilefd_size
+ DEE_METHODDEF_v100("size",member(&_deefilefd_size),"() -> uint64_t"),
+#endif
+ DEE_METHODDEF_END_v100
+};
+#else
+#define _deefilefd_tp_methods DeeType_DEFAULT_SLOT(tp_methods)
 #endif
 
 
@@ -313,7 +439,8 @@ DeeFileTypeObject DeeFileFD_Type = {
    null,null,null,null,null,null,null,null,null,null),
   DEE_TYPE_OBJECT_COMPARE_v100(null,null,null,null,null,null),
   DEE_TYPE_OBJECT_SEQ_v101(null,null,null,null,null,null,null,null,null,null),
-  DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,null,null,null,null,null,null),
+  DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,null,null,
+   member(_deefilefd_tp_methods),null,null,null),
   DEE_TYPE_OBJECT_FOOTER_v100
  },
  DEE_FILE_TYPE_OBJECT_IO_v100(
@@ -328,4 +455,4 @@ DeeFileTypeObject DeeFileFD_Type = {
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_FILE_FD_INL */
+#endif /* !GUARD_DEEMON_FILE_FD_C_INL */

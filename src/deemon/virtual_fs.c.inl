@@ -139,7 +139,7 @@ static int DEE_CALL _vfs_fileio_open_stringmemory(
   DeeError_NoMemory();
   return -1;
  }
- fp->fo_flags |= DEE_FILE_FLAG_IO_VFSFILE;
+ fp->fo_flags |= DEE_PRIVATE_FILEFLAG_IO_VFSFILE;
  fp->fio_vfs.fio_type = &_vfs_fileio_stringmemory_type;
  fp->fio_vfs.fio_data = data;
  Dee_INCREF(data->ob_string = str);
@@ -237,7 +237,7 @@ static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsdev_urandom_open(
    struct DeeRandomNumberGenerator *)&fp->fio_vfs.fio_data);
 #endif
  }
- fp->fo_flags |= DEE_FILE_FLAG_IO_VFSFILE;
+ fp->fo_flags |= DEE_PRIVATE_FILEFLAG_IO_VFSFILE;
  fp->fio_vfs.fio_type = &_vfs_fileio_urandom_type;
  return 0;
 }
@@ -245,7 +245,7 @@ static DEE_A_RET_EXCEPT(-1) int DEE_CALL _vfsdev_zero_open(
  DEE_A_IN struct DeeVFSFile const *DEE_UNUSED(self),
  DEE_A_INOUT DeeFileIOObject *fp, DEE_A_IN Dee_uint16_t DEE_UNUSED(mode)) {
  fp->fio_vfs.fio_data = NULL;
- fp->fo_flags |= DEE_FILE_FLAG_IO_VFSFILE;
+ fp->fo_flags |= DEE_PRIVATE_FILEFLAG_IO_VFSFILE;
  fp->fio_vfs.fio_type = &_vfs_fileio_zero_type;
  return 0;
 }

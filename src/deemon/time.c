@@ -630,20 +630,20 @@ DeeTime_NewFromWin32FileTime(DEE_A_IN struct _FILETIME const *t) {
 
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *
-DeeTime_NewFromYears(DEE_A_IN Dee_uint64_t years) {
+DeeTime_NewFromYears(DEE_A_IN Dee_timetick_t years) {
  return _DeeTime_Alloc(DeeTimeKind_YEARS,years);
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *
-DeeTime_NewFromMonths(DEE_A_IN Dee_uint64_t months) {
+DeeTime_NewFromMonths(DEE_A_IN Dee_timetick_t months) {
  return _DeeTime_Alloc(DeeTimeKind_MONTHS,months);
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *
-DeeTime_New(DEE_A_IN Dee_uint64_t ticks) {
+DeeTime_New(DEE_A_IN Dee_timetick_t ticks) {
  return DeeTime_NEW(ticks);
 }
 
 
-DEE_A_RET_WUNUSED Dee_uint64_t DeeTime_GetTotalMonths(
+DEE_A_RET_WUNUSED Dee_timetick_t DeeTime_GetTotalMonths(
  DEE_A_IN_OBJECT(DeeTimeObject) const *self) {
  // TODO: What about the current year?
  return DeeTime_Days2Years(DeeTime_GetTotalDays(self))*12;

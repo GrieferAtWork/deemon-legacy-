@@ -128,28 +128,29 @@ static BOOL DeeWin32SysFD_LargeWrite64(HANDLE hFile, void const *p, Dee_uint64_t
  DeeWin32SysFD_TrySeekHandle((self)->w32_handle,off,whence,newpos)
 
 static BOOL DeeWin32SysFD_TrySeekHandle(
- HANDLE hFile, Dee_uint64_t off, DWORD whence, Dee_uint64_t *newpos) {
- union{ Dee_uint64_t off64; DWORD offd[2]; LONG offl[2]; } used_offset; used_offset.off64 = off;
+ HANDLE hFile, Dee_int64_t off, DWORD whence, Dee_uint64_t *newpos) {
+ union{ Dee_int64_t off64; Dee_uint64_t uoff64; DWORD offd[2]; LONG offl[2]; } used_offset; used_offset.off64 = off;
  if DEE_UNLIKELY((used_offset.offd[0] = SetFilePointer(hFile,
   used_offset.offl[0],&used_offset.offl[1],
   (DWORD)whence)) == INVALID_SET_FILE_POINTER) {
   if (GetLastError() != 0) return FALSE;
  }
- if (newpos) *newpos = used_offset.off64;
+ if (newpos) *newpos = used_offset.uoff64;
  return TRUE;
 }
 
 #define DeeWin32SysFD_Seek(self,off,whence,newpos,...)\
 do{\
  if DEE_UNLIKELY(!DeeWin32SysFD_SeekHandle(\
-  (self)->w32_handle,off,whence,newpos)) {\
+  (self)->w32_handle,off,(DWORD)(whence),newpos)) {\
   {__VA_ARGS__;}\
  }\
 }while(0)
 
 static BOOL DeeWin32SysFD_SeekHandle(
- HANDLE hFile, Dee_uint64_t off, DWORD whence, Dee_uint64_t *newpos) {
- union{ Dee_uint64_t off64; DWORD offd[2]; LONG offl[2]; } used_offset; used_offset.off64 = off;
+ HANDLE hFile, Dee_int64_t off, DWORD whence, Dee_uint64_t *newpos) {
+ union{ Dee_int64_t off64; Dee_uint64_t uoff64; DWORD offd[2]; LONG offl[2];
+ } used_offset; used_offset.off64 = off;
  if DEE_UNLIKELY((used_offset.offd[0] = SetFilePointer(hFile,
   used_offset.offl[0],&used_offset.offl[1],
   (DWORD)whence)) == INVALID_SET_FILE_POINTER) {
@@ -179,7 +180,7 @@ static BOOL DeeWin32SysFD_SeekHandle(
     return -1;
   }
  }
- if (newpos) *newpos = used_offset.off64;
+ if (newpos) *newpos = used_offset.uoff64;
  return TRUE;
 }
 
@@ -238,19 +239,36 @@ do{\
  }\
 }while(0)
 
+#ifdef DEE_PRIVATE_DECL_DEE_TIMETICK_T
+DEE_PRIVATE_DECL_DEE_TIMETICK_T
+#undef DEE_PRIVATE_DECL_DEE_TIMETICK_T
+#endif
+
+// >> [[optional
+// >>   struct DeeSysFDTimes { ... };
+// >>   [[optional]] #define DeeSysFDTimes_INIT(atime,ctime,mtime) { ... }
+// >>                void DeeSysFDTimes_Init(DEE_A_OUT struct DeeSysFDTimes *self, Dee_timetick_t atime, Dee_timetick_t ctime, Dee_timetick_t mtime);
+// >>                Dee_timetick_t DeeSysFDTimes_GetATime(DEE_A_IN struct DeeSysFDTimes const *self);
+// >>                Dee_timetick_t DeeSysFDTimes_GetCTime(DEE_A_IN struct DeeSysFDTimes const *self);
+// >>                Dee_timetick_t DeeSysFDTimes_GetMTime(DEE_A_IN struct DeeSysFDTimes const *self);
+// >>                void DeeSysFDTimes_SetATime(DEE_A_INOUT struct DeeSysFDTimes *self, Dee_timetick_t );
+// >>                void DeeSysFDTimes_SetCTime(DEE_A_INOUT struct DeeSysFDTimes *self, Dee_timetick_t );
+// >>                void DeeSysFDTimes_SetMTime(DEE_A_INOUT struct DeeSysFDTimes *self, Dee_timetick_t );
+// >>   [[optional]] bool DeeSysFD_TryGetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT struct DeeSysFDTimes *times);
+// >>   [[optional]] bool DeeSysFD_TryGetATime(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_timetick_t *atime);
+// >>   [[optional]] bool DeeSysFD_TryGetCTime(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_timetick_t *ctime);
+// >>   [[optional]] bool DeeSysFD_TryGetMTime(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_timetick_t *mtime);
+// >>   [[optional]] void DeeSysFD_GetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT struct DeeSysFDTimes *times, CODE on_error);
+// >>   [[optional]] void DeeSysFD_SetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN struct DeeSysFDTimes const *times, CODE on_error);
+// >>   [[optional]] void DeeSysFD_SetACMTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN_OPT Dee_timetick_t *atime, DEE_A_IN_OPT Dee_timetick_t *ctime, DEE_A_IN_OPT Dee_timetick_t *mtime, CODE on_error);
+// >> ]]
 
 
 
 
-
-
-
-//////////////////////////////////////////////////////////////////////////
-// === DeeWin32SysStdFD ===
-struct DeeWin32SysStdFD { DEE_WIN32_SYSFD_HEAD };
-#define DeeWin32SysStdFD_GET_STDIN(self)  (void)((self)->w32_handle = GetStdHandle(STD_INPUT_HANDLE))
-#define DeeWin32SysStdFD_GET_STDOUT(self) (void)((self)->w32_handle = GetStdHandle(STD_OUTPUT_HANDLE))
-#define DeeWin32SysStdFD_GET_STDERR(self) (void)((self)->w32_handle = GetStdHandle(STD_ERROR_HANDLE))
+#define DeeWin32SysFD_GET_STDIN(self)  (void)((self)->w32_handle = GetStdHandle(STD_INPUT_HANDLE))
+#define DeeWin32SysFD_GET_STDOUT(self) (void)((self)->w32_handle = GetStdHandle(STD_OUTPUT_HANDLE))
+#define DeeWin32SysFD_GET_STDERR(self) (void)((self)->w32_handle = GetStdHandle(STD_ERROR_HANDLE))
 
 
 
@@ -263,14 +281,14 @@ struct DeeWin32SysFileFD {
 #define DeeWin32SysFileFD_IS_APPENDMODE(self) DEE_OPENMODE_ISAPPEND((self)->w32_openmode)
 
 #define DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(openmode)\
- (((openmode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_READ   ?   OPEN_EXISTING : \
-  ((openmode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_WRITE  ?   CREATE_ALWAYS : \
-/*((openmode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_APPEND ? */OPEN_ALWAYS)
+ (DWORD)(((openmode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_READ   ?   OPEN_EXISTING : \
+         ((openmode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_WRITE  ?   CREATE_ALWAYS : \
+       /*((openmode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_APPEND ? */OPEN_ALWAYS)
 #define DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(openmode)\
- (((openmode)&DEE_OPENMODE_FLAG_UPDATE) ? (GENERIC_READ|GENERIC_WRITE) : \
-  ((openmode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_READ ? GENERIC_READ : GENERIC_WRITE)
+ (DWORD)(((openmode)&DEE_OPENMODE_FLAG_UPDATE) ? (GENERIC_READ|GENERIC_WRITE) : \
+         ((openmode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_READ ? GENERIC_READ : GENERIC_WRITE)
 #define DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)\
- ((FILE_FLAG_BACKUP_SEMANTICS|FILE_ATTRIBUTE_NORMAL)|(((perms)&0444)==0 ? FILE_ATTRIBUTE_READONLY : 0))
+ (DWORD)((FILE_FLAG_BACKUP_SEMANTICS|FILE_ATTRIBUTE_NORMAL)|(((perms)&0444)==0 ? FILE_ATTRIBUTE_READONLY : 0))
 
 
 DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoUtf8Init(struct DeeWin32SysFileFD *self, Dee_Utf8Char const *filename, DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
@@ -344,17 +362,31 @@ extern DeeObject *DeeWin32SysFileFD_DoGetWideFilename(HANDLE hFile);
 
 
 // Windows doesn't provide its own append filemode, so we need to improvise
-#define DeeSysFileFD_TryWrite(self,p,s,ws) \
+#define DeeWin32SysFileFD_TryWrite(self,p,s,ws) \
 ((DeeWin32SysFileFD_IS_APPENDMODE(self)\
   ? DeeWin32SysFD_TrySeek(self,0,FILE_END,NULL)\
   : TRUE) && DeeWin32SysFD_TryWrite(self,p,s,ws))
-#define DeeSysFileFD_Write(self,p,s,ws,...) \
+#define DeeWin32SysFileFD_Write(self,p,s,ws,...) \
 do{\
  if (DeeWin32SysFileFD_IS_APPENDMODE(self)) {\
   DeeWin32SysFD_Seek(self,0,FILE_END,NULL,__VA_ARGS__);\
  }\
  DeeWin32SysFD_Write(self,p,s,ws,__VA_ARGS__);\
 }while(0)
+
+
+#define DeeWin32SysFileFD_TryGetSize(self,result)\
+ GetFileSizeEx((self)->w32_handle,(PLARGE_INTEGER)(result))
+#define DeeWin32SysFileFD_GetSize(self,result,...)\
+do{\
+ if DEE_UNLIKELY(!DeeWin32SysFileFD_TryGetSize(self,result)) {\
+  DeeError_SetStringf(&DeeErrorType_IOError,\
+                      "GetFileSizeEx(%p) : %K",(self)->w32_handle,\
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+ }\
+}while(0)
+
+
 
 
 
@@ -401,11 +433,9 @@ do{\
 #define DeeSysFD_Flush       DeeWin32SysFD_Flush
 #define DeeSysFD_TryTrunc    DeeWin32SysFD_TryTrunc
 #define DeeSysFD_Trunc       DeeWin32SysFD_Trunc
-
-#define DeeSysStdFD            DeeWin32SysStdFD
-#define DeeSysStdFD_GET_STDIN  DeeWin32SysStdFD_GET_STDIN
-#define DeeSysStdFD_GET_STDOUT DeeWin32SysStdFD_GET_STDOUT
-#define DeeSysStdFD_GET_STDERR DeeWin32SysStdFD_GET_STDERR
+#define DeeSysFD_GET_STDIN   DeeWin32SysFD_GET_STDIN
+#define DeeSysFD_GET_STDOUT  DeeWin32SysFD_GET_STDOUT
+#define DeeSysFD_GET_STDERR  DeeWin32SysFD_GET_STDERR
 
 #define DeeSysFileFD                   DeeWin32SysFileFD
 #define DeeSysFileFD_Utf8TryInit       DeeWin32SysFileFD_Utf8TryInit
@@ -419,6 +449,10 @@ do{\
 #define DeeSysFileFD_Filename          DeeWin32SysFileFD_WideFilename
 #define DeeSysFileFD_Utf8Filename      DeeWin32SysFileFD_Utf8Filename
 #define DeeSysFileFD_WideFilename      DeeWin32SysFileFD_WideFilename
+#define DeeSysFileFD_TryWrite          DeeWin32SysFileFD_TryWrite
+#define DeeSysFileFD_Write             DeeWin32SysFileFD_Write
+#define DeeSysFileFD_TryGetSize        DeeWin32SysFileFD_TryGetSize
+#define DeeSysFileFD_GetSize           DeeWin32SysFileFD_GetSize
 
 #define DeeSysPipeFD           DeeWin32SysPipeFD
 #define DeeSysPipeFD_TryInitEx DeeWin32SysPipeFD_TryInitEx

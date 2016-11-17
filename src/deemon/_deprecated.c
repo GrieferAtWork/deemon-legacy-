@@ -72,30 +72,18 @@ DEPRECATED_EXPORT(int,DeeClass_HasClassGetSetString,(DeeTypeObject *self, char c
 DEPRECATED_EXPORT(int,DeeClass_GetGetSetString,(DeeTypeObject *self, char const *name, DeeObject **getter_, DeeObject **delete_, DeeObject **setter_)) { return DeeClass_GetPropertyString(self,name,getter_,delete_,setter_); }
 DEPRECATED_EXPORT(int,DeeClass_GetClassGetSetString,(DeeTypeObject *self, char const *name, DeeObject **getter_, DeeObject **delete_, DeeObject **setter_)) { return DeeClass_GetClassPropertyString(self,name,getter_,delete_,setter_); }
 
-#undef DeeFileIO_NewObject
-#undef DeeFileIO_ReOpenObject
-#undef DeeFileIO_Utf8New
-#undef DeeFileIO_Utf8ReOpen
-#undef DeeFileIO_WideNew
-#undef DeeFileIO_WideReOpen
-#undef _DeeFileIO_NewObject
-#undef _DeeFileIO_ReOpenObject
-#undef _DeeFileIO_Utf8New
-#undef _DeeFileIO_Utf8ReOpen
-#undef _DeeFileIO_WideNew
-#undef _DeeFileIO_WideReOpen
-DEPRECATED_EXPORT(DeeObject *,DeeFileIO_Utf8New,(Dee_Utf8Char const *file, char const *mode)) { return DeeFileIO_Utf8NewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(DeeObject *,DeeFileIO_WideNew,(Dee_WideChar const *file, char const *mode)) { return DeeFileIO_WideNewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(DeeObject *,DeeFileIO_NewObject,(DeeObject const *file, char const *mode)) { return DeeFileIO_NewObjectEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(DeeObject *,_DeeFileIO_Utf8New,(Dee_Utf8Char const *file, char const *mode)) { return _DeeFileIO_Utf8NewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(DeeObject *,_DeeFileIO_WideNew,(Dee_WideChar const *file, char const *mode)) { return _DeeFileIO_WideNewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(DeeObject *,_DeeFileIO_NewObject,(DeeObject const *file, char const *mode)) { return _DeeFileIO_NewObjectEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(int,DeeFileIO_Utf8ReOpen,(DeeObject *self, Dee_Utf8Char const *file, char const *mode)) { return DeeFileIO_Utf8ReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(int,DeeFileIO_WideReOpen,(DeeObject *self, Dee_WideChar const *file, char const *mode)) { return DeeFileIO_WideReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(int,DeeFileIO_ReOpenObject,(DeeObject *self, DeeObject const *file, char const *mode)) { return DeeFileIO_ReOpenObjectEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(int,_DeeFileIO_Utf8ReOpen,(DeeObject *self, Dee_Utf8Char const *file, char const *mode)) { return _DeeFileIO_Utf8ReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(int,_DeeFileIO_WideReOpen,(DeeObject *self, Dee_WideChar const *file, char const *mode)) { return _DeeFileIO_WideReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
-DEPRECATED_EXPORT(int,_DeeFileIO_ReOpenObject,(DeeObject *self, DeeObject const *file, char const *mode)) { return _DeeFileIO_ReOpenObjectEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS); }
+#undef DeeFile_OpenObject
+#undef DeeFile_Utf8Open
+#undef DeeFile_WideOpen
+#undef _DeeFile_OpenObject
+#undef _DeeFile_Utf8Open
+#undef _DeeFile_WideOpen
+DEPRECATED_EXPORT(DeeObject *,DeeFile_Utf8Open,(Dee_Utf8Char const *file, char const *mode)) { return DeeFile_Utf8OpenEx(file,DeeFile_TryParseMode(mode),DEE_FILEIO_DEFAULT_PERMISSIONS); }
+DEPRECATED_EXPORT(DeeObject *,DeeFile_WideOpen,(Dee_WideChar const *file, char const *mode)) { return DeeFile_WideOpenEx(file,DeeFile_TryParseMode(mode),DEE_FILEIO_DEFAULT_PERMISSIONS); }
+DEPRECATED_EXPORT(DeeObject *,DeeFile_OpenObject,(DeeObject const *file, char const *mode)) { return DeeFile_OpenObjectEx(file,DeeFile_TryParseMode(mode),DEE_FILEIO_DEFAULT_PERMISSIONS); }
+DEPRECATED_EXPORT(DeeObject *,_DeeFile_Utf8Open,(Dee_Utf8Char const *file, char const *mode)) { return _DeeFile_Utf8OpenEx(file,DeeFile_TryParseMode(mode),DEE_FILEIO_DEFAULT_PERMISSIONS); }
+DEPRECATED_EXPORT(DeeObject *,_DeeFile_WideOpen,(Dee_WideChar const *file, char const *mode)) { return _DeeFile_WideOpenEx(file,DeeFile_TryParseMode(mode),DEE_FILEIO_DEFAULT_PERMISSIONS); }
+DEPRECATED_EXPORT(DeeObject *,_DeeFile_OpenObject,(DeeObject const *file, char const *mode)) { return _DeeFile_OpenObjectEx(file,DeeFile_TryParseMode(mode),DEE_FILEIO_DEFAULT_PERMISSIONS); }
 #undef DeeFileWriter_New
 DEPRECATED_EXPORT(DeeObject *,DeeFileWriter_New,(void)) { return DeeFileWriter_NewWithSizeHint(0); }
 #undef DeeFile_Read
@@ -140,6 +128,9 @@ DEPRECATED_EXPORT(int,DeeFile_PrintAll,(DeeObject *self, DeeObject *v)) { return
 #undef DeeFile_WriteObject
 DEPRECATED_EXPORT(DeeObject *,DeeFile_ReadObject,(DeeObject *self, DeeTypeObject *tp)) { return DeeFile_TReadStructuredObject(Dee_TYPE(self),self,tp); }
 DEPRECATED_EXPORT(int,DeeFile_WriteObject,(DeeObject *self, DeeObject *v)) { return DeeFile_TWriteStructuredObject(Dee_TYPE(self),self,v); }
+#undef DeeFileIO_Size
+DEPRECATED_EXPORT(int,DeeFileIO_Size,(DeeObject *self, Dee_uint64_t *v)) { return DeeFile_Size(self,v); }
+
 
 #undef DeeList_NewFromSequence
 #undef DeeList_AssignSequence

@@ -136,7 +136,7 @@ err_ctx:
 #elif 1 // Posix /dev/urandom RNG
 #define DEE_HAVE_NATIVE_URANDOM 1
  DeeObject *urandom; int result;
- if DEE_UNLIKELY((urandom = DeeFileIO_New("/dev/urandom","r")) == NULL) return -1;
+ if DEE_UNLIKELY((urandom = DeeFile_Open("/dev/urandom","r")) == NULL) return -1;
  result = DeeFile_ReadAll(urandom,p,s);
  Dee_DECREF(urandom);
  return result;

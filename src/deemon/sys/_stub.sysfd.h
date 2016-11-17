@@ -39,16 +39,12 @@ struct DeeStubSysFD { DEE_STUB_SYSFD_HEAD };
 #define DeeStubSysFD_Seek(self,off,whence,newpos,...) do{DeeError_NotImplemented_str("sysfd");{__VA_ARGS__;}}while(0)
 #define DeeStubSysFD_Read(self,p,s,rs,...)            do{DeeError_NotImplemented_str("sysfd");{__VA_ARGS__;}}while(0)
 #define DeeStubSysFD_Write(self,p,s,ws,...)           do{DeeError_NotImplemented_str("sysfd");{__VA_ARGS__;}}while(0)
-
-//////////////////////////////////////////////////////////////////////////
-// === DeeStubSysStdFD ===
-struct DeeStubSysStdFD { DEE_STUB_SYSFD_HEAD };
-#define DeeStubSysStdFD_INIT_STDIN()     {0}
-#define DeeStubSysStdFD_INIT_STDOUT()    {0}
-#define DeeStubSysStdFD_INIT_STDERR()    {0}
-#define DeeStubSysStdFD_GET_STDIN(self)  (void)0
-#define DeeStubSysStdFD_GET_STDOUT(self) (void)0
-#define DeeStubSysStdFD_GET_STDERR(self) (void)0
+#define DeeStubSysFD_INIT_STDIN()     {0}
+#define DeeStubSysFD_INIT_STDOUT()    {0}
+#define DeeStubSysFD_INIT_STDERR()    {0}
+#define DeeStubSysFD_GET_STDIN(self)  (void)0
+#define DeeStubSysFD_GET_STDOUT(self) (void)0
+#define DeeStubSysFD_GET_STDERR(self) (void)0
 
 //////////////////////////////////////////////////////////////////////////
 // === DeeStubSysFileFD ===
@@ -68,21 +64,19 @@ struct DeeStubSysFileFD { DEE_STUB_SYSFD_HEAD };
 #define DEE_SYSFD_SEEK_CUR  DEE_STUB_SYSFD_SEEK_CUR
 #define DEE_SYSFD_SEEK_END  DEE_STUB_SYSFD_SEEK_END
 
-#define DeeSysFD            DeeStubSysFD
-#define DeeSysFD_TryRead    DeeStubSysFD_TryRead
-#define DeeSysFD_TryWrite   DeeStubSysFD_TryWrite
-#define DeeSysFD_TrySeek    DeeStubSysFD_TrySeek
-#define DeeSysFD_Read       DeeStubSysFD_Read
-#define DeeSysFD_Write      DeeStubSysFD_Write
-#define DeeSysFD_Seek       DeeStubSysFD_Seek
-
-#define DeeSysStdFD             DeeStubSysStdFD
-#define DeeSysStdFD_INIT_STDIN  DeeStubSysStdFD_INIT_STDIN
-#define DeeSysStdFD_INIT_STDOUT DeeStubSysStdFD_INIT_STDOUT
-#define DeeSysStdFD_INIT_STDERR DeeStubSysStdFD_INIT_STDERR
-#define DeeSysStdFD_GET_STDIN   DeeStubSysStdFD_GET_STDIN
-#define DeeSysStdFD_GET_STDOUT  DeeStubSysStdFD_GET_STDOUT
-#define DeeSysStdFD_GET_STDERR  DeeStubSysStdFD_GET_STDERR
+#define DeeSysFD             DeeStubSysFD
+#define DeeSysFD_TryRead     DeeStubSysFD_TryRead
+#define DeeSysFD_TryWrite    DeeStubSysFD_TryWrite
+#define DeeSysFD_TrySeek     DeeStubSysFD_TrySeek
+#define DeeSysFD_Read        DeeStubSysFD_Read
+#define DeeSysFD_Write       DeeStubSysFD_Write
+#define DeeSysFD_Seek        DeeStubSysFD_Seek
+#define DeeSysFD_INIT_STDIN  DeeStubSysFD_INIT_STDIN
+#define DeeSysFD_INIT_STDOUT DeeStubSysFD_INIT_STDOUT
+#define DeeSysFD_INIT_STDERR DeeStubSysFD_INIT_STDERR
+#define DeeSysFD_GET_STDIN   DeeStubSysFD_GET_STDIN
+#define DeeSysFD_GET_STDOUT  DeeStubSysFD_GET_STDOUT
+#define DeeSysFD_GET_STDERR  DeeStubSysFD_GET_STDERR
 
 #define DeeSysFileFD                   DeeStubSysFileFD
 #define DeeSysFileFD_Utf8TryInit       DeeStubSysFileFD_Utf8TryInit

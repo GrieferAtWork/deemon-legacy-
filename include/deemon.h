@@ -429,6 +429,8 @@
 //       Access to everything you might need is still possible,
 //       but the internal member fields are now hidden
 //      (that is: only available in debug builds, not showing up in docs and staring with "__")
+//     - file.io.reopen (prevented splitting vfs files into their own file types)
+//     - file.io.mode (prevented splitting vfs files into their own file types)
 //
 //   Known bugs:
 //     - Very, very few, minor parts of the runtime are still not threadsafe (process)

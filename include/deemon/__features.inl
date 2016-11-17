@@ -1683,15 +1683,19 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #endif
 
 #ifndef DEE_UNUSED
-#if defined(__cplusplus) || defined(__DEEMON__)
-# define DEE_UNUSED(x) /* nothing */
+#if defined(__LCLINT__)
+# define DEE_UNUSED(x) /*@unused@*/ x
 #elif defined(__GNUC__)
-# define DEE_UNUSED(x) DEE_ATTRIBUTE_UNUSED x
-#else
+# define DEE_UNUSED(x) x DEE_ATTRIBUTE_UNUSED
+#elif defined(__cplusplus) || defined(__DEEMON__)
+# define DEE_UNUSED(x) /* nothing */
+#elif defined(_MSC_VER)
 # define DEE_UNUSED(x) x
-#if defined(_MSC_VER) && defined(DEE_LIMITED_DEX)
-# pragma warning(disable: 4100) /* This is just getting too annoying... */
+#ifdef DEE_LIMITED_DEX
+# pragma warning(disable: 4100)
 #endif
+#else
+# define DEE_UNUSED(x) DEE_ATTRIBUTE_UNUSED x
 #endif
 #endif /* !DEE_UNUSED */
 
