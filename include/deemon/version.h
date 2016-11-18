@@ -141,7 +141,7 @@
 //    files as they are found in a posix-style filesystem
 //    NOTE: Can only be enabled on windows
 #ifndef DEE_CONFIG_RUNTIME_HAVE_VFS
-#define DEE_CONFIG_RUNTIME_HAVE_VFS 1
+#define DEE_CONFIG_RUNTIME_HAVE_VFS 0 /*< Currently broken. */
 #endif
 
 //////////////////////////////////////////////////////////////////////////

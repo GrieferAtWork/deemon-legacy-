@@ -75,9 +75,9 @@ static Dee_WideChar const ws_Psapi_dll[] = {'P','s','a','p','i','.','d','l','l',
 #endif
 
 #ifdef WIDE
-DeeObject *DeeWin32SysFileFD_DoGetWideFilename
+DeeObject *DeeWin32Sys_WideGetHandleFilename
 #else
-DeeObject *DeeWin32SysFileFD_DoGetUtf8Filename
+DeeObject *DeeWin32Sys_Utf8GetHandleFilename
 #endif
 (HANDLE hFile) {
  HANDLE hFileMap,hCurrProcess; DWORD error;

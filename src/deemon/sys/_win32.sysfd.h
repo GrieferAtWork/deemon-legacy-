@@ -25,12 +25,15 @@
 #include <deemon/error.h>
 #include <deemon/string.h>
 #include <deemon/deemonrun.h>
+#include <deemon/fs_api.h>
+#include <deemon/string.h>
 #include <deemon/file.h>
 #include <deemon/type.h>
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 #include <Windows.h>
+#include <Aclapi.h>
 DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 
@@ -44,6 +47,10 @@ DEE_COMPILER_MSVC_WARNING_POP
 #define DWORD_MAX 0xFFFFFFFF
 #endif
 
+
+// v not what you think it is...
+#undef FILE_TYPE_DISK
+
 DEE_DECL_BEGIN
 
 
@@ -56,6 +63,10 @@ struct DeeWin32SysFD { DEE_WIN32_SYSFD_HEAD };
 
 #define DeeWin32SysFD_Quit(self) \
  (DEE_LIKELY(CloseHandle((self)->w32_handle)) ? (void)0 : SetLastError(0))
+
+#define DeeWin32SysFD_GET_STDIN(self)  (void)((self)->w32_handle = GetStdHandle(STD_INPUT_HANDLE))
+#define DeeWin32SysFD_GET_STDOUT(self) (void)((self)->w32_handle = GetStdHandle(STD_OUTPUT_HANDLE))
+#define DeeWin32SysFD_GET_STDERR(self) (void)((self)->w32_handle = GetStdHandle(STD_ERROR_HANDLE))
 
 #define DeeWin32SysFD_TryInitCopy(self,right) \
  DuplicateHandle(GetCurrentProcess(),(right)->w32_handle,\
@@ -244,31 +255,393 @@ DEE_PRIVATE_DECL_DEE_TIMETICK_T
 #undef DEE_PRIVATE_DECL_DEE_TIMETICK_T
 #endif
 
-// >> [[optional
-// >>   struct DeeSysFDTimes { ... };
-// >>   [[optional]] #define DeeSysFDTimes_INIT(atime,ctime,mtime) { ... }
-// >>                void DeeSysFDTimes_Init(DEE_A_OUT struct DeeSysFDTimes *self, Dee_timetick_t atime, Dee_timetick_t ctime, Dee_timetick_t mtime);
-// >>                Dee_timetick_t DeeSysFDTimes_GetATime(DEE_A_IN struct DeeSysFDTimes const *self);
-// >>                Dee_timetick_t DeeSysFDTimes_GetCTime(DEE_A_IN struct DeeSysFDTimes const *self);
-// >>                Dee_timetick_t DeeSysFDTimes_GetMTime(DEE_A_IN struct DeeSysFDTimes const *self);
-// >>                void DeeSysFDTimes_SetATime(DEE_A_INOUT struct DeeSysFDTimes *self, Dee_timetick_t );
-// >>                void DeeSysFDTimes_SetCTime(DEE_A_INOUT struct DeeSysFDTimes *self, Dee_timetick_t );
-// >>                void DeeSysFDTimes_SetMTime(DEE_A_INOUT struct DeeSysFDTimes *self, Dee_timetick_t );
-// >>   [[optional]] bool DeeSysFD_TryGetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT struct DeeSysFDTimes *times);
-// >>   [[optional]] bool DeeSysFD_TryGetATime(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_timetick_t *atime);
-// >>   [[optional]] bool DeeSysFD_TryGetCTime(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_timetick_t *ctime);
-// >>   [[optional]] bool DeeSysFD_TryGetMTime(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_timetick_t *mtime);
-// >>   [[optional]] void DeeSysFD_GetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT struct DeeSysFDTimes *times, CODE on_error);
-// >>   [[optional]] void DeeSysFD_SetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN struct DeeSysFDTimes const *times, CODE on_error);
-// >>   [[optional]] void DeeSysFD_SetACMTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN_OPT Dee_timetick_t *atime, DEE_A_IN_OPT Dee_timetick_t *ctime, DEE_A_IN_OPT Dee_timetick_t *mtime, CODE on_error);
-// >> ]]
 
 
+// TODO: Perform the 1601 <---> 0000 conversion!
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TryGetHandleTime(
+ DEE_A_IN HANDLE hFile,
+ DEE_A_OUT_OPT Dee_timetick_t *atime,
+ DEE_A_OUT_OPT Dee_timetick_t *ctime,
+ DEE_A_OUT_OPT Dee_timetick_t *mtime) {
+ FILETIME temp;
+ if DEE_UNLIKELY(!GetFileTime(hFile,(LPFILETIME)ctime,(LPFILETIME)atime,(LPFILETIME)mtime)) return FALSE;
+ if (atime) { temp = *(LPFILETIME)atime; if DEE_UNLIKELY(!FileTimeToLocalFileTime(&temp,(LPFILETIME)atime)) return FALSE; }
+ if (ctime) { temp = *(LPFILETIME)ctime; if DEE_UNLIKELY(!FileTimeToLocalFileTime(&temp,(LPFILETIME)ctime)) return FALSE; }
+ if (mtime) { temp = *(LPFILETIME)mtime; if DEE_UNLIKELY(!FileTimeToLocalFileTime(&temp,(LPFILETIME)mtime)) return FALSE; }
+ return TRUE;
+}
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TrySetHandleTime(
+ DEE_A_IN HANDLE hFile,
+ DEE_A_IN_OPT Dee_timetick_t const *atime,
+ DEE_A_IN_OPT Dee_timetick_t const *ctime,
+ DEE_A_IN_OPT Dee_timetick_t const *mtime) {
+ FILETIME fatime,fctime,fmtime;
+ if (atime && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)atime,&fatime))) return FALSE;
+ if (ctime && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)ctime,&fctime))) return FALSE;
+ if (mtime && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)mtime,&fmtime))) return FALSE;
+ return SetFileTime(hFile,
+                    ctime ? &fctime : NULL,
+                    atime ? &fatime : NULL,
+                    mtime ? &fmtime : NULL);
+}
+
+#define DeeWin32Sys_GetHandleTime(hFile,atime,ctime,mtime,...) \
+do{\
+ FILETIME _ft_temp;\
+ static char const *_ft_convert_error_message = "FileTimeToLocalFileTime(%I64u) : %K";\
+ if DEE_UNLIKELY(!GetFileTime(hFile,(LPFILETIME)(ctime),\
+                (LPFILETIME)(atime),(LPFILETIME)(mtime))) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "GetFileTime(%p) : %K",hFile,\
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ if (atime) { _ft_temp = *(LPFILETIME)(atime); if DEE_UNLIKELY(!FileTimeToLocalFileTime(&_ft_temp,(LPFILETIME)(atime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} }\
+ if (ctime) { _ft_temp = *(LPFILETIME)(ctime); if DEE_UNLIKELY(!FileTimeToLocalFileTime(&_ft_temp,(LPFILETIME)(ctime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} }\
+ if (mtime) { _ft_temp = *(LPFILETIME)(mtime); if DEE_UNLIKELY(!FileTimeToLocalFileTime(&_ft_temp,(LPFILETIME)(mtime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} }\
+}while(0)
+#define DeeWin32Sys_SetHandleTime(hFile,atime,ctime,mtime,...) \
+do{\
+ FILETIME _ft_atime,_ft_ctime,_ft_mtime;\
+ static char const *_ft_convert_error_message = "FileTimeToLocalFileTime(%I64u) : %K";\
+ if ((atime) && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)(atime),&_ft_atime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,*(atime),DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}}\
+ if ((ctime) && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)(ctime),&_ft_ctime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,*(ctime),DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}}\
+ if ((mtime) && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)(mtime),&_ft_mtime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,*(mtime),DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}}\
+ if DEE_UNLIKELY(!SetFileTime(hFile,(ctime) ? &_ft_ctime : NULL,\
+        (atime) ? &_ft_atime : NULL,(mtime) ? &_ft_mtime : NULL)) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "SetFileTime(%p,%I64u,%I64u,%I64u) : %K",hFile,\
+                      (atime) ? *(Dee_timetick_t *)&_ft_atime : (Dee_timetick_t)0,\
+                      (ctime) ? *(Dee_timetick_t *)&_ft_ctime : (Dee_timetick_t)0,\
+                      (mtime) ? *(Dee_timetick_t *)&_ft_mtime : (Dee_timetick_t)0,\
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+
+#define DeeWin32SysFileFD_TryGetTimes(self,atime,ctime,mtime)  DeeWin32Sys_TryGetHandleTime((self)->w32_handle,atime,ctime,mtime)
+#define DeeWin32SysFileFD_TrySetTimes(self,atime,ctime,mtime)  DeeWin32Sys_TrySetHandleTime((self)->w32_handle,atime,ctime,mtime)
+#define DeeWin32SysFileFD_GetTimes(self,atime,ctime,mtime,...) DeeWin32Sys_GetHandleTime((self)->w32_handle,atime,ctime,mtime,__VA_ARGS__)
+#define DeeWin32SysFileFD_SetTimes(self,atime,ctime,mtime,...) DeeWin32Sys_SetHandleTime((self)->w32_handle,atime,ctime,mtime,__VA_ARGS__)
+
+DEE_STATIC_INLINE(DWORD) DeeWin32Sys_TryGetFileAttributesFromHandle(HANDLE hFile) {
+ BY_HANDLE_FILE_INFORMATION fileinfo;
+ if (!GetFileInformationByHandle(hFile,&fileinfo)) return 0;
+ return fileinfo.dwFileAttributes;
+}
+DEE_STATIC_INLINE(DWORD) DeeWin32Sys_GetFileAttributesFromHandle(HANDLE hFile) {
+ BY_HANDLE_FILE_INFORMATION fileinfo;
+ if (!GetFileInformationByHandle(hFile,&fileinfo)) return INVALID_FILE_ATTRIBUTES;
+ // NOTE: If 0x80000000 even is a flag, it's one we're not looking for.
+ //    >> So to make sure we're never, ever detecting an error where there
+ //       is none, we ensure that 'dwFileAttributes' can't possibly be
+ //       INVALID_FILE_ATTRIBUTES (with is 0xFFFFFFFF)
+ return fileinfo.dwFileAttributes&0x7FFFFFFF;
+}
+
+extern DeeObject *DeeWin32Sys_Utf8GetHandleFilename(HANDLE hFile);
+extern DeeObject *DeeWin32Sys_WideGetHandleFilename(HANDLE hFile);
+#define DeeWin32SysFileFD_Utf8Filename(ob) DeeWin32Sys_Utf8GetHandleFilename((ob)->w32_handle)
+#define DeeWin32SysFileFD_WideFilename(ob) DeeWin32Sys_WideGetHandleFilename((ob)->w32_handle)
 
 
-#define DeeWin32SysFD_GET_STDIN(self)  (void)((self)->w32_handle = GetStdHandle(STD_INPUT_HANDLE))
-#define DeeWin32SysFD_GET_STDOUT(self) (void)((self)->w32_handle = GetStdHandle(STD_OUTPUT_HANDLE))
-#define DeeWin32SysFD_GET_STDERR(self) (void)((self)->w32_handle = GetStdHandle(STD_ERROR_HANDLE))
+#define DeeWin32Sys_TryHandleIsFile(hFile) \
+((DeeWin32Sys_TryGetFileAttributesFromHandle(hFile)&\
+ (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE|FILE_ATTRIBUTE_REPARSE_POINT))==0)
+#define DeeWin32Sys_TryHandleIsDir(hFile) \
+ ((DeeWin32Sys_TryGetFileAttributesFromHandle(hFile)&(FILE_ATTRIBUTE_DIRECTORY))!=0)
+#define DeeWin32Sys_TryHandleIsLink(hFile) \
+ ((DeeWin32Sys_TryGetFileAttributesFromHandle(hFile)&(FILE_ATTRIBUTE_REPARSE_POINT))!=0)
+#define DeeWin32Sys_TryHandleIsHidden(hFile) \
+ ((DeeWin32Sys_TryGetFileAttributesFromHandle(hFile)&(FILE_ATTRIBUTE_HIDDEN))!=0)
+#define DeeWin32Sys_TryHandleIsReadOnly(hFile) \
+ ((DeeWin32Sys_TryGetFileAttributesFromHandle(hFile)&(FILE_ATTRIBUTE_READONLY))!=0)
+DEE_STATIC_INLINE(int) DeeWin32Sys_TryHandleIsExecutable(HANDLE hFile) {
+ DeeObject *filename; int result;
+ if DEE_UNLIKELY((filename = DeeWin32Sys_WideGetHandleFilename(
+  hFile)) == NULL) {herr: DeeError_HandledOne(); return 0; }
+ result = _DeeFS_WideIsExecutable(DeeWideString_STR(filename));
+ Dee_DECREF(filename);
+ if (result < 0) goto herr;
+ return result;
+}
+#define DeeWin32Sys_HandleIsExecutable(hFile,result,...)\
+do{ if DEE_UNLIKELY((*(result) = DeeWin32Sys_HandleIsExecutable_impl(hFile)) < 0) {__VA_ARGS__;} }while(0)
+DEE_STATIC_INLINE(int) DeeWin32Sys_HandleIsExecutable_impl(HANDLE hFile) {
+ DeeObject *filename; int result;
+ if DEE_UNLIKELY((filename = DeeWin32Sys_WideGetHandleFilename(hFile)) == NULL) return -1;
+ result = _DeeFS_WideIsExecutable(DeeWideString_STR(filename));
+ Dee_DECREF(filename);
+ return result;
+}
+
+#ifdef FILE_TYPE_CHAR
+#define DeeWin32Sys_TryHandleIsCharDev(hFile)  (GetFileType(hFile) == FILE_TYPE_CHAR)
+#else
+#define DeeWin32Sys_TryHandleIsCharDev(hFile)  0
+#endif
+#ifdef FILE_TYPE_DISK
+#define DeeWin32Sys_TryHandleIsBlockDev(hFile) (GetFileType(hFile) == FILE_TYPE_DISK)
+#else
+#define DeeWin32Sys_TryHandleIsBlockDev(hFile) 0
+#endif
+#ifdef FILE_TYPE_PIPE
+#define DeeWin32Sys_TryHandleIsFiFo(hFile)     (GetFileType(hFile) == FILE_TYPE_PIPE)
+#else
+#define DeeWin32Sys_TryHandleIsFiFo(hFile)     0
+#endif
+#ifdef FILE_TYPE_REMOTE
+#define DeeWin32Sys_TryHandleIsSocket(hFile)   (GetFileType(hFile) == FILE_TYPE_REMOTE)
+#else
+#define DeeWin32Sys_TryHandleIsSocket(hFile)   0
+#endif
+
+#define DeeWin32Sys_HandleIsFile(hFile,result,...) \
+do{\
+ DWORD _fd_attr = DeeWin32Sys_GetFileAttributesFromHandle(hFile);\
+ if (_fd_attr == INVALID_FILE_ATTRIBUTES) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "GetFileInformationByHandle(%p) : %K",hFile,\
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ *(result) = (_fd_attr&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE|FILE_ATTRIBUTE_REPARSE_POINT))==0;\
+}while(0)
+
+#define DeeWin32Sys_HandleIsDir(hFile,result,...) \
+do{\
+ DWORD _fd_attr = DeeWin32Sys_GetFileAttributesFromHandle(hFile);\
+ if (_fd_attr == INVALID_FILE_ATTRIBUTES) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "GetFileInformationByHandle(%p) : %K",hFile,\
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ *(result) = (_fd_attr&(FILE_ATTRIBUTE_DIRECTORY))!=0;\
+}while(0)
+#define DeeWin32Sys_HandleIsLink(hFile,result,...) \
+do{\
+ DWORD _fd_attr = DeeWin32Sys_GetFileAttributesFromHandle(hFile);\
+ if (_fd_attr == INVALID_FILE_ATTRIBUTES) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "GetFileInformationByHandle(%p) : %K",hFile,\
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ *(result) = (_fd_attr&(FILE_ATTRIBUTE_REPARSE_POINT))!=0;\
+}while(0)
+#define DeeWin32Sys_HandleIsHidden(hFile,result,...) \
+do{\
+ DWORD _fd_attr = DeeWin32Sys_GetFileAttributesFromHandle(hFile);\
+ if (_fd_attr == INVALID_FILE_ATTRIBUTES) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "GetFileInformationByHandle(%p) : %K",hFile,\
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ *(result) = (_fd_attr&(FILE_ATTRIBUTE_HIDDEN))!=0;\
+}while(0)
+#define DeeWin32Sys_HandleIsReadOnly(hFile,result,...) \
+do{\
+ DWORD _fd_attr = DeeWin32Sys_GetFileAttributesFromHandle(hFile);\
+ if (_fd_attr == INVALID_FILE_ATTRIBUTES) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "GetFileInformationByHandle(%p) : %K",hFile,\
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ *(result) = (_fd_attr&(FILE_ATTRIBUTE_READONLY))!=0;\
+}while(0)
+#ifdef FILE_TYPE_CHAR
+#define DeeWin32Sys_HandleIsCharDev(hFile,result,...)\
+do{\
+ DWORD _fd_type;\
+ if DEE_UNLIKELY((_fd_type = GetFileType(hFile)) == 0/*FILE_TYPE_UNKNOWN*/) {\
+  if DEE_UNLIKELY((_fd_type = GetLastError()) != 0) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "GetFileType(%p) : %K",hFile,\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+ *(result) = _fd_type == FILE_TYPE_CHAR;\
+}while(0)
+#endif
+
+#ifdef FILE_TYPE_DISK
+#define DeeWin32Sys_HandleIsBlockDev(hFile,result,...)\
+do{\
+ DWORD _fd_type;\
+ if DEE_UNLIKELY((_fd_type = GetFileType(hFile)) == 0/*FILE_TYPE_UNKNOWN*/) {\
+  if DEE_UNLIKELY((_fd_type = GetLastError()) != 0) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "GetFileType(%p) : %K",hFile,\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+ *(result) = _fd_type == FILE_TYPE_DISK;\
+}while(0)
+#else
+#define DeeWin32Sys_HandleIsBlockDev(hFile,result,...) do{ *(result) = 0; }while(0)
+#endif
+#ifdef FILE_TYPE_PIPE
+#define DeeWin32Sys_HandleIsFiFo(hFile,result,...)\
+do{\
+ DWORD _fd_type;\
+ if DEE_UNLIKELY((_fd_type = GetFileType(hFile)) == 0/*FILE_TYPE_UNKNOWN*/) {\
+  if DEE_UNLIKELY((_fd_type = GetLastError()) != 0) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "GetFileType(%p) : %K",hFile,\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+ *(result) = _fd_type == FILE_TYPE_PIPE;\
+}while(0)
+#else
+#define DeeWin32Sys_HandleIsFiFo(hFile,result,...) do{ *(result) = 0; }while(0)
+#endif
+#ifdef FILE_TYPE_REMOTE
+#define DeeWin32Sys_HandleIsSocket(hFile,result,...)\
+do{\
+ DWORD _fd_type;\
+ if DEE_UNLIKELY((_fd_type = GetFileType(hFile)) == 0/*FILE_TYPE_UNKNOWN*/) {\
+  if DEE_UNLIKELY((_fd_type = GetLastError()) != 0) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "GetFileType(%p) : %K",hFile,\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+ *(result) = _fd_type == FILE_TYPE_REMOTE;\
+}while(0)
+#else
+#define DeeWin32Sys_HandleIsSocket(hFile,result,...) do{ *(result) = 0; }while(0)
+#endif
+
+#define DeeWin32SysFileFD_TryIsFile(self)     DeeWin32Sys_TryHandleIsFile((self)->w32_handle)
+#define DeeWin32SysFileFD_TryIsDir(self)      DeeWin32Sys_TryHandleIsDir((self)->w32_handle)
+#define DeeWin32SysFileFD_TryIsLink(self)     DeeWin32Sys_TryHandleIsLink((self)->w32_handle)
+#define DeeWin32SysFileFD_TryIsHidden(self)   DeeWin32Sys_TryHandleIsHidden((self)->w32_handle)
+#define DeeWin32SysFileFD_TryIsCharDev(self)  DeeWin32Sys_TryHandleIsCharDev((self)->w32_handle)
+#define DeeWin32SysFileFD_TryIsBlockDev(self) DeeWin32Sys_TryHandleIsBlockDev((self)->w32_handle)
+#define DeeWin32SysFileFD_TryIsFiFo(self)     DeeWin32Sys_TryHandleIsFiFo((self)->w32_handle)
+#define DeeWin32SysFileFD_TryIsSocket(self)   DeeWin32Sys_TryHandleIsSocket((self)->w32_handle)
+
+#define DeeWin32SysFileFD_IsFile(self,result,...)     DeeWin32Sys_HandleIsFile((self)->w32_handle,result,__VA_ARGS__)
+#define DeeWin32SysFileFD_IsDir(self,result,...)      DeeWin32Sys_HandleIsDir((self)->w32_handle,result,__VA_ARGS__)
+#define DeeWin32SysFileFD_IsLink(self,result,...)     DeeWin32Sys_HandleIsLink((self)->w32_handle,result,__VA_ARGS__)
+#define DeeWin32SysFileFD_IsHidden(self,result,...)   DeeWin32Sys_HandleIsHidden((self)->w32_handle,result,__VA_ARGS__)
+#define DeeWin32SysFileFD_IsCharDev(self,result,...)  DeeWin32Sys_HandleIsCharDev((self)->w32_handle,result,__VA_ARGS__)
+#define DeeWin32SysFileFD_IsBlockDev(self,result,...) DeeWin32Sys_HandleIsBlockDev((self)->w32_handle,result,__VA_ARGS__)
+#define DeeWin32SysFileFD_IsFiFo(self,result,...)     DeeWin32Sys_HandleIsFiFo((self)->w32_handle,result,__VA_ARGS__)
+#define DeeWin32SysFileFD_IsSocket(self,result,...)   DeeWin32Sys_HandleIsSocket((self)->w32_handle,result,__VA_ARGS__)
+
+#define DeeWin32Sys_TryHandleGetMod(hFile,result)\
+ (*(result) = (0444|(DeeWin32Sys_TryHandleIsReadOnly(hFile)?0:0222)\
+  |(DeeWin32Sys_TryHandleIsExecutable(hFile)?0111:0)),1)
+#define DeeWin32Sys_HandleGetMod(hFile,result,...)\
+do{\
+ int _fp_temp;\
+ DeeWin32Sys_HandleIsReadOnly(hFile,&_fp_temp,__VA_ARGS__);\
+ *(result) = (Dee_mode_t)(0444|(_fp_temp ? 0 : 0222));\
+ DeeWin32Sys_HandleIsExecutable(hFile,&_fp_temp,__VA_ARGS__);\
+ if (_fp_temp) *(result) |= 0111;\
+}while(0)
+
+
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TryHandleChmod(HANDLE hFile, Dee_mode_t mode) {
+ BY_HANDLE_FILE_INFORMATION info; DeeObject *wfilename; BOOL result;
+ // Only able to change the read-only bits
+ if DEE_UNLIKELY(!GetFileInformationByHandle(hFile,&info)) return FALSE;
+ if ((mode&0222)!=0) { // +w
+  if ((info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)==0) return TRUE;
+  info.dwFileAttributes &= ~FILE_ATTRIBUTE_READONLY;
+ } else { // -w
+  if ((info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)!=0) return TRUE;
+  info.dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+ }
+ if ((wfilename = DeeWin32Sys_WideGetHandleFilename(hFile)) == NULL)
+ { DeeError_HandledOne(); return FALSE; }
+ result = SetFileAttributesW(DeeWideString_STR(wfilename),info.dwFileAttributes);
+ Dee_DECREF(wfilename);
+ return result;
+}
+#define DeeWin32Sys_HandleChmod(hFile,mode,...)\
+do{\
+ BY_HANDLE_FILE_INFORMATION _fp_info; DeeObject *_fp_wfilename;\
+ /* Only able to change the read-only bits */\
+ if DEE_UNLIKELY(!GetFileInformationByHandle(hFile,&_fp_info)) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "GetFileInformationByHandle(%p) : %K",hFile,\
+                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ if ((((mode)&0222)!=0) != ((_fp_info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)==0)) {\
+  if ((_fp_info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)==0) /* Toggle read-only */\
+   _fp_info.dwFileAttributes &= ~(FILE_ATTRIBUTE_READONLY);\
+  else _fp_info.dwFileAttributes |= FILE_ATTRIBUTE_READONLY;\
+  if DEE_UNLIKELY((_fp_wfilename = DeeWin32Sys_WideGetHandleFilename(hFile)) == NULL) {__VA_ARGS__;}\
+  if DEE_UNLIKELY(!SetFileAttributesW(DeeWideString_STR(_fp_wfilename),_fp_info.dwFileAttributes)) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "SetFileAttributesW(%r,%lu) : %K",\
+                       _fp_wfilename,_fp_info.dwFileAttributes,\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   Dee_DECREF(_fp_wfilename);\
+   {__VA_ARGS__;}\
+  }\
+  Dee_DECREF(_fp_wfilename);\
+ }\
+}while(0)
+
+#define DeeWin32SysFileFD_TryGetMod(self,result)  DeeWin32Sys_TryHandleGetMod((self)->w32_handle,result)
+#define DeeWin32SysFileFD_GetMod(self,result,...) DeeWin32Sys_HandleGetMod((self)->w32_handle,result,__VA_ARGS__)
+#define DeeWin32SysFileFD_TryChmod(self,mode)     DeeWin32Sys_TryHandleChmod((self)->w32_handle,mode)
+#define DeeWin32SysFileFD_Chmod(self,mode,...)    DeeWin32Sys_HandleChmod((self)->w32_handle,mode,__VA_ARGS__)
+
+// TODO: bool DeeSysFileFD_TryChmod(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_mode_t mode);
+// TODO: void DeeSysFileFD_Chmod(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_mode_t mode, CODE on_error);
+
+#define DeeWin32Sys_TryHandleGetOwn(hFile,owner,group)\
+ (GetSecurityInfo(hFile,SE_FILE_OBJECT,\
+  OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
+  (PSID *)(owner),(PSID *)(group),NULL,NULL,NULL)==0)
+#define DeeWin32Sys_HandleGetOwn(hFile,owner,group,...)\
+do{\
+ DWORD error;\
+ if DEE_UNLIKELY((error = GetSecurityInfo(hFile,SE_FILE_OBJECT,\
+  OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
+  (PSID *)(owner),(PSID *)(group),NULL,NULL,NULL)) != 0) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "GetSecurityInfo(%p,SE_FILE_OBJECTOWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,...,NULL,NULL,NULL) : %K",\
+                       hFile,DeeSystemError_Win32ToString(error));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#define DeeWin32Sys_TryHandleChown(hFile,owner,group)\
+ (SetSecurityInfo(hFile,SE_FILE_OBJECT,\
+  OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
+  (PSID)(owner),(PSID)(group),NULL,NULL)==0)
+#define DeeWin32Sys_HandleChown(hFile,owner,group,...)\
+do{\
+ DWORD error;\
+ if DEE_UNLIKELY((error = SetSecurityInfo(hFile,SE_FILE_OBJECT,\
+  OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
+  (PSID *)(owner),(PSID *)(group),NULL,NULL)) != 0) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "SetSecurityInfo(%p,SE_FILE_OBJECTOWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,%p,%p,NULL,NULL) : %K",\
+                       hFile,owner,group,DeeSystemError_Win32ToString(error));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+
+#define DeeWin32SysFileFD_TryGetOwn(self,owner,group)  DeeWin32Sys_TryHandleGetOwn((self)->w32_handle,owner,group)
+#define DeeWin32SysFileFD_GetOwn(self,owner,group,...) DeeWin32Sys_HandleGetOwn((self)->w32_handle,owner,group,__VA_ARGS__)
+#define DeeWin32SysFileFD_TryChown(self,owner,group)   DeeWin32Sys_TryHandleChown((self)->w32_handle,owner,group)
+#define DeeWin32SysFileFD_Chown(self,owner,group,...)  DeeWin32Sys_HandleChown((self)->w32_handle,owner,group,__VA_ARGS__)
+
+
 
 
 
@@ -354,11 +727,6 @@ do{\
   DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
  ) (self)->w32_openmode = mode; else {__VA_ARGS__;} \
 }while(0)
-
-extern DeeObject *DeeWin32SysFileFD_DoGetUtf8Filename(HANDLE hFile);
-extern DeeObject *DeeWin32SysFileFD_DoGetWideFilename(HANDLE hFile);
-#define DeeWin32SysFileFD_Utf8Filename(ob) DeeWin32SysFileFD_DoGetUtf8Filename((ob)->w32_handle)
-#define DeeWin32SysFileFD_WideFilename(ob) DeeWin32SysFileFD_DoGetWideFilename((ob)->w32_handle)
 
 
 // Windows doesn't provide its own append filemode, so we need to improvise
@@ -453,6 +821,34 @@ do{\
 #define DeeSysFileFD_Write             DeeWin32SysFileFD_Write
 #define DeeSysFileFD_TryGetSize        DeeWin32SysFileFD_TryGetSize
 #define DeeSysFileFD_GetSize           DeeWin32SysFileFD_GetSize
+#define DeeSysFileFD_TryGetTimes       DeeWin32SysFileFD_TryGetTimes
+#define DeeSysFileFD_TrySetTimes       DeeWin32SysFileFD_TrySetTimes
+#define DeeSysFileFD_GetTimes          DeeWin32SysFileFD_GetTimes
+#define DeeSysFileFD_SetTimes          DeeWin32SysFileFD_SetTimes
+#define DeeSysFileFD_TryIsFile         DeeWin32SysFileFD_TryIsFile
+#define DeeSysFileFD_TryIsDir          DeeWin32SysFileFD_TryIsDir
+#define DeeSysFileFD_TryIsLink         DeeWin32SysFileFD_TryIsLink
+#define DeeSysFileFD_TryIsHidden       DeeWin32SysFileFD_TryIsHidden
+#define DeeSysFileFD_TryIsCharDev      DeeWin32SysFileFD_TryIsCharDev
+#define DeeSysFileFD_TryIsBlockDev     DeeWin32SysFileFD_TryIsBlockDev
+#define DeeSysFileFD_TryIsFiFo         DeeWin32SysFileFD_TryIsFiFo
+#define DeeSysFileFD_TryIsSocket       DeeWin32SysFileFD_TryIsSocket
+#define DeeSysFileFD_IsFile            DeeWin32SysFileFD_IsFile
+#define DeeSysFileFD_IsDir             DeeWin32SysFileFD_IsDir
+#define DeeSysFileFD_IsLink            DeeWin32SysFileFD_IsLink
+#define DeeSysFileFD_IsHidden          DeeWin32SysFileFD_IsHidden
+#define DeeSysFileFD_IsCharDev         DeeWin32SysFileFD_IsCharDev
+#define DeeSysFileFD_IsBlockDev        DeeWin32SysFileFD_IsBlockDev
+#define DeeSysFileFD_IsFiFo            DeeWin32SysFileFD_IsFiFo
+#define DeeSysFileFD_IsSocket          DeeWin32SysFileFD_IsSocket
+#define DeeSysFileFD_TryGetMod         DeeWin32SysFileFD_TryGetMod
+#define DeeSysFileFD_GetMod            DeeWin32SysFileFD_GetMod
+#define DeeSysFileFD_TryChmod          DeeWin32SysFileFD_TryChmod
+#define DeeSysFileFD_Chmod             DeeWin32SysFileFD_Chmod
+#define DeeSysFileFD_TryGetOwn         DeeWin32SysFileFD_TryGetOwn
+#define DeeSysFileFD_GetOwn            DeeWin32SysFileFD_GetOwn
+#define DeeSysFileFD_TryChown          DeeWin32SysFileFD_TryChown
+#define DeeSysFileFD_Chown             DeeWin32SysFileFD_Chown
 
 #define DeeSysPipeFD           DeeWin32SysPipeFD
 #define DeeSysPipeFD_TryInitEx DeeWin32SysPipeFD_TryInitEx

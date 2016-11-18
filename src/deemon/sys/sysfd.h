@@ -105,24 +105,41 @@
 // >> [[optional]] void DeeSysFileFD_Write(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_IN_RB(*ws) void const *p, DEE_A_IN size_t s, DEE_A_OUT size_t *ws, CODE on_error);
 // >> [[optional]] bool DeeSysFileFD_TrySeek(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_IN Dee_int64_t pos, DEE_A_IN int whence, DEE_A_OUT_OPT Dee_uint64_t *newoff);
 // >> [[optional]] void DeeSysFileFD_Seek(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_IN Dee_int64_t pos, DEE_A_IN int whence, DEE_A_OUT_OPT Dee_uint64_t *newoff, CODE on_error);
-// >> [[optional
-// >>   struct DeeSysFileFDTimes { ... };
-// >>   [[optional]] #define DeeSysFileFDTimes_INIT(atime,ctime,mtime) { ... }
-// >>                void DeeSysFileFDTimes_Init(DEE_A_OUT struct DeeSysFileFDTimes *self, Dee_timetick_t atime, Dee_timetick_t ctime, Dee_timetick_t mtime);
-// >>                Dee_timetick_t DeeSysFileFDTimes_GetATime(DEE_A_IN struct DeeSysFileFDTimes const *self);
-// >>                Dee_timetick_t DeeSysFileFDTimes_GetCTime(DEE_A_IN struct DeeSysFileFDTimes const *self);
-// >>                Dee_timetick_t DeeSysFileFDTimes_GetMTime(DEE_A_IN struct DeeSysFileFDTimes const *self);
-// >>                void DeeSysFileFDTimes_SetATime(DEE_A_INOUT struct DeeSysFileFDTimes *self, Dee_timetick_t );
-// >>                void DeeSysFileFDTimes_SetCTime(DEE_A_INOUT struct DeeSysFileFDTimes *self, Dee_timetick_t );
-// >>                void DeeSysFileFDTimes_SetMTime(DEE_A_INOUT struct DeeSysFileFDTimes *self, Dee_timetick_t );
-// >>   [[optional]] bool DeeSysFileFD_TryGetTimes(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_OUT struct DeeSysFileFDTimes *times);
-// >>   [[optional]] bool DeeSysFileFD_TryGetATime(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_OUT Dee_timetick_t *atime);
-// >>   [[optional]] bool DeeSysFileFD_TryGetCTime(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_OUT Dee_timetick_t *ctime);
-// >>   [[optional]] bool DeeSysFileFD_TryGetMTime(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_OUT Dee_timetick_t *mtime);
-// >>   [[optional]] void DeeSysFileFD_GetTimes(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_OUT struct DeeSysFileFDTimes *times, CODE on_error);
-// >>   [[optional]] void DeeSysFileFD_SetTimes(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_IN struct DeeSysFileFDTimes const *times, CODE on_error);
-// >>   [[optional]] void DeeSysFileFD_SetACMTimes(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_IN_OPT Dee_timetick_t *atime, DEE_A_IN_OPT Dee_timetick_t *ctime, DEE_A_IN_OPT Dee_timetick_t *mtime, CODE on_error);
-// >> ]]
+// >> [[optional]] bool DeeSysFileFD_TryGetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime);
+// >> [[optional]] bool DeeSysFileFD_TrySetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
+// >> [[optional]] void DeeSysFileFD_GetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_SetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime, CODE on_error);
+// >> [[optional]] bool DeeSysFileFD_TryIsFile(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsDir(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsLink(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsDrive(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsMount(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsHidden(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsExecutable(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsCharDev(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsBlockDev(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsFiFo(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] bool DeeSysFileFD_TryIsSocket(DEE_A_INOUT struct DeeSysFD *self);
+// >> [[optional]] void DeeSysFileFD_IsFile(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsDir(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsLink(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsDrive(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsMount(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsHidden(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsExecutable(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsCharDev(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsBlockDev(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsFiFo(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] void DeeSysFileFD_IsSocket(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT int *result, CODE on_error);
+// >> [[optional]] bool DeeSysFileFD_TryGetMod(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_mode_t *result);
+// >> [[optional]] void DeeSysFileFD_GetMod(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_mode_t *result, CODE on_error);
+// >> [[optional]] bool DeeSysFileFD_TryChmod(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_mode_t mode);
+// >> [[optional]] void DeeSysFileFD_Chmod(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_mode_t mode, CODE on_error);
+// >> [[optional]] bool DeeSysFileFD_TryGetOwn(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group);
+// >> [[optional]] void DeeSysFileFD_GetOwn(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group, CODE on_error);
+// >> [[optional]] bool DeeSysFileFD_TryChown(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
+// >> [[optional]] void DeeSysFileFD_Chown(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group, CODE on_error);
+// 
 //
 // >> struct DeeSysPipeFD: DeeSysFD { ... };
 //         - Pipes are generally an optional platform-dependent feature,

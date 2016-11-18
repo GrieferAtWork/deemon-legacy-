@@ -290,6 +290,7 @@
     <ClInclude Include="..\include\deemon\optional\detail\object_callattr.h" />
     <ClInclude Include="..\include\deemon\optional\enum_attributes.h" />
     <ClInclude Include="..\include\deemon\optional\float_decl.h" />
+    <ClInclude Include="..\include\deemon\optional\fs_api.modechange.h" />
     <ClInclude Include="..\include\deemon\optional\hashmap.h" />
     <ClInclude Include="..\include\deemon\optional\hashset.h" />
     <ClInclude Include="..\include\deemon\optional\integer_decl.h" />
@@ -539,6 +540,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\file\file.impl.buffered_read.inl" />
     <None Include="..\src\deemon\file\file.impl.read.inl" />
     <None Include="..\src\deemon\file\file.io.c.inl" />
+    <None Include="..\src\deemon\file\file.io.fsops.c.inl" />
     <None Include="..\src\deemon\file\file.iterator.inl" />
     <None Include="..\src\deemon\file\file.joined.inl" />
     <None Include="..\src\deemon\file\file.reader.inl" />

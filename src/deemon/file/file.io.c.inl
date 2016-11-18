@@ -63,6 +63,8 @@ DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *_DeeFile_
  DeeSysFileFD_Utf8Init(&result->io_descr,file,openmode,permissions,
                        { DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
+ DeeFileFD_InitBasic(result,DEE_PRIVATE_FILEFLAG_FD_VALID|
+                            DEE_PRIVATE_FILEFLAG_FD_OWNED);
  return (DeeObject *)result;
 }
 DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *_DeeFile_WideOpenEx(
@@ -72,6 +74,8 @@ DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *_DeeFile_
  DeeSysFileFD_WideInit(&result->io_descr,file,openmode,permissions,
                        { DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
+ DeeFileFD_InitBasic(result,DEE_PRIVATE_FILEFLAG_FD_VALID|
+                            DEE_PRIVATE_FILEFLAG_FD_OWNED);
  return (DeeObject *)result;
 }
 DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *DeeFile_Utf8OpenEx(
@@ -84,6 +88,8 @@ err_newfilename: Dee_DECREF(newfile); return NULL;
  DeeSysFileFD_Utf8InitObject(&result->io_descr,newfile,openmode,permissions,
                              { DeeObject_Free(result); goto err_newfilename; });
  DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
+ DeeFileFD_InitBasic(result,DEE_PRIVATE_FILEFLAG_FD_VALID|
+                            DEE_PRIVATE_FILEFLAG_FD_OWNED);
  Dee_DECREF(newfile);
  return (DeeObject *)result;
 }
@@ -97,6 +103,8 @@ err_newfilename: Dee_DECREF(newfile); return NULL;
  DeeSysFileFD_WideInitObject(&result->io_descr,newfile,openmode,permissions,
                              { DeeObject_Free(result); goto err_newfilename; });
  DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
+ DeeFileFD_InitBasic(result,DEE_PRIVATE_FILEFLAG_FD_VALID|
+                            DEE_PRIVATE_FILEFLAG_FD_OWNED);
  Dee_DECREF(newfile);
  return (DeeObject *)result;
 }
@@ -140,6 +148,65 @@ err_newfilename: Dee_DECREF(newfilename); return NULL;
 }
 
 
+DEE_A_RET_OBJECT_REF(DeeUtf8StringObject) *DeeFileIO_Utf8Filename(
+ DEE_A_IN_OBJECT(DeeFileIOObject) const *self) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeFileIO_Check(self));
+#ifdef DeeSysFileFD_Utf8Filename
+ DeeObject *result;
+ DeeFileIO_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
+ result = DeeSysFileFD_Utf8Filename(&((DeeFileIOObject *)self)->io_descr);
+ DeeFileIO_RELEASE_SHARED(self);
+ return result;
+#elif defined(DeeSysFileFD_WideFilename)\
+   || defined(DeeSysFileFD_Filename)
+ DeeObject *result,*newresult;
+ DeeFileIO_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
+#ifdef DeeSysFileFD_WideFilename
+ result = DeeSysFileFD_WideFilename(&((DeeFileIOObject *)self)->io_descr);
+#else
+ result = DeeSysFileFD_Filename(&((DeeFileIOObject *)self)->io_descr);
+#endif
+ DeeFileIO_RELEASE_SHARED(self);
+ if DEE_UNLIKELY(!result) return NULL;
+ newresult = DeeUtf8String_Cast(result);
+ Dee_DECREF(result);
+ return newresult;
+#else
+ DeeError_NotImplemented_str("file.io.filename");
+ return NULL;
+#endif
+}
+DEE_A_RET_OBJECT_REF(DeeWideStringObject) *DeeFileIO_WideFilename(
+ DEE_A_IN_OBJECT(DeeFileIOObject) const *self) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeFileIO_Check(self));
+#ifdef DeeSysFileFD_WideFilename
+ DeeObject *result;
+ DeeFileIO_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
+ result = DeeSysFileFD_WideFilename(&((DeeFileIOObject *)self)->io_descr);
+ DeeFileIO_RELEASE_SHARED(self);
+ return result;
+#elif defined(DeeSysFileFD_Utf8Filename)\
+   || defined(DeeSysFileFD_Filename)
+ DeeObject *result,*newresult;
+ DeeFileIO_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
+#ifdef DeeSysFileFD_Utf8Filename
+ result = DeeSysFileFD_Utf8Filename(&((DeeFileIOObject *)self)->io_descr);
+#else
+ result = DeeSysFileFD_Filename(&((DeeFileIOObject *)self)->io_descr);
+#endif
+ DeeFileIO_RELEASE_SHARED(self);
+ if DEE_UNLIKELY(!result) return NULL;
+ newresult = DeeWideString_Cast(result);
+ Dee_DECREF(result);
+ return newresult;
+#else
+ DeeError_NotImplemented_str("file.io.wfilename");
+ return NULL;
+#endif
+}
+
+
+
 DeeString_NEW_STATIC_EX(_deefileio_default_mode,1,{'r'});
 static int _deefileio_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeFileIOObject *self, DeeObject *args) {
@@ -151,22 +218,16 @@ static int _deefileio_tp_any_ctor(
  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)mode,&DeeString_Type) != 0) return -1;
  openmode = DeeFile_TryParseMode(DeeString_STR(mode));
 #ifdef DEE_PLATFORM_WINDOWS
- if DEE_UNLIKELY(DeeWideString_Check(filename)) Dee_INCREF(filename);
- else {
-  if DEE_UNLIKELY((filename = (DeeAnyStringObject *)(DeeFileIO_Check(filename)
-   ? DeeFileIO_WideFilename((DeeObject *)filename)
-   : DeeWideString_Cast((DeeObject *)filename))) == NULL) return -1;
- }
+ if DEE_UNLIKELY((filename = (DeeAnyStringObject *)(DeeFileIO_Check(filename)
+  ? DeeFileIO_WideFilename((DeeObject *)filename)
+  : DeeWideString_Cast((DeeObject *)filename))) == NULL) return -1;
  DeeSysFileFD_WideInitObject(&self->io_descr,(DeeObject *)filename,openmode,
                              perms,{ Dee_DECREF(filename); return -1; });
  Dee_DECREF(filename);
 #else
- if DEE_UNLIKELY(DeeUtf8String_Check(filename)) Dee_INCREF(filename);
- else {
-  if DEE_UNLIKELY((filename = (DeeAnyStringObject *)(DeeFileIO_Check(filename)
-   ? DeeFileIO_Utf8Filename((DeeObject *)filename)
-   : DeeUtf8String_Cast((DeeObject *)filename))) == NULL) return -1;
- }
+ if DEE_UNLIKELY((filename = (DeeAnyStringObject *)(DeeFileIO_Check(filename)
+  ? DeeFileIO_Utf8Filename((DeeObject *)filename)
+  : DeeUtf8String_Cast((DeeObject *)filename))) == NULL) return -1;
  DeeSysFileFD_Utf8InitObject(&self->io_descr,(DeeObject *)filename,openmode,
                              perms,{ Dee_DECREF(filename); return -1; });
  Dee_DECREF(filename);
@@ -175,7 +236,6 @@ static int _deefileio_tp_any_ctor(
                           DEE_PRIVATE_FILEFLAG_FD_OWNED);
  return 0;
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 // Scan for additional callbacks required for filefd descriptors, and link them
@@ -278,7 +338,18 @@ static int DEE_CALL _deefileio_tp_io_trunc(DeeFileIOObject *self) {
 #endif
 
 #ifdef DeeSysFileFD_Quit
+#define _pdeefileio_tp_dtor     &_deefileio_tp_dtor
 #define _pdeefileio_tp_io_close &_deefileio_tp_io_close
+static void DEE_CALL _deefileio_tp_dtor(DeeFileIOObject *self) {
+ if ((self->fo_flags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) == 
+                     (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
+  self->fo_flags &= ~(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED);
+  DeeSysFileFD_Quit(&self->fd_descr);
+#ifdef DeeSysFD_Quit
+  DeeSysFD_Quit(&self->fd_descr);
+#endif
+ }
+}
 static void DEE_CALL _deefileio_tp_io_close(DeeFileIOObject *self) {
  DeeFileFD_ACQUIRE_EXCLUSIVE(self,return);
  DeeSysFileFD_Quit(&self->io_descr);
@@ -287,6 +358,7 @@ static void DEE_CALL _deefileio_tp_io_close(DeeFileIOObject *self) {
  DeeFileFD_RELEASE_EXCLUSIVE(self);
 }
 #else
+#define _pdeefileio_tp_dtor     DeeType_DEFAULT_SLOT(tp_dtor)
 #define _pdeefileio_tp_io_close DeeType_DEFAULT_SLOT(tp_io_close)
 #endif
 
@@ -665,7 +737,7 @@ DeeFileTypeObject DeeFileIO_Type = {
    member(_pdeefilefd_tp_copy_ctor),
    member(_pdeefilefd_tp_move_ctor),
    member(&_deefileio_tp_any_ctor)),
-  DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,member(_pdeefilefd_tp_dtor)),
+  DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,member(_pdeefileio_tp_dtor)),
   DEE_TYPE_OBJECT_ASSIGN_v100(
    member(_pdeefilefd_tp_copy_assign),
    member(_pdeefilefd_tp_move_assign),null),
@@ -696,5 +768,9 @@ DeeFileTypeObject DeeFileIO_Type = {
 };
 
 DEE_DECL_END
+
+#ifndef __INTELLISENSE__
+#include "file.io.fsops.c.inl"
+#endif
 
 #endif /* !GUARD_DEEMON_FILE_IO_C_INL */

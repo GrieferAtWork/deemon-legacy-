@@ -79,14 +79,14 @@ struct DeeFileFDObject {
 #define DeeFileFD_ACQUIRE_SHARED(ob,...)\
 do{\
  DeeFile_ACQUIRE(ob);\
- if (((ob)->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID)==0)\
+ if ((((DeeFileFDObject *)(ob))->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID)==0)\
  { DeeFile_RELEASE(ob); {__VA_ARGS__;} } else {\
-  DeeAtomic32_FetchInc((ob)->fd_users,memory_order_seq_cst);\
+  DeeAtomic32_FetchInc(((DeeFileFDObject *)(ob))->fd_users,memory_order_seq_cst);\
   DeeFile_RELEASE(ob);\
  }\
 }while(0)
 #define DeeFileFD_RELEASE_SHARED(ob)\
- DeeAtomic32_FetchDec((ob)->fd_users,memory_order_seq_cst)
+ DeeAtomic32_FetchDec(((DeeFileFDObject *)(ob))->fd_users,memory_order_seq_cst)
 
 //////////////////////////////////////////////////////////////////////////
 // Acquire exclusive access to a given file descriptor
@@ -112,7 +112,7 @@ do{\
 #define DeeFileFD_RELEASE_EXCLUSIVE(ob) DeeFile_RELEASE(ob)
 
 DeeError_NEW_STATIC(_DeeErrorInstance_FileFDAlreadyClosed,&DeeErrorType_IOError,
-                    "Invalid file descriptor");
+                    "Invalid/Closed file descriptor");
 #define DeeErrorInstance_FileFDAlreadyClosed ((DeeObject *)&_DeeErrorInstance_FileFDAlreadyClosed)
 
 

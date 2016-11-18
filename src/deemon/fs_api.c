@@ -52,6 +52,7 @@
 #include <deemon/__alloca.inl>
 #include <deemon/__xconf.inl>
 #include <deemon/posix_features.inl>
+#include <deemon/sys/sysfd.h>
 #include <deemon/unicode/char_traits.inl>
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/virtual_fs.h.inl>
@@ -64,7 +65,7 @@ DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 #include <Userenv.h>
 #include <Lmcons.h>
 #include <accctrl.h>
-#include <aclapi.h>
+#include <Aclapi.h>
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_IO_H
 #include <io.h>
 #endif
@@ -257,7 +258,6 @@ static DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8Win32GetProce
 static DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideWin32GetProcessUserHome(DEE_A_IN HANDLE process_handle);
 static DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8Win32FGetFileType(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN HANDLE handle);
 static DEE_A_RET_EXCEPT(-1) int _DeeFS_WideWin32FGetFileType(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN HANDLE handle);
-static DEE_A_RET_EXCEPT(-1) int _DeeFS_Win32FGetFileTypeObject(DEE_A_IN DeeObject const *path, DEE_A_IN HANDLE handle);
 static DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8Win32GetFileType(DEE_A_IN_Z Dee_Utf8Char const *path);
 static DEE_A_RET_EXCEPT(-1) int _DeeFS_WideWin32GetFileType(DEE_A_IN_Z Dee_WideChar const *path);
 static DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *_DeeFS_Utf8Win32ReadLinkHandle(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN HANDLE hfile);
@@ -305,10 +305,6 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8GetModWithHandle(DEE_A_IN
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideGetModWithHandle(DEE_A_IN_Z Dee_WideChar const *filename, DEE_A_IN Dee_filedescr_t file, DEE_A_OUT Dee_mode_t *mode);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8SetModWithHandle(DEE_A_IN_Z Dee_Utf8Char const *filename, DEE_A_IN Dee_filedescr_t file, DEE_A_IN Dee_mode_t mode);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideSetModWithHandle(DEE_A_IN_Z Dee_WideChar const *filename, DEE_A_IN Dee_filedescr_t file, DEE_A_IN Dee_mode_t mode);
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8ChmodStringToModeWithHandle(DEE_A_IN_Z Dee_Utf8Char const *filename, DEE_A_IN Dee_filedescr_t file, DEE_A_IN_Z char const *mode_str, DEE_A_OUT Dee_mode_t *mode);
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideChmodStringToModeWithHandle(DEE_A_IN_Z Dee_WideChar const *filename, DEE_A_IN Dee_filedescr_t file, DEE_A_IN_Z char const *mode_str, DEE_A_OUT Dee_mode_t *mode);
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8ChmodStringToMode(DEE_A_IN_Z Dee_Utf8Char const *filename, DEE_A_IN_Z char const *mode_str, DEE_A_OUT Dee_mode_t *mode);
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideChmodStringToMode(DEE_A_IN_Z Dee_WideChar const *filename, DEE_A_IN_Z char const *mode_str, DEE_A_OUT Dee_mode_t *mode);
 
 #ifdef DEE_PLATFORM_WINDOWS
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8Win32GetOwnWithHandle(DEE_A_IN_Z Dee_Utf8Char const *filename, DEE_A_IN Dee_filedescr_t file, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group);
@@ -990,151 +986,6 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFS_IsAbsObject(
  Dee_DECREF(path);
  return result;
 }
-
-
-#ifdef DEE_PLATFORM_WINDOWS
-static DEE_A_RET_EXCEPT(-1) int _DeeFS_Win32FGetFileTypeObject(
- DEE_A_IN DeeObject const *path, DEE_A_IN HANDLE handle) {
- int result;
- if (DeeWideString_Check(path)) return _DeeFS_WideWin32FGetFileType(DeeWideString_STR(path),handle);
- if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- result = _DeeFS_Utf8Win32FGetFileType(DeeUtf8String_STR(path),handle);
- Dee_DECREF(path);
- return result;
-}
-#endif
-
-#if DEE_PLATFORM_HAVE_IO
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsFile(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
-#ifdef DEE_PLATFORM_WINDOWS
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- return DeeFileIO_HANDLE(fp) != DEE_FILEIO_INVALID_HANDLE;
-#elif defined(DEE_PLATFORM_UNIX)
- struct stat attrib;
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- if DEE_UNLIKELY(_deefs_posix_fstat(DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),&attrib) != 0) return -1;
- return S_ISREG(attrib.st_mode);
-#else
- (void)fp;
- return 0;
-#endif
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsDir(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
-#ifdef DEE_PLATFORM_WINDOWS
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- return DeeFileIO_HANDLE(fp) == DEE_FILEIO_INVALID_HANDLE;
-#elif defined(DEE_PLATFORM_UNIX)
- struct stat attrib;
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- if DEE_UNLIKELY(_deefs_posix_fstat(DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),&attrib) != 0) return -1;
- return S_ISDIR(attrib.st_mode);
-#else
- (void)fp;
- return 0;
-#endif
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsLink(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
-#ifdef DEE_PLATFORM_WINDOWS
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- return _DeeFS_IsLinkObject(DeeFileIO_FILE(fp));
-#elif defined(DEE_PLATFORM_UNIX)
- struct stat attrib;
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- if DEE_UNLIKELY(_deefs_posix_fstat(DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),&attrib) != 0) return -1;
- return S_ISLNK(attrib.st_mode);
-#else
- (void)fp;
- return 0;
-#endif
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsDrive(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
-#ifdef DEE_PLATFORM_WINDOWS
- return _DeeFS_IsDriveObject(DeeFileIO_FILE(fp));
-#else
- (void)fp;
- return 0;
-#endif
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsMount(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- return _DeeFS_IsMountObject(DeeFileIO_FILE(fp));
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsHidden(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- return _DeeFS_IsHiddenObject(DeeFileIO_FILE(fp));
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsExecutable(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
-#if defined(DEE_PLATFORM_UNIX)
- struct stat attrib; int temp;
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- if DEE_UNLIKELY(_deefs_posix_fstat(DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),&attrib) != 0) return -1;
- if (!S_ISREG(attrib.st_mode)) return 0;
- return (attrib.st_mode & 0111) != 0;
-#else
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- return _DeeFS_IsExecutableObject(DeeFileIO_FILE(fp));
-#endif
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsCharDev(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
-#if defined(DEE_PLATFORM_WINDOWS) && defined(FILE_TYPE_CHAR)
- int result = _DeeFS_Win32FGetFileTypeObject(DeeFileIO_FILE(fp),DeeFileIO_HANDLE(fp));
- return result == -1 ? -1 : result == FILE_TYPE_CHAR;
-#elif defined(DEE_PLATFORM_UNIX) && defined(S_ISCHR)
- struct stat attrib; int temp;
- if DEE_UNLIKELY((temp = _deefs_posix_fstat(
-  DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),&attrib)) < 0) return -1;
- return S_ISCHR(attrib.st_mode);
-#else
- (void)fp;
- return 0;
-#endif
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsBlockDev(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
-#if defined(DEE_PLATFORM_WINDOWS) && (defined(FILE_TYPE_DISK) && 0)
- int result = _DeeFS_Win32FGetFileTypeObject(DeeFileIO_FILE(fp),DeeFileIO_HANDLE(fp));
- return DEE_UNLIKELY(result < 0) ? result : result == FILE_TYPE_DISK;
-#elif defined(DEE_PLATFORM_UNIX) && defined(S_ISBLK)
- struct stat attrib; int temp;
- if DEE_UNLIKELY((temp = _deefs_posix_fstat(DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),&attrib)) != 0)
-  return DEE_UNLIKELY(temp < 0) ? temp : 0;
- return S_ISBLK(attrib.st_mode);
-#else
- (void)fp;
- return 0;
-#endif
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsFiFo(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
-#if defined(DEE_PLATFORM_WINDOWS) && defined(FILE_TYPE_PIPE)
- int result = _DeeFS_Win32FGetFileTypeObject(DeeFileIO_FILE(fp),DeeFileIO_HANDLE(fp));
- return DEE_UNLIKELY(result < 0) ? result : result == FILE_TYPE_PIPE;
-#elif defined(DEE_PLATFORM_UNIX) && defined(S_ISFIFO)
- struct stat attrib; int temp;
- if DEE_UNLIKELY((temp = _deefs_posix_fstat(DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),&attrib)) != 0)
-  return DEE_UNLIKELY(temp < 0) ? temp : 0;
- return S_ISFIFO(attrib.st_mode);
-#else
- (void)fp;
- return 0;
-#endif
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsSocket(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) {
-#if defined(DEE_PLATFORM_WINDOWS) && defined(FILE_TYPE_REMOTE)
- int result = _DeeFS_Win32FGetFileTypeObject(DeeFileIO_FILE(fp),DeeFileIO_HANDLE(fp));
- return DEE_UNLIKELY(result < 0) ? result : result == FILE_TYPE_REMOTE;
-#elif defined(DEE_PLATFORM_UNIX) && defined(S_ISSOCK)
- struct stat attrib; int temp;
- if DEE_UNLIKELY((temp = _deefs_posix_fstat(DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),&attrib)) != 0)
-  return DEE_UNLIKELY(temp < 0) ? temp : 0;
- return S_ISSOCK(attrib.st_mode);
-#else
- (void)fp;
- return 0;
-#endif
-}
-#endif
-
-
 
 
 DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_IsFileObject(
@@ -2477,10 +2328,10 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8GetModWithHandle(
                        filename,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return -1;
  }
- *mode = 0111; // readable by default
+ *mode = 0444; // readable by default
  if ((info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)==0) *mode |= 0222; // writeable
  if DEE_UNLIKELY((error = _DeeFS_Utf8IsExecutable(filename)) < 0) return error;
- if (error) *mode |= 0444; // executable
+ if (error) *mode |= 0111; // executable
  return 0;
 }
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideGetModWithHandle(
@@ -2494,10 +2345,10 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideGetModWithHandle(
                        filename,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return -1;
  }
- *mode = 0111; // readable by default
+ *mode = 0444; // readable by default
  if ((info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)==0) *mode |= 0222; // writeable
  if DEE_UNLIKELY((error = _DeeFS_WideIsExecutable(filename)) < 0) return error;
- if (error) *mode |= 0444; // executable
+ if (error) *mode |= 0111; // executable
  return 0;
 }
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8SetModWithHandle(
@@ -2558,7 +2409,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideSetModWithHandle(
  // Implement writable through the read-only attribute
  if ((mode&0222)!=0) { // +w
   if ((info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)==0) return 0;
-  info.dwFileAttributes &= ~FILE_ATTRIBUTE_READONLY;
+  info.dwFileAttributes &= ~(FILE_ATTRIBUTE_READONLY);
  } else { // -w
   if ((info.dwFileAttributes&FILE_ATTRIBUTE_READONLY)!=0) return 0;
   info.dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
@@ -2724,9 +2575,9 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8GetMod(
     Dee_DECREF(rfs_path);
     return temp;
    }
-   *mode = 0111;
+   *mode = 0444;
    if ((file.vf_attr&DEE_VFS_FILEATTRIBUTE_REFS)!=0) *mode |= 0222;
-   if ((file.vf_attr&DEE_VFS_FILEATTRIBUTE_EXEC)!=0) *mode |= 0444;
+   if ((file.vf_attr&DEE_VFS_FILEATTRIBUTE_EXEC)!=0) *mode |= 0111;
    return 0;
   }
  }
@@ -2786,9 +2637,9 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideGetMod(
     Dee_DECREF(rfs_path);
     return temp;
    }
-   *mode = 0111;
+   *mode = 0444;
    if ((file.vf_attr&DEE_VFS_FILEATTRIBUTE_REFS)!=0) *mode |= 0222;
-   if ((file.vf_attr&DEE_VFS_FILEATTRIBUTE_EXEC)!=0) *mode |= 0444;
+   if ((file.vf_attr&DEE_VFS_FILEATTRIBUTE_EXEC)!=0) *mode |= 0111;
    return 0;
   }
  }
@@ -2830,6 +2681,64 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideGetMod(
   return 0;
 #endif
  }
+}
+
+DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeFS_ParseModeChange(
+ DEE_A_IN_Z char const *mode, DEE_A_OUT Dee_modechange_t *result) {
+ char const *mode_iter; Dee_uint8_t opkind;
+ Dee_uint16_t channels,changes;
+ DEE_ASSERT(mode),DEE_ASSERT(result);
+ mode_iter = mode,channels = 0,changes = 0;
+ opkind = DEE_MODECHANGE_KIND_NONE;
+ while (1) switch (*mode_iter++) {
+  case 'u': case 'U': channels |= 0700; break;
+  case 'g': case 'G': channels |= 0070; break;
+  case 'o': case 'O': channels |= 0007; break;
+  default: --mode_iter; goto p_opkind;
+ }
+p_opkind:
+ while (1) switch (*mode_iter++) {
+  case '+': opkind = DEE_MODECHANGE_KIND_ADD; break;
+  case '-': opkind = DEE_MODECHANGE_KIND_DEL; break;
+  case '=': opkind = DEE_MODECHANGE_KIND_SET; break;
+  default: --mode_iter; goto p_opflags;
+ }
+p_opflags:
+ while (1) switch (*mode_iter++) {
+  case 'r': case 'R': changes |= 0444; break;
+  case 'w': case 'W': changes |= 0222; break;
+  case 'x': case 'X': changes |= 0111; break;
+  default: --mode_iter; goto end;
+ }
+end:
+ if DEE_UNLIKELY(*mode_iter) {
+  DeeError_SetStringf(&DeeErrorType_ValueError,
+                      "chmod(%q) : Invalid chmod format",mode);
+  return -1;
+ }
+ // If no channels were specified, all are affected
+ if (!channels) channels = 0777;
+ // Compile the final modechange, and store it in '*result'
+ *result = DEE_MODECHANGE(channels&changes,opkind);
+ return 0;
+}
+
+
+void _DeeFS_ExecModeChange(
+ DEE_A_INOUT Dee_mode_t *mode, DEE_A_IN Dee_size_t mcc,
+ DEE_A_IN_R(mmc) Dee_modechange_t const *mcv) {
+ Dee_modechange_t const *iter,*end; Dee_modechange_t change;
+ end = (iter = mcv)+mcc;
+ do {
+  change = *iter++;
+  switch (DEE_MODECHANGE_KIND(change)) {
+   case DEE_MODECHANGE_KIND_SET:    *mode  = (Dee_mode_t)  DEE_MODECHANGE_BITS(change); break;
+   case DEE_MODECHANGE_KIND_ADD:    *mode |= (Dee_mode_t)  DEE_MODECHANGE_BITS(change); break;
+   case DEE_MODECHANGE_KIND_DEL:    *mode &= (Dee_mode_t)~(DEE_MODECHANGE_BITS(change)); break;
+   case DEE_MODECHANGE_KIND_TOGGLE: *mode ^= (Dee_mode_t)  DEE_MODECHANGE_BITS(change); break;
+   default: break;
+  }
+ } while (iter != end);
 }
 
 
@@ -2945,26 +2854,29 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideChmod(
 #endif
  }
 }
-DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8ChmodString(
- DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN_Z char const *mode) {
+
+
+DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8ChmodEx(
+ DEE_A_IN_Z Dee_Utf8Char const *path,
+ DEE_A_IN Dee_size_t mcc, DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) {
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
  if (_DeeVFS_Utf8IsVirtualPath(path)) {
   struct DeeVFSFile file; DeeObject *rfs_path; int temp;
   if DEE_UNLIKELY((temp = DeeVFS_Utf8LocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;
   if (temp == 0) {
    if (rfs_path) {
-    temp = _DeeFS_Utf8ChmodString(DeeUtf8String_STR(rfs_path),mode);
+    temp = _DeeFS_Utf8ChmodEx(DeeUtf8String_STR(rfs_path),mcc,mcv);
     Dee_DECREF(rfs_path);
     return temp;
    }
    DeeError_SetStringf(&DeeErrorType_SystemError,
-                       "chmod(%q,%s) : Can't chmod virtual file",path,mode);
+                       "chmod(%q) : Can't chmod virtual file",path);
    return -1;
   }
  }
 #endif
  {
-  Dee_mode_t new_mode;
+  Dee_mode_t newmode;
 #ifdef DEE_PLATFORM_WINDOWS
   HANDLE file; int error;
   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
@@ -2976,7 +2888,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8ChmodString(
       !DeeFS_Utf8Win32IsPathUNC(path)) {
     DeeObject *temp;
     if ((temp = DeeFS_Utf8Win32PathUNC(path)) == NULL) return -1;
-    error = _DeeFS_WideChmodString(DeeWideString_STR(temp),mode);
+    error = _DeeFS_WideChmodEx(DeeWideString_STR(temp),mcc,mcv);
     Dee_DECREF(temp);
     return error;
    }
@@ -2986,8 +2898,17 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8ChmodString(
                         path,DeeSystemError_Win32ToString((unsigned long)error));
    return -1;
   }
-  error = _DeeFS_Utf8ChmodStringToModeWithHandle(path,file,mode,&new_mode);
-  if DEE_LIKELY(error == 0) error = _DeeFS_Utf8SetModWithHandle(path,file,new_mode);
+  if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET) {
+   int temp; newmode = 0444;
+   DeeWin32Sys_HandleIsReadOnly(file,&temp,goto err_file);
+   if (!temp) newmode |= 0222;
+   if DEE_UNLIKELY((temp = _DeeFS_Utf8IsExecutable(path)) < 0) {
+err_file: if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0); return -1; 
+   }
+   if (temp) newmode |= 0111;
+  }
+  _DeeFS_ExecModeChange(&newmode,mcc,mcv);
+  error = _DeeFS_Utf8SetModWithHandle(path,file,newmode);
   if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0);
   return error;
 #elif defined(DEE_PLATFORM_UNIX) && DEE_HAVE_FCHMOD
@@ -2998,37 +2919,41 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8ChmodString(
                         DeeSystemError_ToString(DeeSystemError_Consume()));
    return -1;
   }
-  error = _DeeFS_Utf8ChmodStringToModeWithHandle(path,file,mode,&new_mode);
-  if DEE_LIKELY(error == 0) error = _DeeFS_Utf8SetModWithHandle(path,file,new_mode);
+  if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET
+      && _DeeFS_Utf8GetModWithHandle(path,&newmode) != 0) { error = -1; goto end_close; }
+  error = _DeeFS_Utf8SetModWithHandle(path,file,newmode);
+end_close:
   if DEE_UNLIKELY(close(file) != 0) errno = 0;
   return error;
 #else
-  int error = _DeeFS_Utf8ChmodStringToMode(path,mode,&new_mode);
-  if DEE_LIKELY(error == 0) error = _DeeFS_Utf8Chmod(path,new_mode);
-  return error;
+  if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET
+      && _DeeFS_Utf8GetMod(path,&newmode) != 0) return -1;
+  _DeeFS_ExecModeChange(&newmode,mcc,mcv);
+  return _DeeFS_Utf8Chmod(path,newmode);
 #endif
  }
 }
-DEE_A_RET_EXCEPT(-1) int _DeeFS_WideChmodString(
- DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN_Z char const *mode) {
+DEE_A_RET_EXCEPT(-1) int _DeeFS_WideChmodEx(
+ DEE_A_IN_Z Dee_WideChar const *path,
+ DEE_A_IN Dee_size_t mcc, DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) {
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
  if (_DeeVFS_WideIsVirtualPath(path)) {
   struct DeeVFSFile file; DeeObject *rfs_path; int temp;
   if DEE_UNLIKELY((temp = DeeVFS_WideLocateOrReadReFsLink(path,&file,&rfs_path)) < 0) return temp;
   if (temp == 0) {
    if (rfs_path) {
-    temp = _DeeFS_WideChmodString(DeeWideString_STR(rfs_path),mode);
+    temp = _DeeFS_WideChmodEx(DeeWideString_STR(rfs_path),mcc,mcv);
     Dee_DECREF(rfs_path);
     return temp;
    }
    DeeError_SetStringf(&DeeErrorType_SystemError,
-                       "chmod(%lq,%s) : Can't chmod virtual file",path,mode);
+                       "chmod(%lq) : Can't chmod virtual file",path);
    return -1;
   }
  }
 #endif
  {
-  Dee_mode_t new_mode;
+  Dee_mode_t newmode;
 #ifdef DEE_PLATFORM_WINDOWS
   HANDLE file; int error;
   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
@@ -3039,8 +2964,8 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideChmodString(
    if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
       !DeeFS_WideWin32IsPathUNC(path)) {
     DeeObject *temp;
-    if DEE_UNLIKELY((temp = DeeFS_WideWin32PathUNC(path)) == NULL) return -1;
-    error = _DeeFS_WideChmodString(DeeWideString_STR(temp),mode);
+    if ((temp = DeeFS_WideWin32PathUNC(path)) == NULL) return -1;
+    error = _DeeFS_WideChmodEx(DeeWideString_STR(temp),mcc,mcv);
     Dee_DECREF(temp);
     return error;
    }
@@ -3050,20 +2975,30 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideChmodString(
                         path,DeeSystemError_Win32ToString((unsigned long)error));
    return -1;
   }
-  error = _DeeFS_WideChmodStringToModeWithHandle(path,file,mode,&new_mode);
-  if DEE_LIKELY(error == 0) error = _DeeFS_WideSetModWithHandle(path,file,new_mode);
+  if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET) {
+   int temp; newmode = 0444;
+   DeeWin32Sys_HandleIsReadOnly(file,&temp,goto err_file);
+   if (!temp) newmode |= 0222;
+   if DEE_UNLIKELY((temp = _DeeFS_WideIsExecutable(path)) < 0) {
+err_file: if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0); return -1; 
+   }
+   if (temp) newmode |= 0111;
+  }
+  _DeeFS_ExecModeChange(&newmode,mcc,mcv);
+  error = _DeeFS_WideSetModWithHandle(path,file,newmode);
   if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0);
   return error;
 #elif defined(DEE_PLATFORM_UNIX) && DEE_HAVE_FCHMOD
   DeeObject *utf8_path; int result;
   if DEE_UNLIKELY((utf8_path = DeeUtf8String_FromWideString(path)) == NULL) return -1;
-  result = _DeeFS_Utf8ChmodString(DeeUtf8String_STR(utf8_path),mode);
+  result = _DeeFS_Utf8ChmodEx(DeeUtf8String_STR(utf8_path),mcc,mcv);
   Dee_DECREF(utf8_path);
   return result;
 #else
-  int error = _DeeFS_WideChmodStringToMode(path,mode,&new_mode);
-  if DEE_LIKELY(error == 0) error = _DeeFS_WideChmod(path,new_mode);
-  return error;
+  if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET
+      && _DeeFS_WideGetMod(path,&newmode) != 0) return -1;
+  _DeeFS_ExecModeChange(&newmode,mcc,mcv);
+  return _DeeFS_WideChmod(path,newmode);
 #endif
  }
 }
@@ -3080,15 +3015,16 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_ChmodObject(
  Dee_DECREF(path);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int _DeeFS_ChmodStringObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN_Z char const *mode) {
+DEE_A_RET_EXCEPT(-1) int _DeeFS_ChmodExObject(
+ DEE_A_IN_OBJECT(DeeAnyStringObject) const *path,
+ DEE_A_IN Dee_size_t mcc, DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) {
  int result;
 #if DEE_HAVE_WIDEAPI
  if (DeeWideString_Check(path))
-  return _DeeFS_WideChmodString(DeeWideString_STR(path),mode);
+  return _DeeFS_WideChmodEx(DeeWideString_STR(path),mcc,mcv);
 #endif
  if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- result = _DeeFS_Utf8ChmodString(DeeUtf8String_STR(path),mode);
+ result = _DeeFS_Utf8ChmodEx(DeeUtf8String_STR(path),mcc,mcv);
  Dee_DECREF(path);
  return result;
 }
@@ -3109,18 +3045,19 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_ChmodObject(
  Dee_DECREF(path);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeFS_ChmodStringObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN_Z char const *mode) {
+DEE_A_RET_EXCEPT(-1) int DeeFS_ChmodExObject(
+ DEE_A_IN_OBJECT(DeeAnyStringObject) const *path,
+ DEE_A_IN Dee_size_t mcc, DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) {
  int result;
  if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
 #if DEE_HAVE_WIDEAPI
  if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideChmodString(DeeWideString_STR(path),mode);
+  result = _DeeFS_WideChmodEx(DeeWideString_STR(path),mcc,mcv);
  } else 
 #endif
  {
   if DEE_UNLIKELY(DeeUtf8String_InplaceCast((DeeObject const **)&path) != 0) return -1;
-  result = _DeeFS_Utf8ChmodString(DeeUtf8String_STR(path),mode);
+  result = _DeeFS_Utf8ChmodEx(DeeUtf8String_STR(path),mcc,mcv);
  }
  Dee_DECREF(path);
  return result;
@@ -3189,176 +3126,6 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_GetOwnObject(
  return result;
 }
 
-#if DEE_PLATFORM_HAVE_IO
-DEE_A_RET_EXCEPT(-1) int DeeFileIO_Chmod(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *fp,
- DEE_A_IN Dee_mode_t mode) {
- DeeObject *filename_ob; int result;
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- if (DeeWideString_Check(DeeFileIO_FILE(fp))) {
-  result = _DeeFS_WideSetModWithHandle(DeeWideString_STR(DeeFileIO_FILE(fp)),
-                                       DeeFileIO_HANDLE(fp),mode);
- } else {
-  if DEE_UNLIKELY((filename_ob = DeeUtf8String_Cast(DeeFileIO_FILE(fp))) == NULL) return -1;
-  result = _DeeFS_Utf8SetModWithHandle(DeeUtf8String_STR(filename_ob),DeeFileIO_HANDLE(fp),mode);
-  Dee_DECREF(filename_ob);
- }
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFileIO_ChmodString(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *fp,
- DEE_A_IN_Z char const *mode) {
- DeeObject *filename_ob; int result; Dee_mode_t new_mode;
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- if (DeeWideString_Check(DeeFileIO_FILE(fp))) {
-  result = _DeeFS_WideChmodStringToModeWithHandle(DeeWideString_STR(DeeFileIO_FILE(fp)),
-                                                  DeeFileIO_HANDLE(fp),mode,&new_mode);
-  if DEE_LIKELY(result == 0) {
-   result = _DeeFS_WideSetModWithHandle(DeeWideString_STR(DeeFileIO_FILE(fp)),
-                                        DeeFileIO_HANDLE(fp),new_mode);
-  }
- } else {
-  if DEE_UNLIKELY((filename_ob = DeeUtf8String_Cast(DeeFileIO_FILE(fp))) == NULL) return -1;
-  result = _DeeFS_Utf8ChmodStringToModeWithHandle(DeeUtf8String_STR(filename_ob),
-                                                  DeeFileIO_HANDLE(fp),mode,&new_mode);
-  if DEE_LIKELY(result == 0) {
-   result = _DeeFS_Utf8SetModWithHandle(DeeUtf8String_STR(filename_ob),
-                                        DeeFileIO_HANDLE(fp),new_mode);
-  }
-  Dee_DECREF(filename_ob);
- }
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFileIO_GetMod(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *path, DEE_A_OUT Dee_mode_t *mode) {
- DeeObject *utf8_path; int result;
- DEE_ASSERT(DeeObject_Check(path) && DeeFileIO_Check(path));
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(DeeFileIO_FILE(path))) {
-  result = _DeeFS_WideGetModWithHandle(DeeWideString_STR(DeeFileIO_FILE(path)),
-                                       DeeFileIO_HANDLE(path),mode);
- } else
-#endif
- {
-  if DEE_UNLIKELY((utf8_path = DeeUtf8String_Cast(DeeFileIO_FILE(path))) == NULL) return -1;
-  result = _DeeFS_Utf8GetModWithHandle(DeeUtf8String_STR(utf8_path),DeeFileIO_HANDLE(path),mode);
-  Dee_DECREF(utf8_path);
- }
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFileIO_GetOwn(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *fp,
- DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
-#ifdef DEE_PLATFORM_WINDOWS
- DeeObject *wide_path; int result;
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- if (DeeUtf8String_Check(DeeFileIO_FILE(fp))) {
-  result = _DeeFS_Utf8Win32GetOwnWithHandle(DeeUtf8String_STR(DeeFileIO_FILE(fp)),
-                                            DeeFileIO_HANDLE(fp),owner,group);
- } else {
-  if DEE_UNLIKELY((wide_path = DeeWideString_Cast(DeeFileIO_FILE(fp))) == NULL) return -1;
-  result = _DeeFS_WideWin32GetOwnWithHandle(DeeWideString_STR(wide_path),
-                                            DeeFileIO_HANDLE(fp),owner,group);
-  Dee_DECREF(wide_path);
- }
- return result;
-#elif defined(DEE_PLATFORM_UNIX)
- struct stat attrib;
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
-#if DEE_HAVE_FSTAT
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY(fstat(DeeFileIO_HANDLE(fp),&attrib) != 0)
-#else
- DeeObject *utf8_path;
- if DEE_UNLIKELY((utf8_path = DeeUtf8String_Cast(DeeFileIO_FILE(fp))) == NULL) return -1;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_u8path;
- if DEE_UNLIKELY(stat(DeeUtf8String_STR(utf8_path),&attrib) != 0)
-#endif
- {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-#if DEE_HAVE_FSTAT
-                       "fstat(%d:%r) : %K",
-                       DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),
-#else
-                       "stat(%q) : %K",
-                       DeeUtf8String_STR(utf8_path),
-#endif
-                       DeeSystemError_ToString(DeeSystemError_Consume()));
-#if !DEE_HAVE_FSTAT
-err_u8path:
-  Dee_DECREF(utf8_path);
-#endif
-  return -1;
- }
-#if !DEE_HAVE_FSTAT
- Dee_DECREF(utf8_path);
-#endif
- *owner = attrib.st_uid;
- *group = attrib.st_gid;
- return 0;
-#else
- (void)path;
- *owner = 0;
- *group = 0;
- return 0;
-#endif
-}
-DEE_A_RET_EXCEPT(-1) int DeeFileIO_Chown(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *fp,
- DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
-#ifdef DEE_PLATFORM_WINDOWS
- DeeObject *wide_path; int result;
- DEE_ASSERT(DeeObject_Check(fp) && DeeFileIO_Check(fp));
- if (DeeUtf8String_Check(DeeFileIO_FILE(fp))) {
-  result = _DeeFS_Utf8Win32SetOwnWithHandle(DeeUtf8String_STR(DeeFileIO_FILE(fp)),
-                                            DeeFileIO_HANDLE(fp),owner,group);
- } else {
-  if DEE_UNLIKELY((wide_path = DeeWideString_Cast(DeeFileIO_FILE(fp))) == NULL) return -1;
-  result = _DeeFS_WideWin32SetOwnWithHandle(DeeWideString_STR(wide_path),
-                                            DeeFileIO_HANDLE(fp),owner,group);
-  Dee_DECREF(wide_path);
- }
- return result;
-#elif defined(DEE_PLATFORM_UNIX)
- struct stat attrib;
-#if DEE_HAVE_FCHOWN
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY(fchown(DeeFileIO_HANDLE(fp),owner,group) != 0)
-#else
- DeeObject *utf8_path;
- if DEE_UNLIKELY((utf8_path = DeeUtf8String_Cast(DeeFileIO_FILE(fp))) == NULL) return -1;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_u8path;
- if DEE_UNLIKELY(chown(DeeUtf8String_STR(utf8_path),owner,group) != 0)
-#endif
- {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-#if DEE_HAVE_FSTAT
-                       "fchown(%d:%r,%R,%R) : %K",
-                       DeeFileIO_HANDLE(fp),DeeFileIO_FILE(fp),
-#else
-                       "chown(%q,%R,%R) : %K",
-                       DeeUtf8String_STR(utf8_path),
-#endif
-                       DeeFS_Utf8UidToUser(owner,1),
-                       DeeFS_Utf8GidToGroup(group,1),
-                       DeeSystemError_ToString(DeeSystemError_Consume()));
-#if !DEE_HAVE_FSTAT
-err_u8path:
-  Dee_DECREF(utf8_path);
-#endif
-  return -1;
- }
-#if !DEE_HAVE_FSTAT
- Dee_DECREF(utf8_path);
-#endif
- return 0;
-#else
- (void)path,owner,group;
- return 0;
-#endif
-}
-
-#endif
 
 
 
@@ -3869,18 +3636,11 @@ struct DeeFSDirObject {
   DEE_A_REF DeeWideStringObject *dir_widepath; /*< [1..1] Directory to iterate. */
   DEE_A_REF DeeUtf8StringObject *dir_utf8path; /*< [1..1] Directory to iterate. */
   DEE_A_REF DeeAnyStringObject  *dir_path;     /*< [1..1] Directory to iterate. */
-#if DEE_HAVE_FOPENDIR
-#define DEE_PRIVATE_FS_DIR_PATH_MAYBE_FILEIO
-  DEE_A_REF DeeFileIOObject     *dir_iopath;   /*< [1..1] Directory to iterate. */
-#endif
  }
 #if !DEE_COMPILER_HAVE_UNNAMED_UNION
 #define dir_widepath _dir_data.dir_widepath
 #define dir_utf8path _dir_data.dir_utf8path
 #define dir_path     _dir_data.dir_path
-#if DEE_HAVE_FOPENDIR
-#define dir_iopath   _dir_data.dir_iopath
-#endif
  _dir_data
 #endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
  ;
@@ -3981,60 +3741,20 @@ DEE_COMPILER_MSVC_WARNING_POP
 # define DeeFSDirIterator_DONE(ob) 1
 #endif
 
-#if DEE_PLATFORM_HAVE_IO
-#ifndef DEE_PRIVATE_FS_DIR_PATH_MAYBE_FILEIO
-static void _deeerror_cannot_list_non_directory_fileio(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *path) {
- DeeError_SetStringf(&DeeErrorType_SystemError,
-                     "Cannot list non-directory %r",
-                     DeeFileIO_FILE(path));
-}
-#endif
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *
-DeeFileIO_ListDir(DEE_A_IN_OBJECT(DeeFileIOObject) const *path) {
-#ifdef DEE_PRIVATE_FS_DIR_PATH_MAYBE_FILEIO
- DeeFSDirObject *result;
+DeeFileIO_ListDir(DEE_A_INOUT_OBJECT(DeeFileIOObject) *path) {
+ DeeObject *pathname,*result;
  DEE_ASSERT(DeeObject_Check(path) && DeeFileIO_Check(path));
- result = DeeObject_MALLOCF(DeeFSDirObject,"dir(%p)",DeeFileIO_FILE(path));
- if DEE_LIKELY(result) {
-  DeeObject_INIT(result,&DeeFSQuery_Type);
-  if DEE_UNLIKELY((result->dir_iopath = (DeeFileIOObject *)path) == NULL) {
-   _DeeObject_DELETE(&DeeFSQuery_Type,result);
-   result = NULL;
-  }
- }
- return (DeeObject *)result;
+ // TODO: fopendir support
+#ifdef DEE_PLATFORM_WINDOWS
+ if DEE_UNLIKELY((pathname = DeeFileIO_WideFilename(path)) == NULL) return NULL;
 #else
- DEE_ASSERT(DeeObject_Check(path) && DeeFileIO_Check(path));
- if DEE_UNLIKELY(DeeFileIO_HANDLE(path) != DEE_FILEIO_INVALID_HANDLE) {
-  _deeerror_cannot_list_non_directory_fileio(path);
-  return NULL;
- }
- return _DeeFS_ListDirObject(DeeFileIO_FILE(path));
+ if DEE_UNLIKELY((pathname = DeeFileIO_Utf8Filename(path)) == NULL) return NULL;
 #endif
+ result = _DeeFS_ListDirObject(pathname);
+ Dee_DECREF(pathname);
+ return result;
 }
-#endif
-
-#ifdef DEE_PRIVATE_FS_DIR_PATH_MAYBE_FILEIO
-DEE_STATIC_INLINE(int) _DeeFSDirIterator_InitFromFileHandle(
- DeeFSDirIteratorObject *self, Dee_filedescr_t handle) {
-#if 1 || defined(DEE_PLATFORM_UNIX) && DEE_HAVE_FOPENDIR
- DEE_ASSERT(DeeObject_Check(self) && (DeeFSDirIterator_Check(self)
-                                 || DeeFSQueryIterator_Check(self)));
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY((self->di_unix.diu_dfd = fdopendir(handle)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "fdopendir(%d) : %K",handle,
-                      DeeSystemError_ToString(DeeSystemError_Consume()));
-  return -1;
- }
- return 0;
-#else
- (void)self,handle;
- return 0;
-#endif
-}
-#endif
 
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFSDirIterator_WideInit(
  DEE_A_INOUT DeeFSDirIteratorObject *self, DEE_A_IN_Z Dee_WideChar const *path);
@@ -4273,9 +3993,14 @@ static void _DeeFSDirIterator_Quit(DeeFSDirIteratorObject *self) {
 #endif
  }
 }
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+#define _pdeefsdiriterator_tp_visit &_deefsdiriterator_tp_visit
 DEE_VISIT_PROC(_deefsdiriterator_tp_visit,DeeFSDirIteratorObject *self) {
  _DeeFSDirIterator_Visit(self);
 }
+#else
+#define _pdeefsdiriterator_tp_visit DeeType_DEFAULT_SLOT(tp_visit)
+#endif
 
 static int _DeeFSDirIterator_Yield(DeeFSDirIteratorObject *self, DeeObject **result) {
 #if defined(DEE_PLATFORM_WINDOWS)
@@ -4678,14 +4403,10 @@ static int _deefsdir_tp_any_ctor(
  DeeObject *path;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:dir",&path) != 0) return -1;
  if (DeeFileIO_Check(path)) {
-#ifdef DEE_PRIVATE_FS_DIR_PATH_MAYBE_FILEIO
-  Dee_INCREF(path);
+#ifdef DEE_PLATFORM_WINDOWS
+  if DEE_UNLIKELY((path = DeeFileIO_WideFilename(path)) == NULL) return -1;
 #else
-  if DEE_UNLIKELY(DeeFileIO_HANDLE(path) != DEE_FILEIO_INVALID_HANDLE) {
-   _deeerror_cannot_list_non_directory_fileio(path);
-   return -1;
-  }
-  Dee_INCREF(path = DeeFileIO_FILE(path));
+  if DEE_UNLIKELY((path = DeeFileIO_Filename(path)) == NULL) return -1;
 #endif
  } else {
   if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
@@ -4720,14 +4441,7 @@ static DeeObject *_deefsdir_tp_seq_iter_self(DeeFSDirObject *self) {
  if DEE_UNLIKELY((result = DeeObject_MALLOCF(DeeFSDirIteratorObject,
   "dir.iterator(%p)",self)) == NULL) return NULL;
  DeeObject_INIT(result,&DeeFSDirIterator_Type);
-#ifdef DEE_PRIVATE_FS_DIR_PATH_MAYBE_FILEIO
- if DEE_UNLIKELY((DeeFileIO_Check(self->dir_iopath)
-  ? _DeeFSDirIterator_InitFromFileHandle(result,DeeFileIO_HANDLE(self->dir_iopath))
-  : _DeeFSDirIterator_Init(result,self->dir_path)) != 0)
-#else
- if DEE_UNLIKELY((_DeeFSDirIterator_Init(result,self->dir_path)) != 0)
-#endif
- {
+ if DEE_UNLIKELY(_DeeFSDirIterator_Init(result,self->dir_path) != 0) {
   _DeeObject_DELETE(&DeeFSDirIterator_Type,result);
   result = NULL;
  }
@@ -4749,24 +4463,22 @@ static DeeObject *_deefsquery_tp_seq_iter_self(DeeFSDirObject *self) {
 static int _deefsdiriterator_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self),
  struct DeeFSDirIteratorObject *self, DeeObject *args) {
- DeeObject *arg;
+ DeeObject *arg; int result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:dir.iterator",&arg) != 0) return -1;
  if (DeeFSDir_Check(arg)) {
-  return _DeeFSDirIterator_Init(self,
-#ifdef DEE_PRIVATE_FS_DIR_PATH_MAYBE_FILEIO
-   DeeFileIO_Check(((DeeFSDirObject *)arg)->dir_iopath)
-   ? (DeeAnyStringObject *)DeeFileIO_FILE(((DeeFSDirObject *)arg)->dir_iopath) :
-#endif
-   ((DeeFSDirObject *)arg)->dir_path);
+  result = _DeeFSDirIterator_Init(self,((DeeFSDirObject *)arg)->dir_path);
  } else if (DeeFileIO_Check(arg)) {
-#ifdef DEE_PRIVATE_FS_DIR_PATH_MAYBE_FILEIO
-  return _DeeFSDirIterator_InitFromFileHandle(self,DeeFileIO_HANDLE(arg));
+#ifdef DEE_PLATFORM_WINDOWS
+  if DEE_UNLIKELY((arg = DeeFileIO_WideFilename(arg)) == NULL) return -1;
 #else
-  return _DeeFSDirIterator_Init(self,(DeeAnyStringObject *)DeeFileIO_FILE(arg));
+  if DEE_UNLIKELY((arg = DeeFileIO_Filename(arg)) == NULL) return -1;
 #endif
+  result = _DeeFSDirIterator_Init(self,(DeeAnyStringObject *)arg);
+  Dee_DECREF(arg);
  } else {
-  return _DeeFSDirIterator_Init(self,(DeeAnyStringObject *)arg);
+  result = _DeeFSDirIterator_Init(self,(DeeAnyStringObject *)arg);
  }
+ return result;
 }
 static int _deefsqueryiterator_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), struct DeeFSQueryIteratorObject *self, DeeObject *args) {
@@ -4857,8 +4569,7 @@ DeeTypeObject DeeFSDirIterator_Type = {
   member(&_DeeFSDirIterator_Quit)),
  DEE_TYPE_OBJECT_ASSIGN_v100(null,null,null),
  DEE_TYPE_OBJECT_CAST_v101(null,null,null,null,null),
- DEE_TYPE_OBJECT_OBJECT_v100(null,
-  member(&_deefsdiriterator_tp_visit)),
+ DEE_TYPE_OBJECT_OBJECT_v100(null,member(_pdeefsdiriterator_tp_visit)),
  DEE_TYPE_OBJECT_MATH_v101(
   null,null,null,null,null,null,null,null,null,null,null,
   null,null,null,null,null,null,null,null,null,null,null,

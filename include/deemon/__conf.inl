@@ -506,6 +506,8 @@ static void __intellisense__DEE_LVERBOSE4R(char const *fmt, ...);
 #define DEE_PRIVATE_DECL_DEE_THREAD_ID  typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_THREADID) DeeThreadID;
 #endif
 #define DEE_PRIVATE_DECL_DEE_MODE_T     typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_MODE_T) Dee_mode_t;
+#define DEE_PRIVATE_DECL_DEE_UID_T      typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_UID_T) Dee_uid_t;
+#define DEE_PRIVATE_DECL_DEE_GID_T      typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_GID_T) Dee_gid_t;
 #define DEE_PRIVATE_DECL_DEE_TIMETICK_T typedef DEE_TYPES_UINT64_T Dee_timetick_t;
 #define DEE_PRIVATE_DECL_DEE_OBJECT                DEE_OBJECT_DEF(DeeObject);
 #define DEE_PRIVATE_DECL_DEE_TYPEOBJECT            DEE_OBJECT_DEF(DeeTypeObject);

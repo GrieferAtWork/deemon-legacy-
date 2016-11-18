@@ -162,10 +162,12 @@ int DEE_CALL _deefilefd_tp_move_assign(
   self->fo_flags = newflags;
   *&self->fd_descr = new_fd;
   DeeFileFD_RELEASE_EXCLUSIVE(self);
+#ifdef DeeSysFD_Quit
   if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
                 (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
    DeeSysFD_Quit(&old_fd);
   }
+#endif
  }
  return 0;
 }
@@ -202,10 +204,12 @@ after_copy:
   self->fo_flags = newflags;
   *&self->fd_descr = new_fd;
   DeeFileFD_RELEASE_EXCLUSIVE(self);
+#ifdef DeeSysFD_Quit
   if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
                 (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
    DeeSysFD_Quit(&old_fd);
   }
+#endif
  }
  return 0;
 }

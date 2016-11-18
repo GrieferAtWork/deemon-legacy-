@@ -55,27 +55,23 @@ static struct {
 #ifdef DEE_PLATFORM_WINDOWS
  DeeFileWin32DbgObject dp_stddbg;
 #endif
-}
-#ifdef DEE_SYSFD_HAVE_STATIC_STDFD_INITIALIZER
-const /*< Only make this constant if all initializers are static. */
-#endif
-_dee_default_printers_data = {
+} _dee_default_printers_data = {
  // NOTE: All printers are initialized with two references, because
  //       the second one is stored in the vector of active printers below.
 #ifdef DeeSysFD_INIT_STDOUT
  DeeFileFDObject_INIT_REF_VALID(&DeeFileFD_Type,2,DeeSysFD_INIT_STDOUT()), /*< dp_stdout. */
 #elif defined(DeeSysFD_GET_STDOUT)
- DeeFileFDObject_INIT_REF_INVALID(&DeeFileFD_Type,2), /*< dp_stdout. */
+ DeeFileFDObject_INIT_REF_INVALID(&DeeFileFD_Type,1), /*< dp_stdout. */
 #endif
 #ifdef DeeSysFD_INIT_STDERR
  DeeFileFDObject_INIT_REF_VALID(&DeeFileFD_Type,2,DeeSysFD_INIT_STDERR()), /*< dp_stderr. */
 #elif defined(DeeSysFD_GET_STDERR)
- DeeFileFDObject_INIT_REF_INVALID(&DeeFileFD_Type,2), /*< dp_stderr. */
+ DeeFileFDObject_INIT_REF_INVALID(&DeeFileFD_Type,1), /*< dp_stderr. */
 #endif
 #ifdef DeeSysFD_INIT_STDIN
  DeeFileFDObject_INIT_REF_VALID(&DeeFileFD_Type,2,DeeSysFD_INIT_STDIN()), /*< dp_stdin. */
 #elif defined(DeeSysFD_GET_STDIN)
- DeeFileFDObject_INIT_REF_INVALID(&DeeFileFD_Type,2), /*< dp_stdin. */
+ DeeFileFDObject_INIT_REF_INVALID(&DeeFileFD_Type,1), /*< dp_stdin. */
 #endif
  {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFile_Type,2)} /*< dp_stdnull. */
 #ifdef DEE_PLATFORM_WINDOWS
@@ -83,6 +79,7 @@ _dee_default_printers_data = {
 #endif
 };
 
+#ifdef DEE_SYSFD_HAVE_STATIC_STDFD_INITIALIZER
 static DeeFileObject *const _dee_default_printers[_DEE_STDMAX+1] = {
 #if defined(DeeSysFD_INIT_STDOUT) || defined(DeeSysFD_GET_STDOUT)
  (DeeFileObject *)&_dee_default_printers_data.dp_stdout,
@@ -108,8 +105,10 @@ static DeeFileObject *const _dee_default_printers[_DEE_STDMAX+1] = {
  (DeeFileObject *)&_dee_default_printers_data.dp_stdnull,
 #endif
 };
+#endif
 
 
+DEE_COMPILER_MSVC_WARNING_PUSH(4061)
 DEE_ATTRIBUTE_ADD_RESULT_REFERENCE DEE_A_RET_OBJECT(DeeFileObject) *
 DeeFile_DefaultStd(DEE_A_IN enum DeeStdPrinter printer) {
  DEE_ASSERTF(printer >= 0 && printer <= _DEE_STDMAX,
@@ -155,6 +154,7 @@ DeeFile_DefaultStd(DEE_A_IN enum DeeStdPrinter printer) {
  }
 #endif
 }
+DEE_COMPILER_MSVC_WARNING_POP
 
 
 
@@ -212,10 +212,10 @@ DeeFile_Std(DEE_A_IN enum DeeStdPrinter printer) {
   Dee_INCREF(result);
  } else {
   // First time initialization
-  // NOTE: We inherit the second reference here!
-  // NOTE: This is allowed, as not even 'DeeFile_ResetStd' resets the printers to NULL
   result = (DeeFileObject *)DeeFile_DefaultStd(printer);
   _dee_active_printers[printer] = result;
+  // NOTE: Add two reference: one for the cache of active printers, and one of the return value
+  DeeAtomicN_FetchAdd(DEE_TYPES_SIZEOF_REFCNT,result->__ob_refcnt,2,memory_order_seq_cst);
  }
 #endif
  DeeAtomicMutex_Release(&_dee_active_printers_lock);
@@ -230,22 +230,61 @@ DEE_A_EXEC void DeeFile_SetStd(DEE_A_IN enum DeeStdPrinter printer,
  Dee_INCREF(fp);
  DeeAtomicMutex_Acquire(&_dee_active_printers_lock);
  old_printer = _dee_active_printers[printer];
-#ifndef DEE_SYSFD_HAVE_STATIC_STDFD_INITIALIZER
- if DEE_UNLIKELY(!old_printer) {
-  // Must still account for uninitialized printers
-  Dee_INCREF(old_printer = (DeeFileObject *)DeeFile_DefaultStd(printer));
- }
-#endif
  _dee_active_printers[printer] = (DeeFileObject *)fp;
  DeeAtomicMutex_Release(&_dee_active_printers_lock);
  // Drop a reference to the old printer
+#ifdef DEE_SYSFD_HAVE_STATIC_STDFD_INITIALIZER
  Dee_DECREF(old_printer);
+#else
+ Dee_XDECREF(old_printer);
+#endif
 }
+DEE_COMPILER_MSVC_WARNING_PUSH(4061)
 DEE_A_EXEC void DeeFile_DelStd(DEE_A_IN enum DeeStdPrinter printer) {
  DeeFileObject *old_printer,*default_printer;
  DEE_ASSERTF(printer >= 0 && printer <= _DEE_STDMAX,
              "Invalid printer: %d",(int)printer);
- default_printer = _dee_default_printers[printer];
+ switch (printer) {
+  case DEE_STDOUT:
+#ifdef DeeSysFD_INIT_STDOUT
+    Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stdout);
+#elif defined(DeeSysFD_GET_STDOUT)
+    default_printer = NULL;
+#else
+    Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull);
+#endif
+    break;
+   case DEE_STDERR:
+#ifdef DeeSysFD_INIT_STDERR
+    Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stderr);
+#elif defined(DeeSysFD_GET_STDERR)
+    default_printer = NULL;
+#else
+    Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull);
+#endif
+    break;
+   case DEE_STDIN:
+#ifdef DeeSysFD_INIT_STDIN
+   Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stdin);
+#elif defined(DeeSysFD_GET_STDIN)
+   default_printer = NULL;
+#else
+   Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull);
+#endif
+   break;
+  case DEE_STDDBG: 
+#ifdef DEE_PLATFORM_WINDOWS
+   Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stddbg);
+#elif defined(DeeSysFD_INIT_STDERR)
+   Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stderr);
+#elif defined(DeeSysFD_GET_STDERR)
+   default_printer = NULL;
+#else
+   Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull);
+#endif
+   break;
+  default: Dee_INCREF(default_printer = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull); break;
+ }
  DeeAtomicMutex_Acquire(&_dee_active_printers_lock);
  old_printer = _dee_active_printers[printer];
  if (old_printer == default_printer
@@ -261,48 +300,60 @@ DEE_A_EXEC void DeeFile_DelStd(DEE_A_IN enum DeeStdPrinter printer) {
  // Drop a reference to the old printer
  Dee_DECREF(old_printer);
 }
+DEE_COMPILER_MSVC_WARNING_POP
 
 DEE_A_EXEC void DeeFile_ResetStd(void) {
  DeeFileObject *old_printers[_DEE_STDMAX+1];
  DeeAtomicMutex_Acquire(&_dee_active_printers_lock);
  memcpy(old_printers,_dee_active_printers,
         (_DEE_STDMAX+1)*sizeof(DeeFileObject *));
-#define PRINTER_ASSIGNED(printer)\
-   (_dee_active_printers[printer] != _dee_default_printers[printer]\
- && _dee_active_printers[printer] != NULL)
-#define RESET_PRINTER(printer) \
-   (_dee_active_printers[printer] = _dee_default_printers[printer])
-#ifndef DeeSysFD_INIT_STDOUT
- if (PRINTER_ASSIGNED(DEE_STDOUT)) RESET_PRINTER(DEE_STDOUT);
+#ifdef DeeSysFD_INIT_STDOUT
+ Dee_INCREF(_dee_active_printers[DEE_STDOUT] = (DeeFileObject *)&_dee_default_printers_data.dp_stdout);
+#elif defined(DeeSysFD_GET_STDOUT)
+ _dee_active_printers[DEE_STDOUT] = NULL;
 #else
- RESET_PRINTER(DEE_STDOUT);
+ Dee_INCREF(_dee_active_printers[DEE_STDOUT] = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull);
 #endif
-#ifndef DeeSysFD_INIT_STDERR
- if (PRINTER_ASSIGNED(DEE_STDERR)) RESET_PRINTER(DEE_STDERR);
+#ifdef DeeSysFD_INIT_STDERR
+ Dee_INCREF(_dee_active_printers[DEE_STDERR] = (DeeFileObject *)&_dee_default_printers_data.dp_stderr);
+#elif defined(DeeSysFD_GET_STDERR)
+ _dee_active_printers[DEE_STDERR] = NULL;
 #else
- RESET_PRINTER(DEE_STDERR);
+ Dee_INCREF(_dee_active_printers[DEE_STDERR] = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull);
 #endif
-#ifndef DeeSysFD_INIT_STDIN
- if (PRINTER_ASSIGNED(DEE_STDIN)) RESET_PRINTER(DEE_STDIN);
+#ifdef DeeSysFD_INIT_STDIN
+ Dee_INCREF(_dee_active_printers[DEE_STDIN] = (DeeFileObject *)&_dee_default_printers_data.dp_stdin);
+#elif defined(DeeSysFD_GET_STDIN)
+ _dee_active_printers[DEE_STDIN] = NULL;
 #else
- RESET_PRINTER(DEE_STDIN);
+ Dee_INCREF(_dee_active_printers[DEE_STDIN] = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull);
 #endif
- RESET_PRINTER(DEE_STDNULL);
- RESET_PRINTER(DEE_STDDBG);
-#undef RESET_PRINTER
+ Dee_INCREF(_dee_active_printers[DEE_STDNULL] = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull);
+#ifdef DEE_PLATFORM_WINDOWS
+ Dee_INCREF(_dee_active_printers[DEE_STDDBG] = (DeeFileObject *)&_dee_default_printers_data.dp_stddbg);
+#elif defined(DeeSysFD_INIT_STDERR)
+ Dee_INCREF(_dee_active_printers[DEE_STDDBG] = (DeeFileObject *)&_dee_default_printers_data.dp_stderr);
+#elif defined(DeeSysFD_GET_STDERR)
+ _dee_active_printers[DEE_STDDBG] = NULL;
+#else
+ Dee_INCREF(_dee_active_printers[DEE_STDDBG] = (DeeFileObject *)&_dee_default_printers_data.dp_stdnull);
+#endif
 #undef PRINTER_ASSIGNED
  DeeAtomicMutex_Release(&_dee_active_printers_lock);
-#ifdef DeeSysFD_INIT_STDOUT
+#if defined(DeeSysFD_INIT_STDOUT) || (\
+   !defined(DeeSysFD_INIT_STDOUT) && !defined(DeeSysFD_GET_STDOUT))
  Dee_DECREF(old_printers[DEE_STDOUT]);
 #else
  Dee_XDECREF(old_printers[DEE_STDOUT]);
 #endif
-#ifdef DeeSysFD_INIT_STDERR
+#if defined(DeeSysFD_INIT_STDERR) || (\
+   !defined(DeeSysFD_INIT_STDERR) && !defined(DeeSysFD_GET_STDERR))
  Dee_DECREF(old_printers[DEE_STDERR]);
 #else
  Dee_XDECREF(old_printers[DEE_STDERR]);
 #endif
-#ifdef DeeSysFD_INIT_STDIN
+#if defined(DeeSysFD_INIT_STDIN) || (\
+   !defined(DeeSysFD_INIT_STDIN) && !defined(DeeSysFD_GET_STDIN))
  Dee_DECREF(old_printers[DEE_STDIN]);
 #else
  Dee_XDECREF(old_printers[DEE_STDIN]);

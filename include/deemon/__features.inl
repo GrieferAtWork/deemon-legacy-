@@ -1870,9 +1870,6 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
     defined(DEE_PLATFORM_WINDOWS) && \
     defined(DEE_LIMITED_API)
 // Just for syntax highlighting
-#define DEE_TYPES_SIZEOF_UID_T  4
-#define DEE_TYPES_SIZEOF_GID_T  4
-#define DEE_TYPES_SIZEOF_MODE_T 4
 #define DEE_TYPES_SIZEOF_PID_T  4
 typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_UID_T)  uid_t;
 typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_GID_T)  gid_t;

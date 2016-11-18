@@ -894,8 +894,8 @@ def_doc:
  return 0;
 }
 static void _deetype_tp_dtor(DeeTypeObject *self) {
- DEE_ASSERT((DeeType_FLAGS(self)&DEE_TYPE_FLAG_HEAP_TYPE)!=0 &&
-            "Destroying non-heap type");
+ DEE_ASSERTF((DeeType_FLAGS(self)&DEE_TYPE_FLAG_HEAP_TYPE)!=0,
+             "Destroying non-heap type %q",DeeType_GET_SLOT(self,tp_name));
  if ((DeeType_FLAGS(self)&DEE_TYPE_FLAG_REGISTERED_MARSHAL)!=0)
   DeeMarshal_UnregisterType(self);
  if ((DeeType_FLAGS(self)&DEE_TYPE_FLAG_STATIC_NAME)==0)

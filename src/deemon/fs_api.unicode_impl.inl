@@ -3316,94 +3316,6 @@ expand:
 }
 #endif
 
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_F(ChmodStringToModeWithHandle)(
- DEE_A_IN_Z DEE_CHAR const *filename, DEE_A_IN Dee_filedescr_t file,
- DEE_A_IN_Z char const *mode_str, DEE_A_OUT Dee_mode_t *mode) {
- int opkind = 0; char const *mode_iter = mode_str;
- Dee_uint32_t channels = 0;
- Dee_uint32_t op_flags = 0;
- while (1) switch (*mode_iter++) {
-  case 'u': case 'U': channels |= 0700; break;
-  case 'g': case 'G': channels |= 0070; break;
-  case 'o': case 'O': channels |= 0007; break;
-  default: --mode_iter; goto p_opkind;
- }
-p_opkind:
- while (1) switch (*mode_iter++) {
-  case '+': opkind = 1; break;
-  case '-': opkind = 2; break;
-  case '=': opkind = 3; break;
-  default: --mode_iter; goto p_opflags;
- }
-p_opflags:
- while (1) switch (*mode_iter++) {
-  case 'r': case 'R': op_flags |= 0444; break;
-  case 'w': case 'W': op_flags |= 0222; break;
-  case 'x': case 'X': op_flags |= 0111; break;
-  default: --mode_iter; goto end;
- }
-end:
- if (*mode_iter) {
-  DeeError_SetStringf(&DeeErrorType_ValueError,
-                      "chmod(" DEE_PRINTF_STRQ ",%q) : Invalid chmod format",
-                      filename,mode_str);
-  return -1;
- }
- if (!channels) channels = 0777;
- if (opkind == 3) *mode = op_flags&channels; else {
-  Dee_mode_t old_mode;
-  if (_DeeFS_F(GetModWithHandle)(filename,file,&old_mode) == -1) return -1;
-  *mode = old_mode&0777;
-  if (opkind == 1) *mode |= op_flags&channels;
-  else if (opkind == 2) *mode &= ~(op_flags&channels);
- }
- return 0;
-}
-
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeFS_F(ChmodStringToMode)(
- DEE_A_IN_Z DEE_CHAR const *filename,
- DEE_A_IN_Z char const *mode_str, DEE_A_OUT Dee_mode_t *mode) {
- int opkind = 0; char const *mode_iter = mode_str;
- Dee_uint32_t channels = 0;
- Dee_uint32_t op_flags = 0;
- while (1) switch (*mode_iter++) {
-  case 'u': case 'U': channels |= 0700; break;
-  case 'g': case 'G': channels |= 0070; break;
-  case 'o': case 'O': channels |= 0007; break;
-  default: --mode_iter; goto p_opkind;
- }
-p_opkind:
- while (1) switch (*mode_iter++) {
-  case '+': opkind = 1; break;
-  case '-': opkind = 2; break;
-  case '=': opkind = 3; break;
-  default: --mode_iter; goto p_opflags;
- }
-p_opflags:
- while (1) switch (*mode_iter++) {
-  case 'r': case 'R': op_flags |= 0444; break;
-  case 'w': case 'W': op_flags |= 0222; break;
-  case 'x': case 'X': op_flags |= 0111; break;
-  default: --mode_iter; goto end;
- }
-end:
- if (*mode_iter) {
-  DeeError_SetStringf(&DeeErrorType_ValueError,
-                      "chmod(" DEE_PRINTF_STRQ ",%q) : Invalid chmod format",
-                      filename,mode_str);
-  return -1;
- }
- if (!channels) channels = 0777;
- if (opkind == 3) *mode = op_flags&channels; else {
-  Dee_mode_t old_mode;
-  if (_DeeFS_F(GetMod)(filename,&old_mode) == -1) return -1;
-  *mode = old_mode&0777;
-  if (opkind == 1) *mode |= op_flags&channels;
-  else if (opkind == 2) *mode &= ~(op_flags&channels);
- }
- return 0;
-}
-
 
 
 
@@ -3849,14 +3761,6 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_F(Chmod)(
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return -1;
  result = _DeeFS_F(Chmod)(DEE_STRING_STR(path),mode);
- Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_F(ChmodString)(
- DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_Z char const *mode) {
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return -1;
- result = _DeeFS_F(ChmodString)(DEE_STRING_STR(path),mode);
  Dee_DECREF(path);
  return result;
 }

@@ -25,6 +25,7 @@
 #include <deemon/optional/string_forward.h>
 #include <deemon/optional/std/stdarg.h>
 #include <deemon/optional/std/string.h>
+#include <deemon/optional/fs_api.modechange.h>
 #ifdef DEE_LIMITED_DEX
 #include <deemon/__bswap_intrin.inl>
 #include <deemon/optional/atomic_mutex.h>
@@ -59,6 +60,18 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 DEE_PRIVATE_DECL_DEE_FILE_TYPEOBJECT
 #undef DEE_PRIVATE_DECL_DEE_FILE_TYPEOBJECT
 #endif
+#ifdef DEE_PRIVATE_DECL_DEE_MODE_T
+DEE_PRIVATE_DECL_DEE_MODE_T
+#undef DEE_PRIVATE_DECL_DEE_MODE_T
+#endif
+#ifdef DEE_PRIVATE_DECL_DEE_UID_T
+DEE_PRIVATE_DECL_DEE_UID_T
+#undef DEE_PRIVATE_DECL_DEE_UID_T
+#endif
+#ifdef DEE_PRIVATE_DECL_DEE_GID_T
+DEE_PRIVATE_DECL_DEE_GID_T
+#undef DEE_PRIVATE_DECL_DEE_GID_T
+#endif
 
 DEE_OBJECT_DEF(DeeFileObject);
 DEE_OBJECT_DEF(DeeFileFDObject);
@@ -67,11 +80,6 @@ DEE_OBJECT_DEF(DeeFileIteratorObject);
 DEE_OBJECT_DEF(DeeFileWriterObject);
 DEE_OBJECT_DEF(DeeFileReaderObject);
 DEE_OBJECT_DEF(DeeFileJoinedObject);
-
-#ifdef DEE_PRIVATE_DECL_DEE_MODE_T
-DEE_PRIVATE_DECL_DEE_MODE_T
-#undef DEE_PRIVATE_DECL_DEE_MODE_T
-#endif
 
 #ifdef DEE_LIMITED_DEX
 struct _DeeFileTypeIOOperators {
@@ -646,6 +654,25 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_SetTimes2(
  DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) *tm_creation,
  DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) *tm_modification)
  DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsFile(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsDir(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsLink(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsDrive(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsMount(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsHidden(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsExecutable(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsCharDev(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsBlockDev(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsFiFo(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsSocket(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) DeeFileIO_ListDir(DEE_A_INOUT_OBJECT(DeeFileIOObject) *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_GetMod(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp, DEE_A_OUT Dee_mode_t *mode) DEE_ATTRIBUTE_NONNULL((1,2));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_ChmodEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *fp, DEE_A_IN Dee_size_t mcc, DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_Chmod(DEE_A_INOUT_OBJECT(DeeFileIOObject) *fp, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_Chown(DEE_A_INOUT_OBJECT(DeeFileIOObject) *fp, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_GetOwn(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) DEE_ATTRIBUTE_NONNULL((1,2,3));
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_RET_EXCEPT(-1) int) DeeFileIO_ChmodString(DEE_A_INOUT_OBJECT(DeeFileIOObject) *fp, DEE_A_IN_Z char const *mode) { Dee_modechange_t change; if (DeeFS_ParseModeChange(mode,&change) != 0) return -1; return DeeFileIO_ChmodEx(fp,1,&change); }
 
 
 //////////////////////////////////////////////////////////////////////////

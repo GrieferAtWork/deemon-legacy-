@@ -520,6 +520,7 @@ DEE_DECL_END
 #include "file.base.inl"
 #include "file_type.inl"
 #ifdef DEE_PLATFORM_WINDOWS
+#include "file.win32_debug.c.inl"
 #include "../sys/_win32.sysfd.filename.c.inl"
 #endif /* DEE_PLATFORM_WINDOWS */
 #endif
