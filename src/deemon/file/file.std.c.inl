@@ -61,17 +61,17 @@ static struct {
 #ifdef DeeSysFD_INIT_STDOUT
  DeeFileFDObject_INIT_REF_VALID(&DeeFileFD_Type,2,DeeSysFD_INIT_STDOUT()), /*< dp_stdout. */
 #elif defined(DeeSysFD_GET_STDOUT)
- DeeFileFDObject_INIT_REF_INVALID(&DeeFileFD_Type,1), /*< dp_stdout. */
+ DeeFileFDObject_INIT_REF_LATER(&DeeFileFD_Type,1), /*< dp_stdout. */
 #endif
 #ifdef DeeSysFD_INIT_STDERR
  DeeFileFDObject_INIT_REF_VALID(&DeeFileFD_Type,2,DeeSysFD_INIT_STDERR()), /*< dp_stderr. */
 #elif defined(DeeSysFD_GET_STDERR)
- DeeFileFDObject_INIT_REF_INVALID(&DeeFileFD_Type,1), /*< dp_stderr. */
+ DeeFileFDObject_INIT_REF_LATER(&DeeFileFD_Type,1), /*< dp_stderr. */
 #endif
 #ifdef DeeSysFD_INIT_STDIN
  DeeFileFDObject_INIT_REF_VALID(&DeeFileFD_Type,2,DeeSysFD_INIT_STDIN()), /*< dp_stdin. */
 #elif defined(DeeSysFD_GET_STDIN)
- DeeFileFDObject_INIT_REF_INVALID(&DeeFileFD_Type,1), /*< dp_stdin. */
+ DeeFileFDObject_INIT_REF_LATER(&DeeFileFD_Type,1), /*< dp_stdin. */
 #endif
  {DEE_FILE_OBJECT_HEAD_INIT_REF(&DeeFile_Type,2)} /*< dp_stdnull. */
 #ifdef DEE_PLATFORM_WINDOWS
