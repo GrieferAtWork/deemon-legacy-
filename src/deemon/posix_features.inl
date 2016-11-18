@@ -409,7 +409,6 @@
 #define DEE_HAVE_PWRITE DEE_HAVE_PREAD
 #endif
 
-
 #ifndef DEE_HAVE__WOPEN
 #if defined(_MSC_VER)
 # define DEE_HAVE__WOPEN 1

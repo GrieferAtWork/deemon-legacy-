@@ -49,24 +49,6 @@
 //         - Truncate 'this' fd to its current r/w pointer, or return false/throw an Error.IOError
 // >> [[optional]] bool DeeSysFD_TryGetSize(DEE_A_IN struct DeeSysFD const *self, DEE_A_OUT Dee_uint64_t *result);
 // >> [[optional]] void DeeSysFD_GetSize(DEE_A_IN struct DeeSysFD const *self, DEE_A_OUT Dee_uint64_t *result, CODE on_error);
-// >> [[optional
-// >>   struct DeeSysFDTimes { ... };
-// >>   [[optional]] #define DeeSysFDTimes_INIT(atime,ctime,mtime) { ... }
-// >>                void DeeSysFDTimes_Init(DEE_A_OUT struct DeeSysFDTimes *self, Dee_timetick_t atime, Dee_timetick_t ctime, Dee_timetick_t mtime);
-// >>                Dee_timetick_t DeeSysFDTimes_GetATime(DEE_A_IN struct DeeSysFDTimes const *self);
-// >>                Dee_timetick_t DeeSysFDTimes_GetCTime(DEE_A_IN struct DeeSysFDTimes const *self);
-// >>                Dee_timetick_t DeeSysFDTimes_GetMTime(DEE_A_IN struct DeeSysFDTimes const *self);
-// >>                void DeeSysFDTimes_SetATime(DEE_A_INOUT struct DeeSysFDTimes *self, Dee_timetick_t );
-// >>                void DeeSysFDTimes_SetCTime(DEE_A_INOUT struct DeeSysFDTimes *self, Dee_timetick_t );
-// >>                void DeeSysFDTimes_SetMTime(DEE_A_INOUT struct DeeSysFDTimes *self, Dee_timetick_t );
-// >>   [[optional]] bool DeeSysFD_TryGetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT struct DeeSysFDTimes *times);
-// >>   [[optional]] bool DeeSysFD_TryGetATime(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_timetick_t *atime);
-// >>   [[optional]] bool DeeSysFD_TryGetCTime(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_timetick_t *ctime);
-// >>   [[optional]] bool DeeSysFD_TryGetMTime(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT Dee_timetick_t *mtime);
-// >>   [[optional]] void DeeSysFD_GetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT struct DeeSysFDTimes *times, CODE on_error);
-// >>   [[optional]] void DeeSysFD_SetTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN struct DeeSysFDTimes const *times, CODE on_error);
-// >>   [[optional]] void DeeSysFD_SetACMTimes(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN_OPT Dee_timetick_t *atime, DEE_A_IN_OPT Dee_timetick_t *ctime, DEE_A_IN_OPT Dee_timetick_t *mtime, CODE on_error);
-// >> ]]
 //
 // >> [[optional]] #define DeeSysFD_INIT_STDIN()   {...}
 // >> [[optional]] #define DeeSysFD_INIT_STDOUT()  {...}

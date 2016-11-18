@@ -173,14 +173,14 @@ do{\
 #define DEE_UNIX_SYSFD_TRUNC_FUNC     ftruncate
 #endif
 #ifdef DEE_UNIX_SYSFD_TRUNC_FUNC
-DEE_STATIC_INLINE(int) DeeUnixSysFD_TryTruncHandle(int fd) {
+#define DeeUnixSys_TryFDTrunc DeeUnixSys_TryFDTrunc
+DEE_STATIC_INLINE(int) DeeUnixSys_TryFDTrunc(int fd) {
  Dee_int64_t trunc_size;
  trunc_size = (Dee_int64_t)DEE_UNIX_SYSFD_USED_SEEK_FUNCTION(fd,0,SEEK_CUR);
  if DEE_UNLIKELY(trunc_size == -1 && errno != 0) return 0;
  return DEE_UNIX_SYSFD_TRUNC_FUNC(fd,(Dee_uint64_t)trunc_size) != -1;
 }
-#define DeeUnixSysFD_TryTrunc(self) DeeUnixSysFD_TryTruncHandle((self)->unx_fd)
-#define DeeUnixSysFD_Trunc(self,...)\
+#define DeeUnixSys_FDTrunc(fd,...)\
 do{\
  Dee_int64_t _fd_trunc_size; int _fd_error;\
  trunc_size = (Dee_int64_t)DEE_UNIX_SYSFD_USED_SEEK_FUNCTION(fd,0,SEEK_CUR);\
@@ -188,18 +188,24 @@ do{\
   if ((_fd_error = errno) != 0) {\
    DeeError_SetStringf(&DeeErrorType_IOError,\
                        DEE_PP_STR(DEE_UNIX_SYSFD_USED_SEEK_FUNCTION) "(%d,0,SEEK_CUR) : %K",\
-                       DeeSystemError_ToString(_fd_error));\
+                       fd,DeeSystemError_ToString(_fd_error));\
    {__VA_ARGS__;}\
   }\
  }\
- if (DEE_UNIX_SYSFD_TRUNC_FUNC((self)->unx_fd,(Dee_uint64_t)trunc_size) == -1) {\
+ if (DEE_UNIX_SYSFD_TRUNC_FUNC(fd,(Dee_uint64_t)trunc_size) == -1) {\
   DeeError_SetStringf(&DeeErrorType_IOError,\
                       DEE_PP_STR(DEE_UNIX_SYSFD_TRUNC_FUNC) "(%d,%I64u) : %K",\
-                      (self)->unx_fd,trunc_size,\
-                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+                      fd,trunc_size,DeeSystemError_ToString(DeeSystemError_Consume()));\
   {__VA_ARGS__;}\
  }\
 }while(0)
+
+#endif /* DEE_UNIX_SYSFD_TRUNC_FUNC */
+
+
+#ifdef DEE_UNIX_SYSFD_TRUNC_FUNC
+#define DeeUnixSysFD_TryTrunc(self)  DeeUnixSys_TryFDTrunc((self)->unx_fd)
+#define DeeUnixSysFD_Trunc(self,...) DeeUnixSys_FDTrunc((self)->unx_fd,__VA_ARGS__)
 #endif /* DEE_UNIX_SYSFD_TRUNC_FUNC */
 
 
@@ -217,14 +223,20 @@ do{\
 // === DeeUnixSysFileFD ===
 struct DeeUnixSysFileFD { DEE_UNIX_SYSFD_HEAD };
 
+#ifdef O_LARGEFILE
+#define DEE_UNIX_SYSFD_USED_O_LARGEFILE O_LARGEFILE
+#else
+#define DEE_UNIX_SYSFD_USED_O_LARGEFILE 0
+#endif
+
 #define DEE_UNIX_SYSFILEFD_OPENMODE_GETMODE(openmode)\
 (DEE_OPENMODE_HASUPDATE(openmode) ?\
- (DEE_OPENMODE_ISREAD(openmode)  ?   (O_RDWR) : \
-  DEE_OPENMODE_ISWRITE(openmode) ?   (O_RDWR|O_CREAT|O_TRUNC) : \
-/*DEE_OPENMODE_ISAPPEND(openmode)? */(O_RDWR|O_CREAT|O_APPEND)) :\
- (DEE_OPENMODE_ISREAD(openmode)  ?   (O_RDONLY) : \
-  DEE_OPENMODE_ISWRITE(openmode) ?   (O_RDONLY|O_CREAT|O_TRUNC) : \
-/*DEE_OPENMODE_ISAPPEND(openmode)? */(O_RDONLY|O_CREAT|O_APPEND)))
+ (DEE_OPENMODE_ISREAD(openmode)  ?   (DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDWR) : \
+  DEE_OPENMODE_ISWRITE(openmode) ?   (DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDWR|O_CREAT|O_TRUNC) : \
+/*DEE_OPENMODE_ISAPPEND(openmode)? */(DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDWR|O_CREAT|O_APPEND)) :\
+ (DEE_OPENMODE_ISREAD(openmode)  ?   (DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDONLY) : \
+  DEE_OPENMODE_ISWRITE(openmode) ?   (DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDONLY|O_CREAT|O_TRUNC) : \
+/*DEE_OPENMODE_ISAPPEND(openmode)? */(DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDONLY|O_CREAT|O_APPEND)))
 
 
 #define DeeUnixSysFileFD_Utf8TryInit(self,filename,mode,perms) \
@@ -312,21 +324,24 @@ do{\
 
 
 
-DEE_STATIC_INLINE(void) _quick_itos8(Dee_Utf8Char *out, int v) {
+DEE_STATIC_INLINE(void) _deeunix_quick_itos8(Dee_Utf8Char *out, int v) {
  int used_v = v,len; Dee_Utf8Char *used_out;
  do ++len; while ((used_v /= 10) != 0);
  used_v = v,used_out = out+len;
  do *--out = '0'+(used_v%10); while ((used_v != 10) != 0);
 }
-DEE_STATIC_INLINE(void) _quick_itosw(Dee_WideChar *out, int v) {
+DEE_STATIC_INLINE(void) _deeunix_quick_itosw(Dee_WideChar *out, int v) {
  int used_v = v,len; Dee_WideChar *used_out;
  do ++len; while ((used_v /= 10) != 0);
  used_v = v,used_out = out+len;
  do *--out = '0'+(used_v%10); while ((used_v != 10) != 0);
 }
 
-DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetUtf8Name(int fd) { Dee_Utf8Char buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _quick_itos8(buffer+14,fd); return _DeeFS_Utf8ReadLink(buffer); }
-DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetWideName(int fd) { Dee_WideChar buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _quick_itosw(buffer+14,fd); return _DeeFS_WideReadLink(buffer); }
+#define DeeUnixSysFD_DoGetName     DeeUnixSysFD_DoGetUtf8Name
+#define DeeUnixSysFD_DoGetUtf8Name DeeUnixSysFD_DoGetUtf8Name
+#define DeeUnixSysFD_DoGetWideName DeeUnixSysFD_DoGetWideName
+DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetUtf8Name(int fd) { Dee_Utf8Char buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _deeunix_quick_itos8(buffer+14,fd); return _DeeFS_Utf8ReadLink(buffer); }
+DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetWideName(int fd) { Dee_WideChar buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _deeunix_quick_itosw(buffer+14,fd); return _DeeFS_WideReadLink(buffer); }
 #define DeeUnixSysFileFD_Utf8Filename(ob) DeeUnixSysFD_DoGetUtf8Name((ob)->unx_fd)
 #define DeeUnixSysFileFD_WideFilename(ob) DeeUnixSysFD_DoGetWideName((ob)->unx_fd)
 
@@ -338,7 +353,7 @@ DEE_PRIVATE_DECL_DEE_TIMETICK_T
 #endif
 
 #define DeeSysFileFD_TryGetTimes(self,atime,ctime,mtime)\
- DeeUnixSys_TryGetTimesFromFD((self)->unx_fd,atime,ctime,mtime)
+ DeeUnixSys_TryFDGetTimes((self)->unx_fd,atime,ctime,mtime)
 #define DeeSysFileFD_GetTimes(self,atime,ctime,mtime,...)\
 do{\
  if (!DeeSysFileFD_TryGetTimes(self,atime,ctime,mtime)) {\
@@ -349,7 +364,8 @@ do{\
  }\
 }while(0)
 
-DEE_STATIC_INLINE(int) DeeUnixSys_TryGetTimesFromFD(
+#define DeeUnixSys_TryFDGetTimes DeeUnixSys_TryFDGetTimes
+DEE_STATIC_INLINE(int) DeeUnixSys_TryFDGetTimes(
  int fd, Dee_timetick_t *atime, Dee_timetick_t *ctime, Dee_timetick_t *mtime) {
  struct stat st;
  if DEE_UNLIKELY(fstat(fd,&st) == -1) return 0;
@@ -363,7 +379,8 @@ DEE_STATIC_INLINE(int) DeeUnixSys_TryGetTimesFromFD(
 // NOTE: Setting filetime is only possible through use of the filename,
 //       which is a fallback case that we're not required to handle!
 #if DEE_HAVE_FSTAT
-DEE_STATIC_INLINE(Dee_mode_t) DeeUnixSys_TryGetModeFromFD(int fd) {
+#define DeeUnixSys_TryFDGetMode DeeUnixSys_TryFDGetMode
+DEE_STATIC_INLINE(Dee_mode_t) DeeUnixSys_TryFDGetMode(int fd) {
  struct stat st;
  if DEE_UNLIKELY(fstat(fd,&st) == -1) return 0;
  return st.st_mode;
@@ -404,84 +421,85 @@ do{\
 }while(0)
 
 #ifdef S_ISREG
-#define DeeUnixSys_TryIsFileFromFD(fd) S_ISREG(DeeUnixSys_TryGetModeFromFD(fd))
-#define DeeUnixSys_IsFileFromFD(fd,result,...) \
+#define DeeUnixSys_TryFDIsFile(fd) S_ISREG(DeeUnixSys_TryFDGetMode(fd))
+#define DeeUnixSys_FDIsFile(fd,result,...) \
  DEE_UNIXSYS_GENERIC_FSTAT_MODE_PROXY(S_ISREG,fd,result,__VA_ARGS__)
 #endif
 #ifdef S_ISDIR
-#define DeeUnixSys_TryIsDirFromFD(fd) S_ISDIR(DeeUnixSys_TryGetModeFromFD(fd))
-#define DeeUnixSys_IsDirFromFD(fd,result,...) \
+#define DeeUnixSys_TryFDIsDir(fd) S_ISDIR(DeeUnixSys_TryFDGetMode(fd))
+#define DeeUnixSys_FDIsDir(fd,result,...) \
  DEE_UNIXSYS_GENERIC_FSTAT_MODE_PROXY(S_ISDIR,fd,result,__VA_ARGS__)
 #endif
 #ifdef S_ISCHR
-#define DeeUnixSys_TryIsCharDevFromFD(fd) S_ISCHR(DeeUnixSys_TryGetModeFromFD(fd))
-#define DeeUnixSys_IsCharDevFromFD(fd,result,...) \
+#define DeeUnixSys_TryFDIsCharDev(fd) S_ISCHR(DeeUnixSys_TryFDGetMode(fd))
+#define DeeUnixSys_FDIsCharDev(fd,result,...) \
  DEE_UNIXSYS_GENERIC_FSTAT_MODE_PROXY(S_ISCHR,fd,result,__VA_ARGS__)
 #endif
 #ifdef S_ISBLK
-#define DeeUnixSys_TryIsBlockDevFromFD(fd) S_ISBLK(DeeUnixSys_TryGetModeFromFD(fd))
-#define DeeUnixSys_IsBlockDevFromFD(fd,result,...) \
+#define DeeUnixSys_TryFDIsBlockDev(fd) S_ISBLK(DeeUnixSys_TryFDGetMode(fd))
+#define DeeUnixSys_IsFDBlockDev(fd,result,...) \
  DEE_UNIXSYS_GENERIC_FSTAT_MODE_PROXY(S_ISBLK,fd,result,__VA_ARGS__)
 #endif
 #ifdef S_ISFIFO
-#define DeeUnixSys_TryIsFiFoFromFD(fd) S_ISFIFO(DeeUnixSys_TryGetModeFromFD(fd))
-#define DeeUnixSys_IsFiFoFromFD(fd,result,...) \
+#define DeeUnixSys_TryFDIsFiFo(fd) S_ISFIFO(DeeUnixSys_TryFDGetMode(fd))
+#define DeeUnixSys_FDIsFiFo(fd,result,...) \
  DEE_UNIXSYS_GENERIC_FSTAT_MODE_PROXY(S_ISFIFO,fd,result,__VA_ARGS__)
 #endif
 #ifdef S_ISLNK
-#define DeeUnixSys_TryIsLinkFromFD(fd) S_ISLNK(DeeUnixSys_TryGetModeFromFD(fd))
-#define DeeUnixSys_IsLinkFromFD(fd,result,...) \
+#define DeeUnixSys_TryFDIsLink(fd) S_ISLNK(DeeUnixSys_TryFDGetMode(fd))
+#define DeeUnixSys_FDIsLink(fd,result,...) \
  DEE_UNIXSYS_GENERIC_FSTAT_MODE_PROXY(S_ISLNK,fd,result,__VA_ARGS__)
 #endif
 #ifdef S_ISSOCK
-#define DeeUnixSys_TryIsSocketFromFD(fd) S_ISSOCK(DeeUnixSys_TryGetModeFromFD(fd))
-#define DeeUnixSys_IsSocketFromFD(fd,result,...) \
+#define DeeUnixSys_TryFDIsSocket(fd) S_ISSOCK(DeeUnixSys_TryFDGetMode(fd))
+#define DeeUnixSys_FDIsSocket(fd,result,...) \
  DEE_UNIXSYS_GENERIC_FSTAT_MODE_PROXY(S_ISSOCK,fd,result,__VA_ARGS__)
 #endif
 #define DEE_UNIX_PRIVATE_IS_EXEC(mode) (((mode)&0111)!=0)
-#define DeeUnixSys_TryIsExecutableFromFD(fd) DEE_UNIX_PRIVATE_IS_EXEC(DeeUnixSys_TryGetModeFromFD(fd))
-#define DeeUnixSys_IsExecutableFromFD(fd,result,...) \
+#define DeeUnixSys_TryFDIsExecutable(fd) DEE_UNIX_PRIVATE_IS_EXEC(DeeUnixSys_TryFDGetMode(fd))
+#define DeeUnixSys_FDIsExecutable(fd,result,...) \
  DEE_UNIXSYS_GENERIC_FSTAT_MODE_PROXY(DEE_UNIX_PRIVATE_IS_EXEC,fd,result,__VA_ARGS__)
-#ifdef DeeUnixSys_TryIsFileFromFD
-#define DeeUnixSysFileFD_TryIsFile(self)         DeeUnixSys_TryIsFileFromFD((self)->unx_fd)
-#define DeeUnixSysFileFD_IsFile(self,result,...) DeeUnixSys_IsFileFromFD((self)->unx_fd,result,__VA_ARGS__)
+#ifdef DeeUnixSys_TryFDIsFile
+#define DeeUnixSysFileFD_TryIsFile(self)         DeeUnixSys_TryFDIsFile((self)->unx_fd)
+#define DeeUnixSysFileFD_IsFile(self,result,...) DeeUnixSys_FDIsFile((self)->unx_fd,result,__VA_ARGS__)
 #endif
-#ifdef DeeUnixSys_TryIsDirFromFD
-#define DeeUnixSysFileFD_TryIsDir(self)         DeeUnixSys_TryIsDirFromFD((self)->unx_fd)
-#define DeeUnixSysFileFD_IsDir(self,result,...) DeeUnixSys_IsDirFromFD((self)->unx_fd,result,__VA_ARGS__)
+#ifdef DeeUnixSys_TryFDIsDir
+#define DeeUnixSysFileFD_TryIsDir(self)         DeeUnixSys_TryFDIsDir((self)->unx_fd)
+#define DeeUnixSysFileFD_IsDir(self,result,...) DeeUnixSys_FDIsDir((self)->unx_fd,result,__VA_ARGS__)
 #endif
-#ifdef DeeUnixSys_TryIsLinkFromFD
-#define DeeUnixSysFileFD_TryIsLink(self)         DeeUnixSys_TryIsLinkFromFD((self)->unx_fd)
-#define DeeUnixSysFileFD_IsLink(self,result,...) DeeUnixSys_IsLinkFromFD((self)->unx_fd,result,__VA_ARGS__)
+#ifdef DeeUnixSys_TryFDIsLink
+#define DeeUnixSysFileFD_TryIsLink(self)         DeeUnixSys_TryFDIsLink((self)->unx_fd)
+#define DeeUnixSysFileFD_IsLink(self,result,...) DeeUnixSys_FDIsLink((self)->unx_fd,result,__VA_ARGS__)
 #endif
-#ifdef DeeUnixSys_TryIsCharDevFromFD
-#define DeeUnixSysFileFD_TryIsCharDev(self)         DeeUnixSys_TryIsCharDevFromFD((self)->unx_fd)
-#define DeeUnixSysFileFD_IsCharDev(self,result,...) DeeUnixSys_IsCharDevFromFD((self)->unx_fd,result,__VA_ARGS__)
+#ifdef DeeUnixSys_TryFDIsCharDev
+#define DeeUnixSysFileFD_TryIsCharDev(self)         DeeUnixSys_TryFDIsCharDev((self)->unx_fd)
+#define DeeUnixSysFileFD_IsCharDev(self,result,...) DeeUnixSys_FDIsCharDev((self)->unx_fd,result,__VA_ARGS__)
 #endif
-#ifdef DeeUnixSys_TryIsBlockDevFromFD
-#define DeeUnixSysFileFD_TryIsBlockDev(self)         DeeUnixSys_TryIsBlockDevFromFD((self)->unx_fd)
-#define DeeUnixSysFileFD_IsBlockDev(self,result,...) DeeUnixSys_IsBlockDevFromFD((self)->unx_fd,result,__VA_ARGS__)
+#ifdef DeeUnixSys_TryFDIsBlockDev
+#define DeeUnixSysFileFD_TryIsBlockDev(self)         DeeUnixSys_TryFDIsBlockDev((self)->unx_fd)
+#define DeeUnixSysFileFD_IsBlockDev(self,result,...) DeeUnixSys_IsFDBlockDev((self)->unx_fd,result,__VA_ARGS__)
 #endif
-#ifdef DeeUnixSys_TryIsFiFoFromFD
-#define DeeUnixSysFileFD_TryIsFiFo(self)         DeeUnixSys_TryIsFiFoFromFD((self)->unx_fd)
-#define DeeUnixSysFileFD_IsFiFo(self,result,...) DeeUnixSys_IsFiFoFromFD((self)->unx_fd,result,__VA_ARGS__)
+#ifdef DeeUnixSys_TryFDIsFiFo
+#define DeeUnixSysFileFD_TryIsFiFo(self)         DeeUnixSys_TryFDIsFiFo((self)->unx_fd)
+#define DeeUnixSysFileFD_IsFiFo(self,result,...) DeeUnixSys_FDIsFiFo((self)->unx_fd,result,__VA_ARGS__)
 #endif
-#ifdef DeeUnixSys_TryIsSocketFromFD
-#define DeeUnixSysFileFD_TryIsSocket(self)         DeeUnixSys_TryIsSocketFromFD((self)->unx_fd)
-#define DeeUnixSysFileFD_IsSocket(self,result,...) DeeUnixSys_IsSocketFromFD((self)->unx_fd,result,__VA_ARGS__)
+#ifdef DeeUnixSys_TryFDIsSocket
+#define DeeUnixSysFileFD_TryIsSocket(self)         DeeUnixSys_TryFDIsSocket((self)->unx_fd)
+#define DeeUnixSysFileFD_IsSocket(self,result,...) DeeUnixSys_FDIsSocket((self)->unx_fd,result,__VA_ARGS__)
 #endif
-#define DeeUnixSysFileFD_TryIsExecutable(self)         DeeUnixSys_TryIsExecutableFromFD((self)->unx_fd)
-#define DeeUnixSysFileFD_IsExecutable(self,result,...) DeeUnixSys_IsExecutableFromFD((self)->unx_fd,result,__VA_ARGS__)
+#define DeeUnixSysFileFD_TryIsExecutable(self)         DeeUnixSys_TryFDIsExecutable((self)->unx_fd)
+#define DeeUnixSysFileFD_IsExecutable(self,result,...) DeeUnixSys_FDIsExecutable((self)->unx_fd,result,__VA_ARGS__)
 
 // TODO: DeeUnixSysFileFD_IsMount could be implemented being a little bit faster...
 
-DEE_STATIC_INLINE(int) DeeUnixSys_TryGetModFromFD(int fd, Dee_mode_t *result) {
+#define DeeUnixSys_TryFDGetMod DeeUnixSys_TryFDGetMod
+DEE_STATIC_INLINE(int) DeeUnixSys_TryFDGetMod(int fd, Dee_mode_t *result) {
  struct stat st;
  if DEE_UNLIKELY(fstat(fd,&st) == -1) return 0;
  *result = st.st_mode & 0777;
  return 1;
 }
-#define DeeUnixSys_GetModFromFD(fd,result,...)\
+#define DeeUnixSys_FDGetMod(fd,result,...)\
 do{\
  struct stat _fd_st;\
  if DEE_UNLIKELY(fstat(fd,&_fd_st) == -1) {\
@@ -493,10 +511,77 @@ do{\
  *(result) = _fd_st.st_mode & 0777;\
 }while(0)
 
-#define DeeUnixSysFileFD_TryGetMod(self,result)  DeeUnixSys_TryGetModFromFD((self)->unx_fd,result)
-#define DeeUnixSysFileFD_GetMod(self,result,...) DeeUnixSys_GetModFromFD((self)->unx_fd,result,__VA_ARGS__)
+#define DeeUnixSysFileFD_TryGetMod(self,result)  DeeUnixSys_TryFDGetMod((self)->unx_fd,result)
+#define DeeUnixSysFileFD_GetMod(self,result,...) DeeUnixSys_FDGetMod((self)->unx_fd,result,__VA_ARGS__)
+#endif /* DEE_HAVE_FSTAT */
+
+#if DEE_HAVE_FCHMOD
+#define DeeUnixSys_TryFDChMod(fd,mode) (fchmod(fd,mode) != -1)
+#define DeeUnixSys_FDChMod(fd,mode,...)\
+do{\
+ if DEE_UNLIKELY(fchmod(fd,mode) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "fchmod(%d,%.4o) : %K",fd,(int)(mode),\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif
+
+#ifdef DeeUnixSys_TryFDChMod
+#define DeeUnixSysFileFD_TryChMod(self,mode)  DeeUnixSys_TryFDChMod((self)->unx_fd,mode)
+#define DeeUnixSysFileFD_ChMod(self,mode,...) DeeUnixSys_FDChMod((self)->unx_fd,mode,__VA_ARGS__)
+#endif
+
+
+#if DEE_HAVE_FSTAT
+#define DeeUnixSys_TryFDGetOwn DeeUnixSys_TryFDGetOwn
+DEE_STATIC_INLINE(int) DeeUnixSys_TryFDGetOwn(int fd, Dee_uid_t *owner, Dee_gid_t *group) {
+ struct stat st;
+ if DEE_UNLIKELY(fstat(fd,&st) == -1) return 0;
+ *owner = st.st_uid;
+ *group = st.st_gid;
+ return 1;
+}
+#define DeeUnixSys_FDGetOwn(fd,owner,group,...)\
+do{\
+ struct stat _fd_st;\
+ if DEE_UNLIKELY(fstat(fd,&_fd_st) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "fstat(%d) : %K",fd,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ *(owner) = _fd_st.st_uid;\
+ *(group) = _fd_st.st_gid;\
+}while(0)
 
 #endif /* DEE_HAVE_FSTAT */
+
+
+#if DEE_HAVE_FCHOWN
+#define DeeUnixSys_TryFDChown(fd,owner,group) (fchown(fd,owner,group) != -1)
+#define DeeUnixSys_FDChown(fd,owner,group,...) \
+do{\
+ if DEE_UNLIKELY(fchown(fd,owner,group) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "fchown(%d,%I" DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_UID_T)) "d,"\
+                                "%I" DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_GID_T)) "d) : %K",fd,\
+                      (Dee_uid_t)(owner),(Dee_gid_t)(group),\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif /* DEE_HAVE_FCHOWN */
+
+#ifdef DeeUnixSys_TryFDGetOwn
+#define DeeUnixSysFileFD_TryGetOwn(self,owner,group)  DeeUnixSys_TryFDGetOwn((self)->unx_fd,owner,group)
+#define DeeUnixSysFileFD_GetOwn(self,owner,group,...) DeeUnixSys_FDGetOwn((self)->unx_fd,owner,group,__VA_ARGS__)
+#endif
+#ifdef DeeUnixSys_TryFDChown
+#define DeeUnixSysFileFD_TryChown(self,owner,group)   DeeUnixSys_TryFDChown((self)->unx_fd,owner,group)
+#define DeeUnixSysFileFD_Chown(self,owner,group,...)  DeeUnixSys_FDChown((self)->unx_fd,owner,group,__VA_ARGS__)
+#endif
 
 
 
@@ -601,6 +686,18 @@ do{\
 #ifdef DeeUnixSysFileFD_TryGetMod
 #define DeeSysFileFD_TryGetMod         DeeUnixSysFileFD_TryGetMod
 #define DeeSysFileFD_GetMod            DeeUnixSysFileFD_GetMod
+#endif
+#ifdef DeeUnixSysFileFD_TryChMod
+#define DeeSysFileFD_TryChMod          DeeUnixSysFileFD_TryChMod
+#define DeeSysFileFD_ChMod             DeeUnixSysFileFD_ChMod
+#endif
+#ifdef DeeUnixSysFileFD_TryGetOwn
+#define DeeSysFileFD_TryGetOwn        DeeUnixSysFileFD_TryGetOwn
+#define DeeSysFileFD_GetOwn           DeeUnixSysFileFD_GetOwn
+#endif
+#ifdef DeeUnixSysFileFD_TryChown
+#define DeeSysFileFD_TryChown         DeeUnixSysFileFD_TryChown
+#define DeeSysFileFD_Chown            DeeUnixSysFileFD_Chown
 #endif
 
 

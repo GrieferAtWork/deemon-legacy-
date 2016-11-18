@@ -782,27 +782,30 @@ DeeProcess_NewObject(DEE_A_IN_OBJECT(DeeStringObject) const *cmd) {
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeProcessObject) *DeeProcess_NewExObject(
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *exe, DEE_A_IN_OBJECT(DeeAnyStringObject) const *args) {
- DeeProcessObject *result; DeeObject *temp;
+ DeeProcessObject *result;
  DEE_ASSERT(DeeObject_Check(exe));
  DEE_ASSERT(DeeObject_Check(args));
  if ((exe = DeeFS_PathExpandObject(exe)) == NULL) return NULL;
  if (DeeWideString_Check(args)) Dee_INCREF(args);
  else if ((args = DeeWideString_Cast(args)) == NULL) { result = NULL; goto err_exe; }
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (DeeWideString_Check(exe)) {
-  if (DeeVFS_WideIsVirtualPath(DeeWideString_STR(exe))) {
-   if ((temp = DeeVFS_WideReadReFsLink(DeeWideString_STR(exe))) == NULL) goto err_args_r;
-   Dee_DECREF(exe);
-   Dee_INHERIT_REF(exe,temp);
-  }
- } else {
-  if (DeeUtf8String_InplaceCast((DeeObject const **)&exe) != 0) {
+ {
+  DeeObject *temp;
+  if (DeeWideString_Check(exe)) {
+   if (DeeVFS_WideIsVirtualPath(DeeWideString_STR(exe))) {
+    if ((temp = DeeVFS_WideReadReFsLink(DeeWideString_STR(exe))) == NULL) goto err_args_r;
+    Dee_DECREF(exe);
+    Dee_INHERIT_REF(exe,temp);
+   }
+  } else {
+   if (DeeUtf8String_InplaceCast((DeeObject const **)&exe) != 0) {
 err_args_r: result = NULL; goto err_args;
-  }
-  if (DeeVFS_Utf8IsVirtualPath(DeeUtf8String_STR(exe))) {
-   if ((temp = DeeVFS_Utf8ReadReFsLink(DeeUtf8String_STR(exe))) == NULL) goto err_args_r;
-   Dee_DECREF(exe);
-   Dee_INHERIT_REF(exe,temp);
+   }
+   if (DeeVFS_Utf8IsVirtualPath(DeeUtf8String_STR(exe))) {
+    if ((temp = DeeVFS_Utf8ReadReFsLink(DeeUtf8String_STR(exe))) == NULL) goto err_args_r;
+    Dee_DECREF(exe);
+    Dee_INHERIT_REF(exe,temp);
+   }
   }
  }
 #endif
@@ -812,7 +815,13 @@ err_args_r: result = NULL; goto err_args;
   DeeProcess_INIT_NONREF(result);
   Dee_INHERIT_REF(result->p_exe,*(DeeAnyStringObject **)&exe);
   Dee_INHERIT_REF(result->p_args,*(DeeAnyStringObject **)&args);
- } else {err_args: Dee_DECREF(args);err_exe: Dee_DECREF(exe); }
+ } else {
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+err_args:
+#endif
+  Dee_DECREF(args);
+err_exe: Dee_DECREF(exe);
+ }
  return (DeeObject *)result;
 }
 
@@ -904,18 +913,11 @@ err_cmdlinegen:
  memset(&info,0,sizeof(STARTUPINFOA));
  info.cb = sizeof(STARTUPINFOA);
  info.dwFlags = STARTF_USESTDHANDLES;
- // Lock all files to gain exclusive rights to their handles
- if (_self->p_stdin) DeeFile_ACQUIRE(_self->p_stdin);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_ACQUIRE(_self->p_stdout);
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_ACQUIRE(_self->p_stderr);
 #define IMPORT_HANDLE(dst,src,default)\
 do{\
  if (DeeFileFD_Win32AcquireHandle((DeeObject *)(src),&(dst)) == 0) {\
   if (!SetHandleInformation(dst,HANDLE_FLAG_INHERIT,1)) goto err_hinfo;\
-  /* TODO: We should probably keep the ticket until the process has started. */\
+  /* TODO: We should probably keep the tickets until the process has started. */\
   DeeFileFD_Win32ReleaseHandle((DeeObject *)(src));\
  } else {\
   if (!DuplicateHandle(\
@@ -976,12 +978,6 @@ do{\
   goto err_ulock_files;
  }
  _self ->p_handle = detached ? DEE_PROCESS_INVALID_HANDLE : pinfo.hProcess;
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_RELEASE(_self->p_stderr);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_RELEASE(_self->p_stdout);
- if (_self->p_stdin) DeeFile_RELEASE(_self->p_stdin);
  DeeProcess_RELEASE(self);
 
  if (detached && !CloseHandle(pinfo.hProcess)) SetLastError(0);
@@ -994,12 +990,6 @@ do{\
 err_hinfo:
  DeeError_SystemError("SetHandleInformation");
 err_ulock_files:
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_RELEASE(_self->p_stderr);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_RELEASE(_self->p_stdout);
- if (_self->p_stdin) DeeFile_RELEASE(_self->p_stdin);
  DeeProcess_RELEASE(self);
  Dee_XDECREF(usedcwd);
  Dee_DECREF(cmdline);

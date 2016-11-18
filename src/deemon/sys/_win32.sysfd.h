@@ -600,9 +600,6 @@ do{\
 #define DeeWin32SysFileFD_TryChmod(self,mode)     DeeWin32Sys_TryHandleChmod((self)->w32_handle,mode)
 #define DeeWin32SysFileFD_Chmod(self,mode,...)    DeeWin32Sys_HandleChmod((self)->w32_handle,mode,__VA_ARGS__)
 
-// TODO: bool DeeSysFileFD_TryChmod(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_mode_t mode);
-// TODO: void DeeSysFileFD_Chmod(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_mode_t mode, CODE on_error);
-
 #define DeeWin32Sys_TryHandleGetOwn(hFile,owner,group)\
  (GetSecurityInfo(hFile,SE_FILE_OBJECT,\
   OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
