@@ -2085,7 +2085,7 @@ DEE_A_RET_EXCEPT(-1) int Dee_Main(
   if (CHECK_L("keep-comments")) { DeeLexer_LEXER(lexer)->l_flags |= TPPLexer_FLAG_TOK_COMMENTS; } else
   if (CHECK("o","out")) { if (argc) { --argc;
    Dee_XDECREF(pp_config.output_file);
-   if DEE_UNLIKELY((pp_config.output_file = DeeFile_Open(*argv++,DEE_OPENMODE('w',0))) == NULL) goto err_0;
+   if DEE_UNLIKELY((pp_config.output_file = DeeFile_OpenEx(*argv++,DEE_OPENMODE('w',0),0775)) == NULL) goto err_0;
   } } else
   if (*arg == 'C') { if DEE_UNLIKELY(_dee_parsearg_C(&config,arg+1) != 0) goto err_0; } else
   if (CHECK_S("i")) {
@@ -2233,12 +2233,6 @@ exec_func2:
   // Output compiled code to file
   if (pp_config.output_file) {
    if DEE_UNLIKELY(DeeSaveCompiled_FileStream(func,pp_config.output_file) != 0) goto err_2;
-#ifdef DEE_PLATFORM_UNIX
-   // v should always be the case, but might not be forever...
-   if (DeeFileIO_Check(pp_config.output_file)) {
-    if DEE_UNLIKELY(DeeFileIO_Chmod(pp_config.output_file,0777) != 0) goto err_2;
-   }
-#endif
    Dee_CLEAR(pp_config.output_file);
   }
 

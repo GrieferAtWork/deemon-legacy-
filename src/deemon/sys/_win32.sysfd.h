@@ -218,8 +218,8 @@ do{\
   if (_fd_error == ERROR_BROKEN_PIPE) *(ws) = 0;\
   else {\
    DeeError_SetStringf(&DeeErrorType_IOError,\
-                       "WriteFile(%p,%p,%Iu) : %K",\
-                       (self)->w32_handle,p,(Dee_size_t)(s),\
+                       "WriteFile(%p,%p,%Iu:%.*q) : %K",\
+                       (self)->w32_handle,p,(Dee_size_t)(s),(unsigned)(s),p,\
                        DeeSystemError_Win32ToString(_fd_error));\
    {__VA_ARGS__;}\
   }\
@@ -676,6 +676,14 @@ DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideTryInitObject(struct DeeWin32Sys
 #include "_win32.sysfd.createfile.h"
 #endif
 
+#define DeeWin32SysFileFD_TryInitCopy(self,right)\
+ ((self)->w32_openmode = (right)->w32_openmode,DeeWin32SysFD_TryInitCopy(self,right))
+#define DeeWin32SysFileFD_InitCopy(self,right,...) \
+do{\
+ DeeWin32SysFD_InitCopy(self,right,__VA_ARGS__);\
+ (self)->w32_openmode = (right)->w32_openmode;\
+}while(0)
+
 #define DeeWin32SysFileFD_Utf8TryInitObject(self,filename,mode,perms) \
 ((self)->w32_openmode = mode,DeeWin32SysFileFD_DoUtf8TryInitObject(self,filename,\
   DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
@@ -803,6 +811,8 @@ do{\
 #define DeeSysFD_GET_STDERR  DeeWin32SysFD_GET_STDERR
 
 #define DeeSysFileFD                   DeeWin32SysFileFD
+#define DeeSysFileFD_TryInitCopy       DeeWin32SysFileFD_TryInitCopy
+#define DeeSysFileFD_InitCopy          DeeWin32SysFileFD_InitCopy
 #define DeeSysFileFD_Utf8TryInit       DeeWin32SysFileFD_Utf8TryInit
 #define DeeSysFileFD_WideTryInit       DeeWin32SysFileFD_WideTryInit
 #define DeeSysFileFD_Utf8TryInitObject DeeWin32SysFileFD_Utf8TryInitObject

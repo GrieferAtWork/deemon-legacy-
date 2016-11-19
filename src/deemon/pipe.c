@@ -39,23 +39,10 @@
 #include <deemon/structured.h>
 #include <deemon/tuple.h>
 
-#include DEE_INCLUDE_MEMORY_API_DISABLE()
-#ifdef DEE_PLATFORM_WINDOWS
-DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
-#include <Windows.h>
-DEE_COMPILER_MSVC_WARNING_POP
-#elif defined(DEE_PLATFORM_UNIX)
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H
-#include <errno.h>
-#endif
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_UNISTD_H
-#include <unistd.h>
-#endif
-#endif
-#include DEE_INCLUDE_MEMORY_API_ENABLE()
-
 // /scr/*
 #include <deemon/__xconf.inl>
+#include <deemon/file/file.fd.h>
+#include <deemon/sys/sysfd.h>
 #include DEE_INCLUDE_MEMORY_API()
 
 // */ (nano...)
@@ -63,65 +50,41 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 DEE_DECL_BEGIN
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DeePipeObject) *
-_DeePipeReader_NewFromInheritedHandle(DEE_A_IN Dee_filedescr_t handle) {
- DeePipeObject *result;
- if ((result = DeeObject_MALLOCF(DeePipeObject,
-  "pipe.reader (handle = %lu)",(unsigned long)handle)) != NULL) {
-  DeeObject_INIT(result,(DeeTypeObject *)&DeePipeReader_Type);
-  _DeeFile_Init(result);
-  result->p_handle = handle;
- }
- return (DeeObject *)result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(DeePipeObject) *
-_DeePipeWriter_NewFromInheritedHandle(DEE_A_IN Dee_filedescr_t handle) {
- DeePipeObject *result;
- if ((result = DeeObject_MALLOCF(DeePipeObject,
-  "pipe.writer (handle = %lu)",(unsigned long)handle)) != NULL) {
-  DeeObject_INIT(result,(DeeTypeObject *)&DeePipeWriter_Type);
-  _DeeFile_Init(result);
-  result->p_handle = handle;
- }
- return (DeeObject *)result;
-}
+#ifdef DEE_LIMITED_API
+struct DeePipeObject {
+#ifdef DeeSysPipeFD
+ DEE_FILE_FD_OBJECT_HEAD
+ struct DeeSysPipeFD p_descr; /*< Pipe file descriptor. */
+#else
+ DEE_FILE_OBJECT_HEAD
+#endif
+};
+#endif
+
 
 DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1) int DeePipe_New(
  DEE_A_REF DEE_A_OUT_OBJECT(DeePipeObject) **reader,
  DEE_A_REF DEE_A_OUT_OBJECT(DeePipeObject) **writer,
  DEE_A_IN Dee_size_t size_hint) {
- DeePipeObject *r,*w;
+#ifdef DeeSysPipeFD_InitEx
+ DeePipeObject *r,*w; (void)size_hint;
  DEE_ASSERT(reader && writer);
  if DEE_UNLIKELY((r = DeeObject_MALLOCF(DeePipeObject,"pipe.reader (size_hint = %lu)",(unsigned long)size_hint)) == NULL) return -1;
  if DEE_UNLIKELY((w = DeeObject_MALLOCF(DeePipeObject,"pipe.writer (size_hint = %lu)",(unsigned long)size_hint)) == NULL) {err_free_r: DeeObject_Free(r); return -1; }
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_free_rw;
-#ifdef DEE_PLATFORM_WINDOWS
- if DEE_UNLIKELY(!CreatePipe((PHANDLE)&r->p_handle,(PHANDLE)&w->p_handle,NULL,(DWORD)size_hint)) {
-  DeeError_SystemError("CreatePipe");
-err_free_rw:
-  DeeObject_Free(w);
-  goto err_free_r;
- }
-#elif defined(DEE_PLATFORM_UNIX)
- (void)size_hint; // unused
- {int handles[2];
-  if DEE_UNLIKELY(pipe(handles) != 0) {
-   DeeError_SystemError("pipe");
-err_free_rw:
-   DeeObject_Free(w);
-   goto err_free_r;
-  }
-  r->p_handle = handles[0];
-  w->p_handle = handles[1];
- }
-#endif
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {err_free_rw: DeeObject_Free(w); goto err_free_r; }
+ DeeSysPipeFD_InitEx(&r->p_descr,&w->p_descr,size_hint,goto err_free_rw);
  DeeObject_INIT(r,(DeeTypeObject *)&DeePipeReader_Type);
  DeeObject_INIT(w,(DeeTypeObject *)&DeePipeWriter_Type);
- _DeeFile_Init(r);
- _DeeFile_Init(w);
+ DeeFileFD_InitBasic(r,DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED);
+ DeeFileFD_InitBasic(w,DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED);
  Dee_INHERIT_REF(*(DeePipeObject **)reader,r);
  Dee_INHERIT_REF(*(DeePipeObject **)writer,w);
  return 0;
+#else
+ (void)reader,writer,size_hint;
+ DeeError_NotImplemented_str("pipe");
+ return -1;
+#endif
 }
 
 
@@ -129,276 +92,273 @@ err_free_rw:
 
 //////////////////////////////////////////////////////////////////////////
 // Pipe VTable
-static void DEE_CALL _deepipe_tp_dtor(DeePipeObject *self) {
+#if !defined(DEE_PLATFORM_UNIX) && defined(DeeSysPipeFD)
+static DeeObject *DEE_CALL _DeePipe_ToString(DeePipeObject *self, char const *name) {
+ DeeObject *result;
+ DeeFileFD_ACQUIRE_SHARED(self,{ return DeeString_Newf("<%s(CLOSED)>",name); });
 #ifdef DEE_PLATFORM_WINDOWS
- if DEE_UNLIKELY(self->p_handle && !CloseHandle(self->p_handle)) SetLastError(0);
-#elif defined(DEE_PLATFORM_UNIX)
- if DEE_UNLIKELY(self->p_handle > 0 && close(self->p_handle) != 0) errno = 0;
+ result = DeeString_Newf("<%s(%p)>",name,self->p_descr.w32_handle);
+#else
+ result = DeeString_Newf("<%s(%.*q)>",name,(unsigned)sizeof(self->p_descr),&self->p_descr);
 #endif
+ DeeFileFD_RELEASE_SHARED(self);
+ return result;
 }
-static DeeObject *DEE_CALL _deepipe_tp_str(DeePipeObject *self) {
-#ifdef DEE_PLATFORM_WINDOWS
- return DeeString_Newf("<pipe: %#Ix>",self->p_handle);
-#elif defined(DEE_PLATFORM_UNIX)
- return DeeString_Newf("<pipe: %d>",self->p_handle);
+
+#define _pdeepipe_tp_str       &_deepipe_tp_str
+#define _pdeepipereader_tp_str &_deepipereader_tp_str
+#define _pdeepipewriter_tp_str &_deepipewriter_tp_str
+static DeeObject *DEE_CALL _deepipe_tp_str(DeePipeObject *self) { return _DeePipe_ToString(self,"pipe"); }
+static DeeObject *DEE_CALL _deepipereader_tp_str(DeePipeObject *self) { return _DeePipe_ToString(self,"pipe.reader"); }
+static DeeObject *DEE_CALL _deepipewriter_tp_str(DeePipeObject *self) { return _DeePipe_ToString(self,"pipe.writer"); }
+#else
+#define _pdeepipe_tp_str       DeeType_DEFAULT_SLOT(tp_str)
+#define _pdeepipereader_tp_str DeeType_DEFAULT_SLOT(tp_str)
+#define _pdeepipewriter_tp_str DeeType_DEFAULT_SLOT(tp_str)
 #endif
-}
-static int DEE_CALL _deepipe_tp_move_ctor(
- DeeTypeObject *DEE_UNUSED(tp_self),
- DeePipeObject *self, DeePipeObject *right) {
- _DeeFile_InitMove(self,right);
- self->p_handle = right->p_handle;
-#ifdef DEE_PLATFORM_WINDOWS
- right->p_handle = NULL;
-#elif defined(DEE_PLATFORM_UNIX)
- right->p_handle = -1;
-#endif
+
+
+
+#ifdef DeeSysPipeFD_InitCopy
+#define _pdeepipe_tp_copy_ctor &_deepipe_tp_copy_ctor
+static int DEE_CALL _deepipe_tp_copy_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeePipeObject *self, DeePipeObject *right) {
+ Dee_uint32_t newflags;
+ // In here, we always copy the file-descriptor
+ DeePipeFD_ACQUIRE_SHARED(right,{ DeePipeFD_InitBasic(self,DEE_PRIVATE_FILEFLAG_NONE); return 0; });
+ DeeSysPipeFD_InitCopy(&self->p_descr,&right->p_descr,{ DeePipeFD_RELEASE_SHARED(right); return -1; });
+ newflags = right->fo_flags;
+ DeePipeFD_RELEASE_SHARED(right);
+ DeePipeFD_InitBasic(self,newflags|DEE_PRIVATE_FILEFLAG_FD_OWNED);
  return 0;
 }
+DEE_COMPILER_MSVC_WARNING_PUSH(4701)
+#define _pdeepipe_tp_copy_assign &_deepipe_tp_copy_assign
+static int DEE_CALL _deepipe_tp_copy_assign(
+ DeePipeObject *self, DeePipeObject *right) {
+ struct DeeSysPipeFD new_fd,old_fd;
+ Dee_uint32_t newflags,oldflags;
+ if (self != right) {
+  DeePipeFD_ACQUIRE_SHARED(right,{
+   /* NOTE: new_fd is intentionally left uninitialized. */
+   newflags = right->fo_flags;
+   goto after_copy;
+  });
+  newflags = right->fo_flags;
+  // NOTE: Unlike within the copy-constructor, here we
+  //       inherit the ownership attribute from 'right', too.
+  if ((newflags&DEE_PRIVATE_FILEFLAG_FD_OWNED)!=0) {
+   DeeSysPipeFD_InitCopy(&new_fd,&right->p_descr,{ DeePipeFD_RELEASE_SHARED(right); return -1; });
+  } else {
+   new_fd = right->p_descr;
+  }
+  DeePipeFD_RELEASE_SHARED(right);
+after_copy:
+  DeePipeFD_ACQUIRE_EXCLUSIVE(self);
+  oldflags = self->fo_flags;
+  old_fd = self->p_descr;
+  self->fo_flags = newflags;
+  self->p_descr = new_fd;
+  DeePipeFD_RELEASE_EXCLUSIVE(self);
+#if defined(DeeSysPipeFD_Quit) || defined(DeeSysFD_Quit)
+  if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
+                (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
+#ifdef DeeSysPipeFD_Quit
+   DeeSysPipeFD_Quit(&old_fd);
+#endif
+#ifdef DeeSysFD_Quit
+   DeeSysFD_Quit(&old_fd);
+#endif
+  }
+#endif
+ }
+ return 0;
+}
+DEE_COMPILER_MSVC_WARNING_POP
+#else
+#define _pdeepipe_tp_copy_ctor   _pdeefilefd_tp_copy_ctor
+#define _pdeepipe_tp_copy_assign _pdeefilefd_tp_copy_assign
+#endif
+
+#if defined(DeeSysPipeFD_InitCopy) || defined(DeeSysPipeFD_Quit)
+#define _pdeepipe_tp_move_ctor &_deepipe_tp_move_ctor
+static int _deepipe_tp_move_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeePipeObject *self, DeePipeObject *right) {
+ Dee_uint32_t newflags;
+ DeePipeFD_ACQUIRE_EXCLUSIVE(right,{});
+ newflags = right->fo_flags;
+ self->p_descr = right->p_descr;
+ right->fo_flags = DEE_PRIVATE_FILEFLAG_NONE;
+ DeePipeFD_RELEASE_EXCLUSIVE(right);
+ DeePipeFD_InitBasic(self,newflags);
+ return 0;
+}
+#define _pdeepipe_tp_move_assign &_deepipe_tp_move_assign
 static int DEE_CALL _deepipe_tp_move_assign(
  DeePipeObject *self, DeePipeObject *right) {
- if DEE_LIKELY(self != right) {
-  Dee_uint32_t new_flags;
-  Dee_filedescr_t new_handle;
-  DeeFile_ACQUIRE(right);
-  new_flags = right->fo_flags;
-  new_handle = right->p_handle;
-#ifdef DEE_PLATFORM_WINDOWS
-  right->p_handle = NULL;
-#elif defined(DEE_PLATFORM_UNIX)
-  right->p_handle = -1;
+ struct DeeSysPipeFD new_fd,old_fd;
+ Dee_uint32_t newflags,oldflags;
+ if (self != right) {
+  DeePipeFD_ACQUIRE_EXCLUSIVE(right);
+  new_fd = right->p_descr;
+  newflags = right->fo_flags;
+  right->fo_flags = DEE_PRIVATE_FILEFLAG_NONE;
+  DeePipeFD_RELEASE_EXCLUSIVE(right);
+  DeePipeFD_ACQUIRE_EXCLUSIVE(self);
+  oldflags = self->fo_flags;
+  old_fd = self->p_descr;
+  self->fo_flags = newflags;
+  self->p_descr = new_fd;
+  DeePipeFD_RELEASE_EXCLUSIVE(self);
+#if defined(DeeSysPipeFD_Quit) || defined(DeeSysFD_Quit)
+  if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
+                (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
+#ifdef DeeSysPipeFD_Quit
+   DeeSysPipeFD_Quit(&old_fd);
 #endif
-  DeeFile_RELEASE(right);
-  DeeFile_ACQUIRE(self);
-  _deepipe_tp_dtor(self);
-  self->p_handle = new_handle;
-  self->fo_flags = new_flags;
-  DeeFile_RELEASE(self);
+#ifdef DeeSysFD_Quit
+   DeeSysFD_Quit(&old_fd);
+#endif
+  }
+#endif
  }
  return 0;
 }
-static int DEE_CALL _deepipe_tp_io_flush(DeePipeObject *DEE_UNUSED(self)) {
- return 0;
-}
-static void DEE_CALL _deepipe_tp_io_close(DeePipeObject *self) {
- DeeFile_ACQUIRE(self);
- if DEE_LIKELY(self->p_handle) {
-#ifdef DEE_PLATFORM_WINDOWS
-  if DEE_UNLIKELY(!CloseHandle(self->p_handle)) SetLastError(0);
-  self->p_handle = NULL;
-#elif defined(DEE_PLATFORM_UNIX)
-  if DEE_UNLIKELY(close(self->p_handle) != 0) errno = 0;
-  self->p_handle = -1;
-#endif
- }
- DeeFile_RELEASE(self);
-}
-
-
-
-#ifdef DEE_PLATFORM_WINDOWS
-#ifndef SIZEOF_DWORD
-#define SIZEOF_DWORD 4
-#endif
-#ifndef DWORD_MAX
-#define DWORD_MAX 0xFFFFFFFF
-#endif
-#endif
-
-
-//////////////////////////////////////////////////////////////////////////
-// Pipe reader VTable
-static DeeObject *DEE_CALL _deepipereader_tp_str(DeePipeObject *self) {
- Dee_filedescr_t handle;
- DeeFile_ACQUIRE(self);
- handle = self->p_handle;
- DeeFile_RELEASE(self);
-#ifdef DEE_PLATFORM_WINDOWS
- return DeeString_Newf("<pipe.reader: %#Ix>",handle);
-#elif defined(DEE_PLATFORM_UNIX)
- return DeeString_Newf("<pipe.reader: %d>",handle);
-#endif
-}
-#ifdef DEE_PLATFORM_WINDOWS
-#ifndef SIZEOF_DWORD
-#define SIZEOF_DWORD 4
-#endif
-#ifndef DWORD_MAX
-#define DWORD_MAX 0xFFFFFFFF
-#endif
-#endif
-
-static int DEE_CALL _deepipereader_tp_io_read(DeePipeObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- DeeFile_ACQUIRE(self);
- {
-#if defined(DEE_PLATFORM_WINDOWS)
-#if DEE_TYPES_SIZEOF_SIZE_T > SIZEOF_DWORD
-  DWORD temp; *rs = 0;
-  while (s) {
-   if DEE_UNLIKELY(!ReadFile((HANDLE)self->p_handle,p,s >= DWORD_MAX
-    ?(DWORD)DWORD_MAX:(DWORD)s,(LPDWORD)&temp,NULL))
 #else
-   if DEE_UNLIKELY(!ReadFile((HANDLE)self->p_handle,p,s,(LPDWORD)rs,NULL))
+#define _pdeepipe_tp_move_ctor   _pdeefilefd_tp_move_ctor
+#define _pdeepipe_tp_move_assign _pdeefilefd_tp_move_assign
 #endif
-   {
-    DWORD error;
-    DeeFile_RELEASE(self);
-    error = DeeSystemError_Win32Consume();
-    if (error == ERROR_BROKEN_PIPE) { *rs = 0; return 0; } // End of pipe
-    DeeError_SystemErrorExplicit("ReadFile",error);
-    return -1;
-   }
-#if DEE_TYPES_SIZEOF_SIZE_T > SIZEOF_DWORD
-   if (!temp) break; // can't read more
-   s -= (Dee_size_t)temp;
-   *(char const **)&p += (Dee_size_t)temp;
-   *rs += (Dee_size_t)temp;
-  }
-#endif
-#elif defined(DEE_PLATFORM_UNIX)
-  Dee_ssize_t result;
-  result = (Dee_ssize_t)read(self->p_handle,p,s);
-  if (result == -1) {
-   int error = errno;
-   if (error) {
-    errno = 0;
-    DeeFile_RELEASE(self);
-    DeeError_SystemErrorExplicit("read",error);
-    return -1;
-   }
-  }
-  *rs = *(Dee_size_t *)&result;
-#elif DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
-  if ((*rs = fread(p,sizeof(char),s,(FILE *)self->p_handle)) != s) {
-   int error;
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H
-   if (ferror((FILE *)self->p_handle) != 0)
-#else /* DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H */
-   if ((error = ferror((FILE *)self->p_handle)) != 0)
-#endif /* !DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H */
-   {
-    DeeFile_RELEASE(self);
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H
-    error = errno;
-    errno = 0;
-#endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H */
-    DeeError_SystemErrorExplicit("fread",error);
-   }
-  }
-#endif
-  DeeFile_RELEASE(self);
-  return 0;
- }
-}
-static int DEE_CALL _deepipereader_tp_io_write(
- DeePipeObject *DEE_UNUSED(self), void const *DEE_UNUSED(p),
- Dee_size_t DEE_UNUSED(s), Dee_size_t *DEE_UNUSED(ws)) {
- DeeError_NotImplemented_str("pipe.reader.write");
- return -1;
-}
-static int DEE_CALL _deepipereader_tp_io_seek(
- DeePipeObject *DEE_UNUSED(self), Dee_int64_t DEE_UNUSED(off),
- int DEE_UNUSED(whence), Dee_uint64_t *DEE_UNUSED(pos)) {
- DeeError_NotImplemented_str("pipe.reader.seek");
- return -1;
-}
-static int DEE_CALL _deepipereader_tp_io_trunc(DeePipeObject *DEE_UNUSED(self)) {
- DeeError_NotImplemented_str("pipe.reader.trunc");
- return -1;
-}
 
 
 //////////////////////////////////////////////////////////////////////////
-// Pipe writer VTable
-static DeeObject *DEE_CALL _deepipewriter_tp_str(DeePipeObject *self) {
- Dee_filedescr_t handle;
- DeeFile_ACQUIRE(self);
- handle = self->p_handle;
- DeeFile_RELEASE(self);
-#ifdef DEE_PLATFORM_WINDOWS
- return DeeString_Newf("<pipe.writer: %#Ix>",handle);
-#elif defined(DEE_PLATFORM_UNIX)
- return DeeString_Newf("<pipe.writer: %d>",handle);
+// Scan for additional callbacks required for pipefd descriptors, and link them.
+#ifdef DeeSysPipeFD_Read
+#define _pdeepipe_tp_io_read &_deepipe_tp_io_read
+static int DEE_CALL _deepipe_tp_io_read(
+ DeePipeObject *self, void const const *p, Dee_size_t s, Dee_size_t *rs) {
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeePipeFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_PipeFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysPipeFD_Read(&self->p_descr,p,s,rs,{
+  DeePipeFD_RELEASE_SHARED(self);
+  return -1;
+ });
+ DeePipeFD_RELEASE_SHARED(self);
+ return 0;
+}
+#else
+#define _pdeepipe_tp_io_read  DeeType_DEFAULT_SLOT(tp_io_read)
 #endif
-}
-static int DEE_CALL _deepipewriter_tp_io_read(
- DeePipeObject *DEE_UNUSED(self), void *DEE_UNUSED(p),
- Dee_size_t DEE_UNUSED(s), Dee_size_t *DEE_UNUSED(rs)) {
- DeeError_NotImplemented_str("pipe.writer.read");
- return -1;
-}
-static int DEE_CALL _deepipewriter_tp_io_write(
+#ifdef DeeSysPipeFD_Write
+#define _pdeepipe_tp_io_write &_deepipe_tp_io_write
+static int DEE_CALL _deepipe_tp_io_write(
  DeePipeObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- DeeFile_ACQUIRE(self);
- {
-#if defined(DEE_PLATFORM_WINDOWS)
-#if DEE_TYPES_SIZEOF_SIZE_T > SIZEOF_DWORD
-  DWORD temp; *ws = 0;
-  while (s) {
-   if DEE_UNLIKELY(!WriteFile((HANDLE)self->p_handle,p,s >= DWORD_MAX
-    ?(DWORD)DWORD_MAX:(DWORD)s,(LPDWORD)&temp,NULL))
+ DeePipeFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_PipeFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysPipeFD_Write(&self->p_descr,p,s,ws,{
+  DeePipeFD_RELEASE_SHARED(self);
+  return -1;
+ });
+ DeePipeFD_RELEASE_SHARED(self);
+ return 0;
+}
 #else
-   if DEE_UNLIKELY(!WriteFile(self->p_handle,p,s,(LPDWORD)ws,NULL))
+#define _pdeepipe_tp_io_write DeeType_DEFAULT_SLOT(tp_io_write)
 #endif
-   {
-    DeeFile_RELEASE(self);
-    DeeError_SystemError("WriteFile");
-    return -1;
-   }
-#if DEE_TYPES_SIZEOF_SIZE_T > SIZEOF_DWORD
-   if (!temp) break; // can't write more
-   s -= (Dee_size_t)temp;
-   *(char const **)&p += (Dee_size_t)temp;
-   *ws += (Dee_size_t)temp;
-  }
+#ifdef DeeSysPipeFD_Seek
+#define _pdeepipe_tp_io_seek &_deepipe_tp_io_seek
+static int DEE_CALL _deepipe_tp_io_seek(
+ DeePipeObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) {
+ DEE_FILEFD_FIX_SEEKWHENCE(whence);
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeePipeFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_PipeFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysPipeFD_Seek(&self->p_descr,off,whence,pos,{
+  DeePipeFD_RELEASE_SHARED(self);
+  return -1;
+ });
+ DeePipeFD_RELEASE_SHARED(self);
+ return 0;
+}
+#else
+#define _pdeepipe_tp_io_seek  DeeType_DEFAULT_SLOT(tp_io_seek)
 #endif
-#elif defined(DEE_PLATFORM_UNIX)
-  Dee_ssize_t result;
-  result = (Dee_ssize_t)write(self->p_handle,p,s);
-  if DEE_UNLIKELY(result == -1) {
-   int error = errno;
-   if (error) {
-    DeeFile_RELEASE(self);
-    errno = 0;
-    DeeError_SystemErrorExplicit("write",error);
-    return -1;
-   }
-  }
-  *ws = *(Dee_size_t *)&result;
-#elif DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
-  if ((*ws = fwrite(p,sizeof(char),s,(FILE *)self->p_handle)) != s) {
-   int error;
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H
-   if (ferror((FILE *)self->p_handle) != 0)
-#else /* DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H */
-   if ((error = ferror((FILE *)self->p_handle)) != 0)
-#endif /* !DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H */
-   {
-    DeeFile_RELEASE(self);
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H
-    error = errno;
-    errno = 0;
-#endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_ERRNO_H */
-    DeeError_SystemErrorExplicit("fwrite",error);
-   }
-  }
+
+
+#ifdef DeeSysPipeFD_Flush
+#define _pdeepipe_tp_io_flush &_deepipe_tp_io_flush
+static int DEE_CALL _deepipe_tp_io_flush(DeePipeObject *self) {
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeePipeFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_PipeFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysFD_Flush(&self->p_descr,{
+  DeePipeFD_RELEASE_SHARED(self);
+  return -1;
+ });
+ DeePipeFD_RELEASE_SHARED(self);
+ return 0;
+}
+#else
+#define _pdeepipe_tp_io_flush DeeType_DEFAULT_SLOT(tp_io_flush)
 #endif
-  DeeFile_RELEASE(self);
-  return 0;
+
+#ifdef DeeSysPipeFD_Trunc
+#define _pdeepipe_tp_io_trunc &_deepipe_tp_io_trunc
+static int DEE_CALL _deepipe_tp_io_trunc(DeePipeObject *self) {
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeePipeFD_ACQUIRE_SHARED(self,{
+  DeeError_Throw(DeeErrorInstance_PipeFDAlreadyClosed);
+  return -1;
+ });
+ DeeSysPipeFD_Trunc(&self->p_descr,{
+  DeePipeFD_RELEASE_SHARED(self);
+  return -1;
+ });
+ DeePipeFD_RELEASE_SHARED(self);
+ return 0;
+}
+#else
+#define _pdeepipe_tp_io_trunc DeeType_DEFAULT_SLOT(tp_io_trunc)
+#endif
+
+#ifdef DeeSysPipeFD_Quit
+#define _pdeepipe_tp_dtor     &_deepipe_tp_dtor
+#define _pdeepipe_tp_io_close &_deepipe_tp_io_close
+static void DEE_CALL _deepipe_tp_dtor(DeePipeObject *self) {
+ if ((self->fo_flags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) == 
+                     (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
+  self->fo_flags &= ~(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED);
+  DeeSysPipeFD_Quit(&self->fd_descr);
+#ifdef DeeSysFD_Quit
+  DeeSysFD_Quit(&self->fd_descr);
+#endif
  }
 }
-static int DEE_CALL _deepipewriter_tp_io_seek(
- DeePipeObject *DEE_UNUSED(self), Dee_int64_t DEE_UNUSED(off),
- int DEE_UNUSED(whence), Dee_uint64_t *DEE_UNUSED(pos)) {
- DeeError_NotImplemented_str("pipe.writer.seek");
- return -1;
+static void DEE_CALL _deepipe_tp_io_close(DeePipeObject *self) {
+ DeePipeFD_ACQUIRE_EXCLUSIVE(self,return);
+ DeeSysPipeFD_Quit(&self->p_descr);
+ DeeSysFD_Quit(&self->p_descr);
+ self->fo_flags &= ~DEE_PRIVATE_FILEFLAG_FD_VALID;
+ DeePipeFD_RELEASE_EXCLUSIVE(self);
 }
-static int DEE_CALL _deepipewriter_tp_io_trunc(DeePipeObject *DEE_UNUSED(self)) {
- DeeError_NotImplemented_str("pipe.writer.trunc");
- return -1;
-}
+#else
+#define _pdeepipe_tp_dtor     DeeType_DEFAULT_SLOT(tp_dtor)
+#define _pdeepipe_tp_io_close DeeType_DEFAULT_SLOT(tp_io_close)
+#endif
+
+
+
+
+
 
 
 static DeeObject *DEE_CALL _deepipeclass_new(
@@ -410,15 +370,6 @@ static DeeObject *DEE_CALL _deepipeclass_new(
  Dee_DECREF(w);
  Dee_DECREF(r);
  return res;
-}
-static DeeObject *DEE_CALL _deepipe_fileno(
- DeePipeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- Dee_filedescr_t handle;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,":fileno") != 0) return NULL;
- DeeFile_ACQUIRE(self);
- handle = DeePipe_HANDLE(self);
- DeeFile_RELEASE(self);
- return DeeObject_New(Dee_filedescr_t,handle);
 }
 
 static struct DeeMemberDef const _deepipe_tp_class_members[] = {
@@ -433,37 +384,21 @@ static struct DeeMethodDef const _deepipe_tp_class_methods[] = {
  DEE_METHODDEF_END_v100
 };
 
-#if !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
-#define _deepipe_tp_members DeeType_DEFAULT_SLOT(tp_members)
-#else /* !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
-static struct DeeMemberDef const _deepipe_tp_members[] = {
- DEE_MEMBERDEF_NAMED_RO_v100("__p_handle",DeePipeObject,p_handle,Dee_filedescr_t),
- DEE_MEMBERDEF_END_v100
-};
-#endif /* DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
-
-static struct DeeMethodDef const _deepipe_tp_methods[] = {
-#ifdef DEE_PLATFORM_WINDOWS
- DEE_METHODDEF_v100("fileno",member(&_deepipe_fileno),"() -> none *"),
-#elif defined(DEE_PLATFORM_UNIX)
- DEE_METHODDEF_v100("fileno",member(&_deepipe_fileno),"() -> int"),
-#endif /* ... */
- DEE_METHODDEF_END_v100
-};
-
 DeeFileTypeObject DeePipe_Type = {
  {DEE_TYPE_OBJECT_HEAD_EX_v100(
    member(&DeeFileType_Type),member("pipe"),null,null,
-   member((DeeTypeObject *)&DeeFile_Type)),
-  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeePipeObject),null,null,null,
-   member(&_deepipe_tp_move_ctor),null),
-  DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,
-   member(&_deepipe_tp_dtor)),
-  DEE_TYPE_OBJECT_ASSIGN_v100(null,
-   member(&_deepipe_tp_move_assign),null),
+   member((DeeTypeObject *)&DeeFileFD_Type)),
+  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeePipeObject),null,
+   member(_pdeefilefd_tp_ctor),
+   member(_pdeepipe_tp_copy_ctor),
+   member(_pdeepipe_tp_move_ctor),null),
+  DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,member(_pdeepipe_tp_dtor)),
+  DEE_TYPE_OBJECT_ASSIGN_v100(
+   member(_pdeepipe_tp_copy_assign),
+   member(_pdeepipe_tp_move_assign),null),
   DEE_TYPE_OBJECT_CAST_v101(
-   member(&_deepipe_tp_str),
-   member(&_deepipe_tp_str),null,null,null),
+   member(_pdeepipe_tp_str),
+   member(_pdeepipe_tp_str),null,null,null),
   DEE_TYPE_OBJECT_OBJECT_v100(null,null),
   DEE_TYPE_OBJECT_MATH_v101(
    null,null,null,null,null,null,null,null,null,null,null,
@@ -471,28 +406,35 @@ DeeFileTypeObject DeePipe_Type = {
    null,null,null,null,null,null,null,null,null,null),
   DEE_TYPE_OBJECT_COMPARE_v100(null,null,null,null,null,null),
   DEE_TYPE_OBJECT_SEQ_v101(null,null,null,null,null,null,null,null,null,null),
-  DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,
-   member(_deepipe_tp_members),null,member(_deepipe_tp_methods),
+  DEE_TYPE_OBJECT_ATTRIBUTE_v100(null,null,null,null,null,null,
    member(_deepipe_tp_class_members),null,
    member(_deepipe_tp_class_methods)),
   DEE_TYPE_OBJECT_FOOTER_v100
  },
- DEE_FILE_TYPE_OBJECT_IO_v100(null,null,null,null,null,
-  member(&_deepipe_tp_io_close))
+ DEE_FILE_TYPE_OBJECT_IO_v100(
+  member(_pdeepipe_tp_io_read),
+  member(_pdeepipe_tp_io_write),
+  member(_pdeepipe_tp_io_seek),
+  member(_pdeepipe_tp_io_flush),
+  member(_pdeepipe_tp_io_trunc),
+  member(_pdeepipe_tp_io_close))
  DEE_FILE_TYPE_OBJECT_FOOTER_v100
 };
 DeeFileTypeObject DeePipeReader_Type = {
  {DEE_TYPE_OBJECT_HEAD_EX_v100(
    member(&DeeFileType_Type),member("pipe.reader"),null,null,
    member((DeeTypeObject *)&DeePipe_Type)),
-  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeePipeObject),null,null,null,
-   member(&_deepipe_tp_move_ctor),null),
+  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeePipeObject),null,
+   member(_pdeefilefd_tp_ctor),
+   member(_pdeepipe_tp_copy_ctor),
+   member(_pdeepipe_tp_move_ctor),null),
   DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,null),
-  DEE_TYPE_OBJECT_ASSIGN_v100(null,
-   member(&_deepipe_tp_move_assign),null),
+  DEE_TYPE_OBJECT_ASSIGN_v100(
+   member(_pdeepipe_tp_copy_assign),
+   member(_pdeepipe_tp_move_assign),null),
   DEE_TYPE_OBJECT_CAST_v101(
-   member(&_deepipereader_tp_str),
-   member(&_deepipereader_tp_str),null,null,null),
+   member(_pdeepipereader_tp_str),
+   member(_pdeepipereader_tp_str),null,null,null),
   DEE_TYPE_OBJECT_OBJECT_v100(null,null),
   DEE_TYPE_OBJECT_MATH_v101(
    null,null,null,null,null,null,null,null,null,null,null,
@@ -504,25 +446,29 @@ DeeFileTypeObject DeePipeReader_Type = {
   DEE_TYPE_OBJECT_FOOTER_v100
  },
  DEE_FILE_TYPE_OBJECT_IO_v100(
-  member(&_deepipereader_tp_io_read),
-  member(&_deepipereader_tp_io_write),
-  member(&_deepipereader_tp_io_seek),
-  member(&_deepipe_tp_io_flush),
-  member(&_deepipereader_tp_io_trunc),null)
+  member(_pdeepipe_tp_io_read),
+  member(_pdeepipe_tp_io_write),
+  member(_pdeepipe_tp_io_seek),
+  member(_pdeepipe_tp_io_flush),
+  member(_pdeepipe_tp_io_trunc),
+  member(_pdeepipe_tp_io_close))
  DEE_FILE_TYPE_OBJECT_FOOTER_v100
 };
 DeeFileTypeObject DeePipeWriter_Type = {
  {DEE_TYPE_OBJECT_HEAD_EX_v100(
    member(&DeeFileType_Type),member("pipe.writer"),null,null,
    member((DeeTypeObject *)&DeePipe_Type)),
-  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeePipeObject),null,null,null,
-   member(&_deepipe_tp_move_ctor),null),
+  DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeePipeObject),null,
+   member(_pdeefilefd_tp_ctor),
+   member(_pdeepipe_tp_copy_ctor),
+   member(_pdeepipe_tp_move_ctor),null),
   DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,null),
-  DEE_TYPE_OBJECT_ASSIGN_v100(null,
-   member(&_deepipe_tp_move_assign),null),
+  DEE_TYPE_OBJECT_ASSIGN_v100(
+   member(_pdeepipe_tp_copy_assign),
+   member(_pdeepipe_tp_move_assign),null),
   DEE_TYPE_OBJECT_CAST_v101(
-   member(&_deepipewriter_tp_str),
-   member(&_deepipewriter_tp_str),null,null,null),
+   member(_pdeepipewriter_tp_str),
+   member(_pdeepipewriter_tp_str),null,null,null),
   DEE_TYPE_OBJECT_OBJECT_v100(null,null),
   DEE_TYPE_OBJECT_MATH_v101(
    null,null,null,null,null,null,null,null,null,null,null,
@@ -534,11 +480,12 @@ DeeFileTypeObject DeePipeWriter_Type = {
   DEE_TYPE_OBJECT_FOOTER_v100
  },
  DEE_FILE_TYPE_OBJECT_IO_v100(
-  member(&_deepipewriter_tp_io_read),
-  member(&_deepipewriter_tp_io_write),
-  member(&_deepipewriter_tp_io_seek),
-  member(&_deepipe_tp_io_flush),
-  member(&_deepipewriter_tp_io_trunc),null)
+  member(_pdeepipe_tp_io_read),
+  member(_pdeepipe_tp_io_write),
+  member(_pdeepipe_tp_io_seek),
+  member(_pdeepipe_tp_io_flush),
+  member(_pdeepipe_tp_io_trunc),
+  member(_pdeepipe_tp_io_close))
  DEE_FILE_TYPE_OBJECT_FOOTER_v100
 };
 

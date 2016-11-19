@@ -207,8 +207,129 @@ DEE_A_RET_OBJECT_REF(DeeWideStringObject) *DeeFileIO_WideFilename(
 
 
 
+#ifdef DeeSysFileFD_InitCopy
+#define _pdeefileio_tp_copy_ctor &_deefileio_tp_copy_ctor
+static int DEE_CALL _deefileio_tp_copy_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeeFileIOObject *self, DeeFileIOObject *right) {
+ Dee_uint32_t newflags;
+ // In here, we always copy the file-descriptor
+ DeeFileFD_ACQUIRE_SHARED(right,{ DeeFileFD_InitBasic(self,DEE_PRIVATE_FILEFLAG_NONE); return 0; });
+ DeeSysFileFD_InitCopy(&self->io_descr,&right->io_descr,{ DeeFileFD_RELEASE_SHARED(right); return -1; });
+ newflags = right->fo_flags;
+ DeeFileFD_RELEASE_SHARED(right);
+ DeeFileFD_InitBasic(self,newflags|DEE_PRIVATE_FILEFLAG_FD_OWNED);
+ return 0;
+}
+DEE_COMPILER_MSVC_WARNING_PUSH(4701)
+#define _pdeefileio_tp_copy_assign &_deefileio_tp_copy_assign
+static int DEE_CALL _deefileio_tp_copy_assign(
+ DeeFileIOObject *self, DeeFileIOObject *right) {
+ struct DeeSysFileFD new_fd,old_fd;
+ Dee_uint32_t newflags,oldflags;
+ if (self != right) {
+  DeeFileFD_ACQUIRE_SHARED(right,{
+   /* NOTE: new_fd is intentionally left uninitialized. */
+   newflags = right->fo_flags;
+   goto after_copy;
+  });
+  newflags = right->fo_flags;
+  // NOTE: Unlike within the copy-constructor, here we
+  //       inherit the ownership attribute from 'right', too.
+  if ((newflags&DEE_PRIVATE_FILEFLAG_FD_OWNED)!=0) {
+   DeeSysFileFD_InitCopy(&new_fd,&right->io_descr,{ DeeFileFD_RELEASE_SHARED(right); return -1; });
+  } else {
+   new_fd = right->io_descr;
+  }
+  DeeFileFD_RELEASE_SHARED(right);
+after_copy:
+  DeeFileFD_ACQUIRE_EXCLUSIVE(self);
+  oldflags = self->fo_flags;
+  old_fd = self->io_descr;
+  self->fo_flags = newflags;
+  self->io_descr = new_fd;
+  DeeFileFD_RELEASE_EXCLUSIVE(self);
+#if defined(DeeSysFileFD_Quit) || defined(DeeSysFD_Quit)
+  if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
+                (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
+#ifdef DeeSysFileFD_Quit
+   DeeSysFileFD_Quit(&old_fd);
+#endif
+#ifdef DeeSysFD_Quit
+   DeeSysFD_Quit(&old_fd);
+#endif
+  }
+#endif
+ }
+ return 0;
+}
+DEE_COMPILER_MSVC_WARNING_POP
+#else
+#define _pdeefileio_tp_copy_ctor   _pdeefilefd_tp_copy_ctor
+#define _pdeefileio_tp_copy_assign _pdeefilefd_tp_copy_assign
+#endif
+
+#if defined(DeeSysFileFD_InitCopy) || defined(DeeSysFileFD_Quit)
+#define _pdeefileio_tp_move_ctor &_deefileio_tp_move_ctor
+static int _deefileio_tp_move_ctor(
+ DeeTypeObject *DEE_UNUSED(tp_self), DeeFileIOObject *self, DeeFileIOObject *right) {
+ Dee_uint32_t newflags;
+ DeeFileFD_ACQUIRE_EXCLUSIVE(right,{});
+ newflags = right->fo_flags;
+ self->io_descr = right->io_descr;
+ right->fo_flags = DEE_PRIVATE_FILEFLAG_NONE;
+ DeeFileFD_RELEASE_EXCLUSIVE(right);
+ DeeFileFD_InitBasic(self,newflags);
+ return 0;
+}
+#define _pdeefileio_tp_move_assign &_deefileio_tp_move_assign
+static int DEE_CALL _deefileio_tp_move_assign(
+ DeeFileIOObject *self, DeeFileIOObject *right) {
+ struct DeeSysFileFD new_fd,old_fd;
+ Dee_uint32_t newflags,oldflags;
+ if (self != right) {
+  DeeFileFD_ACQUIRE_EXCLUSIVE(right);
+  new_fd = right->io_descr;
+  newflags = right->fo_flags;
+  right->fo_flags = DEE_PRIVATE_FILEFLAG_NONE;
+  DeeFileFD_RELEASE_EXCLUSIVE(right);
+  DeeFileFD_ACQUIRE_EXCLUSIVE(self);
+  oldflags = self->fo_flags;
+  old_fd = self->io_descr;
+  self->fo_flags = newflags;
+  self->io_descr = new_fd;
+  DeeFileFD_RELEASE_EXCLUSIVE(self);
+#if defined(DeeSysFileFD_Quit) || defined(DeeSysFD_Quit)
+  if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
+                (DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) {
+#ifdef DeeSysFileFD_Quit
+   DeeSysFileFD_Quit(&old_fd);
+#endif
+#ifdef DeeSysFD_Quit
+   DeeSysFD_Quit(&old_fd);
+#endif
+  }
+#endif
+ }
+ return 0;
+}
+#else
+#define _pdeefileio_tp_move_ctor   _pdeefilefd_tp_move_ctor
+#define _pdeefileio_tp_move_assign _pdeefilefd_tp_move_assign
+#endif
+
+#ifndef DEE_PLATFORM_UNIX
+#define _pdeefileio_tp_str &_deefileio_tp_str
+static DeeObject *DEE_CALL _deefileio_tp_str(DeeFileIOObject *self) {
+ return DeeString_Newf("<file.io(%r)>",DeeFileIO_Utf8Filename((DeeObject *)self));
+}
+#else
+#define _pdeefileio_tp_str DeeType_DEFAULT_SLOT(tp_str)
+#endif
+
+
+
 DeeString_NEW_STATIC_EX(_deefileio_default_mode,1,{'r'});
-static int _deefileio_tp_any_ctor(
+static int DEE_CALL _deefileio_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeFileIOObject *self, DeeObject *args) {
  DeeAnyStringObject *filename; Dee_openmode_t openmode;
  Dee_mode_t perms = DEE_FILEIO_DEFAULT_PERMISSIONS;
@@ -238,7 +359,7 @@ static int _deefileio_tp_any_ctor(
 }
 
 //////////////////////////////////////////////////////////////////////////
-// Scan for additional callbacks required for filefd descriptors, and link them
+// Scan for additional callbacks required for filefd descriptors, and link them.
 #ifdef DeeSysFileFD_Read
 #define _pdeefileio_tp_io_read &_deefileio_tp_io_read
 static int DEE_CALL _deefileio_tp_io_read(
@@ -371,7 +492,7 @@ static void DEE_CALL _deefileio_tp_io_close(DeeFileIOObject *self) {
 
 #ifdef DeeSysFileFD_GetSize
 #define _deefileio_size _deefileio_size
-static DeeObject *_deefileio_size(
+static DeeObject *DEE_CALL _deefileio_size(
  DeeFileIOObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  Dee_uint64_t fp_size;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":size") != 0) return NULL;
@@ -381,7 +502,7 @@ static DeeObject *_deefileio_size(
 #endif /* DeeSysFileFD_GetSize */
 
 
-static DeeObject *_deefileio_filename_get(
+static DeeObject *DEE_CALL _deefileio_filename_get(
  DeeFileIOObject *self, void *DEE_UNUSED(closure)) {
 #ifdef DeeSysFileFD_Utf8Filename
  DeeObject *result;
@@ -398,7 +519,7 @@ static DeeObject *_deefileio_filename_get(
  return NULL;
 #endif
 }
-static DeeObject *_deefileio_wfilename_get(
+static DeeObject *DEE_CALL _deefileio_wfilename_get(
  DeeFileIOObject *self, void *DEE_UNUSED(closure)) {
 #ifdef DeeSysFileFD_WideFilename
  DeeObject *result;
@@ -734,15 +855,15 @@ DeeFileTypeObject DeeFileIO_Type = {
    null,member((DeeTypeObject *)&DeeFileFD_Type)),
   DEE_TYPE_OBJECT_CONSTRUCTOR_v100(sizeof(DeeFileIOObject),null,
    member(_pdeefilefd_tp_ctor),
-   member(_pdeefilefd_tp_copy_ctor),
-   member(_pdeefilefd_tp_move_ctor),
+   member(_pdeefileio_tp_copy_ctor),
+   member(_pdeefileio_tp_move_ctor),
    member(&_deefileio_tp_any_ctor)),
   DEE_TYPE_OBJECT_DESTRUCTOR_v100(null,member(_pdeefileio_tp_dtor)),
   DEE_TYPE_OBJECT_ASSIGN_v100(
-   member(_pdeefilefd_tp_copy_assign),
-   member(_pdeefilefd_tp_move_assign),null),
+   member(_pdeefileio_tp_copy_assign),
+   member(_pdeefileio_tp_move_assign),null),
   DEE_TYPE_OBJECT_CAST_v101(
-   member(_pdeefilefd_tp_str),null,null,null,null),
+   member(_pdeefileio_tp_str),null,null,null,null),
   DEE_TYPE_OBJECT_OBJECT_v100(null,null),
   DEE_TYPE_OBJECT_MATH_v101(
    null,null,null,null,null,null,null,null,null,null,null,

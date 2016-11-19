@@ -272,12 +272,12 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileReaderObject) *) Dee
 #define DEE_FILE_OPENTEMPORARY_FLAG_DELETE_WHEN_CLOSED DEE_UINT32_C(0x00000001)
 DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_OpenTemporary(DEE_A_IN Dee_uint32_t flags);
 
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_Utf8OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_WideOpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) _DeeFile_Utf8OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) _DeeFile_WideOpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) _DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
+DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_Utf8OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_WideOpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) _DeeFile_Utf8OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) _DeeFile_WideOpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) _DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
 #define DEE_FILEIO_DEFAULT_PERMISSIONS 0644
 #define DeeFile_Utf8Open(file,mode)    DeeFile_Utf8OpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
 #define DeeFile_WideOpen(file,mode)    DeeFile_WideOpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
@@ -294,8 +294,8 @@ DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObje
 
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TRead(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs) DEE_ATTRIBUTE_NONNULL((1,2,5));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TWrite(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *ws) DEE_ATTRIBUTE_NONNULL((1,2,5));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TReadAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs) DEE_ATTRIBUTE_NONNULL((1,2,5));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TWriteAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *ws) DEE_ATTRIBUTE_NONNULL((1,2,5));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TReadAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs) DEE_ATTRIBUTE_NONNULL((1,2,6));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TWriteAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *ws) DEE_ATTRIBUTE_NONNULL((1,2,6));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TReadAll(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_OUT_WB(s) void *p, DEE_A_IN Dee_size_t s) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TWriteAll(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TReadAllAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_OUT_WB(s) void *p, DEE_A_IN Dee_size_t s) DEE_ATTRIBUTE_NONNULL((1,2));
@@ -598,7 +598,7 @@ DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT(1) int) DeeFileFD_Win32AcquireHandle(
 #endif
 #ifdef DEE_PLATFORM_UNIX
 DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT(1) int) DeeFileFD_PosixAcquireFileno(
- DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT int **result) DEE_ATTRIBUTE_NONNULL((1));
+ DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT int *result) DEE_ATTRIBUTE_NONNULL((1));
 #define DeeFileFD_PosixReleaseFileno _DeeFileFD_PrivateReleaseTicket
 #endif
 

@@ -78,7 +78,15 @@ for (local f: dirtree("tests")) {
 }
 
 
+#if defined(__POSIX__) || __has_extension(vfs)
+#define HAVE_VFS
+#endif
+
+#ifdef HAVE_VFS
 deemon_exe = fs::readlink("/proc/self/exe");
+#else
+deemon_exe = "deemon";
+#endif
 args = ["-I "+fs::path::join(fs::getcwd(),"include")];
 
 for (local x: tests) {
@@ -99,10 +107,10 @@ for (local x: tests) {
 	test.start();
 	error = test.join();
 	if (error != 0) {
-test_error:
 		print "\nTest failed with:",error,"\n";
 		return error;
 	}
+#ifdef HAVE_VFS
 	if (!fast_mode) {
 		// Run the same test again, but this time generate a compiled source file
 		// NOTE: We stream the data through a pipe as
@@ -115,7 +123,10 @@ test_error:
 		output_data = r.readall();
 		r.close();
 		error = test.join();
-		if (error != 0) goto test_error;
+		if (error != 0) {
+			print "\nFailed to compile test to binary:",error,"\n";
+			return error;
+		}
 		r,w = pipe.new()...;
 		test = process(deemon_exe,["-in=data","/dev/stdin"]);
 		test.stdin = r;
@@ -124,8 +135,12 @@ test_error:
 		w.write(output_data);
 		w.close();
 		error = test.join();
-		if (error != 0) goto test_error;
+		if (error != 0) {
+			print "\nFailed to execute test binary:",error,"\n";
+			return error;
+		}
 	}
+#endif
 }
 
 print "\n>>> Everything OK <<<\n";

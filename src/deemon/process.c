@@ -47,6 +47,7 @@
 #include <deemon/none.h>
 #include <deemon/string.h>
 #include <deemon/tuple.h>
+#include <deemon/file/file.fd.h>
 #include "unicode/char_traits.inl"
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include "virtual_fs.h.inl"
@@ -665,7 +666,7 @@ _DeeProcess_PosixGetCmd(DEE_A_IN DeeProcessHandle pid) {
  DeeObject *file,*filename,*data,*result;
  char *iter,*end,*dst;
  if ((filename = DeeString_Newf("/proc/%d/cmdline",pid)) == NULL) return NULL;
- file = DeeFile_OpenObject(filename,"r");
+ file = DeeFile_OpenObject(filename,DEE_OPENMODE('r',0));
  Dee_DECREF(filename);
  if (!file) return NULL;
  data = DeeFile_ReadData(file,(Dee_size_t)-1);
@@ -915,7 +916,8 @@ err_cmdlinegen:
  info.dwFlags = STARTF_USESTDHANDLES;
 #define IMPORT_HANDLE(dst,src,default)\
 do{\
- if (DeeFileFD_Win32AcquireHandle((DeeObject *)(src),&(dst)) == 0) {\
+ /* TODO: Throw an error if the source fd was closed. */\
+ if ((src) && DeeFileFD_Win32AcquireHandle((DeeObject *)(src),&(dst)) == 0) {\
   if (!SetHandleInformation(dst,HANDLE_FLAG_INHERIT,1)) goto err_hinfo;\
   /* TODO: We should probably keep the tickets until the process has started. */\
   DeeFileFD_Win32ReleaseHandle((DeeObject *)(src));\
@@ -999,8 +1001,7 @@ err_ulock_files:
 #elif defined(DEE_PLATFORM_UNIX)
 DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeProcess_Start(
  DEE_A_INOUT_OBJECT(DeeProcessObject) *self, DEE_A_IN int detached) {
- DeeObject *used_exe,*used_args;
- char **argv,**envv; int result;
+ DeeObject *used_exe,*used_args; char **argv,**envv; int result;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeProcess_ACQUIRE(self);
@@ -1031,34 +1032,27 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeProcess_Start(
   }
  }
 #endif
-#define hof(x) (DeePipe_Check(x)?DeePipe_HANDLE(x):DeeFileIO_HANDLE(x))
  // Lock all files to gain exclusive access to their handles
- if (_self->p_stdin) DeeFile_ACQUIRE(_self->p_stdin);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_ACQUIRE(_self->p_stdout);
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_ACQUIRE(_self->p_stderr);
+ if (_self->p_stdin)  DeeFileFD_ACQUIRE_SHARED(_self->p_stdin,{ DeeError_SetStringf(&DeeErrorType_IOError,"process.stdin was closed"); result = -1; goto end_afterstdin; });
+ if (_self->p_stdout) DeeFileFD_ACQUIRE_SHARED(_self->p_stdout,{ DeeError_SetStringf(&DeeErrorType_IOError,"process.stdout was closed"); result = -1; goto end_afterstdout; });
+ if (_self->p_stderr) DeeFileFD_ACQUIRE_SHARED(_self->p_stderr,{ DeeError_SetStringf(&DeeErrorType_IOError,"process.stderr was closed"); result = -1; goto end_afterstderr; });
  // TODO: Have another pipe that the child process can use to
  //       talk back if starting the process caused an error.
- result = _DeeProcess_PosixCreate(
-  DeeString_STR(used_exe),argv,envv,
-  _self->p_cwd ? DeeString_STR(_self->p_cwd) : NULL,
-  _self->p_stdin ? hof(_self->p_stdin) : -1,
-  _self->p_stdout ? hof(_self->p_stdout) : -1,
-  _self->p_stderr ? hof(_self->p_stderr) : -1,
-  &_self->p_handle);
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_RELEASE(_self->p_stderr);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_RELEASE(_self->p_stdout);
- if (_self->p_stdin) DeeFile_RELEASE(_self->p_stdin);
+ result = _DeeProcess_PosixCreate(DeeString_STR(used_exe),argv,envv,
+                                  _self->p_cwd ? DeeString_STR(_self->p_cwd) : NULL,
+                                  _self->p_stdin ? ((DeeFileFDObject *)_self->p_stdin)->fd_descr.unx_fd : -1,
+                                  _self->p_stdout ? ((DeeFileFDObject *)_self->p_stdout)->fd_descr.unx_fd : -1,
+                                  _self->p_stderr ? ((DeeFileFDObject *)_self->p_stderr)->fd_descr.unx_fd : -1,
+                                  &_self->p_handle);
+ if (_self->p_stderr) DeeFileFD_RELEASE_SHARED(_self->p_stderr);
+end_afterstderr:
+ if (_self->p_stdout) DeeFileFD_RELEASE_SHARED(_self->p_stdout);
+end_afterstdout:
+ if (_self->p_stdin) DeeFileFD_RELEASE_SHARED(_self->p_stdin);
+end_afterstdin:
  if (envv) _DeeProcess_PosixFreeStringList(envv);
  _DeeProcess_PosixFreeStringList(argv);
-#undef hof
-end2:
- DeeProcess_RELEASE(self);
+end2: DeeProcess_RELEASE(self);
 end:
  Dee_DECREF(used_args);
  Dee_DECREF(used_exe);

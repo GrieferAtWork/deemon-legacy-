@@ -295,7 +295,11 @@ DEE_A_EXEC void DeeFile_DelStd(DEE_A_IN enum DeeStdPrinter printer) {
   DeeAtomicMutex_Release(&_dee_active_printers_lock);
   return;
  }
+#ifdef DEE_SYSFD_HAVE_STATIC_STDFD_INITIALIZER
  Dee_INCREF(_dee_active_printers[printer] = default_printer);
+#else
+ Dee_XINCREF(_dee_active_printers[printer] = default_printer);
+#endif
  DeeAtomicMutex_Release(&_dee_active_printers_lock);
  // Drop a reference to the old printer
  Dee_DECREF(old_printer);

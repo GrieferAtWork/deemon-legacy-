@@ -2876,8 +2876,8 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8ChmodEx(
  }
 #endif
  {
-  Dee_mode_t newmode;
 #ifdef DEE_PLATFORM_WINDOWS
+  Dee_mode_t newmode;
   HANDLE file; int error;
   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
   if DEE_UNLIKELY((file = CreateFileA(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|
@@ -2912,7 +2912,7 @@ err_file: if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0); return -1;
   if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0);
   return error;
 #elif defined(DEE_PLATFORM_UNIX) && DEE_HAVE_FCHMOD
-  int error,file;
+  Dee_mode_t newmode; int error,file;
   if DEE_UNLIKELY((file = open(path,O_RDWR)) < 0) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                         "open(%q) : %K",path,
@@ -2920,12 +2920,13 @@ err_file: if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0); return -1;
    return -1;
   }
   if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET
-      && _DeeFS_Utf8GetModWithHandle(path,&newmode) != 0) { error = -1; goto end_close; }
+      && _DeeFS_Utf8GetModWithHandle(path,file,&newmode) != 0) { error = -1; goto end_close; }
   error = _DeeFS_Utf8SetModWithHandle(path,file,newmode);
 end_close:
   if DEE_UNLIKELY(close(file) != 0) errno = 0;
   return error;
 #else
+  Dee_mode_t newmode;
   if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET
       && _DeeFS_Utf8GetMod(path,&newmode) != 0) return -1;
   _DeeFS_ExecModeChange(&newmode,mcc,mcv);

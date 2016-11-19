@@ -296,7 +296,7 @@ compile_deemon() {
 	update_object_file "$source_path/deemon/dict.c"
 	update_object_file "$source_path/deemon/enum_attributes.c"
 	update_object_file "$source_path/deemon/error.c"
-	update_object_file "$source_path/deemon/file.c"
+	update_object_file "$source_path/deemon/file/file.c"
 	update_object_file "$source_path/deemon/float.c"
 	update_object_file "$source_path/deemon/foreign_function.c"
 	update_object_file "$source_path/deemon/fs_api.c"

@@ -174,10 +174,10 @@
 #if defined(DeeSysPipeFD_InitEx) \
  || defined(DeeSysPipeFD_Init)
 #ifndef DeeSysPipeFD_Init
-# define DeeSysPipeFD_Init(reader,writer) DeeSysPipeFD_InitEx(reader,writer,0)
+# define DeeSysPipeFD_Init(reader,writer,...) DeeSysPipeFD_InitEx(reader,writer,0,__VA_ARGS__)
 #endif
 #ifndef DeeSysPipeFD_InitEx
-# define DeeSysPipeFD_InitEx(reader,writer,size_hint) DeeSysPipeFD_Init(reader,writer)
+# define DeeSysPipeFD_InitEx(reader,writer,size_hint,...) DeeSysPipeFD_Init(reader,writer,__VA_ARGS__)
 #endif
 #endif
 

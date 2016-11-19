@@ -69,9 +69,7 @@ struct DeeUnixSysFD { DEE_UNIX_SYSFD_HEAD };
 #define DEE_UNIX_SYSFD_SEEK_END  SEEK_END
 
 #define DeeUnixSysFD_Quit(self) \
-(DEE_LIKELY((self)->unx_fd != INVALID_HANDLE_VALUE)\
- ? (DEE_LIKELY(close((self)->unx_fd) != -1) ? (void)0 : errno = 0)\
- : (void)0)
+ (DEE_UNLIKELY(close((self)->unx_fd) == -1) ? (void)(errno = 0) : (void)0)
 
 #define DeeUnixSysFD_TryInitCopy(self,right) \
  (((self)->unx_fd = dup((right)->unx_fd)) != -1)
@@ -97,29 +95,36 @@ do{\
 #else
 # define DEE_UNIX_SYSFD_USED_SEEK_FUNCTION lseek
 #endif
-#define DeeUnixSysFD_TrySeekHandle(fd,off,whence,newpos)\
+#define DeeUnixSys_TryFDSeek(fd,off,whence,newpos)\
  (((newpos) ? (*(Dee_int64_t *)(newpos) =\
   (Dee_int64_t)DEE_UNIX_SYSFD_USED_SEEK_FUNCTION(fd,off,whence)) :\
   (Dee_int64_t)DEE_UNIX_SYSFD_USED_SEEK_FUNCTION(fd,off,whence)) != -1 || errno == 0)
-#define DeeUnixSysFD_TrySeek(self,off,whence,newpos)\
- DeeUnixSysFD_TrySeekHandle((self)->unx_fd,off,whence,newpos)
-
-#define DeeUnixSysFD_Seek(self,off,whence,newpos,...)\
+#define DeeUnixSys_FDSeek(fd,off,whence,newpos,...)\
 do{\
  Dee_int64_t _fd_newpos;\
- _fd_newpos = (Dee_int64_t)DEE_UNIX_SYSFD_USED_SEEK_FUNCTION((self)->unx_fd,off,whence);\
+ _fd_newpos = (Dee_int64_t)DEE_UNIX_SYSFD_USED_SEEK_FUNCTION(fd,off,whence);\
  if DEE_UNLIKELY(_fd_newpos == -1) {\
   int _fd_error = errno;\
   if (_fd_error != 0) {\
-   DeeError_SetStringf(&DeeErrorType_IOError,\
-                       DEE_PP_STR(DEE_UNIX_SYSFD_USED_SEEK_FUNCTION) "(%d,%I64d,%d) : %K",\
-                       (self)->unx_fd,(Dee_int64_t)(off),(int)(whence),\
-                       DeeSystemError_ToString(_fd_error));\
+   if (_fd_error == ESPIPE) {\
+    DeeError_NotImplemented_str("seek");\
+   } else {\
+    DeeError_SetStringf(&DeeErrorType_IOError,\
+                        DEE_PP_STR(DEE_UNIX_SYSFD_USED_SEEK_FUNCTION) "(%d,%I64d,%d) : %K",\
+                        fd,(Dee_int64_t)(off),(int)(whence),\
+                        DeeSystemError_ToString(_fd_error));\
+   }\
    {__VA_ARGS__;}\
   }\
  }\
  if (newpos) *(Dee_int64_t *)(newpos) = _fd_newpos;\
 }while(0)
+
+
+#define DeeUnixSysFD_TrySeek(self,off,whence,newpos)\
+ DeeUnixSys_TryFDSeek((self)->unx_fd,off,whence,newpos)
+#define DeeUnixSysFD_Seek(self,off,whence,newpos,...)\
+ DeeUnixSys_FDSeek((self)->unx_fd,off,whence,newpos,__VA_ARGS__)
 
 
 #define DeeUnixSysFD_Read(self,p,s,rs,...)\
@@ -130,7 +135,7 @@ do{\
    DeeError_SetStringf(&DeeErrorType_IOError,\
                        "read(%d,%p,%Iu) : %K",\
                        (self)->unx_fd,p,(Dee_size_t)(s),\
-                       DeeSystemError_UnixToString(_fd_error));\
+                       DeeSystemError_ToString(_fd_error));\
    {__VA_ARGS__;}\
   }\
  }\
@@ -141,9 +146,9 @@ do{\
   int _fd_error = errno;\
   if (_fd_error != 0) {\
    DeeError_SetStringf(&DeeErrorType_IOError,\
-                       "write(%d,%p,%Iu) : %K",\
-                       (self)->unx_fd,p,(Dee_size_t)(s),\
-                       DeeSystemError_UnixToString(_fd_error));\
+                       "write(%d,%p,%Iu:%.*q) : %K",\
+                       (self)->unx_fd,p,(Dee_size_t)(s),(unsigned)(s),p,\
+                       DeeSystemError_ToString(_fd_error));\
    {__VA_ARGS__;}\
   }\
  }\
@@ -182,24 +187,15 @@ DEE_STATIC_INLINE(int) DeeUnixSys_TryFDTrunc(int fd) {
 }
 #define DeeUnixSys_FDTrunc(fd,...)\
 do{\
- Dee_int64_t _fd_trunc_size; int _fd_error;\
- trunc_size = (Dee_int64_t)DEE_UNIX_SYSFD_USED_SEEK_FUNCTION(fd,0,SEEK_CUR);\
- if (trunc_size == -1) {\
-  if ((_fd_error = errno) != 0) {\
-   DeeError_SetStringf(&DeeErrorType_IOError,\
-                       DEE_PP_STR(DEE_UNIX_SYSFD_USED_SEEK_FUNCTION) "(%d,0,SEEK_CUR) : %K",\
-                       fd,DeeSystemError_ToString(_fd_error));\
-   {__VA_ARGS__;}\
-  }\
- }\
- if (DEE_UNIX_SYSFD_TRUNC_FUNC(fd,(Dee_uint64_t)trunc_size) == -1) {\
+ Dee_uint64_t _fd_trunc_size; int _fd_error;\
+ DeeUnixSys_FDSeek(fd,0,SEEK_CUR,&_fd_trunc_size,__VA_ARGS__);\
+ if DEE_UNLIKELY(DEE_UNIX_SYSFD_TRUNC_FUNC(fd,_fd_trunc_size) == -1) {\
   DeeError_SetStringf(&DeeErrorType_IOError,\
                       DEE_PP_STR(DEE_UNIX_SYSFD_TRUNC_FUNC) "(%d,%I64u) : %K",\
-                      fd,trunc_size,DeeSystemError_ToString(DeeSystemError_Consume()));\
+                      fd,_fd_trunc_size,DeeSystemError_ToString(DeeSystemError_Consume()));\
   {__VA_ARGS__;}\
  }\
 }while(0)
-
 #endif /* DEE_UNIX_SYSFD_TRUNC_FUNC */
 
 
@@ -210,12 +206,18 @@ do{\
 
 
 
-#define DeeUnixSysFD_INIT_STDIN()     {STDOUT_FILENO}
-#define DeeUnixSysFD_INIT_STDOUT()    {STDERR_FILENO}
-#define DeeUnixSysFD_INIT_STDERR()    {STDIN_FILENO}
-#define DeeUnixSysFD_GET_STDIN(self)  (void)((self)->unx_fd = GetStdHandle(STD_INPUT_HANDLE))
-#define DeeUnixSysFD_GET_STDOUT(self) (void)((self)->unx_fd = GetStdHandle(STD_OUTPUT_HANDLE))
-#define DeeUnixSysFD_GET_STDERR(self) (void)((self)->unx_fd = GetStdHandle(STD_ERROR_HANDLE))
+#ifdef STDIN_FILENO
+#define DeeUnixSysFD_INIT_STDIN()     {STDIN_FILENO}
+#define DeeUnixSysFD_GET_STDIN(self)  (void)((self)->unx_fd = STDIN_FILENO)
+#endif
+#ifdef STDOUT_FILENO
+#define DeeUnixSysFD_INIT_STDOUT()    {STDOUT_FILENO}
+#define DeeUnixSysFD_GET_STDOUT(self) (void)((self)->unx_fd = STDOUT_FILENO)
+#endif
+#ifdef STDERR_FILENO
+#define DeeUnixSysFD_INIT_STDERR()    {STDERR_FILENO}
+#define DeeUnixSysFD_GET_STDERR(self) (void)((self)->unx_fd = STDERR_FILENO)
+#endif
 
 
 
@@ -235,8 +237,8 @@ struct DeeUnixSysFileFD { DEE_UNIX_SYSFD_HEAD };
   DEE_OPENMODE_ISWRITE(openmode) ?   (DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDWR|O_CREAT|O_TRUNC) : \
 /*DEE_OPENMODE_ISAPPEND(openmode)? */(DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDWR|O_CREAT|O_APPEND)) :\
  (DEE_OPENMODE_ISREAD(openmode)  ?   (DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDONLY) : \
-  DEE_OPENMODE_ISWRITE(openmode) ?   (DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDONLY|O_CREAT|O_TRUNC) : \
-/*DEE_OPENMODE_ISAPPEND(openmode)? */(DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_RDONLY|O_CREAT|O_APPEND)))
+  DEE_OPENMODE_ISWRITE(openmode) ?   (DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_WRONLY|O_CREAT|O_TRUNC) : \
+/*DEE_OPENMODE_ISAPPEND(openmode)? */(DEE_UNIX_SYSFD_USED_O_LARGEFILE|O_WRONLY|O_CREAT|O_APPEND)))
 
 
 #define DeeUnixSysFileFD_Utf8TryInit(self,filename,mode,perms) \
@@ -269,12 +271,12 @@ do{\
  int _fd_error;\
  if DEE_UNLIKELY(((self)->unx_fd = open(filename,\
   DEE_UNIX_SYSFILEFD_OPENMODE_GETMODE(mode),(int)(perms))) == -1) {\
-  DeeTypeObject *used_error;\
+  DeeTypeObject *_fd_used_error;\
   switch ((_fd_error = errno)) {\
-   case EISDIR: case ENOTDIR: case ENOENT: used_error = &DeeErrorType_FileNotFound; break;\
-   default:                                used_error = &DeeErrorType_IOError; break;\
+   case EISDIR: case ENOTDIR: case ENOENT: _fd_used_error = &DeeErrorType_FileNotFound; break;\
+   default:                                _fd_used_error = &DeeErrorType_IOError; break;\
   }\
-  DeeError_SetStringf(used_error,\
+  DeeError_SetStringf(_fd_used_error,\
                       "open(%q,%d,%.4o) : %K",filename,\
                       DEE_UNIX_SYSFILEFD_OPENMODE_GETMODE(mode),(int)(perms),\
                       DeeSystemError_ToString(_fd_error));\
@@ -290,12 +292,12 @@ do{\
  int _fd_error;\
  if DEE_UNLIKELY(((self)->unx_fd = _wopen(filename,\
   DEE_UNIX_SYSFILEFD_OPENMODE_GETMODE(mode),(int)(perms))) == -1) {\
-  DeeTypeObject *used_error;\
+  DeeTypeObject *_fd_used_error;\
   switch ((_fd_error = errno)) {\
-   case EISDIR: case ENOTDIR: case ENOENT: used_error = &DeeErrorType_FileNotFound; break;\
-   default:                                used_error = &DeeErrorType_IOError; break;\
+   case EISDIR: case ENOTDIR: case ENOENT: _fd_used_error = &DeeErrorType_FileNotFound; break;\
+   default:                                _fd_used_error = &DeeErrorType_IOError; break;\
   }\
-  DeeError_SetStringf(used_error,\
+  DeeError_SetStringf(_fd_used_error,\
                       "_wopen(%lq,%d,%.4o) : %K",filename,\
                       DEE_UNIX_SYSFILEFD_OPENMODE_GETMODE(mode),(int)(perms),\
                       DeeSystemError_ToString(_fd_error));\
@@ -308,7 +310,7 @@ do{\
 #define DeeUnixSysFileFD_WideInit(self,filename,mode,perms,...)\
 do{\
  DeeObject *_fd_u8filename; int _fd_error;\
- if DEE_UNLIKELY((_fd_u8filename = DeeString_FromWideString(filename)) == NULL) return -1;\
+ if DEE_UNLIKELY((_fd_u8filename = DeeString_FromWideString(filename)) == NULL) {__VA_ARGS__;}\
  DeeUnixSysFileFD_Utf8InitObject(self,_fd_u8filename,mode,perms,{Dee_DECREF(_fd_u8filename);{__VA_ARGS__;}});\
  Dee_DECREF(_fd_u8filename);\
 }while(0)
@@ -316,7 +318,7 @@ do{\
 do{\
  DeeObject *_fd_u8filename; int _fd_error;\
  if DEE_UNLIKELY((_fd_u8filename = DeeString_FromWideStringWithLength(\
-  DeeWideString_SIZE(filename),DeeWideString_STR(filename))) == NULL) return -1;\
+  DeeWideString_SIZE(filename),DeeWideString_STR(filename))) == NULL) {__VA_ARGS__;}\
  DeeUnixSysFileFD_Utf8InitObject(self,_fd_u8filename,mode,perms,{Dee_DECREF(_fd_u8filename);{__VA_ARGS__;}});\
  Dee_DECREF(_fd_u8filename);\
 }while(0)
@@ -325,23 +327,23 @@ do{\
 
 
 DEE_STATIC_INLINE(void) _deeunix_quick_itos8(Dee_Utf8Char *out, int v) {
- int used_v = v,len; Dee_Utf8Char *used_out;
+ int used_v = v,len = 0; Dee_Utf8Char *used_out;
  do ++len; while ((used_v /= 10) != 0);
  used_v = v,used_out = out+len;
- do *--out = '0'+(used_v%10); while ((used_v != 10) != 0);
+ do *--out = '0'+(used_v%10); while ((used_v /= 10) != 0);
 }
 DEE_STATIC_INLINE(void) _deeunix_quick_itosw(Dee_WideChar *out, int v) {
- int used_v = v,len; Dee_WideChar *used_out;
+ int used_v = v,len = 0; Dee_WideChar *used_out;
  do ++len; while ((used_v /= 10) != 0);
  used_v = v,used_out = out+len;
- do *--out = '0'+(used_v%10); while ((used_v != 10) != 0);
+ do *--out = '0'+(used_v%10); while ((used_v /= 10) != 0);
 }
 
 #define DeeUnixSysFD_DoGetName     DeeUnixSysFD_DoGetUtf8Name
 #define DeeUnixSysFD_DoGetUtf8Name DeeUnixSysFD_DoGetUtf8Name
 #define DeeUnixSysFD_DoGetWideName DeeUnixSysFD_DoGetWideName
-DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetUtf8Name(int fd) { Dee_Utf8Char buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _deeunix_quick_itos8(buffer+14,fd); return _DeeFS_Utf8ReadLink(buffer); }
-DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetWideName(int fd) { Dee_WideChar buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _deeunix_quick_itosw(buffer+14,fd); return _DeeFS_WideReadLink(buffer); }
+DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetUtf8Name(int fd) { Dee_Utf8Char buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _deeunix_quick_itos8(buffer+15,fd); return _DeeFS_Utf8ReadLink(buffer); }
+DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetWideName(int fd) { Dee_WideChar buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _deeunix_quick_itosw(buffer+15,fd); return _DeeFS_WideReadLink(buffer); }
 #define DeeUnixSysFileFD_Utf8Filename(ob) DeeUnixSysFD_DoGetUtf8Name((ob)->unx_fd)
 #define DeeUnixSysFileFD_WideFilename(ob) DeeUnixSysFD_DoGetWideName((ob)->unx_fd)
 
@@ -603,7 +605,7 @@ DEE_STATIC_INLINE(int) DeeUnixSysPipeFD_TryInitFD(int *reader, int *writer) {
 #define DeeUnixSysPipeFD_Init(input,output,...)\
 do{\
  if DEE_UNLIKELY(!DeeUnixSysPipeFD_TryInit(input,output)) {\
-  DeeError_SetStringf(used_error,"pipe() : %K",\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"pipe() : %K",\
                       DeeSystemError_ToString(DeeSystemError_Consume()));\
   {__VA_ARGS__;}\
  }\
@@ -632,12 +634,24 @@ do{\
 #define DeeSysFD_Trunc      DeeUnixSysFD_Trunc
 #endif
 
+#ifdef DeeUnixSysFD_INIT_STDIN
 #define DeeSysFD_INIT_STDIN  DeeUnixSysFD_INIT_STDIN
+#endif
+#ifdef DeeUnixSysFD_INIT_STDOUT
 #define DeeSysFD_INIT_STDOUT DeeUnixSysFD_INIT_STDOUT
+#endif
+#ifdef DeeUnixSysFD_INIT_STDERR
 #define DeeSysFD_INIT_STDERR DeeUnixSysFD_INIT_STDERR
+#endif
+#ifdef DeeUnixSysFD_GET_STDIN
 #define DeeSysFD_GET_STDIN   DeeUnixSysFD_GET_STDIN
+#endif
+#ifdef DeeUnixSysFD_GET_STDOUT
 #define DeeSysFD_GET_STDOUT  DeeUnixSysFD_GET_STDOUT
+#endif
+#ifdef DeeUnixSysFD_GET_STDERR
 #define DeeSysFD_GET_STDERR  DeeUnixSysFD_GET_STDERR
+#endif
 
 #define DeeSysFileFD                   DeeUnixSysFileFD
 #define DeeSysFileFD_Utf8TryInit       DeeUnixSysFileFD_Utf8TryInit

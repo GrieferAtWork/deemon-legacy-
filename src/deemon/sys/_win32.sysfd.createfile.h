@@ -40,7 +40,7 @@ static DEE_ATTRIBUTE_UNUSED void _DeeWin32SysFileFD_ThrowCreateFileError(
   default:                used_error_type = &DeeErrorType_IOError; break;
  }
  DeeError_SetStringf(used_error_type,
-                     "CreateFileW(%r,%lu,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,%lu,%lu,NULL) : %K",
+                     "CreateFileW(%lq,%lu,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,%lu,%lu,NULL) : %K",
                      filename,dwDesiredAccess,dwCreationDisposition,dwFlagsAndAttributes,
                      DeeSystemError_Win32ToString(error));
 }
@@ -77,7 +77,7 @@ DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideInitObject
   *dst_string++ = '\\';
   *dst_string++ = '?';
   *dst_string++ = '\\';
-  memcpy(dst_string,filename,filename_size*sizeof(Dee_WideChar));
+  memcpy(dst_string,DeeWideString_STR(filename),filename_size*sizeof(Dee_WideChar));
   dst_string[filename_size] = 0;
   self->w32_handle = DEE_WIN32_DO_CREATEFILEW(uncwfilename,dwDesiredAccess,
                                               dwCreationDisposition,dwFlagsAndAttributes);

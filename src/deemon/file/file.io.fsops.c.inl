@@ -74,7 +74,7 @@ DEE_A_RET_EXCEPT(-1) int DeeFileIO_SetTimes2(
  DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) *tm_access,
  DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) *tm_creation,
  DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) *tm_modification) {
-#ifdef DeeSysFileFD_GetTimes
+#ifdef DeeSysFileFD_SetTimes
  Dee_timetick_t ttm_access,ttm_creation,ttm_modification;
  DEE_ASSERT(DeeObject_Check(self) && DeeFileIO_Check(self));
  DeeFileIO_ACQUIRE_SHARED(self,{
@@ -374,6 +374,25 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsSocket(DEE_A_IN_OBJECT(DeeFileIOObje
 
 
 
+DEE_A_RET_EXCEPT(-1) int DeeFileIO_GetMod(
+ DEE_A_IN_OBJECT(DeeFileIOObject) const *self, DEE_A_OUT Dee_mode_t *mode) {
+ DEE_ASSERT(DeeObject_Check(self) && DeeFileIO_Check(self));
+ {
+#ifdef DeeSysFileFD_GetMod
+  DeeFileIO_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return -1; });
+  DeeSysFileFD_GetMod(&((DeeFileIOObject *)self)->io_descr,mode,
+                      { DeeFileIO_RELEASE_SHARED(self); return -1; });
+  DeeFileIO_RELEASE_SHARED(self);
+  return 0;
+#else
+  int result; // Fallback: Implement with file name
+  if DEE_UNLIKELY((self = _DeeFileIO_FastFilename(self)) == NULL) return -1;
+  result = _DeeFS_GetModObject(self,mode);
+  Dee_DECREF(self);
+  return result;
+#endif
+ }
+}
 DEE_A_RET_EXCEPT(-1) int DeeFileIO_Chmod(
  DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN Dee_mode_t mode) {
  DEE_ASSERT(DeeObject_Check(self) && DeeFileIO_Check(self));
@@ -421,25 +440,7 @@ DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeFileIO_ChmodEx(
 #endif
  }
 }
-DEE_A_RET_EXCEPT(-1) int DeeFileIO_GetMod(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *self, DEE_A_OUT Dee_mode_t *mode) {
- DEE_ASSERT(DeeObject_Check(self) && DeeFileIO_Check(self));
- {
-#ifdef DeeSysFileFD_GetMod
-  DeeFileIO_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return -1; });
-  DeeSysFileFD_GetMod(&((DeeFileIOObject *)self)->io_descr,mode,
-                      { DeeFileIO_RELEASE_SHARED(self); return -1; });
-  DeeFileIO_RELEASE_SHARED(self);
-  return 0;
-#else
-  int result; // Fallback: Implement with file name
-  if DEE_UNLIKELY((self = _DeeFileIO_FastFilename(self)) == NULL) return -1;
-  result = _DeeFS_GetModObject(self,mode);
-  Dee_DECREF(self);
-  return result;
-#endif
- }
-}
+
 DEE_A_RET_EXCEPT(-1) int DeeFileIO_GetOwn(
  DEE_A_IN_OBJECT(DeeFileIOObject) const *self,
  DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
@@ -448,8 +449,8 @@ DEE_A_RET_EXCEPT(-1) int DeeFileIO_GetOwn(
  {
 #ifdef DeeSysFileFD_GetOwn
   DeeFileIO_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return -1; });
-  DeeWin32SysFileFD_GetOwn(&((DeeFileIOObject *)self)->io_descr,&owner,&group,
-                           { DeeFileIO_RELEASE_SHARED(self); return -1; });
+  DeeSysFileFD_GetOwn(&((DeeFileIOObject *)self)->io_descr,owner,group,
+                      { DeeFileIO_RELEASE_SHARED(self); return -1; });
   DeeFileIO_RELEASE_SHARED(self);
   return 0;
 #else
@@ -469,8 +470,8 @@ DEE_A_RET_EXCEPT(-1) int DeeFileIO_Chown(
  {
 #ifdef DeeSysFileFD_Chown
   DeeFileIO_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return -1; });
-  DeeWin32SysFileFD_GetOwn(&((DeeFileIOObject *)self)->io_descr,&owner,&group,
-                           { DeeFileIO_RELEASE_SHARED(self); return -1; });
+  DeeSysFileFD_Chown(&((DeeFileIOObject *)self)->io_descr,owner,group,
+                     { DeeFileIO_RELEASE_SHARED(self); return -1; });
   DeeFileIO_RELEASE_SHARED(self);
   return 0;
 #else

@@ -48,7 +48,7 @@ DEE_A_RET_NOEXCEPT(1) int DeeFileFD_Win32AcquireHandle(
 
 #ifdef DEE_PLATFORM_UNIX
 DEE_A_RET_NOEXCEPT(1) int DeeFileFD_PosixAcquireFileno(
- DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT int **result) {
+ DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT int *result) {
  DEE_ASSERT(DeeObject_Check(self) && DeeFileFD_Check(self));
  DEE_ASSERT(result);
  DeeFileFD_ACQUIRE_SHARED((DeeFileFDObject *)self,return 1);
@@ -104,7 +104,7 @@ int DEE_CALL _deefilefd_tp_move_ctor(
  Dee_uint32_t newflags;
  DeeFileFD_ACQUIRE_EXCLUSIVE(right,{});
  newflags = right->fo_flags;
- *&self->fd_descr = *&right->fd_descr;
+ self->fd_descr = right->fd_descr;
  right->fo_flags = DEE_PRIVATE_FILEFLAG_NONE;
  DeeFileFD_RELEASE_EXCLUSIVE(right);
  DeeFileFD_InitBasic(self,newflags);
@@ -152,15 +152,15 @@ int DEE_CALL _deefilefd_tp_move_assign(
  Dee_uint32_t newflags,oldflags;
  if (self != right) {
   DeeFileFD_ACQUIRE_EXCLUSIVE(right);
-  new_fd = *&right->fd_descr;
+  new_fd = right->fd_descr;
   newflags = right->fo_flags;
   right->fo_flags = DEE_PRIVATE_FILEFLAG_NONE;
   DeeFileFD_RELEASE_EXCLUSIVE(right);
   DeeFileFD_ACQUIRE_EXCLUSIVE(self);
   oldflags = self->fo_flags;
-  old_fd = *&self->fd_descr;
+  old_fd = self->fd_descr;
   self->fo_flags = newflags;
-  *&self->fd_descr = new_fd;
+  self->fd_descr = new_fd;
   DeeFileFD_RELEASE_EXCLUSIVE(self);
 #ifdef DeeSysFD_Quit
   if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
@@ -189,20 +189,17 @@ int DEE_CALL _deefilefd_tp_copy_assign(
   // NOTE: Unlike within the copy-constructor, here we
   //       inherit the ownership attribute from 'right', too.
   if ((newflags&DEE_PRIVATE_FILEFLAG_FD_OWNED)!=0) {
-   DeeSysFD_InitCopy(&new_fd,&right->fd_descr,{
-    DeeFileFD_RELEASE_SHARED(right);
-    return -1;
-   });
+   DeeSysFD_InitCopy(&new_fd,&right->fd_descr,{ DeeFileFD_RELEASE_SHARED(right); return -1; });
   } else {
-   new_fd = *&right->fd_descr;
+   new_fd = right->fd_descr;
   }
   DeeFileFD_RELEASE_SHARED(right);
 after_copy:
   DeeFileFD_ACQUIRE_EXCLUSIVE(self);
   oldflags = self->fo_flags;
-  old_fd = *&self->fd_descr;
+  old_fd = self->fd_descr;
   self->fo_flags = newflags;
-  *&self->fd_descr = new_fd;
+  self->fd_descr = new_fd;
   DeeFileFD_RELEASE_EXCLUSIVE(self);
 #ifdef DeeSysFD_Quit
   if ((oldflags&(DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED)) ==
@@ -222,7 +219,8 @@ DEE_COMPILER_MSVC_WARNING_POP
 #ifdef DEE_PLATFORM_UNIX
 #define _pdeefilefd_tp_str &_deefilefd_tp_str
 DeeObject *DEE_CALL _deefilefd_tp_str(DeeFileFDObject *self) {
- return DeeUnixSysFD_DoGetUtf8Name(&self->fd_descr->unx_fd);
+ return DeeString_Newf("<file.fd(%d) %r>",self->fd_descr.unx_fd,
+                       DeeUnixSysFD_DoGetUtf8Name(self->fd_descr.unx_fd));
 }
 #else
 #define _pdeefilefd_tp_str DeeType_DEFAULT_SLOT(tp_str)
@@ -406,7 +404,7 @@ static struct DeeMethodDef const _deefilefd_tp_methods[] = {
  DEE_METHODDEF_v100("win32_handle",member(&_deefilefd_win32_handle),"() -> HANDLE"),
 #endif
 #ifdef _deefilefd_posix_fileno
- DEE_METHODDEF_v100("posix_fileno",member(&_deefileio_fileno),"() -> int"),
+ DEE_METHODDEF_v100("posix_fileno",member(&_deefilefd_posix_fileno),"() -> int"),
 #endif
 #ifdef _deefilefd_size
  DEE_METHODDEF_v100("size",member(&_deefilefd_size),"() -> uint64_t"),
