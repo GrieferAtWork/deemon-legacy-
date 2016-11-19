@@ -31,45 +31,76 @@
 
 DEE_DECL_BEGIN
 
-#if DEE_SYSFD_SEEK_SET != DEE_SEEK_SET
-#define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_SET(whence) (whence==DEE_SEEK_SET)?whence=DEE_SYSFD_SEEK_SET:
+#ifndef DEE_SYSFD_SEEK_SET
+DeeError_NEW_STATIC(_unsupported_seek_set,&DeeErrorType_NotImplemented,"SEEK_SET is not supported");
+# define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_SET(whence,...) if(whence==DEE_SEEK_SET){DeeError_Throw((DeeObject *)&_unsupported_seek_set);{__VA_ARGS__;}};else
+#elif DEE_SYSFD_SEEK_SET != DEE_SEEK_SET
+# define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_SET(whence,...) if(whence==DEE_SEEK_SET)whence=DEE_SYSFD_SEEK_SET;else
 #else
-#define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_SET(whence) /* nothing */
+# define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_SET(whence,...) /* nothing */
 #endif
-#if DEE_SYSFD_SEEK_CUR != DEE_SEEK_CUR
-#define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_CUR(whence) (whence==DEE_SEEK_CUR)?whence=DEE_SYSFD_SEEK_CUR:
+
+#ifndef DEE_SYSFD_SEEK_CUR
+DeeError_NEW_STATIC(_unsupported_seek_cur,&DeeErrorType_NotImplemented,"SEEK_CUR is not supported");
+# define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_CUR(whence,...) if(whence==DEE_SEEK_CUR){DeeError_Throw((DeeObject *)&_unsupported_seek_cur);{__VA_ARGS__;}};else
+#elif DEE_SYSFD_SEEK_CUR != DEE_SEEK_CUR
+# define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_CUR(whence,...) if(whence==DEE_SEEK_CUR)whence=DEE_SYSFD_SEEK_CUR;else
 #else
-#define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_CUR(whence) /* nothing */
+# define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_CUR(whence,...) /* nothing */
 #endif
-#if DEE_SYSFD_SEEK_END != DEE_SEEK_END
-#define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_END(whence) (whence==DEE_SEEK_END)?whence=DEE_SYSFD_SEEK_END:
+
+#ifndef DEE_SYSFD_SEEK_END
+DeeError_NEW_STATIC(_unsupported_seek_end,&DeeErrorType_NotImplemented,"SEEK_END is not supported");
+# define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_END(whence,...) if(whence==DEE_SEEK_END){DeeError_Throw((DeeObject *)&_unsupported_seek_end);{__VA_ARGS__;}};else
+#elif DEE_SYSFD_SEEK_END != DEE_SEEK_END
+# define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_END(whence,...) if(whence==DEE_SEEK_END)whence=DEE_SYSFD_SEEK_END;else
 #else
-#define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_END(whence) /* nothing */
+# define DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_END(whence,...) /* nothing */
 #endif
-#define DEE_FILEFD_FIX_SEEKWHENCE(whence) \
- (DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_SET((whence)) \
-  DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_CUR((whence)) \
-  DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_END((whence)) (void)0)
+
+#define DEE_FILEFD_FIX_SEEKWHENCE(whence,...) \
+do{\
+ DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_SET((whence),__VA_ARGS__)\
+ DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_CUR((whence),__VA_ARGS__)\
+ DEE_PRIVATE_FILEFD_FIX_SEEKWHENCE_END((whence),__VA_ARGS__);\
+}while(0)
 
 
 
+#ifdef DeeSysFD
 #define DEE_FILE_FD_OBJECT_HEAD \
  DEE_FILE_OBJECT_HEAD \
  Dee_uint32_t    fd_users; /*< [atomic,inc:lock(fo_lock)] Amount of threads currently using this file-descriptor (incrementing requires a lock to 'fo_lock'). */
+#else
+#define DEE_FILE_FD_OBJECT_HEAD DEE_FILE_OBJECT_HEAD
+#endif
 
 struct DeeFileFDObject {
  DEE_FILE_FD_OBJECT_HEAD
+#ifdef DeeSysFD
  struct DeeSysFD fd_descr; /*< File descriptor (only writable when 'fo_lock' is owned and 'fd_users' is '0') */
+#endif
 };
-#define DeeFileFDObject_INIT_REF_INVALID(tp,ref)      {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_NONE,0,{/* don't initialize */}}
-#define DeeFileFDObject_INIT_REF_LATER(tp,ref)        {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID,0,{/* don't initialize */}}
-#define DeeFileFDObject_INIT_REF_VALID(tp,ref,descr)  {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID,0,descr}
-#define DeeFileFDObject_INIT_REF_OWNED(tp,ref,descr)  {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED,0,descr}
+
+#ifdef DeeSysFD
+# define DeeFileFDObject_INIT_REF_INVALID(tp,ref)      {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_NONE,0,{/* don't initialize */}}
+# define DeeFileFDObject_INIT_REF_LATER(tp,ref)        {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID,0,{/* don't initialize */}}
+# define DeeFileFDObject_INIT_REF_VALID(tp,ref,descr)  {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID,0,descr}
+# define DeeFileFDObject_INIT_REF_OWNED(tp,ref,descr)  {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED,0,descr}
+#else
+# define DeeFileFDObject_INIT_REF_INVALID(tp,ref)      {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_NONE}
+#endif
 
 
+#ifdef DeeSysFD
 #define DeeFileFD_InitBasic(ob,flags)\
  (DeeAtomicMutex_Init(&(ob)->fo_lock)\
  ,(ob)->fo_flags = (flags),(ob)->fd_users = 0)
+#else
+#define DeeFileFD_InitBasic(ob,flags)\
+ (DeeAtomicMutex_Init(&(ob)->fo_lock)\
+ ,(ob)->fo_flags = (flags))
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Acquire shared access to a given file descriptor
@@ -77,6 +108,7 @@ struct DeeFileFDObject {
 //    on the descriptor, knowing that the descriptor will not just randomly
 //    be closed before you release the your ticket.
 // >> The provided block of code is executed if the descriptor is (no longer) valid.
+#ifdef DeeSysFD
 #define DeeFileFD_ACQUIRE_SHARED(ob,...)\
 do{\
  DeeFile_ACQUIRE(ob);\
@@ -88,12 +120,17 @@ do{\
 }while(0)
 #define DeeFileFD_RELEASE_SHARED(ob)\
  DeeAtomic32_FetchDec(((DeeFileFDObject *)(ob))->fd_users,memory_order_seq_cst)
+#else
+#define DeeFileFD_ACQUIRE_SHARED(ob,...) do{}while(0)
+#define DeeFileFD_RELEASE_SHARED(ob)     (void)0
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // Acquire exclusive access to a given file descriptor
 // >> Only you are allowed to operate on a given descriptor.
 //    Such a ticket is required for closing a descriptor.
 // >> The provided block of code is executed if the descriptor is (no longer) valid.
+#ifdef DeeSysFD
 #define DeeFileFD_ACQUIRE_EXCLUSIVE(ob,...)\
 do{\
  DeeFile_ACQUIRE(ob);\
@@ -111,16 +148,20 @@ do{\
  }\
 }while(0)
 #define DeeFileFD_RELEASE_EXCLUSIVE(ob) DeeFile_RELEASE(ob)
+#else /* DeeSysFD */
+#define DeeFileFD_ACQUIRE_EXCLUSIVE(ob,...) do{}while(0)
+#define DeeFileFD_RELEASE_EXCLUSIVE(ob) (void)0
+#endif /* !DeeSysFD */
 
+#ifdef DeeSysFD
 DeeError_NEW_STATIC(_DeeErrorInstance_FileFDAlreadyClosed,&DeeErrorType_IOError,
                     "Invalid/Closed file descriptor");
 #define DeeErrorInstance_FileFDAlreadyClosed ((DeeObject *)&_DeeErrorInstance_FileFDAlreadyClosed)
-
+#endif /* DeeSysFD */
 
 
 #define _pdeefilefd_tp_ctor &_deefilefd_tp_ctor
-extern int _deefilefd_tp_ctor(
- DeeFileTypeObject *DEE_UNUSED(tp_self), DeeFileFDObject *self);
+extern int DEE_CALL _deefilefd_tp_ctor(DeeFileTypeObject *DEE_UNUSED(tp_self), DeeFileFDObject *self);
 
 #ifdef DeeSysFD_InitCopy /*< The system supports fd duplication. */
 #define _pdeefilefd_tp_copy_ctor &_deefilefd_tp_copy_ctor
@@ -132,7 +173,9 @@ extern int DEE_CALL _deefilefd_tp_copy_ctor(
 #define _pdeefilefd_tp_move_ctor &_deefilefd_tp_move_ctor
 extern int DEE_CALL _deefilefd_tp_move_ctor(
  DeeFileTypeObject *DEE_UNUSED(tp_self), DeeFileFDObject *self, DeeFileFDObject *right);
-#if defined(DEE_PLATFORM_WINDOWS) || defined(DEE_PLATFORM_UNIX)
+#if (defined(DEE_PLATFORM_WINDOWS)\
+  || defined(DEE_PLATFORM_UNIX))\
+  && defined(DeeSysFD)
 #define _pdeefilefd_tp_any_ctor &_deefilefd_tp_any_ctor
 extern int DEE_CALL _deefilefd_tp_any_ctor(
  DeeFileTypeObject *DEE_UNUSED(tp_self), DeeFileFDObject *self, DeeObject *args);

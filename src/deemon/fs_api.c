@@ -2900,10 +2900,15 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8ChmodEx(
   }
   if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET) {
    int temp; newmode = 0444;
+#ifdef DeeWin32Sys_HandleIsReadOnly
    DeeWin32Sys_HandleIsReadOnly(file,&temp,goto err_file);
    if (!temp) newmode |= 0222;
+#endif
    if DEE_UNLIKELY((temp = _DeeFS_Utf8IsExecutable(path)) < 0) {
-err_file: if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0); return -1; 
+#ifdef DeeWin32Sys_HandleIsReadOnly
+err_file:
+#endif
+    if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0); return -1; 
    }
    if (temp) newmode |= 0111;
   }
@@ -2978,10 +2983,15 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_WideChmodEx(
   }
   if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET) {
    int temp; newmode = 0444;
+#ifdef DeeWin32Sys_HandleIsReadOnly
    DeeWin32Sys_HandleIsReadOnly(file,&temp,goto err_file);
    if (!temp) newmode |= 0222;
+#endif
    if DEE_UNLIKELY((temp = _DeeFS_WideIsExecutable(path)) < 0) {
-err_file: if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0); return -1; 
+#ifdef DeeWin32Sys_HandleIsReadOnly
+err_file:
+#endif
+    if DEE_UNLIKELY(!CloseHandle(file)) SetLastError(0); return -1; 
    }
    if (temp) newmode |= 0111;
   }

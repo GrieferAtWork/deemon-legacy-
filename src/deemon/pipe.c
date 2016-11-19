@@ -274,7 +274,7 @@ static int DEE_CALL _deepipe_tp_io_write(
 #define _pdeepipe_tp_io_seek &_deepipe_tp_io_seek
 static int DEE_CALL _deepipe_tp_io_seek(
  DeePipeObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) {
- DEE_FILEFD_FIX_SEEKWHENCE(whence);
+ DEE_FILEFD_FIX_SEEKWHENCE(whence,return-1);
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeePipeFD_ACQUIRE_SHARED(self,{
   DeeError_Throw(DeeErrorInstance_PipeFDAlreadyClosed);

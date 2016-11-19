@@ -31,9 +31,10 @@ DEE_DECL_BEGIN
 
 struct DeeFileIOObject {
  DEE_FILE_FD_OBJECT_HEAD
+#ifdef DeeSysFileFD
  struct DeeSysFileFD io_descr;
+#endif
 };
-#define DeeFileIO_FD(ob)     (&((DeeFileIOObject *)Dee_REQUIRES_POINTER(ob))->io_descr)
 #define DeeFileIO_ACQUIRE_SHARED    DeeFileFD_ACQUIRE_SHARED
 #define DeeFileIO_RELEASE_SHARED    DeeFileFD_RELEASE_SHARED
 #define DeeFileIO_ACQUIRE_EXCLUSIVE DeeFileFD_ACQUIRE_EXCLUSIVE

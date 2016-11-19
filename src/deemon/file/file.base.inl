@@ -723,33 +723,13 @@ static struct DeeMemberDef const _deefile_tp_class_members[] = {
 DeeString_NEW_STATIC_EX(_deefile_default_open_mode,1,{'r'});
 static DeeObject *DEE_CALL _deefileclass_open(
  DeeTypeObject *DEE_UNUSED(self), DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeAnyStringObject *filename; DeeObject *result; Dee_openmode_t openmode;
- Dee_mode_t perms = DEE_FILEIO_DEFAULT_PERMISSIONS;
+ DeeAnyStringObject *filename; Dee_openmode_t openmode;
  DeeStringObject *mode = (DeeStringObject *)&_deefile_default_open_mode;
+ Dee_mode_t perms = DEE_FILEIO_DEFAULT_PERMISSIONS;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|oI" DEE_PP_STR(DEE_PP_MUL8(
   DEE_TYPES_SIZEOF_MODE_T)) "u:file.fd.fp",&filename,&mode,&perms) != 0) return NULL;
  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)mode,&DeeString_Type) != 0) return NULL;
  openmode = DeeFile_TryParseMode(DeeString_STR(mode));
- if (DeeFileIO_Check(filename)) {
-  if DEE_UNLIKELY((result = (DeeObject *)DeeObject_Malloc(sizeof(DeeFileIOObject))) == NULL) return NULL;
-#ifdef DEE_PLATFORM_WINDOWS
-  if DEE_UNLIKELY((filename = (DeeAnyStringObject *)(
-   DeeFileIO_WideFilename((DeeObject *)filename))) == NULL) {
-err_freer: DeeObject_Free(result); return NULL;
-  }
-  DeeSysFileFD_WideInitObject(&((DeeFileIOObject *)result)->io_descr,(DeeObject *)filename,openmode,
-                              perms,{ Dee_DECREF(filename); goto err_freer; });
-#else
-  if DEE_UNLIKELY((filename = (DeeAnyStringObject *)(
-   DeeFileIO_Utf8Filename((DeeObject *)filename))) == NULL) {
-err_freer: DeeObject_Free(result); return NULL;
-  }
-  DeeSysFileFD_Utf8InitObject(&((DeeFileIOObject *)result)->io_descr,(DeeObject *)filename,openmode,
-                              perms,{ Dee_DECREF(filename); goto err_freer; });
-#endif
-  Dee_DECREF(filename);
-  return result;
- }
  return DeeFile_OpenObjectEx((DeeObject *)filename,openmode,perms);
 }
 

@@ -40,9 +40,14 @@ DEE_A_RET_NOEXCEPT(1) int DeeFileFD_Win32AcquireHandle(
  DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT /*PHANDLE*/ void **result) {
  DEE_ASSERT(DeeObject_Check(self) && DeeFileFD_Check(self));
  DEE_ASSERT(result);
+#ifdef DeeSysFD
  DeeFileFD_ACQUIRE_SHARED((DeeFileFDObject *)self,return 1);
  *(PHANDLE)result = ((DeeFileFDObject *)self)->fd_descr.w32_handle;
  return 0;
+#else
+ (void)self,result;
+ return 1;
+#endif
 }
 #endif
 
@@ -51,9 +56,14 @@ DEE_A_RET_NOEXCEPT(1) int DeeFileFD_PosixAcquireFileno(
  DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT int *result) {
  DEE_ASSERT(DeeObject_Check(self) && DeeFileFD_Check(self));
  DEE_ASSERT(result);
+#ifdef DeeSysFD
  DeeFileFD_ACQUIRE_SHARED((DeeFileFDObject *)self,return 1);
  *result = ((DeeFileFDObject *)self)->fd_descr.unx_fd;
  return 0;
+#else
+ (void)self,result;
+ return 1;
+#endif
 }
 #endif
 
@@ -61,7 +71,11 @@ DEE_A_RET_NOEXCEPT(1) int DeeFileFD_PosixAcquireFileno(
 void _DeeFileFD_PrivateReleaseTicket(
  DEE_A_INOUT_OBJECT(DeeFileFDObject) *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeFileFD_Check(self));
+#ifdef DeeSysFD
  DeeFileFD_RELEASE_SHARED((DeeFileFDObject *)self);
+#else
+ (void)self;
+#endif
 }
 #endif
 
@@ -104,15 +118,18 @@ int DEE_CALL _deefilefd_tp_move_ctor(
  Dee_uint32_t newflags;
  DeeFileFD_ACQUIRE_EXCLUSIVE(right,{});
  newflags = right->fo_flags;
+#ifdef DeeSysFD
  self->fd_descr = right->fd_descr;
+#endif
  right->fo_flags = DEE_PRIVATE_FILEFLAG_NONE;
  DeeFileFD_RELEASE_EXCLUSIVE(right);
  DeeFileFD_InitBasic(self,newflags);
  return 0;
 }
 
-#if defined(DEE_PLATFORM_WINDOWS)\
- || defined(DEE_PLATFORM_UNIX)
+#if (defined(DEE_PLATFORM_WINDOWS)\
+  || defined(DEE_PLATFORM_UNIX))\
+  && defined(DeeSysFD)
 #define _pdeefilefd_tp_any_ctor &_deefilefd_tp_any_ctor
 int DEE_CALL _deefilefd_tp_any_ctor(
  DeeFileTypeObject *DEE_UNUSED(tp_self),
@@ -121,16 +138,14 @@ int DEE_CALL _deefilefd_tp_any_ctor(
 #ifdef DEE_PLATFORM_WINDOWS
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"p:file.fd",&new_fd) != 0) return -1;
  self->fd_descr.w32_handle = (HANDLE)new_fd;
-#else
+#else /* #elif DEE_PLATFORM_UNIX */
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"d:file.fd",&new_fd) != 0) return -1;
  self->fd_descr.unx_fd = new_fd;
-#endif
+#endif /* ... */
  // XXX: Validate handle?
  DeeFileFD_InitBasic(self,DEE_PRIVATE_FILEFLAG_FD_VALID);
  return 0;
 }
-#else
-#define _pdeefilefd_tp_any_ctor DeeType_DEFAULT_SLOT(tp_any_ctor)
 #endif
 
 #ifdef DeeSysFD_Quit
@@ -141,13 +156,12 @@ void DEE_CALL _deefilefd_tp_dtor(DeeFileFDObject *self) {
   DeeSysFD_Quit(&self->fd_descr);
  }
 }
-#else
-#define _pdeefilefd_tp_dtor DeeType_DEFAULT_SLOT(tp_dtor)
 #endif
 
 
 int DEE_CALL _deefilefd_tp_move_assign(
  DeeFileFDObject *self, DeeFileFDObject *right) {
+#ifdef DeeSysFD
  struct DeeSysFD new_fd,old_fd;
  Dee_uint32_t newflags,oldflags;
  if (self != right) {
@@ -169,6 +183,9 @@ int DEE_CALL _deefilefd_tp_move_assign(
   }
 #endif
  }
+#else
+ (void)self,right;
+#endif
  return 0;
 }
 
@@ -211,8 +228,6 @@ after_copy:
  return 0;
 }
 DEE_COMPILER_MSVC_WARNING_POP
-#else
-#define _pdeefilefd_tp_copy_assign DeeType_DEFAULT_SLOT(tp_copy_assign)
 #endif
 
 
@@ -222,23 +237,31 @@ DeeObject *DEE_CALL _deefilefd_tp_str(DeeFileFDObject *self) {
  return DeeString_Newf("<file.fd(%d) %r>",self->fd_descr.unx_fd,
                        DeeUnixSysFD_DoGetUtf8Name(self->fd_descr.unx_fd));
 }
-#else
-#define _pdeefilefd_tp_str DeeType_DEFAULT_SLOT(tp_str)
 #endif
 
 int DEE_CALL _deefilefd_tp_bool(DeeFileFDObject *self) {
+#ifdef DeeSysFD
  int result;
  DeeFile_ACQUIRE(self);
  result = ((self->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID) != 0);
  DeeFile_RELEASE(self);
  return result;
+#else
+ (void)self;
+ return 0;
+#endif
 }
 DeeObject *DEE_CALL _deefilefd_tp_not(DeeFileFDObject *self) {
+#ifdef DeeSysFD
  int result;
  DeeFile_ACQUIRE(self);
  result = ((self->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID) == 0);
  DeeFile_RELEASE(self);
  DeeReturn_Bool(result);
+#else
+ (void)self;
+ DeeReturn_True;
+#endif
 }
 
 
@@ -288,7 +311,7 @@ static int DEE_CALL _deefilefd_tp_io_seek(
  // If the sysfd seek modes differ from deemon's static codes, fix the differences
  // NOTE: This is mearly meant as a precausion.
  //       Both windows and linux use 0,1,2 for these modes, just like deemon does.
- DEE_FILEFD_FIX_SEEKWHENCE(whence);
+ DEE_FILEFD_FIX_SEEKWHENCE(whence,return-1);
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeFileFD_ACQUIRE_SHARED(self,{
   DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed);
@@ -374,12 +397,18 @@ static DeeObject *DEE_CALL _deefilefd_size(
 #define _deefilefd_win32_handle _deefilefd_win32_handle
 static DeeObject *DEE_CALL _deefilefd_win32_handle(
  DeeFileFDObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+#ifdef DeeSysFD
  HANDLE result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":win32_handle") != 0) return NULL;
  DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
  result = self->fd_descr.w32_handle;
  DeeFileFD_RELEASE_SHARED(self);
  return DeeVoidPointer_New(result);
+#else
+ (void)self,args;
+ DeeError_NotImplemented_str("fd");
+ return NULL;
+#endif
 }
 #endif
 
@@ -387,12 +416,18 @@ static DeeObject *DEE_CALL _deefilefd_win32_handle(
 #define _deefilefd_posix_fileno _deefilefd_posix_fileno
 static DeeObject *DEE_CALL _deefilefd_posix_fileno(
  DeeFileFDObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+#ifdef DeeSysFD
  int result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":posix_fileno") != 0) return NULL;
  DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
  result = self->fd_descr.unx_fd;
  DeeFileFD_RELEASE_SHARED(self);
  return DeeObject_New(int,result);
+#else
+ (void)self,args;
+ DeeError_NotImplemented_str("fd");
+ return NULL;
+#endif
 }
 #endif
 

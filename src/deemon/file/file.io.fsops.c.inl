@@ -140,23 +140,6 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 
 
-
-#ifdef DEE_PLATFORM_WINDOWS
-static DEE_A_RET_EXCEPT(-1) int _DeeFS_Win32FGetFileType(DEE_A_IN HANDLE handle) {
- DWORD error,ftype;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY((ftype = GetFileType(handle)) == 0
-              && (error = DeeSystemError_Win32Consume()) != 0) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "GetFileType(%p:%R) : %K",handle,
-                      DeeWin32Sys_WideGetHandleFilename(handle),
-                      DeeSystemError_Win32ToString(error));
-  return -1;
- }
- return (int)ftype;
-}
-#endif
-
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFileIO_IsFile(DEE_A_IN_OBJECT(DeeFileIOObject) const *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeFileIO_Check(self));
  {

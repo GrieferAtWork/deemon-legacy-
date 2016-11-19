@@ -25,11 +25,11 @@
 
 //////////////////////////////////////////////////////////////////////////
 //
-// >> #define DEE_SYSFD_SEEK_SET <implementation_dependent>
-// >> #define DEE_SYSFD_SEEK_CUR <implementation_dependent>
-// >> #define DEE_SYSFD_SEEK_END <implementation_dependent>
+// >> [[optional]] #define DEE_SYSFD_SEEK_SET <implementation_dependent>
+// >> [[optional]] #define DEE_SYSFD_SEEK_CUR <implementation_dependent>
+// >> [[optional]] #define DEE_SYSFD_SEEK_END <implementation_dependent>
 //
-// >> struct DeeSysFD { ... };
+// >> [[optional]] struct DeeSysFD { ... };
 // >> [[optional]] void DeeSysFD_Quit(DEE_A_INOUT struct DeeSysFD *self);
 // >> [[optional]] bool DeeSysFD_TryInitCopy(DEE_A_INOUT struct DeeSysFD *self, DEE_A_INOUT struct DeeSysFD *right);
 // >> [[optional]] void DeeSysFD_InitCopy(DEE_A_INOUT struct DeeSysFD *self, DEE_A_INOUT struct DeeSysFD *right, CODE on_error);
@@ -64,7 +64,7 @@
 //           NOTE: The generated 'self' object should not be destroyed
 //                 with 'DeeSysFD_Quit', but may be closed.
 //
-// >> struct DeeSysFileFD: DeeSysFD { ... };
+// >> [[optional]] struct DeeSysFileFD: DeeSysFD { ... };
 // >> [[optional]] void DeeSysFileFD_Quit(DEE_A_IN struct DeeSysFileFD *self);
 //         - Destruction code that must be execute in addition of 'DeeSysFD_Quit'
 // >> [[optional]] bool DeeSysFileFD_Utf8TryInit(struct DeeSysFileFD *self, Dee_Utf8Char const *filename, Dee_uint16_t mode, Dee_mode_t perms);
@@ -123,7 +123,7 @@
 // >> [[optional]] void DeeSysFileFD_Chown(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group, CODE on_error);
 // 
 //
-// >> struct DeeSysPipeFD: DeeSysFD { ... };
+// >> [[optional]] struct DeeSysPipeFD: DeeSysFD { ... };
 //         - Pipes are generally an optional platform-dependent feature,
 //           not being required per-sé, but being a simple way of doing for IPC.
 //           They are optional for the same reason why processes themselves are optional
@@ -142,10 +142,12 @@
 // >> [[optional]] void DeeSysPipeFD_Write(DEE_A_INOUT struct DeeSysFileFD *self, DEE_A_IN_RB(*ws) void const *p, DEE_A_IN size_t s, DEE_A_OUT size_t *ws, CODE on_error);
 
 
-#ifdef DEE_PLATFORM_WINDOWS
+#if defined(DEE_PLATFORM_WINDOWS)
 # include <deemon/sys/_win32.sysfd.h>
 #elif defined(DEE_PLATFORM_UNIX)
 # include <deemon/sys/_unix.sysfd.h>
+#elif 1
+# include <deemon/sys/_stub.sysfd.h>
 #else
 # error "No File implementation for this platform"
 #endif
