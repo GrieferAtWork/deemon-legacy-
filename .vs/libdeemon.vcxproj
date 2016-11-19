@@ -227,6 +227,7 @@
     <ClCompile Include="..\src\deemon\unicode\string.c" />
     <ClCompile Include="..\src\deemon\uuid.c" />
     <ClCompile Include="..\src\deemon\value.c" />
+    <ClCompile Include="..\src\deemon\vfs\vfs_core.c" />
     <ClCompile Include="..\src\deemon\weakref.c" />
     <ClCompile Include="..\src\deemon\_deprecated.c" />
     <ClCompile Include="..\src\tpp\tpp.c">
@@ -289,6 +290,7 @@
     <ClInclude Include="..\include\deemon\optional\cfunction_decl.h" />
     <ClInclude Include="..\include\deemon\optional\detail\object_callattr.h" />
     <ClInclude Include="..\include\deemon\optional\enum_attributes.h" />
+    <ClInclude Include="..\include\deemon\optional\file.openmode.h" />
     <ClInclude Include="..\include\deemon\optional\float_decl.h" />
     <ClInclude Include="..\include\deemon\optional\fs_api.modechange.h" />
     <ClInclude Include="..\include\deemon\optional\hashmap.h" />
@@ -377,6 +379,11 @@
     <ClInclude Include="..\src\deemon\sys\_win32.sysfd.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.systls.h" />
     <ClInclude Include="..\src\deemon\uuid_list.h" />
+    <ClInclude Include="..\src\deemon\vfs\vfs_core.h" />
+    <ClInclude Include="..\src\deemon\vfs\vfs_native_mount.h" />
+    <ClInclude Include="..\src\deemon\vfs\vfs_native_node.h" />
+    <ClInclude Include="..\src\deemon\vfs\vfs_root.h" />
+    <ClInclude Include="..\src\deemon\vfs\vfs_virtual_dir.h" />
     <ClInclude Include="..\src\tpp\tpp.h" />
   </ItemGroup>
   <ItemGroup>
@@ -610,6 +617,11 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\unicode\string.impl.stof.inl" />
     <None Include="..\src\deemon\unicode\string.impl.stoi.inl" />
     <None Include="..\src\deemon\unicode\string.unicode_impl.inl" />
+    <None Include="..\src\deemon\vfs\vfs_core.unicode_impl.inl" />
+    <None Include="..\src\deemon\vfs\vfs_native_mount.c.inl" />
+    <None Include="..\src\deemon\vfs\vfs_native_node.c.inl" />
+    <None Include="..\src\deemon\vfs\vfs_root.c.inl" />
+    <None Include="..\src\deemon\vfs\vfs_virtual_dir.c.inl" />
     <None Include="..\src\deemon\virtual_fs.c.inl" />
     <None Include="..\src\deemon\virtual_fs.dev_urandom.inl" />
     <None Include="..\src\deemon\virtual_fs.dev_zero.inl" />

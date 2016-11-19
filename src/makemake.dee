@@ -31,7 +31,7 @@ const copyright="\
 fs.chdir(fs.path.head(__FILE__));
 
 const source_extensions = [".c"];
-const ignored_paths = ["tpp","libffi","libffi_linux","libffi_msvc","ancestory"];
+const ignored_paths = ["tpp","libffi","libffi_linux","libffi_msvc","ancestory","vfs"];
 
 function find_source_files;
 function find_source_files(path) {

@@ -35,7 +35,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 #include DEE_INCLUDE_MEMORY_API()
 
-// include/*
+// /include/*
 #include <deemon/bool.h>
 #include <deemon/cfunction.h>
 #include <deemon/class.h>
@@ -69,10 +69,13 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include <deemon/value.h>
 #include <deemon/weakref.h>
 
-// src/*
+// /src/*
 #include <deemon/__xconf.inl>
 #include <deemon/compiler/xast.h>
 #include <deemon/compiler/sast.h>
+#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#include <deemon/vfs/vfs_core.h>
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
 
 // */ (nano...)
 
@@ -470,6 +473,11 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
  //       so no user code should be able to run here!
  _DeeClassType_Finalize();
 #endif
+
+#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+ // Shutdown the virtual file system.
+ DeeVFS_Shutdown();
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
 
  // Clear all structured type caches (pointer types, lvalue types, foreign_function types, ...)
  DeeStructuredType_Shutdown();

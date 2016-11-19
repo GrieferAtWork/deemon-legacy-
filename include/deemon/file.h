@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_FILE_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/optional/file.openmode.h>
 #include <deemon/optional/string_forward.h>
 #include <deemon/optional/std/stdarg.h>
 #include <deemon/optional/std/string.h>
@@ -80,6 +81,9 @@ DEE_OBJECT_DEF(DeeFileIteratorObject);
 DEE_OBJECT_DEF(DeeFileWriterObject);
 DEE_OBJECT_DEF(DeeFileReaderObject);
 DEE_OBJECT_DEF(DeeFileJoinedObject);
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+DEE_OBJECT_DEF(DeeVFSFileObject);
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #ifdef DEE_LIMITED_DEX
 struct _DeeFileTypeIOOperators {
@@ -136,6 +140,7 @@ DEE_DATA_DECL(DeeTypeObject) DeeFileType_Type;
 #define DEE_PRIVATE_FILEFLAG_IO_DELONCLOSE  DEE_UINT32_C(0x40000000) /*< Used by file.io (delete file when the handle is closed). */
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
 #define DEE_PRIVATE_FILEFLAG_IO_VFSFILE     DEE_UINT32_C(0x80000000) /*< Virtual file system file. */
+#define DEE_PRIVATE_FILEFLAG_VFS_VALID      DEE_PRIVATE_FILEFLAG_FD_VALID /*< Valid VFS file. */
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS*/
 
 #define DEE_FILE_OBJECT_HEAD \
@@ -155,44 +160,6 @@ struct DeeFileObject { DEE_FILE_OBJECT_HEAD }; // Common base class
 #define _DeeFile_InitCopy(ob,right) (DeeAtomicMutex_Init(&(ob)->fo_lock),(ob)->fo_flags=(right)->fo_flags)
 #define _DeeFile_InitMove            _DeeFile_InitCopy
 #endif
-
-
-
-typedef Dee_uint16_t Dee_openmode_t;
-#define DEE_OPENMODE_READ            DEE_UINT16_C(0x0000)
-#define DEE_OPENMODE_WRITE           DEE_UINT16_C(0x0001)
-#define DEE_OPENMODE_APPEND          DEE_UINT16_C(0x0002)
-#define DEE_OPENMODE_FLAG_UPDATE     DEE_UINT16_C(0x0004) // flag
-#define DEE_OPENMODE_MASKMODE        DEE_UINT16_C(0x0003) // last 2 bits
-#define DEE_OPENMODE_MASKBASIC       DEE_UINT16_C(0x0007) // last 3 bits
-#define DEE_OPENMODE_ISREAD(mode)    (((mode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_READ)
-#define DEE_OPENMODE_ISWRITE(mode)   (((mode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_WRITE)
-#define DEE_OPENMODE_ISAPPEND(mode)  (((mode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_APPEND)
-#define DEE_OPENMODE_HASUPDATE(mode) (((mode)&DEE_OPENMODE_FLAG_UPDATE)!=0)
-
-//////////////////////////////////////////////////////////////////////////
-// >> Dee_openmode_t DEE_OPENMODE(char rwa, bool update);
-// Returns a basic open mode:
-// @param rwa:    A character, that is either 'r', 'w' or 'a'
-// @param update: A boolean, indicating if a file should be opened in update mode
-#define DEE_OPENMODE(rwa,update)\
-(((rwa) == 'r' ?  DEE_OPENMODE_READ :\
-  (rwa) == 'w' ?  DEE_OPENMODE_WRITE :\
-/*(rwa) == 'a' ?*/DEE_OPENMODE_APPEND\
-)|((update) ? DEE_OPENMODE_FLAG_UPDATE : 0))
-
-
-
-#if DEE_DEPRECATED_API_VERSION(100,102,104)
-#define DEE_FILE_MODE_READ        DEE_MACRO_DEPRECATED(DEE_OPENMODE_READ)
-#define DEE_FILE_MODE_WRITE       DEE_MACRO_DEPRECATED(DEE_OPENMODE_WRITE)
-#define DEE_FILE_MODE_APPEND      DEE_MACRO_DEPRECATED(DEE_OPENMODE_APPEND)
-#define DEE_FILE_FLAG_UPDATE      DEE_MACRO_DEPRECATED(DEE_OPENMODE_FLAG_UPDATE)
-#define DEE_FILE_MASK_MODE        DEE_MACRO_DEPRECATED(DEE_OPENMODE_MASKMODE)
-#define DEE_FILE_MASK_BASIC_MODE  DEE_MACRO_DEPRECATED(DEE_OPENMODE_MASKBASIC)
-#endif
-
-
 
 #ifdef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
 DEE_PRIVATE_DECL_DEE_FILEDESCR_T

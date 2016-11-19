@@ -13,6 +13,7 @@
 *.opensdf
 *.v12.suo
 *.swp
+*.dat
 
 build/*
 lib/dex/*

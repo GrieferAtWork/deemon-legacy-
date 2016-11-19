@@ -214,6 +214,7 @@ struct _DeeEmptyUtf32StringObject;
 #define DeeReturn_Character                                   DeeReturn_Utf8Character
 #define DeeReturn_EmptyString                                 DeeReturn_EmptyUtf8String
 #define DeeReturn_STATIC_STRING                               DeeReturn_STATIC_UTF8_STRING
+#define DeeReturn_STATIC_STRING_EX                            DeeReturn_STATIC_UTF8_STRING_EX
 #define DeeReturn_STATIC_STRING_NOREF                         DeeReturn_STATIC_UTF8_STRING_NOREF
 #define DeeString_Check                                       DeeUtf8String_Check
 #define DeeString_CheckExact                                  DeeUtf8String_CheckExact
