@@ -32,8 +32,6 @@
 #include <deemon/sys/sysfd.h>
 #endif
 
-#include <deemon/fs_api.h>
-
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
 
@@ -66,18 +64,7 @@ DEE_PRIVATE_DECL_DEE_GID_T
 #undef DEE_PRIVATE_DECL_DEE_GID_T
 #endif
 
-// TODO: To have the new vfs-system fully working, we need to add another abstraction
-//       layer, separating the native portions from the filesystem Apis.
-#define DeeNativeFS_Utf8GetCwd  DeeFS_Utf8GetCwd
-#define DeeNativeFS_WideGetCwd  DeeFS_WideGetCwd
-#define DeeNativeFS_GetCwd      DeeNativeFS_Utf8GetCwd
-
-#define DeeNativeFS_Utf8Chdir       _DeeFS_Utf8ChDir
-#define DeeNativeFS_WideChdir       _DeeFS_WideChDir
-#define DeeNativeFS_Utf8ChdirObject _DeeFS_ChDirObject
-#define DeeNativeFS_WideChdirObject _DeeFS_ChDirObject
-#define DeeNativeFS_Chdir           DeeNativeFS_Utf8Chdir
-#define DeeNativeFS_ChdirObject     DeeNativeFS_Utf8ChdirObject
+// TODO: Convert all NativeFS functions to SysFS
 
 #define DeeNativeFS_Utf8Readlink       _DeeFS_Utf8ReadLink
 #define DeeNativeFS_WideReadlink       _DeeFS_WideReadLink

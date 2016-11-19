@@ -24,17 +24,17 @@
 #endif
 
 #ifdef WIDE
-#define DEESTRINGOBJECT           DeeWideStringObject
-#define DeeString_F(x)            DeeWideString_##x
-#define DeeVFS_F(x)               DeeVFS_Wide##x
-#define DeeNativeFS_F(x)          DeeNativeFS_Wide##x
-#define DEE_CHAR                  Dee_WideChar
+#define DEESTRINGOBJECT DeeWideStringObject
+#define DeeString_F(x)  DeeWideString_##x
+#define DeeVFS_F(x)     DeeVFS_Wide##x
+#define DeeSysFS_F(x)   DeeSysFS_Wide##x
+#define DEE_CHAR        Dee_WideChar
 #else
-#define DEESTRINGOBJECT           DeeUtf8StringObject
-#define DeeString_F(x)            DeeUtf8String_##x
-#define DeeVFS_F(x)               DeeVFS_Utf8##x
-#define DeeNativeFS_F(x)          DeeNativeFS_Utf8##x
-#define DEE_CHAR                  Dee_Utf8Char
+#define DEESTRINGOBJECT DeeUtf8StringObject
+#define DeeString_F(x)  DeeUtf8String_##x
+#define DeeVFS_F(x)     DeeVFS_Utf8##x
+#define DeeSysFS_F(x)   DeeSysFS_Utf8##x
+#define DEE_CHAR        Dee_Utf8Char
 #endif
 
 
@@ -62,7 +62,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeVFS_F(GetCwd)(void)
  }
  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
  // Not virtual CWD --> Return the native one
- return DeeNativeFS_F(GetCwd)();
+ return DeeSysFS_F(GetCwd)();
 }
 DEE_A_RET_EXCEPT(-1) int DeeVFS_F(Chdir)(DEE_A_IN_Z DEE_CHAR const *path) {
 #ifdef WIDE
@@ -86,7 +86,9 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_F(Chdir)(DEE_A_IN_Z DEE_CHAR const *path) {
   // Delete the (possibly) active virtual CWD path
   DeeVFS_DelCwdNode();
   // Update the native CWD
-  return DeeNativeFS_F(Chdir)(path);
+native_chdir:
+  DeeSysFS_F(Chdir)(path,return -1);
+  return 0;
  }
 walk_relative:
  // Relative virtual/native path
@@ -94,7 +96,7 @@ walk_relative:
  if ((oldcwd = DeeVFS_CWD) == NULL) {
   DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
   // No virtual CWD node set --> 'path' must be relative within the native filesystem
-  return DeeNativeFS_F(Chdir)(path);
+  goto native_chdir;
  }
  DeeVFSNode_INCREF(oldcwd);
  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
@@ -230,7 +232,7 @@ DeeVFS_F(ForceNativePath)(DEE_A_IN_Z DEE_CHAR const *path) {
 #undef DEESTRINGOBJECT
 #undef DeeString_F
 #undef DeeVFS_F
-#undef DeeNativeFS_F
+#undef DeeSysFS_F
 #undef DEE_CHAR
 #ifdef WIDE
 #undef WIDE

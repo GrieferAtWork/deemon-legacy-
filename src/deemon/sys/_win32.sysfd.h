@@ -256,18 +256,21 @@ DEE_PRIVATE_DECL_DEE_TIMETICK_T
 #endif
 
 
+#ifndef DeeWin32Sys_FiletimeToTimetick // NOTE: Also implemented in "_win32.sysfd.h"
+#define DeeWin32Sys_FiletimeToTimetick(ft) (((ft)/DEE_UINT64_C(10000))+DEE_UINT64_C(50522659200000))
+#define DeeWin32Sys_TimetickToFiletime(tt) (((tt)-DEE_UINT64_C(50522659200000))*DEE_UINT64_C(10000))
+#endif
 
-// TODO: Perform the 1601 <---> 0000 conversion!
 DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TryGetHandleTime(
  DEE_A_IN HANDLE hFile,
  DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime,
  DEE_A_OUT_OPT Dee_timetick_t *mtime) {
- FILETIME temp;
+ Dee_timetick_t temp;
  if DEE_UNLIKELY(!GetFileTime(hFile,(LPFILETIME)ctime,(LPFILETIME)atime,(LPFILETIME)mtime)) return FALSE;
- if (atime) { temp = *(LPFILETIME)atime; if DEE_UNLIKELY(!FileTimeToLocalFileTime(&temp,(LPFILETIME)atime)) return FALSE; }
- if (ctime) { temp = *(LPFILETIME)ctime; if DEE_UNLIKELY(!FileTimeToLocalFileTime(&temp,(LPFILETIME)ctime)) return FALSE; }
- if (mtime) { temp = *(LPFILETIME)mtime; if DEE_UNLIKELY(!FileTimeToLocalFileTime(&temp,(LPFILETIME)mtime)) return FALSE; }
+ if (atime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime((LPFILETIME)atime,(LPFILETIME)&temp)) return FALSE; *atime = DeeWin32Sys_FiletimeToTimetick(temp); }
+ if (ctime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime((LPFILETIME)ctime,(LPFILETIME)&temp)) return FALSE; *ctime = DeeWin32Sys_FiletimeToTimetick(temp); }
+ if (mtime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime((LPFILETIME)mtime,(LPFILETIME)&temp)) return FALSE; *mtime = DeeWin32Sys_FiletimeToTimetick(temp); }
  return TRUE;
 }
 DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TrySetHandleTime(
@@ -275,10 +278,10 @@ DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TrySetHandleTime(
  DEE_A_IN_OPT Dee_timetick_t const *atime,
  DEE_A_IN_OPT Dee_timetick_t const *ctime,
  DEE_A_IN_OPT Dee_timetick_t const *mtime) {
- FILETIME fatime,fctime,fmtime;
- if (atime && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)atime,&fatime))) return FALSE;
- if (ctime && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)ctime,&fctime))) return FALSE;
- if (mtime && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)mtime,&fmtime))) return FALSE;
+ FILETIME fatime,fctime,fmtime,temp;
+ if (atime) { *(Dee_timetick_t *)&temp = DeeWin32Sys_TimetickToFiletime(*atime); if DEE_UNLIKELY(!LocalFileTimeToFileTime(&temp,&fatime)) return FALSE; }
+ if (ctime) { *(Dee_timetick_t *)&temp = DeeWin32Sys_TimetickToFiletime(*ctime); if DEE_UNLIKELY(!LocalFileTimeToFileTime(&temp,&fctime)) return FALSE; }
+ if (mtime) { *(Dee_timetick_t *)&temp = DeeWin32Sys_TimetickToFiletime(*mtime); if DEE_UNLIKELY(!LocalFileTimeToFileTime(&temp,&fmtime)) return FALSE; }
  return SetFileTime(hFile,
                     ctime ? &fctime : NULL,
                     atime ? &fatime : NULL,
@@ -287,7 +290,7 @@ DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TrySetHandleTime(
 
 #define DeeWin32Sys_GetHandleTime(hFile,atime,ctime,mtime,...) \
 do{\
- FILETIME _ft_temp;\
+ Dee_timetick_t _ft_temp;\
  static char const *_ft_convert_error_message = "FileTimeToLocalFileTime(%I64u) : %K";\
  if DEE_UNLIKELY(!GetFileTime(hFile,(LPFILETIME)(ctime),\
                 (LPFILETIME)(atime),(LPFILETIME)(mtime))) {\
@@ -296,17 +299,17 @@ do{\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
   {__VA_ARGS__;}\
  }\
- if (atime) { _ft_temp = *(LPFILETIME)(atime); if DEE_UNLIKELY(!FileTimeToLocalFileTime(&_ft_temp,(LPFILETIME)(atime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} }\
- if (ctime) { _ft_temp = *(LPFILETIME)(ctime); if DEE_UNLIKELY(!FileTimeToLocalFileTime(&_ft_temp,(LPFILETIME)(ctime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} }\
- if (mtime) { _ft_temp = *(LPFILETIME)(mtime); if DEE_UNLIKELY(!FileTimeToLocalFileTime(&_ft_temp,(LPFILETIME)(mtime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} }\
+ if (atime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime((LPFILETIME)&_ft_temp,(LPFILETIME)(atime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} *(atime) = DeeWin32Sys_FiletimeToTimetick(_ft_temp); }\
+ if (ctime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime((LPFILETIME)&_ft_temp,(LPFILETIME)(ctime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} *(ctime) = DeeWin32Sys_FiletimeToTimetick(_ft_temp); }\
+ if (mtime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime((LPFILETIME)&_ft_temp,(LPFILETIME)(mtime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} *(mtime) = DeeWin32Sys_FiletimeToTimetick(_ft_temp); }\
 }while(0)
 #define DeeWin32Sys_SetHandleTime(hFile,atime,ctime,mtime,...) \
 do{\
- FILETIME _ft_atime,_ft_ctime,_ft_mtime;\
+ FILETIME _ft_atime,_ft_ctime,_ft_mtime,_ft_temp;\
  static char const *_ft_convert_error_message = "FileTimeToLocalFileTime(%I64u) : %K";\
- if ((atime) && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)(atime),&_ft_atime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,*(atime),DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}}\
- if ((ctime) && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)(ctime),&_ft_ctime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,*(ctime),DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}}\
- if ((mtime) && DEE_UNLIKELY(!LocalFileTimeToFileTime((FILETIME const *)(mtime),&_ft_mtime))) { DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,*(mtime),DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}}\
+ if (atime) { *(Dee_timetick_t *)&_ft_temp = DeeWin32Sys_TimetickToFiletime(*(atime)); if DEE_UNLIKELY(!LocalFileTimeToFileTime(&_ft_temp,&_ft_atime)) DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,*(Dee_timetick_t *)&_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}}\
+ if (ctime) { *(Dee_timetick_t *)&_ft_temp = DeeWin32Sys_TimetickToFiletime(*(ctime)); if DEE_UNLIKELY(!LocalFileTimeToFileTime(&_ft_temp,&_ft_ctime)) DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,*(Dee_timetick_t *)&_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}}\
+ if (mtime) { *(Dee_timetick_t *)&_ft_temp = DeeWin32Sys_TimetickToFiletime(*(mtime)); if DEE_UNLIKELY(!LocalFileTimeToFileTime(&_ft_temp,&_ft_mtime)) DeeError_SetStringf(&DeeErrorType_SystemError,_ft_convert_error_message,*(Dee_timetick_t *)&_ft_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}}\
  if DEE_UNLIKELY(!SetFileTime(hFile,(ctime) ? &_ft_ctime : NULL,\
         (atime) ? &_ft_atime : NULL,(mtime) ? &_ft_mtime : NULL)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\

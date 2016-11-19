@@ -364,6 +364,7 @@
     <ClInclude Include="..\src\deemon\signalhandler.h" />
     <ClInclude Include="..\src\deemon\sys\sysdynlib.h" />
     <ClInclude Include="..\src\deemon\sys\sysfd.h" />
+    <ClInclude Include="..\src\deemon\sys\sysfs.h" />
     <ClInclude Include="..\src\deemon\sys\systls.h" />
     <ClInclude Include="..\src\deemon\sys\_emulated.systls.h" />
     <ClInclude Include="..\src\deemon\sys\_haiku.sysdynlib.h" />
@@ -377,6 +378,8 @@
     <ClInclude Include="..\src\deemon\sys\_win32.sysdynlib.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.sysfd.createfile.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.sysfd.h" />
+    <ClInclude Include="..\src\deemon\sys\_win32.sysfs.h" />
+    <ClInclude Include="..\src\deemon\sys\_win32.sysfs.unicode_impl.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.systls.h" />
     <ClInclude Include="..\src\deemon\uuid_list.h" />
     <ClInclude Include="..\src\deemon\vfs\vfs_core.h" />

@@ -30,6 +30,7 @@
 #include <deemon/error.h>
 #include <deemon/string.h>
 #include <deemon/deemonrun.h>
+#include <deemon/sys/sysfs.h>
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
@@ -261,7 +262,7 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_GetCwdNode(void) {
  }
  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
  // Must use the native cwd, returning a path to it.
- if DEE_UNLIKELY((native_cwd = DeeNativeFS_GetCwd()) == NULL) return NULL;
+ if DEE_UNLIKELY((native_cwd = DeeSysFS_GetCwd()) == NULL) return NULL;
  result = DeeVFS_LocateNative(DeeString_STR(native_cwd));
  Dee_DECREF(native_cwd);
  return result;
@@ -269,8 +270,9 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_GetCwdNode(void) {
 DEE_A_RET_EXCEPT(-1) int DeeVFS_SetCwdNode(DEE_A_IN struct DeeVFSNode *cwd) {
  struct DeeVFSNode *old_cwd;
  DEE_ASSERT(cwd);
- if (DeeVFSNode_IsNative(cwd) && DeeNativeFS_Chdir( // Update the native CWD directory
-  DeeString_STR(((DeeVFSNativeNode *)cwd)->vnn_path)) != 0) return -1;
+ if (DeeVFSNode_IsNative(cwd)) { // Update the native CWD directory
+  DeeSysFS_ChdirObject(((DeeVFSNativeNode *)cwd)->vnn_path,return -1);
+ }
  DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);
  old_cwd = DeeVFS_CWD; DeeVFS_CWD = cwd;
  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);

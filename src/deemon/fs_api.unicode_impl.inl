@@ -939,7 +939,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeFS_F(ListEnv)(void) {
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) { Dee_DECREF(result); return NULL; }
  if DEE_UNLIKELY((env_vars = WIN32_F(GetEnvironmentStrings)()) == NULL) {
   Dee_DECREF(result);
-  DeeError_SystemError(DEE_PP_STR(WIN32_F(GetEnvironmentStringsA)));
+  DeeError_SystemError(DEE_PP_STR(WIN32_F(GetEnvironmentStrings)));
   return NULL;
  }
  for (line = env_vars; *line; line += (DEE_STRLEN(line)+1)) {
