@@ -219,8 +219,6 @@ static void DeeFS_Utf8ReconfigureEnv(
 
 
 // Forward inline APIs
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8PathExpandObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WidePathExpandObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8PathHeadObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WidePathHeadObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8PathTailObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
@@ -427,18 +425,6 @@ static int _dee_posix_check_getcwd_error(void) {
 // Current working directory get/set
 // NOTE: 'path' may be relative, allowing you to navigate from the current cwd
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *
-DeeFS_GetHomeUserObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *user) {
- DeeObject *result;
- DEE_ASSERT(DeeObject_Check(user));
- if (DeeWideString_Check(user)) return DeeFS_WideGetHomeUser(DeeWideString_STR(user));
- if DEE_UNLIKELY((user = DeeUtf8String_Cast(user)) == NULL) return NULL;
- result = DeeFS_Utf8GetHomeUser(DeeUtf8String_STR(user));
- Dee_DECREF(user);
- return result;
-}
-
-
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *DeeFS_GetTmpNameObject(
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *path,
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *prefix) {
@@ -477,12 +463,13 @@ end_0: Dee_DECREF(path);
 
 
 
+#if 1
 DEE_A_RET_EXCEPT(-1) int DeeFS_SetListEnv(
  DEE_A_IN_OBJECT(struct DeeListObject) const *v) {
  DeeObject *old_env,**iter,**end,*elem;
  DEE_ASSERT(DeeObject_Check(v) && DeeList_Check(v));
  if DEE_UNLIKELY((v = DeeList_Copy(v)) == NULL) return -1;
- if DEE_UNLIKELY((old_env = DeeFS_ListEnv()) == NULL) {err_v: Dee_DECREF(v); return -1; }
+ if DEE_UNLIKELY((old_env = DeeFS_EnumEnv()) == NULL) {err_v: Dee_DECREF(v); return -1; }
  end = (iter = DeeList_ELEM(old_env))+DeeList_SIZE(old_env);
  while (iter != end) {
   DEE_ASSERT(DeeObject_Check(*iter) && DeeTuple_Check(*iter));
@@ -505,76 +492,7 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_SetListEnv(
  Dee_DECREF(v);
  return 0;
 }
-
-DEE_A_RET_EXCEPT(-1) int DeeFS_HasEnvObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *name) {
- int result;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(name))
-  return DeeFS_WideHasEnv(DeeWideString_STR(name));
 #endif
- if DEE_UNLIKELY((name = DeeUtf8String_Cast(name)) == NULL) return -1;
- result = DeeFS_Utf8HasEnv(DeeUtf8String_STR(name));
- Dee_DECREF(name);
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *DeeFS_GetEnvObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *name) {
- DeeObject *result;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(name))
-  return DeeFS_WideGetEnv(DeeWideString_STR(name));
-#endif
- if DEE_UNLIKELY((name = DeeUtf8String_Cast(name)) == NULL) return NULL;
- result = DeeFS_Utf8GetEnv(DeeUtf8String_STR(name));
- Dee_DECREF(name);
- return result;
-}
-DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeAnyStringObject) *DeeFS_TryGetEnvObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *name) {
- DeeObject *result;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(name))
-  return DeeFS_WideTryGetEnv(DeeWideString_STR(name));
-#endif
- if DEE_UNLIKELY((name = DeeUtf8String_Cast(name)) == NULL) { DeeError_Handled(); return NULL; }
- result = DeeFS_Utf8TryGetEnv(DeeUtf8String_STR(name));
- Dee_DECREF(name);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_DelEnvObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *name) {
- int result;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(name))
-  return DeeFS_WideDelEnv(DeeWideString_STR(name));
-#endif
- if DEE_UNLIKELY((name = DeeUtf8String_Cast(name)) == NULL) return -1;
- result = DeeFS_Utf8DelEnv(DeeUtf8String_STR(name));
- Dee_DECREF(name);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_SetEnvObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *name,
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *value) {
- int result;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(name)) {
-  if DEE_UNLIKELY((value = DeeWideString_Cast(value)) == NULL) return -1;
-  result = DeeFS_WideSetEnv(
-   DeeWideString_STR(name),
-   DeeWideString_STR(value));
-  Dee_DECREF(value);
-  return result;
- }
-#endif
- if DEE_UNLIKELY((name = DeeUtf8String_Cast(name)) == NULL) return -1;
- if DEE_UNLIKELY((value = DeeUtf8String_Cast(value)) == NULL) { result = -1; goto err_0; }
- result = DeeFS_Utf8SetEnv(DeeUtf8String_STR(name),DeeUtf8String_STR(value));
- Dee_DECREF(value);
-err_0: Dee_DECREF(name);
- return result;
-}
 
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *
@@ -817,128 +735,6 @@ static int _deefs_posix_try_lstat(char const *path, struct stat *attrib) {
 }
 #endif
 #endif
-
-
-DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *
-_DeeFS_GetATimeObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DeeObject *result;
- if DEE_UNLIKELY(_DeeFS_GetTimes2Object(path,&result,NULL,NULL) != 0) return NULL;
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *
-_DeeFS_GetCTimeObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DeeObject *result;
- if DEE_UNLIKELY(_DeeFS_GetTimes2Object(path,NULL,&result,NULL) != 0) return NULL;
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *
-_DeeFS_GetMTimeObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DeeObject *result;
- if DEE_UNLIKELY(_DeeFS_GetTimes2Object(path,NULL,NULL,&result) != 0) return NULL;
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *
-DeeFS_GetATimeObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DeeObject *result;
- if DEE_UNLIKELY(DeeFS_GetTimes2Object(path,&result,NULL,NULL) != 0) return NULL;
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *
-DeeFS_GetCTimeObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DeeObject *result;
- if DEE_UNLIKELY(DeeFS_GetTimes2Object(path,NULL,&result,NULL) != 0) return NULL;
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *
-DeeFS_GetMTimeObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DeeObject *result;
- if DEE_UNLIKELY(DeeFS_GetTimes2Object(path,NULL,NULL,&result) != 0) return NULL;
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTupleObject) *
-_DeeFS_GetTimesObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DeeObject *a,*c,*m,*result;
- if DEE_UNLIKELY(_DeeFS_GetTimes2Object(path,&a,&c,&m) != 0) return NULL;
- result = DeeTuple_Pack(3,a,c,m);
- Dee_DECREF(a);
- Dee_DECREF(c);
- Dee_DECREF(m);
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTupleObject) *
-DeeFS_GetTimesObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DeeObject *a,*c,*m,*result;
- if DEE_UNLIKELY(DeeFS_GetTimes2Object(path,&a,&c,&m) != 0) return NULL;
- result = DeeTuple_Pack(3,a,c,m);
- Dee_DECREF(a);
- Dee_DECREF(c);
- Dee_DECREF(m);
- return result;
-}
-
-
-DEE_A_RET_EXCEPT(-1) int _DeeFS_GetTimes2Object(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path,
- DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **tm_access,
- DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **tm_creation,
- DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **tm_modification) {
- int result;
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideGetTimes2(DeeWideString_STR(path),tm_access,tm_creation,tm_modification);
- } else {
-  if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
-  result = _DeeFS_Utf8GetTimes2(DeeUtf8String_STR(path),tm_access,tm_creation,tm_modification);
-  Dee_DECREF(path);
- }
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_GetTimes2Object(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path,
- DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **tm_access,
- DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **tm_creation,
- DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **tm_modification) {
- int result;
- if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideGetTimes2(DeeWideString_STR(path),tm_access,tm_creation,tm_modification);
- } else {
-  if DEE_UNLIKELY(DeeUtf8String_InplaceCast((DeeObject const **)&path) != 0) return -1;
-  result = _DeeFS_Utf8GetTimes2(DeeUtf8String_STR(path),tm_access,tm_creation,tm_modification);
- }
- Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int _DeeFS_SetTimes2Object(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path,
- DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) const *tm_access,
- DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) const *tm_creation,
- DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) const *tm_modification) {
- int result;
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideSetTimes2(DeeWideString_STR(path),tm_access,tm_creation,tm_modification);
- } else {
-  if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
-  result = _DeeFS_Utf8SetTimes2(DeeUtf8String_STR(path),tm_access,tm_creation,tm_modification);
-  Dee_DECREF(path);
- }
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_SetTimes2Object(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path,
- DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) const *tm_access,
- DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) const *tm_creation,
- DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) const *tm_modification) {
- int result;
- if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideSetTimes2(DeeWideString_STR(path),tm_access,tm_creation,tm_modification);
- } else {
-  if DEE_UNLIKELY(DeeUtf8String_InplaceCast((DeeObject const **)&path) != 0) return -1;
-  result = _DeeFS_Utf8SetTimes2(DeeUtf8String_STR(path),tm_access,tm_creation,tm_modification);
- }
- Dee_DECREF(path);
- return result;
-}
 
 
 DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_IsAbsObject(

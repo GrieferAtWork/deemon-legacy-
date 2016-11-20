@@ -239,7 +239,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryChownObject(
 #elif defined(DeeSysFS_Utf8TryChownObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return -1;
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return -1; }
  result = DeeSysFS_Utf8TryChownObject(path_ob,owner,group);
  Dee_DECREF(path_ob);
  return result;

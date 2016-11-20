@@ -91,6 +91,48 @@ DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self)
  return DeeString_STR(native_path)[DeeString_SIZE(native_path)-1] == ':';
 }
 
+DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetTimes(
+ DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT_OPT Dee_timetick_t *atime,
+ DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
+ if (!self->vn_type->vnt_node.vnt_gettimes) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Can't read time for %R",
+                      DeeVFSNode_Filename(self));
+  return -1;
+ }
+ return (*self->vn_type->vnt_node.vnt_gettimes)(self,atime,ctime,mtime);
+}
+DEE_A_RET_EXCEPT(-1) int DeeVFSNode_SetTimes(
+      DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_OPT Dee_timetick_t const *atime,
+ DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
+ if (!self->vn_type->vnt_node.vnt_settimes) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Can't write time for %R",
+                      DeeVFSNode_Filename(self));
+  return -1;
+ }
+ return (*self->vn_type->vnt_node.vnt_settimes)(self,atime,ctime,mtime);
+}
+DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetTimes(
+ DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT_OPT Dee_timetick_t *atime,
+ DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
+ int error;
+ if (!self->vn_type->vnt_node.vnt_gettimes) return 0;
+ error = (*self->vn_type->vnt_node.vnt_gettimes)(self,atime,ctime,mtime);
+ if (error < 0) { DeeError_HandledOne(); error = 1; }
+ return !error;
+}
+DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TrySetTimes(
+      DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_OPT Dee_timetick_t const *atime,
+ DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
+ int error;
+ if (!self->vn_type->vnt_node.vnt_settimes) return 0;
+ error = (*self->vn_type->vnt_node.vnt_settimes)(self,atime,ctime,mtime);
+ if (error < 0) { DeeError_HandledOne(); error = 1; }
+ return !error;
+}
+
+
 
 DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
  DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_INOUT struct DeeVFSNode *self) {
@@ -230,6 +272,106 @@ DeeVFS_Locate(DEE_A_IN_Z char const *path) {
  DeeVFSNode_DECREF(cwd);
  return result;
 }
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LLocateWithCWD(
+ DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z char const *path) {
+ struct DeeVFSLocateState state;
+ DEE_ASSERT(cwd);
+ state.vld_startpath = path;
+ state.vld_link_ind = 0;
+ if (DEE_VFS_ISSEP(*path)) { // Absolute path
+  do ++path; while (DEE_VFS_ISSEP(*path));
+  return DeeVFS_LLocateAt_impl(&state,DeeVFS_Root,path);
+ }
+ return DeeVFS_LLocateAt_impl(&state,cwd,path);
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LocateWithCWD(
+ DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z char const *path) {
+ struct DeeVFSLocateState state;
+ DEE_ASSERT(cwd);
+ state.vld_startpath = path;
+ state.vld_link_ind = 0;
+ if (DEE_VFS_ISSEP(*path)) { // Absolute path
+  do ++path; while (DEE_VFS_ISSEP(*path));
+  return DeeVFS_LocateAt_impl(&state,DeeVFS_Root,path);
+ }
+ return DeeVFS_LocateAt_impl(&state,cwd,path);
+}
+
+
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *
+DeeVFS_WideLLocate(DEE_A_IN_Z Dee_WideChar const *path) {
+ DeeObject *u8path; struct DeeVFSNode *result;
+ if DEE_UNLIKELY((u8path = DeeUtf8String_FromWideString(path)) == NULL) return NULL;
+ result = DeeVFS_Utf8LLocate(DeeUtf8String_STR(u8path));
+ Dee_DECREF(u8path);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *
+DeeVFS_WideLocate(DEE_A_IN_Z Dee_WideChar const *path) {
+ DeeObject *u8path; struct DeeVFSNode *result;
+ if DEE_UNLIKELY((u8path = DeeWideString_FromWideString(path)) == NULL) return NULL;
+ result = DeeVFS_Utf8Locate(DeeUtf8String_STR(u8path));
+ Dee_DECREF(u8path);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateWithCWD(
+ DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path) {
+ DeeObject *u8path; struct DeeVFSNode *result;
+ if DEE_UNLIKELY((u8path = DeeUtf8String_FromWideString(path)) == NULL) return NULL;
+ result = DeeVFS_Utf8LLocateWithCWD(cwd,DeeUtf8String_STR(u8path));
+ Dee_DECREF(u8path);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateWithCWD(
+ DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path) {
+ DeeObject *u8path; struct DeeVFSNode *result;
+ if DEE_UNLIKELY((u8path = DeeUtf8String_FromWideString(path)) == NULL) return NULL;
+ result = DeeVFS_Utf8LocateWithCWD(cwd,DeeUtf8String_STR(u8path));
+ Dee_DECREF(u8path);
+ return result;
+}
+
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateObject(
+ DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ struct DeeVFSNode *result; DeeObject *u8path;
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ if ((u8path = DeeUtf8String_FromWideStringWithLength(
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return NULL;
+ result = DeeVFS_Utf8LLocateObject(u8path);
+ Dee_DECREF(u8path);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateObject(
+ DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ struct DeeVFSNode *result; DeeObject *u8path;
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ if ((u8path = DeeUtf8String_FromWideStringWithLength(
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return NULL;
+ result = DeeVFS_Utf8LocateObject(u8path);
+ Dee_DECREF(u8path);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateWithCWDObject(
+ DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ struct DeeVFSNode *result; DeeObject *u8path;
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ if ((u8path = DeeUtf8String_FromWideStringWithLength(
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return NULL;
+ result = DeeVFS_Utf8LLocateWithCWDObject(cwd,u8path);
+ Dee_DECREF(u8path);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateWithCWDObject(
+ DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ struct DeeVFSNode *result; DeeObject *u8path;
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ if ((u8path = DeeUtf8String_FromWideStringWithLength(
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return NULL;
+ result = DeeVFS_Utf8LocateWithCWDObject(cwd,u8path);
+ Dee_DECREF(u8path);
+ return result;
+}
+
 
 
 
@@ -261,6 +403,13 @@ DeeVFS_LocateNative(DEE_A_IN_Z char const *path) {
 struct DeeAtomicMutex        DeeVFS_CWD_lock = DeeAtomicMutex_INIT();
 DEE_A_REF struct DeeVFSNode *DeeVFS_CWD = NULL;
 
+DEE_A_RET_NOEXCEPT_REF struct DeeVFSNode *DeeVFS_GetActiveCwdNode(void) {
+ struct DeeVFSNode *result;
+ DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);
+ if ((result = DeeVFS_CWD) != NULL) DeeVFSNode_INCREF(result);
+ DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
+ return result;
+}
 DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_GetCwdNode(void) {
  struct DeeVFSNode *result; DeeObject *native_cwd;
  // Check if the cwd lies within the virtual filesystem

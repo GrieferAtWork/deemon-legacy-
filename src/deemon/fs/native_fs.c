@@ -34,6 +34,7 @@ DEE_DECL_END
 #include "native_fs.chdir.c.inl"
 #include "native_fs.chmod.c.inl"
 #include "native_fs.chown.c.inl"
+#include "native_fs.delenv.c.inl"
 #include "native_fs.enumenv.c.inl"
 #include "native_fs.getcwd.c.inl"
 #include "native_fs.getenv.c.inl"
@@ -55,6 +56,7 @@ DEE_DECL_END
 #include "native_fs.islink.c.inl"
 #include "native_fs.ismount.c.inl"
 #include "native_fs.issocket.c.inl"
+#include "native_fs.setenv.c.inl"
 #include "native_fs.settimes.c.inl"
 #endif
 

@@ -259,16 +259,16 @@
 #define DeeSysFS_WideTryDelEnvObject(envname) DeeSysFS_WideTryDelEnv(DeeWideString_STR(envname))
 #endif
 #if !defined(DeeSysFS_Utf8SetEnvObject) && defined(DeeSysFS_Utf8SetEnv)
-#define DeeSysFS_Utf8SetEnvObject(envname,newvalue,...) DeeSysFS_Utf8SetEnv(DeeUtf8String_STR(envname),newvalue,__VA_ARGS__)
+#define DeeSysFS_Utf8SetEnvObject(envname,newvalue,...) DeeSysFS_Utf8SetEnv(DeeUtf8String_STR(envname),DeeUtf8String_STR(newvalue),__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideSetEnvObject) && defined(DeeSysFS_WideSetEnv)
-#define DeeSysFS_WideSetEnvObject(envname,newvalue,...) DeeSysFS_WideSetEnv(DeeWideString_STR(envname),newvalue,__VA_ARGS__)
+#define DeeSysFS_WideSetEnvObject(envname,newvalue,...) DeeSysFS_WideSetEnv(DeeWideString_STR(envname),DeeWideString_STR(newvalue),__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8TrySetEnvObject) && defined(DeeSysFS_Utf8TrySetEnv)
-#define DeeSysFS_Utf8TrySetEnvObject(envname,newvalue) DeeSysFS_Utf8TrySetEnv(DeeUtf8String_STR(envname),newvalue)
+#define DeeSysFS_Utf8TrySetEnvObject(envname,newvalue) DeeSysFS_Utf8TrySetEnv(DeeUtf8String_STR(envname),DeeUtf8String_STR(newvalue))
 #endif
 #if !defined(DeeSysFS_WideTrySetEnvObject) && defined(DeeSysFS_WideTrySetEnv)
-#define DeeSysFS_WideTrySetEnvObject(envname,newvalue) DeeSysFS_WideTrySetEnv(DeeWideString_STR(envname),newvalue)
+#define DeeSysFS_WideTrySetEnvObject(envname,newvalue) DeeSysFS_WideTrySetEnv(DeeWideString_STR(envname),DeeWideString_STR(newvalue))
 #endif
 
 #if !defined(DeeSysFS_Utf8GetUserHomeObject) && defined(DeeSysFS_Utf8GetUserHome)

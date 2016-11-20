@@ -77,6 +77,13 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 #define DEE_NFS_HAVE_ENUMENV
 #endif
 
+#if defined(DeeSysFS_Utf8GetEnv) || defined(DeeSysFS_WideGetEnv)\
+ || defined(DeeSysFS_Utf8TryGetEnv) || defined(DeeSysFS_WideTryGetEnv)\
+ || defined(DeeSysFS_Utf8GetEnvObject) || defined(DeeSysFS_WideGetEnvObject)\
+ || defined(DeeSysFS_Utf8TryGetEnvObject) || defined(DeeSysFS_WideTryGetEnvObject)
+#define DEE_NFS_HAVE_GETENV
+#endif
+
 #if defined(DeeSysFS_Utf8HasEnv) || defined(DeeSysFS_WideHasEnv)\
  || defined(DeeSysFS_Utf8TryHasEnv) || defined(DeeSysFS_WideTryHasEnv)\
  || defined(DeeSysFS_Utf8HasEnvObject) || defined(DeeSysFS_WideHasEnvObject)\
@@ -84,11 +91,18 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 #define DEE_NFS_HAVE_HASENV
 #endif
 
-#if defined(DeeSysFS_Utf8GetEnv) || defined(DeeSysFS_WideGetEnv)\
- || defined(DeeSysFS_Utf8TryGetEnv) || defined(DeeSysFS_WideTryGetEnv)\
- || defined(DeeSysFS_Utf8GetEnvObject) || defined(DeeSysFS_WideGetEnvObject)\
- || defined(DeeSysFS_Utf8TryGetEnvObject) || defined(DeeSysFS_WideTryGetEnvObject)
-#define DEE_NFS_HAVE_GETENV
+#if defined(DeeSysFS_Utf8DelEnv) || defined(DeeSysFS_WideDelEnv)\
+ || defined(DeeSysFS_Utf8TryDelEnv) || defined(DeeSysFS_WideTryDelEnv)\
+ || defined(DeeSysFS_Utf8DelEnvObject) || defined(DeeSysFS_WideDelEnvObject)\
+ || defined(DeeSysFS_Utf8TryDelEnvObject) || defined(DeeSysFS_WideTryDelEnvObject)
+#define DEE_NFS_HAVE_DELENV
+#endif
+
+#if defined(DeeSysFS_Utf8SetEnv) || defined(DeeSysFS_WideSetEnv)\
+ || defined(DeeSysFS_Utf8TrySetEnv) || defined(DeeSysFS_WideTrySetEnv)\
+ || defined(DeeSysFS_Utf8SetEnvObject) || defined(DeeSysFS_WideSetEnvObject)\
+ || defined(DeeSysFS_Utf8TrySetEnvObject) || defined(DeeSysFS_WideTrySetEnvObject)
+#define DEE_NFS_HAVE_SETENV
 #endif
 
 #if defined(DeeSysFS_Utf8GetTimes) || defined(DeeSysFS_WideGetTimes)\
@@ -254,8 +268,8 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetUserHomeO
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetTmp(void);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetTmp(void);
 
-extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeNFS_Utf8ListEnv(void);
-extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeNFS_WideListEnv(void);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeNFS_Utf8EnumEnv(void);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeNFS_WideEnumEnv(void);
 extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8HasEnv(DEE_A_IN_Z Dee_Utf8Char const *envname);
 extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideHasEnv(DEE_A_IN_Z Dee_WideChar const *envname);
 extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8HasEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname);
@@ -450,7 +464,7 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsSocketObject(DEE_A_IN_OBJECT(De
 #define DeeNFS_GetUserHome           DeeNFS_Utf8GetUserHome
 #define DeeNFS_GetUserHomeObject     DeeNFS_Utf8GetUserHomeObject
 #define DeeNFS_GetTmp                DeeNFS_Utf8GetTmp
-#define DeeNFS_ListEnv               DeeNFS_Utf8ListEnv
+#define DeeNFS_EnumEnv               DeeNFS_Utf8EnumEnv
 #define DeeNFS_HasEnv                DeeNFS_Utf8HasEnv
 #define DeeNFS_HasEnvObject          DeeNFS_Utf8HasEnvObject
 #define DeeNFS_TryHasEnv             DeeNFS_Utf8TryHasEnv

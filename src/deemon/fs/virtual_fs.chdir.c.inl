@@ -18,23 +18,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_C
-#define GUARD_DEEMON_FS_VIRTUAL_FS_C 1
+#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_CHDIR_C_INL
+#define GUARD_DEEMON_FS_VIRTUAL_FS_CHDIR_C_INL 1
 #define DEE_LIMITED_API 1
 
 #include <deemon/__conf.inl>
-
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#include <deemon/fs/virtual_fs.h>
+#include <deemon/string.h>
+#include <deemon/type.h>
+
 DEE_DECL_BEGIN
 
+DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8ChdirObject(
+ DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
+ DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
+ return DeeVFS_Utf8Chdir(DeeUtf8String_STR(path));
+}
+DEE_A_RET_EXCEPT(-1) int DeeVFS_WideChdirObject(
+ DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ return DeeVFS_WideChdir(DeeWideString_STR(path));
+}
+DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryChdirObject(
+ DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
+ DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
+ return DeeVFS_Utf8TryChdir(DeeUtf8String_STR(path));
+}
+DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryChdirObject(
+ DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ return DeeVFS_WideTryChdir(DeeWideString_STR(path));
+}
+
+
 DEE_DECL_END
-
-#ifndef __INTELLISENSE__
-#include "virtual_fs.chdir.c.inl"
-#include "virtual_fs.gettimes.c.inl"
-#include "virtual_fs.settimes.c.inl"
-#endif
-
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
 
-#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_C */
+#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_CHDIR_C_INL */

@@ -32,6 +32,7 @@
 #include <deemon/deemonrun.h>
 #include <deemon/dex.h>
 #include <deemon/error.h>
+#include <deemon/time.h>
 #include <deemon/file.h>
 #include <deemon/float.h>
 #include <deemon/fs_api.h>
@@ -1306,20 +1307,20 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wgettmpname) {
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_gethome) {
  DeeObject *user = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:__builtin_fs_gethome",&user) != 0) return NULL;
- return DeeNone_Check(user) ? DeeFS_Utf8GetHome() : DeeFS_GetHomeUserObject(user);
+ return DeeNone_Check(user) ? DeeFS_Utf8GetHome() : DeeFS_GetUserHomeObject(user);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wgethome) {
  DeeObject *user = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"|o:__builtin_fs_wgethome",&user) != 0) return NULL;
- return DeeNone_Check(user) ? DeeFS_WideGetHome() : DeeFS_GetHomeUserObject(user);
+ return DeeNone_Check(user) ? DeeFS_WideGetHome() : DeeFS_GetUserHomeObject(user);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_listenv) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_fs_listenv") != 0) return NULL;
- return DeeFS_Utf8ListEnv();
+ return DeeFS_Utf8EnumEnv();
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wlistenv) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_fs_wlistenv") != 0) return NULL;
- return DeeFS_WideListEnv();
+ return DeeFS_WideEnumEnv();
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_hasenv) {
  DeeObject *name; int temp;
@@ -1413,66 +1414,90 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_path_expandvars) {
  return DeeFS_PathExpandVarsObject(path);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_getatime) {
- DeeObject *path;
+ DeeObject *path; Dee_timetick_t result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:__builtin_fs_getatime",&path) != 0) return NULL;
  if DEE_UNLIKELY(DeeFileIO_Check(path)) return DeeFileIO_GetATime(path);
- return DeeFS_GetATimeObject(path);
+ if DEE_UNLIKELY(DeeFS_GetTimesObject(path,&result,NULL,NULL) != 0) return NULL;
+ return DeeTime_New(result);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_getctime) {
- DeeObject *path;
+ DeeObject *path; Dee_timetick_t result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:__builtin_fs_getctime",&path) != 0) return NULL;
  if DEE_UNLIKELY(DeeFileIO_Check(path)) return DeeFileIO_GetCTime(path);
- return DeeFS_GetCTimeObject(path);
+ if DEE_UNLIKELY(DeeFS_GetTimesObject(path,NULL,&result,NULL) != 0) return NULL;
+ return DeeTime_New(result);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_getmtime) {
- DeeObject *path;
+ DeeObject *path; Dee_timetick_t result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:__builtin_fs_getmtime",&path) != 0) return NULL;
- return DeeFileIO_Check(path) ? DeeFileIO_GetMTime(path) : DeeFS_GetMTimeObject(path);
+ if DEE_UNLIKELY(DeeFileIO_Check(path)) return DeeFileIO_GetMTime(path);
+ if DEE_UNLIKELY(DeeFS_GetTimesObject(path,NULL,NULL,&result) != 0) return NULL;
+ return DeeTime_New(result);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_gettimes) {
- DeeObject *path;
+ DeeObject *path; Dee_timetick_t atime,ctime,mtime;
+ DeeObject *result,*atimeob,*ctimeob,*mtimeob;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:__builtin_fs_gettimes",&path) != 0) return NULL;
- return DeeFileIO_Check(path) ? DeeFileIO_GetTimes(path) : DeeFS_GetTimesObject(path);
+ if DEE_UNLIKELY(DeeFileIO_Check(path)) return DeeFileIO_GetTimes(path);
+ if DEE_UNLIKELY(DeeFS_GetTimesObject(path,&atime,&ctime,&mtime) != 0) return NULL;
+ if DEE_UNLIKELY((atimeob = DeeTime_New(atime)) == NULL) return NULL;
+ if DEE_UNLIKELY((ctimeob = DeeTime_New(ctime)) == NULL) {err_atime: Dee_DECREF(atimeob); return NULL; }
+ if DEE_UNLIKELY((mtimeob = DeeTime_New(mtime)) == NULL) { Dee_DECREF(ctimeob); goto err_atime; }
+ result = DeeTuple_Pack(3,atimeob,ctimeob,mtimeob);
+ Dee_DECREF(mtimeob);
+ Dee_DECREF(ctimeob);
+ Dee_DECREF(atimeob);
+ return result;
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_setatime) {
- DeeObject *path,*tm_access;
+ DeeObject *path,*tm_access; Dee_timetick_t atime;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"oo:setatime",&path,&tm_access) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(tm_access,&DeeTime_Type) != 0) return NULL;
+ atime = DeeTime_GetTick(tm_access);
  if DEE_UNLIKELY((DeeFileIO_Check(path)
   ? DeeFileIO_SetATime(path,tm_access)
-  : DeeFS_SetATimeObject(path,tm_access)) != 0) return NULL;
+  : DeeFS_SetTimesObject(path,&atime,NULL,NULL)) != 0) return NULL;
  DeeReturn_None;
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_setctime) {
- DeeObject *path,*tm_creation;
+ DeeObject *path,*tm_creation; Dee_timetick_t ctime;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"oo:setctime",&path,&tm_creation) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(tm_creation,&DeeTime_Type) != 0) return NULL;
+ ctime = DeeTime_GetTick(tm_creation);
  if DEE_UNLIKELY((DeeFileIO_Check(path)
   ? DeeFileIO_SetCTime(path,tm_creation)
-  : DeeFS_SetCTimeObject(path,tm_creation)) != 0) return NULL;
+  : DeeFS_SetTimesObject(path,NULL,&ctime,NULL)) != 0) return NULL;
  DeeReturn_None;
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_setmtime) {
- DeeObject *path,*tm_modification;
+ DeeObject *path,*tm_modification; Dee_timetick_t mtime;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"oo:setmtime",&path,&tm_modification) != 0) return NULL;
+ if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(tm_modification,&DeeTime_Type) != 0) return NULL;
+ mtime = DeeTime_GetTick(tm_modification);
  if DEE_UNLIKELY((DeeFileIO_Check(path)
   ? DeeFileIO_SetMTime(path,tm_modification)
-  : DeeFS_SetMTimeObject(path,tm_modification)
-  ) != 0) return NULL;
+  : DeeFS_SetTimesObject(path,NULL,NULL,&mtime)) != 0) return NULL;
  DeeReturn_None;
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_settimes) {
  DeeObject *path,*tm_access = Dee_None,*tm_creation = Dee_None,*tm_modification = Dee_None;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|ooo:settimes",&path,
   &tm_access,&tm_creation,&tm_modification) != 0) return NULL;
+ if (!DeeNone_Check(tm_access) && DeeError_TypeError_CheckTypeExact(tm_access,&DeeTime_Type) != 0) return NULL;
+ if (!DeeNone_Check(tm_creation) && DeeError_TypeError_CheckTypeExact(tm_creation,&DeeTime_Type) != 0) return NULL;
+ if (!DeeNone_Check(tm_modification) && DeeError_TypeError_CheckTypeExact(tm_modification,&DeeTime_Type) != 0) return NULL;
  if (DeeFileIO_Check(path)) {
   if DEE_UNLIKELY(DeeFileIO_SetTimes2(path,
    DeeNone_Check(tm_access) ? NULL : tm_access,
    DeeNone_Check(tm_creation) ? NULL : tm_creation,
    DeeNone_Check(tm_modification) ? NULL : tm_modification) != 0) return NULL;
  } else {
-  if DEE_UNLIKELY(DeeFS_SetTimes2Object(path,
-   DeeNone_Check(tm_access) ? NULL : tm_access,
-   DeeNone_Check(tm_creation) ? NULL : tm_creation,
-   DeeNone_Check(tm_modification) ? NULL : tm_modification) != 0) return NULL;
+  Dee_timetick_t atime,ctime,mtime;
+  if DEE_UNLIKELY(DeeFS_SetTimesObject(path,
+   DeeNone_Check(tm_access) ? NULL : (atime = DeeTime_GetTick(tm_access),&atime),
+   DeeNone_Check(tm_creation) ? NULL : (ctime = DeeTime_GetTick(tm_creation),&ctime),
+   DeeNone_Check(tm_modification) ? NULL : (mtime = DeeTime_GetTick(tm_modification),&mtime)
+   ) != 0) return NULL;
  }
  DeeReturn_None;
 }

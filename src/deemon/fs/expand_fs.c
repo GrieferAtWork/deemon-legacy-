@@ -18,23 +18,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_C
-#define GUARD_DEEMON_FS_VIRTUAL_FS_C 1
+#ifndef GUARD_DEEMON_FS_EXPAND_FS_C
+#define GUARD_DEEMON_FS_EXPAND_FS_C 1
 #define DEE_LIMITED_API 1
 
 #include <deemon/__conf.inl>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
 
 DEE_DECL_END
 
 #ifndef __INTELLISENSE__
-#include "virtual_fs.chdir.c.inl"
-#include "virtual_fs.gettimes.c.inl"
-#include "virtual_fs.settimes.c.inl"
+#include "expand_fs.chdir.c.inl"
+#include "expand_fs.gettimes.c.inl"
+#include "expand_fs.settimes.c.inl"
 #endif
 
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
-
-#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_C */
+#endif /* !GUARD_DEEMON_FS_EXPAND_FS_C */

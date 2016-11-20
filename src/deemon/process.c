@@ -1638,7 +1638,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeProcess_GetEnviron(
  DEE_A_IN_OBJECT(DeeProcessObject) const *self) {
  DeeObject *result;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
- if (DeeProcess_IS_SELF(self)) return DeeFS_ListEnv();
+ if (DeeProcess_IS_SELF(self)) return DeeFS_EnumEnv();
  if (DeeProcess_IS_REF(self)) { _deeprocess_error_is_ref(self); return NULL; }
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) {
@@ -1649,7 +1649,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeProcess_GetEnviron(
  } 
  Dee_XINCREF(result = (DeeObject *)_self->p_environ);
  DeeProcess_RELEASE(self);
- return result ? result : DeeFS_ListEnv();
+ return result ? result : DeeFS_EnumEnv();
 }
 DEE_A_RET_EXCEPT(-1) int DeeProcess_SetEnviron(
  DEE_A_IN_OBJECT(DeeProcessObject) *self, DEE_A_INOUT_OBJECT(DeeListObject) *env) {

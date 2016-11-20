@@ -116,7 +116,6 @@ do{\
 #define DeeWin32Sys_Utf8DelEnv(envname,...) \
 do{\
  if (!SetEnvironmentVariableA(envname,NULL)) {\
-  DWORD error = GetLastError();\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "SetEnvironmentVariableA(%q,NULL) : %K",envname,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
@@ -137,7 +136,6 @@ do{\
 #define DeeWin32Sys_Utf8SetEnv(envname,newvalue,...) \
 do{\
  if (!SetEnvironmentVariableA(envname,newvalue)) {\
-  DWORD error = GetLastError();\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "SetEnvironmentVariableA(%q,%q) : %K",envname,newvalue,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\

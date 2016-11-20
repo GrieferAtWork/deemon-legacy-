@@ -36,34 +36,56 @@ DEE_DECL_BEGIN
 DeeError_NEW_STATIC(_dee_notimplemented_gettmp,&DeeErrorType_NotImplemented,"gettmp");
 #endif
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetTmp(void) {
+#ifdef DEE_NFS_HAVE_GETENV
+ static Dee_Utf8Char const name_TMPDIR[] = {'T','M','P','D','I','R',0};
+ static Dee_Utf8Char const name_TEMP[] = {'T','E','M','P',0};
+ static Dee_Utf8Char const name_TMP[] = {'T','M','P',0};
+ DeeObject *result;
+ if ((result = DeeNFS_Utf8TryGetEnv(name_TMPDIR)) != NULL) return result;
+ if ((result = DeeNFS_Utf8TryGetEnv(name_TEMP)) != NULL) return result;
+ if ((result = DeeNFS_Utf8TryGetEnv(name_TMP)) != NULL) return result;
+#endif /* DEE_NFS_HAVE_GETENV */
+ {
 #ifdef DeeSysFS_Utf8GetTmp
- return DeeSysFS_Utf8GetTmp();
+  return DeeSysFS_Utf8GetTmp();
 #elif defined(DeeSysFS_WideGetTmp)
- DeeObject *result,*newresult;
- if DEE_UNLIKELY((result = DeeSysFS_WideGetTmp()) == NULL) return NULL;
- newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
-                                                    DeeWideString_STR(result));
- Dee_DECREF(result);
- return newresult;
+  DeeObject *newresult;
+  if DEE_UNLIKELY((result = DeeSysFS_WideGetTmp()) == NULL) return NULL;
+  newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
+                                                     DeeWideString_STR(result));
+  Dee_DECREF(result);
+  return newresult;
 #else
- DeeError_Throw((DeeObject *)&_dee_notimplemented_gettmp);
- return NULL;
+  DeeError_Throw((DeeObject *)&_dee_notimplemented_gettmp);
+  return NULL;
 #endif
+ }
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetTmp(void) {
+#ifdef DEE_NFS_HAVE_GETENV
+ static Dee_WideChar const name_TMPDIR[] = {'T','M','P','D','I','R',0};
+ static Dee_WideChar const name_TEMP[] = {'T','E','M','P',0};
+ static Dee_WideChar const name_TMP[] = {'T','M','P',0};
+ DeeObject *result;
+ if ((result = DeeNFS_WideTryGetEnv(name_TMPDIR)) != NULL) return result;
+ if ((result = DeeNFS_WideTryGetEnv(name_TEMP)) != NULL) return result;
+ if ((result = DeeNFS_WideTryGetEnv(name_TMP)) != NULL) return result;
+#endif /* DEE_NFS_HAVE_GETENV */
+ {
 #ifdef DeeSysFS_WideGetTmp
- return DeeSysFS_WideGetTmp();
+  return DeeSysFS_WideGetTmp();
 #elif defined(DeeSysFS_Utf8GetTmp)
- DeeObject *result,*newresult;
- if DEE_UNLIKELY((result = DeeSysFS_Utf8GetTmp()) == NULL) return NULL;
- newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
-                                                    DeeUtf8String_STR(result));
- Dee_DECREF(result);
- return newresult;
+  DeeObject *newresult;
+  if DEE_UNLIKELY((result = DeeSysFS_Utf8GetTmp()) == NULL) return NULL;
+  newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
+                                                     DeeUtf8String_STR(result));
+  Dee_DECREF(result);
+  return newresult;
 #else
- DeeError_Throw((DeeObject *)&_dee_notimplemented_gettmp);
- return NULL;
+  DeeError_Throw((DeeObject *)&_dee_notimplemented_gettmp);
+  return NULL;
 #endif
+ }
 }
 
 DEE_DECL_END
