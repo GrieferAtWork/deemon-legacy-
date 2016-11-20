@@ -26,7 +26,6 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
-#include <deemon/fs/native_fs.h>
 #include <deemon/fs/expand_fs.h>
 
 DEE_DECL_BEGIN
@@ -35,7 +34,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8HasProperty(
  DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) return -1;
- result = DeeNFS_Utf8HasPropertyObject(xpath,prop);
+ result = _DeeFS_Utf8HasPropertyObject(xpath,prop);
  Dee_DECREF(xpath);
  return result;
 }
@@ -43,7 +42,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_WideHasProperty(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) return -1;
- result = DeeNFS_WideHasPropertyObject(xpath,prop);
+ result = _DeeFS_WideHasPropertyObject(xpath,prop);
  Dee_DECREF(xpath);
  return result;
 }
@@ -51,7 +50,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8HasPropertyObject(
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) return -1;
- result = DeeNFS_Utf8HasPropertyObject(xpath,prop);
+ result = _DeeFS_Utf8HasPropertyObject(xpath,prop);
  Dee_DECREF(xpath);
  return result;
 }
@@ -59,7 +58,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_WideHasPropertyObject(
  DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) return -1;
- result = DeeNFS_WideHasPropertyObject(xpath,prop);
+ result = _DeeFS_WideHasPropertyObject(xpath,prop);
  Dee_DECREF(xpath);
  return result;
 }
@@ -67,7 +66,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryHasProperty(
  DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) { DeeError_HandledOne(); return -1; }
- result = DeeNFS_Utf8TryHasPropertyObject(xpath,prop);
+ result = _DeeFS_Utf8TryHasPropertyObject(xpath,prop);
  Dee_DECREF(xpath);
  return result;
 }
@@ -75,7 +74,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryHasProperty(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) { DeeError_HandledOne(); return -1; }
- result = DeeNFS_WideTryHasPropertyObject(xpath,prop);
+ result = _DeeFS_WideTryHasPropertyObject(xpath,prop);
  Dee_DECREF(xpath);
  return result;
 }
@@ -83,7 +82,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryHasPropertyObject(
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) { DeeError_HandledOne(); return -1; }
- result = DeeNFS_Utf8TryHasPropertyObject(xpath,prop);
+ result = _DeeFS_Utf8TryHasPropertyObject(xpath,prop);
  Dee_DECREF(xpath);
  return result;
 }
@@ -91,7 +90,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryHasPropertyObject(
  DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) { DeeError_HandledOne(); return -1; }
- result = DeeNFS_WideTryHasPropertyObject(xpath,prop);
+ result = _DeeFS_WideTryHasPropertyObject(xpath,prop);
  Dee_DECREF(xpath);
  return result;
 }

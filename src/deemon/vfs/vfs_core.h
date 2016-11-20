@@ -224,11 +224,11 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TrySetTimes(
  DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
 
 #define DeeVFSNode_Walk(self,elemname) \
- (DEE_ASSERTF(DeeVFSNode_FileHasWalk(self),"Can't walk node %r",DeeVFSNode_Filename(self)),\
+ (DEE_ASSERTF(DeeVFSNode_FileHasWalk(self),"Can't walk node %R",DeeVFSNode_Filename(self)),\
              (*(self)->vn_type->vnt_node.vnt_walk)(self,elemname))
 
 #define DeeVFSNode_ReadLink(self) \
- (DEE_ASSERTF(DeeVFSNode_FileHasWalk(self),"Node is not a link: %r",DeeVFSNode_Filename(self)),\
+ (DEE_ASSERTF(DeeVFSNode_FileHasWalk(self),"Node is not a link: %R",DeeVFSNode_Filename(self)),\
              (*(self)->vn_type->vnt_node.vnt_link)(self))
 
 struct DeeVFSLocateState;
@@ -241,7 +241,7 @@ extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
 
 #define _DeeVFSNode_GetViewBufferSize(self) (self)->vn_type->vnt_file.vft_size
 #define _DeeVFSNode_OpenViewBuffer(self)\
- (DEE_ASSERTF(DeeVFSNode_FileHasOpen(self),"Can't view node %r",DeeVFSNode_Filename(self)),\
+ (DEE_ASSERTF(DeeVFSNode_FileHasOpen(self),"Can't view node %R",DeeVFSNode_Filename(self)),\
   DeeVFSNode_INCREF(self),((struct DeeVFSView *)(buf))->vv_node = (self),\
                           ((struct DeeVFSView *)(buf))->vv_type = (self)->vn_type,\
   ((*(self)->vn_type->vnt_view.vvt_open)(ob,(struct DeeVFSView *)(buf)) != 0)\
@@ -253,14 +253,16 @@ extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
 // Opens the file of a node inside the given buffer memory
 //  - Returns non-zero on error.
 #define _DeeVFSNode_OpenFileBuffer(self,buf,mode,perms)\
- (DEE_ASSERTF(DeeVFSNode_FileHasOpen(self),"Can't open node %r",DeeVFSNode_Filename(self)),\
+ (DEE_ASSERTF(DeeVFSNode_FileHasOpen(self),"Can't open node %R",DeeVFSNode_Filename(self)),\
   DeeVFSNode_INCREF(self),((struct DeeVFSFile *)(buf))->vf_node = (self),\
                           ((struct DeeVFSFile *)(buf))->vf_type = (self)->vn_type,\
   ((*(self)->vn_type->vnt_file.vft_open)(ob,(struct DeeVFSFile *)(buf),mode,perms) != 0)\
   ? (DeeVFSNode_DECREF(self),-1) : 0)
 
 
+#ifndef DEE_VFS_MAX_LINK_INDIRECTION
 #define DEE_VFS_MAX_LINK_INDIRECTION 1024
+#endif /* !DEE_VFS_MAX_LINK_INDIRECTION */
 struct DeeVFSLocateState {
  char const  *vld_startpath; /*< [1..1] Original start path. */
  unsigned int vld_link_ind;  /*< Current level of link indirection. */
@@ -294,6 +296,8 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_LocateAt(
 // A path can be forced to be virtual when its prepended by a '/'
 #define DeeVFS_Utf8IsVirtualPath(path) (*(path)==   DEE_CHAR8_C('/'))
 #define DeeVFS_WideIsVirtualPath(path) (*(path)==DEE_WIDECHAR_C('/'))
+#define DeeVFS_Utf8IsVirtualPathObject(path) DeeVFS_Utf8IsVirtualPath(DeeUtf8String_STR(path))
+#define DeeVFS_WideIsVirtualPathObject(path) DeeVFS_WideIsVirtualPath(DeeWideString_STR(path))
 
 #ifdef DEE_PLATFORM_WINDOWS
 // TODO: This only works for 1-character drive letters

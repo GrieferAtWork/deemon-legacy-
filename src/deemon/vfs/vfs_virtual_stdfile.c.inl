@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_VFS_VFS_VIRTUAL_DIR_C_INL
-#define GUARD_DEEMON_VFS_VFS_VIRTUAL_DIR_C_INL 1
+#ifndef GUARD_DEEMON_VFS_VFS_VIRTUAL_STDFILE_C_INL
+#define GUARD_DEEMON_VFS_VFS_VIRTUAL_STDFILE_C_INL 1
 #ifndef DEE_LIMITED_API
 #define DEE_LIMITED_API 1
 #endif
@@ -27,82 +27,30 @@
 #include <deemon/__conf.inl>
 #include <deemon/string.h>
 #include <deemon/vfs/vfs_core.h>
-#include <deemon/vfs/vfs_virtual_dir.h>
+#include <deemon/vfs/vfs_native_node.h>
+#include <deemon/vfs/vfs_virtual_stdfile.h>
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
-// Node VTable
-static struct DeeVFSNode *DEE_CALL _deevfs_virtualdirnode_vnt_walk(
- struct DeeVFSVirtualDirNode *self, char const *name) {
- struct DeeVFSVirtualDirEntry *iter;
- iter = self->vdn_children;
- while (1) {
-  if (!iter->name) break;
-  DEE_ASSERT(iter->node);
-  if (strcmp(iter->name,name) == 0) {
-   DeeVFSNode_INCREF(iter->node);
-   return iter->node;
-  }
-  ++iter;
- }
- DeeError_SetStringf(&DeeErrorType_SystemError,
-                     "Virtual directory %R does not contain a node %q",
-                     DeeVFSNode_Filename((struct DeeVFSNode *)self),
-                     name);
- return NULL;
-}
-static DeeObject *DEE_CALL _deevfs_virtualdirnode_vnt_nameof(
- struct DeeVFSVirtualDirNode *self, struct DeeVFSNode *child) {
- struct DeeVFSVirtualDirEntry *iter;
- iter = self->vdn_children;
- while (1) {
-  if (!iter->name) break;
-  if (iter->node == child) return DeeString_New(iter->name);
-  ++iter;
- }
- return NULL;
-}
-
-
-//////////////////////////////////////////////////////////////////////////
 // File VTable
-static int DEE_CALL _deevfs_virtualdirfile_vft_open(
- struct DeeVFSVirtualDirFile *DEE_UNUSED(self),
+static int DEE_CALL _deevfs_virtualstdfilefile_vft_open(
+ struct DeeVFSNativeFile *self,
  Dee_openmode_t DEE_UNUSED(openmode), Dee_mode_t DEE_UNUSED(permissions)) {
- return 0;
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-// View VTable
-static int DEE_CALL _deevfs_virtualdirview_vvt_open(struct DeeVFSVirtualDirView *self) {
- DeeAtomicMutex_Init(&self->vdv_lock);
- self->vdv_pos = ((struct DeeVFSVirtualDirNode *)self->vdv_view.vv_node)->vdn_children;
- return 0;
-}
-static int DEE_CALL _deevfs_virtualdirview_vvt_yield(
- struct DeeVFSVirtualDirView *self, struct DeeVFSNode **result) {
- DeeAtomicMutex_Acquire(&self->vdv_lock);
- DEE_ASSERT(self->vdv_pos);
- if (!self->vdv_pos->name) {
-  DeeAtomicMutex_Release(&self->vdv_lock);
-  return 1;
- }
- *result = (self->vdv_pos++)->node;
- DeeVFSNode_INCREF(*result);
- DeeAtomicMutex_Release(&self->vdv_lock);
+ self->vnf_fd.w32_handle = GetStdHandle(((
+  struct DeeVFSVirtualStdFileNode *)self->vnf_file.vf_node)->std_handleid);
+ self->vnf_fd.w32_openmode = DEE_OPENMODE('w',1);
  return 0;
 }
 
 
 
-struct DeeVFSNodeType const DeeVFSVirtualDirNode_Type = {
- { sizeof(struct DeeVFSVirtualDirNode), // vnt_node
+struct DeeVFSNodeType const DeeVFSVirtualStdFileNode_Type = {
+ { sizeof(struct DeeVFSVirtualStdFileNode), // vnt_node
   (void (DEE_CALL *)(struct DeeVFSNode *))                                                                                              NULL,
-  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))                                                                   &_deevfs_virtualdirnode_vnt_walk,
-  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                                                                    &_deevfs_virtualdirnode_vnt_nameof,
+  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))                                                                   NULL,
+  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                                                                    NULL,
   (DeeObject *(DEE_CALL *)(struct DeeVFSNode *))                                                                                        NULL,
   (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
   (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
@@ -119,18 +67,18 @@ struct DeeVFSNodeType const DeeVFSVirtualDirNode_Type = {
   (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t,DEE_A_IN Dee_gid_t))                                                                  NULL,
   (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t *,DEE_A_OUT_OPT Dee_timetick_t *,DEE_A_OUT_OPT Dee_timetick_t *))                NULL,
   (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t const *,DEE_A_IN_OPT Dee_timetick_t const *,DEE_A_IN_OPT Dee_timetick_t const *))NULL,
- },{ sizeof(struct DeeVFSVirtualDirFile),// vnt_file
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_virtualdirfile_vft_open,
-  (void(DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
- },{ sizeof(struct DeeVFSVirtualDirView), // vnt_view
-  (int (DEE_CALL *)(struct DeeVFSView *))                     &_deevfs_virtualdirview_vvt_open,
+ },{ sizeof(struct DeeVFSNativeFile),// vnt_file
+  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_virtualstdfilefile_vft_open,
+  (void(DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_quit,
+  (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_nativefile_vft_read,
+  (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_nativefile_vft_write,
+  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &_deevfs_nativefile_vft_seek,
+  (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_flush,
+  (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_trunc,
+ },{ 0, // vnt_view
+  (int (DEE_CALL *)(struct DeeVFSView *))                     NULL,
   (void (DEE_CALL *)(struct DeeVFSView *))                    NULL,
-  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_virtualdirview_vvt_yield,
+  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))NULL,
  }
 };
 
@@ -138,4 +86,4 @@ struct DeeVFSNodeType const DeeVFSVirtualDirNode_Type = {
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
 
-#endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_DIR_C_INL */
+#endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_STDFILE_C_INL */

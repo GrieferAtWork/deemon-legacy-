@@ -18,45 +18,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_VFS_VFS_NATIVE_NODE_H
-#define GUARD_DEEMON_VFS_VFS_NATIVE_NODE_H 1
+#ifndef GUARD_DEEMON_VFS_VFS_VIRTUAL_STDFILE_H
+#define GUARD_DEEMON_VFS_VFS_VIRTUAL_STDFILE_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/optional/atomic_mutex.h>
 #include <deemon/vfs/vfs_core.h>
-#include <deemon/sys/sysfd.h>
+#include <deemon/fs/native_filefd.h>
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
 // Native VFS node: A filesystem node that points back into the 
-struct DeeVFSNativeNode {
- struct DeeVFSNode          vnn_node; /*< Underlying node. */
- DEE_A_REF DeeStringObject *vnn_path; /*< [1..1] Absolute, native path to this node. */
+struct DeeVFSVirtualStdFileNode {
+ struct DeeVFSNode std_node;     /*< Underlying node. */
+ DWORD             std_handleid; /*< [1..1] Vector of children nodes. */
 };
-struct DeeVFSNativeFile {
- struct DeeVFSFile   vnf_file; /*< Underlying file. */
-#ifdef DeeSysFileFD
- struct DeeSysFileFD vnf_fd;   /*< Native file descriptor. */
-#endif
-};
-struct DeeVFSNativeView {
- struct DeeVFSView   vnv_view; /*< Underlying view. */
- // TODO: Implement 'sysdir'
-};
+#define DeeVFSVirtualStdFileNode_INIT(parent,std_handle_id) \
+ {DeeVFSNode_INIT(&DeeVFSVirtualStdFileNode_Type,parent),std_handle_id}
 
-
-extern struct DeeVFSNodeType const DeeVFSNativeNode_Type;
-
-extern void DEE_CALL _deevfs_nativefile_quit(struct DeeVFSNativeFile *self);
-extern int DEE_CALL _deevfs_nativefile_vft_read(DEE_A_INOUT struct DeeVFSNativeFile *self, void *p, Dee_size_t s, Dee_size_t *rs);
-extern int DEE_CALL _deevfs_nativefile_vft_write(DEE_A_INOUT struct DeeVFSNativeFile *self, void const *p, Dee_size_t s, Dee_size_t *ws);
-extern int DEE_CALL _deevfs_nativefile_vft_seek(DEE_A_INOUT struct DeeVFSNativeFile *self, Dee_int64_t off, int whence, Dee_uint64_t *pos);
-extern int DEE_CALL _deevfs_nativefile_vft_flush(DEE_A_INOUT struct DeeVFSNativeFile *self);
-extern int DEE_CALL _deevfs_nativefile_vft_trunc(DEE_A_INOUT struct DeeVFSNativeFile *self);
-
+extern struct DeeVFSNodeType const DeeVFSVirtualStdFileNode_Type;
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
 
-#endif /* !GUARD_DEEMON_VFS_VFS_NATIVE_NODE_H */
+#endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_STDFILE_H */

@@ -37,12 +37,16 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8GetTimes(
  DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  struct DeeVFSNode *cwd,*filenode; int error;
- if (DeeVFS_Utf8IsAbsoluteNativePath(path) ||
-    (cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-  return DeeNFS_Utf8GetTimes(path,atime,ctime,mtime);
+ if (DeeVFS_Utf8IsAbsoluteNativePath(path)) {
+call_native: return DeeNFS_Utf8GetTimes(path,atime,ctime,mtime);
  }
- filenode = DeeVFS_Utf8LocateWithCWD(cwd,path);
- DeeVFSNode_DECREF(cwd);
+ if (DeeVFS_Utf8IsVirtualPath(path)) {
+  filenode = DeeVFS_Utf8Locate(path);
+ } else {
+  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
+  filenode = DeeVFS_Utf8LocateWithCWD(cwd,path);
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!filenode) return -1;
  error = DeeVFSNode_GetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
@@ -52,12 +56,16 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_WideGetTimes(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  struct DeeVFSNode *cwd,*filenode; int error;
- if (DeeVFS_WideIsAbsoluteNativePath(path) ||
-    (cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-  return DeeNFS_WideGetTimes(path,atime,ctime,mtime);
+ if (DeeVFS_WideIsAbsoluteNativePath(path)) {
+call_native: return DeeNFS_WideGetTimes(path,atime,ctime,mtime);
  }
- filenode = DeeVFS_WideLocateWithCWD(cwd,path);
- DeeVFSNode_DECREF(cwd);
+ if (DeeVFS_WideIsVirtualPath(path)) {
+  filenode = DeeVFS_WideLocate(path);
+ } else {
+  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
+  filenode = DeeVFS_WideLocateWithCWD(cwd,path);
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!filenode) return -1;
  error = DeeVFSNode_GetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
@@ -68,12 +76,16 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8GetTimesObject(
               DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  struct DeeVFSNode *cwd,*filenode; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
- if (DeeVFS_Utf8IsAbsoluteNativePathObject(path) ||
-    (cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-  return DeeNFS_Utf8GetTimesObject(path,atime,ctime,mtime);
+ if (DeeVFS_Utf8IsAbsoluteNativePathObject(path)) {
+call_native: return DeeNFS_Utf8GetTimesObject(path,atime,ctime,mtime);
  }
- filenode = DeeVFS_Utf8LocateWithCWDObject(cwd,path);
- DeeVFSNode_DECREF(cwd);
+ if (DeeVFS_Utf8IsVirtualPathObject(path)) {
+  filenode = DeeVFS_Utf8LocateObject(path);
+ } else {
+  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
+  filenode = DeeVFS_Utf8LocateWithCWDObject(cwd,path);
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!filenode) return -1;
  error = DeeVFSNode_GetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
@@ -84,12 +96,16 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_WideGetTimesObject(
               DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  struct DeeVFSNode *cwd,*filenode; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
- if (DeeVFS_WideIsAbsoluteNativePathObject(path) ||
-    (cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-  return DeeNFS_WideGetTimesObject(path,atime,ctime,mtime);
+ if (DeeVFS_WideIsAbsoluteNativePathObject(path)) {
+call_native: return DeeNFS_WideGetTimesObject(path,atime,ctime,mtime);
  }
- filenode = DeeVFS_WideLocateWithCWDObject(cwd,path);
- DeeVFSNode_DECREF(cwd);
+ if (DeeVFS_WideIsVirtualPathObject(path)) {
+  filenode = DeeVFS_WideLocateObject(path);
+ } else {
+  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
+  filenode = DeeVFS_WideLocateWithCWDObject(cwd,path);
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!filenode) return -1;
  error = DeeVFSNode_GetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
@@ -101,12 +117,16 @@ DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryGetTimes(
  DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  struct DeeVFSNode *cwd,*filenode; int error;
- if (DeeVFS_Utf8IsAbsoluteNativePath(path) ||
-    (cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-  return DeeNFS_Utf8TryGetTimes(path,atime,ctime,mtime);
+ if (DeeVFS_Utf8IsAbsoluteNativePath(path)) {
+call_native: return DeeNFS_Utf8TryGetTimes(path,atime,ctime,mtime);
  }
- filenode = DeeVFS_Utf8LocateWithCWD(cwd,path);
- DeeVFSNode_DECREF(cwd);
+ if (DeeVFS_Utf8IsVirtualPath(path)) {
+  filenode = DeeVFS_Utf8Locate(path);
+ } else {
+  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
+  filenode = DeeVFS_Utf8LocateWithCWD(cwd,path);
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return -1; }
  error = DeeVFSNode_TryGetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
@@ -116,12 +136,16 @@ DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryGetTimes(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  struct DeeVFSNode *cwd,*filenode; int error;
- if (DeeVFS_WideIsAbsoluteNativePath(path) ||
-    (cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-  return DeeNFS_WideTryGetTimes(path,atime,ctime,mtime);
+ if (DeeVFS_WideIsAbsoluteNativePath(path)) {
+call_native: return DeeNFS_WideTryGetTimes(path,atime,ctime,mtime);
  }
- filenode = DeeVFS_WideLocateWithCWD(cwd,path);
- DeeVFSNode_DECREF(cwd);
+ if (DeeVFS_WideIsVirtualPath(path)) {
+  filenode = DeeVFS_WideLocate(path);
+ } else {
+  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
+  filenode = DeeVFS_WideLocateWithCWD(cwd,path);
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return -1; }
  error = DeeVFSNode_TryGetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
@@ -132,12 +156,16 @@ DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryGetTimesObject(
               DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  struct DeeVFSNode *cwd,*filenode; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
- if (DeeVFS_Utf8IsAbsoluteNativePathObject(path) ||
-    (cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-  return DeeNFS_Utf8TryGetTimesObject(path,atime,ctime,mtime);
+ if (DeeVFS_Utf8IsAbsoluteNativePathObject(path)) {
+call_native: return DeeNFS_Utf8TryGetTimesObject(path,atime,ctime,mtime);
  }
- filenode = DeeVFS_Utf8LocateWithCWDObject(cwd,path);
- DeeVFSNode_DECREF(cwd);
+ if (DeeVFS_Utf8IsVirtualPathObject(path)) {
+  filenode = DeeVFS_Utf8LocateObject(path);
+ } else {
+  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
+  filenode = DeeVFS_Utf8LocateWithCWDObject(cwd,path);
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return -1; }
  error = DeeVFSNode_TryGetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
@@ -148,12 +176,16 @@ DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryGetTimesObject(
               DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  struct DeeVFSNode *cwd,*filenode; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
- if (DeeVFS_WideIsAbsoluteNativePathObject(path) ||
-    (cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-  return DeeNFS_WideTryGetTimesObject(path,atime,ctime,mtime);
+ if (DeeVFS_WideIsAbsoluteNativePathObject(path)) {
+call_native: return DeeNFS_WideTryGetTimesObject(path,atime,ctime,mtime);
  }
- filenode = DeeVFS_WideLocateWithCWDObject(cwd,path);
- DeeVFSNode_DECREF(cwd);
+ if (DeeVFS_WideIsVirtualPathObject(path)) {
+  filenode = DeeVFS_WideLocateObject(path);
+ } else {
+  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
+  filenode = DeeVFS_WideLocateWithCWDObject(cwd,path);
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return -1; }
  error = DeeVFSNode_TryGetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);

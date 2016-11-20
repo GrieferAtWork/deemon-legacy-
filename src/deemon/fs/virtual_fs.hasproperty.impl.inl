@@ -78,12 +78,16 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int VFS_FUNC(HasProperty)(
 #else
  DEE_ASSERT(path);
 #endif
- if (VFS_FUNCNOTRY(IsAbsoluteNativePath)(path) ||
-    (cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-  return NFS_FUNC(HasProperty)(path,prop);
+ if (VFS_FUNCNOTRY(IsAbsoluteNativePath)(path)) {
+call_native: return NFS_FUNC(HasProperty)(path,prop);
  }
- filenode = VFS_FUNCNOTRY(LocateWithCWD)(cwd,path);
- DeeVFSNode_DECREF(cwd);
+ if (VFS_FUNCNOTRY(IsVirtualPath)(path)) {
+  filenode = VFS_FUNCNOTRY(Locate)(path);
+ } else {
+  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
+  filenode = VFS_FUNCNOTRY(LocateWithCWD)(cwd,path);
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!filenode) {
 #ifdef DO_TRY
   DeeError_HandledOne();

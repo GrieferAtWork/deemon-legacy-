@@ -179,7 +179,7 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LLocateAt_impl(
  struct DeeVFSNode *newroot,*result,*newresult;
  char *part; Dee_size_t partsize;
  char const *path_iter,*part_begin;
- DEE_ASSERTF(!DEE_VFS_ISSEP(*path),
+ DEE_ASSERTF(!DEE_VFS_ISSEP(path[0]),
              "Given path %q isn't a relative path to %R",
              path,DeeVFSNode_Filename(root));
  if (DeeVFSNode_IsLink(root)) {
@@ -204,7 +204,7 @@ err_r:
    return NULL;
   }
   part_begin = path_iter;
-  do ++path_iter; while (*path_iter && !DEE_VFS_ISSEP(*path_iter));
+  while (*path_iter && !DEE_VFS_ISSEP(*path_iter)) ++path_iter;
   if ((partsize = (Dee_size_t)(path_iter-part_begin)) != 0) {
    // Check for special part names ('.' and '..')
    if (partsize == 1 && part_begin[0] == '.') {
@@ -478,6 +478,7 @@ DEE_DECL_END
 #include "vfs_core.unicode_impl.inl"
 #include "vfs_native_mount.c.inl"
 #include "vfs_native_node.c.inl"
+#include "vfs_virtual_stdfile.c.inl"
 #include "vfs_virtual_dir.c.inl"
 #include "vfs_root.c.inl"
 #endif
