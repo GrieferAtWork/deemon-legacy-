@@ -108,8 +108,8 @@ extern DEE_A_RET_WUNUSED BOOL _DeeWin32Window_TryEnterFullscreen_impl(DEE_A_IN H
 #define DeeWin32Window_TryFlip(hwnd)                      UpdateWindow(hwnd)
 #define DeeWin32Window_TryGetAttr(hwnd,attr)     ((void *)GetPropA(hwnd,attr))
 #define DeeWin32Window_TrySetAttr(hwnd,attr,v)            SetPropA(hwnd,attr,(HANDLE)(v))
-#define DeeWin32Window_TryUtf8SetTitle(hwnd,title)        SetWindowTextA(hwnd,title)
-#define DeeWin32Window_TryWideSetTitle(hwnd,title)        SetWindowTextW(hwnd,title)
+#define DeeWin32Window_Utf8TrySetTitle(hwnd,title)        SetWindowTextA(hwnd,title)
+#define DeeWin32Window_WideTrySetTitle(hwnd,title)        SetWindowTextW(hwnd,title)
 
 #define DeeWin32Window_SetWindowLong(hwnd,id,v)   (SetLastError(0),(SetWindowLongW(hwnd,id,v) != 0) || GetLastError() == 0)
 #define DeeWin32Window_PumpEvents() (DeeThread_CheckInterrupt() != 0 ? -1 : DeeWin32Window_PumpEventsNoInterrupt())
@@ -298,8 +298,8 @@ extern DEE_A_RET_EXCEPT_REF struct DeeWindowSurfaceObject *DeeWindow_Win32Create
 #ifdef DEE_PLATFORM_WINDOWS
 #define /* DEE_A_RET_NOEXCEPT(NULL) */DeeWindow_TryGetAttr(ob,attr)       DeeWin32Window_TryGetAttr(DeeWindow_Win32HWND(ob),attr)
 #define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TrySetAttr(ob,attr,v)     DeeWin32Window_TrySetAttr(DeeWindow_Win32HWND(ob),attr,v)
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TryUtf8SetTitle(ob,title) DeeWin32Window_TryUtf8SetTitle(DeeWindow_Win32HWND(ob),title)
-#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_TryWideSetTitle(ob,title) DeeWin32Window_TryWideSetTitle(DeeWindow_Win32HWND(ob),title)
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_Utf8TrySetTitle(ob,title) DeeWin32Window_Utf8TrySetTitle(DeeWindow_Win32HWND(ob),title)
+#define /* DEE_A_RET_NOEXCEPT(0)    */DeeWindow_WideTrySetTitle(ob,title) DeeWin32Window_WideTrySetTitle(DeeWindow_Win32HWND(ob),title)
 #endif /* DEE_PLATFORM_WINDOWS */
 
 #ifdef DEE_PLATFORM_WINDOWS

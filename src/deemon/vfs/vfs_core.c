@@ -30,14 +30,15 @@
 #include <deemon/error.h>
 #include <deemon/string.h>
 #include <deemon/deemonrun.h>
-#include <deemon/sys/sysfs.h>
+#include <deemon/fs/native_fs.h>
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
 
 
 void _DeeVFSNode_Delete(DEE_A_IN struct DeeVFSNode *self) {
- (*self->vn_type->vnt_node.vnt_quit)(self);
+ void (DEE_CALL *quit_func)(struct DeeVFSNode *);
+ if ((quit_func = self->vn_type->vnt_node.vnt_quit) != NULL) (*quit_func)(self);
  if (self->vn_parent) DeeVFSNode_DECREF(self->vn_parent);
  DeeVFSNode_FREE(self);
 }
@@ -48,7 +49,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WriteFilename(
  DEE_A_INOUT struct DeeStringWriter *writer, DEE_A_IN struct DeeVFSNode const *node) {
  DeeObject *name; int error;
  DeeObject *(DEE_CALL *nameofproc)(struct DeeVFSNode *,struct DeeVFSNode *);
- if (!node->vn_parent) return DeeStringWriter_WriteChar(writer,DEE_VFS_SEP);
+ if (!node->vn_parent) return 0;
  if (DeeVFSNode_WriteFilename(writer,node->vn_parent) != 0) return -1;
  if (DeeStringWriter_WriteChar(writer,DEE_VFS_SEP) != 0) return -1;
  nameofproc = node->vn_parent->vn_type->vnt_node.vnt_nameof;
@@ -62,6 +63,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WriteFilename(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *
 DeeVFSNode_Filename(DEE_A_IN struct DeeVFSNode const *node) {
  DeeObject *result; struct DeeStringWriter writer = DeeStringWriter_INIT();
+ if (!node->vn_parent) DeeReturn_STATIC_STRING_EX(1,{DEE_VFS_SEP});
  if (DeeVFSNode_WriteFilename(&writer,node) != 0) result = NULL;
  else result = DeeStringWriter_Pack(&writer);
  DeeStringWriter_Quit(&writer);
@@ -79,6 +81,14 @@ DeeVFSNode_Pathname(DEE_A_IN struct DeeVFSNode const *node) {
   DeeStringWriter_Quit(&writer);
   return result;
  }
+}
+
+DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self) {
+ DeeStringObject *native_path;
+ if (!DeeVFSNode_IsNative(self)) return 0;
+ native_path = ((struct DeeVFSNativeNode *)self)->vnn_path;
+ if (!DeeString_SIZE(native_path)) return 0;
+ return DeeString_STR(native_path)[DeeString_SIZE(native_path)-1] == ':';
 }
 
 
@@ -157,7 +167,7 @@ err_r:
     }
     memcpy(part,part_begin,partsize*sizeof(char));
     part[partsize] = 0;
-    newresult = (*root->vn_type->vnt_node.vnt_walk)(result,part);
+    newresult = (*result->vn_type->vnt_node.vnt_walk)(result,part);
     free_nn(part);
     if DEE_UNLIKELY(!newresult) goto err_r;
     DeeVFSNode_DECREF(result);
@@ -262,7 +272,7 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_GetCwdNode(void) {
  }
  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
  // Must use the native cwd, returning a path to it.
- if DEE_UNLIKELY((native_cwd = DeeSysFS_GetCwd()) == NULL) return NULL;
+ if DEE_UNLIKELY((native_cwd = DeeNFS_GetCwd()) == NULL) return NULL;
  result = DeeVFS_LocateNative(DeeString_STR(native_cwd));
  Dee_DECREF(native_cwd);
  return result;
@@ -271,8 +281,9 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_SetCwdNode(DEE_A_IN struct DeeVFSNode *cwd) {
  struct DeeVFSNode *old_cwd;
  DEE_ASSERT(cwd);
  if (DeeVFSNode_IsNative(cwd)) { // Update the native CWD directory
-  DeeSysFS_ChdirObject(((DeeVFSNativeNode *)cwd)->vnn_path,return -1);
+  if (DeeNFS_ChdirObject((DeeObject *)((DeeVFSNativeNode *)cwd)->vnn_path) != 0) return -1;
  }
+ DeeVFSNode_INCREF(cwd); // New reference for 'DeeVFS_CWD'
  DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);
  old_cwd = DeeVFS_CWD; DeeVFS_CWD = cwd;
  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);

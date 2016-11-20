@@ -166,6 +166,7 @@ struct DeeVFSNodeType const DeeVFSNativeMountNode_Type = {
   (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
   (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
   (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
+  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
   (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t *))                                                                                  NULL,
   (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t ))                                                                                   NULL,
   (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t *,DEE_A_OUT Dee_gid_t *))                                                             NULL,

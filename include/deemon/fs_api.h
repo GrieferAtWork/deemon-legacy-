@@ -22,6 +22,8 @@
 #define GUARD_DEEMON_FS_API_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/string.h>
+#include <deemon/type.h>
 #include <deemon/optional/fs_api.modechange.h>
 #include <deemon/optional/string_forward.h>
 
@@ -122,17 +124,83 @@ DEE_OBJECT_DEF(DeeFSWin32SIDObject);
 struct DeeListObject;
 struct DeeTimeObject;
 
+#define DEE_PRIVATE_CALL_UTF8WIDE_ARG0(T,uniarg,u8func,wfunc)\
+ T result; DeeObject *u8arg;\
+ if (DeeWideString_Check(uniarg)) return wfunc(uniarg);\
+ if DEE_UNLIKELY((u8arg = DeeUtf8String_Cast(uniarg)) == NULL) return -1;\
+ result = u8func(u8arg);\
+ Dee_DECREF(path);\
+ return result;
+#define DEE_PRIVATE_CALL_UTF8WIDE_ARGN(T,uniarg,u8func,wfunc,...)\
+ T result; DeeObject *u8arg;\
+ if (DeeWideString_Check(uniarg)) return wfunc(uniarg,__VA_ARGS__);\
+ if DEE_UNLIKELY((u8arg = DeeUtf8String_Cast(uniarg)) == NULL) return -1;\
+ result = u8func(u8arg,__VA_ARGS__);\
+ Dee_DECREF(path);\
+ return result;
+
+
+
+typedef Dee_uint32_t Dee_fsapimode_t;
+#define DEE_FSAPIMODE_NONE       DEE_UINT32_C(0x00000000)
+#define DEE_FSAPIMODE_EXPANDVARS DEE_UINT32_C(0x00000001)
+#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#define DEE_FSAPIMODE_ENABLEVFS  DEE_UINT32_C(0x00000002)
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+
+#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#define DEE_FSAPIMODE_DEFAULT   (DEE_FSAPIMODE_EXPANDVARS|DEE_FSAPIMODE_ENABLEVFS)
+#else /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#define DEE_FSAPIMODE_DEFAULT   (DEE_FSAPIMODE_EXPANDVARS)
+#endif /* !DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+
+//////////////////////////////////////////////////////////////////////////
+// Get/Set the current FS-API Mode
+// NOTE: When attempting to set an invalid/unsupported mode, an Error.ValueError will be thrown.
+DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_fsapimode_t) DeeFS_GetAPIMode(void);
+DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeFS_SetAPIMode(DEE_A_IN Dee_fsapimode_t mode);
+
+
+typedef void (*DeeFunPointer)(void);
+//////////////////////////////////////////////////////////////////////////
+// Returns the function pointer of a given ID, associated with the selected FS-API mode.
+DEE_FUNC_DECL(DEE_A_RET_NEVER_NULL DeeFunPointer) DeeFS_GetFunction(DEE_A_IN Dee_size_t id);
+#ifdef _MSC_VER
+#define DeeFS_GETFUNCTION(T,id) __pragma(warning(suppress: 4191)) \
+                                (*(T)DeeFS_GetFunction(DEE_TYPES_SIZEOF_POINTER*id))
+#else
+#define DeeFS_GETFUNCTION(T,id) (*(T)DeeFS_GetFunction(DEE_TYPES_SIZEOF_POINTER*id))
+#endif
+
+typedef DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *(DEE_CALL *PDEEFS_UTF8GETCWD)(void);
+typedef DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *(DEE_CALL *PDEEFS_WIDEGETCWD)(void);
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_UTF8CHDIR)(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_WIDECHDIR)(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_UTF8CHDIROBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_WIDECHDIROBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+
 //////////////////////////////////////////////////////////////////////////
 // Current working directory get/set
 // NOTE: 'path' may be relative, allowing you to navigate from the current cwd
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8GetCwd(void);
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WideGetCwd(void);
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8ChDir(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideChDir(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_Utf8ChDir(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_WideChDir(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_ChDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_ChDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeFS_Utf8GetCwd         DeeFS_GETFUNCTION(PDEEFS_UTF8GETCWD,     0)
+#define DeeFS_WideGetCwd         DeeFS_GETFUNCTION(PDEEFS_WIDEGETCWD,     1)
+#define DeeFS_Utf8ChDir          DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIR,      2)
+#define DeeFS_WideChDir          DeeFS_GETFUNCTION(PDEEFS_WIDECHDIR,      3)
+#define DeeFS_Utf8ChDirObject    DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIROBJECT,4)
+#define DeeFS_WideChDirObject    DeeFS_GETFUNCTION(PDEEFS_WIDECHDIROBJECT,5)
+#define _DeeFS_Utf8ChDir         DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIR,      6)
+#define _DeeFS_WideChDir         DeeFS_GETFUNCTION(PDEEFS_WIDECHDIR,      7)
+#define _DeeFS_Utf8ChDirObject   DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIROBJECT,8)
+#define _DeeFS_WideChDirObject   DeeFS_GETFUNCTION(PDEEFS_WIDECHDIROBJECT,9)
+
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int)
+DeeFS_ChDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
+ DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,path,DeeFS_Utf8ChDirObject,DeeFS_WideChDirObject)
+}
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int)
+_DeeFS_ChDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
+ DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,path,_DeeFS_Utf8ChDirObject,_DeeFS_WideChDirObject)
+}
 #define DeeFS_GetCwd DeeFS_Utf8GetCwd
 
 //////////////////////////////////////////////////////////////////////////
@@ -703,6 +771,9 @@ extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeFS_AutoGetUserAndGroup(
  DEE_A_OUT Dee_uid_t *uid, DEE_A_OUT Dee_gid_t *gid);
 #endif
 #endif
+
+#undef DEE_PRIVATE_CALL_UTF8WIDE_ARG0
+#undef DEE_PRIVATE_CALL_UTF8WIDE_ARGN
 
 DEE_DECL_END
 

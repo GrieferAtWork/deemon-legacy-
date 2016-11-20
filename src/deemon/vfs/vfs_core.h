@@ -28,9 +28,6 @@
 #include <deemon/optional/object_malloc.h>
 #include <deemon/optional/file.openmode.h>
 #include DEE_INCLUDE_MEMORY_API()
-#ifdef DEE_LIMITED_API
-#include <deemon/sys/sysfd.h>
-#endif
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
@@ -64,7 +61,7 @@ DEE_PRIVATE_DECL_DEE_GID_T
 #undef DEE_PRIVATE_DECL_DEE_GID_T
 #endif
 
-// TODO: Convert all NativeFS functions to SysFS
+// TODO: Convert all NativeFS functions to NFS
 
 #define DeeNativeFS_Utf8Readlink       _DeeFS_Utf8ReadLink
 #define DeeNativeFS_WideReadlink       _DeeFS_WideReadLink
@@ -72,91 +69,6 @@ DEE_PRIVATE_DECL_DEE_GID_T
 #define DeeNativeFS_WideReadlinkObject _DeeFS_ReadLinkObject
 #define DeeNativeFS_Readlink           DeeNativeFS_Utf8Readlink
 #define DeeNativeFS_ReadlinkObject     DeeNativeFS_Utf8ReadlinkObject
-
-#define DeeNativeFS_Utf8IsFile       _DeeFS_Utf8IsFile
-#define DeeNativeFS_WideIsFile       _DeeFS_WideIsFile
-#define DeeNativeFS_Utf8IsFileObject _DeeFS_IsFileObject
-#define DeeNativeFS_WideIsFileObject _DeeFS_IsFileObject
-#define DeeNativeFS_IsFile           DeeNativeFS_Utf8IsFile
-#define DeeNativeFS_IsFileObject     DeeNativeFS_Utf8IsFileObject
-
-#define DeeNativeFS_Utf8IsDir       _DeeFS_Utf8IsDir
-#define DeeNativeFS_WideIsDir       _DeeFS_WideIsDir
-#define DeeNativeFS_Utf8IsDirObject _DeeFS_IsDirObject
-#define DeeNativeFS_WideIsDirObject _DeeFS_IsDirObject
-#define DeeNativeFS_IsDir           DeeNativeFS_Utf8IsDir
-#define DeeNativeFS_IsDirObject     DeeNativeFS_Utf8IsDirObject
-
-#define DeeNativeFS_Utf8IsLink       _DeeFS_Utf8IsLink
-#define DeeNativeFS_WideIsLink       _DeeFS_WideIsLink
-#define DeeNativeFS_Utf8IsLinkObject _DeeFS_IsLinkObject
-#define DeeNativeFS_WideIsLinkObject _DeeFS_IsLinkObject
-#define DeeNativeFS_IsLink           DeeNativeFS_Utf8IsLink
-#define DeeNativeFS_IsLinkObject     DeeNativeFS_Utf8IsLinkObject
-
-#define DeeNativeFS_Utf8IsHidden       _DeeFS_Utf8IsHidden
-#define DeeNativeFS_WideIsHidden       _DeeFS_WideIsHidden
-#define DeeNativeFS_Utf8IsHiddenObject _DeeFS_IsHiddenObject
-#define DeeNativeFS_WideIsHiddenObject _DeeFS_IsHiddenObject
-#define DeeNativeFS_IsHidden           DeeNativeFS_Utf8IsHidden
-#define DeeNativeFS_IsHiddenObject     DeeNativeFS_Utf8IsHiddenObject
-
-#define DeeNativeFS_Utf8IsCharDev       _DeeFS_Utf8IsCharDev
-#define DeeNativeFS_WideIsCharDev       _DeeFS_WideIsCharDev
-#define DeeNativeFS_Utf8IsCharDevObject _DeeFS_IsCharDevObject
-#define DeeNativeFS_WideIsCharDevObject _DeeFS_IsCharDevObject
-#define DeeNativeFS_IsCharDev           DeeNativeFS_Utf8IsCharDev
-#define DeeNativeFS_IsCharDevObject     DeeNativeFS_Utf8IsCharDevObject
-
-#define DeeNativeFS_Utf8IsBlockDev       _DeeFS_Utf8IsBlockDev
-#define DeeNativeFS_WideIsBlockDev       _DeeFS_WideIsBlockDev
-#define DeeNativeFS_Utf8IsBlockDevObject _DeeFS_IsBlockDevObject
-#define DeeNativeFS_WideIsBlockDevObject _DeeFS_IsBlockDevObject
-#define DeeNativeFS_IsBlockDev           DeeNativeFS_Utf8IsBlockDev
-#define DeeNativeFS_IsBlockDevObject     DeeNativeFS_Utf8IsBlockDevObject
-
-#define DeeNativeFS_Utf8IsFiFo       _DeeFS_Utf8IsFiFo
-#define DeeNativeFS_WideIsFiFo       _DeeFS_WideIsFiFo
-#define DeeNativeFS_Utf8IsFiFoObject _DeeFS_IsFiFoObject
-#define DeeNativeFS_WideIsFiFoObject _DeeFS_IsFiFoObject
-#define DeeNativeFS_IsFiFo           DeeNativeFS_Utf8IsFiFo
-#define DeeNativeFS_IsFiFoObject     DeeNativeFS_Utf8IsFiFoObject
-
-#define DeeNativeFS_Utf8IsSocket       _DeeFS_Utf8IsSocket
-#define DeeNativeFS_WideIsSocket       _DeeFS_WideIsSocket
-#define DeeNativeFS_Utf8IsSocketObject _DeeFS_IsSocketObject
-#define DeeNativeFS_WideIsSocketObject _DeeFS_IsSocketObject
-#define DeeNativeFS_IsSocket           DeeNativeFS_Utf8IsSocket
-#define DeeNativeFS_IsSocketObject     DeeNativeFS_Utf8IsSocketObject
-
-#define DeeNativeFS_Utf8GetMod       _DeeFS_Utf8GetMod
-#define DeeNativeFS_WideGetMod       _DeeFS_WideGetMod
-#define DeeNativeFS_Utf8GetModObject _DeeFS_GetModObject
-#define DeeNativeFS_WideGetModObject _DeeFS_GetModObject
-#define DeeNativeFS_GetMod           DeeNativeFS_Utf8GetMod
-#define DeeNativeFS_GetModObject     DeeNativeFS_Utf8GetModObject
-
-#define DeeNativeFS_Utf8GetOwn       _DeeFS_Utf8GetOwn
-#define DeeNativeFS_WideGetOwn       _DeeFS_WideGetOwn
-#define DeeNativeFS_Utf8GetOwnObject _DeeFS_GetOwnObject
-#define DeeNativeFS_WideGetOwnObject _DeeFS_GetOwnObject
-#define DeeNativeFS_GetOwn           DeeNativeFS_Utf8GetOwn
-#define DeeNativeFS_GetOwnObject     DeeNativeFS_Utf8GetOwnObject
-
-#define DeeNativeFS_Utf8Chmod       _DeeFS_Utf8Chmod
-#define DeeNativeFS_WideChmod       _DeeFS_WideChmod
-#define DeeNativeFS_Utf8ChmodObject _DeeFS_ChmodObject
-#define DeeNativeFS_WideChmodObject _DeeFS_ChmodObject
-#define DeeNativeFS_Chmod           DeeNativeFS_Utf8Chmod
-#define DeeNativeFS_ChmodObject     DeeNativeFS_Utf8ChmodObject
-
-#define DeeNativeFS_Utf8Chown       _DeeFS_Utf8Chown
-#define DeeNativeFS_WideChown       _DeeFS_WideChown
-#define DeeNativeFS_Utf8ChownObject _DeeFS_ChownObject
-#define DeeNativeFS_WideChownObject _DeeFS_ChownObject
-#define DeeNativeFS_Chown           DeeNativeFS_Utf8Chown
-#define DeeNativeFS_ChownObject     DeeNativeFS_Utf8ChownObject
-
 
 
 
@@ -175,6 +87,7 @@ struct _DeeVFSNodeTypeData {
  DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_isdir)(DEE_A_INOUT struct DeeVFSNode *self);
  DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_islink)(DEE_A_INOUT struct DeeVFSNode *self);
  DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_ishidden)(DEE_A_INOUT struct DeeVFSNode *self);
+ DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_isexecutable)(DEE_A_INOUT struct DeeVFSNode *self);
  DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_ischardev)(DEE_A_INOUT struct DeeVFSNode *self);
  DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_isblockdev)(DEE_A_INOUT struct DeeVFSNode *self);
  DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_isfifo)(DEE_A_INOUT struct DeeVFSNode *self);
@@ -261,11 +174,12 @@ struct DeeVFSNode {
 #define DeeVFSNode_InitWithParent(self,type,parent)\
  ((self)->vn_refcnt = 1\
  ,(self)->vn_type = (type)\
- ,(self)->vn_parent,DeeVFSNode_INCREF(parent))
+ ,(self)->vn_parent = (parent)\
+ ,DeeVFSNode_INCREF(parent))
 
 
 extern void _DeeVFSNode_Delete(DEE_A_IN struct DeeVFSNode *self);
-#define DeeVFSNode_DECREF(self) (!DeeAtomic16_DecFetch((self)->vn_refcnt,memory_order_seq_cst)?_DeeVFSNode_Delete(self):(void)0)
+#define DeeVFSNode_DECREF(self) ((!DeeAtomic16_DecFetch((self)->vn_refcnt,memory_order_seq_cst))?_DeeVFSNode_Delete(self):(void)0)
 #define DeeVFSNode_INCREF(self) (void)DeeAtomic16_FetchInc((self)->vn_refcnt,memory_order_seq_cst)
 
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WriteFilename(
@@ -283,15 +197,17 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeVFSNode_Pathname(DEE_A_I
 
 //////////////////////////////////////////////////////////////////////////
 // Generic node attribute query functions
-#define DeeVFSNode_IsFile(self)     ((self)->vn_type->vnt_node.vnt_isfile ? (*(self)->vn_type->vnt_node.vnt_isfile)(self) : DeeVFSNode_FileHasOpen(self))
-#define DeeVFSNode_IsDir(self)      ((self)->vn_type->vnt_node.vnt_isdir  ? (*(self)->vn_type->vnt_node.vnt_isdir )(self) : DeeVFSNode_FileHasView(self))
-#define DeeVFSNode_IsLink(self)     ((self)->vn_type->vnt_node.vnt_islink ? (*(self)->vn_type->vnt_node.vnt_islink)(self) : DeeVFSNode_FileHasLink(self))
-#define DeeVFSNode_IsHidden(self)   ((self)->vn_type->vnt_node.vnt_ishidden ? (*(self)->vn_type->vnt_node.vnt_ishidden)(self) : (self)->vn_name[0] == '.')
-#define DeeVFSNode_IsCharDev(self)  ((self)->vn_type->vnt_node.vnt_ischardev && (*(self)->vn_type->vnt_node.vnt_ischardev)(self))
-#define DeeVFSNode_IsBlockDev(self) ((self)->vn_type->vnt_node.vnt_isblockdev && (*(self)->vn_type->vnt_node.vnt_isblockdev)(self))
-#define DeeVFSNode_IsFiFo(self)     ((self)->vn_type->vnt_node.vnt_isfifo && (*(self)->vn_type->vnt_node.vnt_isfifo)(self))
-#define DeeVFSNode_IsSocket(self)   ((self)->vn_type->vnt_node.vnt_issocket && (*(self)->vn_type->vnt_node.vnt_issocket)(self))
-#define DeeVFSNode_IsDrive(self)    (((self)->vn_flags&DEE_VFSNODE_FLAG_DRIVE)!=0)
+#define DeeVFSNode_IsFile(self)       ((self)->vn_type->vnt_node.vnt_isfile ? (*(self)->vn_type->vnt_node.vnt_isfile)(self) : DeeVFSNode_FileHasOpen(self))
+#define DeeVFSNode_IsDir(self)        ((self)->vn_type->vnt_node.vnt_isdir  ? (*(self)->vn_type->vnt_node.vnt_isdir )(self) : DeeVFSNode_FileHasView(self))
+#define DeeVFSNode_IsLink(self)       ((self)->vn_type->vnt_node.vnt_islink ? (*(self)->vn_type->vnt_node.vnt_islink)(self) : DeeVFSNode_FileHasLink(self))
+#define DeeVFSNode_IsHidden(self)     ((self)->vn_type->vnt_node.vnt_ishidden ? (*(self)->vn_type->vnt_node.vnt_ishidden)(self) : (self)->vn_name[0] == '.')
+#define DeeVFSNode_IsExecutable(self) ((self)->vn_type->vnt_node.vnt_isexecutable ? (*(self)->vn_type->vnt_node.vnt_isexecutable)(self) : 0)
+#define DeeVFSNode_IsCharDev(self)    ((self)->vn_type->vnt_node.vnt_ischardev && (*(self)->vn_type->vnt_node.vnt_ischardev)(self))
+#define DeeVFSNode_IsBlockDev(self)   ((self)->vn_type->vnt_node.vnt_isblockdev && (*(self)->vn_type->vnt_node.vnt_isblockdev)(self))
+#define DeeVFSNode_IsFiFo(self)       ((self)->vn_type->vnt_node.vnt_isfifo && (*(self)->vn_type->vnt_node.vnt_isfifo)(self))
+#define DeeVFSNode_IsSocket(self)     ((self)->vn_type->vnt_node.vnt_issocket && (*(self)->vn_type->vnt_node.vnt_issocket)(self))
+extern DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self);
+#define DeeVFSNode_IsDrive   DeeVFSNode_IsMount
 
 
 #define DeeVFSNode_Walk(self,elemname) \
@@ -367,6 +283,8 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_LocateAt(
 #define DeeVFS_WideIsVirtualPath(path) (*(path)==DEE_WIDECHAR_C('/'))
 
 #ifdef DEE_PLATFORM_WINDOWS
+// TODO: This only works for 1-character drive letters
+//       >> Someday windows might have more...
 #define DeeVFS_Utf8IsAbsoluteNativePath(path) (*(path)&&(path)[1]==   DEE_CHAR8_C(':'))
 #define DeeVFS_WideIsAbsoluteNativePath(path) (*(path)&&(path)[1]==DEE_WIDECHAR_C(':'))
 #else
@@ -404,6 +322,8 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8GetCwd(void)
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideGetCwd(void);
 extern DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8Chdir(DEE_A_IN_Z Dee_Utf8Char const *path);
 extern DEE_A_RET_EXCEPT(-1) int DeeVFS_WideChdir(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryChdir(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryChdir(DEE_A_IN_Z Dee_WideChar const *path);
 
 
 //////////////////////////////////////////////////////////////////////////

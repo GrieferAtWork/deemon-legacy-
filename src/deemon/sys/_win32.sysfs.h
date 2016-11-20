@@ -208,14 +208,14 @@ do{\
   {__VA_ARGS__;}\
  }\
  for (_env_line = _env_vars; *_env_line;) {\
-  Dee_Utf8Char const *_env_name,*_env_value_begin,*_env_line_end;\
+  Dee_Utf8Char *_env_value_begin,*_env_line_end;\
   _env_value_begin = _env_line;\
   /* Skip internal env vars (like per-drive cwd, and others) */\
   if (*_env_value_begin == '=') continue;\
   while (*_env_value_begin && *_env_value_begin != '=') ++_env_value_begin;\
   /* No idea what this is about, but lets be safe */\
   if DEE_UNLIKELY(!*_env_value_begin) continue;\
-  _env_line_end += _env_value_begin+Dee_Utf8StrLen(_env_line);\
+  _env_line_end = _env_value_begin+Dee_Utf8StrLen(_env_line);\
   enum((Dee_size_t)(_env_value_begin-_env_line),_env_line,\
        (Dee_size_t)(_env_line_end-(_env_value_begin+1)),_env_value_begin+1,\
        {if DEE_UNLIKELY(!FreeEnvironmentStringsA(_env_vars)) SetLastError(0); {__VA_ARGS__;}});\
@@ -234,14 +234,14 @@ do{\
   {__VA_ARGS__;}\
  }\
  for (_env_line = _env_vars; *_env_line;) {\
-  Dee_WideChar const *_env_name,*_env_value_begin,*_env_line_end;\
+  Dee_WideChar *_env_value_begin,*_env_line_end;\
   _env_value_begin = _env_line;\
   /* Skip internal env vars (like per-drive cwd, and others) */\
   if (*_env_value_begin == DEE_WIDECHAR_C('=')) continue;\
   while (*_env_value_begin && *_env_value_begin != DEE_WIDECHAR_C('=')) ++_env_value_begin;\
   /* No idea what this is about, but lets be safe */\
   if DEE_UNLIKELY(!*_env_value_begin) continue;\
-  _env_line_end += _env_value_begin+Dee_WideStrLen(_env_line);\
+  _env_line_end = _env_value_begin+Dee_WideStrLen(_env_line);\
   enum((Dee_size_t)(_env_value_begin-_env_line),_env_line,\
        (Dee_size_t)(_env_line_end-(_env_value_begin+1)),_env_value_begin+1,\
        {if DEE_UNLIKELY(!FreeEnvironmentStringsW(_env_vars)) SetLastError(0); {__VA_ARGS__;}});\
@@ -274,10 +274,10 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeWin32Sy
 
 static BOOL DeeWin32Sys_WideTryGetTimes(
  Dee_WideChar const *path, Dee_timetick_t *atime, Dee_timetick_t *ctime, Dee_timetick_t *mtime) {
- WIN32_FILE_ATTRIBUTE_DATA attr; Dee_timetick_t temp;
+ WIN32_FILE_ATTRIBUTE_DATA attr; Dee_timetick_t temp; BOOL success;
  if DEE_UNLIKELY(!GetFileAttributesExW(path,GetFileExInfoStandard,&attr)) {
   if (path[0] != '\\' || path[1] != '\\' || path[2] != '?' || path[3] != '\\') {
-   DeeObject *unc_path; Dee_size_t path_size; BOOL temp;
+   DeeObject *unc_path; Dee_size_t path_size;
    // Retry after UNC formating
    path_size = Dee_WideStrLen(path);
    if DEE_UNLIKELY((unc_path = DeeWideString_NewSized(
@@ -287,32 +287,57 @@ static BOOL DeeWin32Sys_WideTryGetTimes(
    DeeWideString_STR(unc_path)[1] = '\\';
    DeeWideString_STR(unc_path)[2] = '?';
    DeeWideString_STR(unc_path)[3] = '\\';
-   temp = GetFileAttributesExW(DeeWideString_STR(unc_path),GetFileExInfoStandard,&attr);
+   success = GetFileAttributesExW(DeeWideString_STR(unc_path),GetFileExInfoStandard,&attr);
    Dee_DECREF(unc_path);
-   if (!temp) return FALSE;
-  } else return FALSE;
+  } else success = FALSE;
+  if (!success) return FALSE;
  }
  if (atime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime(&attr.ftLastAccessTime,(LPFILETIME)&temp)) return FALSE; *atime = DeeWin32Sys_FiletimeToTimetick(temp); }
  if (ctime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime(&attr.ftCreationTime,  (LPFILETIME)&temp)) return FALSE; *ctime = DeeWin32Sys_FiletimeToTimetick(temp); }
  if (mtime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime(&attr.ftLastWriteTime, (LPFILETIME)&temp)) return FALSE; *mtime = DeeWin32Sys_FiletimeToTimetick(temp); }
  return TRUE;
 }
-static BOOL DeeWin32Sys_Utf8TryGetTimes(
- Dee_Utf8Char const *path, Dee_timetick_t *atime,
- Dee_timetick_t *ctime, Dee_timetick_t *mtime) {
- DeeObject *wpath; BOOL result;
- if DEE_UNLIKELY((wpath = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return FALSE; }
- result = DeeWin32Sys_WideTryGetTimes(DeeWideString_STR(wpath),atime,ctime,mtime);
- Dee_DECREF(wpath);
- return result;
-}
 
+#define DeeWin32Sys_WideGetTimes(path,atime,ctime,mtime,...)\
+do{\
+ WIN32_FILE_ATTRIBUTE_DATA _tm_attr; Dee_timetick_t _tm_temp;\
+ static char const *_tm_convert_error_message = "FileTimeToLocalFileTime(%I64u) : %K";\
+ if DEE_UNLIKELY(!GetFileAttributesExW(path,GetFileExInfoStandard,&_tm_attr)) {\
+  if ((path)[0] != '\\' || (path)[1] != '\\' || (path)[2] != '?' || (path)[3] != '\\') {\
+   DeeObject *_tm_unc_path; Dee_size_t _tm_path_size;\
+   /* Retry after UNC formating */\
+   _tm_path_size = Dee_WideStrLen(path);\
+   if DEE_UNLIKELY((_tm_unc_path = DeeWideString_NewSized(\
+    _tm_path_size+4)) == NULL) { DeeError_HandledOne(); return FALSE; }\
+   memcpy(DeeWideString_STR(_tm_unc_path)+4,path,_tm_path_size);\
+   DeeWideString_STR(_tm_unc_path)[0] = '\\';\
+   DeeWideString_STR(_tm_unc_path)[1] = '\\';\
+   DeeWideString_STR(_tm_unc_path)[2] = '?';\
+   DeeWideString_STR(_tm_unc_path)[3] = '\\';\
+   if (!GetFileAttributesExW(DeeWideString_STR(_tm_unc_path),GetFileExInfoStandard,&_tm_attr)) {\
+    DeeError_SetStringf(&DeeErrorType_SystemError,\
+                        "GetFileAttributesExW(%lq,GetFileExInfoStandard,...) : %K",\
+                        DeeWideString_STR(_tm_unc_path),\
+                        DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+    Dee_DECREF(_tm_unc_path);\
+    {__VA_ARGS__;}\
+   }\
+   Dee_DECREF(_tm_unc_path);\
+  } else {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "GetFileAttributesExW(%lq,GetFileExInfoStandard,...) : %K",\
+                       path,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+ if (atime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime(&_tm_attr.ftLastAccessTime,(LPFILETIME)&_tm_temp)) { DeeError_SetStringf(&DeeErrorType_SystemError,_tm_convert_error_message,*(Dee_timetick_t *)&_tm_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} *(atime) = DeeWin32Sys_FiletimeToTimetick(_tm_temp); }\
+ if (ctime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime(&_tm_attr.ftCreationTime,  (LPFILETIME)&_tm_temp)) { DeeError_SetStringf(&DeeErrorType_SystemError,_tm_convert_error_message,*(Dee_timetick_t *)&_tm_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} *(ctime) = DeeWin32Sys_FiletimeToTimetick(_tm_temp); }\
+ if (mtime) { if DEE_UNLIKELY(!FileTimeToLocalFileTime(&_tm_attr.ftLastWriteTime, (LPFILETIME)&_tm_temp)) { DeeError_SetStringf(&DeeErrorType_SystemError,_tm_convert_error_message,*(Dee_timetick_t *)&_tm_temp,DeeSystemError_Win32ToString(DeeSystemError_Win32Consume())); {__VA_ARGS__;}} *(mtime) = DeeWin32Sys_FiletimeToTimetick(_tm_temp); }\
+}while(0)
 
-#define DeeWin32SysFS_Utf8TryGetTimes DeeWin32Sys_Utf8TryGetTimes
 #define DeeWin32SysFS_WideTryGetTimes DeeWin32Sys_WideTryGetTimes
+#define DeeWin32SysFS_WideGetTimes    DeeWin32Sys_WideGetTimes
 
-// >> [[optional]] void DeeSysFS_Utf8GetTimes(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
-// >> [[optional]] void DeeSysFS_WideGetTimes(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
 
 
 
@@ -347,7 +372,7 @@ static BOOL DeeWin32Sys_Utf8TryGetTimes(
 #define DeeSysFS_WideGetHome     DeeWin32SysFS_WideGetHome
 #define DeeSysFS_Utf8GetTmp      DeeWin32SysFS_Utf8GetTmp
 #define DeeSysFS_WideGetTmp      DeeWin32SysFS_WideGetTmp
-#define DeeSysFS_Utf8TryGetTimes DeeWin32SysFS_Utf8TryGetTimes
+#define DeeSysFS_WideGetTimes    DeeWin32SysFS_WideGetTimes
 #define DeeSysFS_WideTryGetTimes DeeWin32SysFS_WideTryGetTimes
 
 DEE_DECL_END

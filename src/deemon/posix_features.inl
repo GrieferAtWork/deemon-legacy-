@@ -165,6 +165,28 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE__WSETENV
+#define DEE_HAVE__WSETENV 0
+#endif
+
+#ifndef DEE_HAVE_PUTENV
+#if (defined(_SVID_SOURCE) && _SVID_SOURCE)\
+ || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE)\
+ || (defined(_MSC_VER))
+# define DEE_HAVE_PUTENV 1
+#else
+# define DEE_HAVE_PUTENV 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WPUTENV
+#if defined(_MSC_VER)
+# define DEE_HAVE__WPUTENV 1
+#else
+# define DEE_HAVE__WPUTENV 0
+#endif
+#endif
+
 #ifndef DEE_HAVE_UNSETENV
 #if (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)\
  || (defined(_BSD_SOURCE) && _BSD_SOURCE)
@@ -172,6 +194,10 @@
 #else
 # define DEE_HAVE_UNSETENV 0
 #endif
+#endif
+
+#ifndef DEE_HAVE__WUNSETENV
+#define DEE_HAVE__WUNSETENV 0
 #endif
 
 #ifndef DEE_HAVE_READLINK
@@ -414,6 +440,46 @@
 # define DEE_HAVE__WOPEN 1
 #else
 # define DEE_HAVE__WOPEN 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WGETCWD
+#if defined(_MSC_VER)
+# define DEE_HAVE__WGETCWD 1
+#else
+# define DEE_HAVE__WGETCWD 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WCHDIR
+#if defined(_MSC_VER)
+# define DEE_HAVE__WCHDIR 1
+#else
+# define DEE_HAVE__WCHDIR 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WGETENV
+#if defined(_MSC_VER)
+# define DEE_HAVE__WGETENV 1
+#else
+# define DEE_HAVE__WGETENV 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WENVIRON
+#if defined(_MSC_VER)
+# define DEE_HAVE__WENVIRON 1
+#else
+# define DEE_HAVE__WENVIRON 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WSTAT
+#if defined(_MSC_VER)
+# define DEE_HAVE__WSTAT 1
+#else
+# define DEE_HAVE__WSTAT 0
 #endif
 #endif
 

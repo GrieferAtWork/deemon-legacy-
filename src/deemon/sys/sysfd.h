@@ -23,6 +23,9 @@
 
 #include <deemon/__conf.inl>
 
+// TODO: Support for fchdir
+
+
 //////////////////////////////////////////////////////////////////////////
 //
 // >> [[optional]] #define DEE_SYSFD_SEEK_SET <implementation_dependent>
@@ -153,6 +156,79 @@
 #endif
 
 
+#if !defined(DeeSysFileFD_Utf8TryInitObject)\
+  && defined(DeeSysFileFD_Utf8TryInit)
+#define DeeSysFileFD_Utf8TryInitObject(self,filename,mode,perms) \
+ DeeSysFileFD_Utf8TryInit(self,DeeUtf8String_STR(filename),mode,perms)
+#endif
+#if !defined(DeeSysFileFD_WideTryInitObject)\
+  && defined(DeeSysFileFD_WideTryInit)
+#define DeeSysFileFD_WideTryInitObject(self,filename,mode,perms) \
+ DeeSysFileFD_WideTryInit(self,DeeWideString_STR(filename),mode,perms)
+#endif
+#if !defined(DeeSysFileFD_Utf8InitObject)\
+  && defined(DeeSysFileFD_Utf8Init)
+#define DeeSysFileFD_Utf8InitObject(self,filename,mode,perms,...) \
+ DeeSysFileFD_Utf8Init(self,DeeUtf8String_STR(filename),mode,perms,__VA_ARGS__)
+#endif
+#if !defined(DeeSysFileFD_WideInitObject)\
+  && defined(DeeSysFileFD_WideInit)
+#define DeeSysFileFD_WideInitObject(self,filename,mode,perms,...) \
+ DeeSysFileFD_WideInit(self,DeeWideString_STR(filename),mode,perms,__VA_ARGS__)
+#endif
+
+
+#if !defined(DeeSysFileFD_Utf8TryInit) && !defined(DeeSysFileFD_Utf8TryInitObject)\
+ && !defined(DeeSysFileFD_WideTryInit) && !defined(DeeSysFileFD_WideTryInitObject)\
+ && !defined(DeeSysFileFD_Utf8Init) && !defined(DeeSysFileFD_Utf8InitObject)\
+ && !defined(DeeSysFileFD_WideInit) && !defined(DeeSysFileFD_WideInitObject)
+// Without any initializers, make sure that no member functions are defined either
+#undef DeeSysFileFD
+#undef DeeSysFileFD_Quit
+#undef DeeSysFileFD_Filename
+#undef DeeSysFileFD_Utf8Filename
+#undef DeeSysFileFD_WideFilename
+#undef DeeSysFileFD_TryRead
+#undef DeeSysFileFD_TryWrite
+#undef DeeSysFileFD_Read
+#undef DeeSysFileFD_Write
+#undef DeeSysFileFD_TrySeek
+#undef DeeSysFileFD_Seek
+#undef DeeSysFileFD_TryGetTimes
+#undef DeeSysFileFD_TrySetTimes
+#undef DeeSysFileFD_GetTimes
+#undef DeeSysFileFD_SetTimes
+#undef DeeSysFileFD_TryIsFile
+#undef DeeSysFileFD_TryIsDir
+#undef DeeSysFileFD_TryIsLink
+#undef DeeSysFileFD_TryIsDrive
+#undef DeeSysFileFD_TryIsMount
+#undef DeeSysFileFD_TryIsHidden
+#undef DeeSysFileFD_TryIsExecutable
+#undef DeeSysFileFD_TryIsCharDev
+#undef DeeSysFileFD_TryIsBlockDev
+#undef DeeSysFileFD_TryIsFiFo
+#undef DeeSysFileFD_TryIsSocket
+#undef DeeSysFileFD_IsFile
+#undef DeeSysFileFD_IsDir
+#undef DeeSysFileFD_IsLink
+#undef DeeSysFileFD_IsDrive
+#undef DeeSysFileFD_IsMount
+#undef DeeSysFileFD_IsHidden
+#undef DeeSysFileFD_IsExecutable
+#undef DeeSysFileFD_IsCharDev
+#undef DeeSysFileFD_IsBlockDev
+#undef DeeSysFileFD_IsFiFo
+#undef DeeSysFileFD_IsSocket
+#undef DeeSysFileFD_TryGetMod
+#undef DeeSysFileFD_GetMod
+#undef DeeSysFileFD_TryChmod
+#undef DeeSysFileFD_Chmod
+#undef DeeSysFileFD_TryGetOwn
+#undef DeeSysFileFD_GetOwn
+#undef DeeSysFileFD_TryChown
+#undef DeeSysFileFD_Chown
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////

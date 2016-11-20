@@ -27,21 +27,20 @@
 #define DEESTRINGOBJECT DeeWideStringObject
 #define DeeString_F(x)  DeeWideString_##x
 #define DeeVFS_F(x)     DeeVFS_Wide##x
-#define DeeSysFS_F(x)   DeeSysFS_Wide##x
+#define DeeNFS_F(x)     DeeNFS_Wide##x
 #define DEE_CHAR        Dee_WideChar
 #else
 #define DEESTRINGOBJECT DeeUtf8StringObject
 #define DeeString_F(x)  DeeUtf8String_##x
 #define DeeVFS_F(x)     DeeVFS_Utf8##x
-#define DeeSysFS_F(x)   DeeSysFS_Utf8##x
+#define DeeNFS_F(x)     DeeNFS_Utf8##x
 #define DEE_CHAR        Dee_Utf8Char
 #endif
 
 
 DEE_DECL_BEGIN
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeVFS_F(GetCwd)(void)
-{
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeVFS_F(GetCwd)(void) {
  struct DeeVFSNode *virtual_cwd; DeeObject *result;
  DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);
  if ((virtual_cwd = DeeVFS_CWD) != NULL) {
@@ -62,8 +61,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeVFS_F(GetCwd)(void)
  }
  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
  // Not virtual CWD --> Return the native one
- return DeeSysFS_F(GetCwd)();
+ return DeeNFS_F(GetCwd)();
 }
+
 DEE_A_RET_EXCEPT(-1) int DeeVFS_F(Chdir)(DEE_A_IN_Z DEE_CHAR const *path) {
 #ifdef WIDE
  DeeObject *charpath;
@@ -87,8 +87,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_F(Chdir)(DEE_A_IN_Z DEE_CHAR const *path) {
   DeeVFS_DelCwdNode();
   // Update the native CWD
 native_chdir:
-  DeeSysFS_F(Chdir)(path,return -1);
-  return 0;
+  return DeeNFS_F(Chdir)(path);
  }
 walk_relative:
  // Relative virtual/native path
@@ -126,6 +125,69 @@ walk_relative:
  DeeVFSNode_DECREF(oldcwd);
  DeeVFSNode_DECREF(oldcwd);
 
+ return 0;
+}
+DEE_A_RET_NOEXCEPT(0) int DeeVFS_F(TryChdir)(DEE_A_IN_Z DEE_CHAR const *path) {
+#ifdef WIDE
+ DeeObject *charpath;
+#endif
+ struct DeeVFSNode *oldcwd,*newcwd; int error;
+ if (DeeVFS_F(IsVirtualPath)(path)) { // Absolute virtual path
+#ifdef WIDE
+  if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL) goto err_h1;
+  newcwd = DeeVFS_Locate(DeeString_STR(charpath));
+  Dee_DECREF(charpath);
+#else
+  newcwd = DeeVFS_Locate(path);
+#endif
+  if DEE_UNLIKELY(!newcwd)
+  {err_h1: DeeError_HandledOne(); return 0; }
+  error = DeeVFS_SetCwdNode(newcwd);
+  Dee_DECREF(newcwd);
+  return error;
+ }
+ if (DeeVFS_F(IsAbsoluteNativePath)(path)) { // Absolute native path
+  // Delete the (possibly) active virtual CWD path
+  DeeVFS_DelCwdNode();
+  // Update the native CWD
+native_chdir:
+  return DeeNFS_F(TryChdir)(path);
+ }
+walk_relative:
+ // Relative virtual/native path
+ DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);
+ if ((oldcwd = DeeVFS_CWD) == NULL) {
+  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
+  // No virtual CWD node set --> 'path' must be relative within the native filesystem
+  goto native_chdir;
+ }
+ DeeVFSNode_INCREF(oldcwd);
+ DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
+ // Walk a relative path within the virtual filesystem
+#ifdef WIDE
+ if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL) goto err_h1;
+ newcwd = DeeVFS_LocateAt(oldcwd,DeeString_STR(charpath));
+ Dee_DECREF(charpath);
+#else
+ newcwd = DeeVFS_LocateAt(oldcwd,path);
+#endif
+ if DEE_UNLIKELY(!newcwd) { DeeVFSNode_DECREF(oldcwd); goto err_h1; }
+ DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);
+ // Make sure that the cwd wasn't changed by another thread in the meantime
+ if (oldcwd != DeeVFS_CWD) {
+  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
+  DeeVFSNode_DECREF(newcwd);
+  DeeVFSNode_DECREF(oldcwd);
+  goto walk_relative;
+ }
+ // NOTE: Also inherit a second reference from 'DeeVFS_CWD' into 'oldcwd'
+ Dee_INHERIT_REF(DeeVFS_CWD,newcwd);
+ DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
+ // Remove 2 references: One was stored in 'oldcwd' while we
+ //                      were traversing the relative path.
+ //                      And the other was stored on DeeVFS_CWD
+ DeeVFSNode_DECREF(oldcwd);
+ DeeVFSNode_DECREF(oldcwd);
  return 0;
 }
 
@@ -232,7 +294,7 @@ DeeVFS_F(ForceNativePath)(DEE_A_IN_Z DEE_CHAR const *path) {
 #undef DEESTRINGOBJECT
 #undef DeeString_F
 #undef DeeVFS_F
-#undef DeeSysFS_F
+#undef DeeNFS_F
 #undef DEE_CHAR
 #ifdef WIDE
 #undef WIDE

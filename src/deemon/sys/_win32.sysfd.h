@@ -542,7 +542,7 @@ do{\
 #define DeeWin32SysFileFD_IsSocket(self,result,...)   DeeWin32Sys_HandleIsSocket((self)->w32_handle,result,__VA_ARGS__)
 
 #define DeeWin32Sys_TryHandleGetMod(hFile,result)\
- (*(result) = (0444|(DeeWin32Sys_TryHandleIsReadOnly(hFile)?0:0222)\
+ (*(result) = (Dee_mode_t)(0444|(DeeWin32Sys_TryHandleIsReadOnly(hFile)?0:0222)\
   |(DeeWin32Sys_TryHandleIsExecutable(hFile)?0111:0)),1)
 #define DeeWin32Sys_HandleGetMod(hFile,result,...)\
 do{\

@@ -426,33 +426,6 @@ static int _dee_posix_check_getcwd_error(void) {
 //////////////////////////////////////////////////////////////////////////
 // Current working directory get/set
 // NOTE: 'path' may be relative, allowing you to navigate from the current cwd
-DEE_A_RET_EXCEPT(-1) int DeeFS_ChDirObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
- if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideChDir(DeeWideString_STR(path));
- } else
-#endif
- {
-  if DEE_UNLIKELY(DeeUtf8String_InplaceCast((DeeObject const **)&path) != 0) { result = -1; goto end; }
-  result = _DeeFS_Utf8ChDir(DeeUtf8String_STR(path));
- }
-end: Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int _DeeFS_ChDirObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) return _DeeFS_WideChDir(DeeWideString_STR(path));
-#endif
- if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- result = _DeeFS_Utf8ChDir(DeeUtf8String_STR(path));
- Dee_DECREF(path);
- return result;
-}
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *
 DeeFS_GetHomeUserObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *user) {

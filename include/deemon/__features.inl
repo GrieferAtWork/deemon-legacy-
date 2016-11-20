@@ -421,6 +421,15 @@
 #endif
 #endif
 
+#ifndef DEE_ENVIRONMENT_HAVE_INCLUDE_DIRECT_H
+#if __has_include(<direct.h>) || defined(_MSC_VER) || \
+    defined(HAVE_DIRECT_H) || defined(HAVE_INCLUDE_DIRECT_H)
+#define DEE_ENVIRONMENT_HAVE_INCLUDE_DIRECT_H 1
+#else
+#define DEE_ENVIRONMENT_HAVE_INCLUDE_DIRECT_H 0
+#endif
+#endif
+
 #ifndef DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
 #if __has_include(<stdio.h>) || 1 || \
     defined(HAVE_STDIO_H) || defined(HAVE_INCLUDE_STDIO_H)
