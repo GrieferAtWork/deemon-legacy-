@@ -721,7 +721,7 @@ do{\
 }while(0)
 #define DeeWin32SysFileFD_Utf8Init(self,filename,mode,perms,...) \
 do{\
- if DEE_LIKELY(DeeWin32SysFileFD_DoUtf8TryInit(self,filename,\
+ if DEE_LIKELY(DeeWin32SysFileFD_DoUtf8Init(self,filename,\
   DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
   DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),\
   DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
@@ -729,7 +729,7 @@ do{\
 }while(0)
 #define DeeWin32SysFileFD_WideInit(self,filename,mode,perms,...) \
 do{\
- if DEE_LIKELY(DeeWin32SysFileFD_DoWideTryInit(self,filename,\
+ if DEE_LIKELY(DeeWin32SysFileFD_DoWideInit(self,filename,\
   DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
   DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),\
   DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
