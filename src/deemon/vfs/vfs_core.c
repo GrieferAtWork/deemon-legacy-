@@ -83,6 +83,22 @@ DeeVFSNode_Pathname(DEE_A_IN struct DeeVFSNode const *node) {
  }
 }
 
+DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFSNode_HasHiddenFilename(
+ DEE_A_IN struct DeeVFSNode const *self) {
+ DeeObject *node_name; int result;
+ DeeObject *(DEE_CALL *nameofproc)(struct DeeVFSNode *,struct DeeVFSNode *);
+ if DEE_UNLIKELY(!self->vn_parent) return 0;
+ nameofproc = self->vn_parent->vn_type->vnt_node.vnt_nameof;
+ if DEE_UNLIKELY(!nameofproc) return 0;
+ node_name = (*nameofproc)(self->vn_parent,(struct DeeVFSNode *)self);
+ if DEE_UNLIKELY(!node_name) return -1;
+ DEE_ASSERT(DeeObject_Check(node_name) &&
+            DeeString_Check(node_name));
+ result = DeeString_STR(node_name)[0] == '.';
+ Dee_DECREF(node_name);
+ return result;
+}
+
 DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self) {
  DeeStringObject *native_path;
  if (!DeeVFSNode_IsNative(self)) return 0;

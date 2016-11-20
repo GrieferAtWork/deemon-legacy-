@@ -610,7 +610,70 @@ do{\
 #define DeeUnixSysFS_Utf8SetTimes    DeeUnixSys_Utf8SetTimes
 #endif
 
-
+#if 0 /* TODO */
+DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsMount)(DEE_A_IN_Z DEE_CHAR const *path) {
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+ if (_DeeVFS_F(IsVirtualPath)(path)) return DeeVFS_F(IsMount)(path);
+#endif
+ {
+#ifdef DEE_PLATFORM_WINDOWS
+  return _DeeFS_F(IsDrive)(path);
+#elif defined(WIDE)
+  DeeObject *path_ob; int result;
+  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) return -1;
+  result = _DeeFS_Utf8IsMount(DeeUtf8String_STR(path_ob));
+  Dee_DECREF(path_ob);
+  return result;
+#elif defined(DEE_PLATFORM_UNIX)
+  // As described here:
+  // http://stackoverflow.com/questions/10410513/function-or-a-systemcall-similar-to-mountpoint-command-in-linux
+  struct stat mp,mp_parent; int temp;
+  char *path_parent,*path_end; Dee_size_t path_size;
+  if DEE_UNLIKELY((temp = _deefs_posix_try_stat(path,&mp)) != 0)
+   return DEE_UNLIKELY(temp < 0) ? temp : 0;
+  path_size = strlen(path);
+#if DEE_HAVE_ALLOCA
+#ifdef _PREFAST_
+#pragma warning(push)
+#pragma warning(disable: 6255)
+#endif
+  path_parent = (char *)alloca((path_size+4)*sizeof(char));
+#ifdef _PREFAST_
+#pragma warning(pop)
+#endif
+#else
+  while DEE_UNLIKELY((path_parent = (char *)malloc_nz(
+   (path_size+4)*sizeof(char))) == NULL) {
+   if DEE_LIKELY(Dee_CollectMemory()) continue;
+   DeeError_NoMemory();
+   return -1;
+  }
+#endif
+  path_end = path_parent+path_size;
+  if (path_size) {
+   memcpy(path_parent,path,path_size*sizeof(char));
+   if (!IS_SEP(path_end[-1])) *path_end++ = SEP;
+  }
+  *path_end++ = '.';
+  *path_end++ = '.';
+  *path_end++ = '\0';
+  if DEE_UNLIKELY((temp = _deefs_posix_try_stat(path_parent,&mp_parent)) != 0) {
+#if !DEE_HAVE_ALLOCA
+   free_nn(path_parent);
+#endif
+   return DEE_UNLIKELY(temp < 0) ? temp : 0;
+  }
+#if !DEE_HAVE_ALLOCA
+  free_nn(path_parent);
+#endif
+  return mp.st_dev != mp_parent.st_dev;
+#else
+  (void)path;
+  return 0;
+#endif
+ }
+}
+#endif
 
 #define DeeSysFS_Utf8GetCwd DeeUnixSysFS_Utf8GetCwd
 #ifdef DeeUnixSysFS_WideGetCwd

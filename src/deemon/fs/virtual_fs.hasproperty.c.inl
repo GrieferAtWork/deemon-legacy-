@@ -18,24 +18,42 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_C
-#define GUARD_DEEMON_FS_VIRTUAL_FS_C 1
+#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_HASPROPERTY_C_INL
+#define GUARD_DEEMON_FS_VIRTUAL_FS_HASPROPERTY_C_INL 1
+#ifndef DEE_LIMITED_API
 #define DEE_LIMITED_API 1
-
-#include <deemon/__conf.inl>
-
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
-DEE_DECL_BEGIN
-
-DEE_DECL_END
-
-#ifndef __INTELLISENSE__
-#include "virtual_fs.chdir.c.inl"
-#include "virtual_fs.gettimes.c.inl"
-#include "virtual_fs.hasproperty.c.inl"
-#include "virtual_fs.settimes.c.inl"
 #endif
 
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#include <deemon/__conf.inl>
+#include <deemon/error.h>
+#include <deemon/fs/native_fs.h>
+#include <deemon/fs/virtual_fs.h>
+#include <deemon/optional/fs_api.fileproperty.h>
+#include <deemon/string.h>
+#include <deemon/type.h>
+#include <deemon/vfs/vfs_core.h>
+#ifndef __INTELLISENSE__
+#define WIDE
+#define DO_TRY
+#define OBJECT
+#include "virtual_fs.hasproperty.impl.inl"
+#define WIDE
+#define DO_TRY
+#include "virtual_fs.hasproperty.impl.inl"
+#define WIDE
+#define OBJECT
+#include "virtual_fs.hasproperty.impl.inl"
+#define WIDE
+#include "virtual_fs.hasproperty.impl.inl"
+#define DO_TRY
+#define OBJECT
+#include "virtual_fs.hasproperty.impl.inl"
+#define DO_TRY
+#include "virtual_fs.hasproperty.impl.inl"
+#define OBJECT
+#include "virtual_fs.hasproperty.impl.inl"
+#include "virtual_fs.hasproperty.impl.inl"
+#endif
 
-#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_C */
+
+#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_ISBLOCKDEV_C_INL */

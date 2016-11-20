@@ -60,7 +60,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsSocket(DEE_A_IN_Z Dee_Utf8Char cons
  return result;
 #elif defined(DeeSysFileFD_IsSocket)
  struct DeeNativeFileFD fd; int result;
- DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_IsSocket(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -91,7 +91,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsSocket(DEE_A_IN_Z Dee_WideChar cons
  return result;
 #elif defined(DeeSysFileFD_IsSocket)
  struct DeeNativeFileFD fd; int result;
- DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_IsSocket(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -116,7 +116,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsSocketObject(DEE_A_IN_OBJECT(DeeUtf
  return result;
 #elif defined(DeeSysFileFD_IsSocket)
  struct DeeNativeFileFD fd; int result;
- DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_IsSocket(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -141,7 +141,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsSocketObject(DEE_A_IN_OBJECT(DeeWid
  return result;
 #elif defined(DeeSysFileFD_IsSocket)
  struct DeeNativeFileFD fd; int result;
- DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_IsSocket(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;

@@ -199,14 +199,16 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeVFSNode_Pathname(DEE_A_I
 #define DeeVFSNode_IsFile(self)       ((self)->vn_type->vnt_node.vnt_isfile ? (*(self)->vn_type->vnt_node.vnt_isfile)(self) : DeeVFSNode_FileHasOpen(self))
 #define DeeVFSNode_IsDir(self)        ((self)->vn_type->vnt_node.vnt_isdir  ? (*(self)->vn_type->vnt_node.vnt_isdir )(self) : DeeVFSNode_FileHasView(self))
 #define DeeVFSNode_IsLink(self)       ((self)->vn_type->vnt_node.vnt_islink ? (*(self)->vn_type->vnt_node.vnt_islink)(self) : DeeVFSNode_FileHasLink(self))
-#define DeeVFSNode_IsHidden(self)     ((self)->vn_type->vnt_node.vnt_ishidden ? (*(self)->vn_type->vnt_node.vnt_ishidden)(self) : (self)->vn_name[0] == '.')
+#define DeeVFSNode_IsHidden(self)     ((self)->vn_type->vnt_node.vnt_ishidden ? (*(self)->vn_type->vnt_node.vnt_ishidden)(self) : DeeVFSNode_HasHiddenFilename(self))
 #define DeeVFSNode_IsExecutable(self) ((self)->vn_type->vnt_node.vnt_isexecutable ? (*(self)->vn_type->vnt_node.vnt_isexecutable)(self) : 0)
 #define DeeVFSNode_IsCharDev(self)    ((self)->vn_type->vnt_node.vnt_ischardev && (*(self)->vn_type->vnt_node.vnt_ischardev)(self))
 #define DeeVFSNode_IsBlockDev(self)   ((self)->vn_type->vnt_node.vnt_isblockdev && (*(self)->vn_type->vnt_node.vnt_isblockdev)(self))
 #define DeeVFSNode_IsFiFo(self)       ((self)->vn_type->vnt_node.vnt_isfifo && (*(self)->vn_type->vnt_node.vnt_isfifo)(self))
 #define DeeVFSNode_IsSocket(self)     ((self)->vn_type->vnt_node.vnt_issocket && (*(self)->vn_type->vnt_node.vnt_issocket)(self))
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFSNode_HasHiddenFilename(DEE_A_IN struct DeeVFSNode const *self);
 extern DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self);
-#define DeeVFSNode_IsDrive   DeeVFSNode_IsMount
+#define DeeVFSNode_IsMount DeeVFSNode_IsMount
+#define DeeVFSNode_IsDrive DeeVFSNode_IsMount
 
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetTimes(
  DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT_OPT Dee_timetick_t *atime,

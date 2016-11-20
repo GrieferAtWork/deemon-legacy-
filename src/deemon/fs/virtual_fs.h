@@ -23,6 +23,7 @@
 
 #include <deemon/__conf.inl>
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#include <deemon/optional/fs_api.fileproperty.h>
 #include <deemon/vfs/vfs_core.h>
 
 DEE_DECL_BEGIN
@@ -84,6 +85,15 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTrySetTimes(DEE_A_IN_Z Dee_WideChar 
 extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TrySetTimesObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
 extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTrySetTimesObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
 
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8HasProperty(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideHasProperty(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8HasPropertyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideHasPropertyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryHasProperty(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryHasProperty(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryHasPropertyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryHasPropertyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+
 #if 0
 
 extern DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8GetMod(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT Dee_mode_t *mode);
@@ -119,106 +129,6 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryChown(DEE_A_IN_Z Dee_Utf8Char con
 extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryChown(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
 extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryChownObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
 extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryChownObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
-
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsFile(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsFile(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsFileObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsFileObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsFile(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsFile(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsFileObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsFileObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsDir(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsDir(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsDir(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsDir(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsLink(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsLink(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsLinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsLinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsLink(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsLink(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsLinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsLinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsDrive(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsDrive(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsDriveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsDriveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsDrive(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsDrive(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsDriveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsDriveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsMount(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsMount(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsMountObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsMountObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsMount(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsMount(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsMountObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsMountObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsHidden(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsHidden(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsHiddenObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsHiddenObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsHidden(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsHidden(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsHiddenObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsHiddenObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsExecutable(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsExecutable(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsExecutableObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsExecutableObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsExecutable(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsExecutable(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsExecutableObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsExecutableObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsCharDev(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsCharDev(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsCharDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsCharDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsCharDev(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsCharDev(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsCharDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsCharDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsBlockDev(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsBlockDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsBlockDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsBlockDev(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsBlockDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsBlockDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsFiFo(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsFiFo(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsFiFoObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsFiFoObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsFiFo(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsFiFo(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsFiFoObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsFiFoObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsSocket(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsSocket(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_Utf8IsSocketObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFS_WideIsSocketObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsSocket(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsSocket(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryIsSocketObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryIsSocketObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 #endif
 
 #define DeeVFS_GetCwd                DeeVFS_Utf8GetCwd

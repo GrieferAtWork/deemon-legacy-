@@ -52,6 +52,14 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTrySetTimes(DEE_A_IN_Z Dee_WideChar 
 extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TrySetTimesObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
 extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTrySetTimesObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
 
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeXFS_Utf8HasProperty(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeXFS_WideHasProperty(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeXFS_Utf8HasPropertyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeXFS_WideHasPropertyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryHasProperty(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryHasProperty(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryHasPropertyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryHasPropertyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
 
 DEE_DECL_END
 

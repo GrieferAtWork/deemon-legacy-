@@ -31,6 +31,7 @@ DEE_DECL_END
 #ifndef __INTELLISENSE__
 #include "expand_fs.chdir.c.inl"
 #include "expand_fs.gettimes.c.inl"
+#include "expand_fs.hasproperty.c.inl"
 #include "expand_fs.settimes.c.inl"
 #endif
 

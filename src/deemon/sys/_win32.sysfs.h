@@ -336,7 +336,186 @@ do{\
 #define DeeWin32SysFS_WideTryGetTimes DeeWin32Sys_WideTryGetTimes
 #define DeeWin32SysFS_WideGetTimes    DeeWin32Sys_WideGetTimes
 
-
+#if 0 /* TODO */
+DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFS_F(IsDrive)(DEE_A_IN_Z DEE_CHAR const *path) {
+#ifdef DEE_PLATFORM_WINDOWS
+ DEE_CHAR const *path_iter;
+ DeeObject *path_ob; int temp;
+ if (*path == DEE_CHAR_C('$')
+  || *path == DEE_CHAR_C('%')
+  || *path == DEE_CHAR_C('~')) {
+expand:
+  if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return -1;
+  path = DEE_STRING_STR(path_ob);
+  if (!DEE_CH_IS_ALNUM(*path)) temp = 0; else {
+   do ++path; while (DEE_CH_IS_ALNUM(*path));
+   temp = IS_DRIVE_SEP(*path) && !path[IS_SEP(path[1]) ? 2 : 1];
+  }
+  Dee_DECREF(path_ob);
+  return temp;
+ } else {
+  path_iter = path;
+  if (!DEE_CH_IS_ALNUM(*path_iter)) return 0;
+  do ++path_iter; while (DEE_CH_IS_ALNUM(*path_iter));
+  if (*path_iter == DEE_CHAR_C('$')
+   || *path_iter == DEE_CHAR_C('%')
+   || *path_iter == DEE_CHAR_C('~')) goto expand;
+  return IS_DRIVE_SEP(*path_iter) && !path_iter[IS_SEP(path_iter[1]) ? 2 : 1];
+ }
+#else
+ (void)path;
+ return 0;
+#endif
+}
+DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsFile)(DEE_A_IN_Z DEE_CHAR const *path) {
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+ if (_DeeVFS_F(IsVirtualPath)(path)) return DeeVFS_F(IsFile)(path);
+#endif
+ {
+#ifdef DEE_PLATFORM_WINDOWS
+  DWORD temp;
+  if DEE_UNLIKELY(WIN32_F(fixed_GetFileAttributes)(path,&temp) != 0) return -1;
+  if (temp != INVALID_FILE_ATTRIBUTES) return (temp&FILE_ATTRIBUTE_DIRECTORY)==0;
+  temp = DeeSystemError_Win32Consume();
+  return temp != ERROR_FILE_NOT_FOUND &&
+         temp != ERROR_PATH_NOT_FOUND &&
+         temp != ERROR_INVALID_NAME;
+#elif defined(WIDE)
+  DeeObject *path_ob; int result;
+  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) return -1;
+  result = _DeeFS_Utf8IsFile(DeeUtf8String_STR(path_ob));
+  Dee_DECREF(path_ob);
+  return result;
+#elif defined(DEE_PLATFORM_UNIX)
+  struct stat attrib; int temp;
+  if DEE_UNLIKELY((temp = _deefs_posix_try_stat(path,&attrib)) != 0)
+   return DEE_UNLIKELY(temp < 0) ? temp : 0;
+  return S_ISREG(attrib.st_mode);
+#else
+  (void)path;
+  return 0;
+#endif
+ }
+}
+DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsDir)(DEE_A_IN_Z DEE_CHAR const *path) {
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+ if (_DeeVFS_F(IsVirtualPath)(path)) return DeeVFS_F(IsDir)(path);
+#endif
+ {
+#ifdef DEE_PLATFORM_WINDOWS
+  DWORD temp;
+  if DEE_UNLIKELY(WIN32_F(fixed_GetFileAttributes)(path,&temp) != 0) return -1;
+  if (temp != INVALID_FILE_ATTRIBUTES) {
+   if ((temp & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
+    HANDLE handle;
+    if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+    if DEE_UNLIKELY((handle = WIN32_F(CreateFile)(path,GENERIC_READ,FILE_SHARE_READ|
+     FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,0,NULL)) != INVALID_HANDLE_VALUE) {
+     CloseHandle(handle);
+     goto ret_attr_dir;
+    }
+    temp = DeeSystemError_Win32Consume();
+#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
+    if (DEE_FS_WIN32_IS_UNC_ERROR(temp) &&
+       !DeeFS_F(Win32IsPathUNC)(path)) {
+     DeeObject *unc_path; int result;
+     if DEE_UNLIKELY((unc_path = DeeFS_F(Win32PathUNC)(path)) == NULL) return -1;
+     result = _DeeFS_WideIsDir(DeeWideString_STR(unc_path));
+     Dee_DECREF(unc_path);
+     return result;
+    }
+#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
+    return 0;
+   } else {
+ret_attr_dir:
+    return (temp & FILE_ATTRIBUTE_DIRECTORY) != 0;
+   }
+  }
+  temp = DeeSystemError_Win32Consume();
+  return !WIN32_IS_FILE_NOT_FOUND_ERROR(temp);
+#elif defined(WIDE)
+  DeeObject *path_ob; int result;
+  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) return -1;
+  result = _DeeFS_Utf8IsDir(DeeUtf8String_STR(path_ob));
+  Dee_DECREF(path_ob);
+  return result;
+#elif defined(DEE_PLATFORM_UNIX)
+  struct stat attrib; int temp;
+  if DEE_UNLIKELY((temp = _deefs_posix_try_stat(path,&attrib)) != 0)
+   return DEE_UNLIKELY(temp < 0) ? temp : 0;
+  return S_ISDIR(attrib.st_mode);
+#else
+  (void)path;
+  return 0;
+#endif
+ }
+}
+DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsExecutable)(DEE_A_IN_Z DEE_CHAR const *path) {
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+ if (_DeeVFS_F(IsVirtualPath)(path)) return DeeVFS_F(IsExecutable)(path);
+#endif
+ {
+#ifdef DEE_PLATFORM_WINDOWS
+  static DEE_CHAR const s_PATHEXT[] = {'P','A','T','H','E','X','T',0};
+  DeeObject *pathext; DEE_CHAR *iter,*ext_begin,*end;
+  DEE_CHAR const *path_end,*path_iter; Dee_size_t path_size,ext_size;
+  DEE_ASSERT(path);
+  if DEE_UNLIKELY((pathext = DeeFS_F(GetEnv)(s_PATHEXT)) == NULL) return -1;
+  end = (iter = DEE_STRING_STR(pathext))+DEE_STRING_SIZE(pathext);
+  path_end = path+(path_size = DEE_STRLEN(path));
+  if (iter != end) while (1) {
+   ext_begin = iter;
+   while (iter != end && *iter != DEE_CHAR_C(';')) ++iter;
+   ext_size = (Dee_size_t)(iter-ext_begin);
+   if (ext_size <= path_size) {
+    path_iter = path+(path_size-ext_size);
+    while (path_iter != path_end) {
+     if (DEE_CH_TO_UPPER(*path_iter++) !=
+         DEE_CH_TO_UPPER(*ext_begin++)) goto next;
+    }
+    Dee_DECREF(pathext);
+    // It has the right suffix >> Not make sure it exists as a file
+    return _DeeFS_F(IsFile)(path);
+   }
+next:
+   if (iter == end) break;
+   ++iter; // skip ';'
+  }
+  Dee_DECREF(pathext);
+  return 0;
+#elif defined(WIDE)
+  DeeObject *path_ob; int result;
+  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) return -1;
+  result = _DeeFS_Utf8IsExecutable(DeeUtf8String_STR(path_ob));
+  Dee_DECREF(path_ob);
+  return result;
+#elif defined(DEE_PLATFORM_UNIX)
+  struct stat attrib; int temp;
+  if DEE_UNLIKELY((temp = _deefs_posix_try_stat(path,&attrib)) != 0)
+   return DEE_UNLIKELY(temp < 0) ? temp : 0;
+  if (!S_ISREG(attrib.st_mode)) return 0;
+  return (attrib.st_mode & 0111) != 0;
+#else
+  (void)path;
+  return 0;
+#endif
+ }
+}
+DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsDrive)(DEE_A_IN_Z DEE_CHAR const *path) {
+#ifdef DEE_PLATFORM_WINDOWS
+ DEE_CHAR const *path_iter;
+ DEE_ASSERT(path); path_iter = path;
+ if (!DEE_CH_IS_ALNUM(*path_iter)) return 0;
+ do ++path_iter; while (DEE_CH_IS_ALNUM(*path_iter)); // we allow longer drive names (coz who nose?)
+ if (!IS_DRIVE_SEP(*path)) return 0; // no ':' after the drive name
+ while (IS_SEP(path[1])) ++path; // skip seps after the ':'
+ return !path[1];
+#else
+ (void)path;
+ return 0;
+#endif
+}
+#endif
 
 
 

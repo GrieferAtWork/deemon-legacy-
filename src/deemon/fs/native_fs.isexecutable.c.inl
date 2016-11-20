@@ -60,7 +60,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsExecutable(DEE_A_IN_Z Dee_Utf8Char 
  return result;
 #elif defined(DeeSysFileFD_IsExecutable)
  struct DeeNativeFileFD fd; int result;
- DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_IsExecutable(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -91,7 +91,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsExecutable(DEE_A_IN_Z Dee_WideChar 
  return result;
 #elif defined(DeeSysFileFD_IsExecutable)
  struct DeeNativeFileFD fd; int result;
- DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_IsExecutable(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -116,7 +116,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsExecutableObject(DEE_A_IN_OBJECT(De
  return result;
 #elif defined(DeeSysFileFD_IsExecutable)
  struct DeeNativeFileFD fd; int result;
- DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_IsExecutable(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -141,7 +141,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsExecutableObject(DEE_A_IN_OBJECT(De
  return result;
 #elif defined(DeeSysFileFD_IsExecutable)
  struct DeeNativeFileFD fd; int result;
- DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_IsExecutable(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;

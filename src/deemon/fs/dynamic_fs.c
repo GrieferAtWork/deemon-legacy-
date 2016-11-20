@@ -134,7 +134,24 @@ struct DeeFSApi {
  PDEEFS_WIDETRYSETTIMES              _fa_widetrysettimes;
  PDEEFS_UTF8TRYSETTIMESOBJECT        _fa_utf8trysettimesobject;
  PDEEFS_WIDETRYSETTIMESOBJECT        _fa_widetrysettimesobject;
+ PDEEFS_UTF8HASPROPERTY              fa_utf8hasproperty;
+ PDEEFS_WIDEHASPROPERTY              fa_widehasproperty;
+ PDEEFS_UTF8HASPROPERTYOBJECT        fa_utf8haspropertyobject;
+ PDEEFS_WIDEHASPROPERTYOBJECT        fa_widehaspropertyobject;
+ PDEEFS_UTF8HASPROPERTY              _fa_utf8hasproperty;
+ PDEEFS_WIDEHASPROPERTY              _fa_widehasproperty;
+ PDEEFS_UTF8HASPROPERTYOBJECT        _fa_utf8haspropertyobject;
+ PDEEFS_WIDEHASPROPERTYOBJECT        _fa_widehaspropertyobject;
+ PDEEFS_UTF8TRYHASPROPERTY           fa_utf8tryhasproperty;
+ PDEEFS_WIDETRYHASPROPERTY           fa_widetryhasproperty;
+ PDEEFS_UTF8TRYHASPROPERTYOBJECT     fa_utf8tryhaspropertyobject;
+ PDEEFS_WIDETRYHASPROPERTYOBJECT     fa_widetryhaspropertyobject;
+ PDEEFS_UTF8TRYHASPROPERTY           _fa_utf8tryhasproperty;
+ PDEEFS_WIDETRYHASPROPERTY           _fa_widetryhasproperty;
+ PDEEFS_UTF8TRYHASPROPERTYOBJECT     _fa_utf8tryhaspropertyobject;
+ PDEEFS_WIDETRYHASPROPERTYOBJECT     _fa_widetryhaspropertyobject;
 };
+enum{s=sizeof(struct DeeFSApi)/sizeof(void *)};
 DEE_COMPILER_STRUCTURE_PACKED_END
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2 && ((\
@@ -153,98 +170,114 @@ DEE_COMPILER_STRUCTURE_PACKED_END
 
 static struct DeeAtomicMutex DeeFSApi_ActiveLock = DeeAtomicMutex_INIT();
 static struct DeeFSApi DeeFSApi_Active = {
- _DeeDFS(Utf8GetCwd),              /*<  fa_utf8getcwd. */
- _DeeDFS(WideGetCwd),              /*<  fa_widegetcwd. */
-  DeeDFS(Utf8Chdir),               /*<  fa_utf8chdir. */
-  DeeDFS(WideChdir),               /*<  fa_widechdir. */
-  DeeDFS(Utf8ChdirObject),         /*<  fa_utf8chdirobject. */
-  DeeDFS(WideChdirObject),         /*<  fa_widechdirobject. */
- _DeeDFS(Utf8Chdir),               /*< _fa_utf8chdir. */
- _DeeDFS(WideChdir),               /*< _fa_widechdir. */
- _DeeDFS(Utf8ChdirObject),         /*< _fa_utf8chdirobject. */
- _DeeDFS(WideChdirObject),         /*< _fa_widechdirobject. */
-  DeeDFS(Utf8TryChdir),            /*<  fa_utf8trychdir. */
-  DeeDFS(WideTryChdir),            /*<  fa_widetrychdir. */
-  DeeDFS(Utf8TryChdirObject),      /*<  fa_utf8trychdirobject. */
-  DeeDFS(WideTryChdirObject),      /*<  fa_widetrychdirobject. */
- _DeeDFS(Utf8TryChdir),            /*< _fa_utf8trychdir. */
- _DeeDFS(WideTryChdir),            /*< _fa_widetrychdir. */
- _DeeDFS(Utf8TryChdirObject),      /*< _fa_utf8trychdirobject. */
- _DeeDFS(WideTryChdirObject),      /*< _fa_widetrychdirobject. */
- &DeeNFS_Utf8GetHome,              /*<  fa_utf8gethome. */
- &DeeNFS_WideGetHome,              /*<  fa_widegethome. */
- &DeeNFS_Utf8GetUserHome,          /*<  fa_utf8getuserhome. */
- &DeeNFS_WideGetUserHome,          /*<  fa_widegetuserhome. */
- &DeeNFS_Utf8GetUserHomeObject,    /*<  fa_utf8getuserhomeobject. */
- &DeeNFS_WideGetUserHomeObject,    /*<  fa_widegetuserhomeobject. */
- &DeeNFS_Utf8GetTmp,               /*<  fa_utf8gettmp. */
- &DeeNFS_WideGetTmp,               /*<  fa_widegettmp. */
- &DeeNFS_Utf8EnumEnv,              /*<  fa_utf8enumenv. */
- &DeeNFS_WideEnumEnv,              /*<  fa_wideenumenv. */
- &DeeNFS_Utf8GetEnv,               /*<  fa_utf8getenv. */
- &DeeNFS_WideGetEnv,               /*<  fa_widegetenv. */
- &DeeNFS_Utf8GetEnvObject,         /*<  fa_utf8getenvobject. */
- &DeeNFS_WideGetEnvObject,         /*<  fa_widegetenvobject. */
- &DeeNFS_Utf8HasEnv,               /*<  fa_utf8hasenv. */
- &DeeNFS_WideHasEnv,               /*<  fa_widehasenv. */
- &DeeNFS_Utf8HasEnvObject,         /*<  fa_utf8hasenvobject. */
- &DeeNFS_WideHasEnvObject,         /*<  fa_widehasenvobject. */
- &DeeNFS_Utf8DelEnv,               /*<  fa_utf8delenv. */
- &DeeNFS_WideDelEnv,               /*<  fa_widedelenv. */
- &DeeNFS_Utf8DelEnvObject,         /*<  fa_utf8delenvobject. */
- &DeeNFS_WideDelEnvObject,         /*<  fa_widedelenvobject. */
- &DeeNFS_Utf8SetEnv,               /*<  fa_utf8setenv. */
- &DeeNFS_WideSetEnv,               /*<  fa_widesetenv. */
- &DeeNFS_Utf8SetEnvObject,         /*<  fa_utf8setenvobject. */
- &DeeNFS_WideSetEnvObject,         /*<  fa_widesetenvobject. */
- &DeeNFS_Utf8TryGetEnv,            /*<  fa_utf8trygetenv. */
- &DeeNFS_WideTryGetEnv,            /*<  fa_widetrygetenv. */
- &DeeNFS_Utf8TryGetEnvObject,      /*<  fa_utf8trygetenvobject. */
- &DeeNFS_WideTryGetEnvObject,      /*<  fa_widetrygetenvobject. */
- &DeeNFS_Utf8TryHasEnv,            /*<  fa_utf8tryhasenv. */
- &DeeNFS_WideTryHasEnv,            /*<  fa_widetryhasenv. */
- &DeeNFS_Utf8TryHasEnvObject,      /*<  fa_utf8tryhasenvobject. */
- &DeeNFS_WideTryHasEnvObject,      /*<  fa_widetryhasenvobject. */
- &DeeNFS_Utf8TryDelEnv,            /*<  fa_utf8trydelenv. */
- &DeeNFS_WideTryDelEnv,            /*<  fa_widetrydelenv. */
- &DeeNFS_Utf8TryDelEnvObject,      /*<  fa_utf8trydelenvobject. */
- &DeeNFS_WideTryDelEnvObject,      /*<  fa_widetrydelenvobject. */
- &DeeNFS_Utf8TrySetEnv,            /*<  fa_utf8trysetenv. */
- &DeeNFS_WideTrySetEnv,            /*<  fa_widetrysetenv. */
- &DeeNFS_Utf8TrySetEnvObject,      /*<  fa_utf8trysetenvobject. */
- &DeeNFS_WideTrySetEnvObject,      /*<  fa_widetrysetenvobject. */
-  DeeDFS(Utf8GetTimes),            /*<  fa_utf8gettimes. */
-  DeeDFS(WideGetTimes),            /*<  fa_widegettimes. */
-  DeeDFS(Utf8GetTimesObject),      /*<  fa_utf8gettimesobject. */
-  DeeDFS(WideGetTimesObject),      /*<  fa_widegettimesobject. */
- _DeeDFS(Utf8GetTimes),            /*< _fa_utf8gettimes. */
- _DeeDFS(WideGetTimes),            /*< _fa_widegettimes. */
- _DeeDFS(Utf8GetTimesObject),      /*< _fa_utf8gettimesobject. */
- _DeeDFS(WideGetTimesObject),      /*< _fa_widegettimesobject. */
-  DeeDFS(Utf8SetTimes),            /*<  fa_utf8settimes. */
-  DeeDFS(WideSetTimes),            /*<  fa_widesettimes. */
-  DeeDFS(Utf8SetTimesObject),      /*<  fa_utf8settimesobject. */
-  DeeDFS(WideSetTimesObject),      /*<  fa_widesettimesobject. */
- _DeeDFS(Utf8SetTimes),            /*< _fa_utf8settimes. */
- _DeeDFS(WideSetTimes),            /*< _fa_widesettimes. */
- _DeeDFS(Utf8SetTimesObject),      /*< _fa_utf8settimesobject. */
- _DeeDFS(WideSetTimesObject),      /*< _fa_widesettimesobject. */
-  DeeDFS(Utf8TryGetTimes),         /*<  fa_utf8trygettimes. */
-  DeeDFS(WideTryGetTimes),         /*<  fa_widetrygettimes. */
-  DeeDFS(Utf8TryGetTimesObject),   /*<  fa_utf8trygettimesobject. */
-  DeeDFS(WideTryGetTimesObject),   /*<  fa_widetrygettimesobject. */
- _DeeDFS(Utf8TryGetTimes),         /*< _fa_utf8trygettimes. */
- _DeeDFS(WideTryGetTimes),         /*< _fa_widetrygettimes. */
- _DeeDFS(Utf8TryGetTimesObject),   /*< _fa_utf8trygettimesobject. */
- _DeeDFS(WideTryGetTimesObject),   /*< _fa_widetrygettimesobject. */
-  DeeDFS(Utf8TrySetTimes),         /*<  fa_utf8trysettimes. */
-  DeeDFS(WideTrySetTimes),         /*<  fa_widetrysettimes. */
-  DeeDFS(Utf8TrySetTimesObject),   /*<  fa_utf8trysettimesobject. */
-  DeeDFS(WideTrySetTimesObject),   /*<  fa_widetrysettimesobject. */
- _DeeDFS(Utf8TrySetTimes),         /*< _fa_utf8trysettimes. */
- _DeeDFS(WideTrySetTimes),         /*< _fa_widetrysettimes. */
- _DeeDFS(Utf8TrySetTimesObject),   /*< _fa_utf8trysettimesobject. */
- _DeeDFS(WideTrySetTimesObject),   /*< _fa_widetrysettimesobject. */
+ _DeeDFS(Utf8GetCwd),               /*<  fa_utf8getcwd. */
+ _DeeDFS(WideGetCwd),               /*<  fa_widegetcwd. */
+  DeeDFS(Utf8Chdir),                /*<  fa_utf8chdir. */
+  DeeDFS(WideChdir),                /*<  fa_widechdir. */
+  DeeDFS(Utf8ChdirObject),          /*<  fa_utf8chdirobject. */
+  DeeDFS(WideChdirObject),          /*<  fa_widechdirobject. */
+ _DeeDFS(Utf8Chdir),                /*< _fa_utf8chdir. */
+ _DeeDFS(WideChdir),                /*< _fa_widechdir. */
+ _DeeDFS(Utf8ChdirObject),          /*< _fa_utf8chdirobject. */
+ _DeeDFS(WideChdirObject),          /*< _fa_widechdirobject. */
+  DeeDFS(Utf8TryChdir),             /*<  fa_utf8trychdir. */
+  DeeDFS(WideTryChdir),             /*<  fa_widetrychdir. */
+  DeeDFS(Utf8TryChdirObject),       /*<  fa_utf8trychdirobject. */
+  DeeDFS(WideTryChdirObject),       /*<  fa_widetrychdirobject. */
+ _DeeDFS(Utf8TryChdir),             /*< _fa_utf8trychdir. */
+ _DeeDFS(WideTryChdir),             /*< _fa_widetrychdir. */
+ _DeeDFS(Utf8TryChdirObject),       /*< _fa_utf8trychdirobject. */
+ _DeeDFS(WideTryChdirObject),       /*< _fa_widetrychdirobject. */
+ &DeeNFS_Utf8GetHome,               /*<  fa_utf8gethome. */
+ &DeeNFS_WideGetHome,               /*<  fa_widegethome. */
+ &DeeNFS_Utf8GetUserHome,           /*<  fa_utf8getuserhome. */
+ &DeeNFS_WideGetUserHome,           /*<  fa_widegetuserhome. */
+ &DeeNFS_Utf8GetUserHomeObject,     /*<  fa_utf8getuserhomeobject. */
+ &DeeNFS_WideGetUserHomeObject,     /*<  fa_widegetuserhomeobject. */
+ &DeeNFS_Utf8GetTmp,                /*<  fa_utf8gettmp. */
+ &DeeNFS_WideGetTmp,                /*<  fa_widegettmp. */
+ &DeeNFS_Utf8EnumEnv,               /*<  fa_utf8enumenv. */
+ &DeeNFS_WideEnumEnv,               /*<  fa_wideenumenv. */
+ &DeeNFS_Utf8GetEnv,                /*<  fa_utf8getenv. */
+ &DeeNFS_WideGetEnv,                /*<  fa_widegetenv. */
+ &DeeNFS_Utf8GetEnvObject,          /*<  fa_utf8getenvobject. */
+ &DeeNFS_WideGetEnvObject,          /*<  fa_widegetenvobject. */
+ &DeeNFS_Utf8HasEnv,                /*<  fa_utf8hasenv. */
+ &DeeNFS_WideHasEnv,                /*<  fa_widehasenv. */
+ &DeeNFS_Utf8HasEnvObject,          /*<  fa_utf8hasenvobject. */
+ &DeeNFS_WideHasEnvObject,          /*<  fa_widehasenvobject. */
+ &DeeNFS_Utf8DelEnv,                /*<  fa_utf8delenv. */
+ &DeeNFS_WideDelEnv,                /*<  fa_widedelenv. */
+ &DeeNFS_Utf8DelEnvObject,          /*<  fa_utf8delenvobject. */
+ &DeeNFS_WideDelEnvObject,          /*<  fa_widedelenvobject. */
+ &DeeNFS_Utf8SetEnv,                /*<  fa_utf8setenv. */
+ &DeeNFS_WideSetEnv,                /*<  fa_widesetenv. */
+ &DeeNFS_Utf8SetEnvObject,          /*<  fa_utf8setenvobject. */
+ &DeeNFS_WideSetEnvObject,          /*<  fa_widesetenvobject. */
+ &DeeNFS_Utf8TryGetEnv,             /*<  fa_utf8trygetenv. */
+ &DeeNFS_WideTryGetEnv,             /*<  fa_widetrygetenv. */
+ &DeeNFS_Utf8TryGetEnvObject,       /*<  fa_utf8trygetenvobject. */
+ &DeeNFS_WideTryGetEnvObject,       /*<  fa_widetrygetenvobject. */
+ &DeeNFS_Utf8TryHasEnv,             /*<  fa_utf8tryhasenv. */
+ &DeeNFS_WideTryHasEnv,             /*<  fa_widetryhasenv. */
+ &DeeNFS_Utf8TryHasEnvObject,       /*<  fa_utf8tryhasenvobject. */
+ &DeeNFS_WideTryHasEnvObject,       /*<  fa_widetryhasenvobject. */
+ &DeeNFS_Utf8TryDelEnv,             /*<  fa_utf8trydelenv. */
+ &DeeNFS_WideTryDelEnv,             /*<  fa_widetrydelenv. */
+ &DeeNFS_Utf8TryDelEnvObject,       /*<  fa_utf8trydelenvobject. */
+ &DeeNFS_WideTryDelEnvObject,       /*<  fa_widetrydelenvobject. */
+ &DeeNFS_Utf8TrySetEnv,             /*<  fa_utf8trysetenv. */
+ &DeeNFS_WideTrySetEnv,             /*<  fa_widetrysetenv. */
+ &DeeNFS_Utf8TrySetEnvObject,       /*<  fa_utf8trysetenvobject. */
+ &DeeNFS_WideTrySetEnvObject,       /*<  fa_widetrysetenvobject. */
+  DeeDFS(Utf8GetTimes),             /*<  fa_utf8gettimes. */
+  DeeDFS(WideGetTimes),             /*<  fa_widegettimes. */
+  DeeDFS(Utf8GetTimesObject),       /*<  fa_utf8gettimesobject. */
+  DeeDFS(WideGetTimesObject),       /*<  fa_widegettimesobject. */
+ _DeeDFS(Utf8GetTimes),             /*< _fa_utf8gettimes. */
+ _DeeDFS(WideGetTimes),             /*< _fa_widegettimes. */
+ _DeeDFS(Utf8GetTimesObject),       /*< _fa_utf8gettimesobject. */
+ _DeeDFS(WideGetTimesObject),       /*< _fa_widegettimesobject. */
+  DeeDFS(Utf8SetTimes),             /*<  fa_utf8settimes. */
+  DeeDFS(WideSetTimes),             /*<  fa_widesettimes. */
+  DeeDFS(Utf8SetTimesObject),       /*<  fa_utf8settimesobject. */
+  DeeDFS(WideSetTimesObject),       /*<  fa_widesettimesobject. */
+ _DeeDFS(Utf8SetTimes),             /*< _fa_utf8settimes. */
+ _DeeDFS(WideSetTimes),             /*< _fa_widesettimes. */
+ _DeeDFS(Utf8SetTimesObject),       /*< _fa_utf8settimesobject. */
+ _DeeDFS(WideSetTimesObject),       /*< _fa_widesettimesobject. */
+  DeeDFS(Utf8TryGetTimes),          /*<  fa_utf8trygettimes. */
+  DeeDFS(WideTryGetTimes),          /*<  fa_widetrygettimes. */
+  DeeDFS(Utf8TryGetTimesObject),    /*<  fa_utf8trygettimesobject. */
+  DeeDFS(WideTryGetTimesObject),    /*<  fa_widetrygettimesobject. */
+ _DeeDFS(Utf8TryGetTimes),          /*< _fa_utf8trygettimes. */
+ _DeeDFS(WideTryGetTimes),          /*< _fa_widetrygettimes. */
+ _DeeDFS(Utf8TryGetTimesObject),    /*< _fa_utf8trygettimesobject. */
+ _DeeDFS(WideTryGetTimesObject),    /*< _fa_widetrygettimesobject. */
+  DeeDFS(Utf8TrySetTimes),          /*<  fa_utf8trysettimes. */
+  DeeDFS(WideTrySetTimes),          /*<  fa_widetrysettimes. */
+  DeeDFS(Utf8TrySetTimesObject),    /*<  fa_utf8trysettimesobject. */
+  DeeDFS(WideTrySetTimesObject),    /*<  fa_widetrysettimesobject. */
+ _DeeDFS(Utf8TrySetTimes),          /*< _fa_utf8trysettimes. */
+ _DeeDFS(WideTrySetTimes),          /*< _fa_widetrysettimes. */
+ _DeeDFS(Utf8TrySetTimesObject),    /*< _fa_utf8trysettimesobject. */
+ _DeeDFS(WideTrySetTimesObject),    /*< _fa_widetrysettimesobject. */
+  DeeDFS(Utf8HasProperty),          /*<  fa_utf8hasproperty. */
+  DeeDFS(WideHasProperty),          /*<  fa_widehasproperty. */
+  DeeDFS(Utf8HasPropertyObject),    /*<  fa_utf8haspropertyobject. */
+  DeeDFS(WideHasPropertyObject),    /*<  fa_widehaspropertyobject. */
+ _DeeDFS(Utf8HasProperty),          /*< _fa_utf8hasproperty. */
+ _DeeDFS(WideHasProperty),          /*< _fa_widehasproperty. */
+ _DeeDFS(Utf8HasPropertyObject),    /*< _fa_utf8haspropertyobject. */
+ _DeeDFS(WideHasPropertyObject),    /*< _fa_widehaspropertyobject. */
+  DeeDFS(Utf8TryHasProperty),       /*<  fa_utf8tryhasproperty. */
+  DeeDFS(WideTryHasProperty),       /*<  fa_widetryhasproperty. */
+  DeeDFS(Utf8TryHasPropertyObject), /*<  fa_utf8tryhaspropertyobject. */
+  DeeDFS(WideTryHasPropertyObject), /*<  fa_widetryhaspropertyobject. */
+ _DeeDFS(Utf8TryHasProperty),       /*< _fa_utf8tryhasproperty. */
+ _DeeDFS(WideTryHasProperty),       /*< _fa_widetryhasproperty. */
+ _DeeDFS(Utf8TryHasPropertyObject), /*< _fa_utf8tryhaspropertyobject. */
+ _DeeDFS(WideTryHasPropertyObject), /*< _fa_widetryhaspropertyobject. */
 };
 
 DEE_A_RET_NEVER_NULL DeeFunPointer DeeFS_GetFunction(DEE_A_IN Dee_size_t id) {
@@ -274,32 +307,40 @@ DEE_A_RET_WUNUSED Dee_fsapimode_t DeeFS_GetAPIMode(void) {
 //  - Never-expand versions of regular callbacks
 //  - Callbacks not taking a path (aka. no-expand)
 #define MAP_PRIVATE_FSAPI_EXPORTS(X)\
-  X(fa_utf8getcwd,             Utf8GetCwd)\
-  X(fa_widegetcwd,             WideGetCwd)\
-  X(_fa_utf8chdir,             Utf8Chdir)\
-  X(_fa_widechdir,             WideChdir)\
-  X(_fa_utf8chdirobject,       Utf8ChdirObject)\
-  X(_fa_widechdirobject,       WideChdirObject)\
-  X(_fa_utf8trychdir,          Utf8TryChdir)\
-  X(_fa_widetrychdir,          WideTryChdir)\
-  X(_fa_utf8trychdirobject,    Utf8TryChdirObject)\
-  X(_fa_widetrychdirobject,    WideTryChdirObject)\
-  X(_fa_utf8gettimes,          Utf8GetTimes)\
-  X(_fa_widegettimes,          WideGetTimes)\
-  X(_fa_utf8gettimesobject,    Utf8GetTimesObject)\
-  X(_fa_widegettimesobject,    WideGetTimesObject)\
-  X(_fa_utf8settimes,          Utf8SetTimes)\
-  X(_fa_widesettimes,          WideSetTimes)\
-  X(_fa_utf8settimesobject,    Utf8SetTimesObject)\
-  X(_fa_widesettimesobject,    WideSetTimesObject)\
-  X(_fa_utf8trygettimes,       Utf8TryGetTimes)\
-  X(_fa_widetrygettimes,       WideTryGetTimes)\
-  X(_fa_utf8trygettimesobject, Utf8TryGetTimesObject)\
-  X(_fa_widetrygettimesobject, WideTryGetTimesObject)\
-  X(_fa_utf8trysettimes,       Utf8TrySetTimes)\
-  X(_fa_widetrysettimes,       WideTrySetTimes)\
-  X(_fa_utf8trysettimesobject, Utf8TrySetTimesObject)\
-  X(_fa_widetrysettimesobject, WideTrySetTimesObject)\
+  X(fa_utf8getcwd,               Utf8GetCwd)\
+  X(fa_widegetcwd,               WideGetCwd)\
+  X(_fa_utf8chdir,               Utf8Chdir)\
+  X(_fa_widechdir,               WideChdir)\
+  X(_fa_utf8chdirobject,         Utf8ChdirObject)\
+  X(_fa_widechdirobject,         WideChdirObject)\
+  X(_fa_utf8trychdir,            Utf8TryChdir)\
+  X(_fa_widetrychdir,            WideTryChdir)\
+  X(_fa_utf8trychdirobject,      Utf8TryChdirObject)\
+  X(_fa_widetrychdirobject,      WideTryChdirObject)\
+  X(_fa_utf8gettimes,            Utf8GetTimes)\
+  X(_fa_widegettimes,            WideGetTimes)\
+  X(_fa_utf8gettimesobject,      Utf8GetTimesObject)\
+  X(_fa_widegettimesobject,      WideGetTimesObject)\
+  X(_fa_utf8settimes,            Utf8SetTimes)\
+  X(_fa_widesettimes,            WideSetTimes)\
+  X(_fa_utf8settimesobject,      Utf8SetTimesObject)\
+  X(_fa_widesettimesobject,      WideSetTimesObject)\
+  X(_fa_utf8trygettimes,         Utf8TryGetTimes)\
+  X(_fa_widetrygettimes,         WideTryGetTimes)\
+  X(_fa_utf8trygettimesobject,   Utf8TryGetTimesObject)\
+  X(_fa_widetrygettimesobject,   WideTryGetTimesObject)\
+  X(_fa_utf8trysettimes,         Utf8TrySetTimes)\
+  X(_fa_widetrysettimes,         WideTrySetTimes)\
+  X(_fa_utf8trysettimesobject,   Utf8TrySetTimesObject)\
+  X(_fa_widetrysettimesobject,   WideTrySetTimesObject)\
+  X(_fa_utf8hasproperty,         Utf8HasProperty)\
+  X(_fa_widehasproperty,         WideHasProperty)\
+  X(_fa_utf8haspropertyobject,   Utf8HasPropertyObject)\
+  X(_fa_widehaspropertyobject,   WideHasPropertyObject)\
+  X(_fa_utf8tryhasproperty,      Utf8TryHasProperty)\
+  X(_fa_widetryhasproperty,      WideTryHasProperty)\
+  X(_fa_utf8tryhaspropertyobject,Utf8TryHasPropertyObject)\
+  X(_fa_widetryhaspropertyobject,WideTryHasPropertyObject)\
 
 // Public exports:
 //  - Functions capable of expanding a given path
@@ -308,31 +349,38 @@ DEE_A_RET_WUNUSED Dee_fsapimode_t DeeFS_GetAPIMode(void) {
 //       that will be alias-linked in case the
 //       EXPANDPATH flag is disabled.
 #define MAP_PUBLIC_FSAPI_EXPORTS(X)\
-  X(fa_utf8chdir,            Utf8Chdir)\
-  X(fa_widechdir,            WideChdir)\
-  X(fa_utf8chdirobject,      Utf8ChdirObject)\
-  X(fa_widechdirobject,      WideChdirObject)\
-  X(fa_utf8trychdir,         Utf8TryChdir)\
-  X(fa_widetrychdir,         WideTryChdir)\
-  X(fa_utf8trychdirobject,   Utf8TryChdirObject)\
-  X(fa_widetrychdirobject,   WideTryChdirObject)\
-  X(fa_utf8gettimes,         Utf8GetTimes)\
-  X(fa_widegettimes,         WideGetTimes)\
-  X(fa_utf8gettimesobject,   Utf8GetTimesObject)\
-  X(fa_widegettimesobject,   WideGetTimesObject)\
-  X(fa_utf8settimes,         Utf8SetTimes)\
-  X(fa_widesettimes,         WideSetTimes)\
-  X(fa_utf8settimesobject,   Utf8SetTimesObject)\
-  X(fa_widesettimesobject,   WideSetTimesObject)\
-  X(fa_utf8trygettimes,      Utf8TryGetTimes)\
-  X(fa_widetrygettimes,      WideTryGetTimes)\
-  X(fa_utf8trygettimesobject,Utf8TryGetTimesObject)\
-  X(fa_widetrygettimesobject,WideTryGetTimesObject)\
-  X(fa_utf8trysettimes,      Utf8TrySetTimes)\
-  X(fa_widetrysettimes,      WideTrySetTimes)\
-  X(fa_utf8trysettimesobject,Utf8TrySetTimesObject)\
-  X(fa_widetrysettimesobject,WideTrySetTimesObject)\
-
+  X(fa_utf8chdir,               Utf8Chdir)\
+  X(fa_widechdir,               WideChdir)\
+  X(fa_utf8chdirobject,         Utf8ChdirObject)\
+  X(fa_widechdirobject,         WideChdirObject)\
+  X(fa_utf8trychdir,            Utf8TryChdir)\
+  X(fa_widetrychdir,            WideTryChdir)\
+  X(fa_utf8trychdirobject,      Utf8TryChdirObject)\
+  X(fa_widetrychdirobject,      WideTryChdirObject)\
+  X(fa_utf8gettimes,            Utf8GetTimes)\
+  X(fa_widegettimes,            WideGetTimes)\
+  X(fa_utf8gettimesobject,      Utf8GetTimesObject)\
+  X(fa_widegettimesobject,      WideGetTimesObject)\
+  X(fa_utf8settimes,            Utf8SetTimes)\
+  X(fa_widesettimes,            WideSetTimes)\
+  X(fa_utf8settimesobject,      Utf8SetTimesObject)\
+  X(fa_widesettimesobject,      WideSetTimesObject)\
+  X(fa_utf8trygettimes,         Utf8TryGetTimes)\
+  X(fa_widetrygettimes,         WideTryGetTimes)\
+  X(fa_utf8trygettimesobject,   Utf8TryGetTimesObject)\
+  X(fa_widetrygettimesobject,   WideTryGetTimesObject)\
+  X(fa_utf8trysettimes,         Utf8TrySetTimes)\
+  X(fa_widetrysettimes,         WideTrySetTimes)\
+  X(fa_utf8trysettimesobject,   Utf8TrySetTimesObject)\
+  X(fa_widetrysettimesobject,   WideTrySetTimesObject)\
+  X(fa_utf8hasproperty,         Utf8HasProperty)\
+  X(fa_widehasproperty,         WideHasProperty)\
+  X(fa_utf8haspropertyobject,   Utf8HasPropertyObject)\
+  X(fa_widehaspropertyobject,   WideHasPropertyObject)\
+  X(fa_utf8tryhasproperty,      Utf8TryHasProperty)\
+  X(fa_widetryhasproperty,      WideTryHasProperty)\
+  X(fa_utf8tryhaspropertyobject,Utf8TryHasPropertyObject)\
+  X(fa_widetryhaspropertyobject,WideTryHasPropertyObject)\
 
 
 

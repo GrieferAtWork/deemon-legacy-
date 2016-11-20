@@ -25,6 +25,7 @@
 #include <deemon/string.h>
 #include <deemon/type.h>
 #include <deemon/error.h>
+#include <deemon/optional/fs_api.fileproperty.h>
 #include <deemon/optional/fs_api.modechange.h>
 #include <deemon/optional/string_forward.h>
 
@@ -589,80 +590,125 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_SetTimesObject(
  DEE_PRIVATE_CALL_UTF8WIDE_ARGN(int,-1,path,DeeFS_Utf8SetTimesObject,DeeFS_WideSetTimesObject,atime,ctime,mtime)
 }
 
+
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int (DEE_CALL *PDEEFS_UTF8HASPROPERTY)(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int (DEE_CALL *PDEEFS_WIDEHASPROPERTY)(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int (DEE_CALL *PDEEFS_UTF8HASPROPERTYOBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int (DEE_CALL *PDEEFS_WIDEHASPROPERTYOBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) DEE_ATTRIBUTE_NONNULL((1));
+#ifdef DEE_LIMITED_DEX
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_UTF8TRYHASPROPERTY)(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_WIDETRYHASPROPERTY)(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_UTF8TRYHASPROPERTYOBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_WIDETRYHASPROPERTYOBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) DEE_ATTRIBUTE_NONNULL((1));
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 // Returns '1' if certain conditions apply for a given 'path'; '0' otherwise
+
+#define DeeFS_Utf8HasProperty           DeeFS_GETFUNCTION(PDEEFS_UTF8HASPROPERTY,92)
+#define DeeFS_WideHasProperty           DeeFS_GETFUNCTION(PDEEFS_WIDEHASPROPERTY,93)
+#define DeeFS_Utf8HasPropertyObject     DeeFS_GETFUNCTION(PDEEFS_UTF8HASPROPERTYOBJECT,94)
+#define DeeFS_WideHasPropertyObject     DeeFS_GETFUNCTION(PDEEFS_WIDEHASPROPERTYOBJECT,95)
+#define _DeeFS_Utf8HasProperty          DeeFS_GETFUNCTION(PDEEFS_UTF8HASPROPERTY,96)
+#define _DeeFS_WideHasProperty          DeeFS_GETFUNCTION(PDEEFS_WIDEHASPROPERTY,97)
+#define _DeeFS_Utf8HasPropertyObject    DeeFS_GETFUNCTION(PDEEFS_UTF8HASPROPERTYOBJECT,98)
+#define _DeeFS_WideHasPropertyObject    DeeFS_GETFUNCTION(PDEEFS_WIDEHASPROPERTYOBJECT,99)
+#ifdef DEE_LIMITED_DEX
+#define DeeFS_Utf8TryHasProperty        DeeFS_GETFUNCTION(PDEEFS_UTF8TRYHASPROPERTY,100)
+#define DeeFS_WideTryHasProperty        DeeFS_GETFUNCTION(PDEEFS_WIDETRYHASPROPERTY,101)
+#define DeeFS_Utf8TryHasPropertyObject  DeeFS_GETFUNCTION(PDEEFS_UTF8TRYHASPROPERTYOBJECT,102)
+#define DeeFS_WideTryHasPropertyObject  DeeFS_GETFUNCTION(PDEEFS_WIDETRYHASPROPERTYOBJECT,103)
+#define _DeeFS_Utf8TryHasProperty       DeeFS_GETFUNCTION(PDEEFS_UTF8TRYHASPROPERTY,104)
+#define _DeeFS_WideTryHasProperty       DeeFS_GETFUNCTION(PDEEFS_WIDETRYHASPROPERTY,105)
+#define _DeeFS_Utf8TryHasPropertyObject DeeFS_GETFUNCTION(PDEEFS_UTF8TRYHASPROPERTYOBJECT,106)
+#define _DeeFS_WideTryHasPropertyObject DeeFS_GETFUNCTION(PDEEFS_WIDETRYHASPROPERTYOBJECT,107)
+#endif
+
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int)
+DeeFS_HasPropertyObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) {
+ DEE_PRIVATE_CALL_UTF8WIDE_ARGN(int,-1,path,DeeFS_Utf8HasPropertyObject,DeeFS_WideHasPropertyObject,prop)
+}
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int)
+_DeeFS_HasPropertyObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) {
+ DEE_PRIVATE_CALL_UTF8WIDE_ARGN(int,-1,path,_DeeFS_Utf8HasPropertyObject,_DeeFS_WideHasPropertyObject,prop)
+}
+
+//////////////////////////////////////////////////////////////////////////
+// File properties
+#define _DeeFS_Utf8IsFile(path)           _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISFILE)
+#define _DeeFS_WideIsFile(path)           _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISFILE)
+#define  DeeFS_Utf8IsFile(path)            DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISFILE)
+#define  DeeFS_WideIsFile(path)            DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISFILE)
+#define _DeeFS_IsFileObject(path)       _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISFILE)
+#define  DeeFS_IsFileObject(path)        DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISFILE)
+#define _DeeFS_Utf8IsDir(path)            _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISDIR)
+#define _DeeFS_WideIsDir(path)            _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISDIR)
+#define  DeeFS_Utf8IsDir(path)             DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISDIR)
+#define  DeeFS_WideIsDir(path)             DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISDIR)
+#define _DeeFS_IsDirObject(path)        _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISDIR)
+#define  DeeFS_IsDirObject(path)         DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISDIR)
+#define _DeeFS_Utf8IsLink(path)           _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISLINK)
+#define _DeeFS_WideIsLink(path)           _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISLINK)
+#define  DeeFS_Utf8IsLink(path)            DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISLINK)
+#define  DeeFS_WideIsLink(path)            DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISLINK)
+#define _DeeFS_IsLinkObject(path)       _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISLINK)
+#define  DeeFS_IsLinkObject(path)        DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISLINK)
+#define _DeeFS_Utf8IsDrive(path)          _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISDRIVE)
+#define _DeeFS_WideIsDrive(path)          _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISDRIVE)
+#define  DeeFS_Utf8IsDrive(path)           DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISDRIVE)
+#define  DeeFS_WideIsDrive(path)           DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISDRIVE)
+#define _DeeFS_IsDriveObject(path)      _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISDRIVE)
+#define  DeeFS_IsDriveObject(path)       DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISDRIVE)
+#define _DeeFS_Utf8IsMount(path)          _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISMOUNT)
+#define _DeeFS_WideIsMount(path)          _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISMOUNT)
+#define  DeeFS_Utf8IsMount(path)           DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISMOUNT)
+#define  DeeFS_WideIsMount(path)           DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISMOUNT)
+#define _DeeFS_IsMountObject(path)      _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISMOUNT)
+#define  DeeFS_IsMountObject(path)       DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISMOUNT)
+#define _DeeFS_Utf8IsHidden(path)         _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISHIDDEN)
+#define _DeeFS_WideIsHidden(path)         _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISHIDDEN)
+#define  DeeFS_Utf8IsHidden(path)          DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISHIDDEN)
+#define  DeeFS_WideIsHidden(path)          DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISHIDDEN)
+#define _DeeFS_IsHiddenObject(path)     _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISHIDDEN)
+#define  DeeFS_IsHiddenObject(path)      DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISHIDDEN)
+#define _DeeFS_Utf8IsExecutable(path)     _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISEXECUTABLE)
+#define _DeeFS_WideIsExecutable(path)     _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISEXECUTABLE)
+#define  DeeFS_Utf8IsExecutable(path)      DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISEXECUTABLE)
+#define  DeeFS_WideIsExecutable(path)      DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISEXECUTABLE)
+#define _DeeFS_IsExecutableObject(path) _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISEXECUTABLE)
+#define  DeeFS_IsExecutableObject(path)  DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISEXECUTABLE)
+#define _DeeFS_Utf8IsCharDev(path)        _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISCHARDEV)
+#define _DeeFS_WideIsCharDev(path)        _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISCHARDEV)
+#define  DeeFS_Utf8IsCharDev(path)         DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISCHARDEV)
+#define  DeeFS_WideIsCharDev(path)         DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISCHARDEV)
+#define _DeeFS_IsCharDevObject(path)    _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISCHARDEV)
+#define  DeeFS_IsCharDevObject(path)     DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISCHARDEV)
+#define _DeeFS_Utf8IsBlockDev(path)       _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISBLOCKDEV)
+#define _DeeFS_WideIsBlockDev(path)       _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISBLOCKDEV)
+#define  DeeFS_Utf8IsBlockDev(path)        DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISBLOCKDEV)
+#define  DeeFS_WideIsBlockDev(path)        DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISBLOCKDEV)
+#define _DeeFS_IsBlockDevObject(path)   _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISBLOCKDEV)
+#define  DeeFS_IsBlockDevObject(path)    DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISBLOCKDEV)
+#define _DeeFS_Utf8IsFiFo(path)           _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISFIFO)
+#define _DeeFS_WideIsFiFo(path)           _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISFIFO)
+#define  DeeFS_Utf8IsFiFo(path)            DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISFIFO)
+#define  DeeFS_WideIsFiFo(path)            DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISFIFO)
+#define _DeeFS_IsFiFoObject(path)       _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISFIFO)
+#define  DeeFS_IsFiFoObject(path)        DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISFIFO)
+#define _DeeFS_Utf8IsSocket(path)         _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISSOCKET)
+#define _DeeFS_WideIsSocket(path)         _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISSOCKET)
+#define  DeeFS_Utf8IsSocket(path)          DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISSOCKET)
+#define  DeeFS_WideIsSocket(path)          DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISSOCKET)
+#define _DeeFS_IsSocketObject(path)     _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISSOCKET)
+#define  DeeFS_IsSocketObject(path)      DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISSOCKET)
+
+
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsAbs(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsFile(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsDir(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsLink(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsDrive(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsMount(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsHidden(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsExecutable(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsCharDev(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsBlockDev(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsFiFo(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsSocket(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsAbs(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsFile(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsDir(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsLink(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsDrive(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsMount(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsHidden(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsCharDev(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsBlockDev(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsFiFo(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsSocket(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsExecutable(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsAbs(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsFile(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsDir(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsLink(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsDrive(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsMount(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsHidden(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsExecutable(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsCharDev(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsFiFo(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsSocket(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsAbs(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsFile(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsDir(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsLink(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsDrive(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsMount(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsHidden(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsCharDev(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsFiFo(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsSocket(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsExecutable(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsAbsObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsFileObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsLinkObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsDriveObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsMountObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsHiddenObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsExecutableObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsCharDevObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsBlockDevObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsFiFoObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsSocketObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsAbsObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsFileObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsLinkObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsDriveObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsMountObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsHiddenObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsExecutableObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsCharDevObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsBlockDevObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsFiFoObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsSocketObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
 
 
 //////////////////////////////////////////////////////////////////////////

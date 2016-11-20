@@ -18,24 +18,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_C
-#define GUARD_DEEMON_FS_VIRTUAL_FS_C 1
-#define DEE_LIMITED_API 1
+#ifndef GUARD_DEEMON_OPTIONAL_FS_API_FILEPROPERTY_H
+#define GUARD_DEEMON_OPTIONAL_FS_API_FILEPROPERTY_H 1
 
 #include <deemon/__conf.inl>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
+
+typedef DEE_TYPES_UINT16_T Dee_fileproperty_t;
+
+//////////////////////////////////////////////////////////////////////////
+// File property enumerators
+// >> Used to determinate various host-dependent file properties.
+#define DEE_FILEPROPERTY_NONE          0
+#define DEE_FILEPROPERTY_ISFILE        1
+#define DEE_FILEPROPERTY_ISDIR         2
+#define DEE_FILEPROPERTY_ISLINK        3
+#define DEE_FILEPROPERTY_ISDRIVE       4
+#define DEE_FILEPROPERTY_ISMOUNT       5
+#define DEE_FILEPROPERTY_ISHIDDEN      6
+#define DEE_FILEPROPERTY_ISEXECUTABLE  7
+#define DEE_FILEPROPERTY_ISCHARDEV     8
+#define DEE_FILEPROPERTY_ISBLOCKDEV    9
+#define DEE_FILEPROPERTY_ISFIFO       10
+#define DEE_FILEPROPERTY_ISSOCKET     11
 
 DEE_DECL_END
 
-#ifndef __INTELLISENSE__
-#include "virtual_fs.chdir.c.inl"
-#include "virtual_fs.gettimes.c.inl"
-#include "virtual_fs.hasproperty.c.inl"
-#include "virtual_fs.settimes.c.inl"
-#endif
-
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
-
-#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_C */
+#endif /* !GUARD_DEEMON_OPTIONAL_FS_API_FILEPROPERTY_H */

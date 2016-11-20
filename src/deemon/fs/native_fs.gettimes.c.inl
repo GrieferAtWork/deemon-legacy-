@@ -61,7 +61,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8GetTimes(
  return result;
 #elif defined(DeeSysFileFD_GetTimes)
  struct DeeNativeFileFD fd;
- DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_GetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
@@ -92,7 +92,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideGetTimes(
  return result;
 #elif defined(DeeSysFileFD_GetTimes)
  struct DeeNativeFileFD fd;
- DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_GetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
@@ -117,7 +117,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8GetTimesObject(
  return 0;
 #elif defined(DeeSysFileFD_GetTimes)
  struct DeeNativeFileFD fd;
- DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_GetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
@@ -142,7 +142,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideGetTimesObject(
  return 0;
 #elif defined(DeeSysFileFD_GetTimes)
  struct DeeNativeFileFD fd;
- DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,{ return -1; });
+ if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
  DeeSysFileFD_GetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;

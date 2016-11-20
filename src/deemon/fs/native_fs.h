@@ -23,6 +23,7 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/optional/string_forward.h>
+#include <deemon/optional/fs_api.fileproperty.h>
 #include <deemon/sys/sysfs.h>
 #include <deemon/sys/sysfd.h>
 
@@ -355,6 +356,15 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryChown(DEE_A_IN_Z Dee_WideChar con
 extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryChownObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
 extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryChownObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
 
+
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8HasProperty(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideHasProperty(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8HasPropertyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideHasPropertyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryHasProperty(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryHasProperty(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryHasPropertyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryHasPropertyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
 
 extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsFile(DEE_A_IN_Z Dee_Utf8Char const *path);
 extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsFile(DEE_A_IN_Z Dee_WideChar const *path);
