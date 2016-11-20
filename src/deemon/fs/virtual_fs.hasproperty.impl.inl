@@ -88,14 +88,7 @@ call_native: return NFS_FUNC(HasProperty)(path,prop);
   filenode = VFS_FUNCNOTRY(LocateWithCWD)(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
- if DEE_UNLIKELY(!filenode) {
-#ifdef DO_TRY
-  DeeError_HandledOne();
-  return 0;
-#else
-  return -1;
-#endif
- }
+ if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return 0; }
  switch (prop) {
   case DEE_FILEPROPERTY_ISFILE      : error = DeeVFSNode_IsFile(filenode); break;
   case DEE_FILEPROPERTY_ISDIR       : error = DeeVFSNode_IsDir(filenode); break;
