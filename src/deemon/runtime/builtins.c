@@ -311,7 +311,7 @@ DeeObject *const _DeeBuiltin_ID2Type[] = {
  /*0x00B8*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_ishidden,
  /*0x00B9*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_exists,
  /*0x00BA*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_remove,
- /*0x00BB*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_rmfile,
+ /*0x00BB*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_unlink,
  /*0x00BC*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_mkdir,
  /*0x00BD*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_rmdir,
  /*0x00BE*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_copy,

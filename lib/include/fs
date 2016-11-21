@@ -81,6 +81,7 @@
 #pragma push_macro("exists")
 #pragma push_macro("remove")
 #pragma push_macro("rmfile")
+#pragma push_macro("unlink")
 #pragma push_macro("mkdir")
 #pragma push_macro("rmdir")
 #pragma push_macro("copy_")
@@ -151,6 +152,7 @@
 #undef exists
 #undef remove
 #undef rmfile
+#undef unlink
 #undef mkdir
 #undef rmdir
 #undef copy_
@@ -621,10 +623,11 @@ module fs {
 	local const remove = __builtin_object(0x00BA);
 
 	//////////////////////////////////////////////////////////////////////////
-	// >> function fs::rmfile(string.T path) -> none
+	// >> function fs::unlink(string.T path) -> none
 	//    @throws Error.SystemError: Failed to remove the given file
 	//        Removes a given path (must be a file)
-	local const rmfile = __builtin_object(0x00BB);
+	local const unlink = __builtin_object(0x00BB);
+	local const rmfile = __builtin_object(0x00BB); // Old name (keep for backwards compatibility)
 
 	//////////////////////////////////////////////////////////////////////////
 	// >> function fs::mkdir(string.T path, mode_t mode = 0755) -> none
@@ -971,6 +974,7 @@ module fs {
 #pragma pop_macro("exists")
 #pragma pop_macro("remove")
 #pragma pop_macro("rmfile")
+#pragma pop_macro("unlink")
 #pragma pop_macro("mkdir")
 #pragma pop_macro("rmdir")
 #pragma pop_macro("copy_")

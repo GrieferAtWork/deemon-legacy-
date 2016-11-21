@@ -281,7 +281,7 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_isfifo);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_issocket);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_exists);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_remove);
-DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_rmfile);
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_unlink);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_mkdir);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_rmdir);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_copy);
@@ -576,7 +576,7 @@ for (local name,id: mappings) {
 #define DeeBuiltinFunction___builtin_fs_ishidden                     (*DeeBuiltin_GET(0x00B8))
 #define DeeBuiltinFunction___builtin_fs_exists                       (*DeeBuiltin_GET(0x00B9))
 #define DeeBuiltinFunction___builtin_fs_remove                       (*DeeBuiltin_GET(0x00BA))
-#define DeeBuiltinFunction___builtin_fs_rmfile                       (*DeeBuiltin_GET(0x00BB))
+#define DeeBuiltinFunction___builtin_fs_unlink                       (*DeeBuiltin_GET(0x00BB))
 #define DeeBuiltinFunction___builtin_fs_mkdir                        (*DeeBuiltin_GET(0x00BC))
 #define DeeBuiltinFunction___builtin_fs_rmdir                        (*DeeBuiltin_GET(0x00BD))
 #define DeeBuiltinFunction___builtin_fs_copy                         (*DeeBuiltin_GET(0x00BE))

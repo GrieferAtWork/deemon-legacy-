@@ -1607,9 +1607,9 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_remove) {
  if DEE_UNLIKELY(DeeFS_RemoveObject(path) != 0) return NULL;
  DeeReturn_None;
 }
-DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_rmfile) {
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_unlink) {
  DeeObject *path;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:__builtin_fs_rmfile",&path) != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:__builtin_fs_unlink",&path) != 0) return NULL;
  if DEE_UNLIKELY(DeeFS_UnlinkObject(path) != 0) return NULL;
  DeeReturn_None;
 }

@@ -1569,7 +1569,7 @@ static DEE_A_RET_Z_OPT char const *_DeeBuiltin_GetDoc(
       "(string.wide path) -> none\n"
       "@throws Error.SystemError: Failed to remove the given file/path\n"
       "\tRemoves a given @path (can be a file or directory).");
-  DOC(0x00BB,"__builtin_fs_rmfile",
+  DOC(0x00BB,"__builtin_fs_unlink",
       "(string path) -> none\n"
       "(string.wide path) -> none\n"
       "@throws Error.SystemError: Failed to remove the given file\n"
