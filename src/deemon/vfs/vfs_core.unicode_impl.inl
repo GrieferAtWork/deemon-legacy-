@@ -202,26 +202,46 @@ DeeVFS_F(ForceNativePathObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DeeObject *charpath;
 #endif
  struct DeeVFSNode *cwd,*resultpath; DeeObject *result;
- if (DeeVFS_F(IsAbsoluteNativePath)(DeeString_F(STR)(path))) {
+ if (DeeVFS_F(IsAbsoluteNativePathObject)(path)) {
   // Simple case: 'path' is an absolute, native filesystem path --> Just re-return it
+retpath:
   DeeReturn_NEWREF(path);
  }
- if ((cwd = DeeVFS_GetCwdNode()) == NULL) {
-  // No virtual CWD node set --> 'path' must be relative within the native filesystem
-  // In this situation, we're allowed to return a relative native filesystem path.
-  DeeReturn_NEWREF(path);
- }
- // Expand the given path based on what we just learned from 'cwd'
+ if (DeeVFS_F(IsVirtualPathObject)(path)) {
+  DEE_CHAR const *path_begin = DeeString_F(STR)(path);
+  do ++path_begin; while (DEE_VFS_ISSEP(*path_begin));
 #ifdef WIDE
- if DEE_UNLIKELY((charpath = DeeString_FromWideStringWithLength(
-  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL)
- { DeeVFSNode_DECREF(cwd); return NULL; }
- resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(charpath));
- Dee_DECREF(charpath);
+  if DEE_UNLIKELY((charpath = DeeString_FromWideStringWithLength(
+   DeeString_F(SIZE)(path)-(path_begin-DeeString_F(STR)(path)),path_begin)) == NULL) return NULL;
+  resultpath = DeeVFS_LocateAt(DeeVFS_Root,DeeString_STR(charpath));
+  Dee_DECREF(charpath);
 #else
- resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(path));
+  resultpath = DeeVFS_LocateAt(DeeVFS_Root,path_begin);
 #endif
- DeeVFSNode_DECREF(cwd);
+ } else {
+  if ((cwd = DeeVFS_GetCwdNode()) == NULL) {
+   // No virtual CWD node set --> 'path' must be relative within the native filesystem
+   // In this situation, we're allowed to return a relative native filesystem path.
+   goto retpath;
+  }
+  if (DeeVFSNode_IsNative(cwd)) {
+   // The CWD lies with the native part of the FS.
+   // >> No need to adjust the path
+   DeeVFSNode_DECREF(cwd);
+   goto retpath;
+  }
+  // Expand the given path based on what we just learned from 'cwd'
+#ifdef WIDE
+  if DEE_UNLIKELY((charpath = DeeString_FromWideStringWithLength(
+   DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL)
+  { DeeVFSNode_DECREF(cwd); return NULL; }
+  resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(charpath));
+  Dee_DECREF(charpath);
+#else
+  resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(path));
+#endif
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!resultpath) return NULL;
  if DEE_UNLIKELY(!DeeVFSNode_IsNative(resultpath)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -250,23 +270,41 @@ DeeVFS_F(ForceNativePath)(DEE_A_IN_Z DEE_CHAR const *path) {
  struct DeeVFSNode *cwd,*resultpath; DeeObject *result;
  if (DeeVFS_F(IsAbsoluteNativePath)(path)) {
   // Simple case: 'path' is an absolute, native filesystem path --> Just re-return it
+retpath:
   return DeeString_F(New)(path);
  }
- if ((cwd = DeeVFS_GetCwdNode()) == NULL) {
-  // No virtual CWD node set --> 'path' must be relative within the native filesystem
-  // In this situation, we're allowed to return a relative native filesystem path.
-  return DeeString_F(New)(path);
- }
- // Expand the given path based on what we just learned from 'cwd'
+ if (DeeVFS_F(IsVirtualPath)(path)) {
+  do ++path; while (DEE_VFS_ISSEP(*path));
 #ifdef WIDE
- if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL)
- { DeeVFSNode_DECREF(cwd); return NULL; }
- resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(charpath));
- Dee_DECREF(charpath);
+  if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL) return NULL;
+  resultpath = DeeVFS_LocateAt(DeeVFS_Root,DeeString_STR(charpath));
+  Dee_DECREF(charpath);
 #else
- resultpath = DeeVFS_LocateAt(cwd,path);
+  resultpath = DeeVFS_LocateAt(DeeVFS_Root,path);
 #endif
- DeeVFSNode_DECREF(cwd);
+ } else {
+  if ((cwd = DeeVFS_GetCwdNode()) == NULL) {
+   // No virtual CWD node set --> 'path' must be relative within the native filesystem
+   // In this situation, we're allowed to return a relative native filesystem path.
+   goto retpath;
+  }
+  if (DeeVFSNode_IsNative(cwd)) {
+   // The CWD lies with the native part of the FS.
+   // >> No need to adjust the path
+   DeeVFSNode_DECREF(cwd);
+   goto retpath;
+  }
+  // Expand the given path based on what we just learned from 'cwd'
+#ifdef WIDE
+  if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL)
+  { DeeVFSNode_DECREF(cwd); return NULL; }
+  resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(charpath));
+  Dee_DECREF(charpath);
+#else
+  resultpath = DeeVFS_LocateAt(cwd,path);
+#endif
+  DeeVFSNode_DECREF(cwd);
+ }
  if DEE_UNLIKELY(!resultpath) return NULL;
  if DEE_UNLIKELY(!DeeVFSNode_IsNative(resultpath)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -289,6 +327,88 @@ DeeVFS_F(ForceNativePath)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeVFSNode_DECREF(resultpath);
  return result;
 }
+
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeVFS_F(ForceNativePathWithCwd)(
+ DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z DEE_CHAR const *path) {
+ struct DeeVFSNode *resultpath; DeeObject *result;
+#ifdef WIDE
+ DeeObject *charpath;
+#endif
+ DEE_ASSERT(cwd);
+ DEE_ASSERT(path);
+ DEE_ASSERT(!DeeVFS_F(IsVirtualPath)(path));
+ DEE_ASSERT(!DeeVFS_F(IsAbsoluteNativePath)(path));
+ DEE_ASSERT(!DeeVFSNode_IsNative(cwd));
+ // Expand the given path based on what we just learned from 'cwd'
+#ifdef WIDE
+ if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL)
+ { DeeVFSNode_DECREF(cwd); return NULL; }
+ resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(charpath));
+ Dee_DECREF(charpath);
+#else
+ resultpath = DeeVFS_LocateAt(cwd,path);
+#endif
+ if DEE_UNLIKELY(!resultpath) return NULL;
+ if DEE_UNLIKELY(!DeeVFSNode_IsNative(resultpath)) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+#ifdef WIDE
+                      "Expected native path, but %lq describes virtual path %R",
+#else
+                      "Expected native path, but %q describes virtual path %R",
+#endif
+                      path,DeeVFSNode_Filename(resultpath));
+  DeeVFSNode_DECREF(resultpath);
+  return NULL;
+ }
+#ifdef WIDE
+ result = DeeWideString_FromStringWithLength(
+  DeeString_SIZE(((DeeVFSNativeNode *)resultpath)->vnn_path),
+  DeeString_STR(((DeeVFSNativeNode *)resultpath)->vnn_path));
+#else
+ Dee_INCREF(result = (DeeObject *)((DeeVFSNativeNode *)resultpath)->vnn_path);
+#endif
+ DeeVFSNode_DECREF(resultpath);
+ return result;
+}
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
+DeeVFS_F(ForceNativeRootPath)(DEE_A_IN_Z DEE_CHAR const *path) {
+#ifdef WIDE
+ DeeObject *charpath;
+#endif
+ struct DeeVFSNode *resultpath; DeeObject *result;
+ DEE_ASSERT(path);
+ DEE_ASSERT(DeeVFS_F(IsVirtualPath)(path));
+ do ++path; while (DEE_VFS_ISSEP(*path));
+#ifdef WIDE
+ if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL) return NULL;
+ resultpath = DeeVFS_LocateAt(DeeVFS_Root,DeeString_STR(charpath));
+ Dee_DECREF(charpath);
+#else
+ resultpath = DeeVFS_LocateAt(DeeVFS_Root,path);
+#endif
+ if DEE_UNLIKELY(!resultpath) return NULL;
+ if DEE_UNLIKELY(!DeeVFSNode_IsNative(resultpath)) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+#ifdef WIDE
+                      "Expected native path, but %lq describes virtual path %R",
+#else
+                      "Expected native path, but %q describes virtual path %R",
+#endif
+                      path,DeeVFSNode_Filename(resultpath));
+  DeeVFSNode_DECREF(resultpath);
+  return NULL;
+ }
+#ifdef WIDE
+ result = DeeWideString_FromStringWithLength(
+  DeeString_SIZE(((DeeVFSNativeNode *)resultpath)->vnn_path),
+  DeeString_STR(((DeeVFSNativeNode *)resultpath)->vnn_path));
+#else
+ Dee_INCREF(result = (DeeObject *)((DeeVFSNativeNode *)resultpath)->vnn_path);
+#endif
+ DeeVFSNode_DECREF(resultpath);
+ return result;
+}
+
 
 
 #undef DEESTRINGOBJECT

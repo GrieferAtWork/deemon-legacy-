@@ -65,9 +65,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsLink(DEE_A_IN_Z Dee_Utf8Char const 
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsLink(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsLink(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsLink(DEE_A_IN_Z Dee_WideChar const *path) {
@@ -96,9 +94,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsLink(DEE_A_IN_Z Dee_WideChar const 
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsLink(path,&result);
- return result;
+ return DeeNFS_WideTryIsLink(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsLinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
@@ -121,9 +117,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsLinkObject(DEE_A_IN_OBJECT(DeeUtf8S
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsLinkObject(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsLinkObject(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsLinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
@@ -146,9 +140,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsLinkObject(DEE_A_IN_OBJECT(DeeWideS
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsLinkObject(path,&result);
- return result;
+ return DeeNFS_WideTryIsLinkObject(path);
 #endif
 }
 DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsLink(DEE_A_IN_Z Dee_Utf8Char const *path) {
@@ -161,11 +153,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsLink(DEE_A_IN_Z Dee_Utf8Char const *pa
  result = DeeSysFS_Utf8TryIsLinkObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryIsLinkObject)\
-   || defined(DeeSysFS_WideTryIsLink)
+#elif defined(DeeSysFS_WideTryIsLinkObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryIsLinkObject(path_ob);
+ result = DeeSysFS_WideTryIsLinkObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsLink)
@@ -176,7 +167,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsLink(DEE_A_IN_Z Dee_Utf8Char const *pa
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsLink(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsLink(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -190,11 +181,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsLink(DEE_A_IN_Z Dee_WideChar const *pa
  result = DeeSysFS_WideTryIsLinkObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryIsLinkObject)\
-   || defined(DeeSysFS_Utf8TryIsLink)
+#elif defined(DeeSysFS_Utf8TryIsLinkObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryIsLinkObject(path_ob);
+ result = DeeSysFS_Utf8TryIsLinkObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsLink)
@@ -205,7 +195,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsLink(DEE_A_IN_Z Dee_WideChar const *pa
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsLink(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsLink(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -228,7 +218,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsLinkObject(DEE_A_IN_OBJECT(DeeUtf8Stri
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsLinkObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsLinkObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -251,7 +241,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsLinkObject(DEE_A_IN_OBJECT(DeeWideStri
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsLinkObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsLinkObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }

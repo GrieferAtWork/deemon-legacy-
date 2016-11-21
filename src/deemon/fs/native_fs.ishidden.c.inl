@@ -65,9 +65,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsHidden(DEE_A_IN_Z Dee_Utf8Char cons
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsHidden(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsHidden(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsHidden(DEE_A_IN_Z Dee_WideChar const *path) {
@@ -96,9 +94,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsHidden(DEE_A_IN_Z Dee_WideChar cons
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsHidden(path,&result);
- return result;
+ return DeeNFS_WideTryIsHidden(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsHiddenObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
@@ -121,9 +117,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsHiddenObject(DEE_A_IN_OBJECT(DeeUtf
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsHiddenObject(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsHiddenObject(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsHiddenObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
@@ -146,9 +140,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsHiddenObject(DEE_A_IN_OBJECT(DeeWid
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsHiddenObject(path,&result);
- return result;
+ return DeeNFS_WideTryIsHiddenObject(path);
 #endif
 }
 DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsHidden(DEE_A_IN_Z Dee_Utf8Char const *path) {
@@ -161,11 +153,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsHidden(DEE_A_IN_Z Dee_Utf8Char const *
  result = DeeSysFS_Utf8TryIsHiddenObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryIsHiddenObject)\
-   || defined(DeeSysFS_WideTryIsHidden)
+#elif defined(DeeSysFS_WideTryIsHiddenObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryIsHiddenObject(path_ob);
+ result = DeeSysFS_WideTryIsHiddenObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsHidden)
@@ -176,7 +167,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsHidden(DEE_A_IN_Z Dee_Utf8Char const *
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsHidden(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsHidden(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -190,11 +181,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsHidden(DEE_A_IN_Z Dee_WideChar const *
  result = DeeSysFS_WideTryIsHiddenObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryIsHiddenObject)\
-   || defined(DeeSysFS_Utf8TryIsHidden)
+#elif defined(DeeSysFS_Utf8TryIsHiddenObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryIsHiddenObject(path_ob);
+ result = DeeSysFS_Utf8TryIsHiddenObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsHidden)
@@ -205,7 +195,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsHidden(DEE_A_IN_Z Dee_WideChar const *
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsHidden(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsHidden(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -228,7 +218,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsHiddenObject(DEE_A_IN_OBJECT(DeeUtf8St
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsHiddenObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsHiddenObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -251,7 +241,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsHiddenObject(DEE_A_IN_OBJECT(DeeWideSt
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsHiddenObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsHiddenObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }

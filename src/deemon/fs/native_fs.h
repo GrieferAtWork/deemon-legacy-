@@ -242,6 +242,61 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 #define DEE_NFS_HAVE_ISSOCKET
 #endif
 
+#if defined(DeeSysFS_Utf8IsAbs) || defined(DeeSysFS_WideIsAbs)\
+ || defined(DeeSysFS_Utf8IsAbsObject) || defined(DeeSysFS_WideIsAbsObject)\
+ || defined(DeeSysFS_Utf8TryIsAbs) || defined(DeeSysFS_WideTryIsAbs)\
+ || defined(DeeSysFS_Utf8TryIsAbsObject) || defined(DeeSysFS_WideTryIsAbsObject)
+#define DEE_NFS_HAVE_ISABS
+#endif
+
+#if defined(DeeSysFS_Utf8Exists) || defined(DeeSysFS_WideExists)\
+ || defined(DeeSysFS_Utf8ExistsObject) || defined(DeeSysFS_WideExistsObject)\
+ || defined(DeeSysFS_Utf8TryExists) || defined(DeeSysFS_WideTryExists)\
+ || defined(DeeSysFS_Utf8TryExistsObject) || defined(DeeSysFS_WideTryExistsObject)\
+ || defined(DeeSysFileFD)
+#define DEE_NFS_HAVE_EXISTS
+#endif
+
+#if  defined(DeeSysFS_Utf8Remove) || defined(DeeSysFS_WideRemove)\
+ ||  defined(DeeSysFS_Utf8RemoveObject) || defined(DeeSysFS_WideRemoveObject)\
+ ||  defined(DeeSysFS_Utf8TryRemove) || defined(DeeSysFS_WideTryRemove)\
+ ||  defined(DeeSysFS_Utf8TryRemoveObject) || defined(DeeSysFS_WideTryRemoveObject)\
+ || (defined(DeeSysFS_Utf8TryUnlink) && defined(DeeSysFS_Utf8RmDir))\
+ || (defined(DeeSysFS_WideTryUnlink) && defined(DeeSysFS_WideRmDir))\
+ || (defined(DeeSysFS_Utf8TryUnlinkObject) && defined(DeeSysFS_Utf8RmDirObject))\
+ || (defined(DeeSysFS_WideTryUnlinkObject) && defined(DeeSysFS_WideRmDirObject))\
+ || (defined(DeeSysFS_Utf8Unlink) && defined(DeeSysFS_Utf8TryRmDir))\
+ || (defined(DeeSysFS_WideUnlink) && defined(DeeSysFS_WideTryRmDir))\
+ || (defined(DeeSysFS_Utf8UnlinkObject) && defined(DeeSysFS_Utf8TryRmDirObject))\
+ || (defined(DeeSysFS_WideUnlinkObject) && defined(DeeSysFS_WideTryRmDirObject))\
+ || (defined(DeeSysFS_Utf8TryUnlink) && defined(DeeSysFS_Utf8TryRmDir))\
+ || (defined(DeeSysFS_WideTryUnlink) && defined(DeeSysFS_WideTryRmDir))\
+ || (defined(DeeSysFS_Utf8TryUnlinkObject) && defined(DeeSysFS_Utf8TryRmDirObject))\
+ || (defined(DeeSysFS_WideTryUnlinkObject) && defined(DeeSysFS_WideTryRmDirObject))
+#define DEE_NFS_HAVE_REMOVE
+#endif
+
+#if defined(DeeSysFS_Utf8Unlink) || defined(DeeSysFS_WideUnlink)\
+ || defined(DeeSysFS_Utf8UnlinkObject) || defined(DeeSysFS_WideUnlinkObject)\
+ || defined(DeeSysFS_Utf8TryUnlink) || defined(DeeSysFS_WideTryUnlink)\
+ || defined(DeeSysFS_Utf8TryUnlinkObject) || defined(DeeSysFS_WideTryUnlinkObject)
+#define DEE_NFS_HAVE_UNLINK
+#endif
+
+#if defined(DeeSysFS_Utf8RmDir) || defined(DeeSysFS_WideRmDir)\
+ || defined(DeeSysFS_Utf8RmDirObject) || defined(DeeSysFS_WideRmDirObject)\
+ || defined(DeeSysFS_Utf8TryRmDir) || defined(DeeSysFS_WideTryRmDir)\
+ || defined(DeeSysFS_Utf8TryRmDirObject) || defined(DeeSysFS_WideTryRmDirObject)
+#define DEE_NFS_HAVE_RMDIR
+#endif
+
+#if defined(DeeSysFS_Utf8MkDir) || defined(DeeSysFS_WideMkDir)\
+ || defined(DeeSysFS_Utf8MkDirObject) || defined(DeeSysFS_WideMkDirObject)\
+ || defined(DeeSysFS_Utf8TryMkDir) || defined(DeeSysFS_WideTryMkDir)\
+ || defined(DeeSysFS_Utf8TryMkDirObject) || defined(DeeSysFS_WideTryMkDirObject)
+#define DEE_NFS_HAVE_MKDIR
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 // === FS_API Exports for linking against native filesystem APIS ===
 // >> To check if a set of routines is available, use the macros defined above.
@@ -465,6 +520,60 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsSocket(DEE_A_IN_Z Dee_WideChar 
 extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsSocketObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
 extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsSocketObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsAbs(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsAbs(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsAbsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsAbsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsAbs(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsAbs(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsAbsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsAbsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8Exists(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideExists(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8ExistsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideExistsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryExists(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryExists(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryExistsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryExistsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Remove(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideRemove(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8RemoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideRemoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryRemove(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryRemove(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryRemoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryRemoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Unlink(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideUnlink(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8UnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryUnlink(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryUnlink(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryUnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8RmDir(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideRmDir(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8RmDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideRmDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryRmDir(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryRmDir(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryRmDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryRmDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8MkDir(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMkDir(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8MkDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMkDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryMkDir(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMkDir(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryMkDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMkDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode);
+
 #define DeeNFS_GetCwd                DeeNFS_Utf8GetCwd
 #define DeeNFS_Chdir                 DeeNFS_Utf8Chdir
 #define DeeNFS_ChdirObject           DeeNFS_Utf8ChdirObject
@@ -559,6 +668,30 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsSocketObject(DEE_A_IN_OBJECT(De
 #define DeeNFS_IsSocketObject        DeeNFS_Utf8IsSocketObject
 #define DeeNFS_TryIsSocket           DeeNFS_Utf8TryIsSocket
 #define DeeNFS_TryIsSocketObject     DeeNFS_Utf8TryIsSocketObject
+#define DeeNFS_IsAbs                 DeeNFS_Utf8IsAbs
+#define DeeNFS_IsAbsObject           DeeNFS_Utf8IsAbsObject
+#define DeeNFS_TryIsAbs              DeeNFS_Utf8TryIsAbs
+#define DeeNFS_TryIsAbsObject        DeeNFS_Utf8TryIsAbsObject
+#define DeeNFS_Exists                DeeNFS_Utf8Exists
+#define DeeNFS_ExistsObject          DeeNFS_Utf8ExistsObject
+#define DeeNFS_TryExists             DeeNFS_Utf8TryExists
+#define DeeNFS_TryExistsObject       DeeNFS_Utf8TryExistsObject
+#define DeeNFS_Remove                DeeNFS_Utf8Remove
+#define DeeNFS_RemoveObject          DeeNFS_Utf8RemoveObject
+#define DeeNFS_TryRemove             DeeNFS_Utf8TryRemove
+#define DeeNFS_TryRemoveObject       DeeNFS_Utf8TryRemoveObject
+#define DeeNFS_Unlink                DeeNFS_Utf8Unlink
+#define DeeNFS_UnlinkObject          DeeNFS_Utf8UnlinkObject
+#define DeeNFS_TryUnlink             DeeNFS_Utf8TryUnlink
+#define DeeNFS_TryUnlinkObject       DeeNFS_Utf8TryUnlinkObject
+#define DeeNFS_RmDir                 DeeNFS_Utf8RmDir
+#define DeeNFS_RmDirObject           DeeNFS_Utf8RmDirObject
+#define DeeNFS_TryRmDir              DeeNFS_Utf8TryRmDir
+#define DeeNFS_TryRmDirObject        DeeNFS_Utf8TryRmDirObject
+#define DeeNFS_MkDir                 DeeNFS_Utf8MkDir
+#define DeeNFS_MkDirObject           DeeNFS_Utf8MkDirObject
+#define DeeNFS_TryMkDir              DeeNFS_Utf8TryMkDir
+#define DeeNFS_TryMkDirObject        DeeNFS_Utf8TryMkDirObject
 
 DEE_DECL_END
 

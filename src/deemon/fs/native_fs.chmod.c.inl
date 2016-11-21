@@ -158,11 +158,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryChmod(
  result = DeeSysFS_Utf8TryChmodObject(path_ob,mode);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryChmodObject)\
-   || defined(DeeSysFS_WideTryChmod)
+#elif defined(DeeSysFS_WideTryChmodObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryChmodObject(path_ob,mode);
+ result = DeeSysFS_WideTryChmodObject(path_ob,mode);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryChmod)
@@ -188,11 +187,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryChmod(
  result = DeeSysFS_WideTryChmodObject(path_ob,mode);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryChmodObject)\
-   || defined(DeeSysFS_Utf8TryChmod)
+#elif defined(DeeSysFS_Utf8TryChmodObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryChmodObject(path_ob,mode);
+ result = DeeSysFS_Utf8TryChmodObject(path_ob,mode);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryChmod)

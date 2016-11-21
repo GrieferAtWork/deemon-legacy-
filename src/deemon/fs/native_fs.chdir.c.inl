@@ -127,11 +127,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryChdir(DEE_A_IN_Z Dee_Utf8Char const *pat
  result = DeeSysFS_Utf8TryChdirObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryChdirObject)\
-   || defined(DeeSysFS_WideTryChdir)
+#elif defined(DeeSysFS_WideTryChdirObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryChdirObject(path_ob);
+ result = DeeSysFS_WideTryChdirObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #else
@@ -150,11 +149,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryChdir(DEE_A_IN_Z Dee_WideChar const *pat
  result = DeeSysFS_WideTryChdirObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryChdirObject)\
-   || defined(DeeSysFS_Utf8TryChdir)
+#elif defined(DeeSysFS_Utf8TryChdirObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryChdirObject(path_ob);
+ result = DeeSysFS_Utf8TryChdirObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #else

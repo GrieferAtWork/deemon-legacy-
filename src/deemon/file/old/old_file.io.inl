@@ -1256,7 +1256,7 @@ DEE_STATIC_INLINE(void) _DeeFileIO_CloseAlreadyLocked(DeeFileIOObject *self) {
    self->fio_handle = DEE_FILEIO_INVALID_HANDLE;
    if ((self->fo_flags&DEE_PRIVATE_FILEFLAG_IO_DELONCLOSE)!=0) {
     // Try to delete the file
-    if DEE_UNLIKELY(_DeeFS_RmFileObject(DeeFileIO_FILE(self)) != 0) DeeError_Handled();
+    if DEE_UNLIKELY(_DeeFS_UnlinkObject(DeeFileIO_FILE(self)) != 0) DeeError_Handled();
     self->fo_flags &= ~DEE_PRIVATE_FILEFLAG_IO_DELONCLOSE;
    }
    Dee_DECREF(self->fio_utf8file);

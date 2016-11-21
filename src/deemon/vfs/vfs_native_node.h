@@ -46,8 +46,6 @@ struct DeeVFSNativeView {
 };
 
 
-extern struct DeeVFSNodeType const DeeVFSNativeNode_Type;
-
 extern void DEE_CALL _deevfs_nativefile_quit(struct DeeVFSNativeFile *self);
 extern int DEE_CALL _deevfs_nativefile_vft_read(DEE_A_INOUT struct DeeVFSNativeFile *self, void *p, Dee_size_t s, Dee_size_t *rs);
 extern int DEE_CALL _deevfs_nativefile_vft_write(DEE_A_INOUT struct DeeVFSNativeFile *self, void const *p, Dee_size_t s, Dee_size_t *ws);

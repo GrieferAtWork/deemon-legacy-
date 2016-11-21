@@ -158,11 +158,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryChown(
  result = DeeSysFS_Utf8TryChownObject(path_ob,owner,group);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryChownObject)\
-   || defined(DeeSysFS_WideTryChown)
+#elif defined(DeeSysFS_WideTryChownObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryChownObject(path_ob,owner,group);
+ result = DeeSysFS_WideTryChownObject(path_ob,owner,group);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryChown)
@@ -188,11 +187,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryChown(
  result = DeeSysFS_WideTryChownObject(path_ob,owner,group);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryChownObject)\
-   || defined(DeeSysFS_Utf8TryChown)
+#elif defined(DeeSysFS_Utf8TryChownObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryChownObject(path_ob,owner,group);
+ result = DeeSysFS_Utf8TryChownObject(path_ob,owner,group);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryChown)

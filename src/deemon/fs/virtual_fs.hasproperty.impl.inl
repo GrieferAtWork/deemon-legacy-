@@ -78,6 +78,10 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int VFS_FUNC(HasProperty)(
 #else
  DEE_ASSERT(path);
 #endif
+ if (prop == DEE_FILEPROPERTY_ISABS) {
+  return VFS_FUNCNOTRY(IsAbsoluteNativePath)(path)
+      || VFS_FUNCNOTRY(IsVirtualPath)(path);
+ }
  if (VFS_FUNCNOTRY(IsAbsoluteNativePath)(path)) {
 call_native: return NFS_FUNC(HasProperty)(path,prop);
  }
@@ -101,6 +105,7 @@ call_native: return NFS_FUNC(HasProperty)(path,prop);
   case DEE_FILEPROPERTY_ISBLOCKDEV  : error = DeeVFSNode_IsBlockDev(filenode); break;
   case DEE_FILEPROPERTY_ISFIFO      : error = DeeVFSNode_IsFiFo(filenode); break;
   case DEE_FILEPROPERTY_ISSOCKET    : error = DeeVFSNode_IsSocket(filenode); break;
+  case DEE_FILEPROPERTY_EXISTS      : error = 1; break;
   default: error = 0; break;
  }
 #ifdef DO_TRY

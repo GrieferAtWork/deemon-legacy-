@@ -936,15 +936,15 @@
 #endif
 #endif /* !DEE_ATTRIBUTE_DEPRECATED */
 
-#ifndef DEE_MACRO_DEPRECATED
+#ifndef DEE_DEPRECATED_MACRO
 #if defined(_MSC_VER) || defined(__DEEMON__)
-# define DEE_MACRO_DEPRECATED(new)\
+# define DEE_DEPRECATED_MACRO(new)\
   DEE_COMPILER_PRAGMA(message(__FILE__ "(" DEE_PP_STR(__LINE__) ") : Warning : Deprecated macro. Use " DEE_PP_STR(#new) " instead!")) new
 #elif defined(__GNUC__)
-# define DEE_MACRO_DEPRECATED(new)\
+# define DEE_DEPRECATED_MACRO(new)\
   DEE_COMPILER_PRAGMA(message __FILE__ ":" DEE_PP_STR(__LINE__) ": Warning : Deprecated macro. Use " DEE_PP_STR(#new) " instead!")) new
 #else
-# define DEE_MACRO_DEPRECATED(new)
+# define DEE_DEPRECATED_MACRO(new)
 #endif
 #endif
 

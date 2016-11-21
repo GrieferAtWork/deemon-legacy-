@@ -65,9 +65,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsFile(DEE_A_IN_Z Dee_Utf8Char const 
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsFile(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsFile(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsFile(DEE_A_IN_Z Dee_WideChar const *path) {
@@ -96,9 +94,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsFile(DEE_A_IN_Z Dee_WideChar const 
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsFile(path,&result);
- return result;
+ return DeeNFS_WideTryIsFile(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsFileObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
@@ -121,9 +117,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsFileObject(DEE_A_IN_OBJECT(DeeUtf8S
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsFileObject(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsFileObject(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsFileObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
@@ -146,9 +140,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsFileObject(DEE_A_IN_OBJECT(DeeWideS
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsFileObject(path,&result);
- return result;
+ return DeeNFS_WideTryIsFileObject(path);
 #endif
 }
 DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsFile(DEE_A_IN_Z Dee_Utf8Char const *path) {
@@ -161,11 +153,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsFile(DEE_A_IN_Z Dee_Utf8Char const *pa
  result = DeeSysFS_Utf8TryIsFileObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryIsFileObject)\
-   || defined(DeeSysFS_WideTryIsFile)
+#elif defined(DeeSysFS_WideTryIsFileObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryIsFileObject(path_ob);
+ result = DeeSysFS_WideTryIsFileObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsFile)
@@ -176,7 +167,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsFile(DEE_A_IN_Z Dee_Utf8Char const *pa
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsFile(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsFile(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -190,11 +181,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsFile(DEE_A_IN_Z Dee_WideChar const *pa
  result = DeeSysFS_WideTryIsFileObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryIsFileObject)\
-   || defined(DeeSysFS_Utf8TryIsFile)
+#elif defined(DeeSysFS_Utf8TryIsFileObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryIsFileObject(path_ob);
+ result = DeeSysFS_Utf8TryIsFileObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsFile)
@@ -205,7 +195,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsFile(DEE_A_IN_Z Dee_WideChar const *pa
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsFile(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsFile(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -228,7 +218,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsFileObject(DEE_A_IN_OBJECT(DeeUtf8Stri
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsFileObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsFileObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -251,7 +241,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsFileObject(DEE_A_IN_OBJECT(DeeWideStri
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsFileObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsFileObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }

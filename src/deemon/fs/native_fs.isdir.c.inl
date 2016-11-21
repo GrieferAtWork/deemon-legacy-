@@ -65,9 +65,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsDir(DEE_A_IN_Z Dee_Utf8Char const *
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsDir(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsDir(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsDir(DEE_A_IN_Z Dee_WideChar const *path) {
@@ -96,9 +94,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsDir(DEE_A_IN_Z Dee_WideChar const *
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsDir(path,&result);
- return result;
+ return DeeNFS_WideTryIsDir(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
@@ -121,9 +117,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsDirObject(DEE_A_IN_OBJECT(DeeUtf8St
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsDirObject(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsDirObject(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
@@ -146,9 +140,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsDirObject(DEE_A_IN_OBJECT(DeeWideSt
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsDirObject(path,&result);
- return result;
+ return DeeNFS_WideTryIsDirObject(path);
 #endif
 }
 DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsDir(DEE_A_IN_Z Dee_Utf8Char const *path) {
@@ -161,11 +153,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsDir(DEE_A_IN_Z Dee_Utf8Char const *pat
  result = DeeSysFS_Utf8TryIsDirObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryIsDirObject)\
-   || defined(DeeSysFS_WideTryIsDir)
+#elif defined(DeeSysFS_WideTryIsDirObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryIsDirObject(path_ob);
+ result = DeeSysFS_WideTryIsDirObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsDir)
@@ -176,7 +167,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsDir(DEE_A_IN_Z Dee_Utf8Char const *pat
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsDir(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsDir(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -190,11 +181,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsDir(DEE_A_IN_Z Dee_WideChar const *pat
  result = DeeSysFS_WideTryIsDirObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryIsDirObject)\
-   || defined(DeeSysFS_Utf8TryIsDir)
+#elif defined(DeeSysFS_Utf8TryIsDirObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryIsDirObject(path_ob);
+ result = DeeSysFS_Utf8TryIsDirObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsDir)
@@ -205,7 +195,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsDir(DEE_A_IN_Z Dee_WideChar const *pat
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsDir(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsDir(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -228,7 +218,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsDirObject(DEE_A_IN_OBJECT(DeeUtf8Strin
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsDirObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsDirObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -251,7 +241,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsDirObject(DEE_A_IN_OBJECT(DeeWideStrin
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsDirObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsDirObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }

@@ -158,11 +158,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryGetOwn(
  result = DeeSysFS_Utf8TryGetOwnObject(path_ob,owner,group);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryGetOwnObject)\
-   || defined(DeeSysFS_WideTryGetOwn)
+#elif defined(DeeSysFS_WideTryGetOwnObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryGetOwnObject(path_ob,owner,group);
+ result = DeeSysFS_WideTryGetOwnObject(path_ob,owner,group);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryGetOwn)
@@ -188,11 +187,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryGetOwn(
  result = DeeSysFS_WideTryGetOwnObject(path_ob,owner,group);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryGetOwnObject)\
-   || defined(DeeSysFS_Utf8TryGetOwn)
+#elif defined(DeeSysFS_Utf8TryGetOwnObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryGetOwnObject(path_ob,owner,group);
+ result = DeeSysFS_Utf8TryGetOwnObject(path_ob,owner,group);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryGetOwn)

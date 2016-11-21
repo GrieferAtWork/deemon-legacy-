@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_EXPAND_FS_CHDIR_C_INL
-#define GUARD_DEEMON_FS_EXPAND_FS_CHDIR_C_INL 1
+#ifndef GUARD_DEEMON_FS_EXPAND_FS_UNLINK_C_INL
+#define GUARD_DEEMON_FS_EXPAND_FS_UNLINK_C_INL 1
 #ifndef DEE_LIMITED_API
 #define DEE_LIMITED_API 1
 #endif
@@ -31,63 +31,63 @@
 
 DEE_DECL_BEGIN
 
-DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8Chdir(DEE_A_IN_Z Dee_Utf8Char const *path) {
+DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8Unlink(DEE_A_IN_Z Dee_Utf8Char const *path) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) return -1;
- result = _DeeFS_Utf8ChdirObject(xpath);
+ result = _DeeFS_Utf8UnlinkObject(xpath);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXFS_WideChdir(DEE_A_IN_Z Dee_WideChar const *path) {
+DEE_A_RET_EXCEPT(-1) int DeeXFS_WideUnlink(DEE_A_IN_Z Dee_WideChar const *path) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) return -1;
- result = _DeeFS_WideChdirObject(xpath);
+ result = _DeeFS_WideUnlinkObject(xpath);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryChdir(DEE_A_IN_Z Dee_Utf8Char const *path) {
+DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryUnlink(DEE_A_IN_Z Dee_Utf8Char const *path) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_Utf8TryChdirObject(xpath);
+ result = _DeeFS_Utf8TryUnlinkObject(xpath);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryChdir(DEE_A_IN_Z Dee_WideChar const *path) {
+DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryUnlink(DEE_A_IN_Z Dee_WideChar const *path) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_WideTryChdirObject(xpath);
+ result = _DeeFS_WideTryUnlinkObject(xpath);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8ChdirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
+DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8UnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) return -1;
- result = _DeeFS_Utf8ChdirObject(xpath);
+ result = _DeeFS_Utf8UnlinkObject(xpath);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXFS_WideChdirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+DEE_A_RET_EXCEPT(-1) int DeeXFS_WideUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) return -1;
- result = _DeeFS_WideChdirObject(xpath);
+ result = _DeeFS_WideUnlinkObject(xpath);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryChdirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
+DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryUnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_Utf8TryChdirObject(xpath);
+ result = _DeeFS_Utf8TryUnlinkObject(xpath);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryChdirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_WideTryChdirObject(xpath);
+ result = _DeeFS_WideTryUnlinkObject(xpath);
  Dee_DECREF(xpath);
  return result;
 }
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_FS_EXPAND_FS_CHDIR_C_INL */
+#endif /* !GUARD_DEEMON_FS_EXPAND_FS_UNLINK_C_INL */

@@ -58,17 +58,6 @@ static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativenode_vnt_walk(
  memcpy(DeeString_STR(newpath),DeeString_STR(self->vnn_path),pathsize*sizeof(char));
  DeeString_STR(newpath)[pathsize] = '\\';
  memcpy(DeeString_STR(newpath)+(pathsize+1),name,namesize*sizeof(char));
-#if 0 /*< Not ~really~ necessary */
- // Make sure that the path really exists
- if (GetFileAttributesA(DeeString_STR(newpath)) == INVALID_FILE_ATTRIBUTES) {
-  // Invalid path
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "Invalid path: %r: %K",newpath,
-                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
-  Dee_DECREF(newpath);
-  goto err_r;
- }
-#endif
  DeeVFSNode_InitWithParent(&result->vnn_node,&DeeVFSNativeNode_Type,
                            &self->vnn_node);
  Dee_INHERIT_REF(result->vnn_path,*(DeeStringObject **)&newpath);

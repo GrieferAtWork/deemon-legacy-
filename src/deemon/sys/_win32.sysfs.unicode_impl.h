@@ -409,6 +409,18 @@ err_r: Dee_DECREF(result); return NULL;
  return result;
 }
 
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_F(TryIsAbs)(DEE_CHAR const *path) {
+ if (!*path) return FALSE;
+ while (path[1] != ':') { if (!path[1]) return FALSE; ++path; }
+ return TRUE;
+}
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_F(TryIsDrive)(DEE_CHAR const *path) {
+ if (!*path) return FALSE;
+ while (path[1] != ':') { if (!path[1]) return FALSE; ++path; }
+ while (path[2] == '//' || path[2] == '\\') ++path;
+ return !path[2];
+}
+
 
 DEE_DECL_END
 

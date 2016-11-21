@@ -83,6 +83,8 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(HasProperty)(
   case DEE_FILEPROPERTY_ISBLOCKDEV  : return FUNC(IsBlockDev)(path);
   case DEE_FILEPROPERTY_ISFIFO      : return FUNC(IsFiFo)(path);
   case DEE_FILEPROPERTY_ISSOCKET    : return FUNC(IsSocket)(path);
+  case DEE_FILEPROPERTY_ISABS       : return FUNC(IsAbs)(path);
+  case DEE_FILEPROPERTY_EXISTS      : return FUNC(Exists)(path);
   default: break;
  }
  return 0;

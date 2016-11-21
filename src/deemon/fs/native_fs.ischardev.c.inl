@@ -65,9 +65,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsCharDev(DEE_A_IN_Z Dee_Utf8Char con
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsCharDev(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsCharDev(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsCharDev(DEE_A_IN_Z Dee_WideChar const *path) {
@@ -96,9 +94,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsCharDev(DEE_A_IN_Z Dee_WideChar con
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsCharDev(path,&result);
- return result;
+ return DeeNFS_WideTryIsCharDev(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsCharDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
@@ -121,9 +117,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsCharDevObject(DEE_A_IN_OBJECT(DeeUt
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_Utf8TryIsCharDevObject(path,&result);
- return result;
+ return DeeNFS_Utf8TryIsCharDevObject(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsCharDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
@@ -146,9 +140,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsCharDevObject(DEE_A_IN_OBJECT(DeeWi
  DeeNativeFileFD_Quit(&fd);
  return result;
 #else
- int result;
- DeeNFS_WideTryIsCharDevObject(path,&result);
- return result;
+ return DeeNFS_WideTryIsCharDevObject(path);
 #endif
 }
 DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsCharDev(DEE_A_IN_Z Dee_Utf8Char const *path) {
@@ -161,11 +153,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsCharDev(DEE_A_IN_Z Dee_Utf8Char const 
  result = DeeSysFS_Utf8TryIsCharDevObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryIsCharDevObject)\
-   || defined(DeeSysFS_WideTryIsCharDev)
+#elif defined(DeeSysFS_WideTryIsCharDevObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryIsCharDevObject(path_ob);
+ result = DeeSysFS_WideTryIsCharDevObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsCharDev)
@@ -176,7 +167,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsCharDev(DEE_A_IN_Z Dee_Utf8Char const 
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsCharDev(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsCharDev(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -190,11 +181,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsCharDev(DEE_A_IN_Z Dee_WideChar const 
  result = DeeSysFS_WideTryIsCharDevObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryIsCharDevObject)\
-   || defined(DeeSysFS_Utf8TryIsCharDev)
+#elif defined(DeeSysFS_Utf8TryIsCharDevObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryIsCharDevObject(path_ob);
+ result = DeeSysFS_Utf8TryIsCharDevObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryIsCharDev)
@@ -205,7 +195,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsCharDev(DEE_A_IN_Z Dee_WideChar const 
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsCharDev(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsCharDev(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -228,7 +218,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsCharDevObject(DEE_A_IN_OBJECT(DeeUtf8S
  return result;
 #else
  int result;
- if ((result = DeeNFS_Utf8IsCharDevObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_Utf8IsCharDevObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -251,7 +241,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsCharDevObject(DEE_A_IN_OBJECT(DeeWideS
  return result;
 #else
  int result;
- if ((result = DeeNFS_WideIsCharDevObject(path,&result)) < 0) { DeeError_HandledOne(); result = 0; }
+ if ((result = DeeNFS_WideIsCharDevObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }

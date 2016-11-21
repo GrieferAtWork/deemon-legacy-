@@ -163,11 +163,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryGetTimes(
  result = DeeSysFS_Utf8TryGetTimesObject(path_ob,atime,ctime,mtime);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryGetTimesObject)\
-   || defined(DeeSysFS_WideTryGetTimes)
+#elif defined(DeeSysFS_WideTryGetTimesObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryGetTimesObject(path_ob,atime,ctime,mtime);
+ result = DeeSysFS_WideTryGetTimesObject(path_ob,atime,ctime,mtime);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryGetTimes)
@@ -194,11 +193,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryGetTimes(
  result = DeeSysFS_WideTryGetTimesObject(path_ob,atime,ctime,mtime);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryGetTimesObject)\
-   || defined(DeeSysFS_Utf8TryGetTimes)
+#elif defined(DeeSysFS_Utf8TryGetTimesObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryGetTimesObject(path_ob,atime,ctime,mtime);
+ result = DeeSysFS_Utf8TryGetTimesObject(path_ob,atime,ctime,mtime);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryGetTimes)

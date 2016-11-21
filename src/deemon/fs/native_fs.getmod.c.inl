@@ -158,11 +158,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryGetMod(
  result = DeeSysFS_Utf8TryGetModObject(path_ob,mode);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_WideTryGetModObject)\
-   || defined(DeeSysFS_WideTryGetMod)
+#elif defined(DeeSysFS_WideTryGetModObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryGetModObject(path_ob,mode);
+ result = DeeSysFS_WideTryGetModObject(path_ob,mode);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryGetMod)
@@ -188,11 +187,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryGetMod(
  result = DeeSysFS_WideTryGetModObject(path_ob,mode);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFS_Utf8TryGetModObject)\
-   || defined(DeeSysFS_Utf8TryGetMod)
+#elif defined(DeeSysFS_Utf8TryGetModObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryGetModObject(path_ob,mode);
+ result = DeeSysFS_Utf8TryGetModObject(path_ob,mode);
  Dee_DECREF(path_ob);
  return result;
 #elif defined(DeeSysFileFD_TryGetMod)

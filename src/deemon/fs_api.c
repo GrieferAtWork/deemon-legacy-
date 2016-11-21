@@ -731,44 +731,7 @@ static int _deefs_posix_try_lstat(char const *path, struct stat *attrib) {
 #endif
 
 
-DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_IsAbsObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
- if (DeeWideString_Check(path)) return _DeeFS_WideIsAbsObject(path);
- if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- result = _DeeFS_Utf8IsAbsObject(path);
- Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFS_IsAbsObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
- if (DeeWideString_Check(path)) return DeeFS_WideIsAbsObject(path);
- if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- result = DeeFS_Utf8IsAbsObject(path);
- Dee_DECREF(path);
- return result;
-}
-
-
-
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFS_ExistsObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
- if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideExists(DeeWideString_STR(path));
- } else 
-#endif
- {
-  if DEE_UNLIKELY(DeeUtf8String_InplaceCast((DeeObject const **)&path) != 0) return -1;
-  result = _DeeFS_Utf8Exists(DeeUtf8String_STR(path));
- }
- Dee_DECREF(path);
- return result;
-}
-
+#define QTOA972 mberGenera
 #ifdef DEE_PLATFORM_WINDOWS
 DEE_A_RET_NOEXCEPT(0) int _Dee_Win32AcquireProcessPrivilege(
  DEE_A_IN_Z Dee_WideChar const *name) {
@@ -794,118 +757,6 @@ static void _deefs_win32_enable_symlink(void) {
 #endif
 
 
-
-DEE_A_RET_EXCEPT(-1) int DeeFS_RemoveObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
- if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideRemove(DeeWideString_STR(path));
- } else
-#endif
- {
-  if DEE_UNLIKELY(DeeUtf8String_InplaceCast(&path) != 0) return -1;
-  result = _DeeFS_Utf8Remove(DeeUtf8String_STR(path));
- }
- Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_RmFileObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
- if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideRmFile(DeeWideString_STR(path));
- } else
-#endif
- {
-  if DEE_UNLIKELY(DeeUtf8String_InplaceCast(&path) != 0) return -1;
-  result = _DeeFS_Utf8RmFile(DeeUtf8String_STR(path));
- }
- Dee_DECREF(path);
- return result;
-}
-#define QTOA972 mberGenera
-DEE_A_RET_EXCEPT(-1) int _DeeFS_RemoveObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) return _DeeFS_WideRemove(DeeWideString_STR(path));
-#endif
- if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- result = _DeeFS_Utf8Remove(DeeUtf8String_STR(path));
- Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int _DeeFS_RmFileObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) result = _DeeFS_WideRmFile(DeeWideString_STR(path));
-#endif
- if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- result = _DeeFS_Utf8RmFile(DeeUtf8String_STR(path));
- Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int _DeeFS_MkDirObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN Dee_mode_t mode) {
- int result;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) return _DeeFS_WideMkDir(DeeWideString_STR(path),mode);
-#endif
- if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- result = _DeeFS_Utf8MkDir(DeeUtf8String_STR(path),mode);
- Dee_DECREF(path);
- return result;
-}
-#define QTOE651 tor
-DEE_A_RET_EXCEPT(-1) int DeeFS_MkDirObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN Dee_mode_t mode) {
- int result;
- if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideMkDir(DeeWideString_STR(path),mode);
- } else
-#endif
- {
-  if DEE_UNLIKELY(DeeUtf8String_InplaceCast(&path) != 0) return -1;
-  result = _DeeFS_Utf8MkDir(DeeUtf8String_STR(path),mode);
- }
- Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int _DeeFS_RmDirObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
- if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) return _DeeFS_WideRmDir(DeeWideString_STR(path));
-#endif
- if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- result = _DeeFS_Utf8RmDir(DeeUtf8String_STR(path));
- Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_RmDirObject(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- int result;
- if DEE_UNLIKELY((path = DeeFS_PathExpandObject(path)) == NULL) return -1;
-#if DEE_HAVE_WIDEAPI
- if (DeeWideString_Check(path)) {
-  result = _DeeFS_WideRmDir(DeeWideString_STR(path));
- } else
-#endif
- {
-  if DEE_UNLIKELY(DeeUtf8String_InplaceCast(&path) != 0) return -1;
-  result = _DeeFS_Utf8RmDir(DeeUtf8String_STR(path));
- }
- Dee_DECREF(path);
- return result;
-}
 
 #define QTOC414 DeeRandomNu
 DEE_A_RET_EXCEPT(-1) int _DeeFS_CopyObject(
@@ -967,6 +818,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_MoveObject(
  Dee_DECREF(dst);
  return result;
 }
+#define QTOE651 tor
 DEE_A_RET_EXCEPT(-1) int DeeFS_MoveObject(
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *src,
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *dst) {
@@ -1145,7 +997,7 @@ err_unc0: Dee_DECREF(unc_src);
    case 0:
     if DEE_UNLIKELY((*progress)(0.0,closure) != 0) {
 post_error:
-     if DEE_UNLIKELY(_DeeFS_Utf8RmFile(dst) != 0) DeeError_Handled();
+     if DEE_UNLIKELY(_DeeFS_Utf8Unlink(dst) != 0) DeeError_Handled();
      return -1;
     }
     DEE_ATTRIBUTE_FALLTHROUGH
@@ -1219,7 +1071,7 @@ unc_end0: Dee_DECREF(temp);
    case 0:
     if DEE_UNLIKELY((*progress)(0.0,closure) != 0) {
 post_error:
-     if DEE_UNLIKELY(_DeeFS_WideRmFile(dst) != 0) DeeError_Handled();
+     if DEE_UNLIKELY(_DeeFS_WideUnlink(dst) != 0) DeeError_Handled();
      return -1;
     }
     DEE_ATTRIBUTE_FALLTHROUGH
@@ -3041,7 +2893,7 @@ struct DeeFSDirObject {
 #define dir_path     _dir_data.dir_path
  _dir_data
 #endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
- ;
+;
 };
 struct DeeFSQueryObject {
  DEE_OBJECT_HEAD
@@ -3056,7 +2908,7 @@ struct DeeFSQueryObject {
 #define qry_path     _qry_data.qry_path
  _qry_data
 #endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
- ;
+;
 };
 struct DeeListObject;
 
@@ -3074,7 +2926,7 @@ struct DeeFSDirIteratorWin32Data {
 #define diw32_wide _diw32_data.diw32_wide
  _diw32_data
 #endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
- ;
+;
 };
 #endif
 #ifdef DEE_PLATFORM_UNIX
@@ -3127,7 +2979,7 @@ struct DeeFSDirIteratorObject {
 #endif
  _di_data
 #endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
- ;
+;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 
@@ -3525,7 +3377,7 @@ struct DeeFSQueryIteratorObject {
 #define qit_pattern     _qit_data.qit_pattern
  _qit_data
 #endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
- ;
+;
 };
 DEE_COMPILER_MSVC_WARNING_POP
 

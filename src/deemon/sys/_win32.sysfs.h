@@ -336,37 +336,169 @@ do{\
 #define DeeWin32SysFS_WideTryGetTimes DeeWin32Sys_WideTryGetTimes
 #define DeeWin32SysFS_WideGetTimes    DeeWin32Sys_WideGetTimes
 
-#if 0 /* TODO */
-DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeFS_F(IsDrive)(DEE_A_IN_Z DEE_CHAR const *path) {
-#ifdef DEE_PLATFORM_WINDOWS
- DEE_CHAR const *path_iter;
- DeeObject *path_ob; int temp;
- if (*path == DEE_CHAR_C('$')
-  || *path == DEE_CHAR_C('%')
-  || *path == DEE_CHAR_C('~')) {
-expand:
-  if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return -1;
-  path = DEE_STRING_STR(path_ob);
-  if (!DEE_CH_IS_ALNUM(*path)) temp = 0; else {
-   do ++path; while (DEE_CH_IS_ALNUM(*path));
-   temp = IS_DRIVE_SEP(*path) && !path[IS_SEP(path[1]) ? 2 : 1];
-  }
-  Dee_DECREF(path_ob);
-  return temp;
- } else {
-  path_iter = path;
-  if (!DEE_CH_IS_ALNUM(*path_iter)) return 0;
-  do ++path_iter; while (DEE_CH_IS_ALNUM(*path_iter));
-  if (*path_iter == DEE_CHAR_C('$')
-   || *path_iter == DEE_CHAR_C('%')
-   || *path_iter == DEE_CHAR_C('~')) goto expand;
-  return IS_DRIVE_SEP(*path_iter) && !path_iter[IS_SEP(path_iter[1]) ? 2 : 1];
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_Utf8TryIsAbs(Dee_Utf8Char const *path);
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_WideTryIsAbs(Dee_WideChar const *path);
+#define DeeWin32SysFS_Utf8TryIsAbs       DeeWin32Sys_Utf8TryIsAbs
+#define DeeWin32SysFS_WideTryIsAbs       DeeWin32Sys_WideTryIsAbs
+
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_Utf8TryIsDrive(Dee_Utf8Char const *path);
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_WideTryIsDrive(Dee_WideChar const *path);
+#define DeeWin32SysFS_Utf8TryIsDrive       DeeWin32Sys_Utf8TryIsDrive
+#define DeeWin32SysFS_WideTryIsDrive       DeeWin32Sys_WideTryIsDrive
+
+
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_WideTryUnlink(Dee_WideChar const *path) {
+ DeeObject *newpath; Dee_size_t path_size; BOOL result;
+ if DEE_LIKELY(DeleteFileW(path)) return TRUE;
+ if (path[0] != '\\' || path[1] != '\\' || path[2] != '?' || path[3] != '\\') {
+  path_size = Dee_WideStrLen(path);
+  if DEE_UNLIKELY((newpath = DeeWideString_NewSized(path_size+4)) == NULL) { DeeError_HandledOne(); return FALSE; }
+  memcpy(DeeWideString_STR(newpath)+4,path,path_size*sizeof(Dee_WideChar));
+  DeeWideString_STR(newpath)[0] = '\\';
+  DeeWideString_STR(newpath)[1] = '\\';
+  DeeWideString_STR(newpath)[2] = '?';
+  DeeWideString_STR(newpath)[3] = '\\';
+  result = DeleteFileW(DeeWideString_STR(newpath));
+  Dee_DECREF(newpath);
+  return result;
  }
-#else
- (void)path;
- return 0;
-#endif
+ return FALSE;
 }
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_WideTryUnlinkObject(DeeObject const *path) {
+ DeeObject *newpath; BOOL result;
+ if (DeleteFileW(DeeWideString_STR(path))) return TRUE;
+ if (DeeWideString_STR(path)[0] != '\\' || DeeWideString_STR(path)[1] != '\\'
+  || DeeWideString_STR(path)[2] != '?' || DeeWideString_STR(path)[3] != '\\') {
+  if DEE_UNLIKELY((newpath = DeeWideString_NewSized(
+   DeeWideString_SIZE(path)+4)) == NULL) { DeeError_HandledOne(); return FALSE; }
+  memcpy(DeeWideString_STR(newpath)+4,path,
+         DeeWideString_SIZE(path)*sizeof(Dee_WideChar));
+  DeeWideString_STR(newpath)[0] = '\\';
+  DeeWideString_STR(newpath)[1] = '\\';
+  DeeWideString_STR(newpath)[2] = '?';
+  DeeWideString_STR(newpath)[3] = '\\';
+  result = DeleteFileW(DeeWideString_STR(newpath));
+  Dee_DECREF(newpath);
+  return result;
+ }
+ return FALSE;
+}
+
+#define DeeWin32Sys_WideUnlinkWithLength(path,path_size,...) \
+do{\
+ if DEE_UNLIKELY(!DeleteFileW(path)) {\
+  static char const *_ul_error_message = "DeleteFileW(%lq) : %K";\
+  DeeObject *_ul_newpath; Dee_size_t _ul_path_size;\
+  if ((path)[0] != '\\' || (path)[1] != '\\' || (path)[2] != '?' || (path)[3] != '\\') {\
+   _ul_path_size = (path_size);\
+   if DEE_UNLIKELY((_ul_newpath = DeeWideString_NewSized(_ul_path_size+4)) == NULL) { DeeError_HandledOne(); return FALSE; }\
+   memcpy(DeeWideString_STR(_ul_newpath)+4,path,_ul_path_size*sizeof(Dee_WideChar));\
+   DeeWideString_STR(_ul_newpath)[0] = '\\';\
+   DeeWideString_STR(_ul_newpath)[1] = '\\';\
+   DeeWideString_STR(_ul_newpath)[2] = '?';\
+   DeeWideString_STR(_ul_newpath)[3] = '\\';\
+   if DEE_UNLIKELY(!DeleteFileW(DeeWideString_STR(_ul_newpath))) {\
+    DeeError_SetStringf(&DeeErrorType_SystemError,_ul_error_message,DeeWideString_STR(_ul_newpath),\
+                        DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+    Dee_DECREF(_ul_newpath);\
+    {__VA_ARGS__;}\
+   }\
+   Dee_DECREF(_ul_newpath);\
+  } else {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,_ul_error_message,path,\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+}while(0)
+#define DeeWin32Sys_WideUnlink(path,...) \
+ DeeWin32Sys_WideUnlinkWithLength(path,Dee_WideStrLen(path),__VA_ARGS__)
+#define DeeWin32Sys_WideUnlinkObject(path,...) \
+ DeeWin32Sys_WideUnlinkWithLength(DeeWideString_STR(path),DeeWideString_SIZE(path),__VA_ARGS__)
+
+
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_WideTryRmDir(Dee_WideChar const *path) {
+ DeeObject *newpath; Dee_size_t path_size; BOOL result;
+ if (RemoveDirectoryW(path)) return TRUE;
+ if (path[0] != '\\' || path[1] != '\\' || path[2] != '?' || path[3] != '\\') {
+  path_size = Dee_WideStrLen(path);
+  if DEE_UNLIKELY((newpath = DeeWideString_NewSized(path_size+4)) == NULL) { DeeError_HandledOne(); return FALSE; }
+  memcpy(DeeWideString_STR(newpath)+4,path,path_size*sizeof(Dee_WideChar));
+  DeeWideString_STR(newpath)[0] = '\\';
+  DeeWideString_STR(newpath)[1] = '\\';
+  DeeWideString_STR(newpath)[2] = '?';
+  DeeWideString_STR(newpath)[3] = '\\';
+  result = RemoveDirectoryW(DeeWideString_STR(newpath));
+  Dee_DECREF(newpath);
+  return result;
+ }
+ return FALSE;
+}
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_WideTryRmDirObject(DeeObject const *path) {
+ DeeObject *newpath; BOOL result;
+ if (RemoveDirectoryW(DeeWideString_STR(path))) return TRUE;
+ if (DeeWideString_STR(path)[0] != '\\' || DeeWideString_STR(path)[1] != '\\'
+  || DeeWideString_STR(path)[2] != '?' || DeeWideString_STR(path)[3] != '\\') {
+  if DEE_UNLIKELY((newpath = DeeWideString_NewSized(
+   DeeWideString_SIZE(path)+4)) == NULL) { DeeError_HandledOne(); return FALSE; }
+  memcpy(DeeWideString_STR(newpath)+4,path,
+         DeeWideString_SIZE(path)*sizeof(Dee_WideChar));
+  DeeWideString_STR(newpath)[0] = '\\';
+  DeeWideString_STR(newpath)[1] = '\\';
+  DeeWideString_STR(newpath)[2] = '?';
+  DeeWideString_STR(newpath)[3] = '\\';
+  result = RemoveDirectoryW(DeeWideString_STR(newpath));
+  Dee_DECREF(newpath);
+  return result;
+ }
+ return FALSE;
+}
+#define DeeWin32Sys_WideRmDirWithLength(path,path_size,...) \
+do{\
+ if DEE_UNLIKELY(!RemoveDirectoryW(path)) {\
+  static char const *_rd_error_message = "RemoveDirectoryW(%lq) : %K";\
+  DeeObject *_rd_newpath; Dee_size_t _rd_path_size;\
+  if ((path)[0] != '\\' || (path)[1] != '\\' || (path)[2] != '?' || (path)[3] != '\\') {\
+   _rd_path_size = (path_size);\
+   if DEE_UNLIKELY((_rd_newpath = DeeWideString_NewSized(_rd_path_size+4)) == NULL) { DeeError_HandledOne(); return FALSE; }\
+   memcpy(DeeWideString_STR(_rd_newpath)+4,path,_rd_path_size*sizeof(Dee_WideChar));\
+   DeeWideString_STR(_rd_newpath)[0] = '\\';\
+   DeeWideString_STR(_rd_newpath)[1] = '\\';\
+   DeeWideString_STR(_rd_newpath)[2] = '?';\
+   DeeWideString_STR(_rd_newpath)[3] = '\\';\
+   if DEE_UNLIKELY(!RemoveDirectoryW(DeeWideString_STR(_rd_newpath))) {\
+    DeeError_SetStringf(&DeeErrorType_SystemError,_rd_error_message,DeeWideString_STR(_rd_newpath),\
+                        DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+    Dee_DECREF(_rd_newpath);\
+    {__VA_ARGS__;}\
+   }\
+   Dee_DECREF(_rd_newpath);\
+  } else {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,_rd_error_message,path,\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+}while(0)
+#define DeeWin32Sys_WideRmDir(path,...) \
+ DeeWin32Sys_WideRmDirWithLength(path,Dee_WideStrLen(path),__VA_ARGS__)
+#define DeeWin32Sys_WideRmDirObject(path,...) \
+ DeeWin32Sys_WideRmDirWithLength(DeeWideString_STR(path),DeeWideString_SIZE(path),__VA_ARGS__)
+
+
+
+#define DeeWin32SysFS_WideTryUnlink       DeeWin32Sys_WideTryUnlink
+#define DeeWin32SysFS_WideTryUnlinkObject DeeWin32Sys_WideTryUnlinkObject
+#define DeeWin32SysFS_WideUnlink          DeeWin32Sys_WideUnlink
+#define DeeWin32SysFS_WideUnlinkObject    DeeWin32Sys_WideUnlinkObject
+#define DeeWin32SysFS_WideTryRmDir        DeeWin32Sys_WideTryRmDir
+#define DeeWin32SysFS_WideTryRmDirObject  DeeWin32Sys_WideTryRmDirObject
+#define DeeWin32SysFS_WideRmDir           DeeWin32Sys_WideRmDir
+#define DeeWin32SysFS_WideRmDirObject     DeeWin32Sys_WideRmDirObject
+
+
+
+#if 0 /* TODO */
 DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsFile)(DEE_A_IN_Z DEE_CHAR const *path) {
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
  if (_DeeVFS_F(IsVirtualPath)(path)) return DeeVFS_F(IsFile)(path);
@@ -515,42 +647,167 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsDrive)(DEE_A_IN_Z DEE_CHAR const *pat
  return 0;
 #endif
 }
+#define MODE2PERMS(mode) \
+((((mode)&1)!=0 ? GENERIC_WRITE : 0)\
+|(((mode)&2)!=0 ? GENERIC_READ : 0)\
+|(((mode)&4)!=0 ? GENERIC_EXECUTE : 0))
+
+#ifdef WIDE
+static ULONG DeeFS_Win32InitializeAccessW(EXPLICIT_ACCESSW *access, Dee_mode_t mode)
+#else
+static ULONG DeeFS_Win32InitializeAccessA(EXPLICIT_ACCESSA *access, Dee_mode_t mode)
+#endif
+{
+ PSID everyone_sid = NULL;
+ SID_IDENTIFIER_AUTHORITY SIDAuthWorld = SECURITY_NT_AUTHORITY;
+ // v LEAK
+ //AllocateAndInitializeSid(&SIDAuthWorld,1,SECURITY_WORLD_RID,
+ //                         0,0,0,0,0,0,0,&everyone_sid);
+ AllocateAndInitializeSid(&SIDAuthWorld,2,SECURITY_BUILTIN_DOMAIN_RID,
+                          DOMAIN_ALIAS_RID_ADMINS,0,0,0,0,0,0,&everyone_sid);
+ ZeroMemory(access,3*sizeof(*access));
+ access[0].grfAccessPermissions = MODE2PERMS(mode);
+ access[0].grfAccessMode = SET_ACCESS;
+ access[0].grfInheritance = NO_INHERITANCE;
+ access[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+ access[0].Trustee.TrusteeType = TRUSTEE_IS_GROUP;
+ access[0].Trustee.ptstrName = (DEE_CHAR *)everyone_sid;
+ return 1;
+}
+DEE_A_RET_EXCEPT(-1) int _DeeFS_F(MkDir)(
+ DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN Dee_mode_t mode) {
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+ if (_DeeVFS_F(IsVirtualPath)(path)) {
+  DeeObject *path_ob; int result;
+  if DEE_UNLIKELY((path_ob = DeeVFS_F(ReadReFsLink)(path)) == NULL) return -1;
+  result = _DeeFS_F(MkDir)(DEE_STRING_STR(path_ob),mode);
+  Dee_DECREF(path_ob);
+  return result;
+ }
+#endif
+#ifdef DEE_PLATFORM_WINDOWS
+ BOOL created;
+ (void)mode; // TODO: at least the read-only flag?
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+
+ // TODO
+#if 1
+ created = WIN32_F(CreateDirectory)(path,NULL);
+#else
+ {
+  ULONG n; PACL acl = NULL;
+#ifdef WIDE
+  EXPLICIT_ACCESSW ea[3];
+  n = DeeFS_Win32InitializeAccessW(ea,mode);
+  SetEntriesInAclW(n,ea,NULL,&acl);
+#else
+  EXPLICIT_ACCESSA ea[3];
+  n = DeeFS_Win32InitializeAccessA(ea,mode);
+  SetEntriesInAclA(n,ea,NULL,&acl);
+#endif
+  PSECURITY_DESCRIPTOR sd = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR,SECURITY_DESCRIPTOR_MIN_LENGTH);
+  InitializeSecurityDescriptor(sd,SECURITY_DESCRIPTOR_REVISION);
+  SetSecurityDescriptorDacl(sd,TRUE,acl,FALSE);
+  SECURITY_ATTRIBUTES sa;
+  sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sa.lpSecurityDescriptor = sd;
+  sa.bInheritHandle = FALSE;
+  created = WIN32_F(CreateDirectory)(path,&sa);
+//FreeSid(everyone_sid);
+  LocalFree(sd);
+  LocalFree(acl);
+ }
+#endif
+ if (!created) {
+  int error = (int)DeeSystemError_Win32Consume();
+#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
+  if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
+     !DeeFS_F(Win32IsPathUNC)(path)) {
+   DeeObject *temp;
+   if DEE_UNLIKELY((temp = DeeFS_F(Win32PathUNC)(path)) == NULL) return -1;
+   error = _DeeFS_WideMkDir(DeeWideString_STR(temp),mode);
+   Dee_DECREF(temp);
+   return error;
+  }
+#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      DEE_PP_STR(WIN32_F(CreateDirectory))
+                      "(" DEE_PRINTF_STRQ ") : %K",
+                      path,DeeSystemError_Win32ToString((unsigned long)error));
+  return -1;
+ }
+ return 0;
+#elif defined(WIDE)
+ DeeObject *path_ob; int result;
+ if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) return -1;
+ result = _DeeFS_Utf8MkDir(DeeUtf8String_STR(path_ob),mode);
+ Dee_DECREF(path_ob);
+ return result;
+#elif defined(DEE_PLATFORM_UNIX)
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ if DEE_UNLIKELY(mkdir(path,mode) != 0) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "mkdir(" DEE_PRINTF_STRQ ",%#o) : %K",path,mode,
+                      DeeSystemError_ToString(DeeSystemError_Consume()));
+  return -1;
+ }
+ return 0;
+#else
+ (void)path,mode;
+ return 0;
+#endif
+}
+
 #endif
 
 
 
-#define DeeSysFS_Utf8GetCwd      DeeWin32SysFS_Utf8GetCwd
-#define DeeSysFS_WideGetCwd      DeeWin32SysFS_WideGetCwd
-#define DeeSysFS_Utf8TryChdir    DeeWin32SysFS_Utf8TryChdir
-#define DeeSysFS_WideTryChdir    DeeWin32SysFS_WideTryChdir
-#define DeeSysFS_Utf8Chdir       DeeWin32SysFS_Utf8Chdir
-#define DeeSysFS_WideChdir       DeeWin32SysFS_WideChdir
-#define DeeSysFS_Utf8GetEnv      DeeWin32SysFS_Utf8GetEnv
-#define DeeSysFS_WideGetEnv      DeeWin32SysFS_WideGetEnv
-#define DeeSysFS_Utf8TryGetEnv   DeeWin32SysFS_Utf8TryGetEnv
-#define DeeSysFS_WideTryGetEnv   DeeWin32SysFS_WideTryGetEnv
-#define DeeSysFS_Utf8HasEnv      DeeWin32SysFS_Utf8HasEnv
-#define DeeSysFS_WideHasEnv      DeeWin32SysFS_WideHasEnv
-#define DeeSysFS_Utf8TryHasEnv   DeeWin32SysFS_Utf8TryHasEnv
-#define DeeSysFS_WideTryHasEnv   DeeWin32SysFS_WideTryHasEnv
-#define DeeSysFS_Utf8DelEnv      DeeWin32SysFS_Utf8DelEnv
-#define DeeSysFS_WideDelEnv      DeeWin32SysFS_WideDelEnv
-#define DeeSysFS_Utf8TryDelEnv   DeeWin32SysFS_Utf8TryDelEnv
-#define DeeSysFS_WideTryDelEnv   DeeWin32SysFS_WideTryDelEnv
-#define DeeSysFS_Utf8SetEnv      DeeWin32SysFS_Utf8SetEnv
-#define DeeSysFS_WideSetEnv      DeeWin32SysFS_WideSetEnv
-#define DeeSysFS_Utf8TrySetEnv   DeeWin32SysFS_Utf8TrySetEnv
-#define DeeSysFS_WideTrySetEnv   DeeWin32SysFS_WideTrySetEnv
-#define DeeSysFS_Utf8EnumEnv     DeeWin32SysFS_Utf8EnumEnv
-#define DeeSysFS_WideEnumEnv     DeeWin32SysFS_WideEnumEnv
+#define DeeSysFS_Utf8GetCwd          DeeWin32SysFS_Utf8GetCwd
+#define DeeSysFS_WideGetCwd          DeeWin32SysFS_WideGetCwd
+#define DeeSysFS_Utf8TryChdir        DeeWin32SysFS_Utf8TryChdir
+#define DeeSysFS_WideTryChdir        DeeWin32SysFS_WideTryChdir
+#define DeeSysFS_Utf8Chdir           DeeWin32SysFS_Utf8Chdir
+#define DeeSysFS_WideChdir           DeeWin32SysFS_WideChdir
+#define DeeSysFS_Utf8GetEnv          DeeWin32SysFS_Utf8GetEnv
+#define DeeSysFS_WideGetEnv          DeeWin32SysFS_WideGetEnv
+#define DeeSysFS_Utf8TryGetEnv       DeeWin32SysFS_Utf8TryGetEnv
+#define DeeSysFS_WideTryGetEnv       DeeWin32SysFS_WideTryGetEnv
+#define DeeSysFS_Utf8HasEnv          DeeWin32SysFS_Utf8HasEnv
+#define DeeSysFS_WideHasEnv          DeeWin32SysFS_WideHasEnv
+#define DeeSysFS_Utf8TryHasEnv       DeeWin32SysFS_Utf8TryHasEnv
+#define DeeSysFS_WideTryHasEnv       DeeWin32SysFS_WideTryHasEnv
+#define DeeSysFS_Utf8DelEnv          DeeWin32SysFS_Utf8DelEnv
+#define DeeSysFS_WideDelEnv          DeeWin32SysFS_WideDelEnv
+#define DeeSysFS_Utf8TryDelEnv       DeeWin32SysFS_Utf8TryDelEnv
+#define DeeSysFS_WideTryDelEnv       DeeWin32SysFS_WideTryDelEnv
+#define DeeSysFS_Utf8SetEnv          DeeWin32SysFS_Utf8SetEnv
+#define DeeSysFS_WideSetEnv          DeeWin32SysFS_WideSetEnv
+#define DeeSysFS_Utf8TrySetEnv       DeeWin32SysFS_Utf8TrySetEnv
+#define DeeSysFS_WideTrySetEnv       DeeWin32SysFS_WideTrySetEnv
+#define DeeSysFS_Utf8EnumEnv         DeeWin32SysFS_Utf8EnumEnv
+#define DeeSysFS_WideEnumEnv         DeeWin32SysFS_WideEnumEnv
 #define DEE_SYSFS_UTF8ENUMENV_ENVVALUE_ZERO_TERMINATED
 #define DEE_SYSFS_WIDEENUMENV_ENVVALUE_ZERO_TERMINATED
-#define DeeSysFS_Utf8GetHome     DeeWin32SysFS_Utf8GetHome
-#define DeeSysFS_WideGetHome     DeeWin32SysFS_WideGetHome
-#define DeeSysFS_Utf8GetTmp      DeeWin32SysFS_Utf8GetTmp
-#define DeeSysFS_WideGetTmp      DeeWin32SysFS_WideGetTmp
-#define DeeSysFS_WideGetTimes    DeeWin32SysFS_WideGetTimes
-#define DeeSysFS_WideTryGetTimes DeeWin32SysFS_WideTryGetTimes
+#define DeeSysFS_Utf8GetHome         DeeWin32SysFS_Utf8GetHome
+#define DeeSysFS_WideGetHome         DeeWin32SysFS_WideGetHome
+#define DeeSysFS_Utf8GetTmp          DeeWin32SysFS_Utf8GetTmp
+#define DeeSysFS_WideGetTmp          DeeWin32SysFS_WideGetTmp
+#define DeeSysFS_WideGetTimes        DeeWin32SysFS_WideGetTimes
+#define DeeSysFS_WideTryGetTimes     DeeWin32SysFS_WideTryGetTimes
+#define DeeSysFS_Utf8TryIsAbs        DeeWin32SysFS_Utf8TryIsAbs
+#define DeeSysFS_WideTryIsAbs        DeeWin32SysFS_WideTryIsAbs
+#define DeeSysFS_Utf8TryIsMount      DeeWin32SysFS_Utf8TryIsDrive
+#define DeeSysFS_WideTryIsMount      DeeWin32SysFS_WideTryIsDrive
+#define DeeSysFS_Utf8TryIsDrive      DeeWin32SysFS_Utf8TryIsDrive
+#define DeeSysFS_WideTryIsDrive      DeeWin32SysFS_WideTryIsDrive
+#define DeeSysFS_WideTryUnlink       DeeWin32SysFS_WideTryUnlink
+#define DeeSysFS_WideTryUnlinkObject DeeWin32SysFS_WideTryUnlinkObject
+#define DeeSysFS_WideUnlink          DeeWin32SysFS_WideUnlink
+#define DeeSysFS_WideUnlinkObject    DeeWin32SysFS_WideUnlinkObject
+#define DeeSysFS_WideTryRmDir        DeeWin32SysFS_WideTryRmDir
+#define DeeSysFS_WideTryRmDirObject  DeeWin32SysFS_WideTryRmDirObject
+#define DeeSysFS_WideRmDir           DeeWin32SysFS_WideRmDir
+#define DeeSysFS_WideRmDirObject     DeeWin32SysFS_WideRmDirObject
 
 DEE_DECL_END
 

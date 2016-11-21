@@ -61,6 +61,42 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryHasProperty(DEE_A_IN_Z Dee_WideCh
 extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryHasPropertyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
 extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryHasPropertyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop);
 
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8Remove(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_WideRemove(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8RemoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_WideRemoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryRemove(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryRemove(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryRemoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryRemoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8Unlink(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_WideUnlink(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8UnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_WideUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryUnlink(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryUnlink(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryUnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8RmDir(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_WideRmDir(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8RmDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_WideRmDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryRmDir(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryRmDir(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryRmDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryRmDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8MkDir(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_WideMkDir(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8MkDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_EXCEPT(-1) int DeeXFS_WideMkDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryMkDir(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryMkDir(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryMkDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryMkDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode);
+
 DEE_DECL_END
 
 #endif /* !GUARD_DEEMON_FS_EXPAND_FS_H */

@@ -171,7 +171,7 @@ typedef void (*DeeFunPointer)(void);
 //////////////////////////////////////////////////////////////////////////
 // Returns the function pointer of a given ID, associated with the selected FS-API mode.
 DEE_FUNC_DECL(DEE_A_RET_NEVER_NULL DeeFunPointer) DeeFS_GetFunction(DEE_A_IN Dee_size_t id);
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__INTELLISENSE__)
 #define DeeFS_GETFUNCTION(T,id) __pragma(warning(suppress: 4191)) \
                                 (*(T)DeeFS_GetFunction(DEE_TYPES_SIZEOF_POINTER*id))
 #else
@@ -196,34 +196,44 @@ typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_WIDETRYCHDIROBJEC
 // NOTE: 'path' may be relative, allowing you to navigate from the current cwd
 #define DeeFS_Utf8GetCwd            DeeFS_GETFUNCTION(PDEEFS_UTF8GETCWD,        0)
 #define DeeFS_WideGetCwd            DeeFS_GETFUNCTION(PDEEFS_WIDEGETCWD,        1)
-#define DeeFS_Utf8ChDir             DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIR,         2)
-#define DeeFS_WideChDir             DeeFS_GETFUNCTION(PDEEFS_WIDECHDIR,         3)
-#define DeeFS_Utf8ChDirObject       DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIROBJECT,   4)
-#define DeeFS_WideChDirObject       DeeFS_GETFUNCTION(PDEEFS_WIDECHDIROBJECT,   5)
-#define _DeeFS_Utf8ChDir            DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIR,         6)
-#define _DeeFS_WideChDir            DeeFS_GETFUNCTION(PDEEFS_WIDECHDIR,         7)
-#define _DeeFS_Utf8ChDirObject      DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIROBJECT,   8)
-#define _DeeFS_WideChDirObject      DeeFS_GETFUNCTION(PDEEFS_WIDECHDIROBJECT,   9)
+#define DeeFS_Utf8Chdir             DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIR,         2)
+#define DeeFS_WideChdir             DeeFS_GETFUNCTION(PDEEFS_WIDECHDIR,         3)
+#define DeeFS_Utf8ChdirObject       DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIROBJECT,   4)
+#define DeeFS_WideChdirObject       DeeFS_GETFUNCTION(PDEEFS_WIDECHDIROBJECT,   5)
+#define _DeeFS_Utf8Chdir            DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIR,         6)
+#define _DeeFS_WideChdir            DeeFS_GETFUNCTION(PDEEFS_WIDECHDIR,         7)
+#define _DeeFS_Utf8ChdirObject      DeeFS_GETFUNCTION(PDEEFS_UTF8CHDIROBJECT,   8)
+#define _DeeFS_WideChdirObject      DeeFS_GETFUNCTION(PDEEFS_WIDECHDIROBJECT,   9)
 #ifdef DEE_LIMITED_DEX
-#define DeeFS_Utf8TryChDir          DeeFS_GETFUNCTION(PDEEFS_UTF8TRYCHDIR,      10)
-#define DeeFS_WideTryChDir          DeeFS_GETFUNCTION(PDEEFS_WIDETRYCHDIR,      11)
-#define DeeFS_Utf8TryChDirObject    DeeFS_GETFUNCTION(PDEEFS_UTF8TRYCHDIROBJECT,12)
-#define DeeFS_WideTryChDirObject    DeeFS_GETFUNCTION(PDEEFS_WIDETRYCHDIROBJECT,13)
-#define _DeeFS_Utf8TryChDir         DeeFS_GETFUNCTION(PDEEFS_UTF8TRYCHDIR,      14)
-#define _DeeFS_WideTryChDir         DeeFS_GETFUNCTION(PDEEFS_WIDETRYCHDIR,      15)
-#define _DeeFS_Utf8TryChDirObject   DeeFS_GETFUNCTION(PDEEFS_UTF8TRYCHDIROBJECT,16)
-#define _DeeFS_WideTryChDirObject   DeeFS_GETFUNCTION(PDEEFS_WIDETRYCHDIROBJECT,17)
+#define DeeFS_Utf8TryChdir          DeeFS_GETFUNCTION(PDEEFS_UTF8TRYCHDIR,      10)
+#define DeeFS_WideTryChdir          DeeFS_GETFUNCTION(PDEEFS_WIDETRYCHDIR,      11)
+#define DeeFS_Utf8TryChdirObject    DeeFS_GETFUNCTION(PDEEFS_UTF8TRYCHDIROBJECT,12)
+#define DeeFS_WideTryChdirObject    DeeFS_GETFUNCTION(PDEEFS_WIDETRYCHDIROBJECT,13)
+#define _DeeFS_Utf8TryChdir         DeeFS_GETFUNCTION(PDEEFS_UTF8TRYCHDIR,      14)
+#define _DeeFS_WideTryChdir         DeeFS_GETFUNCTION(PDEEFS_WIDETRYCHDIR,      15)
+#define _DeeFS_Utf8TryChdirObject   DeeFS_GETFUNCTION(PDEEFS_UTF8TRYCHDIROBJECT,16)
+#define _DeeFS_WideTryChdirObject   DeeFS_GETFUNCTION(PDEEFS_WIDETRYCHDIROBJECT,17)
 #endif /* DEE_LIMITED_DEX */
 
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int)
-DeeFS_ChDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,DeeFS_Utf8ChDirObject,DeeFS_WideChDirObject)
+DeeFS_ChdirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
+ DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,DeeFS_Utf8ChdirObject,DeeFS_WideChdirObject)
 }
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int)
-_DeeFS_ChDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,_DeeFS_Utf8ChDirObject,_DeeFS_WideChDirObject)
+_DeeFS_ChdirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
+ DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,_DeeFS_Utf8ChdirObject,_DeeFS_WideChdirObject)
 }
 #define DeeFS_GetCwd DeeFS_Utf8GetCwd
+
+#if DEE_DEPRECATED_API_VERSION(100,102,104)
+#define DeeFS_Utf8ChDir    DEE_DEPRECATED_MACRO(DeeFS_Utf8Chdir)
+#define DeeFS_WideChDir    DEE_DEPRECATED_MACRO(DeeFS_WideChdir)
+#define DeeFS_ChDirObject  DEE_DEPRECATED_MACRO(DeeFS_ChdirObject)
+#define _DeeFS_Utf8ChDir   DEE_DEPRECATED_MACRO(_DeeFS_Utf8Chdir)
+#define _DeeFS_WideChDir   DEE_DEPRECATED_MACRO(_DeeFS_WideChdir)
+#define _DeeFS_ChDirObject DEE_DEPRECATED_MACRO(_DeeFS_ChdirObject)
+#endif
+
 
 typedef DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *(DEE_CALL *PDEEFS_UTF8GETHOME)(void);
 typedef DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *(DEE_CALL *PDEEFS_WIDEGETHOME)(void);
@@ -251,10 +261,10 @@ typedef DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *(DEE_CALL *
 #define DeeFS_WideGetUserHomeObject DeeFS_GETFUNCTION(PDEEFS_WIDEGETUSERHOMEOBJECT,23)
 
 #if DEE_DEPRECATED_API_VERSION(100,102,104)
-#define DeeFS_Utf8GetHomeUser       DEE_MACRO_DEPRECATED(DeeFS_Utf8GetUserHome)
-#define DeeFS_WideGetHomeUser       DEE_MACRO_DEPRECATED(DeeFS_WideGetUserHome)
-#define DeeFS_GetHomeUser           DEE_MACRO_DEPRECATED(DeeFS_GetUserHome)
-#define DeeFS_GetHomeUserObject     DEE_MACRO_DEPRECATED(DeeFS_GetUserHomeObject)
+#define DeeFS_Utf8GetHomeUser       DEE_DEPRECATED_MACRO(DeeFS_Utf8GetUserHome)
+#define DeeFS_WideGetHomeUser       DEE_DEPRECATED_MACRO(DeeFS_WideGetUserHome)
+#define DeeFS_GetHomeUser           DEE_DEPRECATED_MACRO(DeeFS_GetUserHome)
+#define DeeFS_GetHomeUserObject     DEE_DEPRECATED_MACRO(DeeFS_GetUserHomeObject)
 #endif
 
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *)
@@ -342,9 +352,9 @@ typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_WIDETRYSETENVOBJE
 #define DeeFS_Utf8EnumEnv DeeFS_GETFUNCTION(PDEEFS_WIDEENUMENV,27)
 #define DeeFS_EnumEnv   DeeFS_Utf8EnumEnv
 #if DEE_DEPRECATED_API_VERSION(100,102,104)
-#define DeeFS_WideListEnv DEE_MACRO_DEPRECATED(DeeFS_WideEnumEnv)
-#define DeeFS_Utf8ListEnv DEE_MACRO_DEPRECATED(DeeFS_Utf8EnumEnv)
-#define DeeFS_ListEnv     DEE_MACRO_DEPRECATED(DeeFS_EnumEnv)
+#define DeeFS_WideListEnv DEE_DEPRECATED_MACRO(DeeFS_WideEnumEnv)
+#define DeeFS_Utf8ListEnv DEE_DEPRECATED_MACRO(DeeFS_Utf8EnumEnv)
+#define DeeFS_ListEnv     DEE_DEPRECATED_MACRO(DeeFS_EnumEnv)
 #endif
 
 #define DeeFS_Utf8GetEnv          DeeFS_GETFUNCTION(PDEEFS_UTF8GETENV,28)
@@ -701,56 +711,143 @@ _DeeFS_HasPropertyObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_
 #define  DeeFS_WideIsSocket(path)          DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISSOCKET)
 #define _DeeFS_IsSocketObject(path)     _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISSOCKET)
 #define  DeeFS_IsSocketObject(path)      DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISSOCKET)
+#define _DeeFS_Utf8IsAbs(path)            _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISABS)
+#define _DeeFS_WideIsAbs(path)            _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISABS)
+#define  DeeFS_Utf8IsAbs(path)             DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_ISABS)
+#define  DeeFS_WideIsAbs(path)             DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_ISABS)
+#define _DeeFS_IsAbsObject(path)        _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISABS)
+#define  DeeFS_IsAbsObject(path)         DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_ISABS)
+#define _DeeFS_Utf8Exists(path)           _DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_EXISTS)
+#define _DeeFS_WideExists(path)           _DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_EXISTS)
+#define  DeeFS_Utf8Exists(path)            DeeFS_Utf8HasProperty(path,DEE_FILEPROPERTY_EXISTS)
+#define  DeeFS_WideExists(path)            DeeFS_WideHasProperty(path,DEE_FILEPROPERTY_EXISTS)
+#define _DeeFS_ExistsObject(path)       _DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_EXISTS)
+#define  DeeFS_ExistsObject(path)        DeeFS_HasPropertyObject(path,DEE_FILEPROPERTY_EXISTS)
 
 
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8IsAbs(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsAbs(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideIsAbs(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsAbs(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_IsAbsObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_IsAbsObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_UTF8PATHFUN)(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_WIDEPATHFUN)(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_UTF8PATHFUNOBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_WIDEPATHFUNOBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+#ifdef DEE_LIMITED_DEX
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_UTF8TRYPATHFUN)(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_WIDETRYPATHFUN)(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_UTF8TRYPATHFUNOBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_WIDETRYPATHFUNOBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+#endif
 
-
-//////////////////////////////////////////////////////////////////////////
-// Returns '0' if a path describes an existing file / directory
-// - The path may contain wildcards, like '*' or '?'
-// Equivalent to '(#fs::query(path) != 0)'
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_Utf8Exists(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) _DeeFS_WideExists(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8Exists(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideExists(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_ExistsObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
 
 
 //////////////////////////////////////////////////////////////////////////
 // Remove anything / a file
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8Remove(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideRemove(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8RmFile(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideRmFile(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_Utf8Remove(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_WideRemove(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_Utf8RmFile(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_WideRmFile(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_RemoveObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_RmFileObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_RemoveObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_RmFileObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeFS_Utf8Remove           DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUN,108)
+#define DeeFS_WideRemove           DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUN,109)
+#define DeeFS_Utf8RemoveObject     DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUNOBJECT,110)
+#define DeeFS_WideRemoveObject     DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUNOBJECT,111)
+#define _DeeFS_Utf8Remove          DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUN,112)
+#define _DeeFS_WideRemove          DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUN,113)
+#define _DeeFS_Utf8RemoveObject    DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUNOBJECT,114)
+#define _DeeFS_WideRemoveObject    DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUNOBJECT,115)
+#ifdef DEE_LIMITED_DEX
+#define DeeFS_Utf8TryRemove        DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUN,116)
+#define DeeFS_WideTryRemove        DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUN,117)
+#define DeeFS_Utf8TryRemoveObject  DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUNOBJECT,118)
+#define DeeFS_WideTryRemoveObject  DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUNOBJECT,119)
+#define _DeeFS_Utf8TryRemove       DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUN,120)
+#define _DeeFS_WideTryRemove       DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUN,121)
+#define _DeeFS_Utf8TryRemoveObject DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUNOBJECT,122)
+#define _DeeFS_WideTryRemoveObject DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUNOBJECT,123)
+#endif
+#define DeeFS_Utf8Unlink           DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUN,124)
+#define DeeFS_WideUnlink           DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUN,125)
+#define DeeFS_Utf8UnlinkObject     DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUNOBJECT,126)
+#define DeeFS_WideUnlinkObject     DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUNOBJECT,127)
+#define _DeeFS_Utf8Unlink          DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUN,128)
+#define _DeeFS_WideUnlink          DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUN,129)
+#define _DeeFS_Utf8UnlinkObject    DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUNOBJECT,130)
+#define _DeeFS_WideUnlinkObject    DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUNOBJECT,131)
+#ifdef DEE_LIMITED_DEX
+#define DeeFS_Utf8TryUnlink        DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUN,132)
+#define DeeFS_WideTryUnlink        DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUN,133)
+#define DeeFS_Utf8TryUnlinkObject  DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUNOBJECT,134)
+#define DeeFS_WideTryUnlinkObject  DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUNOBJECT,135)
+#define _DeeFS_Utf8TryUnlink       DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUN,136)
+#define _DeeFS_WideTryUnlink       DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUN,137)
+#define _DeeFS_Utf8TryUnlinkObject DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUNOBJECT,138)
+#define _DeeFS_WideTryUnlinkObject DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUNOBJECT,139)
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////
 // Create / Remove a directory
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8MkDir(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideMkDir(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_Utf8RmDir(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_WideRmDir(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_Utf8MkDir(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_WideMkDir(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_Utf8RmDir(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_WideRmDir(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_MkDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_RmDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_MkDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_RmDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeFS_Utf8RmDir           DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUN,140)
+#define DeeFS_WideRmDir           DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUN,141)
+#define DeeFS_Utf8RmDirObject     DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUNOBJECT,142)
+#define DeeFS_WideRmDirObject     DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUNOBJECT,143)
+#define _DeeFS_Utf8RmDir          DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUN,144)
+#define _DeeFS_WideRmDir          DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUN,145)
+#define _DeeFS_Utf8RmDirObject    DeeFS_GETFUNCTION(PDEEFS_UTF8PATHFUNOBJECT,146)
+#define _DeeFS_WideRmDirObject    DeeFS_GETFUNCTION(PDEEFS_WIDEPATHFUNOBJECT,147)
+#ifdef DEE_LIMITED_DEX
+#define DeeFS_Utf8TryRmDir        DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUN,148)
+#define DeeFS_WideTryRmDir        DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUN,149)
+#define DeeFS_Utf8TryRmDirObject  DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUNOBJECT,150)
+#define DeeFS_WideTryRmDirObject  DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUNOBJECT,151)
+#define _DeeFS_Utf8TryRmDir       DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUN,152)
+#define _DeeFS_WideTryRmDir       DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUN,153)
+#define _DeeFS_Utf8TryRmDirObject DeeFS_GETFUNCTION(PDEEFS_UTF8TRYPATHFUNOBJECT,154)
+#define _DeeFS_WideTryRmDirObject DeeFS_GETFUNCTION(PDEEFS_WIDETRYPATHFUNOBJECT,155)
+#endif
+
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_UTF8MKDIR)(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_WIDEMKDIR)(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_UTF8MKDIROBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int (DEE_CALL *PDEEFS_WIDEMKDIROBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+#ifdef DEE_LIMITED_DEX
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_UTF8TRYMKDIR)(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_WIDETRYMKDIR)(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_UTF8TRYMKDIROBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_NOEXCEPT(0) int (DEE_CALL *PDEEFS_WIDETRYMKDIROBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+#endif
+
+#define DeeFS_Utf8MkDir           DeeFS_GETFUNCTION(PDEEFS_UTF8MKDIR,156)
+#define DeeFS_WideMkDir           DeeFS_GETFUNCTION(PDEEFS_WIDEMKDIR,157)
+#define DeeFS_Utf8MkDirObject     DeeFS_GETFUNCTION(PDEEFS_UTF8MKDIROBJECT,158)
+#define DeeFS_WideMkDirObject     DeeFS_GETFUNCTION(PDEEFS_WIDEMKDIROBJECT,159)
+#define _DeeFS_Utf8MkDir          DeeFS_GETFUNCTION(PDEEFS_UTF8MKDIR,160)
+#define _DeeFS_WideMkDir          DeeFS_GETFUNCTION(PDEEFS_WIDEMKDIR,161)
+#define _DeeFS_Utf8MkDirObject    DeeFS_GETFUNCTION(PDEEFS_UTF8MKDIROBJECT,162)
+#define _DeeFS_WideMkDirObject    DeeFS_GETFUNCTION(PDEEFS_WIDEMKDIROBJECT,163)
+#ifdef DEE_LIMITED_DEX
+#define DeeFS_Utf8TryMkDir        DeeFS_GETFUNCTION(PDEEFS_UTF8TRYMKDIR,164)
+#define DeeFS_WideTryMkDir        DeeFS_GETFUNCTION(PDEEFS_WIDETRYMKDIR,165)
+#define DeeFS_Utf8TryMkDirObject  DeeFS_GETFUNCTION(PDEEFS_UTF8TRYMKDIROBJECT,166)
+#define DeeFS_WideTryMkDirObject  DeeFS_GETFUNCTION(PDEEFS_WIDETRYMKDIROBJECT,167)
+#define _DeeFS_Utf8TryMkDir       DeeFS_GETFUNCTION(PDEEFS_UTF8TRYMKDIR,168)
+#define _DeeFS_WideTryMkDir       DeeFS_GETFUNCTION(PDEEFS_WIDETRYMKDIR,169)
+#define _DeeFS_Utf8TryMkDirObject DeeFS_GETFUNCTION(PDEEFS_UTF8TRYMKDIROBJECT,170)
+#define _DeeFS_WideTryMkDirObject DeeFS_GETFUNCTION(PDEEFS_WIDETRYMKDIROBJECT,171)
+#endif
+
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_RemoveObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) { DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,DeeFS_Utf8RemoveObject,DeeFS_WideRemoveObject) }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_UnlinkObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) { DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,DeeFS_Utf8UnlinkObject,DeeFS_WideUnlinkObject) }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_MkDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN Dee_mode_t mode) { DEE_PRIVATE_CALL_UTF8WIDE_ARGN(int,-1,path,DeeFS_Utf8MkDirObject,DeeFS_WideMkDirObject,mode) }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_RmDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) { DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,DeeFS_Utf8RmDirObject,DeeFS_WideRmDirObject) }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_RemoveObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) { DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,_DeeFS_Utf8RemoveObject,_DeeFS_WideRemoveObject) }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_UnlinkObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) { DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,_DeeFS_Utf8UnlinkObject,_DeeFS_WideUnlinkObject) }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_MkDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path, DEE_A_IN Dee_mode_t mode) { DEE_PRIVATE_CALL_UTF8WIDE_ARGN(int,-1,path,_DeeFS_Utf8MkDirObject,_DeeFS_WideMkDirObject,mode) }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFS_RmDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) { DEE_PRIVATE_CALL_UTF8WIDE_ARG0(int,-1,path,_DeeFS_Utf8RmDirObject,_DeeFS_WideRmDirObject) }
+
+
+#if DEE_DEPRECATED_API_VERSION(100,102,104)
+#define DeeFS_Utf8RmFile    DEE_DEPRECATED_MACRO(DeeFS_Utf8Unlink)
+#define DeeFS_WideRmFile    DEE_DEPRECATED_MACRO(DeeFS_WideUnlink)
+#define DeeFS_RmFileObject  DEE_DEPRECATED_MACRO(DeeFS_UnlinkObject)
+#define _DeeFS_Utf8RmFile   DEE_DEPRECATED_MACRO(_DeeFS_Utf8Unlink)
+#define _DeeFS_WideRmFile   DEE_DEPRECATED_MACRO(_DeeFS_WideUnlink)
+#define _DeeFS_RmFileObject DEE_DEPRECATED_MACRO(_DeeFS_UnlinkObject)
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////
 // Copy/Move/Link a file
@@ -980,10 +1077,10 @@ extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeFS_AutoGetUserAndGroup(
 DEE_DECL_END
 
 #ifdef __cplusplus
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_ChDir(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8ChDir(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_ChDir(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideChDir(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_ChDir(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8ChDir(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_ChDir(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideChDir(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_ChDir(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8Chdir(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_ChDir(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideChdir(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_ChDir(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8Chdir(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_ChDir(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideChdir(path); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_GetUserHome(DEE_A_IN_Z Dee_Utf8Char const *user) { return DeeFS_Utf8GetUserHome(user); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_GetUserHome(DEE_A_IN_Z Dee_WideChar const *user) { return DeeFS_WideGetUserHome(user); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) _DeeFS_GetTmpName(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN_Z Dee_Utf8Char const *prefix) { return _DeeFS_Utf8GetTmpName(path,prefix); }
@@ -1082,12 +1179,12 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT_FAIL(-1
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Exists(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideExists(path); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_Remove(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8Remove(path); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_Remove(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideRemove(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_RmFile(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8RmFile(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_RmFile(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideRmFile(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_Unlink(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8Unlink(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_Unlink(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideUnlink(path); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_Remove(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8Remove(path); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_Remove(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideRemove(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_RmFile(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8RmFile(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_RmFile(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideRmFile(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_Unlink(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8Unlink(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) DeeFS_Unlink(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideUnlink(path); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_MkDir(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) { return _DeeFS_Utf8MkDir(path,mode); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_MkDir(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) { return _DeeFS_WideMkDir(path,mode); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_RmDir(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8RmDir(path); }
@@ -1165,8 +1262,8 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_ReadLink(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8ReadLink(path); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_ReadLink(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideReadLink(path); }
 #else
-#define /*DEE_A_EXEC*/ _DeeFS_ChDir            _DeeFS_Utf8ChDir
-#define /*DEE_A_EXEC*/ DeeFS_ChDir             DeeFS_Utf8ChDir
+#define /*DEE_A_EXEC*/ _DeeFS_ChDir            _DeeFS_Utf8Chdir
+#define /*DEE_A_EXEC*/ DeeFS_ChDir             DeeFS_Utf8Chdir
 #define /*DEE_A_EXEC*/ DeeFS_GetUserHome       DeeFS_Utf8GetUserHome
 #define /*DEE_A_EXEC*/ _DeeFS_GetTmpName       _DeeFS_Utf8GetTmpName
 #define /*DEE_A_EXEC*/ DeeFS_GetTmpName        DeeFS_Utf8GetTmpName
@@ -1220,9 +1317,9 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_
 #define /*DEE_A_EXEC*/ _DeeFS_Exists           _DeeFS_Utf8Exists
 #define /*DEE_A_EXEC*/ DeeFS_Exists            DeeFS_Utf8Exists
 #define /*DEE_A_EXEC*/ _DeeFS_Remove           _DeeFS_Utf8Remove
-#define /*DEE_A_EXEC*/ _DeeFS_RmFile           _DeeFS_Utf8RmFile
+#define /*DEE_A_EXEC*/ _DeeFS_RmFile           _DeeFS_Utf8Unlink
 #define /*DEE_A_EXEC*/ DeeFS_Remove            DeeFS_Utf8Remove
-#define /*DEE_A_EXEC*/ DeeFS_RmFile            DeeFS_Utf8RmFile
+#define /*DEE_A_EXEC*/ DeeFS_RmFile            DeeFS_Utf8Unlink
 #define /*DEE_A_EXEC*/ _DeeFS_MkDir            _DeeFS_Utf8MkDir
 #define /*DEE_A_EXEC*/ _DeeFS_RmDir            _DeeFS_Utf8RmDir
 #define /*DEE_A_EXEC*/ DeeFS_MkDir             DeeFS_Utf8MkDir

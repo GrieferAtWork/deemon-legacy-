@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_EXPAND_FS_CHDIR_C_INL
-#define GUARD_DEEMON_FS_EXPAND_FS_CHDIR_C_INL 1
+#ifndef GUARD_DEEMON_FS_EXPAND_FS_MKDIR_C_INL
+#define GUARD_DEEMON_FS_EXPAND_FS_MKDIR_C_INL 1
 #ifndef DEE_LIMITED_API
 #define DEE_LIMITED_API 1
 #endif
@@ -31,63 +31,71 @@
 
 DEE_DECL_BEGIN
 
-DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8Chdir(DEE_A_IN_Z Dee_Utf8Char const *path) {
+DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8MkDir(
+DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) return -1;
- result = _DeeFS_Utf8ChdirObject(xpath);
+ result = _DeeFS_Utf8MkDirObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXFS_WideChdir(DEE_A_IN_Z Dee_WideChar const *path) {
+DEE_A_RET_EXCEPT(-1) int DeeXFS_WideMkDir(
+ DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) return -1;
- result = _DeeFS_WideChdirObject(xpath);
+ result = _DeeFS_WideMkDirObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryChdir(DEE_A_IN_Z Dee_Utf8Char const *path) {
+DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryMkDir(
+ DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_Utf8TryChdirObject(xpath);
+ result = _DeeFS_Utf8TryMkDirObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryChdir(DEE_A_IN_Z Dee_WideChar const *path) {
+DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryMkDir(
+ DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_WideTryChdirObject(xpath);
+ result = _DeeFS_WideTryMkDirObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8ChdirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
+DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8MkDirObject(
+ DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) return -1;
- result = _DeeFS_Utf8ChdirObject(xpath);
+ result = _DeeFS_Utf8MkDirObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXFS_WideChdirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+DEE_A_RET_EXCEPT(-1) int DeeXFS_WideMkDirObject(
+ DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) return -1;
- result = _DeeFS_WideChdirObject(xpath);
+ result = _DeeFS_WideMkDirObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryChdirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
+DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryMkDirObject(
+ DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_Utf8TryChdirObject(xpath);
+ result = _DeeFS_Utf8TryMkDirObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryChdirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryMkDirObject(
+ DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_WideTryChdirObject(xpath);
+ result = _DeeFS_WideTryMkDirObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_FS_EXPAND_FS_CHDIR_C_INL */
+#endif /* !GUARD_DEEMON_FS_EXPAND_FS_MKDIR_C_INL */

@@ -18,25 +18,43 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_EXPAND_FS_C
-#define GUARD_DEEMON_FS_EXPAND_FS_C 1
-#define DEE_LIMITED_API 1
 
-#include <deemon/__conf.inl>
+#include <file>
+#include <fs>
 
-DEE_DECL_BEGIN
+fs::chdir(fs::path::head(__FILE__));
 
-DEE_DECL_END
+local pattern = file.open("pattern.native_fs.isX.c.inl","r")
+	.read().replace("\r\n","\n").replace("\r","\n");
+function make(name) {
+	local text = pattern.format({
+		.name = name
+	});
+	local fp = file.open("native_fs."+name.lower()+".c.inl","w");
+	fp.write(text);
+}
 
-#ifndef __INTELLISENSE__
-#include "expand_fs.chdir.c.inl"
-#include "expand_fs.gettimes.c.inl"
-#include "expand_fs.hasproperty.c.inl"
-#include "expand_fs.mkdir.c.inl"
-#include "expand_fs.remove.c.inl"
-#include "expand_fs.rmdir.c.inl"
-#include "expand_fs.settimes.c.inl"
-#include "expand_fs.unlink.c.inl"
-#endif
 
-#endif /* !GUARD_DEEMON_FS_EXPAND_FS_C */
+make("IsAbs");
+make("IsBlockDev");
+make("IsCharDev");
+make("IsDir");
+make("IsDrive");
+make("IsExecutable");
+make("IsFiFo");
+make("IsFile");
+make("IsHidden");
+make("IsLink");
+make("IsMount");
+make("IsSocket");
+
+
+
+
+
+
+
+
+
+
+

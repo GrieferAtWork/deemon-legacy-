@@ -136,7 +136,7 @@ static int _DeeProcess_PosixCreate(
 DEE_STATIC_INLINE(void) _DeeProcess_PosixFreeStringList(DEE_A_IN char **listv);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeProcess_PosixSplitArgv(DEE_A_IN_Z char const *exe, DEE_A_IN_Z char const *args, DEE_A_OUT char ***argv);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeProcess_PosixSplitEnv(DEE_A_IN DeeListObject *env, DEE_A_OUT char ***envv);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *) _DeeProcess_PosixGetCmd(DEE_A_IN DeeProcessHandle pid) ;
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *) _DeeProcess_PosixGetCmd(DEE_A_IN DeeProcessHandle pid);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeProcess_PosixSetPriority(DEE_A_IN pid_t self, DEE_A_IN double priority);
 #endif
 
@@ -1181,7 +1181,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_SetCwd(
  DEE_A_IN_OBJECT(DeeProcessObject) *self,
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *cwd) {
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
- if (DeeProcess_IS_SELF(self)) return DeeFS_ChDirObject(cwd);
+ if (DeeProcess_IS_SELF(self)) return DeeFS_ChdirObject(cwd);
  if (DeeProcess_IS_REF(self)) { _deeprocess_error_is_ref(self); return -1; }
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) {

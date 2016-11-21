@@ -33,7 +33,11 @@ DEE_DECL_END
 #include "virtual_fs.chdir.c.inl"
 #include "virtual_fs.gettimes.c.inl"
 #include "virtual_fs.hasproperty.c.inl"
+#include "virtual_fs.mkdir.c.inl"
+#include "virtual_fs.remove.c.inl"
+#include "virtual_fs.rmdir.c.inl"
 #include "virtual_fs.settimes.c.inl"
+#include "virtual_fs.unlink.c.inl"
 #endif
 
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */

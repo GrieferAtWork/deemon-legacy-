@@ -192,6 +192,7 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeVFSNode_Pathname(DEE_A_I
 #define DeeVFSNode_FileHasLink(self)   ((self)->vn_type->vnt_node.vnt_link!=NULL)
 #define DeeVFSNode_FileHasWalk(self)   ((self)->vn_type->vnt_node.vnt_walk!=NULL)
 
+extern struct DeeVFSNodeType const DeeVFSNativeNode_Type; // Implemented in "vfs_native_node.c.inl"
 #define DeeVFSNode_IsNative(self) ((self)->vn_type == &DeeVFSNativeNode_Type)
 
 //////////////////////////////////////////////////////////////////////////
@@ -380,6 +381,15 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8ForceNativeP
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideForceNativePathObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8ForceNativePath(DEE_A_IN_Z Dee_Utf8Char const *path);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideForceNativePath(DEE_A_IN_Z Dee_WideChar const *path);
+
+//////////////////////////////////////////////////////////////////////////
+// Forces a (most definitely) virtual path to be native.
+// NOTE: Throw an Error.SystemError if the given path is virtual, and not part of the native filesystem.
+// The root version expends the given path to be absolute
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8ForceNativePathWithCwd(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideForceNativePathWithCwd(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8ForceNativeRootPath(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideForceNativeRootPath(DEE_A_IN_Z Dee_WideChar const *path);
 
 
 //////////////////////////////////////////////////////////////////////////

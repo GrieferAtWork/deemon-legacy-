@@ -2475,7 +2475,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoSafeFormatFileStreamEx(
 #endif
     else {
      DeeFile_Close(temp_fp);
-     if DEE_UNLIKELY(_DeeFS_RmFileObject(temp_filename) != 0) DeeError_Handled();
+     if DEE_UNLIKELY(_DeeFS_UnlinkObject(temp_filename) != 0) DeeError_Handled();
      Dee_DECREF(temp_filename);
     }
    } DeeError_POP_STATE();
@@ -2488,7 +2488,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoSafeFormatFileStreamEx(
   DeeFile_Close(out);
   // Even if we crash after the rmfile, the user
   // could still recover his data from '/tmp/'
-  if (DEE_UNLIKELY(_DeeFS_RmFileObject(out_filename) != 0)
+  if (DEE_UNLIKELY(_DeeFS_UnlinkObject(out_filename) != 0)
    || DEE_UNLIKELY(_DeeFS_MoveObject(temp_filename,out_filename) != 0)
    ) temp = -1; else temp = 0;
   Dee_DECREF(out_filename);
