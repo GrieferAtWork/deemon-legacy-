@@ -57,6 +57,7 @@ DEE_A_RET_WUNUSED Dee_openmode_t DeeFile_TryParseMode(
  switch (*mode++) {
   case 'r': result = DEE_OPENMODE_READ; break;
   case 'w': result = DEE_OPENMODE_WRITE; break;
+  case 'x': result = DEE_OPENMODE_CREATE; break;
   case 'a': result = DEE_OPENMODE_APPEND; break;
   default: return 0; // Invalid mode
  }

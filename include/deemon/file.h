@@ -167,14 +167,6 @@ DEE_PRIVATE_DECL_DEE_FILEDESCR_T
 #endif
 
 
-
-//////////////////////////////////////////////////////////////////////////
-// Parse the open mode for a file
-// >> Invalid modes are silently ignored, and if unrecognized, the default mode is used
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_openmode_t)
- DeeFile_TryParseMode(DEE_A_IN_Z char const *mode) DEE_ATTRIBUTE_NONNULL((1));
-
-
 // v 'DeeFile_Check' checks for any type that is derived from 'file'
 //   - This applies to 'file', 'file.io', 'file.writer' and 'file.reader'
 //     NOTE: Also checks for additional user defined sub-classes

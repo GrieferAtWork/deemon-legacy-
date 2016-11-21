@@ -1867,7 +1867,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeFileIO_Utf8InitObjectEx
 #ifdef DEE_PLATFORM_WINDOWS
   DWORD disposition,access,attr;
   DEE_STATIC_ASSERT(DEE_FILEIO_INVALID_HANDLE == (void *)INVALID_HANDLE_VALUE);
-  switch (self->fio_mode&DEE_OPENMODE_MASKBASIC) {
+  switch (self->fio_mode) {
    case DEE_OPENMODE_READ: disposition = OPEN_EXISTING; access = GENERIC_READ; break;
    case DEE_OPENMODE_WRITE: disposition = CREATE_ALWAYS; access = GENERIC_WRITE; break;
    case DEE_OPENMODE_APPEND: disposition = OPEN_ALWAYS; access = GENERIC_WRITE; break;
@@ -1945,7 +1945,7 @@ no_err:
  return result;
 #elif defined(DEE_PLATFORM_UNIX)
   int open_mode;
-  switch (self->fio_mode&DEE_OPENMODE_MASKBASIC) {
+  switch (self->fio_mode) {
    case DEE_OPENMODE_READ: open_mode = O_RDONLY; break;
    case DEE_OPENMODE_WRITE: open_mode = O_WRONLY|O_CREAT|O_TRUNC; break;
    case DEE_OPENMODE_APPEND: open_mode = O_WRONLY|O_CREAT|O_APPEND; break;
@@ -1978,7 +1978,7 @@ no_err:
 #elif DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
   char const *open_mode;
   (void)permissions;
-  switch (self->fio_mode&DEE_OPENMODE_MASKBASIC) {
+  switch (self->fio_mode) {
    case DEE_OPENMODE_READ: open_mode = "r"; break;
    case DEE_OPENMODE_WRITE: open_mode = "w"; break;
    case DEE_OPENMODE_APPEND: open_mode = "a"; break;
