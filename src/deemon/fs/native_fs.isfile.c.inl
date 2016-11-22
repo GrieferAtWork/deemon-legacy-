@@ -229,7 +229,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsFileObject(DEE_A_IN_OBJECT(DeeWideStri
 #elif defined(DeeSysFS_Utf8TryIsFileObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return -1; }
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
  result = DeeSysFS_Utf8TryIsFileObject(path_ob);
  Dee_DECREF(path_ob);
  return result;

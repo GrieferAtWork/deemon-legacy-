@@ -603,36 +603,149 @@ do{\
 #define DeeWin32SysFileFD_TryChmod(self,mode)     DeeWin32Sys_TryHandleChmod((self)->w32_handle,mode)
 #define DeeWin32SysFileFD_Chmod(self,mode,...)    DeeWin32Sys_HandleChmod((self)->w32_handle,mode,__VA_ARGS__)
 
-#define DeeWin32Sys_TryHandleGetOwn(hFile,owner,group)\
+//////////////////////////////////////////////////////////////////////////
+// Reopens a given handle with the specified arguments.
+// NOTE: Windows vista and up implement a function ReOpenFile,
+//       and if that's available, we use it. But for xp we
+//       need to go the long route and acquire the filename
+//       to use CreateFile for opening it.
+// >> implemented in "_win32.sysfd.c.inl"
+extern HANDLE DeeWin32Sys_TryReOpenFile(HANDLE hOriginalFile, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwFlagsAndAttributes);
+extern HANDLE DeeWin32Sys_ReOpenFile(HANDLE hOriginalFile, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwFlagsAndAttributes);
+
+extern BOOL DeeWin32Sys_AcquirePrivilege(DEE_A_IN Dee_WideChar const *name);
+extern BOOL DeeWin32Sys_AcquireSeRestorePrivilege(void);
+
+//////////////////////////////////////////////////////////////////////////
+// Changes the owner/group of a given file.
+// NOTE: The caller is responsible for ensuring that the file was opened with 'WRITE_OWNER'
+#define DeeWin32Sys_DoTryHandleGetOwn(hFile,owner,group)\
  (GetSecurityInfo(hFile,SE_FILE_OBJECT,\
   OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
-  (PSID *)(owner),(PSID *)(group),NULL,NULL,NULL)==0)
-#define DeeWin32Sys_HandleGetOwn(hFile,owner,group,...)\
+  (PSID *)(owner),(PSID *)(group),NULL,NULL,NULL) == 0)
+#define DeeWin32Sys_DoTryHandleChown(hFile,owner,group)\
+ ((owner) && IsValidSid((PSID)(owner)) && (group) && IsValidSid((PSID)(group)) && \
+  SetSecurityInfo(hFile,SE_FILE_OBJECT,\
+  OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
+  (PSID)(owner),(PSID)(group),NULL,NULL) == 0)
+
+//////////////////////////////////////////////////////////////////////////
+// Changes the owner/group of a given file.
+// Also tries to acquire 'SeRestorePrivilege' and reopens the file if it wasn't opened with 'WRITE_OWNER'
+// >> implemented in "_win32.sysfd.c.inl"
+#define DeeWin32Sys_TryHandleChown(hFile,owner,group) \
+ DeeWin32Sys_TryHandleChown_impl(hFile,(PSID)(owner),(PSID)(group))
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TryHandleChown_impl(HANDLE hFile, PSID owner, PSID group) {
+ BOOL result; HANDLE hNewFile;
+ if (DeeWin32Sys_DoTryHandleChown(hFile,owner,group)) return TRUE;
+ /* Retry with fixed permissions */
+ hNewFile = DeeWin32Sys_ReOpenFile(hFile,WRITE_OWNER,FILE_SHARE_READ|FILE_SHARE_WRITE|
+                                   FILE_SHARE_DELETE,FILE_GENERIC_WRITE);
+ if (hNewFile == INVALID_HANDLE_VALUE) {
+  if (!DeeWin32Sys_AcquireSeRestorePrivilege()) return FALSE;
+  hNewFile = DeeWin32Sys_ReOpenFile(hFile,WRITE_OWNER,FILE_SHARE_READ|FILE_SHARE_WRITE|
+                                    FILE_SHARE_DELETE,FILE_GENERIC_WRITE);
+  if (hNewFile == INVALID_HANDLE_VALUE) return FALSE;
+ }
+ result = DeeWin32Sys_DoTryHandleChown(hFile,owner,group);
+ if (!CloseHandle(hNewFile)) SetLastError(0);
+ return result;
+}
+#define DeeWin32Sys_TryHandleGetOwn(hFile,owner,group) \
+ DeeWin32Sys_TryHandleGetOwn_impl(hFile,(PSID *)(owner),(PSID *)(group))
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TryHandleGetOwn_impl(HANDLE hFile, PSID *owner, PSID *group) {
+ BOOL result; HANDLE hNewFile;
+ if (DeeWin32Sys_DoTryHandleGetOwn(hFile,owner,group)) return TRUE;
+ /* Retry with fixed permissions */
+ hNewFile = DeeWin32Sys_ReOpenFile(hFile,READ_CONTROL,FILE_SHARE_READ|FILE_SHARE_WRITE|
+                                   FILE_SHARE_DELETE,FILE_GENERIC_READ);
+ if (hNewFile == INVALID_HANDLE_VALUE) {
+  if (!DeeWin32Sys_AcquireSeRestorePrivilege()) return FALSE;
+  hNewFile = DeeWin32Sys_ReOpenFile(hFile,READ_CONTROL,FILE_SHARE_READ|FILE_SHARE_WRITE|
+                                    FILE_SHARE_DELETE,FILE_GENERIC_READ);
+  if (hNewFile == INVALID_HANDLE_VALUE) return FALSE;
+ }
+ result = DeeWin32Sys_DoTryHandleGetOwn(hFile,owner,group);
+ if (!CloseHandle(hNewFile)) SetLastError(0);
+ return result;
+}
+
+
+#define DeeWin32Sys_DoHandleGetOwn(hFile,owner,group,...)\
 do{\
- DWORD error;\
- if DEE_UNLIKELY((error = GetSecurityInfo(hFile,SE_FILE_OBJECT,\
+ DWORD _dhg_error;\
+ if DEE_UNLIKELY((_dhg_error = GetSecurityInfo(hFile,SE_FILE_OBJECT,\
   OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
   (PSID *)(owner),(PSID *)(group),NULL,NULL,NULL)) != 0) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
-                       "GetSecurityInfo(%p,SE_FILE_OBJECTOWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,...,NULL,NULL,NULL) : %K",\
-                       hFile,DeeSystemError_Win32ToString(error));\
+                       "GetSecurityInfo(%p,SE_FILE_OBJECT,OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,...,NULL,NULL,NULL) : %K",\
+                       (HANDLE)(hFile),DeeSystemError_Win32ToString(_dhg_error));\
   {__VA_ARGS__;}\
  }\
 }while(0)
-#define DeeWin32Sys_TryHandleChown(hFile,owner,group)\
- (SetSecurityInfo(hFile,SE_FILE_OBJECT,\
-  OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
-  (PSID)(owner),(PSID)(group),NULL,NULL)==0)
+
+
+#define DeeWin32Sys_HandleGetOwn(hFile,owner,group,...)\
+do{\
+ HANDLE _hg_hNewFile;\
+ if (!DeeWin32Sys_DoTryHandleGetOwn(hFile,owner,group)) {\
+  /* Retry with fixed permissions */\
+  _hg_hNewFile = DeeWin32Sys_TryReOpenFile(hFile,READ_CONTROL,FILE_SHARE_READ|FILE_SHARE_WRITE|\
+                                           FILE_SHARE_DELETE,FILE_GENERIC_READ);\
+  if (_hg_hNewFile == INVALID_HANDLE_VALUE) {\
+   if (DeeWin32Sys_AcquireSeRestorePrivilege()) {\
+    _hg_hNewFile = DeeWin32Sys_ReOpenFile(hFile,READ_CONTROL,FILE_SHARE_READ|FILE_SHARE_WRITE|\
+                                          FILE_SHARE_DELETE,FILE_GENERIC_READ);\
+    if (_hg_hNewFile == INVALID_HANDLE_VALUE) {__VA_ARGS__;}\
+   } else {\
+    DeeError_SET_STRING(&DeeErrorType_SystemError,\
+                        "Failed to acquire \"SeRestorePrivilege\"");\
+    {__VA_ARGS__;}\
+   }\
+  }\
+  DeeWin32Sys_DoHandleGetOwn(hFile,owner,group,{CloseHandle(_hg_hNewFile); {__VA_ARGS__;}});\
+  CloseHandle(_hg_hNewFile);\
+ }\
+}while(0)
+
+#define DeeWin32Sys_DoHandleChown(hFile,owner,group,...)\
+do{\
+ DWORD _dhc_error;\
+ if DEE_UNLIKELY((!(owner) || !IsValidSid((PSID)(owner)) ||\
+                  !(group) || !IsValidSid((PSID)(group))\
+ ) ? (_dhc_error = ERROR_INVALID_PARAMETER,1) : (\
+     (_dhc_error = SetSecurityInfo(hFile,SE_FILE_OBJECT,\
+      OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
+      (PSID)(owner),(PSID)(group),NULL,NULL)) != 0)) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "SetSecurityInfo(%p,SE_FILE_OBJECT,OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,%p,%p,NULL,NULL) : %K",\
+                       (HANDLE)(hFile),(PSID)(owner),(PSID)(group),\
+                       DeeSystemError_Win32ToString(_dhc_error));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+
+
 #define DeeWin32Sys_HandleChown(hFile,owner,group,...)\
 do{\
- DWORD error;\
- if DEE_UNLIKELY((error = SetSecurityInfo(hFile,SE_FILE_OBJECT,\
-  OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,\
-  (PSID *)(owner),(PSID *)(group),NULL,NULL)) != 0) {\
-  DeeError_SetStringf(&DeeErrorType_SystemError,\
-                       "SetSecurityInfo(%p,SE_FILE_OBJECTOWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,%p,%p,NULL,NULL) : %K",\
-                       hFile,owner,group,DeeSystemError_Win32ToString(error));\
-  {__VA_ARGS__;}\
+ HANDLE _hc_hNewFile;\
+ if (!DeeWin32Sys_DoTryHandleChown(hFile,owner,group)) {\
+  /* Retry with fixed permissions */\
+  _hc_hNewFile = DeeWin32Sys_TryReOpenFile(hFile,WRITE_OWNER,FILE_SHARE_READ|FILE_SHARE_WRITE|\
+                                           FILE_SHARE_DELETE,FILE_GENERIC_WRITE);\
+  if (_hc_hNewFile == INVALID_HANDLE_VALUE) {\
+   if (DeeWin32Sys_AcquireSeRestorePrivilege()) {\
+    _hc_hNewFile = DeeWin32Sys_ReOpenFile(hFile,WRITE_OWNER,FILE_SHARE_READ|FILE_SHARE_WRITE|\
+                                          FILE_SHARE_DELETE,FILE_GENERIC_WRITE);\
+    if (_hc_hNewFile == INVALID_HANDLE_VALUE) {__VA_ARGS__;}\
+   } else {\
+    DeeError_SET_STRING(&DeeErrorType_SystemError,\
+                        "Failed to acquire \"SeRestorePrivilege\"");\
+    {__VA_ARGS__;}\
+   }\
+  }\
+  DeeWin32Sys_DoHandleChown(hFile,owner,group,{CloseHandle(_hc_hNewFile); {__VA_ARGS__;}});\
+  CloseHandle(_hc_hNewFile);\
  }\
 }while(0)
 
@@ -663,16 +776,18 @@ struct DeeWin32SysFileFD {
          ((openmode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_READ ? GENERIC_READ : GENERIC_WRITE)
 #define DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)\
  (DWORD)((FILE_FLAG_BACKUP_SEMANTICS|FILE_ATTRIBUTE_NORMAL)|(((perms)&0444)==0 ? FILE_ATTRIBUTE_READONLY : 0))
+#define DEE_WIN32_SYSFILEFD_OPENMODE_GETSHAREMODE(openmode)\
+ (FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE)
 
 
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoUtf8Init(struct DeeWin32SysFileFD *self, Dee_Utf8Char const *filename, DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideInit(struct DeeWin32SysFileFD *self, Dee_WideChar const *filename, DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoUtf8TryInit(struct DeeWin32SysFileFD *self, Dee_Utf8Char const *filename, DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideTryInit(struct DeeWin32SysFileFD *self, Dee_WideChar const *filename, DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoUtf8InitObject(struct DeeWin32SysFileFD *self, DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideInitObject(struct DeeWin32SysFileFD *self, DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoUtf8TryInitObject(struct DeeWin32SysFileFD *self, DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideTryInitObject(struct DeeWin32SysFileFD *self, DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8CreateFile(Dee_Utf8Char const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideCreateFile(Dee_WideChar const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8TryCreateFile(Dee_Utf8Char const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideTryCreateFile(Dee_WideChar const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8CreateFileObject(DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideCreateFileObject(DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8TryCreateFileObject(DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideTryCreateFileObject(DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
 
 #ifndef __INTELLISENSE__
 #define TRY_CREATE
@@ -689,52 +804,52 @@ do{\
 }while(0)
 
 #define DeeWin32SysFileFD_Utf8TryInitObject(self,filename,mode,perms) \
-((self)->w32_openmode = mode,DeeWin32SysFileFD_DoUtf8TryInitObject(self,filename,\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)))
+((self)->w32_openmode = mode,((self)->w32_handle = DeeWin32Sys_Utf8TryCreateFileObject(filename,\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),DEE_WIN32_SYSFILEFD_OPENMODE_GETSHAREMODE(mode),\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)\
+)) != INVALID_HANDLE_VALUE)
 #define DeeWin32SysFileFD_WideTryInitObject(self,filename,mode,perms) \
-((self)->w32_openmode = mode,DeeWin32SysFileFD_DoWideTryInitObject(self,filename,\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)))
+((self)->w32_openmode = mode,((self)->w32_handle = DeeWin32Sys_WideTryCreateFileObject(filename,\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),DEE_WIN32_SYSFILEFD_OPENMODE_GETSHAREMODE(mode),\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)\
+)) != INVALID_HANDLE_VALUE)
 #define DeeWin32SysFileFD_Utf8TryInit(self,filename,mode,perms) \
-((self)->w32_openmode = mode,DeeWin32SysFileFD_DoUtf8TryInit(self,filename,\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)))
+((self)->w32_openmode = mode,((self)->w32_handle = DeeWin32Sys_Utf8TryCreateFile(filename,\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),DEE_WIN32_SYSFILEFD_OPENMODE_GETSHAREMODE(mode),\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)\
+)) != INVALID_HANDLE_VALUE)
 #define DeeWin32SysFileFD_WideTryInit(self,filename,mode,perms) \
-((self)->w32_openmode = mode,DeeWin32SysFileFD_DoWideTryInit(self,filename,\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)))
+((self)->w32_openmode = mode,((self)->w32_handle = DeeWin32Sys_WideTryCreateFile(filename,\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),DEE_WIN32_SYSFILEFD_OPENMODE_GETSHAREMODE(mode),\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms)\
+)) != INVALID_HANDLE_VALUE)
 #define DeeWin32SysFileFD_Utf8InitObject(self,filename,mode,perms,...) \
 do{\
- if DEE_LIKELY(DeeWin32SysFileFD_DoUtf8InitObject(self,filename,\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),\
-  DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
- ) (self)->w32_openmode = mode; else {__VA_ARGS__;} \
+ if DEE_LIKELY(((self)->w32_handle = DeeWin32Sys_Utf8CreateFileObject(filename,\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),DEE_WIN32_SYSFILEFD_OPENMODE_GETSHAREMODE(mode),\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
+ ) != INVALID_HANDLE_VALUE) (self)->w32_openmode = mode; else {__VA_ARGS__;} \
 }while(0)
 #define DeeWin32SysFileFD_WideInitObject(self,filename,mode,perms,...) \
 do{\
- if DEE_LIKELY(DeeWin32SysFileFD_DoWideInitObject(self,filename,\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),\
-  DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
- ) (self)->w32_openmode = mode; else {__VA_ARGS__;} \
+ if DEE_LIKELY(((self)->w32_handle = DeeWin32Sys_WideCreateFileObject(filename,\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),DEE_WIN32_SYSFILEFD_OPENMODE_GETSHAREMODE(mode),\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
+ ) != INVALID_HANDLE_VALUE) (self)->w32_openmode = mode; else {__VA_ARGS__;} \
 }while(0)
 #define DeeWin32SysFileFD_Utf8Init(self,filename,mode,perms,...) \
 do{\
- if DEE_LIKELY(DeeWin32SysFileFD_DoUtf8Init(self,filename,\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),\
-  DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
- ) (self)->w32_openmode = mode; else {__VA_ARGS__;} \
+ if DEE_LIKELY(((self)->w32_handle = DeeWin32Sys_Utf8CreateFile(filename,\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),DEE_WIN32_SYSFILEFD_OPENMODE_GETSHAREMODE(mode),\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
+ ) != INVALID_HANDLE_VALUE) (self)->w32_openmode = mode; else {__VA_ARGS__;} \
 }while(0)
 #define DeeWin32SysFileFD_WideInit(self,filename,mode,perms,...) \
 do{\
- if DEE_LIKELY(DeeWin32SysFileFD_DoWideInit(self,filename,\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),\
-  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),\
-  DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
- ) (self)->w32_openmode = mode; else {__VA_ARGS__;} \
+ if DEE_LIKELY(((self)->w32_handle = DeeWin32Sys_WideCreateFile(filename,\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETACCESS(mode),DEE_WIN32_SYSFILEFD_OPENMODE_GETSHAREMODE(mode),\
+  DEE_WIN32_SYSFILEFD_OPENMODE_GETDISPOSITION(mode),DEE_WIN32_SYSFILEFD_PERMISSIONS_GETATTR(perms))\
+ ) != INVALID_HANDLE_VALUE) (self)->w32_openmode = mode; else {__VA_ARGS__;} \
 }while(0)
 
 

@@ -31,9 +31,16 @@ DEE_DECL_END
 
 #ifndef __INTELLISENSE__
 #include "virtual_fs.chdir.c.inl"
+#include "virtual_fs.chmod.c.inl"
+#include "virtual_fs.chown.c.inl"
+#include "virtual_fs.copy.c.inl"
+#include "virtual_fs.getmod.c.inl"
+#include "virtual_fs.getown.c.inl"
 #include "virtual_fs.gettimes.c.inl"
 #include "virtual_fs.hasproperty.c.inl"
+#include "virtual_fs.link.c.inl"
 #include "virtual_fs.mkdir.c.inl"
+#include "virtual_fs.move.c.inl"
 #include "virtual_fs.remove.c.inl"
 #include "virtual_fs.rmdir.c.inl"
 #include "virtual_fs.settimes.c.inl"

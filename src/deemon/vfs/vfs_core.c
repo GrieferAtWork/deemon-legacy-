@@ -49,6 +49,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WriteFilename(
  DEE_A_INOUT struct DeeStringWriter *writer, DEE_A_IN struct DeeVFSNode const *node) {
  DeeObject *name; int error;
  DeeObject *(DEE_CALL *nameofproc)(struct DeeVFSNode *,struct DeeVFSNode *);
+ DEE_ASSERT(writer); DEE_ASSERT(node);
  if (!node->vn_parent) return 0;
  if (DeeVFSNode_WriteFilename(writer,node->vn_parent) != 0) return -1;
  if (DeeStringWriter_WriteChar(writer,DEE_VFS_SEP) != 0) return -1;
@@ -63,6 +64,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WriteFilename(
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *
 DeeVFSNode_Filename(DEE_A_IN struct DeeVFSNode const *node) {
  DeeObject *result; struct DeeStringWriter writer = DeeStringWriter_INIT();
+ DEE_ASSERT(node);
  if (!node->vn_parent) DeeReturn_STATIC_STRING_EX(1,{DEE_VFS_SEP});
  if (DeeVFSNode_WriteFilename(&writer,node) != 0) result = NULL;
  else result = DeeStringWriter_Pack(&writer);
@@ -72,6 +74,7 @@ DeeVFSNode_Filename(DEE_A_IN struct DeeVFSNode const *node) {
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *
 DeeVFSNode_Pathname(DEE_A_IN struct DeeVFSNode const *node) {
  DeeObject *result;
+ DEE_ASSERT(node);
  if (!node->vn_parent) DeeReturn_STATIC_STRING_EX(1,{DEE_VFS_SEP});
  {
   struct DeeStringWriter writer = DeeStringWriter_INIT();
@@ -87,6 +90,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFSNode_HasHiddenFilename(
  DEE_A_IN struct DeeVFSNode const *self) {
  DeeObject *node_name; int result;
  DeeObject *(DEE_CALL *nameofproc)(struct DeeVFSNode *,struct DeeVFSNode *);
+ DEE_ASSERT(self);
  if DEE_UNLIKELY(!self->vn_parent) return 0;
  nameofproc = self->vn_parent->vn_type->vnt_node.vnt_nameof;
  if DEE_UNLIKELY(!nameofproc) return 0;
@@ -101,6 +105,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFSNode_HasHiddenFilename(
 
 DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self) {
  DeeStringObject *native_path;
+ DEE_ASSERT(self);
  if (!DeeVFSNode_IsNative(self)) return 0;
  native_path = ((struct DeeVFSNativeNode *)self)->vnn_path;
  if (!DeeString_SIZE(native_path)) return 0;
@@ -110,6 +115,7 @@ DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self)
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetTimes(
  DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
+ DEE_ASSERT(self);
  if (!self->vn_type->vnt_node.vnt_gettimes) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Can't read time for %R",
@@ -121,6 +127,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetTimes(
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_SetTimes(
       DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_OPT Dee_timetick_t const *atime,
  DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
+ DEE_ASSERT(self);
  if (!self->vn_type->vnt_node.vnt_settimes) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Can't write time for %R",
@@ -133,6 +140,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetTimes(
  DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  int error;
+ DEE_ASSERT(self);
  if (!self->vn_type->vnt_node.vnt_gettimes) return 0;
  error = (*self->vn_type->vnt_node.vnt_gettimes)(self,atime,ctime,mtime);
  if (error < 0) { DeeError_HandledOne(); error = 1; }
@@ -142,11 +150,118 @@ DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TrySetTimes(
       DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_OPT Dee_timetick_t const *atime,
  DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
  int error;
+ DEE_ASSERT(self);
  if (!self->vn_type->vnt_node.vnt_settimes) return 0;
  error = (*self->vn_type->vnt_node.vnt_settimes)(self,atime,ctime,mtime);
  if (error < 0) { DeeError_HandledOne(); error = 1; }
  return !error;
 }
+
+DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetMod(
+ DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_mode_t *mode) {
+ int error;
+ DEE_ASSERT(self); DEE_ASSERT(mode);
+ if (self->vn_type->vnt_node.vnt_getmod)
+  return (*self->vn_type->vnt_node.vnt_getmod)(self,mode);
+ *mode = (Dee_mode_t)(self->vn_type->vnt_file.vft_write ? 0222 : 0000);
+ if (self->vn_type->vnt_node.vnt_isexecutable) {
+  error = (*self->vn_type->vnt_node.vnt_isexecutable)(self);
+  if (error < 0) return error;
+  if (error) *mode |= 0111;
+ } else if (DeeVFSNode_FileHasView(self)) {
+  *mode |= 0111;
+ }
+ if (DeeVFSNode_FileHasOpen(self)) *mode |= 0444;
+ return 0;
+}
+DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetMod(
+ DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_mode_t *mode) {
+ DEE_ASSERT(self); DEE_ASSERT(mode);
+ int error;
+ DEE_ASSERT(self); DEE_ASSERT(mode);
+ if (self->vn_type->vnt_node.vnt_getmod) {
+  error = (*self->vn_type->vnt_node.vnt_getmod)(self,mode);
+  if (error < 0) { handle_error: DeeError_HandledOne(); return 0; }
+  return 1;
+ }
+ *mode = (Dee_mode_t)(self->vn_type->vnt_file.vft_write ? 0222 : 0000);
+ if (self->vn_type->vnt_node.vnt_isexecutable) {
+  error = (*self->vn_type->vnt_node.vnt_isexecutable)(self);
+  if (error < 0) goto handle_error;
+  if (error) *mode |= 0111;
+ } else if (DeeVFSNode_FileHasView(self)) {
+  *mode |= 0111;
+ }
+ if (DeeVFSNode_FileHasOpen(self)) *mode |= 0444;
+ return 1;
+}
+
+DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chmod(
+ DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_mode_t mode) {
+ DEE_ASSERT(self);
+ if (!self->vn_type->vnt_node.vnt_chmod) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Can't chmod %R",
+                      DeeVFSNode_Filename(self));
+  return -1;
+ }
+ return (*self->vn_type->vnt_node.vnt_chmod)(self,mode);
+}
+DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryChmod(
+ DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_mode_t mode) {
+ int error;
+ DEE_ASSERT(self);
+ if (!self->vn_type->vnt_node.vnt_chmod) return 0;
+ error = (*self->vn_type->vnt_node.vnt_chmod)(self,mode);
+ if (error < 0) { DeeError_HandledOne(); return 0; }
+ return 1;
+}
+
+DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetOwn(
+ DEE_A_INOUT struct DeeVFSNode *self,
+ DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
+ DEE_ASSERT(self);
+ if (!self->vn_type->vnt_node.vnt_getown) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Can't getown %R",
+                      DeeVFSNode_Filename(self));
+  return -1;
+ }
+ return (*self->vn_type->vnt_node.vnt_getown)(self,owner,group);
+}
+DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetOwn(
+ DEE_A_INOUT struct DeeVFSNode *self,
+ DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
+ int error; DEE_ASSERT(self);
+ DEE_ASSERT(self);
+ if (!self->vn_type->vnt_node.vnt_getown) return 0;
+ error = (*self->vn_type->vnt_node.vnt_getown)(self,owner,group);
+ if (error < 0) { DeeError_HandledOne(); return 0; }
+ return 1;
+}
+DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(
+ DEE_A_INOUT struct DeeVFSNode *self,
+ DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
+ DEE_ASSERT(self);
+ if (!self->vn_type->vnt_node.vnt_chown) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Can't chown %R",
+                      DeeVFSNode_Filename(self));
+  return -1;
+ }
+ return (*self->vn_type->vnt_node.vnt_chown)(self,owner,group);
+}
+DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryChown(
+ DEE_A_INOUT struct DeeVFSNode *self,
+ DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
+ int error; DEE_ASSERT(self);
+ DEE_ASSERT(self);
+ if (!self->vn_type->vnt_node.vnt_chown) return 0;
+ error = (*self->vn_type->vnt_node.vnt_chown)(self,owner,group);
+ if (error < 0) { DeeError_HandledOne(); return 0; }
+ return 1;
+}
+
 
 
 

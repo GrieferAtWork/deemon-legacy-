@@ -47,6 +47,7 @@
 #include <deemon/none.h>
 #include <deemon/string.h>
 #include <deemon/tuple.h>
+#include <deemon/sys/sysfs.h>
 #include <deemon/file/file.fd.h>
 #include "unicode/char_traits.inl"
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
@@ -283,7 +284,7 @@ DEE_STATIC_INLINE(void) _deewin32_acquire_se_debug_privilege(void) {
   static Dee_WideChar const debug_privilege[] = {
    'S','e','D','e','b','u','g','P','r','i','v','i','l','e','g','e','\0'};
   // Acquire the debug privilege that will allow us to open all the processes (at least if we're admin)
-  (void)_Dee_Win32AcquireProcessPrivilege(debug_privilege);
+  DeeWin32Sys_AcquirePrivilege(debug_privilege);
  });
 }
 

@@ -788,6 +788,24 @@ DEE_A_RET_EXCEPT(-1) int _DeeSAst_ParseTryHandler(
    } else {
     handler_kind = DeeExceptionHandleKind_TYPED;
    }
+   if (token.tk_id == '|') {
+    // TODO: Support for multiple exceptions:
+    // >> try {
+    // >>   dangerous_function();
+    // >> } catch (PossibleError1|PossibleError2 e) {
+    // >>   print "Now that happened again:",e;
+    // >> } catch (PossibleError3 e) {
+    // >>   print "This is different:",e;
+    // >> }
+    // The runtime should implement this with the same
+    // hack used by non-constant exception masks.
+    // TODO: There should be a warning if the given masks imply each other:
+    // >> try {
+    // >>   foo_call();
+    // >> } catch (Error|Error.ValueError e) {
+    // >>   // WARNING: Exception mask Error.ValueError is already implied by Error
+    // >> }
+   }
    // Check for storage for the caught expression
    if DEE_UNLIKELY(token.tk_id != ')') {
     // Must parse an additional storage expression

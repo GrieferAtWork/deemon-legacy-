@@ -185,7 +185,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryDelEnvObject(DEE_A_IN_OBJECT(DeeWideStri
 #elif defined(DeeSysFS_Utf8TryDelEnvObject)
  DeeObject *envname_ob; int result;
  if DEE_UNLIKELY((envname_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(envname),DeeWideString_STR(envname))) == NULL) { DeeError_HandledOne(); return -1; }
+  DeeWideString_SIZE(envname),DeeWideString_STR(envname))) == NULL) { DeeError_HandledOne(); return 0; }
  result = DeeSysFS_Utf8TryDelEnvObject(envname_ob);
  Dee_DECREF(envname_ob);
  return result;

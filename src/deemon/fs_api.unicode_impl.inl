@@ -31,7 +31,7 @@ DEE_DECL_BEGIN
 #define _DeeVFS_F(x)               _DeeVFS_Wide##x
 #define WIN32_F(x)                 x##W
 #define DeeString_F(x)             DeeWideString_##x
-#define DEE_STRINGOBJECT           DeeWideStringObject
+#define DEESTRINGOBJECT            DeeWideStringObject
 #define DEE_CHAR                   Dee_WideChar
 #define DEE_STRLEN                 Dee_WideStrLen
 #define DEE_STRINGWRITER           DeeWideStringWriter
@@ -54,7 +54,7 @@ DEE_DECL_BEGIN
 #define _DeeVFS_F(x)               _DeeVFS_Utf8##x
 #define WIN32_F(x)                 x##A
 #define DeeString_F(x)             DeeUtf8String_##x
-#define DEE_STRINGOBJECT           DeeUtf8StringObject
+#define DEESTRINGOBJECT            DeeUtf8StringObject
 #define DEE_CHAR                   Dee_Utf8Char
 #define DEE_STRLEN                 Dee_Utf8StrLen
 #define DEE_CHAR_C(x)              x
@@ -85,6 +85,42 @@ DEE_DECL_BEGIN
 
 
 
+DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeFS_F(ChmodEx)(
+ DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN Dee_size_t mcc,
+ DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) {
+ Dee_mode_t newmode; DEE_ASSERT(mcc && mcv);
+ if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET &&
+     _DeeFS_F(GetMod)(path,&newmode) != 0) return -1;
+ _DeeFS_ExecModeChange(&newmode,mcc,mcv);
+ return _DeeFS_F(Chmod)(path,newmode);
+}
+DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeFS_F(ChmodExObject)(
+ DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path, DEE_A_IN Dee_size_t mcc,
+ DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) {
+ Dee_mode_t newmode; DEE_ASSERT(mcc && mcv);
+ if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET &&
+     _DeeFS_F(GetModObject)(path,&newmode) != 0) return -1;
+ _DeeFS_ExecModeChange(&newmode,mcc,mcv);
+ return _DeeFS_F(ChmodObject)(path,newmode);
+}
+DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeFS_F(ChmodEx)(
+ DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN Dee_size_t mcc,
+ DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) {
+ Dee_mode_t newmode; DEE_ASSERT(mcc && mcv);
+ if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET &&
+     DeeFS_F(GetMod)(path,&newmode) != 0) return -1;
+ _DeeFS_ExecModeChange(&newmode,mcc,mcv);
+ return DeeFS_F(Chmod)(path,newmode);
+}
+DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int DeeFS_F(ChmodExObject)(
+ DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path, DEE_A_IN Dee_size_t mcc,
+ DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) {
+ Dee_mode_t newmode; DEE_ASSERT(mcc && mcv);
+ if (DEE_MODECHANGE_KIND(mcv[0]) != DEE_MODECHANGE_KIND_SET &&
+     DeeFS_F(GetModObject)(path,&newmode) != 0) return -1;
+ _DeeFS_ExecModeChange(&newmode,mcc,mcv);
+ return DeeFS_F(ChmodObject)(path,newmode);
+}
 
 
 #ifdef DEE_PLATFORM_WINDOWS
@@ -121,7 +157,7 @@ DeeFS_F(Win32PathUNC)(DEE_A_IN_Z DEE_CHAR const *path) {
 }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(Win32GetModuleName)(DEE_A_IN_OPT /*HMODULE*/void *module) {
  DeeObject *result; DWORD temp; Dee_size_t bufsize;
  if DEE_UNLIKELY((result = DEE_STRING_NewSized((
@@ -255,56 +291,13 @@ end:
  free_nn(buffer);
  return result;
 }
-
-static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32FGetFileType)(
- DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN HANDLE handle) {
- DWORD error,ftype;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY((ftype = GetFileType(handle)) == 0
-              && (error = DeeSystemError_Win32Consume()) != 0) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "GetFileType(%p:" DEE_PRINTF_STRQ ") : %K",
-                      handle,path,DeeSystemError_Win32ToString(error));
-  return -1;
- }
- return (int)ftype;
-}
-static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32GetFileType)(
- DEE_A_IN_Z DEE_CHAR const *path) {
- DWORD error; int ftype; HANDLE handle;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY((handle = WIN32_F(CreateFile)(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|
-  FILE_SHARE_DELETE,NULL,OPEN_EXISTING,0,NULL)) != INVALID_HANDLE_VALUE) {
-  ftype = _DeeFS_F(Win32FGetFileType)(path,handle);
-  if DEE_UNLIKELY(!CloseHandle(handle)) SetLastError(0);
-  return ftype;
- }
- error = DeeSystemError_Win32Consume();
-#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
- if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
-    !DeeFS_F(Win32IsPathUNC)(path)) {
-  DeeObject *temp;
-  if DEE_UNLIKELY((temp = DeeFS_F(Win32PathUNC)(path)) == NULL) return -1;
-  ftype = _DeeFS_WideWin32GetFileType(DeeWideString_STR(temp));
-  Dee_DECREF(temp);
-  return ftype;
- }
-#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
- if (error == ERROR_ACCESS_DENIED && _DeeFS_F(IsDir)(path)) return 0;
- if (WIN32_IS_FILE_NOT_FOUND_ERROR(error)) return 0;
- DeeError_SetStringf(&DeeErrorType_SystemError,
-                     DEE_PP_STR(WIN32_F(CreateFile))
-                     "(" DEE_PRINTF_STRQ ") : %K",
-                     path,DeeSystemError_Win32ToString(error));
- return -1;
-}
 #endif
 
 
 #ifdef WIDE
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *) _dee_fs_wide_gen_initial_tmpname
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *) _dee_fs_wide_gen_initial_tmpname
 #else
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *) _dee_fs_utf8_gen_initial_tmpname
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *) _dee_fs_utf8_gen_initial_tmpname
 #endif
 (DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_Z DEE_CHAR const *prefix, DEE_A_OUT DEE_CHAR **digits) {
  static DEE_CHAR const name_0000temp[] = {'0','0','0','0','.','t','m','p',0};
@@ -364,7 +357,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _deefs_utf8_inc_tmpname
  return 0;
 }
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *_DeeFS_F(GetTmpName)(
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *_DeeFS_F(GetTmpName)(
  DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_Z DEE_CHAR const *prefix) {
  DeeObject *result; DEE_CHAR *digits;
 #ifdef WIDE
@@ -386,7 +379,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *_DeeFS_F(GetTmpName)(
  return result;
 }
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(GetTmpName)(
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeFS_F(GetTmpName)(
  DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_Z DEE_CHAR const *prefix) {
  DeeObject *path_ob,*result;
  if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return NULL;
@@ -395,405 +388,6 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(GetTmpName)(
  return result;
 }
 
-
-#ifdef DEE_PLATFORM_WINDOWS
-DEE_COMPILER_PREFAST_WARNING_PUSH(6387)
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetDllDirectory)(void) {
-#ifdef WIDE
- typedef DWORD (WINAPI *LPGETDLLDIRECTORYW)(DWORD nBufferLength, LPWSTR lpBuffer);
- static LPGETDLLDIRECTORYW p_GetDllDirectoryW = NULL;
- static char const s_GetDllDirectoryW[] = "GetDllDirectoryW";
-#else
- typedef DWORD (WINAPI *LPGETDLLDIRECTORYA)(DWORD nBufferLength, LPSTR lpBuffer);
- static LPGETDLLDIRECTORYA p_GetDllDirectoryA = NULL;
- static char const s_GetDllDirectoryA[] = "GetDllDirectoryA";
-#endif
- DWORD temp; DeeObject *result;
- DEE_ATOMIC_ONCE({
-  WIN32_F(p_GetDllDirectory) = (WIN32_F(LPGETDLLDIRECTORY))GetProcAddress(
-   GetModuleHandle(TEXT("KERNEL32")),WIN32_F(s_GetDllDirectory));
- });
- if DEE_UNLIKELY(!WIN32_F(p_GetDllDirectory)) {
-  DeeError_SET_STRING(&DeeErrorType_SystemError,
-                      DEE_PP_STR(WIN32_F(GetDllDirectory))
-                      "(...) : Not implemented");
-  return NULL;
- }
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
- if DEE_UNLIKELY((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETDLLDIRECTORY)) == NULL) return NULL;
- temp = (*WIN32_F(p_GetDllDirectory))(DEE_XCONFIG_FSBUFSIZE_WIN32GETDLLDIRECTORY+1,DEE_STRING_STR(result));
- if DEE_UNLIKELY(!temp) {
-  int error;
-err:
-  error = (int)DeeSystemError_Win32Consume();
-  Dee_DECREF(result);
-  if DEE_UNLIKELY(!error) DEERETURN_EMPTYSTRING;
-  DeeError_SystemErrorExplicit(DEE_PP_STR(WIN32_F(GetDllDirectoryW)),(DWORD)error);
-  return NULL;
- }
- if DEE_UNLIKELY(temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETDLLDIRECTORY) {
-again:
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
-err_r: Dee_DECREF(result); return NULL;
-  }
-  temp = (*WIN32_F(p_GetDllDirectory))(temp+1,DEE_STRING_STR(result));
-  if DEE_UNLIKELY(!temp) goto err;
-  if DEE_UNLIKELY(temp > DEE_STRING_SIZE(result)) goto again;
-  if (temp < DEE_STRING_SIZE(result)) {
-   if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  }
- } else {
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
- }
- return result;
-}
-DEE_COMPILER_PREFAST_WARNING_POP
-
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetSystemDirectory)(void) {
- DWORD temp; DeeObject *result; int error;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
- if DEE_UNLIKELY((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMDIRECTORY)) == NULL) return NULL;
- if DEE_UNLIKELY((temp = WIN32_F(GetSystemDirectory)(
-  DEE_STRING_STR(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMDIRECTORY)) == 0) {
-err: error = (int)DeeSystemError_Win32Consume();
-  Dee_DECREF(result);
-  if DEE_UNLIKELY(!error) DEERETURN_EMPTYSTRING;
-  DeeError_SystemErrorExplicit(DEE_PP_STR(WIN32_F(GetSystemDirectoryW)),(DWORD)error);
-  return NULL;
- }
- if DEE_UNLIKELY(temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMDIRECTORY) {
-again:
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
-err_r: Dee_DECREF(result); return NULL;
-  }
-  temp = WIN32_F(GetSystemDirectory)(DEE_STRING_STR(result),temp);
-  if DEE_UNLIKELY(!temp) goto err;
-  if DEE_UNLIKELY(temp > DEE_STRING_SIZE(result)) goto again;
-  if (temp < DEE_STRING_SIZE(result)) {
-   if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  }
- } else {
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
- }
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetWindowsDirectory)(void) {
- DWORD temp; DeeObject *result; int error;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
- if DEE_UNLIKELY((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETWINDOWSDIRECTORY)) == NULL) return NULL;
- temp = WIN32_F(GetWindowsDirectory)(DEE_STRING_STR(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETWINDOWSDIRECTORY);
- if DEE_UNLIKELY(!temp) {
-err: error = (int)DeeSystemError_Win32Consume();
-  Dee_DECREF(result);
-  if DEE_UNLIKELY(!error) DEERETURN_EMPTYSTRING;
-  DeeError_SystemErrorExplicit(DEE_PP_STR(WIN32_F(GetWindowsDirectory)),(DWORD)error);
-  return NULL;
- }
- if DEE_UNLIKELY(temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETWINDOWSDIRECTORY) {
-again:
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
-err_r: Dee_DECREF(result); return NULL;
-  }
-  temp = WIN32_F(GetWindowsDirectory)(DEE_STRING_STR(result),temp);
-  if DEE_UNLIKELY(!temp) goto err;
-  if DEE_UNLIKELY(temp > DEE_STRING_SIZE(result)) goto again;
-  if (temp < DEE_STRING_SIZE(result)) {
-   if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  }
- } else {
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
- }
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetSystemWindowsDirectory)(void) {
- DWORD temp; DeeObject *result;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
- if DEE_UNLIKELY((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMWINDOWSDIRECTORY)) == NULL) return NULL;
- temp = WIN32_F(GetSystemWindowsDirectory)(DEE_STRING_STR(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMWINDOWSDIRECTORY);
- if DEE_UNLIKELY(!temp) {
-  int error;
-err:
-  error = (int)DeeSystemError_Win32Consume();
-  Dee_DECREF(result);
-  if DEE_UNLIKELY(!error) DEERETURN_EMPTYSTRING;
-  DeeError_SystemErrorExplicit(DEE_PP_STR(WIN32_F(GetSystemWindowsDirectoryW)),(DWORD)error);
-  return NULL;
- }
- if DEE_UNLIKELY(temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSTEMWINDOWSDIRECTORY) {
-again:
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {
-err_r: Dee_DECREF(result); return NULL;
-  }
-  temp = WIN32_F(GetSystemWindowsDirectory)(DEE_STRING_STR(result),temp);
-  if DEE_UNLIKELY(!temp) goto err;
-  if DEE_UNLIKELY(temp > DEE_STRING_SIZE(result)) goto again;
-  if (temp < DEE_STRING_SIZE(result)) {
-   if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  }
- } else {
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
- }
- return result;
-}
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(Win32GetSysWow64Directory)(void) {
- DWORD temp; DeeObject *result;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
- if DEE_UNLIKELY((result = DEE_STRING_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSWOW64DIRECTORY)) == NULL) return NULL;
- temp = WIN32_F(GetSystemWow64Directory)(DEE_STRING_STR(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSWOW64DIRECTORY);
- if DEE_UNLIKELY(!temp) {
-  int error;
-err:
-  error = (int)DeeSystemError_Win32Consume();
-  Dee_DECREF(result);
-  if (!error) DEERETURN_EMPTYSTRING;
-  DeeError_SystemErrorExplicit(DEE_PP_STR(WIN32_F(GetSystemWow64Directory)),(DWORD)error);
-  return NULL;
- }
- if DEE_UNLIKELY(temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETSYSWOW64DIRECTORY) {
-again:
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) {err_r: Dee_DECREF(result); return NULL; }
-  temp = WIN32_F(GetSystemWow64Directory)(DEE_STRING_STR(result),temp);
-  if DEE_UNLIKELY(!temp) goto err;
-  if DEE_UNLIKELY(temp > DEE_STRING_SIZE(result)) goto again;
-  if (temp < DEE_STRING_SIZE(result)) {
-   if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
-  }
- } else {
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
- }
- return result;
-}
-
-static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32FSetFileTime)(
- DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN HANDLE handle, DEE_A_IN_OPT FILETIME const *tm_access,
- DEE_A_IN_OPT FILETIME const *tm_creation, DEE_A_IN_OPT FILETIME const *tm_modification) {
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY(!SetFileTime(handle,tm_creation,tm_access,tm_modification)) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "SetFileTime(%p:" DEE_PRINTF_STRQ ",%I64u,%I64u,%I64u) : %K",
-                      handle,path,
-                      tm_creation ? *(Dee_uint64_t*)tm_creation : (Dee_uint64_t)0,
-                      tm_access ? *(Dee_uint64_t*)tm_access : (Dee_uint64_t)0,
-                      tm_modification ? *(Dee_uint64_t*)tm_modification : (Dee_uint64_t)0,
-                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
-  return -1;
- }
- return 0;
-}
-static DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Win32SetFileTime)(
- DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_OPT FILETIME const *tm_access,
- DEE_A_IN_OPT FILETIME const *tm_creation, DEE_A_IN_OPT FILETIME const *tm_modification) {
- DWORD error; int result;
- HANDLE handle;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY((handle = WIN32_F(CreateFile)(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|
-  FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_GENERIC_WRITE,NULL)) != INVALID_HANDLE_VALUE) {
-  result = _DeeFS_F(Win32FSetFileTime)(path,handle,tm_access,tm_creation,tm_modification);
-  if DEE_UNLIKELY(!CloseHandle(handle)) SetLastError(0);
-  return result;
- }
- error = DeeSystemError_Win32Consume();
-#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
- if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
-    !DeeFS_F(Win32IsPathUNC)(path)) {
-  DeeObject *temp;
-  if DEE_UNLIKELY((temp = DeeFS_F(Win32PathUNC)(path)) == NULL) return -1;
-  result = _DeeFS_WideWin32SetFileTime(DeeWideString_STR(temp),tm_access,
-                                       tm_creation,tm_modification);
-  Dee_DECREF(temp);
-  return result;
- }
-#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
- DeeError_SetStringf(&DeeErrorType_SystemError,
-                     DEE_PP_STR(WIN32_F(CreateFile))
-                     "(" DEE_PRINTF_STRQ ") : %K",
-                     path,DeeSystemError_Win32ToString(error));
- return -1;
-}
-#endif
-
-
-DEE_A_RET_EXCEPT(-1) int _DeeFS_F(SetTimes2)(
- DEE_A_IN_Z DEE_CHAR const *path,
- DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) const *tm_access,
- DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) const *tm_creation,
- DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) const *tm_modification) {
- DEE_ASSERT(path);
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (_DeeVFS_F(IsVirtualPath)(path)) {
-  struct DeeVFSFile file; DeeObject *rfs_path; int temp;
-  if DEE_UNLIKELY((temp = DeeVFS_F(LocateOrReadReFsLink)(path,&file,&rfs_path)) < 0) return -1;
-  if (temp == 0) {
-   if (rfs_path) {
-    temp = _DeeFS_F(SetTimes2)(DEE_STRING_STR(rfs_path),tm_access,
-                               tm_creation,tm_modification);
-    Dee_DECREF(rfs_path);
-    return temp;
-   }
-   return 0;
-  }
- }
-#endif
- {
-#ifdef DEE_PLATFORM_WINDOWS
-  FILETIME ftm_access,ftm_creation,ftm_modification;
-  DEE_ASSERT(!tm_access || (DeeObject_Check(tm_access) && DeeTime_Check(tm_access)));
-  DEE_ASSERT(!tm_creation || (DeeObject_Check(tm_creation) && DeeTime_Check(tm_creation)));
-  DEE_ASSERT(!tm_modification || (DeeObject_Check(tm_modification) && DeeTime_Check(tm_modification)));
-  if (tm_access && DEE_UNLIKELY(DeeTime_AsWin32FileTime(tm_access,&ftm_access) != 0)) return -1;
-  if (tm_creation && DEE_UNLIKELY(DeeTime_AsWin32FileTime(tm_creation,&ftm_creation) != 0)) return -1;
-  if (tm_modification && DEE_UNLIKELY(DeeTime_AsWin32FileTime(tm_modification,&ftm_modification) != 0)) return -1;
-  return _DeeFS_F(Win32SetFileTime)(path,
-   tm_access ? &ftm_access : NULL,
-   tm_creation ? &ftm_creation : NULL,
-   tm_modification ? &ftm_modification : NULL);
-#elif defined(WIDE)
-  DeeObject *path_ob; int result;
-  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) return -1;
-  result = _DeeFS_Utf8SetTimes2(DeeUtf8String_STR(path_ob),tm_access,tm_creation,tm_modification);
-  Dee_DECREF(path_ob);
-  return result;
-#elif DEE_ENVIRONMENT_HAVE_INCLUDE_UTIME_H
-  // NOTE: Under linux we can't set the creation time
-  struct utimbuf times;
-  int error;
-  if (!tm_access || !tm_modification) {
-   DeeObject *atemp,*mtemp; int temp;
-   if DEE_UNLIKELY(!tm_access && !tm_modification) return 0; // no-op
-   if DEE_UNLIKELY(_DeeFS_GetTimes2(path,
-    tm_access ? NULL : &atemp,NULL,
-    tm_modification ? NULL : &mtemp
-    ) != 0) return -1;
-   temp = DeeTime_AsTimeT(tm_access ? tm_access : atemp,&times.actime);
-   if DEE_UNLIKELY(temp == 0) temp = DeeTime_AsTimeT(
-    tm_modification ? tm_modification : mtemp,&times.actime);
-   if (!tm_access) Dee_DECREF(atemp);
-   if (!tm_modification) Dee_DECREF(mtemp);
-   if (temp == -1) return -1;
-  } else {
-   if DEE_UNLIKELY(DEE_UNLIKELY(DeeTime_AsTimeT(tm_access,&times.actime) != 0)
-                || DEE_UNLIKELY(DeeTime_AsTimeT(tm_modification,&times.modtime) != 0)
-                ) return -1;
-  }
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
-  if DEE_UNLIKELY(utime(path,&times) != 0) {
-   DeeError_SetStringf(&DeeErrorType_SystemError,
-                       "utime(" DEE_PRINTF_STRQ ",<%O>,<%O>) : %K",
-                       path,tm_access,tm_modification,
-                       DeeSystemError_ToString(DeeSystemError_Consume()));
-   return -1;
-  }
-  return 0;
-#else
-  (void)path;
-  (void)tm_access;
-  (void)tm_creation;
-  (void)tm_modification;
-  return 0;
-#endif
- }
-}
-
-DEE_A_RET_EXCEPT(-1) int _DeeFS_F(GetTimes2)(
- DEE_A_IN_Z DEE_CHAR const *path,
- DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **tm_access,
- DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **tm_creation,
- DEE_A_REF DEE_A_OUT_OBJECT_OPT(struct DeeTimeObject) **tm_modification) {
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (_DeeVFS_F(IsVirtualPath)(path)) {
-  struct DeeVFSFile file; DeeObject *rfs_path; int temp;
-  if DEE_UNLIKELY((temp = DeeVFS_F(LocateOrReadReFsLink)(path,&file,&rfs_path)) < 0) return -1;
-  if (temp == 0) {
-   if (rfs_path) {
-    temp = _DeeFS_F(GetTimes2)(DEE_STRING_STR(
-     rfs_path),tm_access,tm_creation,tm_modification);
-    Dee_DECREF(rfs_path);
-    return temp;
-   }
-   if (tm_access) if DEE_UNLIKELY((*tm_access = DeeTime_New(0)) == NULL) return -1;
-   if (tm_creation) if DEE_UNLIKELY((*tm_creation = DeeTime_New(0)) == NULL) goto err_0;
-   if (tm_modification) if DEE_UNLIKELY((*tm_modification = DeeTime_New(0)) == NULL) goto err_1;
-   return 0;
-  }
- }
-#endif
- {
-#ifdef DEE_PLATFORM_WINDOWS
-  HANDLE file_handle; int error;
-  WIN32_FILE_ATTRIBUTE_DATA attribute_data;
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
-  if DEE_UNLIKELY((file_handle = WIN32_F(CreateFile)(path,GENERIC_READ,FILE_SHARE_WRITE|
-   FILE_SHARE_READ|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL)) == INVALID_HANDLE_VALUE) {
-   error = (int)DeeSystemError_Win32Consume();
-#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
-   if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
-      !DeeFS_F(Win32IsPathUNC)(path)) {
-    DeeObject *temp;
-    if DEE_UNLIKELY((temp = DeeFS_F(Win32PathUNC)(path)) == NULL) return -1;
-    error = _DeeFS_WideGetTimes2(DeeWideString_STR(temp),tm_access,tm_creation,tm_modification);
-    Dee_DECREF(temp);
-    return error;
-   }
-#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
-   if (error == ERROR_ACCESS_DENIED) {
-    // This can happen if 'path' is not a file, but a directory
-    if DEE_UNLIKELY(!WIN32_F(GetFileAttributesEx)(
-     path,GetFileExInfoStandard,&attribute_data)) {
-     SetLastError(0);
-    } else goto put_data;
-   }
-   DeeError_SetStringf(&DeeErrorType_SystemError,
-                       DEE_PP_STR(WIN32_F(CreateFile))
-                       "(" DEE_PRINTF_STRQ ") : %K",
-                       path,DeeSystemError_Win32ToString((unsigned long)error));
-   return -1;
-  }
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_fh;
-  if DEE_UNLIKELY(!GetFileTime(file_handle,
-   tm_access ? &attribute_data.ftLastAccessTime : NULL,
-   tm_creation ? &attribute_data.ftCreationTime : NULL,
-   tm_modification ? &attribute_data.ftLastWriteTime : NULL)) {
-   DeeError_SetStringf(&DeeErrorType_SystemError,
-                       "GetFileTime(%p:" DEE_PRINTF_STRQ ") : %K",
-                       file_handle,path,
-                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
-err_fh: if DEE_UNLIKELY(!CloseHandle(file_handle)) SetLastError(0);
-   return -1;
-  }
-  if DEE_UNLIKELY(!CloseHandle(file_handle)) SetLastError(0);
-put_data:
-  if (tm_access && DEE_UNLIKELY((*tm_access = DeeTime_NewFromWin32FileTime(&attribute_data.ftLastAccessTime)) == NULL)) return -1;
-  if (tm_creation && DEE_UNLIKELY((*tm_creation = DeeTime_NewFromWin32FileTime(&attribute_data.ftCreationTime)) == NULL)) goto err_0;
-  if (tm_modification && DEE_UNLIKELY((*tm_modification = DeeTime_NewFromWin32FileTime(&attribute_data.ftLastWriteTime)) == NULL)) goto err_1;
-#elif defined(WIDE)
-  DeeObject *path_ob; int result;
-  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) return -1;
-  result = _DeeFS_Utf8GetTimes2(DeeUtf8String_STR(path_ob),tm_access,tm_creation,tm_modification);
-  Dee_DECREF(path_ob);
-  return result;
-#elif defined(DEE_PLATFORM_UNIX)
-  struct stat attrib;
-  if DEE_UNLIKELY(_deefs_posix_stat(path,&attrib) != 0) return -1;
-  if (tm_access && DEE_UNLIKELY((*tm_access = DeeTime_NewFromTimeT(attrib.st_atime)) == NULL)) return -1;
-  if (tm_creation && DEE_UNLIKELY((*tm_creation = DeeTime_NewFromTimeT(attrib.st_ctime)) == NULL)) goto err_0;
-  if (tm_modification && DEE_UNLIKELY((*tm_modification = DeeTime_NewFromTimeT(attrib.st_mtime)) == NULL)) goto err_1;
-#else
-  (void)path;
-  if (tm_access && DEE_UNLIKELY((*tm_access = DeeTime_New(0)) == NULL)) return -1;
-  if (tm_creation && DEE_UNLIKELY((*tm_creation = DeeTime_New(0)) == NULL)) goto err_0;
-  if (tm_modification && DEE_UNLIKELY((*tm_modification = DeeTime_New(0)) == NULL)) goto err_1;
-#endif
-  return 0;
-err_1: if (tm_creation) Dee_DECREF(*tm_creation);
-err_0: if (tm_access) Dee_DECREF(*tm_access);
-  return -1;
- }
-}
 
 #ifdef DEE_PLATFORM_WINDOWS
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -818,375 +412,6 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) WIN32_F(fixed_GetFileAttributes)(
 #endif /* !DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
 #endif
 
-
-
-DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Copy)(
- DEE_A_IN_Z DEE_CHAR const *src, DEE_A_IN_Z DEE_CHAR const *dst) {
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (_DeeVFS_F(IsVirtualPath)(src)) {
-  DeeObject *src_path; int result;
-  if DEE_UNLIKELY((src_path = DeeVFS_F(ReadReFsLink)(src)) == NULL) return -1;
-  result = _DeeFS_F(Copy)(DEE_STRING_STR(src_path),dst);
-  Dee_DECREF(src_path);
-  return result;
- }
- if (_DeeVFS_F(IsVirtualPath)(dst)) {
-  DeeObject *dst_path; int result;
-  if DEE_UNLIKELY((dst_path = DeeVFS_F(ReadReFsLink)(dst)) == NULL) return -1;
-  result = _DeeFS_F(Copy)(src,DEE_STRING_STR(dst_path));
-  Dee_DECREF(dst_path);
-  return result;
- }
-#endif
-#ifdef DEE_PLATFORM_WINDOWS
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if (!WIN32_F(CopyFile)(src,dst,TRUE)) {
-  int error = (int)DeeSystemError_Win32Consume();
-#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
-#ifdef WIDE
-  if (DEE_FS_WIN32_IS_UNC_ERROR(error)) {
-   DeeObject *temp;
-   if (!DeeFS_WideWin32IsPathUNC(src)) {
-    if DEE_UNLIKELY((temp = DeeFS_WideWin32PathUNC(src)) == NULL) return -1;
-    error = _DeeFS_WideCopy(DeeWideString_STR(temp),dst);
-    goto unc_end0;
-   }
-   if (!DeeFS_WideWin32IsPathUNC(dst)) {
-    if DEE_UNLIKELY((temp = DeeFS_WideWin32PathUNC(dst)) == NULL) return -1;
-    error = _DeeFS_WideCopy(src,DeeWideString_STR(temp));
-unc_end0: Dee_DECREF(temp);
-    return error;
-   }
-  }
-#else
-  if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
-     (!DeeFS_Utf8Win32IsPathUNC(src) ||
-      !DeeFS_Utf8Win32IsPathUNC(dst))) {
-   DeeObject *unc_src,*unc_dst;
-   if DEE_UNLIKELY((unc_src = DeeFS_Utf8Win32IsPathUNC(src)
-    ? DeeFS_Utf8Win32PathUNC(src)
-    : DeeWideString_FromUtf8String(src)) == NULL) return -1;
-   if DEE_UNLIKELY((unc_dst = DeeFS_Utf8Win32IsPathUNC(dst)
-    ? DeeFS_Utf8Win32PathUNC(dst)
-    : DeeWideString_FromUtf8String(dst)) == NULL) { error = -1; goto err_unc0; }
-   error = _DeeFS_WideCopy(DeeWideString_STR(unc_src),
-                           DeeWideString_STR(unc_dst));
-   Dee_DECREF(unc_dst);
-err_unc0: Dee_DECREF(unc_src);
-   return error;
-  }
-#endif
-#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      DEE_PP_STR(WIN32_F(CopyFile))
-                      "(" DEE_PRINTF_STRQ "," DEE_PRINTF_STRQ ") : %K",
-                      src,dst,error,DeeSystemError_Win32ToString((unsigned long)error));
-  return -1;
- }
- return 0;
-#elif defined(WIDE)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeUtf8String_FromWideString(src)) == NULL) return -1;
- if DEE_UNLIKELY((dst_ob = DeeUtf8String_FromWideString(dst)) == NULL) { result = -1; goto end_0; }
- result = _DeeFS_Utf8Copy(DeeUtf8String_STR(src_ob),DeeUtf8String_STR(dst_ob));
- Dee_DECREF(dst_ob);
-end_0: Dee_DECREF(src_ob);
- return result;
-#elif defined(DEE_PLATFORM_UNIX)
- int fd_dst,fd_src;
- char buf[4096];
- ssize_t nread;
- int saved_errno;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- fd_src = open(src,O_RDONLY);
- if DEE_UNLIKELY(fd_src < 0) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "open(" DEE_PRINTF_STRQ ") : copy:open(src) : %K",src,
-                      DeeSystemError_ToString(DeeSystemError_Consume()));
-  return -1;
- }
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_from;
- fd_dst = open(dst,O_WRONLY|O_CREAT|O_EXCL,DEE_FILEIO_DEFAULT_PERMISSIONS);
- if DEE_UNLIKELY(fd_dst < 0) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "open(" DEE_PRINTF_STRQ ") : copy:open(dst) : %K",dst,
-                      DeeSystemError_ToString(DeeSystemError_Consume()));
-err_from:
-  if DEE_UNLIKELY(close(fd_src) != 0) errno = 0;
-  return -1;
- }
- while (1) {
-  char *out_ptr;
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_to;
-  nread = read(fd_src,buf,sizeof(buf));
-  if (nread <= 0) break;
-  out_ptr = buf;
-  ssize_t nwritten;
-  do {
-   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_to;
-   nwritten = write(fd_dst,out_ptr,nread);
-   if DEE_LIKELY(nwritten >= 0) {
-    nread -= nwritten;
-    out_ptr += nwritten;
-   } else if DEE_UNLIKELY(errno != EINTR) {
-    DeeError_SetStringf(&DeeErrorType_SystemError,
-                        "copy.dst:write(%d: " DEE_PRINTF_STRQ ") : %K",fd_dst,dst,
-                        DeeSystemError_ToString(DeeSystemError_Consume()));
-err_to:
-    if DEE_UNLIKELY(close(fd_dst) != 0) errno = 0;
-#if 1
-    if DEE_UNLIKELY(unlink(dst) != 0) errno = 0; // Erase partially copied fp
-#endif
-    goto err_from;
-   }
-  } while (nread > 0);
- }
- if (nread == 0) {
-  if DEE_UNLIKELY(close(fd_dst) != 0) {
-   DeeError_SetStringf(&DeeErrorType_SystemError,
-                       "copy.dst:close(%d: " DEE_PRINTF_STRQ ") : %K",fd_dst,dst,
-                       DeeSystemError_ToString(DeeSystemError_Consume()));
-   goto err_from;
-  }
-  if DEE_UNLIKELY(close(fd_src) != 0) errno = 0;
-  return 0; // success
- } else {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "copy.src:read(%d: " DEE_PRINTF_STRQ ") : %K",fd_src,src,
-                      DeeSystemError_ToString(DeeSystemError_Consume()));
-  goto err_to;
- }
-#else
- (void)src,dst;
- return 0;
-#endif
-}
-
-
-
-DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Move)(
- DEE_A_IN_Z DEE_CHAR const *src, DEE_A_IN_Z DEE_CHAR const *dst) {
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (_DeeVFS_F(IsVirtualPath)(src)) {
-  DeeObject *src_path; int result;
-  if DEE_UNLIKELY((src_path = DeeVFS_F(ReadReFsLink)(src)) == NULL) return -1;
-  result = _DeeFS_F(Move)(DEE_STRING_STR(src_path),dst);
-  Dee_DECREF(src_path);
-  return result;
- }
- if (_DeeVFS_F(IsVirtualPath)(dst)) {
-  DeeObject *dst_path; int result;
-  if DEE_UNLIKELY((dst_path = DeeVFS_F(ReadReFsLink)(dst)) == NULL) return -1;
-  result = _DeeFS_F(Move)(src,DEE_STRING_STR(dst_path));
-  Dee_DECREF(dst_path);
-  return result;
- }
-#endif
-#ifdef DEE_PLATFORM_WINDOWS
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY(!WIN32_F(MoveFile)(src,dst)) {
-  int error = (int)DeeSystemError_Win32Consume();
-#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
-#ifdef WIDE
-  if (DEE_FS_WIN32_IS_UNC_ERROR(error)) {
-   DeeObject *temp;
-   if (!DeeFS_WideWin32IsPathUNC(src)) {
-    if DEE_UNLIKELY((temp = DeeFS_WideWin32PathUNC(src)) == NULL) return -1;
-    error = _DeeFS_WideMove(DeeWideString_STR(temp),dst);
-    goto unc_end0;
-   }
-   if (!DeeFS_WideWin32IsPathUNC(dst)) {
-    if DEE_UNLIKELY((temp = DeeFS_WideWin32PathUNC(dst)) == NULL) return -1;
-    error = _DeeFS_WideMove(src,DeeWideString_STR(temp));
-unc_end0: Dee_DECREF(temp);
-    return error;
-   }
-  }
-#else
-  if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
-     (!DeeFS_Utf8Win32IsPathUNC(src) ||
-      !DeeFS_Utf8Win32IsPathUNC(dst))) {
-   DeeObject *unc_src,*unc_dst;
-   if DEE_UNLIKELY((unc_src = DeeFS_Utf8Win32IsPathUNC(src)
-    ? DeeFS_Utf8Win32PathUNC(src)
-    : DeeWideString_FromUtf8String(src)) == NULL) return -1;
-   if DEE_UNLIKELY((unc_dst = DeeFS_Utf8Win32IsPathUNC(dst)
-    ? DeeFS_Utf8Win32PathUNC(dst)
-    : DeeWideString_FromUtf8String(dst)) == NULL) { error = -1; goto err_unc0; }
-   error = _DeeFS_WideMove(
-    DeeWideString_STR(unc_src),DeeWideString_STR(unc_dst));
-   Dee_DECREF(unc_dst);
-err_unc0: Dee_DECREF(unc_src);
-   return error;
-  }
-#endif
-#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      DEE_PP_STR(WIN32_F(MoveFile))
-                      "(" DEE_PRINTF_STRQ "," DEE_PRINTF_STRQ ") : %K",
-                      src,dst,DeeSystemError_Win32ToString((unsigned long)error));
-  return -1;
- }
- return 0;
-#elif defined(WIDE)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeUtf8String_FromWideString(src)) == NULL) return -1;
- if DEE_UNLIKELY((dst_ob = DeeUtf8String_FromWideString(dst)) == NULL) { result = -1; goto end_0; }
- result = _DeeFS_Utf8Move(DeeUtf8String_STR(src_ob),DeeUtf8String_STR(dst_ob));
- Dee_DECREF(dst_ob);
-end_0: Dee_DECREF(src_ob);
- return result;
-#elif DEE_HAVE_RENAME
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY(rename(src,dst) != 0) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "rename(" DEE_PRINTF_STRQ "," DEE_PRINTF_STRQ ") : %K",src,dst,
-                      DeeSystemError_ToString(DeeSystemError_Consume()));
-  return -1;
- }
- return 0;
-#else
- (void)src,dst;
- return 0;
-#endif
-}
-
-
-
-DEE_A_RET_EXCEPT(-1) int _DeeFS_F(Link)(
- DEE_A_IN_Z DEE_CHAR const *src, DEE_A_IN_Z DEE_CHAR const *dst) {
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (_DeeVFS_F(IsVirtualPath)(src)) {
-  DeeObject *src_path; int result;
-  if DEE_UNLIKELY((src_path = DeeVFS_F(ReadReFsLink)(src)) == NULL) return -1;
-  result = _DeeFS_F(Link)(DEE_STRING_STR(src_path),dst);
-  Dee_DECREF(src_path);
-  return result;
- }
- if (_DeeVFS_F(IsVirtualPath)(dst)) {
-  DeeObject *dst_path; int result;
-  if DEE_UNLIKELY((dst_path = DeeVFS_F(ReadReFsLink)(dst)) == NULL) return -1;
-  result = _DeeFS_F(Link)(src,DEE_STRING_STR(dst_path));
-  Dee_DECREF(dst_path);
-  return result;
- }
-#endif
- {
-#ifdef DEE_PLATFORM_WINDOWS
-  DWORD attr;
-#ifdef WIDE
-  typedef BOOLEAN (APIENTRY *LPCREATESYMBOLICLINKW)(
-   LPCWSTR lpSymlinkFileName, LPCWSTR lpTargetFileName, DWORD dwFlags);
-  static LPCREATESYMBOLICLINKW p_CreateSymbolicLinkW = NULL;
-  static char const s_CreateSymbolicLinkW[] = "CreateSymbolicLinkW";
-#else
-  typedef BOOLEAN (APIENTRY *LPCREATESYMBOLICLINKA)(
-   LPCSTR lpSymlinkFileName, LPCSTR lpTargetFileName, DWORD dwFlags);
-  static LPCREATESYMBOLICLINKA p_CreateSymbolicLinkA = NULL;
-  static char const s_CreateSymbolicLinkA[] = "CreateSymbolicLinkA";
-#endif
-  DEE_ATOMIC_ONCE({
-   WIN32_F(p_CreateSymbolicLink) = (WIN32_F(LPCREATESYMBOLICLINK))GetProcAddress(
-   GetModuleHandle(TEXT("KERNEL32")),WIN32_F(s_CreateSymbolicLink));
-  });
-  if DEE_UNLIKELY(!WIN32_F(p_CreateSymbolicLink)) {
-   DeeError_SET_STRING(&DeeErrorType_SystemError,
-                       DEE_PP_STR(WIN32_F(CreateSymbolicLink))
-                       "(...) : Not implemented");
-   return -1;
-  }
-  // Try to enable the privilege
-  // If this fails, we get a permissions error later
-  _deefs_win32_enable_symlink();
-  // TODO: In python3, the following...
-  // >> import _winapi
-  // >> print(_winapi.CreateJunction("include", "newinclude"))
-  // ... manages to create a directory link without admin rights...
-  if DEE_UNLIKELY(WIN32_F(fixed_GetFileAttributes)(src,&attr) != 0) return -1;
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
-  if DEE_UNLIKELY(!(*WIN32_F(p_CreateSymbolicLink))(dst,src,(DWORD)(
-   ((attr&FILE_ATTRIBUTE_DIRECTORY)!=0) ? SYMBOLIC_LINK_FLAG_DIRECTORY : 0))) {
-   int error = (int)DeeSystemError_Win32Consume();
-#if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
-#ifdef WIDE
-   if (DEE_FS_WIN32_IS_UNC_ERROR(error)) {
-    DeeObject *temp;
-    if (!DeeFS_WideWin32IsPathUNC(src)) {
-     if DEE_UNLIKELY((temp = DeeFS_WideWin32PathUNC(src)) == NULL) return -1;
-     error = _DeeFS_WideLink(DeeWideString_STR(temp),dst);
-     goto unc_end0;
-    }
-    if (!DeeFS_WideWin32IsPathUNC(dst)) {
-     if DEE_UNLIKELY((temp = DeeFS_WideWin32PathUNC(dst)) == NULL) return -1;
-     error = _DeeFS_WideLink(src,DeeWideString_STR(temp));
-unc_end0: Dee_DECREF(temp);
-     return error;
-    }
-   }
-#else
-   if (DEE_FS_WIN32_IS_UNC_ERROR(error) &&
-      (!DeeFS_Utf8Win32IsPathUNC(src) ||
-       !DeeFS_Utf8Win32IsPathUNC(dst))) {
-    DeeObject *unc_src,*unc_dst;
-    if DEE_UNLIKELY((unc_src = DeeFS_Utf8Win32IsPathUNC(src)
-     ? DeeFS_Utf8Win32PathUNC(src)
-     : DeeWideString_FromUtf8String(src)) == NULL) return -1;
-    if DEE_UNLIKELY((unc_dst = DeeFS_Utf8Win32IsPathUNC(dst)
-     ? DeeFS_Utf8Win32PathUNC(dst)
-     : DeeWideString_FromUtf8String(dst)) == NULL) { error = -1; goto err_unc0; }
-    error = _DeeFS_WideLink(DeeWideString_STR(unc_src),
-                            DeeWideString_STR(unc_dst));
-    Dee_DECREF(unc_dst);
-err_unc0: Dee_DECREF(unc_src);
-    return error;
-   }
-#endif
-#endif /* DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC */
-#if 0
-   if (error == ERROR_PRIVILEGE_NOT_HELD) { // We can't create symbolic links...
-    // TODO: Try out luck with 'mklink <dst> <src>'
-    if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
-    if DEE_UNLIKELY(!WIN32_F(CreateHardLink)(dst,src,NULL)) {
-     DeeError_SetStringf(&DeeErrorType_SystemError,
-                         DEE_PP_STR(WIN32_F(CreateHardLink))
-                         "(" DEE_PRINTF_STRQ "," DEE_PRINTF_STRQ ") : %K",dst,src,
-                         DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
-     return -1;
-    }
-   } else
-#endif
-   {
-    DeeError_SetStringf(&DeeErrorType_SystemError,
-                        DEE_PP_STR(WIN32_F(CreateSymbolicLink))
-                        "(" DEE_PRINTF_STRQ "," DEE_PRINTF_STRQ ") : %K",
-                        dst,src,DeeSystemError_Win32ToString((unsigned long)error));
-    return -1;
-   }
-  }
-  return 0;
-#elif defined(WIDE)
-  DeeObject *src_ob,*dst_ob; int result;
-  if DEE_UNLIKELY((src_ob = DeeUtf8String_FromWideString(src)) == NULL) return -1;
-  if DEE_UNLIKELY((dst_ob = DeeUtf8String_FromWideString(dst)) == NULL) { result = -1; goto end_0; }
-  result = _DeeFS_Utf8Link(DeeUtf8String_STR(src_ob),DeeUtf8String_STR(dst_ob));
-  Dee_DECREF(dst_ob);
-end_0: Dee_DECREF(src_ob);
-  return result;
-#elif defined(DEE_PLATFORM_UNIX)
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
-  if DEE_UNLIKELY(link(src,dst) != 0) {
-   DeeError_SetStringf(&DeeErrorType_SystemError,
-                       "link(%q,%q) : %K",src,dst,
-                       DeeSystemError_ToString(DeeSystemError_Consume()));
-   return -1;
-  }
-  return 0;
-#else
-  (void)src,dst;
-  return 0;
-#endif
- }
-}
 
 
 #ifdef DEE_PLATFORM_WINDOWS
@@ -1228,7 +453,7 @@ typedef struct _REPARSE_DATA_BUFFER {
 DEE_COMPILER_MSVC_WARNING_POP
 #endif
 
-static DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+static DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 _DeeFS_F(Win32ReadLinkHandle)(DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN HANDLE hfile) {
  DeeObject *result; DWORD bytesReturned; Dee_size_t bufsize;
  REPARSE_DATA_BUFFER *buffer;
@@ -1296,7 +521,7 @@ err_buffer:
 #endif
 
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 _DeeFS_F(ReadLink)(DEE_A_IN_Z DEE_CHAR const *path) {
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
  if (_DeeVFS_F(IsVirtualPath)(path)) return DeeVFS_F(ReadLink)(path);
@@ -1380,7 +605,7 @@ err_r:
 // - Slashes are stripped from all path elements
 // - Empty paths are ignored
 // - All paths are joined with the platform-specific slash
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *)
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
 DeeFS_F(PathJoinObject)(DEE_A_IN Dee_size_t pathc, DEE_A_IN_R(pathc) DeeObject const *const *pathv) {
  DeeObject *result; DeeObject const *const *iter,*const *end,*elem;
  DEE_CHAR const *path_begin,*path_end;
@@ -1418,8 +643,8 @@ err: result = NULL; goto end;
 #pragma warning(push)
 #pragma warning(disable: 28020)
 #endif
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *)
-DeeFS_F(PathExpandVarsObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
+DeeFS_F(PathExpandVarsObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DEE_CHAR ch,*iter,*end,*var_begin,*var_end,*var_name;
  DeeObject *var_value,*result; Dee_size_t varname_len; int temp;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
@@ -1493,8 +718,8 @@ err: result = NULL; goto end;
 #endif
 
 
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *)
-DeeFS_F(PathExpandUserObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
+DeeFS_F(PathExpandUserObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DeeObject *result;
  DEE_CHAR *path_begin,*path_end,*user,*user_begin;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
@@ -1549,8 +774,8 @@ DeeFS_F(PathExpandUserObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
 
 
 
-static DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *_DeeFS_F(PathAbsObject)(
- DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path, DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *cwd) {
+static DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *_DeeFS_F(PathAbsObject)(
+ DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path, DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *cwd) {
  DEE_CHAR const *path_begin,*path_end,*cwd_begin,*cwd_end;
  DeeObject *result,*real_cwd,*new_cwd; DEE_CHAR *result_iter;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
@@ -1610,8 +835,8 @@ skip_path_sep:
 
 
 
-static DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *_DeeFS_F(PathRelObject)(
- DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path, DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *cwd) {
+static DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *_DeeFS_F(PathRelObject)(
+ DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path, DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *cwd) {
  DEE_CHAR const *path_begin,*path_end,*path_part,*cwd_begin,*cwd_end,*cwd_part;
  DEE_CHAR *result_iter; unsigned int up_refs; DeeObject *result,*real_cwd = NULL,*temp;
  if (!_DeeFS_F(IsAbs)(DEE_STRING_STR(path))) {
@@ -1707,8 +932,8 @@ common_end:
 }
 
 // Returns the head of a filename (excluding trail). e.g.: "/foo/bar.txt" --> "/foo/"
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *)
-DeeFS_F(PathHeadObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
+DeeFS_F(PathHeadObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DEE_CHAR *path_begin,*path_end,*new_path_end;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
  new_path_end = path_end = (path_begin = DEE_STRING_STR(path))+DEE_STRING_SIZE(path);
@@ -1719,8 +944,8 @@ DeeFS_F(PathHeadObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
 }
 
 // Returns the tail of a filename. e.g.: "/foo/bar.txt" --> "bar.txt"
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *)
-DeeFS_F(PathTailObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
+DeeFS_F(PathTailObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DEE_CHAR *path_begin,*path_end,*new_path_begin;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
  new_path_begin = path_end = (path_begin = DEE_STRING_STR(path))+DEE_STRING_SIZE(path);
@@ -1730,8 +955,8 @@ DeeFS_F(PathTailObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
 }
 
 // Returns the name of a filename. e.g.: "/foo/bar.txt" --> "bar"
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
-DeeFS_F(PathFileObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
+DeeFS_F(PathFileObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DEE_CHAR *path_begin,*path_end,*new_path_begin,*new_path_end;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
  new_path_begin = path_end = (path_begin = DEE_STRING_STR(path))+DEE_STRING_SIZE(path);
@@ -1743,8 +968,8 @@ DeeFS_F(PathFileObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
 }
 
 // Returns the extension of a filename. e.g.: "/foo/bar.txt" --> ".txt" (Return "" if no extension is found)
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *)
-DeeFS_F(PathExtObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
+DeeFS_F(PathExtObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DEE_CHAR *path_begin,*path_end,*new_path_begin;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
  new_path_begin = path_end = (path_begin = DEE_STRING_STR(path))+DEE_STRING_SIZE(path);
@@ -1757,8 +982,8 @@ DeeFS_F(PathExtObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
 }
 
 // Returns the drive of a filename (including trail). e.g.: "C:/foo/bar.txt" --> "C:/" (Always returns the root folder "/" on non-windows systems; return "" if the path is relative)
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *)
-DeeFS_F(PathDriveObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
+DeeFS_F(PathDriveObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
 #ifdef DRIVE_SEP
  DEE_CHAR *path_begin,*path_end,*new_path_end;
  Dee_size_t drive_len; DeeObject *result;
@@ -1786,8 +1011,8 @@ DeeFS_F(PathDriveObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
 }
 
 // Appends a missing trailing slash to the given path. e.g.: "/foo/bar" --> "/foo/bar/"
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *)
-DeeFS_F(PathIncTrailObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
+DeeFS_F(PathIncTrailObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DEE_CHAR *path_begin,*path_end; Dee_size_t path_len; DeeObject *result;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
  path_end = (path_begin = DEE_STRING_STR(path))+(path_len = DEE_STRING_SIZE(path));
@@ -1802,8 +1027,8 @@ DeeFS_F(PathIncTrailObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
 }
 
 // Exclude all trailing slashes from a given path. e.g.: "/foo/bar///" --> "/foo/bar"
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
-DeeFS_F(PathExcTrailObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
+DeeFS_F(PathExcTrailObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DEE_CHAR *path_begin,*path_end,*new_path_end; Dee_size_t path_len;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
  new_path_end = path_end = (path_begin = DEE_STRING_STR(path))+(path_len = DEE_STRING_SIZE(path));
@@ -1859,7 +1084,7 @@ expand:
 
 
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathHead)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1867,7 +1092,7 @@ DeeFS_F(PathHead)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathTail)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1875,7 +1100,7 @@ DeeFS_F(PathTail)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathFile)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1883,7 +1108,7 @@ DeeFS_F(PathFile)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathExt)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1891,7 +1116,7 @@ DeeFS_F(PathExt)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathDrive)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1899,7 +1124,7 @@ DeeFS_F(PathDrive)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathIncTrail)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1907,7 +1132,7 @@ DeeFS_F(PathIncTrail)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathExcTrail)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1916,7 +1141,7 @@ DeeFS_F(PathExcTrail)(DEE_A_IN_Z DEE_CHAR const *path) {
  return result;
 }
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(PathAbs)(
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeFS_F(PathAbs)(
  DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_Z DEE_CHAR const *cwd) {
  DeeObject *result,*path_ob,*cwd_ob;
  if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return NULL;
@@ -1926,7 +1151,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(PathAbs)(
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(PathRel)(
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeFS_F(PathRel)(
  DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_Z DEE_CHAR const *cwd) {
  DeeObject *result,*path_ob,*cwd_ob;
  if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return NULL;
@@ -1936,7 +1161,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeFS_F(PathRel)(
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *_DeeFS_F(PathAbs)(
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *_DeeFS_F(PathAbs)(
  DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_Z DEE_CHAR const *cwd) {
  DeeObject *result,*path_ob,*cwd_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1946,7 +1171,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *_DeeFS_F(PathAbs)(
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *_DeeFS_F(PathRel)(
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *_DeeFS_F(PathRel)(
  DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN_Z DEE_CHAR const *cwd) {
  DeeObject *result,*path_ob,*cwd_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1959,7 +1184,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *_DeeFS_F(PathRel)(
 
 
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathExpand)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1970,8 +1195,8 @@ DeeFS_F(PathExpand)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(result);
  return path_ob;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
-DeeFS_F(PathExpandObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
+DeeFS_F(PathExpandObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
  DeeObject *result;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
  if DEE_UNLIKELY((path = DeeFS_F(PathExpandVarsObject)(path)) == NULL) return NULL;;
@@ -1983,7 +1208,7 @@ DeeFS_F(PathExpandObject)(DEE_A_IN_OBJECT(DEE_STRINGOBJECT) const *path) {
 
 
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathExpandVars)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
@@ -1991,43 +1216,12 @@ DeeFS_F(PathExpandVars)(DEE_A_IN_Z DEE_CHAR const *path) {
  Dee_DECREF(path_ob);
  return result;
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(PathExpandUser)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DEE_STRING_New(path)) == NULL) return NULL;
  result = DeeFS_F(PathExpandUserObject)(path_ob);
  Dee_DECREF(path_ob);
- return result;
-}
-
-DEE_A_RET_EXCEPT(-1) int DeeFS_F(Copy)(
- DEE_A_IN_Z DEE_CHAR const *src, DEE_A_IN_Z DEE_CHAR const *dst) {
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeFS_F(PathExpand)(src)) == NULL) return -1;
- if DEE_UNLIKELY((dst_ob = DeeFS_F(PathExpand)(dst)) == NULL) { result = -1; goto err_0; }
- result = _DeeFS_F(Copy)(DEE_STRING_STR(src_ob),DEE_STRING_STR(dst_ob));
- Dee_DECREF(dst_ob);
-err_0: Dee_DECREF(src_ob);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_F(Move)(
- DEE_A_IN_Z DEE_CHAR const *src, DEE_A_IN_Z DEE_CHAR const *dst) {
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeFS_F(PathExpand)(src)) == NULL) return -1;
- if DEE_UNLIKELY((dst_ob = DeeFS_F(PathExpand)(dst)) == NULL) { result = -1; goto err_0; }
- result = _DeeFS_F(Move)(DEE_STRING_STR(src_ob),DEE_STRING_STR(dst_ob));
- Dee_DECREF(dst_ob);
-err_0: Dee_DECREF(src_ob);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_F(Link)(
- DEE_A_IN_Z DEE_CHAR const *src, DEE_A_IN_Z DEE_CHAR const *dst) {
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeFS_F(PathExpand)(src)) == NULL) return -1;
- if DEE_UNLIKELY((dst_ob = DeeFS_F(PathExpand)(dst)) == NULL) { result = -1; goto err_0; }
- result = _DeeFS_F(Link)(DEE_STRING_STR(src_ob),DEE_STRING_STR(dst_ob));
- Dee_DECREF(dst_ob);
-err_0: Dee_DECREF(src_ob);
  return result;
 }
 
@@ -2045,37 +1239,11 @@ err_0: Dee_DECREF(src_path);
  return result;
 }
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *
+DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeFS_F(ReadLink)(DEE_A_IN_Z DEE_CHAR const *path) {
  DeeObject *result,*path_ob;
  if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return NULL;
  result = _DeeFS_F(ReadLink)(DEE_STRING_STR(path_ob));
- Dee_DECREF(path_ob);
- return result;
-}
-
-DEE_A_RET_EXCEPT(-1) int DeeFS_F(Chmod)(
- DEE_A_IN_Z DEE_CHAR const *path, DEE_A_IN Dee_mode_t mode) {
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return -1;
- result = _DeeFS_F(Chmod)(DEE_STRING_STR(path),mode);
- Dee_DECREF(path);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_F(GetMod)(
- DEE_A_IN_Z DEE_CHAR const *path, DEE_A_OUT Dee_mode_t *mode) {
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return -1;
- result = _DeeFS_F(GetMod)(DEE_STRING_STR(path_ob),mode);
- Dee_DECREF(path_ob);
- return result;
-}
-DEE_A_RET_EXCEPT(-1) int DeeFS_F(GetOwn)(
- DEE_A_IN_Z DEE_CHAR const *path,
- DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeFS_F(PathExpand)(path)) == NULL) return -1;
- result = _DeeFS_F(GetOwn)(DEE_STRING_STR(path_ob),owner,group);
  Dee_DECREF(path_ob);
  return result;
 }
@@ -2086,7 +1254,7 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_F(GetOwn)(
 #undef _DeeVFS_F
 #undef WIN32_F
 #undef DeeString_F
-#undef DEE_STRINGOBJECT
+#undef DEESTRINGOBJECT
 #undef DEE_CHAR
 #undef DEE_STRLEN
 #undef DEE_PRINTF_STR

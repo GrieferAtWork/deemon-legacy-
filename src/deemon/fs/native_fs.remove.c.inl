@@ -263,7 +263,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryRemoveObject(DEE_A_IN_OBJECT(DeeWideStri
      (defined(DeeSysFS_Utf8TryUnlinkObject) && defined(DeeSysFS_Utf8TryRmDirObject))
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return -1; }
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
 #ifdef DeeSysFS_Utf8TryRemoveObject
  result = DeeSysFS_Utf8TryRemoveObject(path_ob);
 #else

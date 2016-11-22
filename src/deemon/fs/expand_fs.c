@@ -30,9 +30,16 @@ DEE_DECL_END
 
 #ifndef __INTELLISENSE__
 #include "expand_fs.chdir.c.inl"
+#include "expand_fs.chmod.c.inl"
+#include "expand_fs.chown.c.inl"
+#include "expand_fs.copy.c.inl"
+#include "expand_fs.getmod.c.inl"
+#include "expand_fs.getown.c.inl"
 #include "expand_fs.gettimes.c.inl"
 #include "expand_fs.hasproperty.c.inl"
+#include "expand_fs.link.c.inl"
 #include "expand_fs.mkdir.c.inl"
+#include "expand_fs.move.c.inl"
 #include "expand_fs.remove.c.inl"
 #include "expand_fs.rmdir.c.inl"
 #include "expand_fs.settimes.c.inl"

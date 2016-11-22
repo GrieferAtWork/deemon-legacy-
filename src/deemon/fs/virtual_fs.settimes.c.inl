@@ -132,7 +132,7 @@ call_native: return DeeNFS_Utf8TrySetTimes(path,atime,ctime,mtime);
   filenode = DeeVFS_Utf8LocateWithCWD(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
- if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return 0; }
  error = DeeVFSNode_TrySetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
  return error;
@@ -152,7 +152,7 @@ call_native: return DeeNFS_WideTrySetTimes(path,atime,ctime,mtime);
   filenode = DeeVFS_WideLocateWithCWD(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
- if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return 0; }
  error = DeeVFSNode_TrySetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
  return error;
@@ -173,7 +173,7 @@ call_native: return DeeNFS_Utf8TrySetTimesObject(path,atime,ctime,mtime);
   filenode = DeeVFS_Utf8LocateWithCWDObject(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
- if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return 0; }
  error = DeeVFSNode_TrySetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
  return error;
@@ -194,7 +194,7 @@ call_native: return DeeNFS_WideTrySetTimesObject(path,atime,ctime,mtime);
   filenode = DeeVFS_WideLocateWithCWDObject(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
- if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return 0; }
  error = DeeVFSNode_TrySetTimes(filenode,atime,ctime,mtime);
  DeeVFSNode_DECREF(filenode);
  return error;

@@ -185,7 +185,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryRmDirObject(DEE_A_IN_OBJECT(DeeWideStrin
 #elif defined(DeeSysFS_Utf8TryRmDirObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return -1; }
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
  result = DeeSysFS_Utf8TryRmDirObject(path_ob);
  Dee_DECREF(path_ob);
  return result;

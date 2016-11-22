@@ -89,7 +89,7 @@ DeeObject *DeeWin32Sys_Utf8GetHandleFilename
  });
  if (pGetFinalPathNameByHandle) {
   if DEE_UNLIKELY((result = DeeString_F(NewSized)(
-   DEE_XCONFIG_FSBUFSIZE_WIN32_GETFINALPATHBYHANDLE)) == NULL) return NULL;
+   DEE_XCONFIG_FSBUFSIZE_WIN32GETFINALPATHBYHANDLE)) == NULL) return NULL;
 gfpbh_again:
   error = (*pGetFinalPathNameByHandle)(hFile,DeeString_F(STR)(result),
                                        (DWORD)DeeString_F(SIZE)(result),
@@ -170,7 +170,7 @@ err_filemap:
   return NULL;
  }
  if DEE_UNLIKELY((result = DeeString_F(NewSized)(
-  DEE_XCONFIG_FSBUFSIZE_WIN32_GETMAPPEDFILENAME)) == NULL) goto err_filemap;
+  DEE_XCONFIG_FSBUFSIZE_WIN32GETMAPPEDFILENAME)) == NULL) goto err_filemap;
  hCurrProcess = GetCurrentProcess();
 mapfilename_again:
  error = (*pGetMappedFileName)(hCurrProcess,pMem,DeeString_F(STR)(result),

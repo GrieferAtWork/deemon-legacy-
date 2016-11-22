@@ -260,7 +260,11 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 #if  defined(DeeSysFS_Utf8Remove) || defined(DeeSysFS_WideRemove)\
  ||  defined(DeeSysFS_Utf8RemoveObject) || defined(DeeSysFS_WideRemoveObject)\
  ||  defined(DeeSysFS_Utf8TryRemove) || defined(DeeSysFS_WideTryRemove)\
- ||  defined(DeeSysFS_Utf8TryRemoveObject) || defined(DeeSysFS_WideTryRemoveObject)\
+ ||  defined(DeeSysFS_Utf8TryRemoveObject) || defined(DeeSysFS_WideTryRemoveObject)
+#define DEE_NFS_HAVE_OSREMOVE
+#endif
+
+#if  defined(DEE_NFS_HAVE_OSREMOVE)\
  || (defined(DeeSysFS_Utf8TryUnlink) && defined(DeeSysFS_Utf8RmDir))\
  || (defined(DeeSysFS_WideTryUnlink) && defined(DeeSysFS_WideRmDir))\
  || (defined(DeeSysFS_Utf8TryUnlinkObject) && defined(DeeSysFS_Utf8RmDirObject))\
@@ -273,7 +277,7 @@ DEE_PRIVATE_DECL_DEE_OBJECT
  || (defined(DeeSysFS_WideTryUnlink) && defined(DeeSysFS_WideTryRmDir))\
  || (defined(DeeSysFS_Utf8TryUnlinkObject) && defined(DeeSysFS_Utf8TryRmDirObject))\
  || (defined(DeeSysFS_WideTryUnlinkObject) && defined(DeeSysFS_WideTryRmDirObject))
-#define DEE_NFS_HAVE_REMOVE
+#define DEE_NFS_HAVE_REMOVE /*< We can (and do) simulate remove with try_unlink+rmdir/try_rmdir+unlink. */
 #endif
 
 #if defined(DeeSysFS_Utf8Unlink) || defined(DeeSysFS_WideUnlink)\
@@ -295,6 +299,32 @@ DEE_PRIVATE_DECL_DEE_OBJECT
  || defined(DeeSysFS_Utf8TryMkDir) || defined(DeeSysFS_WideTryMkDir)\
  || defined(DeeSysFS_Utf8TryMkDirObject) || defined(DeeSysFS_WideTryMkDirObject)
 #define DEE_NFS_HAVE_MKDIR
+#endif
+
+#if defined(DeeSysFS_Utf8Copy) || defined(DeeSysFS_WideCopy)\
+ || defined(DeeSysFS_Utf8CopyObject) || defined(DeeSysFS_WideCopyObject)\
+ || defined(DeeSysFS_Utf8TryCopy) || defined(DeeSysFS_WideTryCopy)\
+ || defined(DeeSysFS_Utf8TryCopyObject) || defined(DeeSysFS_WideTryCopyObject)
+#define DEE_NFS_HAVE_OSCOPY
+#endif
+#if defined(DEE_NFS_HAVE_OSCOPY)\
+ ||(defined(DeeSysFileFD) && (defined(DeeSysFileFD_Read) || defined(DeeSysFD_Read))\
+                          && (defined(DeeSysFileFD_Write) || defined(DeeSysFD_Write)))
+#define DEE_NFS_HAVE_COPY /*< We can (and do) simulate copy through sysfd. */
+#endif
+
+#if defined(DeeSysFS_Utf8Move) || defined(DeeSysFS_WideMove)\
+ || defined(DeeSysFS_Utf8MoveObject) || defined(DeeSysFS_WideMoveObject)\
+ || defined(DeeSysFS_Utf8TryMove) || defined(DeeSysFS_WideTryMove)\
+ || defined(DeeSysFS_Utf8TryMoveObject) || defined(DeeSysFS_WideTryMoveObject)
+#define DEE_NFS_HAVE_MOVE
+#endif
+
+#if defined(DeeSysFS_Utf8Link) || defined(DeeSysFS_WideLink)\
+ || defined(DeeSysFS_Utf8LinkObject) || defined(DeeSysFS_WideLinkObject)\
+ || defined(DeeSysFS_Utf8TryLink) || defined(DeeSysFS_WideTryLink)\
+ || defined(DeeSysFS_Utf8TryLinkObject) || defined(DeeSysFS_WideTryLinkObject)
+#define DEE_NFS_HAVE_LINK
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -574,6 +604,33 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMkDir(DEE_A_IN_Z Dee_WideChar con
 extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryMkDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode);
 extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMkDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode);
 
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Copy(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideCopy(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8CopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideCopyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryCopy(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryCopy(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryCopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryCopyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst);
+
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Move(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMove(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8MoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryMove(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMove(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryMoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst);
+
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Link(DEE_A_IN_Z Dee_Utf8Char const *link_name, DEE_A_IN_Z Dee_Utf8Char const *target_name);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideLink(DEE_A_IN_Z Dee_WideChar const *link_name, DEE_A_IN_Z Dee_WideChar const *target_name);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8LinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *link_name, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *target_name);
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideLinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *link_name, DEE_A_IN_OBJECT(DeeWideStringObject) const *target_name);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryLink(DEE_A_IN_Z Dee_Utf8Char const *link_name, DEE_A_IN_Z Dee_Utf8Char const *target_name);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryLink(DEE_A_IN_Z Dee_WideChar const *link_name, DEE_A_IN_Z Dee_WideChar const *target_name);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryLinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *link_name, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *target_name);
+extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryLinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *link_name, DEE_A_IN_OBJECT(DeeWideStringObject) const *target_name);
+
 #define DeeNFS_GetCwd                DeeNFS_Utf8GetCwd
 #define DeeNFS_Chdir                 DeeNFS_Utf8Chdir
 #define DeeNFS_ChdirObject           DeeNFS_Utf8ChdirObject
@@ -692,6 +749,18 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMkDirObject(DEE_A_IN_OBJECT(DeeWi
 #define DeeNFS_MkDirObject           DeeNFS_Utf8MkDirObject
 #define DeeNFS_TryMkDir              DeeNFS_Utf8TryMkDir
 #define DeeNFS_TryMkDirObject        DeeNFS_Utf8TryMkDirObject
+#define DeeNFS_Copy                  DeeNFS_Utf8Copy
+#define DeeNFS_CopyObject            DeeNFS_Utf8CopyObject
+#define DeeNFS_TryCopy               DeeNFS_Utf8TryCopy
+#define DeeNFS_TryCopyObject         DeeNFS_Utf8TryCopyObject
+#define DeeNFS_Move                  DeeNFS_Utf8Move
+#define DeeNFS_MoveObject            DeeNFS_Utf8MoveObject
+#define DeeNFS_TryMove               DeeNFS_Utf8TryMove
+#define DeeNFS_TryMoveObject         DeeNFS_Utf8TryMoveObject
+#define DeeNFS_Link                  DeeNFS_Utf8Link
+#define DeeNFS_LinkObject            DeeNFS_Utf8LinkObject
+#define DeeNFS_TryLink               DeeNFS_Utf8TryLink
+#define DeeNFS_TryLinkObject         DeeNFS_Utf8TryLinkObject
 
 DEE_DECL_END
 

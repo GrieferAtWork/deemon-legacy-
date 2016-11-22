@@ -162,6 +162,58 @@ DEE_STATIC_INLINE(int) DeeNativeFileFD_Utf8TryInit(
 }
 #endif
 
+#ifdef DeeSysFileFD_TryRead
+# define DeeNativeFileFD_TryRead  DeeSysFileFD_TryRead
+#elif defined(DeeSysFD_TryRead)
+# define DeeNativeFileFD_TryRead  DeeSysFD_TryRead
+#endif
+#ifdef DeeSysFileFD_TryWrite
+# define DeeNativeFileFD_TryWrite DeeSysFileFD_TryWrite
+#elif defined(DeeSysFD_TryWrite)
+# define DeeNativeFileFD_TryWrite DeeSysFD_TryWrite
+#endif
+#ifdef DeeSysFileFD_TrySeek
+# define DeeNativeFileFD_TrySeek  DeeSysFileFD_TrySeek
+#elif defined(DeeSysFD_TrySeek)
+# define DeeNativeFileFD_TrySeek  DeeSysFD_TrySeek
+#endif
+#ifdef DeeSysFileFD_TryFlush
+# define DeeNativeFileFD_TryFlush DeeSysFileFD_TryFlush
+#elif defined(DeeSysFD_TryFlush)
+# define DeeNativeFileFD_TryFlush DeeSysFD_TryFlush
+#endif
+#ifdef DeeSysFileFD_TryTrunc
+# define DeeNativeFileFD_TryTrunc DeeSysFileFD_TryTrunc
+#elif defined(DeeSysFD_TryTrunc)
+# define DeeNativeFileFD_TryTrunc DeeSysFD_TryTrunc
+#endif
+
+#ifdef DeeSysFileFD_Read
+# define DeeNativeFileFD_Read  DeeSysFileFD_Read
+#elif defined(DeeSysFD_Read)
+# define DeeNativeFileFD_Read  DeeSysFD_Read
+#endif
+#ifdef DeeSysFileFD_Write
+# define DeeNativeFileFD_Write DeeSysFileFD_Write
+#elif defined(DeeSysFD_Write)
+# define DeeNativeFileFD_Write DeeSysFD_Write
+#endif
+#ifdef DeeSysFileFD_Seek
+# define DeeNativeFileFD_Seek  DeeSysFileFD_Seek
+#elif defined(DeeSysFD_Seek)
+# define DeeNativeFileFD_Seek  DeeSysFD_Seek
+#endif
+#ifdef DeeSysFileFD_Flush
+# define DeeNativeFileFD_Flush DeeSysFileFD_Flush
+#elif defined(DeeSysFD_Flush)
+# define DeeNativeFileFD_Flush DeeSysFD_Flush
+#endif
+#ifdef DeeSysFileFD_Trunc
+# define DeeNativeFileFD_Trunc DeeSysFileFD_Trunc
+#elif defined(DeeSysFD_Trunc)
+# define DeeNativeFileFD_Trunc DeeSysFD_Trunc
+#endif
+
 #endif /* DeeSysFileFD */
 
 DEE_DECL_END

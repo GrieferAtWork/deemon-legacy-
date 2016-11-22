@@ -223,6 +223,14 @@ extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetTimes(
 extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TrySetTimes(
       DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_OPT Dee_timetick_t const *atime,
  DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
+extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetMod(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_mode_t *mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetMod(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_mode_t *mode);
+extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chmod(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryChmod(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_mode_t mode);
+extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetOwn(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetOwn(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group);
+extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
+extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryChown(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
 
 #define DeeVFSNode_Walk(self,elemname) \
  (DEE_ASSERTF(DeeVFSNode_FileHasWalk(self),"Can't walk node %R",DeeVFSNode_Filename(self)),\
@@ -390,6 +398,10 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8ForceNativeP
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideForceNativePathWithCwd(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8ForceNativeRootPath(DEE_A_IN_Z Dee_Utf8Char const *path);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideForceNativeRootPath(DEE_A_IN_Z Dee_WideChar const *path);
+#define DeeVFS_Utf8ForceNativePathWithCwdObject(cwd,path) DeeVFS_Utf8ForceNativePathWithCwd(cwd,DeeUtf8String_STR(path))
+#define DeeVFS_WideForceNativePathWithCwdObject(cwd,path) DeeVFS_WideForceNativePathWithCwd(cwd,DeeWideString_STR(path))
+#define DeeVFS_Utf8ForceNativeRootPathObject(path)        DeeVFS_Utf8ForceNativeRootPath(DeeUtf8String_STR(path))
+#define DeeVFS_WideForceNativeRootPathObject(path)        DeeVFS_WideForceNativeRootPath(DeeWideString_STR(path))
 
 
 //////////////////////////////////////////////////////////////////////////

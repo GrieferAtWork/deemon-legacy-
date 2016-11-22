@@ -214,7 +214,120 @@ struct DeeFSApi {
  PDEEFS_WIDETRYMKDIR                _fa_widetrymkdir;
  PDEEFS_UTF8TRYMKDIROBJECT          _fa_utf8trymkdirobject;
  PDEEFS_WIDETRYMKDIROBJECT          _fa_widetrymkdirobject;
+ PDEEFS_UTF8GETMOD                   fa_utf8getmod;
+ PDEEFS_WIDEGETMOD                   fa_widegetmod;
+ PDEEFS_UTF8GETMODOBJECT             fa_utf8getmodobject;
+ PDEEFS_WIDEGETMODOBJECT             fa_widegetmodobject;
+ PDEEFS_UTF8GETMOD                  _fa_utf8getmod;
+ PDEEFS_WIDEGETMOD                  _fa_widegetmod;
+ PDEEFS_UTF8GETMODOBJECT            _fa_utf8getmodobject;
+ PDEEFS_WIDEGETMODOBJECT            _fa_widegetmodobject;
+ PDEEFS_UTF8TRYGETMOD                fa_utf8trygetmod;
+ PDEEFS_WIDETRYGETMOD                fa_widetrygetmod;
+ PDEEFS_UTF8TRYGETMODOBJECT          fa_utf8trygetmodobject;
+ PDEEFS_WIDETRYGETMODOBJECT          fa_widetrygetmodobject;
+ PDEEFS_UTF8TRYGETMOD               _fa_utf8trygetmod;
+ PDEEFS_WIDETRYGETMOD               _fa_widetrygetmod;
+ PDEEFS_UTF8TRYGETMODOBJECT         _fa_utf8trygetmodobject;
+ PDEEFS_WIDETRYGETMODOBJECT         _fa_widetrygetmodobject;
+ PDEEFS_UTF8CHMOD                    fa_utf8chmod;
+ PDEEFS_WIDECHMOD                    fa_widechmod;
+ PDEEFS_UTF8CHMODOBJECT              fa_utf8chmodobject;
+ PDEEFS_WIDECHMODOBJECT              fa_widechmodobject;
+ PDEEFS_UTF8CHMOD                   _fa_utf8chmod;
+ PDEEFS_WIDECHMOD                   _fa_widechmod;
+ PDEEFS_UTF8CHMODOBJECT             _fa_utf8chmodobject;
+ PDEEFS_WIDECHMODOBJECT             _fa_widechmodobject;
+ PDEEFS_UTF8TRYCHMOD                 fa_utf8trychmod;
+ PDEEFS_WIDETRYCHMOD                 fa_widetrychmod;
+ PDEEFS_UTF8TRYCHMODOBJECT           fa_utf8trychmodobject;
+ PDEEFS_WIDETRYCHMODOBJECT           fa_widetrychmodobject;
+ PDEEFS_UTF8TRYCHMOD                _fa_utf8trychmod;
+ PDEEFS_WIDETRYCHMOD                _fa_widetrychmod;
+ PDEEFS_UTF8TRYCHMODOBJECT          _fa_utf8trychmodobject;
+ PDEEFS_WIDETRYCHMODOBJECT          _fa_widetrychmodobject;
+ PDEEFS_UTF8GETOWN                   fa_utf8getown;
+ PDEEFS_WIDEGETOWN                   fa_widegetown;
+ PDEEFS_UTF8GETOWNOBJECT             fa_utf8getownobject;
+ PDEEFS_WIDEGETOWNOBJECT             fa_widegetownobject;
+ PDEEFS_UTF8GETOWN                  _fa_utf8getown;
+ PDEEFS_WIDEGETOWN                  _fa_widegetown;
+ PDEEFS_UTF8GETOWNOBJECT            _fa_utf8getownobject;
+ PDEEFS_WIDEGETOWNOBJECT            _fa_widegetownobject;
+ PDEEFS_UTF8TRYGETOWN                fa_utf8trygetown;
+ PDEEFS_WIDETRYGETOWN                fa_widetrygetown;
+ PDEEFS_UTF8TRYGETOWNOBJECT          fa_utf8trygetownobject;
+ PDEEFS_WIDETRYGETOWNOBJECT          fa_widetrygetownobject;
+ PDEEFS_UTF8TRYGETOWN               _fa_utf8trygetown;
+ PDEEFS_WIDETRYGETOWN               _fa_widetrygetown;
+ PDEEFS_UTF8TRYGETOWNOBJECT         _fa_utf8trygetownobject;
+ PDEEFS_WIDETRYGETOWNOBJECT         _fa_widetrygetownobject;
+ PDEEFS_UTF8CHOWN                    fa_utf8chown;
+ PDEEFS_WIDECHOWN                    fa_widechown;
+ PDEEFS_UTF8CHOWNOBJECT              fa_utf8chownobject;
+ PDEEFS_WIDECHOWNOBJECT              fa_widechownobject;
+ PDEEFS_UTF8CHOWN                   _fa_utf8chown;
+ PDEEFS_WIDECHOWN                   _fa_widechown;
+ PDEEFS_UTF8CHOWNOBJECT             _fa_utf8chownobject;
+ PDEEFS_WIDECHOWNOBJECT             _fa_widechownobject;
+ PDEEFS_UTF8TRYCHOWN                 fa_utf8trychown;
+ PDEEFS_WIDETRYCHOWN                 fa_widetrychown;
+ PDEEFS_UTF8TRYCHOWNOBJECT           fa_utf8trychownobject;
+ PDEEFS_WIDETRYCHOWNOBJECT           fa_widetrychownobject;
+ PDEEFS_UTF8TRYCHOWN                _fa_utf8trychown;
+ PDEEFS_WIDETRYCHOWN                _fa_widetrychown;
+ PDEEFS_UTF8TRYCHOWNOBJECT          _fa_utf8trychownobject;
+ PDEEFS_WIDETRYCHOWNOBJECT          _fa_widetrychownobject;
+ PDEEFS_UTF8COPY                     fa_utf8copy;
+ PDEEFS_WIDECOPY                     fa_widecopy;
+ PDEEFS_UTF8COPYOBJECT               fa_utf8copyobject;
+ PDEEFS_WIDECOPYOBJECT               fa_widecopyobject;
+ PDEEFS_UTF8COPY                    _fa_utf8copy;
+ PDEEFS_WIDECOPY                    _fa_widecopy;
+ PDEEFS_UTF8COPYOBJECT              _fa_utf8copyobject;
+ PDEEFS_WIDECOPYOBJECT              _fa_widecopyobject;
+ PDEEFS_UTF8TRYCOPY                  fa_utf8trycopy;
+ PDEEFS_WIDETRYCOPY                  fa_widetrycopy;
+ PDEEFS_UTF8TRYCOPYOBJECT            fa_utf8trycopyobject;
+ PDEEFS_WIDETRYCOPYOBJECT            fa_widetrycopyobject;
+ PDEEFS_UTF8TRYCOPY                 _fa_utf8trycopy;
+ PDEEFS_WIDETRYCOPY                 _fa_widetrycopy;
+ PDEEFS_UTF8TRYCOPYOBJECT           _fa_utf8trycopyobject;
+ PDEEFS_WIDETRYCOPYOBJECT           _fa_widetrycopyobject;
+ PDEEFS_UTF8COPY                     fa_utf8move;
+ PDEEFS_WIDECOPY                     fa_widemove;
+ PDEEFS_UTF8COPYOBJECT               fa_utf8moveobject;
+ PDEEFS_WIDECOPYOBJECT               fa_widemoveobject;
+ PDEEFS_UTF8COPY                    _fa_utf8move;
+ PDEEFS_WIDECOPY                    _fa_widemove;
+ PDEEFS_UTF8COPYOBJECT              _fa_utf8moveobject;
+ PDEEFS_WIDECOPYOBJECT              _fa_widemoveobject;
+ PDEEFS_UTF8TRYCOPY                  fa_utf8trymove;
+ PDEEFS_WIDETRYCOPY                  fa_widetrymove;
+ PDEEFS_UTF8TRYCOPYOBJECT            fa_utf8trymoveobject;
+ PDEEFS_WIDETRYCOPYOBJECT            fa_widetrymoveobject;
+ PDEEFS_UTF8TRYCOPY                 _fa_utf8trymove;
+ PDEEFS_WIDETRYCOPY                 _fa_widetrymove;
+ PDEEFS_UTF8TRYCOPYOBJECT           _fa_utf8trymoveobject;
+ PDEEFS_WIDETRYCOPYOBJECT           _fa_widetrymoveobject;
+ PDEEFS_UTF8LINK                     fa_utf8link;
+ PDEEFS_WIDELINK                     fa_widelink;
+ PDEEFS_UTF8LINKOBJECT               fa_utf8linkobject;
+ PDEEFS_WIDELINKOBJECT               fa_widelinkobject;
+ PDEEFS_UTF8LINK                    _fa_utf8link;
+ PDEEFS_WIDELINK                    _fa_widelink;
+ PDEEFS_UTF8LINKOBJECT              _fa_utf8linkobject;
+ PDEEFS_WIDELINKOBJECT              _fa_widelinkobject;
+ PDEEFS_UTF8TRYLINK                  fa_utf8trylink;
+ PDEEFS_WIDETRYLINK                  fa_widetrylink;
+ PDEEFS_UTF8TRYLINKOBJECT            fa_utf8trylinkobject;
+ PDEEFS_WIDETRYLINKOBJECT            fa_widetrylinkobject;
+ PDEEFS_UTF8TRYLINK                 _fa_utf8trylink;
+ PDEEFS_WIDETRYLINK                 _fa_widetrylink;
+ PDEEFS_UTF8TRYLINKOBJECT           _fa_utf8trylinkobject;
+ PDEEFS_WIDETRYLINKOBJECT           _fa_widetrylinkobject;
 };
+
 enum{s=sizeof(struct DeeFSApi)/sizeof(void *)};
 DEE_COMPILER_STRUCTURE_PACKED_END
 
@@ -406,9 +519,121 @@ static struct DeeFSApi DeeFSApi_Active = {
  _DeeDFS(WideTryMkDir),                 /*< _fa_widetrymkdir. */
  _DeeDFS(Utf8TryMkDirObject),           /*< _fa_utf8trymkdirobject. */
  _DeeDFS(WideTryMkDirObject),           /*< _fa_widetrymkdirobject. */
+  DeeDFS(Utf8GetMod),                   /*<  fa_utf8getmod. */
+  DeeDFS(WideGetMod),                   /*<  fa_widegetmod. */
+  DeeDFS(Utf8GetModObject),             /*<  fa_utf8getmodobject. */
+  DeeDFS(WideGetModObject),             /*<  fa_widegetmodobject. */
+ _DeeDFS(Utf8GetMod),                   /*< _fa_utf8getmod. */
+ _DeeDFS(WideGetMod),                   /*< _fa_widegetmod. */
+ _DeeDFS(Utf8GetModObject),             /*< _fa_utf8getmodobject. */
+ _DeeDFS(WideGetModObject),             /*< _fa_widegetmodobject. */
+  DeeDFS(Utf8TryGetMod),                /*<  fa_utf8trygetmod. */
+  DeeDFS(WideTryGetMod),                /*<  fa_widetrygetmod. */
+  DeeDFS(Utf8TryGetModObject),          /*<  fa_utf8trygetmodobject. */
+  DeeDFS(WideTryGetModObject),          /*<  fa_widetrygetmodobject. */
+ _DeeDFS(Utf8TryGetMod),                /*< _fa_utf8trygetmod. */
+ _DeeDFS(WideTryGetMod),                /*< _fa_widetrygetmod. */
+ _DeeDFS(Utf8TryGetModObject),          /*< _fa_utf8trygetmodobject. */
+ _DeeDFS(WideTryGetModObject),          /*< _fa_widetrygetmodobject. */
+  DeeDFS(Utf8Chmod),                    /*<  fa_utf8chmod. */
+  DeeDFS(WideChmod),                    /*<  fa_widechmod. */
+  DeeDFS(Utf8ChmodObject),              /*<  fa_utf8chmodobject. */
+  DeeDFS(WideChmodObject),              /*<  fa_widechmodobject. */
+ _DeeDFS(Utf8Chmod),                    /*< _fa_utf8chmod. */
+ _DeeDFS(WideChmod),                    /*< _fa_widechmod. */
+ _DeeDFS(Utf8ChmodObject),              /*< _fa_utf8chmodobject. */
+ _DeeDFS(WideChmodObject),              /*< _fa_widechmodobject. */
+  DeeDFS(Utf8TryChmod),                 /*<  fa_utf8trychmod. */
+  DeeDFS(WideTryChmod),                 /*<  fa_widetrychmod. */
+  DeeDFS(Utf8TryChmodObject),           /*<  fa_utf8trychmodobject. */
+  DeeDFS(WideTryChmodObject),           /*<  fa_widetrychmodobject. */
+ _DeeDFS(Utf8TryChmod),                 /*< _fa_utf8trychmod. */
+ _DeeDFS(WideTryChmod),                 /*< _fa_widetrychmod. */
+ _DeeDFS(Utf8TryChmodObject),           /*< _fa_utf8trychmodobject. */
+ _DeeDFS(WideTryChmodObject),           /*< _fa_widetrychmodobject. */
+  DeeDFS(Utf8GetOwn),                   /*<  fa_utf8getown. */
+  DeeDFS(WideGetOwn),                   /*<  fa_widegetown. */
+  DeeDFS(Utf8GetOwnObject),             /*<  fa_utf8getownobject. */
+  DeeDFS(WideGetOwnObject),             /*<  fa_widegetownobject. */
+ _DeeDFS(Utf8GetOwn),                   /*< _fa_utf8getown. */
+ _DeeDFS(WideGetOwn),                   /*< _fa_widegetown. */
+ _DeeDFS(Utf8GetOwnObject),             /*< _fa_utf8getownobject. */
+ _DeeDFS(WideGetOwnObject),             /*< _fa_widegetownobject. */
+  DeeDFS(Utf8TryGetOwn),                /*<  fa_utf8trygetown. */
+  DeeDFS(WideTryGetOwn),                /*<  fa_widetrygetown. */
+  DeeDFS(Utf8TryGetOwnObject),          /*<  fa_utf8trygetownobject. */
+  DeeDFS(WideTryGetOwnObject),          /*<  fa_widetrygetownobject. */
+ _DeeDFS(Utf8TryGetOwn),                /*< _fa_utf8trygetown. */
+ _DeeDFS(WideTryGetOwn),                /*< _fa_widetrygetown. */
+ _DeeDFS(Utf8TryGetOwnObject),          /*< _fa_utf8trygetownobject. */
+ _DeeDFS(WideTryGetOwnObject),          /*< _fa_widetrygetownobject. */
+  DeeDFS(Utf8Chown),                    /*<  fa_utf8chown. */
+  DeeDFS(WideChown),                    /*<  fa_widechown. */
+  DeeDFS(Utf8ChownObject),              /*<  fa_utf8chownobject. */
+  DeeDFS(WideChownObject),              /*<  fa_widechownobject. */
+ _DeeDFS(Utf8Chown),                    /*< _fa_utf8chown. */
+ _DeeDFS(WideChown),                    /*< _fa_widechown. */
+ _DeeDFS(Utf8ChownObject),              /*< _fa_utf8chownobject. */
+ _DeeDFS(WideChownObject),              /*< _fa_widechownobject. */
+  DeeDFS(Utf8TryChown),                 /*<  fa_utf8trychown. */
+  DeeDFS(WideTryChown),                 /*<  fa_widetrychown. */
+  DeeDFS(Utf8TryChownObject),           /*<  fa_utf8trychownobject. */
+  DeeDFS(WideTryChownObject),           /*<  fa_widetrychownobject. */
+ _DeeDFS(Utf8TryChown),                 /*< _fa_utf8trychown. */
+ _DeeDFS(WideTryChown),                 /*< _fa_widetrychown. */
+ _DeeDFS(Utf8TryChownObject),           /*< _fa_utf8trychownobject. */
+ _DeeDFS(WideTryChownObject),           /*< _fa_widetrychownobject. */
+  DeeDFS(Utf8Copy),                     /*<  fa_utf8copy. */
+  DeeDFS(WideCopy),                     /*<  fa_widecopy. */
+  DeeDFS(Utf8CopyObject),               /*<  fa_utf8copyobject. */
+  DeeDFS(WideCopyObject),               /*<  fa_widecopyobject. */
+ _DeeDFS(Utf8Copy),                     /*< _fa_utf8copy. */
+ _DeeDFS(WideCopy),                     /*< _fa_widecopy. */
+ _DeeDFS(Utf8CopyObject),               /*< _fa_utf8copyobject. */
+ _DeeDFS(WideCopyObject),               /*< _fa_widecopyobject. */
+  DeeDFS(Utf8TryCopy),                  /*<  fa_utf8trycopy. */
+  DeeDFS(WideTryCopy),                  /*<  fa_widetrycopy. */
+  DeeDFS(Utf8TryCopyObject),            /*<  fa_utf8trycopyobject. */
+  DeeDFS(WideTryCopyObject),            /*<  fa_widetrycopyobject. */
+ _DeeDFS(Utf8TryCopy),                  /*< _fa_utf8trycopy. */
+ _DeeDFS(WideTryCopy),                  /*< _fa_widetrycopy. */
+ _DeeDFS(Utf8TryCopyObject),            /*< _fa_utf8trycopyobject. */
+ _DeeDFS(WideTryCopyObject),            /*< _fa_widetrycopyobject. */
+  DeeDFS(Utf8Move),                     /*<  fa_utf8move. */
+  DeeDFS(WideMove),                     /*<  fa_widemove. */
+  DeeDFS(Utf8MoveObject),               /*<  fa_utf8moveobject. */
+  DeeDFS(WideMoveObject),               /*<  fa_widemoveobject. */
+ _DeeDFS(Utf8Move),                     /*< _fa_utf8move. */
+ _DeeDFS(WideMove),                     /*< _fa_widemove. */
+ _DeeDFS(Utf8MoveObject),               /*< _fa_utf8moveobject. */
+ _DeeDFS(WideMoveObject),               /*< _fa_widemoveobject. */
+  DeeDFS(Utf8TryMove),                  /*<  fa_utf8trymove. */
+  DeeDFS(WideTryMove),                  /*<  fa_widetrymove. */
+  DeeDFS(Utf8TryMoveObject),            /*<  fa_utf8trymoveobject. */
+  DeeDFS(WideTryMoveObject),            /*<  fa_widetrymoveobject. */
+ _DeeDFS(Utf8TryMove),                  /*< _fa_utf8trymove. */
+ _DeeDFS(WideTryMove),                  /*< _fa_widetrymove. */
+ _DeeDFS(Utf8TryMoveObject),            /*< _fa_utf8trymoveobject. */
+ _DeeDFS(WideTryMoveObject),            /*< _fa_widetrymoveobject. */
+  DeeDFS(Utf8Link),                     /*<  fa_utf8link. */
+  DeeDFS(WideLink),                     /*<  fa_widelink. */
+  DeeDFS(Utf8LinkObject),               /*<  fa_utf8linkobject. */
+  DeeDFS(WideLinkObject),               /*<  fa_widelinkobject. */
+ _DeeDFS(Utf8Link),                     /*< _fa_utf8link. */
+ _DeeDFS(WideLink),                     /*< _fa_widelink. */
+ _DeeDFS(Utf8LinkObject),               /*< _fa_utf8linkobject. */
+ _DeeDFS(WideLinkObject),               /*< _fa_widelinkobject. */
+  DeeDFS(Utf8TryLink),                  /*<  fa_utf8trylink. */
+  DeeDFS(WideTryLink),                  /*<  fa_widetrylink. */
+  DeeDFS(Utf8TryLinkObject),            /*<  fa_utf8trylinkobject. */
+  DeeDFS(WideTryLinkObject),            /*<  fa_widetrylinkobject. */
+ _DeeDFS(Utf8TryLink),                  /*< _fa_utf8trylink. */
+ _DeeDFS(WideTryLink),                  /*< _fa_widetrylink. */
+ _DeeDFS(Utf8TryLinkObject),            /*< _fa_utf8trylinkobject. */
+ _DeeDFS(WideTryLinkObject),            /*< _fa_widetrylinkobject. */
 };
 
-DEE_A_RET_NEVER_NULL DeeFunPointer DeeFS_GetFunction(DEE_A_IN Dee_size_t id) {
+DEE_A_RET_NEVER_NULL DeeFunPointer DeeFS_GetFunction_v102(DEE_A_IN Dee_size_t id) {
  DeeFunPointer result;
  DEE_ASSERTF(id < sizeof(struct DeeFSApi),"Invalid id: out of bounds");
  DEE_ASSERTF((id%sizeof(DeeFunPointer))==0,"Invalid id: Not pointer aligned");
@@ -501,6 +726,62 @@ DEE_A_RET_WUNUSED Dee_fsapimode_t DeeFS_GetAPIMode(void) {
   X(_fa_widetrymkdir,            WideTryMkDir)\
   X(_fa_utf8trymkdirobject,      Utf8TryMkDirObject)\
   X(_fa_widetrymkdirobject,      WideTryMkDirObject)\
+  X(_fa_utf8getmod,              Utf8GetMod)\
+  X(_fa_widegetmod,              WideGetMod)\
+  X(_fa_utf8getmodobject,        Utf8GetModObject)\
+  X(_fa_widegetmodobject,        WideGetModObject)\
+  X(_fa_utf8trygetmod,           Utf8TryGetMod)\
+  X(_fa_widetrygetmod,           WideTryGetMod)\
+  X(_fa_utf8trygetmodobject,     Utf8TryGetModObject)\
+  X(_fa_widetrygetmodobject,     WideTryGetModObject)\
+  X(_fa_utf8chmod,               Utf8Chmod)\
+  X(_fa_widechmod,               WideChmod)\
+  X(_fa_utf8chmodobject,         Utf8ChmodObject)\
+  X(_fa_widechmodobject,         WideChmodObject)\
+  X(_fa_utf8trychmod,            Utf8TryChmod)\
+  X(_fa_widetrychmod,            WideTryChmod)\
+  X(_fa_utf8trychmodobject,      Utf8TryChmodObject)\
+  X(_fa_widetrychmodobject,      WideTryChmodObject)\
+  X(_fa_utf8getown,              Utf8GetOwn)\
+  X(_fa_widegetown,              WideGetOwn)\
+  X(_fa_utf8getownobject,        Utf8GetOwnObject)\
+  X(_fa_widegetownobject,        WideGetOwnObject)\
+  X(_fa_utf8trygetown,           Utf8TryGetOwn)\
+  X(_fa_widetrygetown,           WideTryGetOwn)\
+  X(_fa_utf8trygetownobject,     Utf8TryGetOwnObject)\
+  X(_fa_widetrygetownobject,     WideTryGetOwnObject)\
+  X(_fa_utf8chown,               Utf8Chown)\
+  X(_fa_widechown,               WideChown)\
+  X(_fa_utf8chownobject,         Utf8ChownObject)\
+  X(_fa_widechownobject,         WideChownObject)\
+  X(_fa_utf8trychown,            Utf8TryChown)\
+  X(_fa_widetrychown,            WideTryChown)\
+  X(_fa_utf8trychownobject,      Utf8TryChownObject)\
+  X(_fa_widetrychownobject,      WideTryChownObject)\
+  X(_fa_utf8copy,                Utf8Copy)\
+  X(_fa_widecopy,                WideCopy)\
+  X(_fa_utf8copyobject,          Utf8CopyObject)\
+  X(_fa_widecopyobject,          WideCopyObject)\
+  X(_fa_utf8trycopy,             Utf8TryCopy)\
+  X(_fa_widetrycopy,             WideTryCopy)\
+  X(_fa_utf8trycopyobject,       Utf8TryCopyObject)\
+  X(_fa_widetrycopyobject,       WideTryCopyObject)\
+  X(_fa_utf8move,                Utf8Move)\
+  X(_fa_widemove,                WideMove)\
+  X(_fa_utf8moveobject,          Utf8MoveObject)\
+  X(_fa_widemoveobject,          WideMoveObject)\
+  X(_fa_utf8trymove,             Utf8TryMove)\
+  X(_fa_widetrymove,             WideTryMove)\
+  X(_fa_utf8trymoveobject,       Utf8TryMoveObject)\
+  X(_fa_widetrymoveobject,       WideTryMoveObject)\
+  X(_fa_utf8link,                Utf8Link)\
+  X(_fa_widelink,                WideLink)\
+  X(_fa_utf8linkobject,          Utf8LinkObject)\
+  X(_fa_widelinkobject,          WideLinkObject)\
+  X(_fa_utf8trylink,             Utf8TryLink)\
+  X(_fa_widetrylink,             WideTryLink)\
+  X(_fa_utf8trylinkobject,       Utf8TryLinkObject)\
+  X(_fa_widetrylinkobject,       WideTryLinkObject)\
 
 // Public exports:
 //  - Functions capable of expanding a given path
@@ -573,6 +854,62 @@ DEE_A_RET_WUNUSED Dee_fsapimode_t DeeFS_GetAPIMode(void) {
   X(fa_widetrymkdir,            WideTryMkDir)\
   X(fa_utf8trymkdirobject,      Utf8TryMkDirObject)\
   X(fa_widetrymkdirobject,      WideTryMkDirObject)\
+  X(fa_utf8getmod,              Utf8GetMod)\
+  X(fa_widegetmod,              WideGetMod)\
+  X(fa_utf8getmodobject,        Utf8GetModObject)\
+  X(fa_widegetmodobject,        WideGetModObject)\
+  X(fa_utf8trygetmod,           Utf8TryGetMod)\
+  X(fa_widetrygetmod,           WideTryGetMod)\
+  X(fa_utf8trygetmodobject,     Utf8TryGetModObject)\
+  X(fa_widetrygetmodobject,     WideTryGetModObject)\
+  X(fa_utf8chmod,               Utf8Chmod)\
+  X(fa_widechmod,               WideChmod)\
+  X(fa_utf8chmodobject,         Utf8ChmodObject)\
+  X(fa_widechmodobject,         WideChmodObject)\
+  X(fa_utf8trychmod,            Utf8TryChmod)\
+  X(fa_widetrychmod,            WideTryChmod)\
+  X(fa_utf8trychmodobject,      Utf8TryChmodObject)\
+  X(fa_widetrychmodobject,      WideTryChmodObject)\
+  X(fa_utf8getown,              Utf8GetOwn)\
+  X(fa_widegetown,              WideGetOwn)\
+  X(fa_utf8getownobject,        Utf8GetOwnObject)\
+  X(fa_widegetownobject,        WideGetOwnObject)\
+  X(fa_utf8trygetown,           Utf8TryGetOwn)\
+  X(fa_widetrygetown,           WideTryGetOwn)\
+  X(fa_utf8trygetownobject,     Utf8TryGetOwnObject)\
+  X(fa_widetrygetownobject,     WideTryGetOwnObject)\
+  X(fa_utf8chown,               Utf8Chown)\
+  X(fa_widechown,               WideChown)\
+  X(fa_utf8chownobject,         Utf8ChownObject)\
+  X(fa_widechownobject,         WideChownObject)\
+  X(fa_utf8trychown,            Utf8TryChown)\
+  X(fa_widetrychown,            WideTryChown)\
+  X(fa_utf8trychownobject,      Utf8TryChownObject)\
+  X(fa_widetrychownobject,      WideTryChownObject)\
+  X(fa_utf8copy,                Utf8Copy)\
+  X(fa_widecopy,                WideCopy)\
+  X(fa_utf8copyobject,          Utf8CopyObject)\
+  X(fa_widecopyobject,          WideCopyObject)\
+  X(fa_utf8trycopy,             Utf8TryCopy)\
+  X(fa_widetrycopy,             WideTryCopy)\
+  X(fa_utf8trycopyobject,       Utf8TryCopyObject)\
+  X(fa_widetrycopyobject,       WideTryCopyObject)\
+  X(fa_utf8move,                Utf8Move)\
+  X(fa_widemove,                WideMove)\
+  X(fa_utf8moveobject,          Utf8MoveObject)\
+  X(fa_widemoveobject,          WideMoveObject)\
+  X(fa_utf8trymove,             Utf8TryMove)\
+  X(fa_widetrymove,             WideTryMove)\
+  X(fa_utf8trymoveobject,       Utf8TryMoveObject)\
+  X(fa_widetrymoveobject,       WideTryMoveObject)\
+  X(fa_utf8link,                Utf8Link)\
+  X(fa_widelink,                WideLink)\
+  X(fa_utf8linkobject,          Utf8LinkObject)\
+  X(fa_widelinkobject,          WideLinkObject)\
+  X(fa_utf8trylink,             Utf8TryLink)\
+  X(fa_widetrylink,             WideTryLink)\
+  X(fa_utf8trylinkobject,       Utf8TryLinkObject)\
+  X(fa_widetrylinkobject,       WideTryLinkObject)\
 
 
 DEE_A_RET_EXCEPT(-1) int DeeFS_SetAPIMode(DEE_A_IN Dee_fsapimode_t mode) {

@@ -43,7 +43,7 @@ typedef DEE_TYPES_UINT16_T Dee_openmode_t;                // =file_state= | =per
 // Returns a basic open mode:
 // @param rwa:    A character, that is either 'r', 'w', 'x' or 'a'
 // @param update: A boolean, indicating if a file should be opened in update mode
-#define DEE_OPENMODE(rwa,update)\
+#define DEE_OPENMODE(rwa,update) \
 (((rwa) == 'r' ?  DEE_OPENMODE_READ :\
   (rwa) == 'w' ?  DEE_OPENMODE_WRITE :\
   (rwa) == 'x' ?  DEE_OPENMODE_CREATE :\

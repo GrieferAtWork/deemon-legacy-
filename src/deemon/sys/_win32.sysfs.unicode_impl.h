@@ -421,6 +421,30 @@ DEE_STATIC_INLINE(BOOL) DeeWin32Sys_F(TryIsDrive)(DEE_CHAR const *path) {
  return !path[2];
 }
 
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_F(TryIsExecutableWithLength)(
+ DEE_CHAR const *path, Dee_size_t path_size) {
+ static DEE_CHAR const name_PATHEXT[] = {'P','A','T','H','E','X','T',0};
+ DeeObject *pathext; DEE_CHAR *iter,*end,*extstart;
+ DEE_CHAR const *match_end; Dee_size_t extsize;
+ if DEE_UNLIKELY((pathext = DeeWin32Sys_F(TryGetEnv)(name_PATHEXT)) == NULL) return FALSE;
+ match_end = path+path_size;
+ end = (iter = DeeString_F(STR)(pathext))+DeeString_F(SIZE)(pathext);
+ while (1) {
+  extstart = iter;
+  while (iter != end && *iter != ';') ++iter;
+  if ((extsize = (Dee_size_t)(iter-extstart)) != 0 && extsize < path_size) {
+   if (memcmp(match_end-extsize,extstart,extsize*sizeof(DEE_CHAR)) == 0) {
+    Dee_DECREF(pathext);
+    return TRUE;
+   }
+  }
+  if (iter == end) break;
+  ++iter; // skip ';'
+ }
+ Dee_DECREF(pathext);
+ return FALSE;
+}
+
 
 DEE_DECL_END
 

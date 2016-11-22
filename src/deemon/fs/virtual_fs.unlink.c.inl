@@ -102,7 +102,7 @@ call_native: return DeeNFS_Utf8TryUnlink(path);
   native_path = DeeVFS_Utf8ForceNativePathWithCwd(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
- if DEE_UNLIKELY(!native_path) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY(!native_path) { DeeError_HandledOne(); return 0; }
  error = DeeNFS_Utf8TryUnlinkObject(native_path);
  Dee_DECREF(native_path);
  return error;
@@ -121,7 +121,7 @@ call_native: return DeeNFS_WideTryUnlink(path);
   native_path = DeeVFS_WideForceNativePathWithCwd(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
- if DEE_UNLIKELY(!native_path) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY(!native_path) { DeeError_HandledOne(); return 0; }
  error = DeeNFS_WideTryUnlinkObject(native_path);
  Dee_DECREF(native_path);
  return error;
@@ -129,7 +129,7 @@ call_native: return DeeNFS_WideTryUnlink(path);
 DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryUnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
  DeeObject *native_path; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
- if DEE_UNLIKELY((native_path = DeeVFS_Utf8ForceNativePathObject(path)) == NULL) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY((native_path = DeeVFS_Utf8ForceNativePathObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
  error = DeeNFS_Utf8TryUnlinkObject(native_path);
  Dee_DECREF(native_path);
  return error;
@@ -137,7 +137,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryUnlinkObject(DEE_A_IN_OBJECT(DeeUtf8Stri
 DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
  DeeObject *native_path; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
- if DEE_UNLIKELY((native_path = DeeVFS_WideForceNativePathObject(path)) == NULL) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY((native_path = DeeVFS_WideForceNativePathObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
  error = DeeNFS_WideTryUnlinkObject(native_path);
  Dee_DECREF(native_path);
  return error;

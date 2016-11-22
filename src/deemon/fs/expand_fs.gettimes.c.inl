@@ -71,7 +71,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryGetTimes(
  DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
  result = DeeNFS_Utf8TryGetTimesObject(xpath,atime,ctime,mtime);
  Dee_DECREF(xpath);
  return result;
@@ -80,7 +80,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryGetTimes(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
  result = DeeNFS_WideTryGetTimesObject(xpath,atime,ctime,mtime);
  Dee_DECREF(xpath);
  return result;
@@ -89,7 +89,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryGetTimesObject(
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
               DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
  result = DeeNFS_Utf8TryGetTimesObject(xpath,atime,ctime,mtime);
  Dee_DECREF(xpath);
  return result;
@@ -98,7 +98,7 @@ DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryGetTimesObject(
  DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
               DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
  DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) { DeeError_HandledOne(); return -1; }
+ if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
  result = DeeNFS_WideTryGetTimesObject(xpath,atime,ctime,mtime);
  Dee_DECREF(xpath);
  return result;
