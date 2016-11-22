@@ -182,6 +182,8 @@
     <ClCompile Include="..\src\deemon\fs\dynamic_fs.c" />
     <ClCompile Include="..\src\deemon\fs\expand_fs.c" />
     <ClCompile Include="..\src\deemon\fs\native_fs.c" />
+    <ClCompile Include="..\src\deemon\fs\objects\native_view.c" />
+    <ClCompile Include="..\src\deemon\fs\objects\vfs_view.c" />
     <ClCompile Include="..\src\deemon\fs\virtual_fs.c" />
     <ClCompile Include="..\src\deemon\fs_api.c" />
     <ClCompile Include="..\src\deemon\gc.c" />
@@ -364,7 +366,12 @@
     <ClInclude Include="..\src\deemon\fs\expand_fs.h" />
     <ClInclude Include="..\src\deemon\fs\native_filefd.h" />
     <ClInclude Include="..\src\deemon\fs\native_fs.h" />
+    <ClInclude Include="..\src\deemon\fs\native_view.utf8.h" />
+    <ClInclude Include="..\src\deemon\fs\native_view.wide.h" />
+    <ClInclude Include="..\src\deemon\fs\objects\native_view.h" />
+    <ClInclude Include="..\src\deemon\fs\objects\vfs_view.h" />
     <ClInclude Include="..\src\deemon\fs\virtual_fs.h" />
+    <ClInclude Include="..\src\deemon\fs\virtual_view.h" />
     <ClInclude Include="..\src\deemon\marshal_data.h" />
     <ClInclude Include="..\src\deemon\runtime\builtin_functions.h" />
     <ClInclude Include="..\src\deemon\runtime\libffi_msvc\ffi.h" />
@@ -375,6 +382,7 @@
     <ClInclude Include="..\src\deemon\sys\sysdynlib.h" />
     <ClInclude Include="..\src\deemon\sys\sysfd.h" />
     <ClInclude Include="..\src\deemon\sys\sysfs.h" />
+    <ClInclude Include="..\src\deemon\sys\sysfs.view.h" />
     <ClInclude Include="..\src\deemon\sys\systls.h" />
     <ClInclude Include="..\src\deemon\sys\_emulated.systls.h" />
     <ClInclude Include="..\src\deemon\sys\_haiku.sysdynlib.h" />
@@ -391,6 +399,7 @@
     <ClInclude Include="..\src\deemon\sys\_win32.sysfd.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.sysfs.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.sysfs.unicode_impl.h" />
+    <ClInclude Include="..\src\deemon\sys\_win32.sysfs.view.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.systls.h" />
     <ClInclude Include="..\src\deemon\uuid_list.h" />
     <ClInclude Include="..\src\deemon\vfs\vfs_core.h" />

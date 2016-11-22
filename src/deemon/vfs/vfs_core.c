@@ -62,6 +62,14 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WriteFilename(
  return error;
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *
+DeeVFSNode_Name(DEE_A_IN struct DeeVFSNode const *node) {
+ DeeObject *(DEE_CALL *nameof_func)(struct DeeVFSNode *,struct DeeVFSNode *);
+ if DEE_UNLIKELY(!node->vn_parent) DeeReturn_STATIC_STRING("/");
+ nameof_func = node->vn_parent->vn_type->vnt_node.vnt_nameof;
+ if DEE_UNLIKELY(!nameof_func) DeeReturn_STATIC_STRING("?");
+ return (*nameof_func)(node->vn_parent,(struct DeeVFSNode *)node);
+}
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *
 DeeVFSNode_Filename(DEE_A_IN struct DeeVFSNode const *node) {
  DeeObject *result; struct DeeStringWriter writer = DeeStringWriter_INIT();
  DEE_ASSERT(node);
@@ -168,10 +176,10 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetMod(
   error = (*self->vn_type->vnt_node.vnt_isexecutable)(self);
   if (error < 0) return error;
   if (error) *mode |= 0111;
- } else if (DeeVFSNode_FileHasView(self)) {
+ } else if (DeeVFSNode_HasView(self)) {
   *mode |= 0111;
  }
- if (DeeVFSNode_FileHasOpen(self)) *mode |= 0444;
+ if (DeeVFSNode_HasOpen(self)) *mode |= 0444;
  return 0;
 }
 DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetMod(
@@ -189,10 +197,10 @@ DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetMod(
   error = (*self->vn_type->vnt_node.vnt_isexecutable)(self);
   if (error < 0) goto handle_error;
   if (error) *mode |= 0111;
- } else if (DeeVFSNode_FileHasView(self)) {
+ } else if (DeeVFSNode_HasView(self)) {
   *mode |= 0111;
  }
- if (DeeVFSNode_FileHasOpen(self)) *mode |= 0444;
+ if (DeeVFSNode_HasOpen(self)) *mode |= 0444;
  return 1;
 }
 
@@ -310,7 +318,7 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LLocateAt_impl(
  DeeVFSNode_INCREF(root); result = root;
  path_iter = path;
  while (*path_iter) {
-  if (!DeeVFSNode_FileHasWalk(result)) {
+  if (!DeeVFSNode_HasWalk(result)) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "Can't walk virtual path %R with %q",
                        DeeVFSNode_Filename(result),path_iter);
