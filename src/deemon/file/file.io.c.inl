@@ -35,6 +35,7 @@
 #include <deemon/memberdef.h>
 #include <deemon/optional/object_malloc.h>
 #include <deemon/fs/native_filefd.h>
+#include <deemon/fs/native_fs.h>
 #include <deemon/sys/sysfd.h>
 
 DEE_DECL_BEGIN
@@ -586,8 +587,18 @@ static DeeObject *DEE_CALL _deefileio_issocket(
 
 static DeeObject *DEE_CALL _deefileio_dir(
  DeeFileIOObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
+ DeeObject *filename,*result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":dir") != 0) return NULL;
- return DeeFileIO_ListDir((DeeObject *)self);
+ // TODO: Support for fopendir
+#ifdef DeeSysFSWideView
+ if DEE_UNLIKELY((filename = DeeFileIO_WideFilename((DeeObject *)self)) == NULL) return NULL;
+ result = DeeNFS_WideOpendirObject(filename);
+#else
+ if DEE_UNLIKELY((filename = DeeFileIO_Utf8Filename((DeeObject *)self)) == NULL) return NULL;
+ result = DeeNFS_Utf8OpendirObject(filename);
+#endif
+ Dee_DECREF(filename);
+ return result;
 }
 static DeeObject *DEE_CALL _deefileio_chmod(
  DeeFileIOObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {

@@ -1715,7 +1715,7 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_win32wdrives) {
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_readlink) {
  DeeObject *path;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:__builtin_fs_readlink",&path) != 0) return NULL;
- return DeeFS_ReadLinkObject(path);
+ return DeeFS_ReadlinkObject(path);
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_chmod) {
  DeeObject *path,*mode; Dee_mode_t modeid;

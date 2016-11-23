@@ -1013,14 +1013,64 @@ end_0: Dee_DECREF(casted_link_name);
  return result;
 }
 
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *(DEE_CALL *PDEEFS_UTF8OPENDIR)(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *(DEE_CALL *PDEEFS_WIDEOPENDIR)(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *(DEE_CALL *PDEEFS_UTF8OPENDIROBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *(DEE_CALL *PDEEFS_WIDEOPENDIROBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+
+#define DeeFS_Utf8Opendir           DeeFS_GETFUNCTION_v102(PDEEFS_UTF8OPENDIR,152)
+#define DeeFS_WideOpendir           DeeFS_GETFUNCTION_v102(PDEEFS_WIDEOPENDIR,154)
+#define DeeFS_Utf8OpendirObject     DeeFS_GETFUNCTION_v102(PDEEFS_UTF8OPENDIROBJECT,154)
+#define DeeFS_WideOpendirObject     DeeFS_GETFUNCTION_v102(PDEEFS_WIDEOPENDIROBJECT,155)
+#define _DeeFS_Utf8Opendir          DeeFS_GETFUNCTION_v102(PDEEFS_UTF8OPENDIR,156)
+#define _DeeFS_WideOpendir          DeeFS_GETFUNCTION_v102(PDEEFS_WIDEOPENDIR,157)
+#define _DeeFS_Utf8OpendirObject    DeeFS_GETFUNCTION_v102(PDEEFS_UTF8OPENDIROBJECT,158)
+#define _DeeFS_WideOpendirObject    DeeFS_GETFUNCTION_v102(PDEEFS_WIDEOPENDIROBJECT,159)
+
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *)
+DeeFS_OpendirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
+ DEE_PRIVATE_CALL_UTF8WIDE_ARG0(DeeObject *,NULL,path,DeeFS_Utf8OpendirObject,DeeFS_WideOpendirObject)
+}
+
+
+
+
+typedef DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *(DEE_CALL *PDEEFS_UTF8READLINK)(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *(DEE_CALL *PDEEFS_WIDEREADLINK)(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *(DEE_CALL *PDEEFS_UTF8READLINKOBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *(DEE_CALL *PDEEFS_WIDEREADLINKOBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+
 //////////////////////////////////////////////////////////////////////////
 // Reads a given file system link
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) _DeeFS_Utf8ReadLink(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) _DeeFS_WideReadLink(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8ReadLink(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WideReadLink(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *) _DeeFS_ReadLinkObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *) DeeFS_ReadLinkObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeFS_Utf8Readlink        DeeFS_GETFUNCTION_v102(PDEEFS_UTF8READLINK,168)
+#define DeeFS_WideReadlink        DeeFS_GETFUNCTION_v102(PDEEFS_WIDEREADLINK,169)
+#define DeeFS_Utf8ReadlinkObject  DeeFS_GETFUNCTION_v102(PDEEFS_UTF8READLINKOBJECT,170)
+#define DeeFS_WideReadlinkObject  DeeFS_GETFUNCTION_v102(PDEEFS_WIDEREADLINKOBJECT,171)
+#define _DeeFS_Utf8Readlink       DeeFS_GETFUNCTION_v102(PDEEFS_UTF8READLINK,172)
+#define _DeeFS_WideReadlink       DeeFS_GETFUNCTION_v102(PDEEFS_WIDEREADLINK,173)
+#define _DeeFS_Utf8ReadlinkObject DeeFS_GETFUNCTION_v102(PDEEFS_UTF8READLINKOBJECT,174)
+#define _DeeFS_WideReadlinkObject DeeFS_GETFUNCTION_v102(PDEEFS_WIDEREADLINKOBJECT,175)
+
+#if DEE_DEPRECATED_API_VERSION(100,102,104)
+#define _DeeFS_Utf8ReadLink   DEE_DEPRECATED_MACRO(_DeeFS_Utf8Readlink)
+#define _DeeFS_WideReadLink   DEE_DEPRECATED_MACRO(_DeeFS_WideReadlink)
+#define _DeeFS_ReadLink       DEE_DEPRECATED_MACRO(_DeeFS_Readlink)
+#define _DeeFS_ReadLinkObject DEE_DEPRECATED_MACRO(_DeeFS_ReadlinkObject)
+#define DeeFS_Utf8ReadLink    DEE_DEPRECATED_MACRO(DeeFS_Utf8Readlink)
+#define DeeFS_WideReadLink    DEE_DEPRECATED_MACRO(DeeFS_WideReadlink)
+#define DeeFS_ReadLink        DEE_DEPRECATED_MACRO(DeeFS_Readlink)
+#define DeeFS_ReadLinkObject  DEE_DEPRECATED_MACRO(DeeFS_ReadlinkObject)
+#endif
+
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *)
+_DeeFS_ReadlinkObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
+ DEE_PRIVATE_CALL_UTF8WIDE_ARG0(DeeObject *,NULL,path,_DeeFS_Utf8ReadlinkObject,_DeeFS_WideReadlinkObject)
+}
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *)
+DeeFS_ReadlinkObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
+ DEE_PRIVATE_CALL_UTF8WIDE_ARG0(DeeObject *,NULL,path,DeeFS_Utf8ReadlinkObject,DeeFS_WideReadlinkObject)
+}
+
 
 
 typedef DEE_A_RET_EXCEPT(-1) int (*DeeFS_ProcessFunc)(double progress, void *closure);
@@ -1049,54 +1099,12 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFS_CopyObjectWithProgress(
 
 
 
-typedef DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *(DEE_CALL *PDEEFS_UTF8OPENDIR)(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-typedef DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *(DEE_CALL *PDEEFS_WIDEOPENDIR)(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-typedef DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *(DEE_CALL *PDEEFS_UTF8OPENDIROBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-typedef DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *(DEE_CALL *PDEEFS_WIDEOPENDIROBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-
-#define DeeFS_Utf8Opendir           DeeFS_GETFUNCTION_v102(PDEEFS_UTF8OPENDIR,152)
-#define DeeFS_WideOpendir           DeeFS_GETFUNCTION_v102(PDEEFS_WIDEOPENDIR,154)
-#define DeeFS_Utf8OpendirObject     DeeFS_GETFUNCTION_v102(PDEEFS_UTF8OPENDIROBJECT,154)
-#define DeeFS_WideOpendirObject     DeeFS_GETFUNCTION_v102(PDEEFS_WIDEOPENDIROBJECT,155)
-#define _DeeFS_Utf8Opendir          DeeFS_GETFUNCTION_v102(PDEEFS_UTF8OPENDIR,156)
-#define _DeeFS_WideOpendir          DeeFS_GETFUNCTION_v102(PDEEFS_WIDEOPENDIR,157)
-#define _DeeFS_Utf8OpendirObject    DeeFS_GETFUNCTION_v102(PDEEFS_UTF8OPENDIROBJECT,158)
-#define _DeeFS_WideOpendirObject    DeeFS_GETFUNCTION_v102(PDEEFS_WIDEOPENDIROBJECT,159)
-
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *)
-DeeFS_OpendirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) {
- DEE_PRIVATE_CALL_UTF8WIDE_ARG0(DeeObject *,NULL,path,DeeFS_Utf8OpendirObject,DeeFS_WideOpendirObject)
-}
-
-
-
-
-DEE_DATA_DECL(DeeTypeObject) DeeFSDir_Type;
-DEE_DATA_DECL(DeeTypeObject) DeeFSDirIterator_Type;
-#define DeeFSDir_Check(ob)              DeeObject_InstanceOf(ob,&DeeFSDir_Type)
-#define DeeFSDir_CheckExact(ob)         DeeObject_InstanceOfExact(ob,&DeeFSDir_Type)
-#define DeeFSDirIterator_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeFSDirIterator_Type)
-#define DeeFSDirIterator_Check          DeeFSDirIterator_CheckExact
-
-DEE_DATA_DECL(DeeTypeObject) DeeFSQuery_Type;
-DEE_DATA_DECL(DeeTypeObject) DeeFSQueryIterator_Type;
-#define DeeFSQuery_Check(ob)              DeeObject_InstanceOf(ob,&DeeFSQuery_Type)
-#define DeeFSQuery_CheckExact(ob)         DeeObject_InstanceOfExact(ob,&DeeFSQuery_Type)
-#define DeeFSQueryIterator_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeFSQueryIterator_Type)
-#define DeeFSQueryIterator_Check          DeeFSQueryIterator_CheckExact
-
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) _DeeFS_Utf8ListDir(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) _DeeFS_WideListDir(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) _DeeFS_ListDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) DeeFS_Utf8ListDir(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) DeeFS_WideListDir(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) DeeFS_ListDirObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) _DeeFS_Utf8Query(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) _DeeFS_WideQuery(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) _DeeFS_QueryObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) DeeFS_Utf8Query(DEE_A_IN_Z Dee_Utf8Char const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) DeeFS_WideQuery(DEE_A_IN_Z Dee_WideChar const *path) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) DeeFS_QueryObject(DEE_A_IN_OBJECT(DeeAnyStringObject) const *path) DEE_ATTRIBUTE_NONNULL((1));
+#define _DeeFS_Utf8ListDir   _DeeFS_Utf8Opendir
+#define _DeeFS_WideListDir   _DeeFS_WideOpendir
+#define _DeeFS_ListDirObject _DeeFS_OpendirObject
+#define DeeFS_Utf8ListDir    DeeFS_Utf8Opendir
+#define DeeFS_WideListDir    DeeFS_WideOpendir
+#define DeeFS_ListDirObject  DeeFS_OpendirObject
 
 #ifdef DEE_PLATFORM_WINDOWS
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8Win32GetModuleName(DEE_A_IN_OPT /*HMODULE*/void *module);
@@ -1239,14 +1247,10 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_RET_EXCEPT(-1)
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_CopyWithProgress(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst, DEE_A_IN DeeFS_ProcessFunc progress, void *closure) { return _DeeFS_WideCopyWithProgress(src,dst,progress,closure); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_RET_EXCEPT(-1) int) DeeFS_CopyWithProgress(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst, DEE_A_IN DeeFS_ProcessFunc progress, void *closure) { return DeeFS_Utf8CopyWithProgress(src,dst,progress,closure); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_RET_EXCEPT(-1) int) DeeFS_CopyWithProgress(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst, DEE_A_IN DeeFS_ProcessFunc progress, void *closure) { return DeeFS_WideCopyWithProgress(src,dst,progress,closure); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) _DeeFS_ListDir(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8ListDir(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) _DeeFS_ListDir(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideListDir(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) DeeFS_ListDir(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8ListDir(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) DeeFS_ListDir(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideListDir(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) _DeeFS_Query(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8Query(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) _DeeFS_Query(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideQuery(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) DeeFS_Query(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8Query(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSQueryObject) *) DeeFS_Query(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideQuery(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) _DeeFS_Opendir(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8Opendir(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) _DeeFS_Opendir(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideOpendir(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) DeeFS_Opendir(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8Opendir(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSDirObject) *) DeeFS_Opendir(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideOpendir(path); }
 #ifdef DEE_PLATFORM_WINDOWS
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_Win32HardLink(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst) { return _DeeFS_Utf8Win32HardLink(src,dst); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_Win32HardLink(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) { return _DeeFS_WideWin32HardLink(src,dst); }
@@ -1287,10 +1291,10 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_RET_EXCEPT(-1)
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_RET_EXCEPT(-1) int) DeeFS_GetOwn(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) { return DeeFS_WideGetOwn(path,owner,group); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_GetOwn(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) { return _DeeFS_Utf8GetOwn(path,owner,group); }
 DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_RET_EXCEPT(-1) int) _DeeFS_GetOwn(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) { return _DeeFS_WideGetOwn(path,owner,group); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) _DeeFS_ReadLink(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8ReadLink(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) _DeeFS_ReadLink(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideReadLink(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_ReadLink(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8ReadLink(path); }
-DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_ReadLink(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideReadLink(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) _DeeFS_Readlink(DEE_A_IN_Z Dee_Utf8Char const *path) { return _DeeFS_Utf8Readlink(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) _DeeFS_Readlink(DEE_A_IN_Z Dee_WideChar const *path) { return _DeeFS_WideReadlink(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Readlink(DEE_A_IN_Z Dee_Utf8Char const *path) { return DeeFS_Utf8Readlink(path); }
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_Readlink(DEE_A_IN_Z Dee_WideChar const *path) { return DeeFS_WideReadlink(path); }
 #else
 #define /*DEE_A_EXEC*/ _DeeFS_ChDir            _DeeFS_Utf8Chdir
 #define /*DEE_A_EXEC*/ DeeFS_ChDir             DeeFS_Utf8Chdir
@@ -1338,10 +1342,8 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_
 #define /*DEE_A_EXEC*/ DeeFS_Link              DeeFS_Utf8Link
 #define /*DEE_A_EXEC*/ _DeeFS_CopyWithProgress _DeeFS_Utf8CopyWithProgress
 #define /*DEE_A_EXEC*/ DeeFS_CopyWithProgress  DeeFS_Utf8CopyWithProgress
-#define /*DEE_A_EXEC*/ _DeeFS_ListDir          _DeeFS_Utf8ListDir
-#define /*DEE_A_EXEC*/ DeeFS_ListDir           DeeFS_Utf8ListDir
-#define /*DEE_A_EXEC*/ _DeeFS_Query            _DeeFS_Utf8Query
-#define /*DEE_A_EXEC*/ DeeFS_Query             DeeFS_Utf8Query
+#define /*DEE_A_EXEC*/ _DeeFS_Opendir          _DeeFS_Utf8Opendir
+#define /*DEE_A_EXEC*/ DeeFS_Opendir           DeeFS_Utf8Opendir
 #ifdef DEE_PLATFORM_WINDOWS
 #define /*DEE_A_EXEC*/ _DeeFS_Win32HardLink    _DeeFS_Utf8Win32HardLink
 #define /*DEE_A_EXEC*/ DeeFS_Win32HardLink     DeeFS_Utf8Win32HardLink
@@ -1365,8 +1367,8 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1)) DEE_A_RET_OBJECT_EXCEPT_
 #endif
 #define /*DEE_A_EXEC*/ DeeFS_GetOwn            DeeFS_Utf8GetOwn
 #define /*DEE_A_EXEC*/ _DeeFS_GetOwn           _DeeFS_Utf8GetOwn
-#define /*DEE_A_EXEC*/ _DeeFS_ReadLink         _DeeFS_Utf8ReadLink
-#define /*DEE_A_EXEC*/ DeeFS_ReadLink          DeeFS_Utf8ReadLink
+#define /*DEE_A_EXEC*/ _DeeFS_Readlink         _DeeFS_Utf8Readlink
+#define /*DEE_A_EXEC*/ DeeFS_Readlink          DeeFS_Utf8Readlink
 #endif
 
 

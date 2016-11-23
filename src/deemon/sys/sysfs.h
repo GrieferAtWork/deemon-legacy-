@@ -169,6 +169,11 @@
 // >> [[optional]] void DeeSysFS_Utf8LinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *link_path, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *target_path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideLinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *link_path, DEE_A_IN_OBJECT(DeeWideStringObject) const *target_path, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
+// >> [[optional]] void DeeSysFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OBJECT(DeeUtf8StringObject) **result, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideReadlink(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OBJECT(DeeWideStringObject) **result, CODE on_error);
+// >> [[optional]] void DeeSysFS_Utf8ReadlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_OUT_OBJECT(DeeUtf8StringObject) **result, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideReadlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_OUT_OBJECT(DeeWideStringObject) **result, CODE on_error);
+//////////////////////////////////////////////////////////////////////////
 
 
 #if defined(DEE_PLATFORM_WINDOWS)
@@ -441,6 +446,12 @@ make("Remove");
 #endif
 #if !defined(DeeSysFS_WideLinkObject) && defined(DeeSysFS_WideLink)
 #define DeeSysFS_WideLinkObject(link_name,target_name,...) DeeSysFS_WideLink(DeeWideString_STR(link_name),DeeWideString_STR(target_name),__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_Utf8ReadlinkObject) && defined(DeeSysFS_Utf8Readlink)
+#define DeeSysFS_Utf8ReadlinkObject(path,result,...) DeeSysFS_Utf8Readlink(DeeUtf8String_STR(path),result,__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_WideReadlinkObject) && defined(DeeSysFS_WideReadlink)
+#define DeeSysFS_WideReadlinkObject(path,result,...) DeeSysFS_WideReadlink(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 
 //////////////////////////////////////////////////////////////////////////

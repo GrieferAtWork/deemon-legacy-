@@ -268,6 +268,11 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 #define DEE_NFS_HAVE_OPEN
 #endif
 
+#if defined(DeeSysFS_Utf8ReadlinkObject)\
+ || defined(DeeSysFS_WideReadlinkObject)
+#define DEE_NFS_HAVE_READLINK
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 // === FS_API Exports for linking against native filesystem APIS ===
 // >> To check if a set of routines is available, use the macros defined above.
@@ -456,6 +461,14 @@ extern DEE_A_RET_EXCEPT_REF DeeObject *DeeNFS_WideOpen(DEE_A_IN_Z Dee_WideChar c
 extern DEE_A_RET_EXCEPT_REF DeeObject *DeeNFS_Utf8OpenObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions);
 extern DEE_A_RET_EXCEPT_REF DeeObject *DeeNFS_WideOpenObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions);
 
+#ifndef DEE_PRIVATE_NFS_READLINK_DECLARED
+#define DEE_PRIVATE_NFS_READLINK_DECLARED
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideReadlink(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8ReadlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideReadlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+#endif
+
 
 #define DeeNFS_GetCwd                DeeNFS_Utf8GetCwd
 #define DeeNFS_Chdir                 DeeNFS_Utf8Chdir
@@ -529,6 +542,8 @@ extern DEE_A_RET_EXCEPT_REF DeeObject *DeeNFS_WideOpenObject(DEE_A_IN_OBJECT(Dee
 #define DeeNFS_LinkObject            DeeNFS_Utf8LinkObject
 #define DeeNFS_Opendir               DeeNFS_Utf8Opendir
 #define DeeNFS_OpendirObject         DeeNFS_Utf8OpendirObject
+#define DeeNFS_Readlink              DeeNFS_Utf8Readlink
+#define DeeNFS_ReadlinkObject        DeeNFS_Utf8ReadlinkObject
 
 
 DEE_DECL_END

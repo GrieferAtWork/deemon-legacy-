@@ -18,35 +18,52 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_EXPAND_FS_C
-#define GUARD_DEEMON_FS_EXPAND_FS_C 1
+#ifndef GUARD_DEEMON_FS_EXPAND_FS_READLINK_C_INL
+#define GUARD_DEEMON_FS_EXPAND_FS_READLINK_C_INL 1
+#ifndef DEE_LIMITED_API
 #define DEE_LIMITED_API 1
+#endif
 
 #include <deemon/__conf.inl>
+#include <deemon/error.h>
+#include <deemon/fs_api.h>
+#include <deemon/fs/expand_fs.h>
 
 DEE_DECL_BEGIN
 
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
+DeeXFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) return NULL;
+ result = _DeeFS_Utf8ReadlinkObject(xpath);
+ Dee_DECREF(xpath);
+ return result;
+}
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
+DeeXFS_WideReadlink(DEE_A_IN_Z Dee_WideChar const *path) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) return NULL;
+ result = _DeeFS_WideReadlinkObject(xpath);
+ Dee_DECREF(xpath);
+ return result;
+}
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
+DeeXFS_Utf8ReadlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) return NULL;
+ result = _DeeFS_Utf8ReadlinkObject(xpath);
+ Dee_DECREF(xpath);
+ return result;
+}
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
+DeeXFS_WideReadlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) return NULL;
+ result = _DeeFS_WideReadlinkObject(xpath);
+ Dee_DECREF(xpath);
+ return result;
+}
+
 DEE_DECL_END
 
-#ifndef __INTELLISENSE__
-#include "expand_fs.chdir.c.inl"
-#include "expand_fs.chmod.c.inl"
-#include "expand_fs.chown.c.inl"
-#include "expand_fs.copy.c.inl"
-#include "expand_fs.getmod.c.inl"
-#include "expand_fs.getown.c.inl"
-#include "expand_fs.gettimes.c.inl"
-#include "expand_fs.hasproperty.c.inl"
-#include "expand_fs.link.c.inl"
-#include "expand_fs.mkdir.c.inl"
-#include "expand_fs.move.c.inl"
-#include "expand_fs.open.c.inl"
-#include "expand_fs.opendir.c.inl"
-#include "expand_fs.readlink.c.inl"
-#include "expand_fs.remove.c.inl"
-#include "expand_fs.rmdir.c.inl"
-#include "expand_fs.settimes.c.inl"
-#include "expand_fs.unlink.c.inl"
-#endif
-
-#endif /* !GUARD_DEEMON_FS_EXPAND_FS_C */
+#endif /* !GUARD_DEEMON_FS_EXPAND_FS_READLINK_C_INL */

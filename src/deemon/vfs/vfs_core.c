@@ -198,13 +198,34 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(
 }
 
 
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
+DeeVFSNode_Utf8Readlink(DEE_A_INOUT struct DeeVFSNode *self) {
+ if (!self->vn_type->vnt_node.vnt_link) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Can't readlink %R",
+                      DeeVFSNode_Filename(self));
+  return NULL;
+ }
+ return (*self->vn_type->vnt_node.vnt_link)(self);
+}
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
+DeeVFSNode_WideReadlink(DEE_A_INOUT struct DeeVFSNode *self) {
+ DeeObject *result,*newresult;
+ if DEE_UNLIKELY((result = DeeVFSNode_Utf8Readlink(self)) == NULL) return NULL;
+ newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
+                                                    DeeUtf8String_STR(result));
+ Dee_DECREF(result);
+ return newresult;
+}
+
+
 
 
 DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
  DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_INOUT struct DeeVFSNode *self) {
  struct DeeVFSNode *result;
  DeeObject *link_path; char const *link_str;
- if DEE_UNLIKELY((link_path = DeeVFSNode_ReadLink(self)) == NULL) return NULL;
+ if DEE_UNLIKELY((link_path = DeeVFSNode_DoReadlink(self)) == NULL) return NULL;
  link_str = DeeString_STR(link_path);
  if (DEE_VFS_ISSEP(link_str[0])) { // Absolute link
   do ++link_str; while (DEE_VFS_ISSEP(link_str[0]));

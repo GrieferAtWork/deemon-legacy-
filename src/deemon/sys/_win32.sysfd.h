@@ -53,6 +53,8 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 DEE_DECL_BEGIN
 
+// TODO: Remove Try-Versions
+
 
 #define DEE_WIN32_SYSFD_HEAD  HANDLE w32_handle; /*< [1..1] File handle. */
 struct DeeWin32SysFD { DEE_WIN32_SYSFD_HEAD };
@@ -782,10 +784,10 @@ struct DeeWin32SysFileFD {
 
 DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8CreateFile(Dee_Utf8Char const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
 DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideCreateFile(Dee_WideChar const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
-DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8TryCreateFile(Dee_Utf8Char const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
-DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideTryCreateFile(Dee_WideChar const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
 DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8CreateFileObject(DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
 DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideCreateFileObject(DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8TryCreateFile(Dee_Utf8Char const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideTryCreateFile(Dee_WideChar const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
 DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8TryCreateFileObject(DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
 DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideTryCreateFileObject(DeeObject const *filename, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes);
 

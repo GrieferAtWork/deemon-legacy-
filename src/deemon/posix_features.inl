@@ -31,7 +31,7 @@
 #include <features.h>
 #endif
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_UNISTD_H
-#include <unistd.h> // _POSIX_PRIORITY_SCHEDULING, _POSIX_TIMERS
+#include <unistd.h> // _POSIX_PRIORITY_SCHEDULING, _POSIX_TIMERS, _POSIX_SYNCHRONIZED_IO
 #endif
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 #endif /* ... */
@@ -358,7 +358,8 @@
 
 #ifndef DEE_HAVE_FDATASYNC
 #if (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 199309L)\
- || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)
+ || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)\
+ && (defined(_POSIX_SYNCHRONIZED_IO) && _POSIX_SYNCHRONIZED_IO > 0)
 # define DEE_HAVE_FDATASYNC 1
 #else
 # define DEE_HAVE_FDATASYNC 0
@@ -480,6 +481,22 @@
 # define DEE_HAVE__WSTAT 1
 #else
 # define DEE_HAVE__WSTAT 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WMKDIR
+#if defined(_MSC_VER)
+# define DEE_HAVE__WMKDIR 1
+#else
+# define DEE_HAVE__WMKDIR 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WRMDIR
+#if defined(_MSC_VER)
+# define DEE_HAVE__WRMDIR 1
+#else
+# define DEE_HAVE__WRMDIR 0
 #endif
 #endif
 

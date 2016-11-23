@@ -395,6 +395,7 @@
     <ClInclude Include="..\src\deemon\sys\_unix.sysdynlib.h" />
     <ClInclude Include="..\src\deemon\sys\_unix.sysfd.h" />
     <ClInclude Include="..\src\deemon\sys\_unix.sysfs.h" />
+    <ClInclude Include="..\src\deemon\sys\_unix.sysfs.view.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.sysdynlib.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.sysfd.createfile.h" />
     <ClInclude Include="..\src\deemon\sys\_win32.sysfd.h" />
@@ -599,6 +600,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\fs\expand_fs.move.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.open.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.opendir.c.inl" />
+    <None Include="..\src\deemon\fs\expand_fs.readlink.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.remove.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.rmdir.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.settimes.c.inl" />
@@ -638,6 +640,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\fs\native_fs.move.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.open.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.opendir.c.inl" />
+    <None Include="..\src\deemon\fs\native_fs.readlink.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.remove.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.rmdir.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.setenv.c.inl" />
@@ -657,6 +660,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\fs\virtual_fs.move.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.open.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.opendir.c.inl" />
+    <None Include="..\src\deemon\fs\virtual_fs.readlink.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.remove.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.rmdir.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.settimes.c.inl" />

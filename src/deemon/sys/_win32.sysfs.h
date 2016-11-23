@@ -29,6 +29,7 @@
 #include <deemon/optional/atomic_once.h>
 #include <deemon/string.h>
 #include <deemon/runtime/extern.h>
+#include <deemon/sys/_win32.sysfd.h>
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
@@ -769,6 +770,122 @@ do{\
 #define DeeWin32SysFS_WideLink(link_name,target_name,...)       DeeWin32Sys_WideLink(link_name,target_name,__VA_ARGS__)
 #define DeeWin32SysFS_WideLinkObject(link_name,target_name,...) DeeWin32Sys_WideLinkObject(link_name,target_name,__VA_ARGS__)
 
+/*
+if ((hfile = WIN32_F(CreateFile)(
+   path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,
+   FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL)) == INVALID_HANDLE_VALUE)
+*/
+
+#ifndef DEE_PRIVATE_REPARSE_DATA_BUFFER_DEFINED
+#define DEE_PRIVATE_REPARSE_DATA_BUFFER_DEFINED
+DEE_COMPILER_MSVC_WARNING_PUSH(4201)
+typedef struct _REPARSE_DATA_BUFFER {
+  ULONG  ReparseTag;
+  USHORT ReparseDataLength;
+  USHORT Reserved;
+  union {
+    struct {
+      USHORT SubstituteNameOffset;
+      USHORT SubstituteNameLength;
+      USHORT PrintNameOffset;
+      USHORT PrintNameLength;
+      ULONG  Flags;
+      WCHAR  PathBuffer[1];
+    } SymbolicLinkReparseBuffer;
+    struct {
+      USHORT SubstituteNameOffset;
+      USHORT SubstituteNameLength;
+      USHORT PrintNameOffset;
+      USHORT PrintNameLength;
+      WCHAR  PathBuffer[1];
+    } MountPointReparseBuffer;
+    struct {
+      UCHAR DataBuffer[1];
+    } GenericReparseBuffer;
+  }
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define SymbolicLinkReparseBuffer _rd_data.SymbolicLinkReparseBuffer
+#define MountPointReparseBuffer   _rd_data.MountPointReparseBuffer
+#define GenericReparseBuffer      _rd_data.GenericReparseBuffer
+ _rd_data
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+ ;
+} REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
+#endif
+
+
+#if DEE_XCONFIG_FSBUFSIZE_WIN32READLINK > MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+#undef DEE_XCONFIG_FSBUFSIZE_WIN32READLINK
+#define DEE_XCONFIG_FSBUFSIZE_WIN32READLINK MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+#endif
+#define DeeWin32Sys_WideReadlink(path,result,...) \
+do{\
+ HANDLE _rl_hFile; REPARSE_DATA_BUFFER *_rl_buffer,*_rl_newbuffer;\
+ DWORD _rl_bufsize,_rl_bytesreturned,_rl_error;\
+ if DEE_UNLIKELY((_rl_hFile = DeeWin32Sys_WideCreateFile(path,GENERIC_READ,\
+  FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,OPEN_EXISTING,\
+  FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT)) == INVALID_HANDLE_VALUE) {__VA_ARGS__;}\
+ while DEE_UNLIKELY((_rl_buffer = (REPARSE_DATA_BUFFER *)malloc_nz(DEE_XCONFIG_FSBUFSIZE_WIN32READLINK)) == NULL) {\
+  if DEE_LIKELY(Dee_CollectMemory()) continue;\
+  CloseHandle(_rl_hFile);\
+  DeeError_NoMemory();\
+  {__VA_ARGS__;}\
+ }\
+ _rl_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32READLINK;\
+ while DEE_UNLIKELY(!DeviceIoControl(_rl_hFile,FSCTL_GET_REPARSE_POINT,\
+   NULL,0,_rl_buffer,_rl_bufsize,&_rl_bytesreturned,NULL)) {\
+  if ((_rl_error = GetLastError()) == ERROR_INSUFFICIENT_BUFFER) {\
+   _rl_bufsize *= 2;\
+   while DEE_UNLIKELY((_rl_newbuffer = (REPARSE_DATA_BUFFER *)\
+    realloc_nnz(_rl_buffer,_rl_bufsize)) == NULL) {\
+    if DEE_LIKELY(Dee_CollectMemory()) continue;\
+    free_nn(_rl_buffer);\
+    CloseHandle(_rl_hFile);\
+    DeeError_NoMemory();\
+    {__VA_ARGS__;}\
+   }\
+   _rl_buffer = _rl_newbuffer;\
+  } else {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "DeviceIoControl(%p:%lq,FSCTL_GET_REPARSE_POINT,NULL,0,...,%lu,...,NULL) : %K",\
+                       _rl_hFile,path,(unsigned long)_rl_bufsize,\
+                       DeeSystemError_Win32ToString(_rl_error));\
+   free_nn(_rl_buffer);\
+   CloseHandle(_rl_hFile);\
+   {__VA_ARGS__;}\
+  }\
+ }\
+ CloseHandle(_rl_hFile);\
+ switch (_rl_buffer->ReparseTag) {\
+  case IO_REPARSE_TAG_SYMLINK:\
+   *(result) = DeeWideString_NewWithLength(\
+    _rl_buffer->SymbolicLinkReparseBuffer.SubstituteNameLength/sizeof(Dee_WideChar),\
+    _rl_buffer->SymbolicLinkReparseBuffer.PathBuffer+\
+    _rl_buffer->SymbolicLinkReparseBuffer.SubstituteNameOffset/sizeof(Dee_WideChar));\
+   break;\
+  case IO_REPARSE_TAG_MOUNT_POINT: {\
+   Dee_WideChar const *_rl_begin,*_rl_end;\
+   _rl_end = (_rl_begin = _rl_buffer->MountPointReparseBuffer.PathBuffer+\
+    (_rl_buffer->MountPointReparseBuffer.SubstituteNameOffset/sizeof(Dee_WideChar)))+\
+    (_rl_buffer->MountPointReparseBuffer.SubstituteNameLength/sizeof(Dee_WideChar));\
+   /* Get rid of that annoying '\??\' prefix */\
+   if (_rl_begin+4 <= _rl_end && (_rl_begin[0] == '\\' || _rl_begin[0] == '/') && _rl_begin[1] == '?' &&\
+       _rl_begin[2] == '?' && (_rl_begin[3] == '\\' || _rl_begin[3] == '/')) _rl_begin += 4;\
+   *(result) = DeeWideString_NewWithLength((Dee_size_t)(_rl_end-_rl_begin),_rl_begin);\
+  } break;\
+  default:\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "DeviceIoControl(%p:%lq) : Unknown/Unsupported link type: %lu",\
+                       _rl_hFile,path,(unsigned long)_rl_buffer->ReparseTag);\
+   free_nn(_rl_buffer);\
+   {__VA_ARGS__;}\
+   break;\
+ }\
+ free_nn(_rl_buffer);\
+ if DEE_UNLIKELY(!*(result)) {__VA_ARGS__;}\
+}while(0)
+#define DeeWin32SysFS_WideReadlink DeeWin32Sys_WideReadlink
+
 
 #if 0 /* TODO: Permissions for CreateDirectoryW */
 #define MODE2PERMS(mode) \
@@ -853,6 +970,7 @@ static ULONG DeeFS_Win32InitializeAccessA(EXPLICIT_ACCESSA *access, Dee_mode_t m
 #define DeeSysFS_WideMoveObject            DeeWin32SysFS_WideMoveObject
 #define DeeSysFS_WideLink                  DeeWin32SysFS_WideLink
 #define DeeSysFS_WideLinkObject            DeeWin32SysFS_WideLinkObject
+#define DeeSysFS_WideReadlink              DeeWin32SysFS_WideReadlink
 
 DEE_DECL_END
 

@@ -49,53 +49,6 @@ struct DeeWin32SysFSWideViewNL {
 #define DeeWin32SysFSWideViewNL_ISIGNOREDENTRY(self)\
  DeeWin32SysFS_ISIGNOREDVIEWENTRY((self)->w32_viewdata.cFileName)
 
-
-#define DeeWin32SysFSWideViewNL_TryInitWithLength(self,path,path_size,...)\
-do{\
- Dee_WideChar *_wv_pattern,*_wv_patternend;\
- Dee_size_t _wv_path_size; DWORD _wv_error;\
- _wv_path_size = (path_size);\
- /* +7: Max pattern size: '\\?\' + '\*' + 0 */\
- while DEE_UNLIKELY((_wv_pattern = (Dee_WideChar *)malloc_nz((\
-  _wv_path_size+7)*sizeof(Dee_WideChar))) == NULL) {\
-  if DEE_LIKELY(Dee_CollectMemory()) continue;\
-  {__VA_ARGS__;}\
- }\
- _wv_patternend = _wv_pattern;\
- if (((path)[0] != '\\' || (path)[1] != '\\'\
-   || (path)[2] != '?'  || (path)[3] != '\\') && (\
-     !(path)[0] || (path)[1] == ':')) {\
-  _wv_patternend[0] = '\\',_wv_patternend[1] = '\\';\
-  _wv_patternend[2] = '?', _wv_patternend[3] = '\\';\
-  _wv_patternend += 4;\
- }\
- memcpy(_wv_patternend,path,_wv_path_size*sizeof(Dee_WideChar));\
- _wv_patternend += _wv_path_size;\
- while (_wv_patternend != _wv_pattern && (_wv_patternend[-1] == '/'\
-     || _wv_patternend[-1] == '\\')) --_wv_patternend;\
- _wv_patternend[0] = '\\';\
- _wv_patternend[1] = '*';\
- _wv_patternend[2] = 0;\
- (self)->w32_hview = FindFirstFileW(_wv_pattern,&(self)->w32_viewdata);\
- if ((self)->w32_hview == INVALID_HANDLE_VALUE) {\
-  _wv_error = GetLastError();\
-  free_nn(_wv_pattern);\
-  if (_wv_error != ERROR_FILE_NOT_FOUND) {__VA_ARGS__;}\
- } else {\
-  free_nn(_wv_pattern);\
-  /* Skip '.' and '..' (always located at the start of views) */\
-  while (DeeWin32SysFSWideViewNL_ISIGNOREDENTRY(self)) {\
-   if DEE_UNLIKELY(!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
-    _wv_error = GetLastError();\
-    FindClose((self)->w32_hview);\
-    if (_wv_error == ERROR_NO_MORE_FILES) {\
-     (self)->w32_hview = INVALID_HANDLE_VALUE;\
-     break;\
-    } else {__VA_ARGS__;}\
-   }\
-  }\
- }\
-}while(0)
 #define DeeWin32SysFSWideViewNL_InitWithLength(self,path,path_size,...)\
 do{\
  Dee_WideChar *_wv_pattern,*_wv_patternend;\
@@ -110,8 +63,8 @@ do{\
  }\
  _wv_patternend = _wv_pattern;\
  if (((path)[0] != '\\' || (path)[1] != '\\'\
-   || (path)[2] != '?'  || (path)[3] != '\\') && (\
-     !(path)[0] || (path)[1] == ':')) {\
+   || (path)[2] != '?'  || (path)[3] != '\\')\
+   && (path)[0] && (path)[1] == ':') {\
   _wv_patternend[0] = '\\',_wv_patternend[1] = '\\';\
   _wv_patternend[2] = '?', _wv_patternend[3] = '\\';\
   _wv_patternend += 4;\
@@ -158,26 +111,12 @@ do{\
 #define DeeWin32SysFSWideViewNL_Quit(self) \
  ((self)->w32_hview != INVALID_HANDLE_VALUE ? (void)FindClose((self)->w32_hview) : (void)0)
 #define DeeWin32SysFSWideViewNL_IsDone(self) ((self)->w32_hview == INVALID_HANDLE_VALUE)
-#define DeeWin32SysFSWideViewNL_TryInit(self,path,...)\
- DeeWin32SysFSWideViewNL_TryInitWithLength(self,path,Dee_WideStrLen(path),__VA_ARGS__)
-#define DeeWin32SysFSWideViewNL_TryInitObject(self,path,...)\
- DeeWin32SysFSWideViewNL_TryInitWithLength(self,DeeWideString_STR(path),DeeWideString_SIZE(path),__VA_ARGS__)
 #define DeeWin32SysFSWideViewNL_Init(self,path,...)\
  DeeWin32SysFSWideViewNL_InitWithLength(self,path,Dee_WideStrLen(path),__VA_ARGS__)
 #define DeeWin32SysFSWideViewNL_InitObject(self,path,...)\
  DeeWin32SysFSWideViewNL_InitWithLength(self,DeeWideString_STR(path),DeeWideString_SIZE(path),__VA_ARGS__)
 #define DeeWin32SysFSWideViewNL_GetFilenameStrLocked(self) (self)->w32_viewdata.cFileName
 
-#define DeeWin32SysFSWideViewNL_TryAdvance(self,...) \
-do{\
- if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
-  DWORD _wv_error = GetLastError();\
-  FindClose((self)->w32_hview);\
-  if (_wv_error == ERROR_NO_MORE_FILES) {\
-   (self)->w32_hview = INVALID_HANDLE_VALUE;\
-  } else {__VA_ARGS__;}\
- }\
-}while(0)
 #define DeeWin32SysFSWideViewNL_Advance(self,...) \
 do{\
  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
@@ -201,8 +140,6 @@ do{\
 #define DeeWin32SysFSWideViewNL_TryIsMount(self)  0
 #define DeeWin32SysFSWideViewNL_TryIsHidden(self) (((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_HIDDEN))!=0)
 
-
-
 #define DeeWin32SysFSWideView DeeWin32SysFSWideView
 struct DeeWin32SysFSWideView {
  HANDLE                w32_hview;
@@ -212,29 +149,12 @@ struct DeeWin32SysFSWideView {
 
 #define DeeWin32SysFSWideView_Quit DeeWin32SysFSWideViewNL_Quit
 #define DeeWin32SysFSWideView_IsDone DeeWin32SysFSWideViewNL_IsDone
-#define DeeWin32SysFSWideView_TryInit(self,path,...) \
-do{DeeWin32SysFSWideViewNL_TryInit(self,path,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
-#define DeeWin32SysFSWideView_TryInitObject(self,path,...) \
-do{DeeWin32SysFSWideViewNL_TryInitObject(self,path,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
 #define DeeWin32SysFSWideView_Init(self,path,...) \
 do{DeeWin32SysFSWideViewNL_Init(self,path,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
 #define DeeWin32SysFSWideView_InitObject(self,path,...) \
 do{DeeWin32SysFSWideViewNL_InitObject(self,path,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
 
 
-#define DeeWin32SysFSWideView_TryAdvanceAndReleaseOnError(self,...) \
-do{\
- if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
-  DWORD _wv_error;\
-  FindClose((self)->w32_hview);\
-  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {\
-   (self)->w32_hview = INVALID_HANDLE_VALUE;\
-  } else {\
-   DeeAtomicMutex_Release(&(self)->w32_lock);\
-   {__VA_ARGS__;}\
-  }\
- }\
-}while(0)
 #define DeeWin32SysFSWideView_AdvanceAndReleaseOnError(self,...) \
 do{\
  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
@@ -264,34 +184,31 @@ DEE_STATIC_INLINE(DWORD) DeeWin32SysFSWideView_GetAttributes(struct DeeWin32SysF
  DeeWin32SysFSWideView_Release(self);
  return result;
 }
-#define DeeWin32SysFSWideView_TryIsFile(self)   ((DeeWin32SysFSWideView_GetAttributes(self)&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==0)
-#define DeeWin32SysFSWideView_TryIsDir(self)    ((DeeWin32SysFSWideView_GetAttributes(self)&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==(FILE_ATTRIBUTE_DIRECTORY))
-#define DeeWin32SysFSWideView_TryIsLink(self)   ((DeeWin32SysFSWideView_GetAttributes(self)&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==(FILE_ATTRIBUTE_REPARSE_POINT))
-#define DeeWin32SysFSWideView_TryIsDrive(self)  0
-#define DeeWin32SysFSWideView_TryIsMount(self)  0
-#define DeeWin32SysFSWideView_TryIsHidden(self) ((DeeWin32SysFSWideView_GetAttributes(self)&(FILE_ATTRIBUTE_HIDDEN))!=0)
+#define DeeWin32SysFSWideView_IsFileAndReleaseOnError(self,result,...)   do{*(result)=(((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==0);}while(0)
+#define DeeWin32SysFSWideView_IsDirAndReleaseOnError(self,result,...)    do{*(result)=(((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==(FILE_ATTRIBUTE_DIRECTORY));}while(0)
+#define DeeWin32SysFSWideView_IsLinkAndReleaseOnError(self,result,...)   do{*(result)=(((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==(FILE_ATTRIBUTE_REPARSE_POINT));}while(0)
+#define DeeWin32SysFSWideView_IsDriveAndReleaseOnError(self,result,...)  do{*(result)=0;}while(0)
+#define DeeWin32SysFSWideView_IsMountAndReleaseOnError(self,result,...)  do{*(result)=0;}while(0)
+#define DeeWin32SysFSWideView_IsHiddenAndReleaseOnError(self,result,...) do{*(result)=((DeeWin32SysFSWideView_GetAttributes(self)&(FILE_ATTRIBUTE_HIDDEN))!=0);}while(0)
 
 #define DeeWin32SysFSWideView_GetFilenameStrLocked DeeWin32SysFSWideViewNL_GetFilenameStrLocked
 #define DEE_WIN32SYSFS_WIDEVIEW_GETFILENAMESTRLOCKED_NEVER_NULL
 
-#define DeeSysFSWideView                      DeeWin32SysFSWideView
-#define DeeSysFSWideView_Quit                 DeeWin32SysFSWideView_Quit
-#define DeeSysFSWideView_IsDone               DeeWin32SysFSWideView_IsDone
-#define DeeSysFSWideView_TryInit              DeeWin32SysFSWideView_TryInit
-#define DeeSysFSWideView_TryInitObject        DeeWin32SysFSWideView_TryInitObject
-#define DeeSysFSWideView_Init                 DeeWin32SysFSWideView_Init
-#define DeeSysFSWideView_InitObject           DeeWin32SysFSWideView_InitObject
-#define DeeSysFSWideView_TryAdvanceAndReleaseOnError DeeWin32SysFSWideView_TryAdvanceAndReleaseOnError
-#define DeeSysFSWideView_AdvanceAndReleaseOnError    DeeWin32SysFSWideView_AdvanceAndReleaseOnError
-#define DeeSysFSWideView_Acquire              DeeWin32SysFSWideView_Acquire
-#define DeeSysFSWideView_Release              DeeWin32SysFSWideView_Release
-#define DeeSysFSWideView_GetFilenameStrLocked DeeWin32SysFSWideView_GetFilenameStrLocked
-#define DeeSysFSWideView_TryIsFile            DeeWin32SysFSWideView_TryIsFile
-#define DeeSysFSWideView_TryIsDir             DeeWin32SysFSWideView_TryIsDir
-#define DeeSysFSWideView_TryIsLink            DeeWin32SysFSWideView_TryIsLink
-#define DeeSysFSWideView_TryIsDrive           DeeWin32SysFSWideView_TryIsDrive
-#define DeeSysFSWideView_TryIsMount           DeeWin32SysFSWideView_TryIsMount
-#define DeeSysFSWideView_TryIsHidden          DeeWin32SysFSWideView_TryIsHidden
+#define DeeSysFSWideView                           DeeWin32SysFSWideView
+#define DeeSysFSWideView_Quit                      DeeWin32SysFSWideView_Quit
+#define DeeSysFSWideView_IsDone                    DeeWin32SysFSWideView_IsDone
+#define DeeSysFSWideView_Init                      DeeWin32SysFSWideView_Init
+#define DeeSysFSWideView_InitObject                DeeWin32SysFSWideView_InitObject
+#define DeeSysFSWideView_AdvanceAndReleaseOnError  DeeWin32SysFSWideView_AdvanceAndReleaseOnError
+#define DeeSysFSWideView_Acquire                   DeeWin32SysFSWideView_Acquire
+#define DeeSysFSWideView_Release                   DeeWin32SysFSWideView_Release
+#define DeeSysFSWideView_GetFilenameStrLocked      DeeWin32SysFSWideView_GetFilenameStrLocked
+#define DeeSysFSWideView_IsFileAndReleaseOnError   DeeWin32SysFSWideView_IsFileAndReleaseOnError
+#define DeeSysFSWideView_IsDirAndReleaseOnError    DeeWin32SysFSWideView_IsDirAndReleaseOnError
+#define DeeSysFSWideView_IsLinkAndReleaseOnError   DeeWin32SysFSWideView_IsLinkAndReleaseOnError
+#define DeeSysFSWideView_IsDriveAndReleaseOnError  DeeWin32SysFSWideView_IsDriveAndReleaseOnError
+#define DeeSysFSWideView_IsMountAndReleaseOnError  DeeWin32SysFSWideView_IsMountAndReleaseOnError
+#define DeeSysFSWideView_IsHiddenAndReleaseOnError DeeWin32SysFSWideView_IsHiddenAndReleaseOnError
 #define DEE_SYSFS_WIDEVIEW_GETFILENAMESTRLOCKED_NEVER_NULL
 
 DEE_DECL_END

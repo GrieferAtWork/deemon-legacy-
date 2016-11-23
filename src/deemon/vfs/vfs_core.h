@@ -61,17 +61,6 @@ DEE_PRIVATE_DECL_DEE_GID_T
 #undef DEE_PRIVATE_DECL_DEE_GID_T
 #endif
 
-// TODO: Convert all NativeFS functions to NFS
-
-#define DeeNativeFS_Utf8Readlink       _DeeFS_Utf8ReadLink
-#define DeeNativeFS_WideReadlink       _DeeFS_WideReadLink
-#define DeeNativeFS_Utf8ReadlinkObject _DeeFS_ReadLinkObject
-#define DeeNativeFS_WideReadlinkObject _DeeFS_ReadLinkObject
-#define DeeNativeFS_Readlink           DeeNativeFS_Utf8Readlink
-#define DeeNativeFS_ReadlinkObject     DeeNativeFS_Utf8ReadlinkObject
-
-
-
 struct DeeVFSNode;
 struct DeeVFSFile;
 struct DeeVFSView;
@@ -234,7 +223,9 @@ extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(DEE_A_INOUT struct DeeVFSNode *
  (DEE_ASSERTF(DeeVFSNode_HasWalk(self),"Can't walk node %R",DeeVFSNode_Filename(self)),\
              (*(self)->vn_type->vnt_node.vnt_walk)(self,elemname))
 
-#define DeeVFSNode_ReadLink(self) \
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFSNode_Utf8Readlink(DEE_A_INOUT struct DeeVFSNode *self);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFSNode_WideReadlink(DEE_A_INOUT struct DeeVFSNode *self);
+#define DeeVFSNode_DoReadlink(self) \
  (DEE_ASSERTF(DeeVFSNode_HasWalk(self),"Node is not a link: %R",DeeVFSNode_Filename(self)),\
              (*(self)->vn_type->vnt_node.vnt_link)(self))
 

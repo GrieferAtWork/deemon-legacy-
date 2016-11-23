@@ -507,6 +507,42 @@ do{\
 #define DeeUnixSysFS_Utf8SetTimes DeeUnixSys_Utf8SetTimes
 #endif
 
+#if DEE_HAVE_READLINK
+#define DeeUnixSysFS_Utf8Readlink DeeUnixSys_Utf8Readlink
+#define DeeUnixSys_Utf8Readlink(path,result,...) \
+do{\
+ Dee_ssize_t _ur_bytes,_ur_new_bytes; int _ur_error;\
+ if DEE_UNLIKELY(((*result) = DeeUtf8String_NewSized(\
+  DEE_XCONFIG_FSBUFSIZE_POSIXREADLINK)) == NULL) {__VA_ARGS__;}\
+ _ur_bytes = (Dee_ssize_t)readlink(path,DeeUtf8String_STR(*(result)),\
+                                   DEE_XCONFIG_FSBUFSIZE_POSIXREADLINK+1);\
+ while (1) {\
+  if DEE_UNLIKELY(_ur_bytes < 0) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"readlink(%q) : %K",path,\
+                       DeeSystemError_ToString(DeeSystemError_Consume()));\
+   Dee_DECREF(*(result));\
+   {__VA_ARGS__;}\
+  } else if DEE_UNLIKELY(_ur_bytes > DEE_XCONFIG_FSBUFSIZE_POSIXREADLINK) {\
+   if DEE_UNLIKELY(DeeUtf8String_Resize(result,_ur_bytes) != 0) {Dee_DECREF(*(result));{__VA_ARGS__;}}\
+   _ur_new_bytes = (Dee_ssize_t)readlink(path,DeeUtf8String_STR(*(result)),\
+                                         DEE_XCONFIG_FSBUFSIZE_POSIXREADLINK+1);\
+   if DEE_UNLIKELY(_ur_new_bytes < 0) {\
+    DeeError_SetStringf(&DeeErrorType_SystemError,"readlink(%q) : %K",path,\
+                        DeeSystemError_ToString(DeeSystemError_Consume()));\
+    Dee_DECREF(*(result));\
+    {__VA_ARGS__;}\
+   }\
+   if DEE_UNLIKELY(_ur_new_bytes == _ur_bytes) break;\
+   _ur_bytes = _ur_new_bytes; /* Link must have changed */\
+  } else {\
+   if DEE_UNLIKELY(DeeUtf8String_Resize(result,_ur_bytes) != 0) {Dee_DECREF(*(result));{__VA_ARGS__;}}\
+   break;\
+  }\
+ }\
+}while(0)
+#endif /* DEE_HAVE_READLINK */
+
+
 #if 0 /* TODO */
 DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsMount)(DEE_A_IN_Z DEE_CHAR const *path) {
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
@@ -624,6 +660,9 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsMount)(DEE_A_IN_Z DEE_CHAR const *pat
 #endif
 #ifdef DeeUnixSysFS_Utf8SetTimes
 #define DeeSysFS_Utf8SetTimes    DeeUnixSysFS_Utf8SetTimes
+#endif
+#ifdef DeeUnixSysFS_Utf8Readlink
+#define DeeSysFS_Utf8Readlink    DeeUnixSysFS_Utf8Readlink
 #endif
 
 DEE_DECL_END

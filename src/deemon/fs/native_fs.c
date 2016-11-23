@@ -64,6 +64,7 @@ DEE_DECL_END
 #include "native_fs.move.c.inl"
 #include "native_fs.open.c.inl"
 #include "native_fs.opendir.c.inl"
+#include "native_fs.readlink.c.inl"
 #include "native_fs.remove.c.inl"
 #include "native_fs.rmdir.c.inl"
 #include "native_fs.setenv.c.inl"

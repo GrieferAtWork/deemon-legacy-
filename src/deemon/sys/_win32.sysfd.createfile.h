@@ -59,8 +59,9 @@ DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideCreateFileObject
  result = DEE_WIN32_DO_CREATEFILEW(wfilename,dwDesiredAccess,dwShareMode,
                                    dwCreationDisposition,dwFlagsAndAttributes);
  if DEE_LIKELY(result != INVALID_HANDLE_VALUE) return result;
- if (wfilename[0] != '\\' || wfilename[1] != '\\' ||
-     wfilename[2] != '?' || wfilename[3] != '\\') {
+ if ((wfilename[0] != '\\' || wfilename[1] != '\\'
+   || wfilename[2] != '?' || wfilename[3] != '\\')
+   && wfilename[0] && wfilename[1] == ':') {
   Dee_WideChar *uncwfilename,*dst_string;
   // Create UNC filename
   filename_size = DeeWideString_SIZE(filename);
@@ -110,8 +111,9 @@ DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideCreateFile
  result = DEE_WIN32_DO_CREATEFILEW(filename,dwDesiredAccess,dwShareMode,
                                    dwCreationDisposition,dwFlagsAndAttributes);
  if DEE_LIKELY(result != INVALID_HANDLE_VALUE) return result;
- if (filename[0] != '\\' || filename[1] != '\\' ||
-     filename[2] != '?' || filename[3] != '\\') {
+ if ((filename[0] != '\\' || filename[1] != '\\'
+   || filename[2] != '?' || filename[3] != '\\')
+   && filename[0] && filename[1] == ':') {
   Dee_WideChar *uncwfilename,*dst_string;
   // Create UNC filename
   filename_size = Dee_WideStrLen(filename);

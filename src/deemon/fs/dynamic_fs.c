@@ -211,6 +211,14 @@ struct DeeFSApi {
  PDEEFILE_WIDEOPENEX                _fa_wideopen;
  PDEEFILE_UTF8OPENEXOBJECT          _fa_utf8openobject;
  PDEEFILE_WIDEOPENEXOBJECT          _fa_wideopenobject;
+ PDEEFS_UTF8READLINK                 fa_utf8readlink;
+ PDEEFS_WIDEREADLINK                 fa_widereadlink;
+ PDEEFS_UTF8READLINKOBJECT           fa_utf8readlinkobject;
+ PDEEFS_WIDEREADLINKOBJECT           fa_widereadlinkobject;
+ PDEEFS_UTF8READLINK                _fa_utf8readlink;
+ PDEEFS_WIDEREADLINK                _fa_widereadlink;
+ PDEEFS_UTF8READLINKOBJECT          _fa_utf8readlinkobject;
+ PDEEFS_WIDEREADLINKOBJECT          _fa_widereadlinkobject;
 };
 
 enum{s=sizeof(struct DeeFSApi)/sizeof(void *)};
@@ -400,6 +408,14 @@ static struct DeeFSApi DeeFSApi_Active = {
  _DeeDFS(WideOpen),                     /*< _fa_wideopen. */
  _DeeDFS(Utf8OpenObject),               /*< _fa_utf8openobject. */
  _DeeDFS(WideOpenObject),               /*< _fa_wideopenobject. */
+  DeeDFS(Utf8Readlink),                 /*<  fa_utf8readlink. */
+  DeeDFS(WideReadlink),                 /*<  fa_widereadlink. */
+  DeeDFS(Utf8ReadlinkObject),           /*<  fa_utf8readlinkobject. */
+  DeeDFS(WideReadlinkObject),           /*<  fa_widereadlinkobject. */
+ _DeeDFS(Utf8Readlink),                 /*< _fa_utf8readlink. */
+ _DeeDFS(WideReadlink),                 /*< _fa_widereadlink. */
+ _DeeDFS(Utf8ReadlinkObject),           /*< _fa_utf8readlinkobject. */
+ _DeeDFS(WideReadlinkObject),           /*< _fa_widereadlinkobject. */
 };
 
 DEE_A_RET_NEVER_NULL DeeFunPointer DeeFS_GetFunction_v102(DEE_A_IN Dee_size_t id) {
@@ -499,6 +515,10 @@ DEE_A_RET_WUNUSED Dee_fsapimode_t DeeFS_GetAPIMode(void) {
   X(_fa_wideopen,                WideOpen)\
   X(_fa_utf8openobject,          Utf8OpenObject)\
   X(_fa_wideopenobject,          WideOpenObject)\
+  X(_fa_utf8readlink,            Utf8Readlink)\
+  X(_fa_widereadlink,            WideReadlink)\
+  X(_fa_utf8readlinkobject,      Utf8ReadlinkObject)\
+  X(_fa_widereadlinkobject,      WideReadlinkObject)\
 
 // Public exports:
 //  - Functions capable of expanding a given path
@@ -575,6 +595,10 @@ DEE_A_RET_WUNUSED Dee_fsapimode_t DeeFS_GetAPIMode(void) {
   X(fa_wideopen,                WideOpen)\
   X(fa_utf8openobject,          Utf8OpenObject)\
   X(fa_wideopenobject,          WideOpenObject)\
+  X(fa_utf8readlink,            Utf8Readlink)\
+  X(fa_widereadlink,            WideReadlink)\
+  X(fa_utf8readlinkobject,      Utf8ReadlinkObject)\
+  X(fa_widereadlinkobject,      WideReadlinkObject)\
 
 
 DEE_A_RET_EXCEPT(-1) int DeeFS_SetAPIMode(DEE_A_IN Dee_fsapimode_t mode) {

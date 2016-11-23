@@ -74,7 +74,7 @@ static DeeObject *DEE_CALL _deevfs_nativenode_vnt_nameof(
  return DeeString_NewWithLength((Dee_size_t)(end-result),result);
 }
 static DeeObject *DEE_CALL _deevfs_nativenode_vnt_link(DEE_A_INOUT struct DeeVFSNativeNode *self) {
- return DeeNativeFS_ReadlinkObject((DeeObject *)self->vnn_path);
+ return DeeNFS_ReadlinkObject((DeeObject *)self->vnn_path);
 }
 static int DEE_CALL _deevfs_nativenode_vnt_isfile(DEE_A_INOUT struct DeeVFSNativeNode *self) {
  return DeeNFS_IsFileObject((DeeObject *)self->vnn_path);
@@ -176,7 +176,7 @@ static int DEE_CALL _deevfs_nativeview_vvt_open(struct DeeVFSNativeView *self) {
  native_path = (DeeObject *)((struct DeeVFSNativeNode *)self->vnv_view.vv_node)->vnn_path;
  native_path = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(native_path),
                                                       DeeUtf8String_STR(native_path));
- if (!native_path) return -1;
+ if DEE_UNLIKELY(!native_path) return -1;
  DeeNFSWideView_InitObject(&self->vnv_dir,native_path,{ Dee_DECREF(native_path); return -1; });
  Dee_DECREF(native_path);
  return 0;

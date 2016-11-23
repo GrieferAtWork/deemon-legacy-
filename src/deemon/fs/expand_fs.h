@@ -111,6 +111,11 @@ extern DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_WideOpen(DEE_A_IN_Z Dee_WideChar c
 extern DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_Utf8OpenObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions);
 extern DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_WideOpenObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions);
 
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeXFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeXFS_WideReadlink(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeXFS_Utf8ReadlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeXFS_WideReadlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
 DEE_DECL_END
 
 #endif /* !GUARD_DEEMON_FS_EXPAND_FS_H */

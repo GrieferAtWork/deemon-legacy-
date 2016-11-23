@@ -143,6 +143,11 @@ extern DEE_A_RET_EXCEPT_REF DeeObject *DeeVFS_WideOpen(DEE_A_IN_Z Dee_WideChar c
 extern DEE_A_RET_EXCEPT_REF DeeObject *DeeVFS_Utf8OpenObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions);
 extern DEE_A_RET_EXCEPT_REF DeeObject *DeeVFS_WideOpenObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions);
 
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideReadlink(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8ReadlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideReadlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+
 #define DeeVFS_GetCwd                DeeVFS_Utf8GetCwd
 #define DeeVFS_Chdir                 DeeVFS_Utf8Chdir
 #define DeeVFS_ChdirObject           DeeVFS_Utf8ChdirObject
@@ -170,6 +175,8 @@ extern DEE_A_RET_EXCEPT_REF DeeObject *DeeVFS_WideOpenObject(DEE_A_IN_OBJECT(Dee
 #define DeeVFS_ChownObject           DeeVFS_Utf8ChownObject
 #define DeeVFS_Opendir               DeeVFS_Utf8Opendir
 #define DeeVFS_OpendirObject         DeeVFS_Utf8OpendirObject
+#define DeeVFS_Readlink              DeeVFS_Utf8Readlink
+#define DeeVFS_ReadlinkObject        DeeVFS_Utf8ReadlinkObject
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
