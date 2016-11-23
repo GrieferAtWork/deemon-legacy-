@@ -319,7 +319,7 @@ DeeObject *const _DeeBuiltin_ID2Type[] = {
  /*0x00C0*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_link,
  /*0x00C1*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_readlink,
  /*0x00C2*/(DeeObject *)&DeeBuiltinFunction___builtin_assertion_failed,
- /*0x00C3*/(DeeObject *)&DeeFSDir_Type,
+ /*0x00C3*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_opendir, // Used-to-be: DeeFSDir_Type
  /*0x00C4*/(DeeObject *)&DeeFSDirIterator_Type,
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
  /*0x00C5*/(DeeObject *)&DeeBuiltinFunction___builtin_memcpy,

@@ -58,14 +58,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsBlockDev(DEE_A_IN_Z Dee_Utf8Char co
  result = DeeNFS_WideIsBlockDevObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsBlockDev)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsBlockDev(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
-#else
- return DeeNFS_Utf8TryIsBlockDev(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path) {
@@ -87,14 +85,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsBlockDev(DEE_A_IN_Z Dee_WideChar co
  result = DeeNFS_Utf8IsBlockDevObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsBlockDev)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsBlockDev(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
-#else
- return DeeNFS_WideTryIsBlockDev(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsBlockDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
@@ -110,14 +106,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsBlockDevObject(DEE_A_IN_OBJECT(DeeU
  DeeSysFS_WideIsBlockDevObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsBlockDev)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsBlockDev(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
-#else
- return DeeNFS_Utf8TryIsBlockDevObject(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsBlockDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
@@ -133,115 +127,11 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsBlockDevObject(DEE_A_IN_OBJECT(DeeW
  DeeSysFS_Utf8IsBlockDevObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsBlockDev)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsBlockDev(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- return DeeNFS_WideTryIsBlockDevObject(path);
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsBlockDev(DEE_A_IN_Z Dee_Utf8Char const *path) {
- DEE_ASSERT(path);
-#ifdef DeeSysFS_Utf8TryIsBlockDev
- return DeeSysFS_Utf8TryIsBlockDev(path);
-#elif defined(DeeSysFS_Utf8TryIsBlockDevObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TryIsBlockDevObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFS_WideTryIsBlockDevObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTryIsBlockDevObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsBlockDev)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsBlockDev(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8IsBlockDev(path)) < 0) { DeeError_HandledOne(); result = 0; }
- return result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path) {
- DEE_ASSERT(path);
-#ifdef DeeSysFS_WideTryIsBlockDev
- return DeeSysFS_WideTryIsBlockDev(path);
-#elif defined(DeeSysFS_WideTryIsBlockDevObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTryIsBlockDevObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFS_Utf8TryIsBlockDevObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TryIsBlockDevObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsBlockDev)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsBlockDev(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideIsBlockDev(path)) < 0) { DeeError_HandledOne(); result = 0; }
- return result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsBlockDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
- DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
-#ifdef DeeSysFS_Utf8TryIsBlockDevObject
- return DeeSysFS_Utf8TryIsBlockDevObject(path);
-#elif defined(DeeSysFS_WideTryIsBlockDevObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
-  DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTryIsBlockDevObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsBlockDev)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsBlockDev(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8IsBlockDevObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
- return result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsBlockDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
- DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
-#ifdef DeeSysFS_WideTryIsBlockDevObject
- return DeeSysFS_WideTryIsBlockDevObject(path);
-#elif defined(DeeSysFS_Utf8TryIsBlockDevObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TryIsBlockDevObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsBlockDev)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsBlockDev(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideIsBlockDevObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -250,10 +140,6 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsBlockDev(DEE_A_IN_Z Dee_Utf8Char co
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path) { DEE_ASSERT(path); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_isblockdev); return -1; }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsBlockDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path)); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_isblockdev); return -1; }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsBlockDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path)); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_isblockdev); return -1; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsBlockDev(DEE_A_IN_Z Dee_Utf8Char const *path) { DEE_ASSERT(path); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path) { DEE_ASSERT(path); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsBlockDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path)); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsBlockDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path)); (void)path; return 0; }
 #endif
 
 DEE_DECL_END

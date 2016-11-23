@@ -18,56 +18,56 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_EXPAND_FS_GETTIMES_C_INL
-#define GUARD_DEEMON_FS_EXPAND_FS_GETTIMES_C_INL 1
+#ifndef GUARD_DEEMON_FS_EXPAND_FS_OPEN_C_INL
+#define GUARD_DEEMON_FS_EXPAND_FS_OPEN_C_INL 1
 #ifndef DEE_LIMITED_API
 #define DEE_LIMITED_API 1
 #endif
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
-#include <deemon/fs_api.h>
+#include <deemon/file.h>
 #include <deemon/fs/expand_fs.h>
 
 DEE_DECL_BEGIN
 
-DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8GetTimes(
- DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
- DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) return -1;
- result = _DeeFS_Utf8GetTimesObject(xpath,atime,ctime,mtime);
+DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_Utf8Open(
+ DEE_A_IN_Z Dee_Utf8Char const *path,
+ DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) return NULL;
+ result = _DeeFile_Utf8OpenExObject(xpath,openmode,permissions);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXFS_WideGetTimes(
- DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
- DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) return -1;
- result = _DeeFS_WideGetTimesObject(xpath,atime,ctime,mtime);
+DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_WideOpen(
+ DEE_A_IN_Z Dee_WideChar const *path,
+ DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) return NULL;
+ result = _DeeFile_WideOpenExObject(xpath,openmode,permissions);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8GetTimesObject(
- DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
-              DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) return -1;
- result = _DeeFS_Utf8GetTimesObject(xpath,atime,ctime,mtime);
+DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_Utf8OpenObject(
+ DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path,
+ DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) return NULL;
+ result = _DeeFile_Utf8OpenExObject(xpath,openmode,permissions);
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_EXCEPT(-1) int DeeXFS_WideGetTimesObject(
- DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
-              DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) return -1;
- result = _DeeFS_WideGetTimesObject(xpath,atime,ctime,mtime);
+DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_WideOpenObject(
+ DEE_A_IN_OBJECT(DeeWideStringObject) const *path,
+ DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) return NULL;
+ result = _DeeFile_WideOpenExObject(xpath,openmode,permissions);
  Dee_DECREF(xpath);
  return result;
 }
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_FS_EXPAND_FS_GETTIMES_C_INL */
+#endif /* !GUARD_DEEMON_FS_EXPAND_FS_OPEN_C_INL */

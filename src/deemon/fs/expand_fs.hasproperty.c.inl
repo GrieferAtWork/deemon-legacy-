@@ -26,6 +26,7 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
+#include <deemon/fs_api.h>
 #include <deemon/fs/expand_fs.h>
 
 DEE_DECL_BEGIN
@@ -62,39 +63,6 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_WideHasPropertyObject(
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryHasProperty(
- DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_fileproperty_t prop) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_Utf8TryHasPropertyObject(xpath,prop);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryHasProperty(
- DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_fileproperty_t prop) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_WideTryHasPropertyObject(xpath,prop);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryHasPropertyObject(
- DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_Utf8TryHasPropertyObject(xpath,prop);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryHasPropertyObject(
- DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_fileproperty_t prop) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_WideTryHasPropertyObject(xpath,prop);
- Dee_DECREF(xpath);
- return result;
-}
-
 
 DEE_DECL_END
 

@@ -45,20 +45,6 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_WideUnlink(DEE_A_IN_Z Dee_WideChar const *path) 
  Dee_DECREF(xpath);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryUnlink(DEE_A_IN_Z Dee_Utf8Char const *path) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_Utf8TryUnlinkObject(xpath);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryUnlink(DEE_A_IN_Z Dee_WideChar const *path) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_WideTryUnlinkObject(xpath);
- Dee_DECREF(xpath);
- return result;
-}
 DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8UnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) return -1;
@@ -70,20 +56,6 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_WideUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringOb
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) return -1;
  result = _DeeFS_WideUnlinkObject(xpath);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryUnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_Utf8TryUnlinkObject(xpath);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _DeeFS_WideTryUnlinkObject(xpath);
  Dee_DECREF(xpath);
  return result;
 }

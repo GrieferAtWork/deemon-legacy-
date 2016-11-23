@@ -24,24 +24,18 @@
 #include <deemon/optional/fs_api.fileproperty.h>
 #include <deemon/fs/native_fs.h>
 #define WIDE
-#define DO_TRY
 #define OBJECT
 #endif
 
 #ifdef WIDE
-#define PREFIX1(name) DeeNFS_Wide##name
+#define PREFIX(name) DeeNFS_Wide##name
 #else
-#define PREFIX1(name) DeeNFS_Utf8##name
-#endif
-#ifdef DO_TRY
-#define PREFIX2(name) PREFIX1(Try##name)
-#else
-#define PREFIX2       PREFIX1
+#define PREFIX(name) DeeNFS_Utf8##name
 #endif
 #ifdef OBJECT
-#define FUNC(name) PREFIX2(name##Object)
+#define FUNC(name) PREFIX(name##Object)
 #else
-#define FUNC       PREFIX2
+#define FUNC       PREFIX
 #endif
 
 DEE_DECL_BEGIN
@@ -93,14 +87,10 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int FUNC(HasProperty)(
 DEE_DECL_END
 
 #undef FUNC
-#undef PREFIX2
-#undef PREFIX1
+#undef PREFIX
 
 #ifdef WIDE
 #undef WIDE
-#endif
-#ifdef DO_TRY
-#undef DO_TRY
 #endif
 #ifdef OBJECT
 #undef OBJECT

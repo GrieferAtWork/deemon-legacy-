@@ -18,57 +18,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_NATIVE_FS_C
-#define GUARD_DEEMON_FS_NATIVE_FS_C 1
+#ifndef GUARD_DEEMON_FS_EXPAND_FS_OPENDIR_C_INL
+#define GUARD_DEEMON_FS_EXPAND_FS_OPENDIR_C_INL 1
+#ifndef DEE_LIMITED_API
 #define DEE_LIMITED_API 1
+#endif
 
 #include <deemon/__conf.inl>
-#include <deemon/fs/native_fs.h>
+#include <deemon/error.h>
+#include <deemon/fs_api.h>
+#include <deemon/fs/expand_fs.h>
 
 DEE_DECL_BEGIN
 
+DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_Utf8Opendir(DEE_A_IN_Z Dee_Utf8Char const *path) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) return NULL;
+ result = _DeeFS_Utf8OpendirObject(xpath);
+ Dee_DECREF(xpath);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_WideOpendir(DEE_A_IN_Z Dee_WideChar const *path) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) return NULL;
+ result = _DeeFS_WideOpendirObject(xpath);
+ Dee_DECREF(xpath);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_Utf8OpendirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) return NULL;
+ result = _DeeFS_Utf8OpendirObject(xpath);
+ Dee_DECREF(xpath);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF DeeObject *DeeXFS_WideOpendirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ DeeObject *xpath,*result;
+ if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) return NULL;
+ result = _DeeFS_WideOpendirObject(xpath);
+ Dee_DECREF(xpath);
+ return result;
+}
+
 DEE_DECL_END
 
-#ifndef __INTELLISENSE__
-#include "native_fs.chdir.c.inl"
-#include "native_fs.chmod.c.inl"
-#include "native_fs.chown.c.inl"
-#include "native_fs.copy.c.inl"
-#include "native_fs.delenv.c.inl"
-#include "native_fs.enumenv.c.inl"
-#include "native_fs.exists.c.inl"
-#include "native_fs.getcwd.c.inl"
-#include "native_fs.getenv.c.inl"
-#include "native_fs.gethome.c.inl"
-#include "native_fs.getmod.c.inl"
-#include "native_fs.getown.c.inl"
-#include "native_fs.gettimes.c.inl"
-#include "native_fs.gettmp.c.inl"
-#include "native_fs.getuserhome.c.inl"
-#include "native_fs.hasenv.c.inl"
-#include "native_fs.hasproperty.c.inl"
-#include "native_fs.isabs.c.inl"
-#include "native_fs.isblockdev.c.inl"
-#include "native_fs.ischardev.c.inl"
-#include "native_fs.isdir.c.inl"
-#include "native_fs.isdrive.c.inl"
-#include "native_fs.isexecutable.c.inl"
-#include "native_fs.isfifo.c.inl"
-#include "native_fs.isfile.c.inl"
-#include "native_fs.ishidden.c.inl"
-#include "native_fs.islink.c.inl"
-#include "native_fs.ismount.c.inl"
-#include "native_fs.issocket.c.inl"
-#include "native_fs.link.c.inl"
-#include "native_fs.mkdir.c.inl"
-#include "native_fs.move.c.inl"
-#include "native_fs.open.c.inl"
-#include "native_fs.opendir.c.inl"
-#include "native_fs.remove.c.inl"
-#include "native_fs.rmdir.c.inl"
-#include "native_fs.setenv.c.inl"
-#include "native_fs.settimes.c.inl"
-#include "native_fs.unlink.c.inl"
-#endif
-
-#endif /* !GUARD_DEEMON_FS_NATIVE_FS_H */
+#endif /* !GUARD_DEEMON_FS_EXPAND_FS_OPENDIR_C_INL */

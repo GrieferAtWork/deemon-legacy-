@@ -22,32 +22,22 @@
 #ifdef __INTELLISENSE__
 #include "virtual_fs.hasproperty.c.inl"
 #define WIDE
-#define DO_TRY
 #define OBJECT
 #endif
 
 #ifdef WIDE
-#define VFS_PREFIX1(name)   DeeVFS_Wide##name
-#define NFS_PREFIX1(name)   DeeNFS_Wide##name
+#define VFS_PREFIX(name) DeeVFS_Wide##name
+#define NFS_PREFIX(name) DeeNFS_Wide##name
 #else
-#define VFS_PREFIX1(name)   DeeVFS_Utf8##name
-#define NFS_PREFIX1(name)   DeeNFS_Utf8##name
-#endif
-#ifdef DO_TRY
-#define VFS_PREFIX2(name)   VFS_PREFIX1(Try##name)
-#define NFS_PREFIX2(name)   NFS_PREFIX1(Try##name)
-#else
-#define VFS_PREFIX2         VFS_PREFIX1
-#define NFS_PREFIX2         NFS_PREFIX1
+#define VFS_PREFIX(name) DeeVFS_Utf8##name
+#define NFS_PREFIX(name) DeeNFS_Utf8##name
 #endif
 #ifdef OBJECT
-#define VFS_FUNC(name)      VFS_PREFIX2(name##Object)
-#define NFS_FUNC(name)      NFS_PREFIX2(name##Object)
-#define VFS_FUNCNOTRY(name) VFS_PREFIX1(name##Object)
+#define VFS_FUNC(name)   VFS_PREFIX(name##Object)
+#define NFS_FUNC(name)   NFS_PREFIX(name##Object)
 #else
-#define VFS_FUNC            VFS_PREFIX2
-#define NFS_FUNC            NFS_PREFIX2
-#define VFS_FUNCNOTRY       VFS_PREFIX1
+#define VFS_FUNC         VFS_PREFIX
+#define NFS_FUNC         NFS_PREFIX
 #endif
 
 DEE_DECL_BEGIN
@@ -79,18 +69,18 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int VFS_FUNC(HasProperty)(
  DEE_ASSERT(path);
 #endif
  if (prop == DEE_FILEPROPERTY_ISABS) {
-  return VFS_FUNCNOTRY(IsAbsoluteNativePath)(path)
-      || VFS_FUNCNOTRY(IsVirtualPath)(path);
+  return VFS_FUNC(IsAbsoluteNativePath)(path)
+      || VFS_FUNC(IsVirtualPath)(path);
  }
- if (VFS_FUNCNOTRY(IsAbsoluteNativePath)(path)) {
+ if (VFS_FUNC(IsAbsoluteNativePath)(path)) {
 call_native: return NFS_FUNC(HasProperty)(path,prop);
  }
- if (VFS_FUNCNOTRY(IsVirtualPath)(path)) {
-  filenode = VFS_FUNCNOTRY(Locate)(path);
+ if (VFS_FUNC(IsVirtualPath)(path)) {
+  filenode = VFS_FUNC(Locate)(path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
-  filenode = VFS_FUNCNOTRY(LocateWithCWD)(cwd,path);
+  filenode = VFS_FUNC(LocateWithCWD)(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return 0; }
@@ -109,28 +99,19 @@ call_native: return NFS_FUNC(HasProperty)(path,prop);
   case DEE_FILEPROPERTY_EXISTS      : error = 1; break;
   default: error = 0; break;
  }
-#ifdef DO_TRY
- if (error < 0) { DeeError_HandledOne(); error = 0; }
-#endif
  DeeVFSNode_DECREF(filenode);
  return error;
 }
 
 DEE_DECL_END
 
-#undef VFS_FUNCNOTRY
-#undef VFS_FUNC
-#undef VFS_PREFIX2
-#undef VFS_PREFIX1
 #undef NFS_FUNC
-#undef NFS_PREFIX2
-#undef NFS_PREFIX1
+#undef VFS_FUNC
+#undef VFS_PREFIX
+#undef NFS_PREFIX
 
 #ifdef WIDE
 #undef WIDE
-#endif
-#ifdef DO_TRY
-#undef DO_TRY
 #endif
 #ifdef OBJECT
 #undef OBJECT

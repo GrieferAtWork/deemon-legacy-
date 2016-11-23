@@ -153,7 +153,7 @@ do{\
 #define DeeFileFD_RELEASE_EXCLUSIVE(ob) (void)0
 #endif /* !DeeSysFD */
 
-#ifdef DeeSysFD
+#if defined(DeeSysFD) || DEE_CONFIG_RUNTIME_HAVE_VFS2
 DeeError_NEW_STATIC(_DeeErrorInstance_FileFDAlreadyClosed,&DeeErrorType_IOError,
                     "Invalid/Closed file descriptor");
 #define DeeErrorInstance_FileFDAlreadyClosed ((DeeObject *)&_DeeErrorInstance_FileFDAlreadyClosed)

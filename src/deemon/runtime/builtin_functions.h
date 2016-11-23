@@ -315,6 +315,7 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_uidname);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_gidname);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wuidname);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wgidname);
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_opendir);
 
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
 //////////////////////////////////////////////////////////////////////////

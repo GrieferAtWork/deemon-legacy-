@@ -124,7 +124,6 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeUnixSys
 #define DeeUnixSysFS_WideGetCwd DeeUnixSys_WideGetCwd
 #endif
 
-#define DeeUnixSys_Utf8TryChdir(path) (chdir(path)!=-1)
 #define DeeUnixSys_Utf8Chdir(path,...) \
 do{\
  if DEE_UNLIKELY(chdir(path) == -1) {\
@@ -136,7 +135,6 @@ do{\
 }while(0)
 
 #if DEE_HAVE__WCHDIR
-#define DeeUnixSys_WideTryChdir(path) (_wchdir(path)!=-1)
 #define DeeUnixSys_WideChdir(path,...) \
 do{\
  if DEE_UNLIKELY(_wchdir(path) == -1) {\
@@ -148,18 +146,15 @@ do{\
 }while(0)
 #endif
 
-#define DeeUnixSysFS_Utf8TryChdir DeeUnixSys_Utf8TryChdir
 #define DeeUnixSysFS_Utf8Chdir    DeeUnixSys_Utf8Chdir
-#ifdef DeeUnixSys_WideTryChdir
-#define DeeUnixSysFS_WideTryChdir DeeUnixSys_WideTryChdir
+#ifdef DeeUnixSys_WideChdir
 #define DeeUnixSysFS_WideChdir    DeeUnixSys_WideChdir
 #endif
 
 
 
-#define DeeUnixSysFS_Utf8GetEnv    DeeUnixSys_Utf8GetEnv
-#define DeeUnixSysFS_Utf8TryGetEnv DeeUnixSys_Utf8TryGetEnv
-#define DeeUnixSys_Utf8GetEnv DeeUnixSys_Utf8GetEnv
+#define DeeUnixSysFS_Utf8GetEnv DeeUnixSys_Utf8GetEnv
+#define DeeUnixSys_Utf8GetEnv   DeeUnixSys_Utf8GetEnv
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *)
 DeeUnixSys_Utf8GetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
  char const *env_value;
@@ -171,25 +166,24 @@ DeeUnixSys_Utf8GetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
  }
  return DeeUtf8String_New(env_value);
 }
-#define DeeUnixSys_Utf8TryGetEnv DeeUnixSys_Utf8TryGetEnv
+#define DeeUnixSysFS_Utf8TryGetEnv DeeUnixSys_Utf8TryGetEnv
+#define DeeUnixSys_Utf8TryGetEnv   DeeUnixSys_Utf8TryGetEnv
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *)
 DeeUnixSys_Utf8TryGetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
- char const *env_value;
+ char const *env_value; DeeObject *result;
  if DEE_UNLIKELY((env_value = getenv(envname)) == NULL) return NULL;
- return DeeUtf8String_New(env_value);
+ if DEE_UNLIKELY((result = DeeUtf8String_New(env_value)) == NULL) DeeError_HandledOne();
+ return result;
 }
-#define DeeUnixSys_Utf8TryHasEnv(envname) (getenv(envname) != NULL)
 #define DeeUnixSys_Utf8HasEnv(envname,result,...) \
-do{ *(result) = DeeUnixSys_Utf8TryHasEnv(envname); }while(0)
-#define DeeUnixSysFS_Utf8TryHasEnv DeeUnixSys_Utf8TryHasEnv
+do{ *(result) = getenv(envname) != NULL; }while(0)
 #define DeeUnixSysFS_Utf8HasEnv    DeeUnixSys_Utf8HasEnv
 
 #if DEE_HAVE__WGETENV
 #define DeeUnixSysFS_WideGetEnv    DeeUnixSys_WideGetEnv
-#define DeeUnixSysFS_WideTryGetEnv DeeUnixSys_WideTryGetEnv
-#define DeeSysFS_WideGetEnv DeeSysFS_WideGetEnv
+#define DeeSysFS_WideGetEnv DeeUnixSysFS_WideGetEnv
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *)
-DeeSysFS_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
+DeeUnixSys_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
  Dee_WideChar const *env_value;
  if DEE_UNLIKELY((env_value = _wgetenv(envname)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -199,22 +193,21 @@ DeeSysFS_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
  }
  return DeeWideString_New(env_value);
 }
-#define DeeSysFS_WideTryGetEnv DeeSysFS_WideTryGetEnv
+#define DeeUnixSysFS_WideTryGetEnv DeeUnixSys_WideTryGetEnv
+#define DeeSysFS_WideTryGetEnv DeeUnixSysFS_WideTryGetEnv
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeWideStringObject) *)
-DeeSysFS_WideTryGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
- Dee_WideChar const *env_value;
+DeeUnixSys_WideTryGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
+ Dee_WideChar const *env_value; DeeObject *result;
  if DEE_UNLIKELY((env_value = _wgetenv(envname)) == NULL) return NULL;
- return DeeWideString_New(env_value);
+ if DEE_UNLIKELY((result = DeeWideString_New(env_value)) == NULL) DeeError_HandledOne();
+ return result;
 }
-#define DeeUnixSys_WideTryHasEnv(envname) (_wgetenv(envname) != NULL)
 #define DeeUnixSys_WideHasEnv(envname,result,...) \
-do{ *(result) = DeeUnixSys_WideTryHasEnv(envname); }while(0)
-#define DeeUnixSysFS_WideTryHasEnv DeeUnixSys_WideTryHasEnv
+do{ *(result) = (_wgetenv(envname) != NULL); }while(0)
 #define DeeUnixSysFS_WideHasEnv    DeeUnixSys_WideHasEnv
 #endif /* DEE_HAVE__WGETENV */
 
 #if DEE_HAVE_UNSETENV
-#define DeeUnixSys_Utf8TryDelEnv(envname) (unsetenv(envname) != -1)
 #define DeeUnixSys_Utf8DelEnv(envname,...) \
 do{\
  if DEE_UNLIKELY(unsetenv(envname) == -1) {\
@@ -224,12 +217,10 @@ do{\
   {__VA_ARGS__;}\
  }\
 }while(0)
-#define DeeUnixSysFS_Utf8TryDelEnv DeeUnixSys_Utf8TryDelEnv
 #define DeeUnixSysFS_Utf8DelEnv    DeeUnixSys_Utf8DelEnv
 #endif /* DEE_HAVE_UNSETENV */
 
 #if DEE_HAVE__WUNSETENV
-#define DeeUnixSys_WideTryDelEnv(envname) (_wunsetenv(envname) != -1)
 #define DeeUnixSys_WideDelEnv(envname,...) \
 do{\
  if DEE_UNLIKELY(_wunsetenv(envname) == -1) {\
@@ -239,12 +230,10 @@ do{\
   {__VA_ARGS__;}\
  }\
 }while(0)
-#define DeeUnixSysFS_WideTryDelEnv DeeUnixSys_WideTryDelEnv
 #define DeeUnixSysFS_WideDelEnv    DeeUnixSys_WideDelEnv
 #endif /* DEE_HAVE__WUNSETENV */
 
 #if DEE_HAVE_SETENV
-#define DeeUnixSys_Utf8TrySetEnv(envname,newvalue) (setenv(envname,newvalue,1) != -1)
 #define DeeUnixSys_Utf8SetEnv(envname,newvalue,...) \
 do{\
  if (setenv(envname,newvalue,1) == -1) {\
@@ -255,7 +244,6 @@ do{\
  }\
 }while(0)
 #elif DEE_HAVE_PUTENV
-#define DeeUnixSys_Utf8TrySetEnv DeeUnixSys_Utf8TrySetEnv
 #define DeeUnixSys_Utf8SetEnv(envname,newvalue,...) \
 do{\
  DeeObject *_env_cmd;\
@@ -269,17 +257,9 @@ do{\
  }\
  Dee_DECREF(cmd);\
 }while(0)
-DEE_STATIC_INLINE(int) DeeUnixSys_Utf8TrySetEnv(char const *envname, char const *newvalue) {
- DeeObject *cmd; int result;
- if DEE_UNLIKELY((cmd = DeeString_Newf("%s=%s",envname,newvalue)) == NULL) { DeeError_HandledOne(); return 0; }
- result = putenv(DeeString_STR(cmd)) != -1;
- Dee_DECREF(cmd);
- return result;
-}
 #endif
 
 #if DEE_HAVE__WSETENV
-#define DeeUnixSys_WideTrySetEnv(envname,newvalue) (_wsetenv(envname,newvalue,1) != -1)
 #define DeeUnixSys_WideSetEnv(envname,newvalue,...) \
 do{\
  if (_wsetenv(envname,newvalue,1) == -1) {\
@@ -290,7 +270,6 @@ do{\
  }\
 }while(0)
 #elif DEE_HAVE__WPUTENV
-#define DeeUnixSys_WideTrySetEnv DeeUnixSys_WideTrySetEnv
 #define DeeUnixSys_WideSetEnv(envname,newvalue,...) \
 do{\
  static Dee_WideChar const _env_fmt[] = {'%','l','s','=','%','l','s',0};\
@@ -305,23 +284,13 @@ do{\
  }\
  Dee_DECREF(cmd);\
 }while(0)
-DEE_STATIC_INLINE(int) DeeUnixSys_WideTrySetEnv(Dee_WideChar const *envname, Dee_WideChar const *newvalue) {
- static Dee_WideChar const fmt[] = {'%','l','s','=','%','l','s',0};
- DeeObject *cmd; int result;
- if DEE_UNLIKELY((cmd = DeeWideString_Newf(fmt,envname,newvalue)) == NULL) { DeeError_HandledOne(); return 0; }
- result = _wputenv(DeeWideString_STR(cmd)) != -1;
- Dee_DECREF(cmd);
- return result;
-}
 #endif
 
 #ifdef DeeUnixSys_Utf8SetEnv
 #define DeeUnixSysFS_Utf8SetEnv    DeeUnixSys_Utf8SetEnv
-#define DeeUnixSysFS_Utf8TrySetEnv DeeUnixSys_Utf8TrySetEnv
 #endif
 #ifdef DeeUnixSys_WideSetEnv
 #define DeeUnixSysFS_WideSetEnv    DeeUnixSys_WideSetEnv
-#define DeeUnixSysFS_WideTrySetEnv DeeUnixSys_WideTrySetEnv
 #endif
 
 
@@ -430,18 +399,6 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeUnixSys
 #define DeeUnixSysFS_WideGetTmp DeeUnixSys_WideGetTmp
 #endif
 
-
-#define DeeUnixSys_Utf8TryGetTimes DeeUnixSys_Utf8TryGetTimes
-DEE_STATIC_INLINE(int) DeeUnixSys_Utf8TryGetTimes(
- DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
- DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
- struct stat st;
- if (stat(path,&st) == -1) return 0;
- if (atime) *atime = DeeTime_TimeT2Mseconds(st.st_atime);
- if (ctime) *ctime = DeeTime_TimeT2Mseconds(st.st_ctime);
- if (mtime) *mtime = DeeTime_TimeT2Mseconds(st.st_mtime);
- return 1;
-}
 #define DeeUnixSys_Utf8GetTimes(path,atime,ctime,mtime,...) \
 do{\
  struct stat _stat_st;\
@@ -457,17 +414,6 @@ do{\
  if (mtime) *(mtime) = DeeTime_TimeT2Mseconds(_stat_st.st_mtime);\
 }while(0)
 #if DEE_HAVE__WSTAT
-#define DeeUnixSys_WideTryGetTimes DeeUnixSys_WideTryGetTimes
-DEE_STATIC_INLINE(int) DeeUnixSys_WideTryGetTimes(
- DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OPT Dee_timetick_t *atime,
- DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
- struct _stat st;
- if (_wstat(path,&st) == -1) return 0;
- if (atime) *atime = DeeTime_TimeT2Mseconds(st.st_atime);
- if (ctime) *ctime = DeeTime_TimeT2Mseconds(st.st_ctime);
- if (mtime) *mtime = DeeTime_TimeT2Mseconds(st.st_mtime);
- return 1;
-}
 #define DeeUnixSys_WideGetTimes(path,atime,ctime,mtime,...) \
 do{\
  struct _stat _stat_st;\
@@ -483,41 +429,12 @@ do{\
 }while(0)
 #endif
 
-#define DeeUnixSysFS_Utf8TryGetTimes DeeUnixSys_Utf8TryGetTimes
-#define DeeUnixSysFS_Utf8GetTimes    DeeUnixSys_Utf8GetTimes
-#ifdef DeeUnixSys_WideTryGetTimes
-#define DeeUnixSysFS_WideTryGetTimes DeeUnixSys_WideTryGetTimes
-#define DeeUnixSysFS_WideGetTimes    DeeUnixSys_WideGetTimes
+#define DeeUnixSysFS_Utf8GetTimes DeeUnixSys_Utf8GetTimes
+#ifdef DeeUnixSys_WideGetTimes
+#define DeeUnixSysFS_WideGetTimes DeeUnixSys_WideGetTimes
 #endif
 
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_TIME_H
-#define DeeUnixSys_Utf8TrySetTimes(path,atime,ctime,mtime) \
- DeeUnixSys_Utf8TrySetTimes_impl(path,atime,mtime)
-DEE_STATIC_INLINE(int) DeeUnixSys_Utf8TrySetTimes_impl(
- DEE_A_IN_Z Dee_Utf8Char const *path,
- DEE_A_IN_OPT Dee_timetick_t const *atime,
- DEE_A_IN_OPT Dee_timetick_t const *mtime) {
- struct timeval tm_val[2];
- if (atime && mtime) {
-  tm_val[0].tv_sec = (long)DeeTime_TimeT2Mseconds(*atime);
-  tm_val[0].tv_usec = (long)((*atime) % 1000);
-  tm_val[1].tv_sec = (long)DeeTime_TimeT2Mseconds(*mtime);
-  tm_val[1].tv_usec = (long)((*mtime) % 1000);
- } else {
-  struct stat st;
-  if DEE_UNLIKELY(!atime && !mtime) return 1;
-  if DEE_UNLIKELY(stat(path,&st) == -1) return 0;
-  if (atime) {
-   tm_val[0].tv_sec = (long)DeeTime_TimeT2Mseconds(*atime);
-   tm_val[0].tv_usec = (long)((*atime) % 1000);
-  } else tm_val[0].tv_sec = st.st_atime,tm_val[0].tv_usec = 0;
-  if (mtime) {
-   tm_val[1].tv_sec = (long)DeeTime_TimeT2Mseconds(*mtime);
-   tm_val[1].tv_usec = (long)((*mtime) % 1000);
-  } else tm_val[1].tv_sec = st.st_mtime,tm_val[1].tv_usec = 0;
- }
- return utimes(path,tm_val) != -1;
-}
 #define DeeUnixSys_Utf8SetTimes(path,atime,ctime,mtime,...) \
  DeeUnixSys_Utf8SetTimes_impl(path,atime,mtime,__VA_ARGS__)
 #define DeeUnixSys_Utf8SetTimes_impl(path,atime,mtime,...) \
@@ -556,25 +473,6 @@ do{\
 }while(0)
 #elif DEE_ENVIRONMENT_HAVE_INCLUDE_UTIME_H\
    && DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_TYPES_H
-#define DeeUnixSys_Utf8TrySetTimes(path,atime,ctime,mtime) \
- DeeUnixSys_Utf8TrySetTimes_impl(path,atime,mtime)
-DEE_STATIC_INLINE(int) DeeUnixSys_Utf8TrySetTimes_impl(
- DEE_A_IN_Z Dee_Utf8Char const *path,
- DEE_A_IN_OPT Dee_timetick_t const *atime,
- DEE_A_IN_OPT Dee_timetick_t const *mtime) {
- struct utimbuf tm_val;
- if (atime && mtime) {
-  tm_val.actime = (Dee_time_t)DeeTime_TimeT2Mseconds(*atime);
-  tm_val.modtime = (Dee_time_t)DeeTime_TimeT2Mseconds(*mtime);
- } else {
-  struct stat st;
-  if DEE_UNLIKELY(!atime && !mtime) return 1;
-  if DEE_UNLIKELY(stat(path,&st) == -1) return 0;
-  tm_val.actime = atime ? (Dee_time_t)DeeTime_TimeT2Mseconds(*atime) : st.st_atime;
-  tm_val.modtime = mtime ? (Dee_time_t)DeeTime_TimeT2Mseconds(*mtime) : st.st_mtime;
- }
- return utime(path,&tm_val) != -1;
-}
 #define DeeUnixSys_Utf8SetTimes(path,atime,ctime,mtime,...) \
  DeeUnixSys_Utf8SetTimes_impl(path,atime,mtime,__VA_ARGS__)
 #define DeeUnixSys_Utf8SetTimes_impl(path,atime,mtime,...) \
@@ -605,9 +503,8 @@ do{\
 }while(0)
 #endif
 
-#ifdef DeeUnixSys_Utf8TrySetTimes
-#define DeeUnixSysFS_Utf8TrySetTimes DeeUnixSys_Utf8TrySetTimes
-#define DeeUnixSysFS_Utf8SetTimes    DeeUnixSys_Utf8SetTimes
+#ifdef DeeUnixSys_Utf8SetTimes
+#define DeeUnixSysFS_Utf8SetTimes DeeUnixSys_Utf8SetTimes
 #endif
 
 #if 0 /* TODO */
@@ -675,70 +572,57 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsMount)(DEE_A_IN_Z DEE_CHAR const *pat
 }
 #endif
 
-#define DeeSysFS_Utf8GetCwd DeeUnixSysFS_Utf8GetCwd
+#define DeeSysFS_Utf8GetCwd      DeeUnixSysFS_Utf8GetCwd
 #ifdef DeeUnixSysFS_WideGetCwd
-#define DeeSysFS_WideGetCwd DeeUnixSysFS_WideGetCwd
+#define DeeSysFS_WideGetCwd      DeeUnixSysFS_WideGetCwd
 #endif
-#define DeeSysFS_Utf8TryChdir DeeUnixSysFS_Utf8TryChdir
-#define DeeSysFS_Utf8Chdir    DeeUnixSysFS_Utf8Chdir
-#ifdef DeeUnixSysFS_WideTryChdir
-#define DeeSysFS_WideTryChdir DeeUnixSysFS_WideTryChdir
-#define DeeSysFS_WideChdir    DeeUnixSysFS_WideChdir
+#define DeeSysFS_Utf8Chdir       DeeUnixSysFS_Utf8Chdir
+#ifdef DeeUnixSysFS_WideChdir
+#define DeeSysFS_WideChdir       DeeUnixSysFS_WideChdir
 #endif
-#define DeeSysFS_Utf8GetEnv    DeeUnixSysFS_Utf8GetEnv
-#define DeeSysFS_Utf8TryGetEnv DeeUnixSysFS_Utf8TryGetEnv
+#define DeeSysFS_Utf8GetEnv      DeeUnixSysFS_Utf8GetEnv
 #ifdef DeeUnixSysFS_WideGetEnv
-#define DeeSysFS_WideGetEnv    DeeUnixSysFS_WideGetEnv
-#define DeeSysFS_WideTryGetEnv DeeUnixSysFS_WideTryGetEnv
+#define DeeSysFS_WideGetEnv      DeeUnixSysFS_WideGetEnv
 #endif
-#define DeeSysFS_Utf8HasEnv    DeeUnixSysFS_Utf8HasEnv
-#define DeeSysFS_Utf8TryHasEnv DeeUnixSysFS_Utf8TryHasEnv
+#define DeeSysFS_Utf8HasEnv      DeeUnixSysFS_Utf8HasEnv
 #ifdef DeeUnixSysFS_WideHasEnv
-#define DeeSysFS_WideHasEnv    DeeUnixSysFS_WideHasEnv
-#define DeeSysFS_WideTryHasEnv DeeUnixSysFS_WideTryHasEnv
+#define DeeSysFS_WideHasEnv      DeeUnixSysFS_WideHasEnv
 #endif
 #ifdef DeeUnixSysFS_Utf8DelEnv
-#define DeeSysFS_Utf8DelEnv    DeeUnixSysFS_Utf8DelEnv
-#define DeeSysFS_Utf8TryDelEnv DeeUnixSysFS_Utf8TryDelEnv
+#define DeeSysFS_Utf8DelEnv      DeeUnixSysFS_Utf8DelEnv
 #endif
 #ifdef DeeUnixSysFS_WideDelEnv
-#define DeeSysFS_WideDelEnv    DeeUnixSysFS_WideDelEnv
-#define DeeSysFS_WideTryDelEnv DeeUnixSysFS_WideTryDelEnv
+#define DeeSysFS_WideDelEnv      DeeUnixSysFS_WideDelEnv
 #endif
 #ifdef DeeUnixSysFS_Utf8SetEnv
-#define DeeSysFS_Utf8SetEnv    DeeUnixSysFS_Utf8SetEnv
-#define DeeSysFS_Utf8TrySetEnv DeeUnixSysFS_Utf8TrySetEnv
+#define DeeSysFS_Utf8SetEnv      DeeUnixSysFS_Utf8SetEnv
 #endif
 #ifdef DeeUnixSysFS_WideSetEnv
-#define DeeSysFS_WideSetEnv    DeeUnixSysFS_WideSetEnv
-#define DeeSysFS_WideTrySetEnv DeeUnixSysFS_WideTrySetEnv
+#define DeeSysFS_WideSetEnv      DeeUnixSysFS_WideSetEnv
 #endif
 #define DEE_SYSFS_UTF8ENUMENV_ENVVALUE_ZERO_TERMINATED
-#define DeeSysFS_Utf8EnumEnv DeeUnixSysFS_Utf8EnumEnv
+#define DeeSysFS_Utf8EnumEnv     DeeUnixSysFS_Utf8EnumEnv
 #ifdef DeeUnixSysFS_WideEnumEnv
 #define DEE_SYSFS_WIDEENUMENV_ENVVALUE_ZERO_TERMINATED
-#define DeeSysFS_WideEnumEnv DeeUnixSysFS_WideEnumEnv
+#define DeeSysFS_WideEnumEnv     DeeUnixSysFS_WideEnumEnv
 #endif
 #ifdef DeeUnixSysFS_Utf8GetHome
-#define DeeSysFS_Utf8GetHome DeeUnixSysFS_Utf8GetHome
+#define DeeSysFS_Utf8GetHome     DeeUnixSysFS_Utf8GetHome
 #endif
 #ifdef DeeUnixSysFS_Utf8GetUserHome
 #define DeeSysFS_Utf8GetUserHome DeeUnixSysFS_Utf8GetUserHome
 #endif
 #ifdef DeeUnixSysFS_Utf8GetTmp
-#define DeeSysFS_Utf8GetTmp DeeUnixSysFS_Utf8GetTmp
+#define DeeSysFS_Utf8GetTmp      DeeUnixSysFS_Utf8GetTmp
 #endif
 #ifdef DeeUnixSysFS_WideGetTmp
-#define DeeSysFS_WideGetTmp DeeUnixSysFS_WideGetTmp
+#define DeeSysFS_WideGetTmp      DeeUnixSysFS_WideGetTmp
 #endif
-#define DeeSysFS_Utf8TryGetTimes DeeUnixSysFS_Utf8TryGetTimes
 #define DeeSysFS_Utf8GetTimes    DeeUnixSysFS_Utf8GetTimes
-#ifdef DeeUnixSysFS_WideTryGetTimes
-#define DeeSysFS_WideTryGetTimes DeeUnixSysFS_WideTryGetTimes
+#ifdef DeeUnixSysFS_WideGetTimes
 #define DeeSysFS_WideGetTimes    DeeUnixSysFS_WideGetTimes
 #endif
-#ifdef DeeUnixSysFS_Utf8TrySetTimes
-#define DeeSysFS_Utf8TrySetTimes DeeUnixSysFS_Utf8TrySetTimes
+#ifdef DeeUnixSysFS_Utf8SetTimes
 #define DeeSysFS_Utf8SetTimes    DeeUnixSysFS_Utf8SetTimes
 #endif
 

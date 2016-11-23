@@ -57,6 +57,25 @@ DeeVFSView_OpenNode(DEE_A_INOUT struct DeeVFSNode *node) {
  return result;
 }
 
+DEE_A_RET_EXCEPT_REF DeeVFSViewObject *
+DeeVFSView_TryOpenNode(DEE_A_INOUT struct DeeVFSNode *node) {
+ DeeVFSViewObject *result; Dee_size_t view_size;
+ if (!DeeVFSNode_HasView(node)) return NULL;
+ // Make sure we allocate enough memory for the view buffer
+ view_size = Dee_OFFSETOF(DeeVFSViewObject,vv_view)+
+             _DeeVFSNode_GetViewBufferSize(node);
+ if DEE_UNLIKELY((result = (DeeVFSViewObject *)DeeObject_TryMalloc(view_size)) == NULL) return NULL;
+ // Open the buffer
+ if DEE_UNLIKELY(_DeeVFSNode_OpenViewBuffer(node,&result->vv_view) != 0) {
+  DeeError_HandledOne();
+  DeeObject_Free(result);
+  return NULL;
+ }
+ // Now just initialize the regular object data.
+ DeeObject_INIT(result,&DeeVFSView_Type);
+ return result;
+}
+
 static DeeVFSViewObject *DEE_CALL _deevfsview_tp_any_new(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeObject *args) {
  DeeVFSViewObject *result; DeeObject *path; struct DeeVFSNode *node;

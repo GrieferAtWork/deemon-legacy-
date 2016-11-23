@@ -60,14 +60,11 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8SetTimes(
  result = DeeNFS_WideSetTimesObject(path_ob,atime,ctime,mtime);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_SetTimes)
+#else
  struct DeeNativeFileFD fd;
- if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,return -1);
  DeeSysFileFD_SetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
- return 0;
-#else
- DeeNFS_Utf8TrySetTimes(path,atime,ctime,mtime);
  return 0;
 #endif
 }
@@ -91,14 +88,11 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideSetTimes(
  result = DeeNFS_Utf8SetTimesObject(path_ob,atime,ctime,mtime);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_SetTimes)
+#else
  struct DeeNativeFileFD fd;
- if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,return -1);
  DeeSysFileFD_SetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
- return 0;
-#else
- DeeNFS_WideTrySetTimes(path,atime,ctime,mtime);
  return 0;
 #endif
 }
@@ -116,14 +110,11 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8SetTimesObject(
  DeeSysFS_WideSetTimesObject(path_ob,atime,ctime,mtime,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
-#elif defined(DeeSysFileFD_SetTimes)
+#else
  struct DeeNativeFileFD fd;
- if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,return -1);
  DeeSysFileFD_SetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
- return 0;
-#else
- DeeNFS_Utf8TrySetTimesObject(path,atime,ctime,mtime);
  return 0;
 #endif
 }
@@ -141,125 +132,12 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideSetTimesObject(
  DeeSysFS_Utf8SetTimesObject(path_ob,atime,ctime,mtime,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
-#elif defined(DeeSysFileFD_SetTimes)
+#else
  struct DeeNativeFileFD fd;
- if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,return -1);
  DeeSysFileFD_SetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
-#else
- DeeNFS_WideTrySetTimesObject(path,atime,ctime,mtime);
- return 0;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TrySetTimes(
- DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN_OPT Dee_timetick_t const *atime,
- DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
- DEE_ASSERT(path);
-#ifdef DeeSysFS_Utf8TrySetTimes
- return DeeSysFS_Utf8TrySetTimes(path,atime,ctime,mtime);
-#elif defined(DeeSysFS_Utf8TrySetTimesObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TrySetTimesObject(path_ob,atime,ctime,mtime);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFS_WideTrySetTimesObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTrySetTimesObject(path_ob,atime,ctime,mtime);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TrySetTimes)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TrySetTimes(&fd,atime,ctime,mtime);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8SetTimes(path,atime,ctime,mtime)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTrySetTimes(
- DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN_OPT Dee_timetick_t const *atime,
- DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
- DEE_ASSERT(path);
-#ifdef DeeSysFS_WideTrySetTimes
- return DeeSysFS_WideTrySetTimes(path,atime,ctime,mtime);
-#elif defined(DeeSysFS_WideTrySetTimesObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTrySetTimesObject(path_ob,atime,ctime,mtime);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFS_Utf8TrySetTimesObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TrySetTimesObject(path_ob,atime,ctime,mtime);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TrySetTimes)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TrySetTimes(&fd,atime,ctime,mtime);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideSetTimes(path,atime,ctime,mtime)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TrySetTimesObject(
- DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime,
-              DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
- DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
-#ifdef DeeSysFS_Utf8TrySetTimesObject
- return DeeSysFS_Utf8TrySetTimesObject(path,atime,ctime,mtime);
-#elif defined(DeeSysFS_WideTrySetTimesObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
-  DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTrySetTimesObject(path_ob,atime,ctime,mtime);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TrySetTimes)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TrySetTimes(&fd,atime,ctime,mtime);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8SetTimesObject(path,atime,ctime,mtime)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTrySetTimesObject(
- DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime,
-              DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
- DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
-#ifdef DeeSysFS_WideTrySetTimesObject
- return DeeSysFS_WideTrySetTimesObject(path,atime,ctime,mtime);
-#elif defined(DeeSysFS_Utf8TrySetTimesObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TrySetTimesObject(path_ob,atime,ctime,mtime);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TrySetTimes)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TrySetTimes(&fd,atime,ctime,mtime);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideSetTimesObject(path,atime,ctime,mtime)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
 #endif
 }
 DEE_COMPILER_MSVC_WARNING_POP
@@ -268,10 +146,6 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8SetTimes(DEE_A_IN_Z Dee_Utf8Char const *path
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideSetTimes(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(atime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(ctime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(mtime)) { DEE_ASSERT(path); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_settimes); return -1; }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8SetTimesObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(atime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(ctime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(mtime)) { DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path)); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_settimes); return -1; }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideSetTimesObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(atime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(ctime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(mtime)) { DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path)); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_settimes); return -1; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TrySetTimes(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(atime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(ctime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(mtime)) { DEE_ASSERT(path); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTrySetTimes(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(atime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(ctime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(mtime)) { DEE_ASSERT(path); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TrySetTimesObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(atime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(ctime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(mtime)) { DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path)); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTrySetTimesObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(atime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(ctime), DEE_A_IN_OPT Dee_timetick_t const *DEE_UNUSED(mtime)) { DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path)); (void)path; return 0; }
 #endif
 
 DEE_DECL_END

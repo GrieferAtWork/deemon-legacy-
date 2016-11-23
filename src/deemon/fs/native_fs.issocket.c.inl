@@ -58,14 +58,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsSocket(DEE_A_IN_Z Dee_Utf8Char cons
  result = DeeNFS_WideIsSocketObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsSocket)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsSocket(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
-#else
- return DeeNFS_Utf8TryIsSocket(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsSocket(DEE_A_IN_Z Dee_WideChar const *path) {
@@ -87,14 +85,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsSocket(DEE_A_IN_Z Dee_WideChar cons
  result = DeeNFS_Utf8IsSocketObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsSocket)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsSocket(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
-#else
- return DeeNFS_WideTryIsSocket(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsSocketObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
@@ -110,14 +106,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsSocketObject(DEE_A_IN_OBJECT(DeeUtf
  DeeSysFS_WideIsSocketObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsSocket)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsSocket(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
-#else
- return DeeNFS_Utf8TryIsSocketObject(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsSocketObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
@@ -133,115 +127,11 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsSocketObject(DEE_A_IN_OBJECT(DeeWid
  DeeSysFS_Utf8IsSocketObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsSocket)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsSocket(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- return DeeNFS_WideTryIsSocketObject(path);
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsSocket(DEE_A_IN_Z Dee_Utf8Char const *path) {
- DEE_ASSERT(path);
-#ifdef DeeSysFS_Utf8TryIsSocket
- return DeeSysFS_Utf8TryIsSocket(path);
-#elif defined(DeeSysFS_Utf8TryIsSocketObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TryIsSocketObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFS_WideTryIsSocketObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTryIsSocketObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsSocket)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsSocket(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8IsSocket(path)) < 0) { DeeError_HandledOne(); result = 0; }
- return result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsSocket(DEE_A_IN_Z Dee_WideChar const *path) {
- DEE_ASSERT(path);
-#ifdef DeeSysFS_WideTryIsSocket
- return DeeSysFS_WideTryIsSocket(path);
-#elif defined(DeeSysFS_WideTryIsSocketObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTryIsSocketObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFS_Utf8TryIsSocketObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TryIsSocketObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsSocket)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsSocket(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideIsSocket(path)) < 0) { DeeError_HandledOne(); result = 0; }
- return result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsSocketObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
- DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
-#ifdef DeeSysFS_Utf8TryIsSocketObject
- return DeeSysFS_Utf8TryIsSocketObject(path);
-#elif defined(DeeSysFS_WideTryIsSocketObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
-  DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTryIsSocketObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsSocket)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsSocket(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8IsSocketObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
- return result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsSocketObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
- DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
-#ifdef DeeSysFS_WideTryIsSocketObject
- return DeeSysFS_WideTryIsSocketObject(path);
-#elif defined(DeeSysFS_Utf8TryIsSocketObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TryIsSocketObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsSocket)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsSocket(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideIsSocketObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -250,10 +140,6 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsSocket(DEE_A_IN_Z Dee_Utf8Char cons
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsSocket(DEE_A_IN_Z Dee_WideChar const *path) { DEE_ASSERT(path); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_issocket); return -1; }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsSocketObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path)); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_issocket); return -1; }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsSocketObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path)); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_issocket); return -1; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsSocket(DEE_A_IN_Z Dee_Utf8Char const *path) { DEE_ASSERT(path); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsSocket(DEE_A_IN_Z Dee_WideChar const *path) { DEE_ASSERT(path); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsSocketObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path)); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsSocketObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path)); (void)path; return 0; }
 #endif
 
 DEE_DECL_END

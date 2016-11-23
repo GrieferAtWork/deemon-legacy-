@@ -363,6 +363,7 @@
     <ClInclude Include="..\src\deemon\compiler\xast.h" />
     <ClInclude Include="..\src\deemon\file\file.fd.h" />
     <ClInclude Include="..\src\deemon\file\file.io.h" />
+    <ClInclude Include="..\src\deemon\file\file.vfs.h" />
     <ClInclude Include="..\src\deemon\fs\expand_fs.h" />
     <ClInclude Include="..\src\deemon\fs\native_filefd.h" />
     <ClInclude Include="..\src\deemon\fs\native_fs.h" />
@@ -576,6 +577,7 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\file\file.joined.inl" />
     <None Include="..\src\deemon\file\file.reader.inl" />
     <None Include="..\src\deemon\file\file.std.c.inl" />
+    <None Include="..\src\deemon\file\file.vfs.c.inl" />
     <None Include="..\src\deemon\file\file.win32_debug.c.inl" />
     <None Include="..\src\deemon\file\file.win32_debug.h.inl" />
     <None Include="..\src\deemon\file\file.writer.inl" />
@@ -595,6 +597,8 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\fs\expand_fs.link.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.mkdir.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.move.c.inl" />
+    <None Include="..\src\deemon\fs\expand_fs.open.c.inl" />
+    <None Include="..\src\deemon\fs\expand_fs.opendir.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.remove.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.rmdir.c.inl" />
     <None Include="..\src\deemon\fs\expand_fs.settimes.c.inl" />
@@ -603,7 +607,6 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\fs\native_fs.chmod.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.chown.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.copy.c.inl" />
-    <None Include="..\src\deemon\fs\native_fs.copy.emulated.impl.inl" />
     <None Include="..\src\deemon\fs\native_fs.delenv.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.enumenv.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.exists.c.inl" />
@@ -633,6 +636,8 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\fs\native_fs.link.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.mkdir.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.move.c.inl" />
+    <None Include="..\src\deemon\fs\native_fs.open.c.inl" />
+    <None Include="..\src\deemon\fs\native_fs.opendir.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.remove.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.rmdir.c.inl" />
     <None Include="..\src\deemon\fs\native_fs.setenv.c.inl" />
@@ -650,6 +655,8 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\fs\virtual_fs.link.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.mkdir.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.move.c.inl" />
+    <None Include="..\src\deemon\fs\virtual_fs.open.c.inl" />
+    <None Include="..\src\deemon\fs\virtual_fs.opendir.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.remove.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.rmdir.c.inl" />
     <None Include="..\src\deemon\fs\virtual_fs.settimes.c.inl" />

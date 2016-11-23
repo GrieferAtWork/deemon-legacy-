@@ -30,13 +30,27 @@
 
 DEE_DECL_BEGIN
 
-#ifdef DeeSysFSUtf8View
+/*[[[deemon
+#include <file>
+const begin_tag = "@DeeSysFSWideView:begin";
+const end_tag   = "@DeeSysFSWideView:end";
+text = file.open(__FILE__,"r").read();
+begin = text.rindex(begin_tag)+#begin_tag;
+end = text.rindex(end_tag,begin);
+text = text[begin:end];
+
+text = text.replace("wide","utf8");
+text = text.replace("Wide","Utf8");
+text = text.replace("WIDE","UTF8");
+text = text.strip().rsstrip("//").strip();
+print text;
+]]]*/
+#ifdef DeeNFSUtf8View
 DEE_OBJECT_DEF(DeeNFSUtf8ViewObject);
 struct DeeNFSUtf8ViewObject {
  DEE_OBJECT_HEAD
  struct DeeNFSUtf8View nwv_view;
 };
-
 extern DeeTypeObject DeeNFSUtf8View_Type;
 
 extern DEE_A_RET_EXCEPT_REF DeeNFSUtf8ViewObject *
@@ -44,7 +58,9 @@ extern DEE_A_RET_EXCEPT_REF DeeNFSUtf8ViewObject *
 extern DEE_A_RET_EXCEPT_REF DeeNFSUtf8ViewObject *
  DeeNFSUtf8View_OpenPathObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
 #endif
+//[[[end]]]
 
+//@DeeSysFSWideView:begin
 #ifdef DeeNFSWideView
 DEE_OBJECT_DEF(DeeNFSWideViewObject);
 struct DeeNFSWideViewObject {
@@ -58,6 +74,7 @@ extern DEE_A_RET_EXCEPT_REF DeeNFSWideViewObject *
 extern DEE_A_RET_EXCEPT_REF DeeNFSWideViewObject *
  DeeNFSWideView_OpenPathObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 #endif
+//@DeeSysFSWideView:end
 
 DEE_DECL_END
 

@@ -22,10 +22,20 @@
 #define GUARD_DEEMON_VFS_VFS_NATIVE_NODE_H 1
 
 #include <deemon/__conf.inl>
-#include <deemon/vfs/vfs_core.h>
-#include <deemon/sys/sysfd.h>
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#include <deemon/vfs/vfs_core.h>
+#include <deemon/sys/sysfd.h>
+#include <deemon/optional/atomic_mutex.h>
+#include <deemon/fs/native_view.wide.h>
+
+#include DEE_INCLUDE_MEMORY_API_DISABLE()
+DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
+#include <Windows.h>
+DEE_COMPILER_MSVC_WARNING_POP
+#include DEE_INCLUDE_MEMORY_API_ENABLE()
+
+
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
@@ -41,8 +51,9 @@ struct DeeVFSNativeFile {
 #endif
 };
 struct DeeVFSNativeView {
- struct DeeVFSView   vnv_view; /*< Underlying view. */
- // TODO: Implement 'sysdir'
+ struct DeeVFSView     vnv_view; /*< Underlying view. */
+ // v TODO: This can be a 'DeeSysFSWideView'
+ struct DeeNFSWideView vnv_dir;
 };
 
 

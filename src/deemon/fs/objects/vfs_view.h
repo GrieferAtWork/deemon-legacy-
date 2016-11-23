@@ -37,6 +37,8 @@ struct DeeVFSViewObject {
 
 extern DEE_A_RET_EXCEPT_REF DeeVFSViewObject *
  DeeVFSView_OpenNode(DEE_A_INOUT struct DeeVFSNode *node);
+extern DEE_A_RET_NOEXCEPT_REF DeeVFSViewObject *
+ DeeVFSView_TryOpenNode(DEE_A_INOUT struct DeeVFSNode *node);
 
 extern DeeTypeObject DeeVFSView_Type;
 

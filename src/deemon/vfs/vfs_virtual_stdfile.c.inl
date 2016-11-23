@@ -79,6 +79,7 @@ struct DeeVFSNodeType const DeeVFSVirtualStdFileNode_Type = {
   (int (DEE_CALL *)(struct DeeVFSView *))                     NULL,
   (void (DEE_CALL *)(struct DeeVFSView *))                    NULL,
   (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))NULL,
+  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))NULL,
  }
 };
 

@@ -58,14 +58,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsMount(DEE_A_IN_Z Dee_Utf8Char const
  result = DeeNFS_WideIsMountObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsMount)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsMount(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
-#else
- return DeeNFS_Utf8TryIsMount(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsMount(DEE_A_IN_Z Dee_WideChar const *path) {
@@ -87,14 +85,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsMount(DEE_A_IN_Z Dee_WideChar const
  result = DeeNFS_Utf8IsMountObject(path_ob);
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsMount)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsMount(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
-#else
- return DeeNFS_WideTryIsMount(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsMountObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
@@ -110,14 +106,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsMountObject(DEE_A_IN_OBJECT(DeeUtf8
  DeeSysFS_WideIsMountObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsMount)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsMount(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
-#else
- return DeeNFS_Utf8TryIsMountObject(path);
 #endif
 }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsMountObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
@@ -133,115 +127,11 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsMountObject(DEE_A_IN_OBJECT(DeeWide
  DeeSysFS_Utf8IsMountObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
-#elif defined(DeeSysFileFD_IsMount)
+#else
  struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
+ DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
  DeeSysFileFD_IsMount(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- return DeeNFS_WideTryIsMountObject(path);
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsMount(DEE_A_IN_Z Dee_Utf8Char const *path) {
- DEE_ASSERT(path);
-#ifdef DeeSysFS_Utf8TryIsMount
- return DeeSysFS_Utf8TryIsMount(path);
-#elif defined(DeeSysFS_Utf8TryIsMountObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TryIsMountObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFS_WideTryIsMountObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTryIsMountObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsMount)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsMount(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8IsMount(path)) < 0) { DeeError_HandledOne(); result = 0; }
- return result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsMount(DEE_A_IN_Z Dee_WideChar const *path) {
- DEE_ASSERT(path);
-#ifdef DeeSysFS_WideTryIsMount
- return DeeSysFS_WideTryIsMount(path);
-#elif defined(DeeSysFS_WideTryIsMountObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTryIsMountObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFS_Utf8TryIsMountObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TryIsMountObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsMount)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInit(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsMount(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideIsMount(path)) < 0) { DeeError_HandledOne(); result = 0; }
- return result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsMountObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
- DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
-#ifdef DeeSysFS_Utf8TryIsMountObject
- return DeeSysFS_Utf8TryIsMountObject(path);
-#elif defined(DeeSysFS_WideTryIsMountObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
-  DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_WideTryIsMountObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsMount)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_Utf8TryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsMount(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8IsMountObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
- return result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsMountObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
- DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
-#ifdef DeeSysFS_WideTryIsMountObject
- return DeeSysFS_WideTryIsMountObject(path);
-#elif defined(DeeSysFS_Utf8TryIsMountObject)
- DeeObject *path_ob; int result;
- if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeSysFS_Utf8TryIsMountObject(path_ob);
- Dee_DECREF(path_ob);
- return result;
-#elif defined(DeeSysFileFD_TryIsMount)
- struct DeeNativeFileFD fd; int result;
- if (!DeeNativeFileFD_WideTryInitObject(&fd,path,DEE_OPENMODE('r',0),0)) return 0;
- result = DeeSysFileFD_TryIsMount(&fd);
- DeeNativeFileFD_Quit(&fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideIsMountObject(path)) < 0) { DeeError_HandledOne(); result = 0; }
  return result;
 #endif
 }
@@ -250,10 +140,6 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsMount(DEE_A_IN_Z Dee_Utf8Char const
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsMount(DEE_A_IN_Z Dee_WideChar const *path) { DEE_ASSERT(path); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_ismount); return -1; }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsMountObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path)); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_ismount); return -1; }
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsMountObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path)); (void)path; DeeError_Throw((DeeObject *)&_dee_notimplemented_ismount); return -1; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsMount(DEE_A_IN_Z Dee_Utf8Char const *path) { DEE_ASSERT(path); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsMount(DEE_A_IN_Z Dee_WideChar const *path) { DEE_ASSERT(path); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryIsMountObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path)); (void)path; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryIsMountObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) { DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path)); (void)path; return 0; }
 #endif
 
 DEE_DECL_END

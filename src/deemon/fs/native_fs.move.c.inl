@@ -50,8 +50,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Move(DEE_A_IN_Z Dee_Utf8Char const *src, DEE
  Dee_DECREF(dst_ob);
  Dee_DECREF(src_ob);
  return 0;
-#elif defined(DeeSysFS_WideMoveObject)\
-   || defined(DeeSysFS_WideMove)
+#else
  DeeObject *src_ob,*dst_ob; int result;
  if DEE_UNLIKELY((src_ob = DeeWideString_FromUtf8String(src)) == NULL) return -1;
  if DEE_UNLIKELY((dst_ob = DeeWideString_FromUtf8String(dst)) == NULL) { result = -1; goto end_srcob; }
@@ -59,9 +58,6 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Move(DEE_A_IN_Z Dee_Utf8Char const *src, DEE
  Dee_DECREF(dst_ob);
 end_srcob: Dee_DECREF(src_ob);
  return result;
-#else
- DeeNFS_Utf8TryMove(src,dst);
- return 0;
 #endif
 }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMove(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) {
@@ -77,8 +73,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMove(DEE_A_IN_Z Dee_WideChar const *src, DEE
  Dee_DECREF(dst_ob);
  Dee_DECREF(src_ob);
  return 0;
-#elif defined(DeeSysFS_Utf8MoveObject)\
-   || defined(DeeSysFS_Utf8Move)
+#else
  DeeObject *src_ob,*dst_ob; int result;
  if DEE_UNLIKELY((src_ob = DeeUtf8String_FromWideString(src)) == NULL) return -1;
  if DEE_UNLIKELY((dst_ob = DeeUtf8String_FromWideString(dst)) == NULL) { result = -1; goto end_srcob; }
@@ -86,9 +81,6 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMove(DEE_A_IN_Z Dee_WideChar const *src, DEE
  Dee_DECREF(dst_ob);
 end_srcob: Dee_DECREF(src_ob);
  return result;
-#else
- DeeNFS_WideTryMove(src,dst);
- return 0;
 #endif
 }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8MoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst) {
@@ -97,7 +89,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8MoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObje
 #ifdef DeeSysFS_Utf8MoveObject
  DeeSysFS_Utf8MoveObject(src,dst,return -1);
  return 0;
-#elif defined(DeeSysFS_WideMoveObject)
+#else
  DeeObject *src_ob,*dst_ob;
  if DEE_UNLIKELY((src_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(src),DeeUtf8String_STR(src))) == NULL) return -1;
@@ -107,9 +99,6 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8MoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObje
  Dee_DECREF(dst_ob);
  Dee_DECREF(src_ob);
  return 0;
-#else
- DeeNFS_Utf8TryMoveObject(src,dst);
- return 0;
 #endif
 }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst) {
@@ -118,7 +107,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMoveObject(DEE_A_IN_OBJECT(DeeWideStringObje
 #ifdef DeeSysFS_WideMoveObject
  DeeSysFS_WideMoveObject(src,dst,return -1);
  return 0;
-#elif defined(DeeSysFS_Utf8MoveObject)
+#else
  DeeObject *src_ob,*dst_ob;
  if DEE_UNLIKELY((src_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(src),DeeWideString_STR(src))) == NULL) return -1;
@@ -128,103 +117,6 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMoveObject(DEE_A_IN_OBJECT(DeeWideStringObje
  Dee_DECREF(dst_ob);
  Dee_DECREF(src_ob);
  return 0;
-#else
- DeeNFS_WideTryMoveObject(src,dst);
- return 0;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryMove(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst) {
- DEE_ASSERT(src); DEE_ASSERT(dst);
-#ifdef DeeSysFS_Utf8TryMove
- return DeeSysFS_Utf8TryMove(src,dst);
-#elif defined(DeeSysFS_Utf8TryMoveObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeUtf8String_New(src)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeUtf8String_New(dst)) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_Utf8TryMoveObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#elif defined(DeeSysFS_WideTryMoveObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeWideString_FromUtf8String(src)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeWideString_FromUtf8String(dst)) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_WideTryMoveObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8Move(src,dst)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMove(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) {
- DEE_ASSERT(src); DEE_ASSERT(dst);
-#ifdef DeeSysFS_WideTryMove
- return DeeSysFS_WideTryMove(src,dst);
-#elif defined(DeeSysFS_WideTryMoveObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeWideString_New(src)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeWideString_New(dst)) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_WideTryMoveObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#elif defined(DeeSysFS_Utf8TryMoveObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeUtf8String_FromWideString(src)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeUtf8String_FromWideString(dst)) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_Utf8TryMoveObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideMove(src,dst)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryMoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst) {
- DEE_ASSERT(DeeObject_Check(src) && DeeUtf8String_Check(src));
- DEE_ASSERT(DeeObject_Check(dst) && DeeUtf8String_Check(dst));
-#ifdef DeeSysFS_Utf8TryMoveObject
- return DeeSysFS_Utf8TryMoveObject(src,dst);
-#elif defined(DeeSysFS_WideTryMoveObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeWideString_FromUtf8StringWithLength(
-  DeeUtf8String_SIZE(src),DeeUtf8String_STR(src))) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeWideString_FromUtf8StringWithLength(
-  DeeUtf8String_SIZE(dst),DeeUtf8String_STR(dst))) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_WideTryMoveObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8MoveObject(src,dst)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst) {
- DEE_ASSERT(DeeObject_Check(src) && DeeWideString_Check(src));
- DEE_ASSERT(DeeObject_Check(dst) && DeeWideString_Check(dst));
-#ifdef DeeSysFS_WideTryMoveObject
- return DeeSysFS_WideTryMoveObject(src,dst);
-#elif defined(DeeSysFS_Utf8TryMoveObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(src),DeeWideString_STR(src))) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(dst),DeeWideString_STR(dst))) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_Utf8TryMoveObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideMoveObject(src,dst)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
 #endif
 }
 #else
@@ -232,10 +124,6 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Move(DEE_A_IN_Z Dee_Utf8Char const *src, DEE
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMove(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) { DEE_ASSERT(src),DEE_ASSERT(dst); (void)src,dst; DeeError_Throw((DeeObject *)&_dee_notimplemented_move); return -1; }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8MoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst) { DEE_ASSERT(DeeObject_Check(src) && DeeUtf8String_Check(src)); DEE_ASSERT(DeeObject_Check(dst) && DeeUtf8String_Check(dst)); (void)src,dst; DeeError_Throw((DeeObject *)&_dee_notimplemented_move); return -1; }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideMoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst) { DEE_ASSERT(DeeObject_Check(src) && DeeWideString_Check(src)); DEE_ASSERT(DeeObject_Check(dst) && DeeWideString_Check(dst)); (void)src,dst; DeeError_Throw((DeeObject *)&_dee_notimplemented_move); return -1; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryMove(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst) { DEE_ASSERT(src),DEE_ASSERT(dst); (void)src,dst; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMove(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) { DEE_ASSERT(src),DEE_ASSERT(dst); (void)src,dst; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryMoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst) { DEE_ASSERT(DeeObject_Check(src) && DeeUtf8String_Check(src)); DEE_ASSERT(DeeObject_Check(dst) && DeeUtf8String_Check(dst)); (void)src,dst; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryMoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst) { DEE_ASSERT(DeeObject_Check(src) && DeeWideString_Check(src)); DEE_ASSERT(DeeObject_Check(dst) && DeeWideString_Check(dst)); (void)src,dst; return 0; }
 #endif
 
 DEE_DECL_END

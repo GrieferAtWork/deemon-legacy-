@@ -41,6 +41,8 @@ DEE_DECL_END
 #include "virtual_fs.link.c.inl"
 #include "virtual_fs.mkdir.c.inl"
 #include "virtual_fs.move.c.inl"
+#include "virtual_fs.open.c.inl"
+#include "virtual_fs.opendir.c.inl"
 #include "virtual_fs.remove.c.inl"
 #include "virtual_fs.rmdir.c.inl"
 #include "virtual_fs.settimes.c.inl"

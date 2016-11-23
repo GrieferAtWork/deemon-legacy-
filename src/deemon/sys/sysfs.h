@@ -26,10 +26,6 @@
 //////////////////////////////////////////////////////////////////////////
 // >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8GetCwd(void);
 // >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideGetCwd(void);
-// >> [[optional]] bool DeeSysFS_Utf8TryChdir(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryChdir(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryChdirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryChdirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8Chdir(DEE_A_IN_Z Dee_Utf8Char const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideChdir(DEE_A_IN_Z Dee_WideChar const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8ChdirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_error);
@@ -43,26 +39,14 @@
 // >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname);
 // >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8TryGetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname);
 // >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideTryGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname);
-// >> [[optional]] bool DeeSysFS_Utf8TryHasEnv(DEE_A_IN_Z Dee_Utf8Char const *envname);
-// >> [[optional]] bool DeeSysFS_WideTryHasEnv(DEE_A_IN_Z Dee_WideChar const *envname);
-// >> [[optional]] bool DeeSysFS_Utf8TryHasEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname);
-// >> [[optional]] bool DeeSysFS_WideTryHasEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname);
 // >> [[optional]] void DeeSysFS_Utf8HasEnv(DEE_A_IN_Z Dee_Utf8Char const *envname, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideHasEnv(DEE_A_IN_Z Dee_WideChar const *envname, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8HasEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideHasEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname, int result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryDelEnv(DEE_A_IN_Z Dee_Utf8Char const *envname);
-// >> [[optional]] bool DeeSysFS_WideTryDelEnv(DEE_A_IN_Z Dee_WideChar const *envname);
-// >> [[optional]] bool DeeSysFS_Utf8TryDelEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname);
-// >> [[optional]] bool DeeSysFS_WideTryDelEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname);
 // >> [[optional]] void DeeSysFS_Utf8DelEnv(DEE_A_IN_Z Dee_Utf8Char const *envname, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideDelEnv(DEE_A_IN_Z Dee_WideChar const *envname, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8DelEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideDelEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname, int result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TrySetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname, DEE_A_IN_Z Dee_Utf8Char const *newvalue);
-// >> [[optional]] bool DeeSysFS_WideTrySetEnv(DEE_A_IN_Z Dee_WideChar const *envname, DEE_A_IN_Z Dee_WideChar const *newvalue);
-// >> [[optional]] bool DeeSysFS_Utf8TrySetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *newvalue);
-// >> [[optional]] bool DeeSysFS_WideTrySetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname, DEE_A_IN_OBJECT(DeeWideStringObject) const *newvalue);
 // >> [[optional]] void DeeSysFS_Utf8SetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname, DEE_A_IN_Z Dee_Utf8Char const *newvalue, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideSetEnv(DEE_A_IN_Z Dee_WideChar const *envname, DEE_A_IN_Z Dee_WideChar const *newvalue, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8SetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *newvalue, int result, CODE on_error);
@@ -90,184 +74,96 @@
 // >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8GetTmp(void);
 // >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideGetTmp(void);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] bool DeeSysFS_Utf8TryGetTimes(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime);
-// >> [[optional]] bool DeeSysFS_WideTryGetTimes(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime);
-// >> [[optional]] bool DeeSysFS_Utf8TryGetTimesObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime);
-// >> [[optional]] bool DeeSysFS_WideTryGetTimesObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime);
 // >> [[optional]] void DeeSysFS_Utf8GetTimes(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideGetTimes(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8GetTimesObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideGetTimesObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TrySetTimes(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
-// >> [[optional]] bool DeeSysFS_WideTrySetTimes(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
-// >> [[optional]] bool DeeSysFS_Utf8TrySetTimesObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
-// >> [[optional]] bool DeeSysFS_WideTrySetTimesObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
 // >> [[optional]] void DeeSysFS_Utf8SetTimes(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideSetTimes(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8SetTimesObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideSetTimesObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] bool DeeSysFS_Utf8TryIsFile(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsFile(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsFileObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsFileObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsFile(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsFile(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsFileObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsFileObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsDir(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsDir(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsDir(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsDir(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsLink(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsLink(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsLinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsLinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsLink(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsLink(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsLinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsLinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsDrive(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsDrive(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsDriveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsDriveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsDrive(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsDrive(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsDriveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsDriveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsMount(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsMount(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsMountObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsMountObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsMount(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsMount(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsMountObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsMountObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsHidden(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsHidden(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsHiddenObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsHiddenObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsHidden(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsHidden(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsHiddenObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsHiddenObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsExecutable(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsExecutable(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsExecutableObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsExecutableObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsExecutable(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsExecutable(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsExecutableObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsExecutableObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsCharDev(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsCharDev(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsCharDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsCharDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsCharDev(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsCharDev(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsCharDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsCharDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsBlockDev(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsBlockDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsBlockDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsBlockDev(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsBlockDevObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsBlockDevObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsFiFo(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsFiFo(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsFiFoObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsFiFoObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsFiFo(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsFiFo(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsFiFoObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsFiFoObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsSocket(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsSocket(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsSocketObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsSocketObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsSocket(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsSocket(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsSocketObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsSocketObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsAbs(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsAbs(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryIsAbsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryIsAbsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8IsAbs(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsAbs(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsAbsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsAbsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryExists(DEE_A_IN_Z Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryExists(DEE_A_IN_Z Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryExistsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryExistsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8Exists(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideExists(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8ExistsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideExistsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, int *result, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] bool DeeSysFS_Utf8TryRemove(DEE_A_IN_T Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryRemove(DEE_A_IN_T Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryRemoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryRemoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8Remove(DEE_A_IN_T Dee_Utf8Char const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideRemove(DEE_A_IN_T Dee_WideChar const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8RemoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideRemoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryUnlink(DEE_A_IN_T Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryUnlink(DEE_A_IN_T Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryUnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8Unlink(DEE_A_IN_T Dee_Utf8Char const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideUnlink(DEE_A_IN_T Dee_WideChar const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8UnlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideUnlinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, CODE on_error);
-// >> [[optional]] bool DeeSysFS_Utf8TryRmDir(DEE_A_IN_T Dee_Utf8Char const *path);
-// >> [[optional]] bool DeeSysFS_WideTryRmDir(DEE_A_IN_T Dee_WideChar const *path);
-// >> [[optional]] bool DeeSysFS_Utf8TryRmDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-// >> [[optional]] bool DeeSysFS_WideTryRmDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 // >> [[optional]] void DeeSysFS_Utf8RmDir(DEE_A_IN_T Dee_Utf8Char const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideRmDir(DEE_A_IN_T Dee_WideChar const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8RmDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideRmDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] bool DeeSysFS_Utf8TryMkDir(DEE_A_IN_T Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode);
-// >> [[optional]] bool DeeSysFS_WideTryMkDir(DEE_A_IN_T Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode);
-// >> [[optional]] bool DeeSysFS_Utf8TryMkDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode);
-// >> [[optional]] bool DeeSysFS_WideTryMkDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode);
 // >> [[optional]] void DeeSysFS_Utf8MkDir(DEE_A_IN_T Dee_Utf8Char const *path, CODE on_error, DEE_A_IN Dee_mode_t mode);
 // >> [[optional]] void DeeSysFS_WideMkDir(DEE_A_IN_T Dee_WideChar const *path, CODE on_error, DEE_A_IN Dee_mode_t mode);
 // >> [[optional]] void DeeSysFS_Utf8MkDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_error, DEE_A_IN Dee_mode_t mode);
 // >> [[optional]] void DeeSysFS_WideMkDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, CODE on_error, DEE_A_IN Dee_mode_t mode);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] bool DeeSysFS_Utf8TryCopy(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst);
-// >> [[optional]] bool DeeSysFS_WideTryCopy(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst);
-// >> [[optional]] bool DeeSysFS_Utf8TryCopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst);
-// >> [[optional]] bool DeeSysFS_WideTryCopyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst);
 // >> [[optional]] void DeeSysFS_Utf8Copy(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideCopy(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8CopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideCopyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] bool DeeSysFS_Utf8TryMove(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst);
-// >> [[optional]] bool DeeSysFS_WideTryMove(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst);
-// >> [[optional]] bool DeeSysFS_Utf8TryMoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst);
-// >> [[optional]] bool DeeSysFS_WideTryMoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst);
 // >> [[optional]] void DeeSysFS_Utf8Move(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideMove(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8MoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideMoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] bool DeeSysFS_Utf8TryLink(DEE_A_IN_Z Dee_Utf8Char const *link_path, DEE_A_IN_Z Dee_Utf8Char const *target_path);
-// >> [[optional]] bool DeeSysFS_WideTryLink(DEE_A_IN_Z Dee_WideChar const *link_path, DEE_A_IN_Z Dee_WideChar const *target_path);
-// >> [[optional]] bool DeeSysFS_Utf8TryLinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *link_path, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *target_path);
-// >> [[optional]] bool DeeSysFS_WideTryLinkObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *link_path, DEE_A_IN_OBJECT(DeeWideStringObject) const *target_path);
 // >> [[optional]] void DeeSysFS_Utf8Link(DEE_A_IN_Z Dee_Utf8Char const *link_path, DEE_A_IN_Z Dee_Utf8Char const *target_path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideLink(DEE_A_IN_Z Dee_WideChar const *link_path, DEE_A_IN_Z Dee_WideChar const *target_path, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8LinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *link_path, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *target_path, CODE on_error);
@@ -369,17 +265,11 @@
 
 /*[[[deemon
 const pattern = "\
-#if !defined(DeeSysFS_Utf8Try{name}Object) && defined(DeeSysFS_Utf8Try{name})
-#define DeeSysFS_Utf8Try{name}Object(path) DeeSysFS_Utf8Try{name}(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTry{name}Object) && defined(DeeSysFS_WideTry{name})
-#define DeeSysFS_WideTry{name}Object(path) DeeSysFS_WideTry{name}(DeeWideString_STR(path))
-#endif
 #if !defined(DeeSysFS_Utf8{name}Object) && defined(DeeSysFS_Utf8{name})
-#define DeeSysFS_Utf8{name}Object(path,...) DeeSysFS_Utf8{name}(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8{name}Object(path,result,...) DeeSysFS_Utf8{name}(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Wide{name}Object) && defined(DeeSysFS_Wide{name})
-#define DeeSysFS_Wide{name}Object(path,...) DeeSysFS_Wide{name}(DeeWideString_STR(path),__VA_ARGS__)
+#define DeeSysFS_Wide{name}Object(path,result,...) DeeSysFS_Wide{name}(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif";
 function make(name) { print pattern.format({ .name = name }); }
 make("IsFile");
@@ -400,209 +290,107 @@ make("Unlink");
 make("RmDir");
 make("Remove");
 ]]]*/
-#if !defined(DeeSysFS_Utf8TryIsFileObject) && defined(DeeSysFS_Utf8TryIsFile)
-#define DeeSysFS_Utf8TryIsFileObject(path) DeeSysFS_Utf8TryIsFile(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsFileObject) && defined(DeeSysFS_WideTryIsFile)
-#define DeeSysFS_WideTryIsFileObject(path) DeeSysFS_WideTryIsFile(DeeWideString_STR(path))
-#endif
 #if !defined(DeeSysFS_Utf8IsFileObject) && defined(DeeSysFS_Utf8IsFile)
-#define DeeSysFS_Utf8IsFileObject(path,...) DeeSysFS_Utf8IsFile(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsFileObject(path,result,...) DeeSysFS_Utf8IsFile(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsFileObject) && defined(DeeSysFS_WideIsFile)
-#define DeeSysFS_WideIsFileObject(path,...) DeeSysFS_WideIsFile(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsDirObject) && defined(DeeSysFS_Utf8TryIsDir)
-#define DeeSysFS_Utf8TryIsDirObject(path) DeeSysFS_Utf8TryIsDir(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsDirObject) && defined(DeeSysFS_WideTryIsDir)
-#define DeeSysFS_WideTryIsDirObject(path) DeeSysFS_WideTryIsDir(DeeWideString_STR(path))
+#define DeeSysFS_WideIsFileObject(path,result,...) DeeSysFS_WideIsFile(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsDirObject) && defined(DeeSysFS_Utf8IsDir)
-#define DeeSysFS_Utf8IsDirObject(path,...) DeeSysFS_Utf8IsDir(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsDirObject(path,result,...) DeeSysFS_Utf8IsDir(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsDirObject) && defined(DeeSysFS_WideIsDir)
-#define DeeSysFS_WideIsDirObject(path,...) DeeSysFS_WideIsDir(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsLinkObject) && defined(DeeSysFS_Utf8TryIsLink)
-#define DeeSysFS_Utf8TryIsLinkObject(path) DeeSysFS_Utf8TryIsLink(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsLinkObject) && defined(DeeSysFS_WideTryIsLink)
-#define DeeSysFS_WideTryIsLinkObject(path) DeeSysFS_WideTryIsLink(DeeWideString_STR(path))
+#define DeeSysFS_WideIsDirObject(path,result,...) DeeSysFS_WideIsDir(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsLinkObject) && defined(DeeSysFS_Utf8IsLink)
-#define DeeSysFS_Utf8IsLinkObject(path,...) DeeSysFS_Utf8IsLink(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsLinkObject(path,result,...) DeeSysFS_Utf8IsLink(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsLinkObject) && defined(DeeSysFS_WideIsLink)
-#define DeeSysFS_WideIsLinkObject(path,...) DeeSysFS_WideIsLink(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsDriveObject) && defined(DeeSysFS_Utf8TryIsDrive)
-#define DeeSysFS_Utf8TryIsDriveObject(path) DeeSysFS_Utf8TryIsDrive(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsDriveObject) && defined(DeeSysFS_WideTryIsDrive)
-#define DeeSysFS_WideTryIsDriveObject(path) DeeSysFS_WideTryIsDrive(DeeWideString_STR(path))
+#define DeeSysFS_WideIsLinkObject(path,result,...) DeeSysFS_WideIsLink(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsDriveObject) && defined(DeeSysFS_Utf8IsDrive)
-#define DeeSysFS_Utf8IsDriveObject(path,...) DeeSysFS_Utf8IsDrive(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsDriveObject(path,result,...) DeeSysFS_Utf8IsDrive(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsDriveObject) && defined(DeeSysFS_WideIsDrive)
-#define DeeSysFS_WideIsDriveObject(path,...) DeeSysFS_WideIsDrive(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsMountObject) && defined(DeeSysFS_Utf8TryIsMount)
-#define DeeSysFS_Utf8TryIsMountObject(path) DeeSysFS_Utf8TryIsMount(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsMountObject) && defined(DeeSysFS_WideTryIsMount)
-#define DeeSysFS_WideTryIsMountObject(path) DeeSysFS_WideTryIsMount(DeeWideString_STR(path))
+#define DeeSysFS_WideIsDriveObject(path,result,...) DeeSysFS_WideIsDrive(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsMountObject) && defined(DeeSysFS_Utf8IsMount)
-#define DeeSysFS_Utf8IsMountObject(path,...) DeeSysFS_Utf8IsMount(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsMountObject(path,result,...) DeeSysFS_Utf8IsMount(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsMountObject) && defined(DeeSysFS_WideIsMount)
-#define DeeSysFS_WideIsMountObject(path,...) DeeSysFS_WideIsMount(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsHiddenObject) && defined(DeeSysFS_Utf8TryIsHidden)
-#define DeeSysFS_Utf8TryIsHiddenObject(path) DeeSysFS_Utf8TryIsHidden(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsHiddenObject) && defined(DeeSysFS_WideTryIsHidden)
-#define DeeSysFS_WideTryIsHiddenObject(path) DeeSysFS_WideTryIsHidden(DeeWideString_STR(path))
+#define DeeSysFS_WideIsMountObject(path,result,...) DeeSysFS_WideIsMount(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsHiddenObject) && defined(DeeSysFS_Utf8IsHidden)
-#define DeeSysFS_Utf8IsHiddenObject(path,...) DeeSysFS_Utf8IsHidden(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsHiddenObject(path,result,...) DeeSysFS_Utf8IsHidden(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsHiddenObject) && defined(DeeSysFS_WideIsHidden)
-#define DeeSysFS_WideIsHiddenObject(path,...) DeeSysFS_WideIsHidden(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsExecutableObject) && defined(DeeSysFS_Utf8TryIsExecutable)
-#define DeeSysFS_Utf8TryIsExecutableObject(path) DeeSysFS_Utf8TryIsExecutable(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsExecutableObject) && defined(DeeSysFS_WideTryIsExecutable)
-#define DeeSysFS_WideTryIsExecutableObject(path) DeeSysFS_WideTryIsExecutable(DeeWideString_STR(path))
+#define DeeSysFS_WideIsHiddenObject(path,result,...) DeeSysFS_WideIsHidden(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsExecutableObject) && defined(DeeSysFS_Utf8IsExecutable)
-#define DeeSysFS_Utf8IsExecutableObject(path,...) DeeSysFS_Utf8IsExecutable(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsExecutableObject(path,result,...) DeeSysFS_Utf8IsExecutable(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsExecutableObject) && defined(DeeSysFS_WideIsExecutable)
-#define DeeSysFS_WideIsExecutableObject(path,...) DeeSysFS_WideIsExecutable(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsCharDevObject) && defined(DeeSysFS_Utf8TryIsCharDev)
-#define DeeSysFS_Utf8TryIsCharDevObject(path) DeeSysFS_Utf8TryIsCharDev(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsCharDevObject) && defined(DeeSysFS_WideTryIsCharDev)
-#define DeeSysFS_WideTryIsCharDevObject(path) DeeSysFS_WideTryIsCharDev(DeeWideString_STR(path))
+#define DeeSysFS_WideIsExecutableObject(path,result,...) DeeSysFS_WideIsExecutable(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsCharDevObject) && defined(DeeSysFS_Utf8IsCharDev)
-#define DeeSysFS_Utf8IsCharDevObject(path,...) DeeSysFS_Utf8IsCharDev(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsCharDevObject(path,result,...) DeeSysFS_Utf8IsCharDev(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsCharDevObject) && defined(DeeSysFS_WideIsCharDev)
-#define DeeSysFS_WideIsCharDevObject(path,...) DeeSysFS_WideIsCharDev(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsBlockDevObject) && defined(DeeSysFS_Utf8TryIsBlockDev)
-#define DeeSysFS_Utf8TryIsBlockDevObject(path) DeeSysFS_Utf8TryIsBlockDev(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsBlockDevObject) && defined(DeeSysFS_WideTryIsBlockDev)
-#define DeeSysFS_WideTryIsBlockDevObject(path) DeeSysFS_WideTryIsBlockDev(DeeWideString_STR(path))
+#define DeeSysFS_WideIsCharDevObject(path,result,...) DeeSysFS_WideIsCharDev(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsBlockDevObject) && defined(DeeSysFS_Utf8IsBlockDev)
-#define DeeSysFS_Utf8IsBlockDevObject(path,...) DeeSysFS_Utf8IsBlockDev(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsBlockDevObject(path,result,...) DeeSysFS_Utf8IsBlockDev(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsBlockDevObject) && defined(DeeSysFS_WideIsBlockDev)
-#define DeeSysFS_WideIsBlockDevObject(path,...) DeeSysFS_WideIsBlockDev(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsFiFoObject) && defined(DeeSysFS_Utf8TryIsFiFo)
-#define DeeSysFS_Utf8TryIsFiFoObject(path) DeeSysFS_Utf8TryIsFiFo(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsFiFoObject) && defined(DeeSysFS_WideTryIsFiFo)
-#define DeeSysFS_WideTryIsFiFoObject(path) DeeSysFS_WideTryIsFiFo(DeeWideString_STR(path))
+#define DeeSysFS_WideIsBlockDevObject(path,result,...) DeeSysFS_WideIsBlockDev(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsFiFoObject) && defined(DeeSysFS_Utf8IsFiFo)
-#define DeeSysFS_Utf8IsFiFoObject(path,...) DeeSysFS_Utf8IsFiFo(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsFiFoObject(path,result,...) DeeSysFS_Utf8IsFiFo(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsFiFoObject) && defined(DeeSysFS_WideIsFiFo)
-#define DeeSysFS_WideIsFiFoObject(path,...) DeeSysFS_WideIsFiFo(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsSocketObject) && defined(DeeSysFS_Utf8TryIsSocket)
-#define DeeSysFS_Utf8TryIsSocketObject(path) DeeSysFS_Utf8TryIsSocket(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsSocketObject) && defined(DeeSysFS_WideTryIsSocket)
-#define DeeSysFS_WideTryIsSocketObject(path) DeeSysFS_WideTryIsSocket(DeeWideString_STR(path))
+#define DeeSysFS_WideIsFiFoObject(path,result,...) DeeSysFS_WideIsFiFo(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsSocketObject) && defined(DeeSysFS_Utf8IsSocket)
-#define DeeSysFS_Utf8IsSocketObject(path,...) DeeSysFS_Utf8IsSocket(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsSocketObject(path,result,...) DeeSysFS_Utf8IsSocket(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsSocketObject) && defined(DeeSysFS_WideIsSocket)
-#define DeeSysFS_WideIsSocketObject(path,...) DeeSysFS_WideIsSocket(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryIsAbsObject) && defined(DeeSysFS_Utf8TryIsAbs)
-#define DeeSysFS_Utf8TryIsAbsObject(path) DeeSysFS_Utf8TryIsAbs(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryIsAbsObject) && defined(DeeSysFS_WideTryIsAbs)
-#define DeeSysFS_WideTryIsAbsObject(path) DeeSysFS_WideTryIsAbs(DeeWideString_STR(path))
+#define DeeSysFS_WideIsSocketObject(path,result,...) DeeSysFS_WideIsSocket(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8IsAbsObject) && defined(DeeSysFS_Utf8IsAbs)
-#define DeeSysFS_Utf8IsAbsObject(path,...) DeeSysFS_Utf8IsAbs(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8IsAbsObject(path,result,...) DeeSysFS_Utf8IsAbs(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideIsAbsObject) && defined(DeeSysFS_WideIsAbs)
-#define DeeSysFS_WideIsAbsObject(path,...) DeeSysFS_WideIsAbs(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryExistsObject) && defined(DeeSysFS_Utf8TryExists)
-#define DeeSysFS_Utf8TryExistsObject(path) DeeSysFS_Utf8TryExists(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryExistsObject) && defined(DeeSysFS_WideTryExists)
-#define DeeSysFS_WideTryExistsObject(path) DeeSysFS_WideTryExists(DeeWideString_STR(path))
+#define DeeSysFS_WideIsAbsObject(path,result,...) DeeSysFS_WideIsAbs(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8ExistsObject) && defined(DeeSysFS_Utf8Exists)
-#define DeeSysFS_Utf8ExistsObject(path,...) DeeSysFS_Utf8Exists(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8ExistsObject(path,result,...) DeeSysFS_Utf8Exists(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideExistsObject) && defined(DeeSysFS_WideExists)
-#define DeeSysFS_WideExistsObject(path,...) DeeSysFS_WideExists(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryChdirObject) && defined(DeeSysFS_Utf8TryChdir)
-#define DeeSysFS_Utf8TryChdirObject(path) DeeSysFS_Utf8TryChdir(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryChdirObject) && defined(DeeSysFS_WideTryChdir)
-#define DeeSysFS_WideTryChdirObject(path) DeeSysFS_WideTryChdir(DeeWideString_STR(path))
+#define DeeSysFS_WideExistsObject(path,result,...) DeeSysFS_WideExists(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8ChdirObject) && defined(DeeSysFS_Utf8Chdir)
-#define DeeSysFS_Utf8ChdirObject(path,...) DeeSysFS_Utf8Chdir(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8ChdirObject(path,result,...) DeeSysFS_Utf8Chdir(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideChdirObject) && defined(DeeSysFS_WideChdir)
-#define DeeSysFS_WideChdirObject(path,...) DeeSysFS_WideChdir(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryUnlinkObject) && defined(DeeSysFS_Utf8TryUnlink)
-#define DeeSysFS_Utf8TryUnlinkObject(path) DeeSysFS_Utf8TryUnlink(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryUnlinkObject) && defined(DeeSysFS_WideTryUnlink)
-#define DeeSysFS_WideTryUnlinkObject(path) DeeSysFS_WideTryUnlink(DeeWideString_STR(path))
+#define DeeSysFS_WideChdirObject(path,result,...) DeeSysFS_WideChdir(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8UnlinkObject) && defined(DeeSysFS_Utf8Unlink)
-#define DeeSysFS_Utf8UnlinkObject(path,...) DeeSysFS_Utf8Unlink(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8UnlinkObject(path,result,...) DeeSysFS_Utf8Unlink(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideUnlinkObject) && defined(DeeSysFS_WideUnlink)
-#define DeeSysFS_WideUnlinkObject(path,...) DeeSysFS_WideUnlink(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryRmDirObject) && defined(DeeSysFS_Utf8TryRmDir)
-#define DeeSysFS_Utf8TryRmDirObject(path) DeeSysFS_Utf8TryRmDir(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryRmDirObject) && defined(DeeSysFS_WideTryRmDir)
-#define DeeSysFS_WideTryRmDirObject(path) DeeSysFS_WideTryRmDir(DeeWideString_STR(path))
+#define DeeSysFS_WideUnlinkObject(path,result,...) DeeSysFS_WideUnlink(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8RmDirObject) && defined(DeeSysFS_Utf8RmDir)
-#define DeeSysFS_Utf8RmDirObject(path,...) DeeSysFS_Utf8RmDir(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8RmDirObject(path,result,...) DeeSysFS_Utf8RmDir(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideRmDirObject) && defined(DeeSysFS_WideRmDir)
-#define DeeSysFS_WideRmDirObject(path,...) DeeSysFS_WideRmDir(DeeWideString_STR(path),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryRemoveObject) && defined(DeeSysFS_Utf8TryRemove)
-#define DeeSysFS_Utf8TryRemoveObject(path) DeeSysFS_Utf8TryRemove(DeeUtf8String_STR(path))
-#endif
-#if !defined(DeeSysFS_WideTryRemoveObject) && defined(DeeSysFS_WideTryRemove)
-#define DeeSysFS_WideTryRemoveObject(path) DeeSysFS_WideTryRemove(DeeWideString_STR(path))
+#define DeeSysFS_WideRmDirObject(path,result,...) DeeSysFS_WideRmDir(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8RemoveObject) && defined(DeeSysFS_Utf8Remove)
-#define DeeSysFS_Utf8RemoveObject(path,...) DeeSysFS_Utf8Remove(DeeUtf8String_STR(path),__VA_ARGS__)
+#define DeeSysFS_Utf8RemoveObject(path,result,...) DeeSysFS_Utf8Remove(DeeUtf8String_STR(path),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideRemoveObject) && defined(DeeSysFS_WideRemove)
-#define DeeSysFS_WideRemoveObject(path,...) DeeSysFS_WideRemove(DeeWideString_STR(path),__VA_ARGS__)
+#define DeeSysFS_WideRemoveObject(path,result,...) DeeSysFS_WideRemove(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
 //[[[end]]]
 

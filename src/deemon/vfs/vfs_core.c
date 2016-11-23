@@ -144,27 +144,6 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_SetTimes(
  }
  return (*self->vn_type->vnt_node.vnt_settimes)(self,atime,ctime,mtime);
 }
-DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetTimes(
- DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT_OPT Dee_timetick_t *atime,
- DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
- int error;
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_gettimes) return 0;
- error = (*self->vn_type->vnt_node.vnt_gettimes)(self,atime,ctime,mtime);
- if (error < 0) { DeeError_HandledOne(); error = 1; }
- return !error;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TrySetTimes(
-      DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_OPT Dee_timetick_t const *atime,
- DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
- int error;
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_settimes) return 0;
- error = (*self->vn_type->vnt_node.vnt_settimes)(self,atime,ctime,mtime);
- if (error < 0) { DeeError_HandledOne(); error = 1; }
- return !error;
-}
-
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetMod(
  DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_mode_t *mode) {
  int error;
@@ -182,28 +161,6 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetMod(
  if (DeeVFSNode_HasOpen(self)) *mode |= 0444;
  return 0;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetMod(
- DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_mode_t *mode) {
- DEE_ASSERT(self); DEE_ASSERT(mode);
- int error;
- DEE_ASSERT(self); DEE_ASSERT(mode);
- if (self->vn_type->vnt_node.vnt_getmod) {
-  error = (*self->vn_type->vnt_node.vnt_getmod)(self,mode);
-  if (error < 0) { handle_error: DeeError_HandledOne(); return 0; }
-  return 1;
- }
- *mode = (Dee_mode_t)(self->vn_type->vnt_file.vft_write ? 0222 : 0000);
- if (self->vn_type->vnt_node.vnt_isexecutable) {
-  error = (*self->vn_type->vnt_node.vnt_isexecutable)(self);
-  if (error < 0) goto handle_error;
-  if (error) *mode |= 0111;
- } else if (DeeVFSNode_HasView(self)) {
-  *mode |= 0111;
- }
- if (DeeVFSNode_HasOpen(self)) *mode |= 0444;
- return 1;
-}
-
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chmod(
  DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_mode_t mode) {
  DEE_ASSERT(self);
@@ -215,16 +172,6 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chmod(
  }
  return (*self->vn_type->vnt_node.vnt_chmod)(self,mode);
 }
-DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryChmod(
- DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_mode_t mode) {
- int error;
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_chmod) return 0;
- error = (*self->vn_type->vnt_node.vnt_chmod)(self,mode);
- if (error < 0) { DeeError_HandledOne(); return 0; }
- return 1;
-}
-
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetOwn(
  DEE_A_INOUT struct DeeVFSNode *self,
  DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
@@ -237,16 +184,6 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetOwn(
  }
  return (*self->vn_type->vnt_node.vnt_getown)(self,owner,group);
 }
-DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetOwn(
- DEE_A_INOUT struct DeeVFSNode *self,
- DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
- int error; DEE_ASSERT(self);
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_getown) return 0;
- error = (*self->vn_type->vnt_node.vnt_getown)(self,owner,group);
- if (error < 0) { DeeError_HandledOne(); return 0; }
- return 1;
-}
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(
  DEE_A_INOUT struct DeeVFSNode *self,
  DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
@@ -258,16 +195,6 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(
   return -1;
  }
  return (*self->vn_type->vnt_node.vnt_chown)(self,owner,group);
-}
-DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryChown(
- DEE_A_INOUT struct DeeVFSNode *self,
- DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
- int error; DEE_ASSERT(self);
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_chown) return 0;
- error = (*self->vn_type->vnt_node.vnt_chown)(self,owner,group);
- if (error < 0) { DeeError_HandledOne(); return 0; }
- return 1;
 }
 
 
@@ -510,6 +437,44 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateWithCWDObject(
  Dee_DECREF(u8path);
  return result;
 }
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateAt(
+ DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path) {
+ struct DeeVFSNode *result; DeeObject *u8path;
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ if ((u8path = DeeUtf8String_FromWideString(path)) == NULL) return NULL;
+ result = DeeVFS_Utf8LLocateAtObject(root,u8path);
+ Dee_DECREF(u8path);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateAt(
+ DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path) {
+ struct DeeVFSNode *result; DeeObject *u8path;
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ if ((u8path = DeeUtf8String_FromWideString(path)) == NULL) return NULL;
+ result = DeeVFS_Utf8LocateAtObject(root,u8path);
+ Dee_DECREF(u8path);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateAtObject(
+ DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ struct DeeVFSNode *result; DeeObject *u8path;
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ if ((u8path = DeeUtf8String_FromWideStringWithLength(
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return NULL;
+ result = DeeVFS_Utf8LLocateAtObject(root,u8path);
+ Dee_DECREF(u8path);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateAtObject(
+ DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
+ struct DeeVFSNode *result; DeeObject *u8path;
+ DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ if ((u8path = DeeUtf8String_FromWideStringWithLength(
+  DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return NULL;
+ result = DeeVFS_Utf8LocateAtObject(root,u8path);
+ Dee_DECREF(u8path);
+ return result;
+}
 
 
 
@@ -526,7 +491,8 @@ DeeVFS_LocateNative(DEE_A_IN_Z char const *path) {
   result = DeeVFSNode_Walk(DeeVFSNative_Root,drive_name);
   if DEE_UNLIKELY(!result) return NULL;
   // Now just traverse the regular virtual path
-  newresult = DeeVFS_LLocateAt(result,path+2);
+  path += 2; while (DEE_VFS_ISSEP(*path)) ++path;
+  newresult = DeeVFS_LLocateAt(result,path);
   DeeVFSNode_DECREF(result);
   return newresult;
  }

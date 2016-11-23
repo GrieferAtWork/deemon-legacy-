@@ -26,23 +26,39 @@
 //////////////////////////////////////////////////////////////////////////
 // >> [[optional]] struct DeeSysFSUtf8View { ... };
 // >> [[optional]] bool DeeSysFSUtf8View_Quit(DEE_A_IN struct DeeSysFSUtf8View *self);
-// >> [[optional]] bool DeeSysFSWideView_IsEmpty(DEE_A_IN struct DeeSysFSUtf8View const *self);
-// >> [[optional]] void DeeSysFSUtf8View_TryInit(DEE_A_OUT struct DeeSysFSUtf8View *self, DEE_A_IN_Z Dee_Utf8Char const *path, CODE on_empty, CODE on_error);
-// >> [[optional]] void DeeSysFSUtf8View_TryInitObject(DEE_A_OUT struct DeeSysFSUtf8View *self, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_empty, CODE on_error);
-// >> [[optional]] void DeeSysFSUtf8View_Init(DEE_A_OUT struct DeeSysFSUtf8View *self, DEE_A_IN_Z Dee_Utf8Char const *path, CODE on_empty, CODE on_error);
-// >> [[optional]] void DeeSysFSUtf8View_InitObject(DEE_A_OUT struct DeeSysFSUtf8View *self, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_empty, CODE on_error);
+// >> [[optional]] bool DeeSysFSUtf8View_IsDone(DEE_A_IN struct DeeSysFSUtf8View const *self);
+// >> [[optional]] void DeeSysFSUtf8View_TryInit(DEE_A_OUT struct DeeSysFSUtf8View *self, DEE_A_IN_Z Dee_Utf8Char const *path, CODE on_error);
+// >> [[optional]] void DeeSysFSUtf8View_TryInitObject(DEE_A_OUT struct DeeSysFSUtf8View *self, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_error);
+// >> [[optional]] void DeeSysFSUtf8View_Init(DEE_A_OUT struct DeeSysFSUtf8View *self, DEE_A_IN_Z Dee_Utf8Char const *path, CODE on_error);
+// >> [[optional]] void DeeSysFSUtf8View_InitObject(DEE_A_OUT struct DeeSysFSUtf8View *self, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] void DeeSysFSUtf8View_TryAdvanceAndAcquire(DEE_A_INOUT struct DeeSysFSUtf8View *self, CODE on_done, CODE on_error);
-// >> [[optional]] void DeeSysFSUtf8View_AdvanceAndAcquire(DEE_A_INOUT struct DeeSysFSUtf8View *self, CODE on_done, CODE on_error);
-// >> [[optional]] void DeeSysFSUtf8View_TryAdvance(DEE_A_INOUT struct DeeSysFSUtf8View *self, CODE on_done, CODE on_error);
-// >> [[optional]] void DeeSysFSUtf8View_Advance(DEE_A_INOUT struct DeeSysFSUtf8View *self, CODE on_done, CODE on_error);
-//                 NOTE: Attempting to yield a view that was already done again behaves the same as the last yield did (call 'on_done')
+// >> [[optional]] void DeeSysFSUtf8View_TryAdvanceAndReleaseOnError(DEE_A_INOUT struct DeeSysFSUtf8View *self, CODE on_error);
+// >> [[optional]] void DeeSysFSUtf8View_AdvanceAndReleaseOnError(DEE_A_INOUT struct DeeSysFSUtf8View *self, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
 // >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *DeeSysFSUtf8View_TryGetPath(DEE_A_INOUT struct DeeSysFSUtf8View *self);
 // >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeSysFSUtf8View_GetPath(DEE_A_INOUT struct DeeSysFSUtf8View *self);
 //////////////////////////////////////////////////////////////////////////
 // >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *DeeSysFSUtf8View_TryGetFilenameObject(DEE_A_IN struct DeeSysFSUtf8View const *self);
 // >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeSysFSUtf8View_GetFilenameObject(DEE_A_IN struct DeeSysFSUtf8View const *self);
+//////////////////////////////////////////////////////////////////////////
+// >> [[optional]] void DeeSysFSUtf8View_Acquire(DEE_A_INOUT struct DeeSysFSUtf8View *self);
+//                 Manually acquires a lock to the view.
+//                 NOTE: If the view wasn't yielded since its creation or the last lock
+//                       was held, the return values of query functions will not have changed.
+//                 NOTE: Accessing attributes after the view is done causes weak undefined behavior
+// >> [[optional]] void DeeSysFSUtf8View_Release(DEE_A_INOUT struct DeeSysFSUtf8View *self);
+//                 Releases a lock help by the view after no error occurred in any of the above methods.
+//////////////////////////////////////////////////////////////////////////
+// The following functions may only be called while a lock to the View is held
+// (as returned by 'DeeSysFSUtf8View_TryAdvanceAndReleaseOnError', 'DeeSysFSUtf8View_AdvanceAndReleaseOnError' and 'DeeSysFSUtf8View_Acquire')
+// NOTE: If an error occurs in any of these functions, the lock is automatically released,
+//       meaning that the caller should __NOT__ attempt to release it again.
+// NOTE: Though the try-versions of the methods below will never release the lock.
+// >> [[optional]] Dee_Utf8Char const *DeeSysFSUtf8View_GetFilenameStrLocked(DEE_A_IN struct DeeSysFSUtf8View const *self);
+// >> [[optional]] #define DEE_SYSFS_UTF8VIEW_GETFILENAMESTRLOCKED_NEVER_NULL
+// >> [[optional]] #define DEE_SYSFS_UTF8VIEW_GETFILENAMESTRLOCKED_ZERO_TERMINATED
+// >> [[optional]] Dee_size_t DeeSysFSUtf8View_GetFilenameSizeLocked(DEE_A_IN struct DeeSysFSUtf8View const *self);
+// >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *DeeSysFSUtf8View_TryGetFilenameObjectLocked(DEE_A_IN struct DeeSysFSUtf8View const *self);
 //////////////////////////////////////////////////////////////////////////
 // >> [[optional]] bool DeeSysFSUtf8View_TryGetTimes(DEE_A_IN struct DeeSysFSUtf8View const *self, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime);
 // >> [[optional]] void DeeSysFSUtf8View_GetTimes(DEE_A_IN struct DeeSysFSUtf8View const *self, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
@@ -69,25 +85,6 @@
 // >> [[optional]] void DeeSysFSUtf8View_IsBlockDev(DEE_A_IN struct DeeSysFSUtf8View const *self, DEE_A_OUT int *result, CODE on_error);
 // >> [[optional]] void DeeSysFSUtf8View_IsFiFo(DEE_A_IN struct DeeSysFSUtf8View const *self, DEE_A_OUT int *result, CODE on_error);
 // >> [[optional]] void DeeSysFSUtf8View_IsSocket(DEE_A_IN struct DeeSysFSUtf8View const *self, DEE_A_OUT int *result, CODE on_error);
-//////////////////////////////////////////////////////////////////////////
-// >> [[optional]] void DeeSysFSUtf8View_Acquire(DEE_A_INOUT struct DeeSysFSUtf8View *self);
-//                 Manually acquires a lock to the view.
-//                 NOTE: If the view wasn't yielded since its creation or the last lock
-//                       was held, the return values of query functions will not have changed.
-//                 NOTE: Accessing attributes after the view is done causes weak undefined behavior
-// >> [[optional]] void DeeSysFSUtf8View_Release(DEE_A_INOUT struct DeeSysFSUtf8View *self);
-//                 Releases a lock help by the view after no error occurred in any of the above methods.
-//////////////////////////////////////////////////////////////////////////
-// The following functions may only be called while a lock to the View is held
-// (as returned by 'DeeSysFSUtf8View_TryAdvanceAndAcquire', 'DeeSysFSUtf8View_AdvanceAndAcquire' and 'DeeSysFSUtf8View_Acquire')
-// NOTE: If an error occurs in any of these functions, the lock is automatically released,
-//       meaning that the caller should __NOT__ attempt to release it again.
-// NOTE: Though the try-versions of the methods below will never release the lock.
-// >> [[optional]] Dee_Utf8Char const *DeeSysFSUtf8View_GetFilenameStrLocked(DEE_A_IN struct DeeSysFSUtf8View const *self);
-// >> [[optional]] #define DEE_SYSFS_UTF8VIEW_GETFILENAMESTRLOCKED_NEVER_NULL
-// >> [[optional]] #define DEE_SYSFS_UTF8VIEW_GETFILENAMESTRLOCKED_ZERO_TERMINATED
-// >> [[optional]] Dee_size_t DeeSysFSUtf8View_GetFilenameSizeLocked(DEE_A_IN struct DeeSysFSUtf8View const *self);
-// >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *DeeSysFSUtf8View_TryGetFilenameObjectLocked(DEE_A_IN struct DeeSysFSUtf8View const *self);
 //////////////////////////////////////////////////////////////////////////
 // ... Everything again, but with every 'Utf8'/'UTF8' replaced with 'Wide'/'WIDE'
 //////////////////////////////////////////////////////////////////////////
@@ -121,6 +118,16 @@
 #define DeeSysFSWideView_InitObject DeeSysFSWideView_TryInitObject
 #endif
 
+#if !defined(DeeSysFSUtf8View_IsDone)\
+ || !defined(DeeSysFSUtf8View_TryAdvanceAndReleaseOnError)
+#undef DeeSysFSUtf8View
+#endif
+
+#if !defined(DeeSysFSWideView_IsDone)\
+ || !defined(DeeSysFSWideView_TryAdvanceAndReleaseOnError)
+#undef DeeSysFSWideView
+#endif
+
 #if !defined(DeeSysFSUtf8View_TryGetFilenameObject)\
  && !defined(DeeSysFSUtf8View_GetFilenameObject)\
  && ((!defined(DeeSysFSUtf8View_GetFilenameStrLocked)\
@@ -145,8 +152,8 @@
 #undef DEE_SYSFS_UTF8VIEW_GETFILENAMESTRLOCKED_ZERO_TERMINATED
 #undef DeeSysFSUtf8View_GetFilenameSizeLocked
 #undef DeeSysFSUtf8View_TryGetFilenameObjectLocked
-#undef DeeSysFSUtf8View_TryAdvanceAndAcquire
-#undef DeeSysFSUtf8View_AdvanceAndAcquire
+#undef DeeSysFSUtf8View_TryAdvanceAndReleaseOnError
+#undef DeeSysFSUtf8View_AdvanceAndReleaseOnError
 #undef DeeSysFSUtf8View_Acquire
 #undef DeeSysFSUtf8View_Release
 #endif
@@ -157,8 +164,8 @@
 #undef DEE_SYSFS_WIDEVIEW_GETFILENAMESTRLOCKED_ZERO_TERMINATED
 #undef DeeSysFSWideView_GetFilenameSizeLocked
 #undef DeeSysFSWideView_TryGetFilenameObjectLocked
-#undef DeeSysFSWideView_TryAdvanceAndAcquire
-#undef DeeSysFSWideView_AdvanceAndAcquire
+#undef DeeSysFSWideView_TryAdvanceAndReleaseOnError
+#undef DeeSysFSWideView_AdvanceAndReleaseOnError
 #undef DeeSysFSWideView_Acquire
 #undef DeeSysFSWideView_Release
 #endif
@@ -176,27 +183,11 @@
 #define DeeSysFSWideView_InitObject(self,path,...) DeeSysFSWideView_Init(self,DeeWideString_STR(path),__VA_ARGS__)
 #endif
 
-#if !defined(DeeSysFSUtf8View_AdvanceAndAcquire) && defined(DeeSysFSUtf8View_TryAdvanceAndAcquire)
-#define DeeSysFSUtf8View_AdvanceAndAcquire(self,on_done,...) DeeSysFSUtf8View_TryAdvanceAndAcquire(self,on_done,on_done)
+#if !defined(DeeSysFSUtf8View_AdvanceAndReleaseOnError) && defined(DeeSysFSUtf8View_TryAdvanceAndReleaseOnError)
+#define DeeSysFSUtf8View_AdvanceAndReleaseOnError(self,on_done,...) DeeSysFSUtf8View_TryAdvanceAndReleaseOnError(self,on_done,on_done)
 #endif
-#if !defined(DeeSysFSWideView_AdvanceAndAcquire) && defined(DeeSysFSWideView_TryAdvanceAndAcquire)
-#define DeeSysFSWideView_AdvanceAndAcquire(self,on_done,...) DeeSysFSWideView_TryAdvanceAndAcquire(self,on_done,on_done)
-#endif
-#if !defined(DeeSysFSUtf8View_TryAdvance)\
-  && defined(DeeSysFSUtf8View_TryAdvanceAndAcquire) && defined(DeeSysFSUtf8View_Acquire)
-#define DeeSysFSUtf8View_TryAdvance(self,on_done,...) do{DeeSysFSUtf8View_TryAdvanceAndAcquire(self,on_done,__VA_ARGS__);DeeSysFSUtf8View_Release(self);}while(0)
-#endif
-#if !defined(DeeSysFSUtf8View_Advance)\
-  && defined(DeeSysFSUtf8View_AdvanceAndAcquire) && defined(DeeSysFSUtf8View_Acquire)
-#define DeeSysFSUtf8View_Advance(self,on_done,...) do{DeeSysFSUtf8View_AdvanceAndAcquire(self,on_done,__VA_ARGS__);DeeSysFSUtf8View_Release(self);}while(0)
-#endif
-#if !defined(DeeSysFSWideView_TryAdvance)\
-  && defined(DeeSysFSWideView_TryAdvanceAndAcquire) && defined(DeeSysFSWideView_Acquire)
-#define DeeSysFSWideView_TryAdvance(self,on_done,...) do{DeeSysFSWideView_TryAdvanceAndAcquire(self,on_done,__VA_ARGS__);DeeSysFSWideView_Release(self);}while(0)
-#endif
-#if !defined(DeeSysFSWideView_Advance)\
-  && defined(DeeSysFSWideView_AdvanceAndAcquire) && defined(DeeSysFSWideView_Acquire)
-#define DeeSysFSWideView_Advance(self,on_done,...) do{DeeSysFSWideView_AdvanceAndAcquire(self,on_done,__VA_ARGS__);DeeSysFSWideView_Release(self);}while(0)
+#if !defined(DeeSysFSWideView_AdvanceAndReleaseOnError) && defined(DeeSysFSWideView_TryAdvanceAndReleaseOnError)
+#define DeeSysFSWideView_AdvanceAndReleaseOnError(self,on_done,...) DeeSysFSWideView_TryAdvanceAndReleaseOnError(self,on_done,on_done)
 #endif
 
 #if defined(DeeSysFSUtf8View_TryIsFile) && !defined(DeeSysFSUtf8View_IsFile)

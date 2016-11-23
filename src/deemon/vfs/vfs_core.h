@@ -138,8 +138,13 @@ struct DeeVFSView {
            struct DeeVFSNodeType const *vv_type; /*< [1..1] Node type (alias for 'vf_node->vn_type'). */
  /* User-specific data... */
 };
-#define DeeVFSView_Quit(self)         (*(self)->vv_type->vnt_view.vvt_quit)(self)
-#define DeeVFSView_Delete(self)       (DeeVFSView_Quit(self),free_nn(self))
+#define DeeVFSView_Quit(self) \
+do{\
+ if ((self)->vv_type->vnt_view.vvt_quit)\
+  (*(self)->vv_type->vnt_view.vvt_quit)(self);\
+ DeeVFSNode_DECREF((self)->vv_node);\
+}while(0)
+#define DeeVFSView_Delete(self) do{ DeeVFSView_Quit(self); free_nn(self); }while(0)
 
 
 
@@ -153,13 +158,13 @@ struct DeeVFSFile {
 #define DeeVFSFile_HasSeek(self)             ((self)->vf_type->vnt_file.vft_seek!=NULL)
 #define DeeVFSFile_HasFlush(self)            ((self)->vf_type->vnt_file.vft_flush!=NULL)
 #define DeeVFSFile_HasTrunc(self)            ((self)->vf_type->vnt_file.vft_trunc!=NULL)
-#define DeeVFSFile_Quit(self)                ((self)->vf_type->vnt_file_quit ? (*(self)->vf_type->vnt_file_quit)(self) : (void)0)
+#define DeeVFSFile_Quit(self)                ((self)->vf_type->vnt_file.vft_quit ? (*(self)->vf_type->vnt_file.vft_quit)(self) : (void)0)
 #define DeeVFSFile_Delete(self)              (DeeVFSFile_Quit(self),free_nn(self))
-#define DeeVFSFile_Read(self,p,s,rs)         (DEE_ASSERTF(DeeVFSFile_HasRead(self),"Can't read file %R",DeeVFSNode_Filename(self->vf_node)),(*(self)->vf_type->vnt_file.vft_read)(self,p,s,rs))
-#define DeeVFSFile_Write(self,p,s,ws)        (DEE_ASSERTF(DeeVFSFile_HasWrite(self),"Can't write file %R",DeeVFSNode_Filename(self->vf_node)),(*(self)->vf_type->vnt_file.vft_write)(self,p,s,ws))
-#define DeeVFSFile_Seek(self,off,whence,pos) (DEE_ASSERTF(DeeVFSFile_HasSeek(self),"Can't seek file %R",DeeVFSNode_Filename(self->vf_node)),(*(self)->vf_type->vnt_file.vft_seek)(self,off,whence,pos))
-#define DeeVFSFile_Flush(self)               (DEE_ASSERTF(DeeVFSFile_HasFlush(self),"Can't flush file %R",DeeVFSNode_Filename(self->vf_node)),(*(self)->vf_type->vnt_file.vft_flush)(self))
-#define DeeVFSFile_Trunc(self)               (DEE_ASSERTF(DeeVFSFile_HasTrunc(self),"Can't trunc file %R",DeeVFSNode_Filename(self->vf_node)),(*(self)->vf_type->vnt_file.vft_trunc)(self))
+#define DeeVFSFile_Read(self,p,s,rs)         (DEE_ASSERTF(DeeVFSFile_HasRead(self),"Can't read file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_read)(self,p,s,rs))
+#define DeeVFSFile_Write(self,p,s,ws)        (DEE_ASSERTF(DeeVFSFile_HasWrite(self),"Can't write file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_write)(self,p,s,ws))
+#define DeeVFSFile_Seek(self,off,whence,pos) (DEE_ASSERTF(DeeVFSFile_HasSeek(self),"Can't seek file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_seek)(self,off,whence,pos))
+#define DeeVFSFile_Flush(self)               (DEE_ASSERTF(DeeVFSFile_HasFlush(self),"Can't flush file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_flush)(self))
+#define DeeVFSFile_Trunc(self)               (DEE_ASSERTF(DeeVFSFile_HasTrunc(self),"Can't trunc file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_trunc)(self))
 
 
 typedef Dee_uint16_t Dee_vfsnode_refcnt_t;
@@ -220,20 +225,10 @@ extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetTimes(
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_SetTimes(
       DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_OPT Dee_timetick_t const *atime,
  DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetTimes(
- DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT_OPT Dee_timetick_t *atime,
- DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TrySetTimes(
-      DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_OPT Dee_timetick_t const *atime,
- DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime);
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetMod(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_mode_t *mode);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetMod(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_mode_t *mode);
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chmod(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_mode_t mode);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryChmod(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_mode_t mode);
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetOwn(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryGetOwn(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group);
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFSNode_TryChown(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
 
 #define DeeVFSNode_Walk(self,elemname) \
  (DEE_ASSERTF(DeeVFSNode_HasWalk(self),"Can't walk node %R",DeeVFSNode_Filename(self)),\
@@ -251,7 +246,7 @@ struct DeeVFSLocateState;
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
  DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_INOUT struct DeeVFSNode *self);
 
-#define _DeeVFSNode_GetViewBufferSize(self) (self)->vn_type->vnt_file.vft_size
+#define _DeeVFSNode_GetViewBufferSize(self) (self)->vn_type->vnt_view.vvt_size
 #define _DeeVFSNode_OpenViewBuffer(self,buf)\
  (DEE_ASSERTF(DeeVFSNode_HasOpen(self),"Can't view node %R",DeeVFSNode_Filename(self)),\
   ((struct DeeVFSView *)(buf))->vv_node = (self),DeeVFSNode_INCREF(self),\
@@ -268,7 +263,7 @@ extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
  (DEE_ASSERTF(DeeVFSNode_HasOpen(self),"Can't open node %R",DeeVFSNode_Filename(self)),\
   DeeVFSNode_INCREF(self),((struct DeeVFSFile *)(buf))->vf_node = (self),\
                           ((struct DeeVFSFile *)(buf))->vf_type = (self)->vn_type,\
-  ((*(self)->vn_type->vnt_file.vft_open)(ob,(struct DeeVFSFile *)(buf),mode,perms) != 0)\
+  ((*(self)->vn_type->vnt_file.vft_open)((struct DeeVFSFile *)(buf),mode,perms) != 0)\
   ? (DeeVFSNode_DECREF(self),-1) : 0)
 
 
@@ -355,19 +350,27 @@ extern DEE_A_RET_NOEXCEPT_REF struct DeeVFSNode *DeeVFS_GetActiveCwdNode(void);
 #define DeeVFS_Utf8Locate         DeeVFS_Locate
 #define DeeVFS_Utf8LLocateWithCWD DeeVFS_LLocateWithCWD
 #define DeeVFS_Utf8LocateWithCWD  DeeVFS_LocateWithCWD
+#define DeeVFS_Utf8LLocateAt      DeeVFS_LLocateAt
+#define DeeVFS_Utf8LocateAt       DeeVFS_LocateAt
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocate(DEE_A_IN_Z Dee_WideChar const *path);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocate(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateWithCWDObject(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateWithCWDObject(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateAt(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateAt(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateAtObject(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateAtObject(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 
 #define DeeVFS_Utf8LLocateObject(path)            DeeVFS_Utf8LLocate(DeeUtf8String_STR(path))
 #define DeeVFS_Utf8LocateObject(path)             DeeVFS_Utf8Locate(DeeUtf8String_STR(path))
 #define DeeVFS_Utf8LLocateWithCWDObject(cwd,path) DeeVFS_Utf8LLocateWithCWD(cwd,DeeUtf8String_STR(path))
 #define DeeVFS_Utf8LocateWithCWDObject(cwd,path)  DeeVFS_Utf8LocateWithCWD(cwd,DeeUtf8String_STR(path))
+#define DeeVFS_Utf8LLocateAtObject(root,path)     DeeVFS_Utf8LLocateAt(root,DeeUtf8String_STR(path))
+#define DeeVFS_Utf8LocateAtObject(root,path)      DeeVFS_Utf8LocateAt(root,DeeUtf8String_STR(path))
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -379,8 +382,6 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8GetCwd(void)
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideGetCwd(void);
 extern DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8Chdir(DEE_A_IN_Z Dee_Utf8Char const *path);
 extern DEE_A_RET_EXCEPT(-1) int DeeVFS_WideChdir(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryChdir(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryChdir(DEE_A_IN_Z Dee_WideChar const *path);
 
 
 //////////////////////////////////////////////////////////////////////////

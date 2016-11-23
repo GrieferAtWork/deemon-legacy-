@@ -70,7 +70,7 @@ static DeeObject *DEE_CALL _deevfs_nativenode_vnt_nameof(
              DeeVFSNode_Filename(&child->vnn_node),DeeVFSNode_Filename(&self->vnn_node));
  (void)self;
  end = result = (resultmin = DeeString_STR(child->vnn_path))+DeeString_SIZE(child->vnn_path);
- do --result; while(*result != '\\' && result != resultmin);
+ while(result != resultmin && result[-1] != '\\') --result;
  return DeeString_NewWithLength((Dee_size_t)(end-result),result);
 }
 static DeeObject *DEE_CALL _deevfs_nativenode_vnt_link(DEE_A_INOUT struct DeeVFSNativeNode *self) {
@@ -170,17 +170,73 @@ int DEE_CALL _deevfs_nativefile_vft_trunc(DEE_A_INOUT struct DeeVFSNativeFile *s
 
 //////////////////////////////////////////////////////////////////////////
 // View VTable
-static int  DEE_CALL _deevfs_nativeview_vvt_open(struct DeeVFSNativeView *self) {
- (void)self; // TODO
+static int DEE_CALL _deevfs_nativeview_vvt_open(struct DeeVFSNativeView *self) {
+ DeeObject *native_path;
+ DEE_ASSERT(DeeVFSNode_IsNative(self->vnv_view.vv_node));
+ native_path = (DeeObject *)((struct DeeVFSNativeNode *)self->vnv_view.vv_node)->vnn_path;
+ native_path = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(native_path),
+                                                      DeeUtf8String_STR(native_path));
+ if (!native_path) return -1;
+ DeeNFSWideView_InitObject(&self->vnv_dir,native_path,{ Dee_DECREF(native_path); return -1; });
+ Dee_DECREF(native_path);
  return 0;
 }
 static void DEE_CALL _deevfs_nativeview_vvt_quit(struct DeeVFSNativeView *self) {
- (void)self; // TODO
+ DeeNFSWideView_Quit(&self->vnv_dir);
+}
+
+static int DEE_CALL _deevfs_nativeview_vvt_curr(
+ struct DeeVFSNativeView *self, struct DeeVFSNativeNode **result) {
+ DeeObject *filename,*u8filename;
+again:
+ DeeNFSWideView_Acquire(&self->vnv_dir);
+ if (DeeNFSWideView_IsDone(&self->vnv_dir)) {
+  DeeNFSWideView_Release(&self->vnv_dir);
+  return 1;
+ }
+ if DEE_UNLIKELY((filename = DeeNFSWideView_TryGetFilenameObjectLocked(&self->vnv_dir)) == NULL) {
+  DeeNFSWideView_Release(&self->vnv_dir);
+  if (Dee_CollectMemory()) goto again;
+  DeeError_NoMemory();
+  return -1;
+ }
+ DeeNFSWideView_Release(&self->vnv_dir);
+ u8filename = DeeString_FromWideStringWithLength(DeeWideString_SIZE(filename),
+                                                 DeeWideString_STR(filename));
+ Dee_DECREF(filename);
+ if DEE_UNLIKELY(!u8filename) return -1;
+ *result = _deevfs_nativenode_vnt_walk((struct DeeVFSNativeNode *)self->vnv_view.vv_node,
+                                       DeeString_STR(u8filename));
+ Dee_DECREF(u8filename);
+ if DEE_UNLIKELY(!*result) return -1;
+ return 0;
 }
 static int DEE_CALL _deevfs_nativeview_vvt_yield(
- struct DeeVFSNativeView *self, struct DeeVFSNode **result) {
- (void)self,result; // TODO
- return 1;
+ struct DeeVFSNativeView *self, struct DeeVFSNativeNode **result) {
+ DeeObject *filename,*u8filename;
+again:
+ DeeNFSWideView_Acquire(&self->vnv_dir);
+ if (DeeNFSWideView_IsDone(&self->vnv_dir)) {
+  DeeNFSWideView_Release(&self->vnv_dir);
+  return 1;
+ }
+ if DEE_UNLIKELY((filename = DeeNFSWideView_TryGetFilenameObjectLocked(&self->vnv_dir)) == NULL) {
+  DeeNFSWideView_Release(&self->vnv_dir);
+  if (Dee_CollectMemory()) goto again;
+  DeeError_NoMemory();
+  return -1;
+ }
+ DeeNFSWideView_AdvanceAndReleaseOnError(&self->vnv_dir,{ Dee_DECREF(filename); return -1; });
+ DeeNFSWideView_Release(&self->vnv_dir);
+ u8filename = DeeString_FromWideStringWithLength(DeeWideString_SIZE(filename),
+                                                 DeeWideString_STR(filename));
+ Dee_DECREF(filename);
+ if DEE_UNLIKELY(!u8filename) return -1;
+ *result = _deevfs_nativenode_vnt_walk((struct DeeVFSNativeNode *)self->vnv_view.vv_node,
+                                       DeeString_STR(u8filename));
+ Dee_DECREF(u8filename);
+ if DEE_UNLIKELY(!*result) return -1;
+ return 0;
 }
 
 
@@ -227,6 +283,7 @@ struct DeeVFSNodeType const DeeVFSNativeNode_Type = {
  },{ sizeof(struct DeeVFSNativeView), // vnt_view
   (int (DEE_CALL *)(struct DeeVFSView *))                     &_deevfs_nativeview_vvt_open,
   (void (DEE_CALL *)(struct DeeVFSView *))                    &_deevfs_nativeview_vvt_quit,
+  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_nativeview_vvt_curr,
   (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_nativeview_vvt_yield,
  }
 };

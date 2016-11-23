@@ -40,17 +40,6 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_WideChdirObject(
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
  return DeeVFS_WideChdir(DeeWideString_STR(path));
 }
-DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryChdirObject(
- DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
- DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
- return DeeVFS_Utf8TryChdir(DeeUtf8String_STR(path));
-}
-DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryChdirObject(
- DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
- DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
- return DeeVFS_WideTryChdir(DeeWideString_STR(path));
-}
-
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */

@@ -1830,6 +1830,11 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wgidname) {
   "|b:__builtin_fs_wgidname",&gid,&full_name) != 0) return NULL;
  return DeeFS_WideGidToGroup(gid,full_name);
 }
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_opendir) {
+ DeeObject *path;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:__builtin_fs_opendir",&path) != 0) return NULL;
+ return DeeFS_OpendirObject(path);
+}
 
 
 

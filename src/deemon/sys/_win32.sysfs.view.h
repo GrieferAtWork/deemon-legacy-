@@ -50,7 +50,7 @@ struct DeeWin32SysFSWideViewNL {
  DeeWin32SysFS_ISIGNOREDVIEWENTRY((self)->w32_viewdata.cFileName)
 
 
-#define DeeWin32SysFSWideViewNL_TryInitWithLength(self,path,path_size,on_empty,...)\
+#define DeeWin32SysFSWideViewNL_TryInitWithLength(self,path,path_size,...)\
 do{\
  Dee_WideChar *_wv_pattern,*_wv_patternend;\
  Dee_size_t _wv_path_size; DWORD _wv_error;\
@@ -62,14 +62,15 @@ do{\
   {__VA_ARGS__;}\
  }\
  _wv_patternend = _wv_pattern;\
- if ((path)[0] != '\\' || (path)[1] != '\\'\
-  || (path)[2] != '?'  || (path)[3] != '\\') {\
+ if (((path)[0] != '\\' || (path)[1] != '\\'\
+   || (path)[2] != '?'  || (path)[3] != '\\') && (\
+     !(path)[0] || (path)[1] == ':')) {\
   _wv_patternend[0] = '\\',_wv_patternend[1] = '\\';\
   _wv_patternend[2] = '?', _wv_patternend[3] = '\\';\
   _wv_patternend += 4;\
  }\
  memcpy(_wv_patternend,path,_wv_path_size*sizeof(Dee_WideChar));\
- _wv_patternend = _wv_pattern+_wv_path_size;\
+ _wv_patternend += _wv_path_size;\
  while (_wv_patternend != _wv_pattern && (_wv_patternend[-1] == '/'\
      || _wv_patternend[-1] == '\\')) --_wv_patternend;\
  _wv_patternend[0] = '\\';\
@@ -78,30 +79,24 @@ do{\
  (self)->w32_hview = FindFirstFileW(_wv_pattern,&(self)->w32_viewdata);\
  if ((self)->w32_hview == INVALID_HANDLE_VALUE) {\
   _wv_error = GetLastError();\
-  if (_wv_error == ERROR_FILE_NOT_FOUND) {\
-   free_nn(_wv_pattern);\
-   {on_empty;}\
-  } else {\
-   free_nn(_wv_pattern);\
-   {__VA_ARGS__;}\
-  }\
+  free_nn(_wv_pattern);\
+  if (_wv_error != ERROR_FILE_NOT_FOUND) {__VA_ARGS__;}\
  } else {\
   free_nn(_wv_pattern);\
- }\
- /* Skip '.' and '..' (always located at the start of views) */\
- while (DeeWin32SysFSWideViewNL_ISIGNOREDENTRY(self)) {\
-  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
-   if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {\
+  /* Skip '.' and '..' (always located at the start of views) */\
+  while (DeeWin32SysFSWideViewNL_ISIGNOREDENTRY(self)) {\
+   if DEE_UNLIKELY(!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
+    _wv_error = GetLastError();\
     FindClose((self)->w32_hview);\
-    {on_empty;}\
-   } else {\
-    FindClose((self)->w32_hview);\
-    {__VA_ARGS__;}\
+    if (_wv_error == ERROR_NO_MORE_FILES) {\
+     (self)->w32_hview = INVALID_HANDLE_VALUE;\
+     break;\
+    } else {__VA_ARGS__;}\
    }\
   }\
  }\
 }while(0)
-#define DeeWin32SysFSWideViewNL_InitWithLength(self,path,path_size,on_empty,...)\
+#define DeeWin32SysFSWideViewNL_InitWithLength(self,path,path_size,...)\
 do{\
  Dee_WideChar *_wv_pattern,*_wv_patternend;\
  Dee_size_t _wv_path_size; DWORD _wv_error;\
@@ -114,14 +109,15 @@ do{\
   {__VA_ARGS__;}\
  }\
  _wv_patternend = _wv_pattern;\
- if ((path)[0] != '\\' || (path)[1] != '\\'\
-  || (path)[2] != '?'  || (path)[3] != '\\') {\
+ if (((path)[0] != '\\' || (path)[1] != '\\'\
+   || (path)[2] != '?'  || (path)[3] != '\\') && (\
+     !(path)[0] || (path)[1] == ':')) {\
   _wv_patternend[0] = '\\',_wv_patternend[1] = '\\';\
   _wv_patternend[2] = '?', _wv_patternend[3] = '\\';\
   _wv_patternend += 4;\
  }\
  memcpy(_wv_patternend,path,_wv_path_size*sizeof(Dee_WideChar));\
- _wv_patternend = _wv_pattern+_wv_path_size;\
+ _wv_patternend += _wv_path_size;\
  while (_wv_patternend != _wv_pattern && (_wv_patternend[-1] == '/'\
      || _wv_patternend[-1] == '\\')) --_wv_patternend;\
  _wv_patternend[0] = '\\';\
@@ -132,7 +128,6 @@ do{\
   _wv_error = GetLastError();\
   if (_wv_error == ERROR_FILE_NOT_FOUND) {\
    free_nn(_wv_pattern);\
-   {on_empty;}\
   } else {\
    DeeError_SetStringf(&DeeErrorType_SystemError,\
                        "FindFirstFileW(%lq) : %K",_wv_pattern,\
@@ -142,49 +137,55 @@ do{\
   }\
  } else {\
   free_nn(_wv_pattern);\
- }\
- /* Skip '.' and '..' (always located at the start of views) */\
- while (DeeWin32SysFSWideViewNL_ISIGNOREDENTRY(self)) {\
-  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
-   if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {\
+  /* Skip '.' and '..' (always located at the start of views) */\
+  while (DeeWin32SysFSWideViewNL_ISIGNOREDENTRY(self)) {\
+   if DEE_UNLIKELY(!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
+    _wv_error = GetLastError();\
     FindClose((self)->w32_hview);\
-    {on_empty;}\
-   } else {\
-    FindClose((self)->w32_hview);\
-    DeeError_SetStringf(&DeeErrorType_SystemError,\
-                        "FindNextFileW(%p,...) : %K",(self)->w32_hview,\
-                        DeeSystemError_Win32ToString(_wv_error));\
-    {__VA_ARGS__;}\
+    if (_wv_error == ERROR_NO_MORE_FILES) {\
+     (self)->w32_hview = INVALID_HANDLE_VALUE;\
+     break;\
+    } else {\
+     DeeError_SetStringf(&DeeErrorType_SystemError,\
+                         "FindNextFileW(%p,...) : %K",(self)->w32_hview,\
+                         DeeSystemError_Win32ToString(_wv_error));\
+     {__VA_ARGS__;}\
+    }\
    }\
   }\
  }\
 }while(0)
-#define DeeWin32SysFSWideViewNL_Quit(self) (void)FindClose((self)->w32_hview)
-#define DeeWin32SysFSWideViewNL_IsEmpty(self) ((self)->w32_hview == INVALID_HANDLE_VALUE)
-#define DeeWin32SysFSWideViewNL_TryInit(self,path,on_empty,...)\
- DeeWin32SysFSWideViewNL_TryInitWithLength(self,path,Dee_WideStrLen(path),on_empty,__VA_ARGS__)
-#define DeeWin32SysFSWideViewNL_TryInitObject(self,path,on_empty,...)\
- DeeWin32SysFSWideViewNL_TryInitWithLength(self,DeeWideString_STR(path),DeeWideString_SIZE(path),on_empty,__VA_ARGS__)
-#define DeeWin32SysFSWideViewNL_Init(self,path,on_empty,...)\
- DeeWin32SysFSWideViewNL_InitWithLength(self,path,Dee_WideStrLen(path),on_empty,__VA_ARGS__)
-#define DeeWin32SysFSWideViewNL_InitObject(self,path,on_empty,...)\
- DeeWin32SysFSWideViewNL_InitWithLength(self,DeeWideString_STR(path),DeeWideString_SIZE(path),on_empty,__VA_ARGS__)
+#define DeeWin32SysFSWideViewNL_Quit(self) \
+ ((self)->w32_hview != INVALID_HANDLE_VALUE ? (void)FindClose((self)->w32_hview) : (void)0)
+#define DeeWin32SysFSWideViewNL_IsDone(self) ((self)->w32_hview == INVALID_HANDLE_VALUE)
+#define DeeWin32SysFSWideViewNL_TryInit(self,path,...)\
+ DeeWin32SysFSWideViewNL_TryInitWithLength(self,path,Dee_WideStrLen(path),__VA_ARGS__)
+#define DeeWin32SysFSWideViewNL_TryInitObject(self,path,...)\
+ DeeWin32SysFSWideViewNL_TryInitWithLength(self,DeeWideString_STR(path),DeeWideString_SIZE(path),__VA_ARGS__)
+#define DeeWin32SysFSWideViewNL_Init(self,path,...)\
+ DeeWin32SysFSWideViewNL_InitWithLength(self,path,Dee_WideStrLen(path),__VA_ARGS__)
+#define DeeWin32SysFSWideViewNL_InitObject(self,path,...)\
+ DeeWin32SysFSWideViewNL_InitWithLength(self,DeeWideString_STR(path),DeeWideString_SIZE(path),__VA_ARGS__)
 #define DeeWin32SysFSWideViewNL_GetFilenameStrLocked(self) (self)->w32_viewdata.cFileName
 
-#define DeeWin32SysFSWideViewNL_TryAdvance(self,on_done,...) \
+#define DeeWin32SysFSWideViewNL_TryAdvance(self,...) \
 do{\
  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
-  DWORD _wv_error;\
-  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {on_done;}\
-  else {__VA_ARGS__;}\
+  DWORD _wv_error = GetLastError();\
+  FindClose((self)->w32_hview);\
+  if (_wv_error == ERROR_NO_MORE_FILES) {\
+   (self)->w32_hview = INVALID_HANDLE_VALUE;\
+  } else {__VA_ARGS__;}\
  }\
 }while(0)
-#define DeeWin32SysFSWideViewNL_Advance(self,on_done,...) \
+#define DeeWin32SysFSWideViewNL_Advance(self,...) \
 do{\
  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
-  DWORD _wv_error;\
-  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {on_done;}\
-  else {\
+  DWORD _wv_error = GetLastError();\
+  FindClose((self)->w32_hview);\
+  if (_wv_error == ERROR_NO_MORE_FILES) {\
+   (self)->w32_hview = INVALID_HANDLE_VALUE;\
+  } else {\
    DeeError_SetStringf(&DeeErrorType_SystemError,\
                        "FindNextFileW(%p,...) : %K",(self)->w32_hview,\
                        DeeSystemError_Win32ToString(_wv_error));\
@@ -208,71 +209,44 @@ struct DeeWin32SysFSWideView {
  WIN32_FIND_DATAW      w32_viewdata;
  struct DeeAtomicMutex w32_lock;
 };
+
 #define DeeWin32SysFSWideView_Quit DeeWin32SysFSWideViewNL_Quit
-#define DeeWin32SysFSWideView_IsEmpty DeeWin32SysFSWideViewNL_IsEmpty
-#define DeeWin32SysFSWideView_TryInit(self,path,on_empty,...) \
-do{DeeWin32SysFSWideViewNL_TryInit(self,path,on_empty,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
-#define DeeWin32SysFSWideView_TryInitObject(self,path,on_empty,...) \
-do{DeeWin32SysFSWideViewNL_TryInitObject(self,path,on_empty,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
-#define DeeWin32SysFSWideView_Init(self,path,on_empty,...) \
-do{DeeWin32SysFSWideViewNL_Init(self,path,on_empty,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
-#define DeeWin32SysFSWideView_InitObject(self,path,on_empty,...) \
-do{DeeWin32SysFSWideViewNL_InitObject(self,path,on_empty,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
+#define DeeWin32SysFSWideView_IsDone DeeWin32SysFSWideViewNL_IsDone
+#define DeeWin32SysFSWideView_TryInit(self,path,...) \
+do{DeeWin32SysFSWideViewNL_TryInit(self,path,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
+#define DeeWin32SysFSWideView_TryInitObject(self,path,...) \
+do{DeeWin32SysFSWideViewNL_TryInitObject(self,path,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
+#define DeeWin32SysFSWideView_Init(self,path,...) \
+do{DeeWin32SysFSWideViewNL_Init(self,path,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
+#define DeeWin32SysFSWideView_InitObject(self,path,...) \
+do{DeeWin32SysFSWideViewNL_InitObject(self,path,__VA_ARGS__);DeeAtomicMutex_Init(&(self)->w32_lock);}while(0)
 
 
-#define DeeWin32SysFSWideView_TryAdvance(self,on_done,...) \
+#define DeeWin32SysFSWideView_TryAdvanceAndReleaseOnError(self,...) \
 do{\
- BOOL _wv_success;\
- DeeAtomicMutex_AcquireRelaxed(&(self)->w32_lock);\
- _wv_success = FindNextFileW((self)->w32_hview,&(self)->w32_viewdata);\
- DeeAtomicMutex_Release(&(self)->w32_lock);\
- if (!_wv_success) {\
+ if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
   DWORD _wv_error;\
-  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {on_done;}\
-  else {__VA_ARGS__;}\
- }\
-}while(0)
-#define DeeWin32SysFSWideView_TryAdvanceAndAcquire(self,on_done,...) \
-do{\
- BOOL _wv_success;\
- DeeAtomicMutex_AcquireRelaxed(&(self)->w32_lock);\
- _wv_success = FindNextFileW((self)->w32_hview,&(self)->w32_viewdata);\
- if (!_wv_success) {\
-  DWORD _wv_error;\
-  DeeAtomicMutex_Release(&(self)->w32_lock);\
-  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {on_done;}\
-  else {__VA_ARGS__;}\
- }\
-}while(0)
-#define DeeWin32SysFSWideView_Advance(self,on_done,...) \
-do{\
- BOOL _wv_success;\
- DeeAtomicMutex_AcquireRelaxed(&(self)->w32_lock);\
- _wv_success = FindNextFileW((self)->w32_hview,&(self)->w32_viewdata);\
- DeeAtomicMutex_Release(&(self)->w32_lock);\
- if (!_wv_success) {\
-  DWORD _wv_error;\
-  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {on_done;}\
-  else {\
-   DeeError_SetStringf(&DeeErrorType_SystemError,\
-                       "FindNextFileW(%p,...) : %K",(self)->w32_hview,\
-                       DeeSystemError_Win32ToString(_wv_error));\
+  FindClose((self)->w32_hview);\
+  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {\
+   (self)->w32_hview = INVALID_HANDLE_VALUE;\
+  } else {\
+   DeeAtomicMutex_Release(&(self)->w32_lock);\
    {__VA_ARGS__;}\
   }\
  }\
 }while(0)
-#define DeeWin32SysFSWideView_AdvanceAndAcquire(self,on_done,...) \
+#define DeeWin32SysFSWideView_AdvanceAndReleaseOnError(self,...) \
 do{\
- BOOL _wv_success;\
- DeeAtomicMutex_AcquireRelaxed(&(self)->w32_lock);\
- _wv_success = FindNextFileW((self)->w32_hview,&(self)->w32_viewdata);\
- if (!_wv_success) {\
+ if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
   DWORD _wv_error;\
-  DeeAtomicMutex_Release(&(self)->w32_lock);\
-  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {on_done;}\
-  else {\
+  FindClose((self)->w32_hview);\
+  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {\
+   (self)->w32_hview = INVALID_HANDLE_VALUE;\
+  } else {\
+   HANDLE _wv_hview = (self)->w32_hview;\
+   DeeAtomicMutex_Release(&(self)->w32_lock);\
    DeeError_SetStringf(&DeeErrorType_SystemError,\
-                       "FindNextFileW(%p,...) : %K",(self)->w32_hview,\
+                       "FindNextFileW(%p,...) : %K",_wv_hview,\
                        DeeSystemError_Win32ToString(_wv_error));\
    {__VA_ARGS__;}\
   }\
@@ -302,15 +276,13 @@ DEE_STATIC_INLINE(DWORD) DeeWin32SysFSWideView_GetAttributes(struct DeeWin32SysF
 
 #define DeeSysFSWideView                      DeeWin32SysFSWideView
 #define DeeSysFSWideView_Quit                 DeeWin32SysFSWideView_Quit
-#define DeeSysFSWideView_IsEmpty              DeeWin32SysFSWideView_IsEmpty
+#define DeeSysFSWideView_IsDone               DeeWin32SysFSWideView_IsDone
 #define DeeSysFSWideView_TryInit              DeeWin32SysFSWideView_TryInit
 #define DeeSysFSWideView_TryInitObject        DeeWin32SysFSWideView_TryInitObject
 #define DeeSysFSWideView_Init                 DeeWin32SysFSWideView_Init
 #define DeeSysFSWideView_InitObject           DeeWin32SysFSWideView_InitObject
-#define DeeSysFSWideView_TryAdvanceAndAcquire DeeWin32SysFSWideView_TryAdvanceAndAcquire
-#define DeeSysFSWideView_AdvanceAndAcquire    DeeWin32SysFSWideView_AdvanceAndAcquire
-#define DeeSysFSWideView_TryAdvance           DeeWin32SysFSWideView_TryAdvance
-#define DeeSysFSWideView_Advance              DeeWin32SysFSWideView_Advance
+#define DeeSysFSWideView_TryAdvanceAndReleaseOnError DeeWin32SysFSWideView_TryAdvanceAndReleaseOnError
+#define DeeSysFSWideView_AdvanceAndReleaseOnError    DeeWin32SysFSWideView_AdvanceAndReleaseOnError
 #define DeeSysFSWideView_Acquire              DeeWin32SysFSWideView_Acquire
 #define DeeSysFSWideView_Release              DeeWin32SysFSWideView_Release
 #define DeeSysFSWideView_GetFilenameStrLocked DeeWin32SysFSWideView_GetFilenameStrLocked

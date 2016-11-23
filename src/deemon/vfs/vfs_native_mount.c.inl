@@ -117,14 +117,15 @@ static int DEE_CALL _deevfs_nativemountfile_vft_open(
 //////////////////////////////////////////////////////////////////////////
 // View VTable
 static int DEE_CALL _deevfs_nativemountview_vvt_open(struct DeeVFSNativeMountView *self) {
- if ((self->vmv_drives = DeeWin32Sys_GetDriveStrings()) == NULL) return -1;
+ if DEE_UNLIKELY((self->vmv_drives = DeeWin32Sys_GetDriveStrings()) == NULL) return -1;
+ self->vmv_drivespos = self->vmv_drives;
  DeeAtomicMutex_Init(&self->vmv_lock);
  return 0;
 }
 static void DEE_CALL _deevfs_nativemountview_vvt_quit(struct DeeVFSNativeMountView *self) {
  DeeWin32Sys_FreeDriveStrings(self->vmv_drives);
 }
-static int DEE_CALL _deevfs_nativemountview_vvt_yield(
+static int DEE_CALL _deevfs_nativemountview_vvt_curr(
  struct DeeVFSNativeMountView *self, struct DeeVFSNativeNode **result) {
  struct DeeVFSNativeNode *result_node;
  if DEE_UNLIKELY((result_node = DeeVFSNode_ALLOC(DeeVFSNativeNode)) == NULL) return -1;
@@ -139,6 +140,30 @@ static int DEE_CALL _deevfs_nativemountview_vvt_yield(
   DeeAtomicMutex_Release(&self->vmv_lock);
   Dee_DECREF(result_node->vnn_path);
   DeeVFSNode_FREE(result);
+  return 1;
+ }
+ DeeString_STR(result_node->vnn_path)[0] = *self->vmv_drivespos;
+ DeeAtomicMutex_Release(&self->vmv_lock);
+ DeeVFSNode_InitWithParent(&result_node->vnn_node,&DeeVFSNativeNode_Type,
+                           self->vmv_view.vv_node);
+ *result = result_node;
+ return 0;
+}
+static int DEE_CALL _deevfs_nativemountview_vvt_yield(
+ struct DeeVFSNativeMountView *self, struct DeeVFSNativeNode **result) {
+ struct DeeVFSNativeNode *result_node;
+ if DEE_UNLIKELY((result_node = DeeVFSNode_ALLOC(DeeVFSNativeNode)) == NULL) return -1;
+ if DEE_UNLIKELY((result_node->vnn_path = (DeeStringObject *)DeeString_NewSized(2)) == NULL) {
+/*err_r:*/ DeeVFSNode_FREE(result_node); return -1;
+ }
+ DeeString_STR(result_node->vnn_path)[1] = ':';
+ DeeAtomicMutex_Acquire(&self->vmv_lock);
+ DEE_ASSERT(self->vmv_drives);
+ DEE_ASSERT(self->vmv_drivespos);
+ if (!*self->vmv_drivespos) {
+  DeeAtomicMutex_Release(&self->vmv_lock);
+  Dee_DECREF(result_node->vnn_path);
+  DeeVFSNode_FREE(result_node);
   return 1;
  }
  DeeString_STR(result_node->vnn_path)[0] = *self->vmv_drivespos;
@@ -184,6 +209,7 @@ struct DeeVFSNodeType const DeeVFSNativeMountNode_Type = {
  },{ sizeof(struct DeeVFSNativeMountView), // vnt_view
   (int (DEE_CALL *)(struct DeeVFSView *))                     &_deevfs_nativemountview_vvt_open,
   (void (DEE_CALL *)(struct DeeVFSView *))                    &_deevfs_nativemountview_vvt_quit,
+  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_nativemountview_vvt_curr,
   (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_nativemountview_vvt_yield,
  }
 };

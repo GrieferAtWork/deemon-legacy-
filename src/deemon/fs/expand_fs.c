@@ -40,6 +40,8 @@ DEE_DECL_END
 #include "expand_fs.link.c.inl"
 #include "expand_fs.mkdir.c.inl"
 #include "expand_fs.move.c.inl"
+#include "expand_fs.open.c.inl"
+#include "expand_fs.opendir.c.inl"
 #include "expand_fs.remove.c.inl"
 #include "expand_fs.rmdir.c.inl"
 #include "expand_fs.settimes.c.inl"

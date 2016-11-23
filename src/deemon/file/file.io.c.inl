@@ -34,14 +34,12 @@
 #include <deemon/integer.h>
 #include <deemon/memberdef.h>
 #include <deemon/optional/object_malloc.h>
+#include <deemon/fs/native_filefd.h>
 #include <deemon/sys/sysfd.h>
 
 DEE_DECL_BEGIN
 
-
-
-
-DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *
+DEE_A_RET_EXCEPT_REF DeeObject * /* DLLEXPORT */
 DeeFile_OpenTemporary(DEE_A_IN Dee_uint32_t flags) {
  DeeString_NEW_STATIC(deemon_prefix,"deemon_fileio_temp");
  DeeObject *filename,*tmp,*result;
@@ -58,159 +56,6 @@ DeeFile_OpenTemporary(DEE_A_IN Dee_uint32_t flags) {
   //       So we should probably start using those...
   ((DeeFileObject *)result)->fo_flags |= DEE_PRIVATE_FILEFLAG_IO_DELONCLOSE;
  }
- return result;
-}
-
-DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *_DeeFile_Utf8OpenEx(
- DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
-#ifdef DeeSysFileFD_Utf8Init
- DeeFileIOObject *result; // TODO: VFS
- if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeFileIOObject)) == NULL) return NULL;
- DeeSysFileFD_Utf8Init(&result->io_descr,file,openmode,permissions,
-                       { DeeObject_Free(result); return NULL; });
- DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
- DeeFileFD_InitBasic(result,DEE_PRIVATE_FILEFLAG_FD_VALID|
-                            DEE_PRIVATE_FILEFLAG_FD_OWNED);
- return (DeeObject *)result;
-#elif defined(DeeSysFileFD_WideInit)
- DeeObject *wfile,*result;
- if DEE_UNLIKELY((wfile = DeeWideString_FromUtf8String(file)) == NULL) return NULL;
- result = _DeeFile_WideOpenEx(DeeWideString_STR(wfile),openmode,permissions);
- Dee_DECREF(wfile);
- return result;
-#else
- (void)file,openmode,permissions;
- DeeError_NotImplemented_str("filefd");
- return NULL;
-#endif
-}
-DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *_DeeFile_WideOpenEx(
- DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
-#ifdef DeeSysFileFD_WideInit
- DeeFileIOObject *result; // TODO: VFS
- if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeFileIOObject)) == NULL) return NULL;
- DeeSysFileFD_WideInit(&result->io_descr,file,openmode,permissions,
-                       { DeeObject_Free(result); return NULL; });
- DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
- DeeFileFD_InitBasic(result,DEE_PRIVATE_FILEFLAG_FD_VALID|
-                            DEE_PRIVATE_FILEFLAG_FD_OWNED);
- return (DeeObject *)result;
-#elif defined(DeeSysFileFD_WideInitObject)
- DeeObject *wfile;
- if DEE_UNLIKELY((wfile = DeeWideString_FromWideString(file)) == NULL) return NULL;
- result = _DeeFile_OpenObjectEx(wfile,openmode,permissions);
- Dee_DECREF(wfile);
- return result;
-#elif defined(DeeSysFileFD_Utf8Init)\
-   || defined(DeeSysFileFD_Utf8InitObject)
- DeeObject *u8file,*result;
- if DEE_UNLIKELY((u8file = DeeUtf8String_FromUtf8String(file)) == NULL) return NULL;
-#ifdef DeeSysFileFD_Utf8InitObject
- result = _DeeFile_OpenObjectEx(u8file,openmode,permissions);
-#else
- result = _DeeFile_Utf8OpenEx(DeeUtf8String_STR(u8file),openmode,permissions);
-#endif
- Dee_DECREF(u8file);
- return result;
-#else
- (void)file,openmode,permissions;
- DeeError_NotImplemented_str("filefd");
- return NULL;
-#endif
-}
-DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *_DeeFile_OpenObjectEx(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *file,
- DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
- // TODO: VFS
-#if defined(DeeSysFileFD_Utf8InitObject) || defined(DeeSysFileFD_Utf8Init)\
- || defined(DeeSysFileFD_WideInitObject) || defined(DeeSysFileFD_WideInit)
- DeeFileIOObject *result;
- if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeFileIOObject)) == NULL) return NULL;
-#if defined(DeeSysFileFD_WideInitObject)\
- || defined(DeeSysFileFD_WideInit)
-#ifdef DEE_PLATFORM_WINDOWS
- if DEE_UNLIKELY((file = DeeWideString_Cast(file)) == NULL) { DeeObject_Free(result); return NULL; }
-#else
- if (DeeWideString_Check(file))
-#endif
- {
-#ifdef DEE_PLATFORM_WINDOWS
-# define local_ERROR_HANDLER { Dee_DECREF(file); DeeObject_Free(result); return NULL; }
-#else
-# define local_ERROR_HANDLER { DeeObject_Free(result); return NULL; }
-#endif
-#ifdef DeeSysFileFD_WideInitObject
-  DeeSysFileFD_WideInitObject(&result->io_descr,file,openmode,permissions,local_ERROR_HANDLER);
-#else /* #elif defined(DeeSysFileFD_WideInit) */
-  DeeSysFileFD_WideInit(&result->io_descr,DeeWideString_STR(file),openmode,permissions,local_ERROR_HANDLER);
-#endif /* ... */
-#undef local_ERROR_HANDLER
-  DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
-  DeeFileFD_InitBasic(result,DEE_PRIVATE_FILEFLAG_FD_VALID|
-                             DEE_PRIVATE_FILEFLAG_FD_OWNED);
-#ifdef DEE_PLATFORM_WINDOWS
-  Dee_DECREF(file);
-#endif
-  return (DeeObject *)result;
- }
-#endif
-#if (!defined(DeeSysFileFD_WideInitObject)\
-  && !defined(DeeSysFileFD_WideInit))\
-  || !defined(DEE_PLATFORM_WINDOWS)
- if DEE_UNLIKELY((file = DeeUtf8String_Cast(file)) == NULL)
- {err_freer: DeeObject_Free(result); return NULL; }
- // Not a widestring filename (cast to utf8 and open that one)
-#ifdef DeeSysFileFD_Utf8InitObject
- DeeSysFileFD_Utf8InitObject(&result->io_descr,file,openmode,permissions,
-                             { Dee_DECREF(file); goto err_freer; });
-#else /* #elif defined(DeeSysFileFD_Utf8Init) */
- DeeSysFileFD_Utf8Init(&result->io_descr,DeeUtf8String_STR(file),openmode,permissions,
-                       { Dee_DECREF(file); goto err_freer; });
-#endif /* ... */
- DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
- DeeFileFD_InitBasic(result,DEE_PRIVATE_FILEFLAG_FD_VALID|
-                            DEE_PRIVATE_FILEFLAG_FD_OWNED);
- Dee_DECREF(file);
- return (DeeObject *)result;
-#endif /* ... */
-#else /* any... */
- (void)file,openmode,permissions;
- DeeError_NotImplemented_str("filefd");
- return NULL;
-#endif /* !any... */
-}
-
-DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *DeeFile_Utf8OpenEx(
- DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
- DeeObject *newfile,*result;
- if DEE_UNLIKELY((newfile = DeeFS_Utf8PathExpand(file)) == NULL) return NULL;
-#ifdef DeeSysFileFD_Utf8Init
- result = _DeeFile_Utf8OpenEx(DeeUtf8String_STR(newfile),openmode,permissions);
-#else
- result = _DeeFile_OpenObjectEx(newfile,openmode,permissions);
-#endif
- Dee_DECREF(newfile);
- return result;
-}
-DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *DeeFile_WideOpenEx(
- DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
- DeeObject *newfile,*result;
- if DEE_UNLIKELY((newfile = DeeFS_WidePathExpand(file)) == NULL) return NULL;
-#ifdef DeeSysFileFD_WideInit
- result = _DeeFile_WideOpenEx(DeeWideString_STR(newfile),openmode,permissions);
-#else
- result = _DeeFile_OpenObjectEx(newfile,openmode,permissions);
-#endif
- Dee_DECREF(newfile);
- return result;
-}
-DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *DeeFile_OpenObjectEx(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *file,
- DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
- DeeObject *result,*newfile;
- if DEE_UNLIKELY((newfile = DeeFS_PathExpandObject(file)) == NULL) return NULL;
- result = _DeeFile_OpenObjectEx(newfile,openmode,permissions);
- Dee_DECREF(newfile);
  return result;
 }
 
@@ -389,7 +234,7 @@ static int DEE_CALL _deefileio_tp_move_assign(
 #ifndef DEE_PLATFORM_UNIX
 #define _pdeefileio_tp_str &_deefileio_tp_str
 static DeeObject *DEE_CALL _deefileio_tp_str(DeeFileIOObject *self) {
- return DeeString_Newf("<file.io(%r)>",DeeFileIO_Utf8Filename((DeeObject *)self));
+ return DeeString_Newf("<file.io(%R)>",DeeFileIO_Utf8Filename((DeeObject *)self));
 }
 #else
 #define _pdeefileio_tp_str DeeType_DEFAULT_SLOT(tp_str)
@@ -404,7 +249,7 @@ static int DEE_CALL _deefileio_tp_any_ctor(
  Dee_mode_t permissions = DEE_FILEIO_DEFAULT_PERMISSIONS;
  DeeStringObject *mode = (DeeStringObject *)&_deefileio_default_mode;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|oI" DEE_PP_STR(DEE_PP_MUL8(
-  DEE_TYPES_SIZEOF_MODE_T)) "u:file.fd.fp",&file,&mode,&permissions) != 0) return -1;
+  DEE_TYPES_SIZEOF_MODE_T)) "u:file.io",&file,&mode,&permissions) != 0) return -1;
  if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact((DeeObject *)mode,&DeeString_Type) != 0) return -1;
  openmode = DeeFile_TryParseMode(DeeString_STR(mode));
 #if defined(DeeSysFileFD_Utf8InitObject) || defined(DeeSysFileFD_Utf8Init)\

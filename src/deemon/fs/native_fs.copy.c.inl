@@ -38,14 +38,43 @@ DEE_DECL_BEGIN
 #ifndef DEE_NFS_HAVE_COPY
 DeeError_NEW_STATIC(_dee_notimplemented_copy,&DeeErrorType_NotImplemented,"copy");
 #endif
-#ifndef DEE_NFS_HAVE_OSCOPY
+#if !defined(DEE_NFS_HAVE_OSCOPY) && defined(DeeNativeFileFD)\
+  && defined(DeeNativeFileFD_Read) && defined(DeeNativeFileFD_Write)
 static DEE_A_RET_EXCEPT(-1) int DeeNativeFileFD_TransferFile(
  DEE_A_INOUT struct DeeNativeFileFD *src_fd,
- DEE_A_INOUT struct DeeNativeFileFD *dst_fd);
-static DEE_A_RET_NOEXCEPT(0) int DeeNativeFileFD_TryTransferFile(
- DEE_A_INOUT struct DeeNativeFileFD *src_fd,
- DEE_A_INOUT struct DeeNativeFileFD *dst_fd);
+ DEE_A_INOUT struct DeeNativeFileFD *dst_fd) {
+ Dee_size_t read_size,written_size;
+ Dee_uint8_t *write_pos;
+#ifdef DEE_XCONFIG_FSBUFSIZE_EMULATEDCOPY_ALLOCHEAP
+#define RETURN(x) do{free_nn(buffer);return(x);}while(0)
+ Dee_uint8_t *buffer;
+ while DEE_UNLIKELY((buffer = (Dee_uint8_t *)malloc_nz(
+  DEE_XCONFIG_FSBUFSIZE_EMULATEDCOPY*sizeof(Dee_uint8_t))) == NULL) {
+  if DEE_LIKELY(Dee_CollectMemory()) continue;
+  DeeError_NoMemory();
+  return -1;
+ }
+#else
+#define RETURN(x) return (x)
+ Dee_uint8_t buffer[DEE_XCONFIG_FSBUFSIZE_EMULATEDCOPY];
 #endif
+ while (1) {
+  DeeNativeFileFD_Read(src_fd,buffer,DEE_XCONFIG_FSBUFSIZE_EMULATEDCOPY,&read_size,RETURN(-1));
+  if (!read_size) break;
+  write_pos = buffer; while (1) {
+   DeeNativeFileFD_Write(dst_fd,write_pos,read_size,&written_size,RETURN(-1));
+   if (!written_size) RETURN(0);
+   if (written_size >= read_size) break;
+   read_size -= written_size;
+   write_pos += written_size;
+  }
+ }
+ RETURN(0);
+#undef RETURN
+
+}
+#endif
+
 
 #ifdef DEE_NFS_HAVE_COPY
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Copy(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst) {
@@ -70,7 +99,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Copy(DEE_A_IN_Z Dee_Utf8Char const *src, DEE
  Dee_DECREF(dst_ob);
 end_srcob: Dee_DECREF(src_ob);
  return result;
-#elif defined(DeeNativeFileFD_Read) && defined(DeeNativeFileFD_Write)
+#else
  struct DeeNativeFileFD src_fd,dst_fd; int result;
  DeeNativeFileFD_Utf8Init(&src_fd,src,DEE_OPENMODE('r',0),0,return -1);
  DeeNativeFileFD_Utf8Init(&dst_fd,dst,DEE_OPENMODE('c',0),0,{ result = -1; goto end_srcfd; });
@@ -78,9 +107,6 @@ end_srcob: Dee_DECREF(src_ob);
  DeeNativeFileFD_Quit(&dst_fd);
 end_srcfd: DeeNativeFileFD_Quit(&src_fd);
  return result;
-#else
- DeeNFS_Utf8TryCopy(src,dst);
- return 0;
 #endif
 }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideCopy(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) {
@@ -105,7 +131,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideCopy(DEE_A_IN_Z Dee_WideChar const *src, DEE
  Dee_DECREF(dst_ob);
 end_srcob: Dee_DECREF(src_ob);
  return result;
-#elif defined(DeeNativeFileFD_Read) && defined(DeeNativeFileFD_Write)
+#else
  struct DeeNativeFileFD src_fd,dst_fd; int result;
  DeeNativeFileFD_WideInit(&src_fd,src,DEE_OPENMODE('r',0),0,return -1);
  DeeNativeFileFD_WideInit(&dst_fd,dst,DEE_OPENMODE('c',0),0,{ result = -1; goto end_srcfd; });
@@ -113,9 +139,6 @@ end_srcob: Dee_DECREF(src_ob);
  DeeNativeFileFD_Quit(&dst_fd);
 end_srcfd: DeeNativeFileFD_Quit(&src_fd);
  return result;
-#else
- DeeNFS_WideTryCopy(src,dst);
- return 0;
 #endif
 }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8CopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst) {
@@ -134,7 +157,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8CopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObje
  Dee_DECREF(dst_ob);
  Dee_DECREF(src_ob);
  return 0;
-#elif defined(DeeNativeFileFD_Read) && defined(DeeNativeFileFD_Write)
+#else
  struct DeeNativeFileFD src_fd,dst_fd; int result;
  DeeNativeFileFD_Utf8InitObject(&src_fd,src,DEE_OPENMODE('r',0),0,return -1);
  DeeNativeFileFD_Utf8InitObject(&dst_fd,dst,DEE_OPENMODE('c',0),0,{ result = -1; goto end_srcfd; });
@@ -142,9 +165,6 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8CopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObje
  DeeNativeFileFD_Quit(&dst_fd);
 end_srcfd: DeeNativeFileFD_Quit(&src_fd);
  return result;
-#else
- DeeNFS_Utf8TryCopyObject(src,dst);
- return 0;
 #endif
 }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideCopyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst) {
@@ -163,7 +183,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideCopyObject(DEE_A_IN_OBJECT(DeeWideStringObje
  Dee_DECREF(dst_ob);
  Dee_DECREF(src_ob);
  return 0;
-#elif defined(DeeNativeFileFD_Read) && defined(DeeNativeFileFD_Write)
+#else
  struct DeeNativeFileFD src_fd,dst_fd; int result;
  DeeNativeFileFD_WideInitObject(&src_fd,src,DEE_OPENMODE('r',0),0,return -1);
  DeeNativeFileFD_WideInitObject(&dst_fd,dst,DEE_OPENMODE('c',0),0,{ result = -1; goto end_srcfd; });
@@ -171,135 +191,6 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideCopyObject(DEE_A_IN_OBJECT(DeeWideStringObje
  DeeNativeFileFD_Quit(&dst_fd);
 end_srcfd: DeeNativeFileFD_Quit(&src_fd);
  return result;
-#else
- DeeNFS_WideTryCopyObject(src,dst);
- return 0;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryCopy(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst) {
- DEE_ASSERT(src); DEE_ASSERT(dst);
-#ifdef DeeSysFS_Utf8TryCopy
- return DeeSysFS_Utf8TryCopy(src,dst);
-#elif defined(DeeSysFS_Utf8TryCopyObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeUtf8String_New(src)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeUtf8String_New(dst)) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_Utf8TryCopyObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#elif defined(DeeSysFS_WideTryCopyObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeWideString_FromUtf8String(src)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeWideString_FromUtf8String(dst)) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_WideTryCopyObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#elif defined(DeeNativeFileFD_Read) && defined(DeeNativeFileFD_Write)
- struct DeeNativeFileFD src_fd,dst_fd; int result;
- if (!DeeNativeFileFD_Utf8TryInit(&src_fd,src,DEE_OPENMODE('r',0),0)) return 0;
- if (!DeeNativeFileFD_Utf8TryInit(&dst_fd,dst,DEE_OPENMODE('c',0),0)) { result = 0; goto end_srcfd; }
- result = DeeNativeFileFD_TryTransferFile(&src_fd,&dst_fd);
- DeeNativeFileFD_Quit(&dst_fd);
-end_srcfd: DeeNativeFileFD_Quit(&src_fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8Copy(src,dst)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryCopy(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) {
- DEE_ASSERT(src); DEE_ASSERT(dst);
-#ifdef DeeSysFS_WideTryCopy
- return DeeSysFS_WideTryCopy(src,dst);
-#elif defined(DeeSysFS_WideTryCopyObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeWideString_New(src)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeWideString_New(dst)) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_WideTryCopyObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#elif defined(DeeSysFS_Utf8TryCopyObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeUtf8String_FromWideString(src)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeUtf8String_FromWideString(dst)) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_Utf8TryCopyObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#elif defined(DeeNativeFileFD_Read) && defined(DeeNativeFileFD_Write)
- struct DeeNativeFileFD src_fd,dst_fd; int result;
- if (!DeeNativeFileFD_WideTryInit(&src_fd,src,DEE_OPENMODE('r',0),0)) return 0;
- if (!DeeNativeFileFD_WideTryInit(&dst_fd,dst,DEE_OPENMODE('c',0),0)) { result = 0; goto end_srcfd; }
- result = DeeNativeFileFD_TryTransferFile(&src_fd,&dst_fd);
- DeeNativeFileFD_Quit(&dst_fd);
-end_srcfd: DeeNativeFileFD_Quit(&src_fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideCopy(src,dst)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryCopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst) {
- DEE_ASSERT(DeeObject_Check(src) && DeeUtf8String_Check(src));
- DEE_ASSERT(DeeObject_Check(dst) && DeeUtf8String_Check(dst));
-#ifdef DeeSysFS_Utf8TryCopyObject
- return DeeSysFS_Utf8TryCopyObject(src,dst);
-#elif defined(DeeSysFS_WideTryCopyObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeWideString_FromUtf8StringWithLength(
-  DeeUtf8String_SIZE(src),DeeUtf8String_STR(src))) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeWideString_FromUtf8StringWithLength(
-  DeeUtf8String_SIZE(dst),DeeUtf8String_STR(dst))) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_WideTryCopyObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#elif defined(DeeNativeFileFD_Read) && defined(DeeNativeFileFD_Write)
- struct DeeNativeFileFD src_fd,dst_fd; int result;
- if (!DeeNativeFileFD_Utf8TryInitObject(&src_fd,src,DEE_OPENMODE('r',0),0)) return 0;
- if (!DeeNativeFileFD_Utf8TryInitObject(&dst_fd,dst,DEE_OPENMODE('c',0),0)) { result = 0; goto end_srcfd; }
- result = DeeNativeFileFD_TryTransferFile(&src_fd,&dst_fd);
- DeeNativeFileFD_Quit(&dst_fd);
-end_srcfd: DeeNativeFileFD_Quit(&src_fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_Utf8CopyObject(src,dst)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
-#endif
-}
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryCopyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst) {
- DEE_ASSERT(DeeObject_Check(src) && DeeWideString_Check(src));
- DEE_ASSERT(DeeObject_Check(dst) && DeeWideString_Check(dst));
-#ifdef DeeSysFS_WideTryCopyObject
- return DeeSysFS_WideTryCopyObject(src,dst);
-#elif defined(DeeSysFS_Utf8TryCopyObject)
- DeeObject *src_ob,*dst_ob; int result;
- if DEE_UNLIKELY((src_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(src),DeeWideString_STR(src))) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((dst_ob = DeeUtf8String_FromWideStringWithLength(
-  DeeWideString_SIZE(dst),DeeWideString_STR(dst))) == NULL) { Dee_DECREF(src_ob); goto err_h1; }
- result = DeeSysFS_Utf8TryCopyObject(src_ob,dst_ob);
- Dee_DECREF(dst_ob);
- Dee_DECREF(src_ob);
- return result;
-#elif defined(DeeNativeFileFD_Read) && defined(DeeNativeFileFD_Write)
- struct DeeNativeFileFD src_fd,dst_fd; int result;
- if (!DeeNativeFileFD_WideTryInitObject(&src_fd,src,DEE_OPENMODE('r',0),0)) return 0;
- if (!DeeNativeFileFD_WideTryInitObject(&dst_fd,dst,DEE_OPENMODE('c',0),0)) { result = 0; goto end_srcfd; }
- result = DeeNativeFileFD_TryTransferFile(&src_fd,&dst_fd);
- DeeNativeFileFD_Quit(&dst_fd);
-end_srcfd: DeeNativeFileFD_Quit(&src_fd);
- return result;
-#else
- int result;
- if ((result = DeeNFS_WideCopyObject(src,dst)) < 0) { DeeError_HandledOne(); result = 1; }
- return !result;
 #endif
 }
 #else
@@ -307,20 +198,8 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Copy(DEE_A_IN_Z Dee_Utf8Char const *src, DEE
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideCopy(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) { DEE_ASSERT(src),DEE_ASSERT(dst); (void)src,dst; DeeError_Throw((DeeObject *)&_dee_notimplemented_copy); return -1; }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8CopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst) { DEE_ASSERT(DeeObject_Check(src) && DeeUtf8String_Check(src)); DEE_ASSERT(DeeObject_Check(dst) && DeeUtf8String_Check(dst)); (void)src,dst; DeeError_Throw((DeeObject *)&_dee_notimplemented_copy); return -1; }
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideCopyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst) { DEE_ASSERT(DeeObject_Check(src) && DeeWideString_Check(src)); DEE_ASSERT(DeeObject_Check(dst) && DeeWideString_Check(dst)); (void)src,dst; DeeError_Throw((DeeObject *)&_dee_notimplemented_copy); return -1; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryCopy(DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst) { DEE_ASSERT(src),DEE_ASSERT(dst); (void)src,dst; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryCopy(DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) { DEE_ASSERT(src),DEE_ASSERT(dst); (void)src,dst; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_Utf8TryCopyObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src, DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst) { DEE_ASSERT(DeeObject_Check(src) && DeeUtf8String_Check(src)); DEE_ASSERT(DeeObject_Check(dst) && DeeUtf8String_Check(dst)); (void)src,dst; return 0; }
-DEE_A_RET_NOEXCEPT(0) int DeeNFS_WideTryCopyObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *src, DEE_A_IN_OBJECT(DeeWideStringObject) const *dst) { DEE_ASSERT(DeeObject_Check(src) && DeeWideString_Check(src)); DEE_ASSERT(DeeObject_Check(dst) && DeeWideString_Check(dst)); (void)src,dst; return 0; }
 #endif
 
 DEE_DECL_END
-
-#ifndef DEE_NFS_HAVE_OSCOPY
-#ifndef __INTELLISENSE__
-#define DO_TRY
-#include "native_fs.copy.emulated.impl.inl"
-#include "native_fs.copy.emulated.impl.inl"
-#endif
-#endif
 
 #endif /* !GUARD_DEEMON_FS_NATIVE_FS_COPY_C_INL */

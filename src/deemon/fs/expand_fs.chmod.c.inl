@@ -26,7 +26,7 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
-#include <deemon/fs/native_fs.h>
+#include <deemon/fs_api.h>
 #include <deemon/fs/expand_fs.h>
 
 DEE_DECL_BEGIN
@@ -35,7 +35,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8Chmod(
  DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) return -1;
- result = DeeNFS_Utf8ChmodObject(xpath,mode);
+ result = _DeeFS_Utf8ChmodObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
@@ -43,7 +43,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_WideChmod(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) return -1;
- result = DeeNFS_WideChmodObject(xpath,mode);
+ result = _DeeFS_WideChmodObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
@@ -51,7 +51,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8ChmodObject(
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) return -1;
- result = DeeNFS_Utf8ChmodObject(xpath,mode);
+ result = _DeeFS_Utf8ChmodObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }
@@ -59,39 +59,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_WideChmodObject(
  DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode) {
  DeeObject *xpath; int result;
  if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) return -1;
- result = DeeNFS_WideChmodObject(xpath,mode);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryChmod(
- DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryChmodObject(xpath,mode);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryChmod(
- DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpand(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryChmodObject(xpath,mode);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryChmodObject(
- DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_Utf8PathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_Utf8TryChmodObject(xpath,mode);
- Dee_DECREF(xpath);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryChmodObject(
- DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode) {
- DeeObject *xpath; int result;
- if DEE_UNLIKELY((xpath = DeeFS_WidePathExpandObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- result = DeeNFS_WideTryChmodObject(xpath,mode);
+ result = _DeeFS_WideChmodObject(xpath,mode);
  Dee_DECREF(xpath);
  return result;
 }

@@ -26,13 +26,14 @@
 #include <deemon/optional/string_forward.h>
 #include <deemon/optional/std/stdarg.h>
 #include <deemon/optional/std/string.h>
+#include <deemon/optional/fs_api.fsapimode.h>
 #include <deemon/optional/fs_api.modechange.h>
+#include <deemon/string.h>
+#include <deemon/type.h>
 #ifdef DEE_LIMITED_DEX
 #include <deemon/__bswap_intrin.inl>
 #include <deemon/optional/atomic_mutex.h>
 #include <deemon/optional/object_decl.h>
-#include <deemon/string.h>
-#include <deemon/type.h>
 #endif
 #ifdef DEE_LIMITED_API
 #include <deemon/error.h>
@@ -138,8 +139,7 @@ DEE_DATA_DECL(DeeTypeObject) DeeFileType_Type;
 #define DEE_PRIVATE_FILEFLAG_FD_OWNED       DEE_UINT32_C(0x02000000) /*< The stored file descriptor is owned. */
 #define DEE_PRIVATE_FILEFLAG_STDINIT        DEE_UINT32_C(0x04000000) /*< [atomic] An std-handle is initialized. */
 #define DEE_PRIVATE_FILEFLAG_IO_DELONCLOSE  DEE_UINT32_C(0x40000000) /*< Used by file.io (delete file when the handle is closed). */
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-#define DEE_PRIVATE_FILEFLAG_IO_VFSFILE     DEE_UINT32_C(0x80000000) /*< Virtual file system file. */
+#if DEE_CONFIG_RUNTIME_HAVE_VFS2
 #define DEE_PRIVATE_FILEFLAG_VFS_VALID      DEE_PRIVATE_FILEFLAG_FD_VALID /*< Valid VFS file. */
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS*/
 
@@ -222,6 +222,11 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileReaderObject) *) Dee
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *str_) DEE_ATTRIBUTE_NONNULL((1));
 
 
+typedef DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *(DEE_CALL *PDEEFILE_UTF8OPENEX)(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *(DEE_CALL *PDEEFILE_WIDEOPENEX)(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *(DEE_CALL *PDEEFILE_UTF8OPENEXOBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *(DEE_CALL *PDEEFILE_WIDEOPENEXOBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+
 //////////////////////////////////////////////////////////////////////////
 // Create a new file object
 // >> DeeFile_OpenTemporary()             -- Creates a temporary file (file will be deleted when closed if 'delete_when_closed != 0')
@@ -230,13 +235,34 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileReaderObject) *) Dee
 #define DEE_FILE_OPENTEMPORARY_FLAG_NONE               DEE_UINT32_C(0x00000000)
 #define DEE_FILE_OPENTEMPORARY_FLAG_DELETE_WHEN_CLOSED DEE_UINT32_C(0x00000001)
 DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_OpenTemporary(DEE_A_IN Dee_uint32_t flags);
+#define DeeFile_Utf8OpenEx         DeeFS_GETFUNCTION_v102(PDEEFILE_UTF8OPENEX,160)
+#define DeeFile_WideOpenEx         DeeFS_GETFUNCTION_v102(PDEEFILE_WIDEOPENEX,161)
+#define DeeFile_Utf8OpenExObject   DeeFS_GETFUNCTION_v102(PDEEFILE_UTF8OPENEXOBJECT,162)
+#define DeeFile_WideOpenExObject   DeeFS_GETFUNCTION_v102(PDEEFILE_WIDEOPENEXOBJECT,163)
+#define _DeeFile_Utf8OpenEx        DeeFS_GETFUNCTION_v102(PDEEFILE_UTF8OPENEX,164)
+#define _DeeFile_WideOpenEx        DeeFS_GETFUNCTION_v102(PDEEFILE_WIDEOPENEX,165)
+#define _DeeFile_Utf8OpenExObject  DeeFS_GETFUNCTION_v102(PDEEFILE_UTF8OPENEXOBJECT,166)
+#define _DeeFile_WideOpenExObject  DeeFS_GETFUNCTION_v102(PDEEFILE_WIDEOPENEXOBJECT,167)
 
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_Utf8OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_WideOpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) _DeeFile_Utf8OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) _DeeFile_WideOpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) _DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *)
+DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
+ DeeObject *result;
+ if (DeeWideString_Check(file)) return DeeFile_WideOpenExObject(file,openmode,permissions);
+ if DEE_UNLIKELY((file = DeeUtf8String_Cast(file)) == NULL) return NULL;
+ result = DeeFile_Utf8OpenExObject(file,openmode,permissions);
+ Dee_DECREF(file);
+ return result;
+}
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *)
+_DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
+ DeeObject *result;
+ if (DeeWideString_Check(file)) return _DeeFile_WideOpenExObject(file,openmode,permissions);
+ if DEE_UNLIKELY((file = DeeUtf8String_Cast(file)) == NULL) return NULL;
+ result = _DeeFile_Utf8OpenExObject(file,openmode,permissions);
+ Dee_DECREF(file);
+ return result;
+}
+
 #define DEE_FILEIO_DEFAULT_PERMISSIONS 0644
 #define DeeFile_Utf8Open(file,mode)    DeeFile_Utf8OpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
 #define DeeFile_WideOpen(file,mode)    DeeFile_WideOpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)

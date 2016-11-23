@@ -91,67 +91,6 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_WideMkDirObject(
  return error;
 }
 
-
-DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryMkDir(
- DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) {
- DeeObject *native_path; struct DeeVFSNode *cwd; int error;
- DEE_ASSERT(path);
- if (DeeVFS_Utf8IsAbsoluteNativePath(path)) {
-call_native: return DeeNFS_Utf8TryMkDir(path,mode);
- }
- if (DeeVFS_Utf8IsVirtualPath(path)) {
-  native_path = DeeVFS_Utf8ForceNativeRootPath(path);
- } else {
-  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
-  native_path = DeeVFS_Utf8ForceNativePathWithCwd(cwd,path);
-  DeeVFSNode_DECREF(cwd);
- }
- if DEE_UNLIKELY(!native_path) { DeeError_HandledOne(); return 0; }
- error = DeeNFS_Utf8TryMkDirObject(native_path,mode);
- Dee_DECREF(native_path);
- return error;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryMkDir(
- DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) {
- DeeObject *native_path; struct DeeVFSNode *cwd; int error;
- DEE_ASSERT(path);
- if (DeeVFS_WideIsAbsoluteNativePath(path)) {
-call_native: return DeeNFS_WideTryMkDir(path,mode);
- }
- if (DeeVFS_WideIsVirtualPath(path)) {
-  native_path = DeeVFS_WideForceNativeRootPath(path);
- } else {
-  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
-  native_path = DeeVFS_WideForceNativePathWithCwd(cwd,path);
-  DeeVFSNode_DECREF(cwd);
- }
- if DEE_UNLIKELY(!native_path) { DeeError_HandledOne(); return 0; }
- error = DeeNFS_WideTryMkDirObject(native_path,mode);
- Dee_DECREF(native_path);
- return error;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeVFS_Utf8TryMkDirObject(
- DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode) {
- DeeObject *native_path; int error;
- DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
- if DEE_UNLIKELY((native_path = DeeVFS_Utf8ForceNativePathObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- error = DeeNFS_Utf8TryMkDirObject(native_path,mode);
- Dee_DECREF(native_path);
- return error;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeVFS_WideTryMkDirObject(
- DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode) {
- DeeObject *native_path; int error;
- DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
- if DEE_UNLIKELY((native_path = DeeVFS_WideForceNativePathObject(path)) == NULL) { DeeError_HandledOne(); return 0; }
- error = DeeNFS_WideTryMkDirObject(native_path,mode);
- Dee_DECREF(native_path);
- return error;
-}
-
-
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
 

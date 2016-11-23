@@ -82,6 +82,19 @@ static int DEE_CALL _deevfs_virtualdirview_vvt_open(struct DeeVFSVirtualDirView 
  self->vdv_pos = ((struct DeeVFSVirtualDirNode *)self->vdv_view.vv_node)->vdn_children;
  return 0;
 }
+static int DEE_CALL _deevfs_virtualdirview_vvt_curr(
+ struct DeeVFSVirtualDirView *self, struct DeeVFSNode **result) {
+ DeeAtomicMutex_Acquire(&self->vdv_lock);
+ DEE_ASSERT(self->vdv_pos);
+ if (!self->vdv_pos->name) {
+  DeeAtomicMutex_Release(&self->vdv_lock);
+  return 1;
+ }
+ *result = self->vdv_pos->node;
+ DeeVFSNode_INCREF(*result);
+ DeeAtomicMutex_Release(&self->vdv_lock);
+ return 0;
+}
 static int DEE_CALL _deevfs_virtualdirview_vvt_yield(
  struct DeeVFSVirtualDirView *self, struct DeeVFSNode **result) {
  DeeAtomicMutex_Acquire(&self->vdv_lock);
@@ -130,6 +143,7 @@ struct DeeVFSNodeType const DeeVFSVirtualDirNode_Type = {
  },{ sizeof(struct DeeVFSVirtualDirView), // vnt_view
   (int (DEE_CALL *)(struct DeeVFSView *))                     &_deevfs_virtualdirview_vvt_open,
   (void (DEE_CALL *)(struct DeeVFSView *))                    NULL,
+  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_virtualdirview_vvt_curr,
   (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_virtualdirview_vvt_yield,
  }
 };

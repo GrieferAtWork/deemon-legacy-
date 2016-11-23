@@ -51,33 +51,13 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_WideLink(
 end_xlink_name: Dee_DECREF(xlink_name);
  return result;
 }
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryLink(
- DEE_A_IN_Z Dee_Utf8Char const *link_name, DEE_A_IN_Z Dee_Utf8Char const *target_name) {
- DeeObject *xlink_name,*xtarget_name; int result;
- if DEE_UNLIKELY((xlink_name = DeeFS_Utf8PathExpand(link_name)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((xtarget_name = DeeFS_Utf8PathExpand(target_name)) == NULL) { Dee_DECREF(xlink_name); goto err_h1; }
- result = _DeeFS_Utf8TryLinkObject(xlink_name,xtarget_name);
- Dee_DECREF(xtarget_name);
- Dee_DECREF(xlink_name);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryLink(
- DEE_A_IN_Z Dee_WideChar const *link_name, DEE_A_IN_Z Dee_WideChar const *target_name) {
- DeeObject *xlink_name,*xtarget_name; int result;
- if DEE_UNLIKELY((xlink_name = DeeFS_WidePathExpand(link_name)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((xtarget_name = DeeFS_WidePathExpand(target_name)) == NULL) { Dee_DECREF(xlink_name); goto err_h1; }
- result = _DeeFS_WideTryLinkObject(xlink_name,xtarget_name);
- Dee_DECREF(xtarget_name);
- Dee_DECREF(xlink_name);
- return result;
-}
 DEE_A_RET_EXCEPT(-1) int DeeXFS_Utf8LinkObject(
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *link_name,
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *target_name) {
  DeeObject *xlink_name,*xtarget_name; int result;
  if DEE_UNLIKELY((xlink_name = DeeFS_Utf8PathExpandObject(link_name)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
  if DEE_UNLIKELY((xtarget_name = DeeFS_Utf8PathExpandObject(target_name)) == NULL) { Dee_DECREF(xlink_name); goto err_h1; }
- result = _DeeFS_Utf8TryLinkObject(xlink_name,xtarget_name);
+ result = _DeeFS_Utf8LinkObject(xlink_name,xtarget_name);
  Dee_DECREF(xtarget_name);
  Dee_DECREF(xlink_name);
  return result;
@@ -91,28 +71,6 @@ DEE_A_RET_EXCEPT(-1) int DeeXFS_WideLinkObject(
  result = _DeeFS_WideLinkObject(xlink_name,xtarget_name);
  Dee_DECREF(xtarget_name);
 end_xlink_name: Dee_DECREF(xlink_name);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_Utf8TryLinkObject(
- DEE_A_IN_OBJECT(DeeUtf8StringObject) const *link_name,
- DEE_A_IN_OBJECT(DeeUtf8StringObject) const *target_name) {
- DeeObject *xlink_name,*xtarget_name; int result;
- if DEE_UNLIKELY((xlink_name = DeeFS_Utf8PathExpandObject(link_name)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((xtarget_name = DeeFS_Utf8PathExpandObject(target_name)) == NULL) { Dee_DECREF(xlink_name); goto err_h1; }
- result = _DeeFS_Utf8TryLinkObject(xlink_name,xtarget_name);
- Dee_DECREF(xtarget_name);
- Dee_DECREF(xlink_name);
- return result;
-}
-DEE_A_RET_NOEXCEPT(0) int DeeXFS_WideTryLinkObject(
- DEE_A_IN_OBJECT(DeeWideStringObject) const *link_name,
- DEE_A_IN_OBJECT(DeeWideStringObject) const *target_name) {
- DeeObject *xlink_name,*xtarget_name; int result;
- if DEE_UNLIKELY((xlink_name = DeeFS_WidePathExpandObject(link_name)) == NULL) {err_h1: DeeError_HandledOne(); return 0; }
- if DEE_UNLIKELY((xtarget_name = DeeFS_WidePathExpandObject(target_name)) == NULL) { Dee_DECREF(xlink_name); goto err_h1; }
- result = _DeeFS_WideTryLinkObject(xlink_name,xtarget_name);
- Dee_DECREF(xtarget_name);
- Dee_DECREF(xlink_name);
  return result;
 }
 
