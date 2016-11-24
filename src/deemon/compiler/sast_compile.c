@@ -22,7 +22,7 @@
 #define GUARD_DEEMON_SAST_COMPILE_C 1
 #define DEE_LIMITED_API 1
 
-// include/*
+// /include/*
 #include <deemon/__conf.inl>
 #include <deemon/compiler/code.h>
 #include <deemon/compiler/compiler.h>
@@ -32,7 +32,7 @@
 #include <deemon/runtime/execute.h>
 #include <deemon/tuple.h>
 
-// src/*
+// /src/*
 #include <deemon/compiler/__opcode.inl>
 #include <deemon/compiler/codewriter.h>
 #include <deemon/compiler/sast.h>
@@ -890,11 +890,15 @@ err_loopnone_failloop: DeeCodeWriter_FAIL_LOOP(writer); return -1;
 #ifdef MASK_NOEXCEPT
      if DEE_UNLIKELY(DeeCodeWriter_WriteOp(writer,OP_EXCEPT_END) != 0) return -1;
 #endif
+#if 1
+     if DEE_UNLIKELY(DeeCodeWriter_WriteOp(writer,OP_RETHROW) != 0) return -1;
+#else
      if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(
       writer,OP_LOAD_LOC,rt_entry->e_store) != 0) return -1;
      //DeeCodeWriter_INCSTACK(writer); // Not really required...
      if DEE_UNLIKELY(DeeCodeWriter_WriteOp(writer,OP_THROW) != 0) return -1;
      //DeeCodeWriter_DECSTACK(writer);
+#endif
 #ifndef MASK_NOEXCEPT
      rt_entry = writer->cw_exceptv+rethrow_catch_id;
      DeeExceptionHandlerEntry_InitCatchAll(rt_entry,writer);
