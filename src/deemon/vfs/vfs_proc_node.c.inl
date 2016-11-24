@@ -186,21 +186,24 @@ static void DEE_CALL _deevfs_procpidnode_quit(struct DeeVFSProcPIDNode *self) {
  Dee_DECREF(self->vpn_proc);
 }
 #define DEE_VFSPROCPIDMEMBER_NONE    0
-#define DEE_VFSPROCPIDMEMBER_EXE     1
-#define DEE_VFSPROCPIDMEMBER_CMDLINE 2
+#define DEE_VFSPROCPIDMEMBER_CMDLINE 1
+#define DEE_VFSPROCPIDMEMBER_CWD     2
+#define DEE_VFSPROCPIDMEMBER_EXE     3
 #define DEE_VFSPROCPIDMEMBER_BEGIN   1
-#define DEE_VFSPROCPIDMEMBER_END     3
+#define DEE_VFSPROCPIDMEMBER_END     4
 static int DeeVFSProcPIDNode_GetMemberID(char const *name) {
- if (strcmp(name,"exe") == 0) return DEE_VFSPROCPIDMEMBER_EXE;
  if (strcmp(name,"cmdline") == 0) return DEE_VFSPROCPIDMEMBER_CMDLINE;
+ if (strcmp(name,"cwd") == 0) return DEE_VFSPROCPIDMEMBER_CWD;
+ if (strcmp(name,"exe") == 0) return DEE_VFSPROCPIDMEMBER_EXE;
  return DEE_VFSPROCPIDMEMBER_NONE;
 }
 static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
  struct DeeVFSProcPIDNode *self, int member_id) {
  struct DeeVFSNode *result; DeeVFSNodeType const *node_type;
  switch (member_id) {
-  case DEE_VFSPROCPIDMEMBER_EXE: node_type = &DeeVFSProcPIDNode_Type_exe; break;
   case DEE_VFSPROCPIDMEMBER_CMDLINE: node_type = &DeeVFSProcPIDNode_Type_cmdline; break;
+  case DEE_VFSPROCPIDMEMBER_CWD: node_type = &DeeVFSProcPIDNode_Type_cwd; break;
+  case DEE_VFSPROCPIDMEMBER_EXE: node_type = &DeeVFSProcPIDNode_Type_exe; break;
   default: DEE_BUILTIN_UNREACHABLE();
  }
  if ((result = DeeVFSNode_ALLOC(struct DeeVFSNode)) == NULL) return NULL;
@@ -210,8 +213,9 @@ static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
 static DeeObject *DEE_CALL _deevfs_procpidnode_nameof(
  struct DeeVFSProcPIDNode *DEE_UNUSED(self), struct DeeVFSNode *child) {
  DeeVFSNodeType const *node_type = child->vn_type;
- if (node_type == &DeeVFSProcPIDNode_Type_exe) DeeReturn_STATIC_STRING("exe");
  if (node_type == &DeeVFSProcPIDNode_Type_cmdline) DeeReturn_STATIC_STRING("cmdline");
+ if (node_type == &DeeVFSProcPIDNode_Type_cwd) DeeReturn_STATIC_STRING("cwd");
+ if (node_type == &DeeVFSProcPIDNode_Type_exe) DeeReturn_STATIC_STRING("exe");
  DEE_ASSERTF(0,"%R is not a parent of /proc/[PID]",
              DeeVFSNode_Filename(child));
  DEE_BUILTIN_UNREACHABLE();
@@ -277,6 +281,16 @@ static DeeObject *DEE_CALL _deevfs_procpidnode_exe_readlink(struct DeeVFSNode *s
 }
 struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe = { /*< '/proc/[PID]/exe' */
  {NULL,(DeeObject *(DEE_CALL *)(struct DeeVFSNode *))&_deevfs_procpidnode_exe_readlink},
+ NULL,DeeVFSNoopNodeType_FileData,NULL};
+//////////////////////////////////////////////////////////////////////////
+static DeeObject *DEE_CALL _deevfs_procpidnode_cwd_readlink(struct DeeVFSNode *self) {
+ DeeObject *process;
+ DEE_ASSERT(self->vn_parent && self->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ process = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vn_parent)->vpn_proc;
+ return DeeProcess_Cwd(process);
+}
+struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cwd = { /*< '/proc/[PID]/cwd' */
+ {NULL,(DeeObject *(DEE_CALL *)(struct DeeVFSNode *))&_deevfs_procpidnode_cwd_readlink},
  NULL,DeeVFSNoopNodeType_FileData,NULL};
 //////////////////////////////////////////////////////////////////////////
 static int DEE_CALL _deevfs_procpidnode_cmdline_open(struct DeeVFSVirtualFile *self) {

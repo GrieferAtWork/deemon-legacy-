@@ -743,14 +743,16 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeProcessObject) *
 DeeProcess_Win32NewFromID(DEE_A_IN DeeProcessID id) {
  HANDLE process_handle; // Open the process as a handle (use the lowest possible access right)
  DeeObject *result;
+ if (id == GetCurrentProcessId()) { Dee_INCREF(&_DeeProcess_Self); return (DeeObject *)&_DeeProcess_Self; }
  if ((process_handle = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,id)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "OpenProcess(%lu) : %K",id,
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return NULL;
  }
- if ((result = _DeeProcess_NewFromHandle(process_handle)) == NULL)
-  if (!CloseHandle(process_handle)) SetLastError(0);
+ if ((result = _DeeProcess_NewFromHandle(process_handle)) == NULL) {
+  CloseHandle(process_handle);
+ }
  return result;
 }
 #endif

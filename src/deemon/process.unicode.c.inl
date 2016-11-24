@@ -293,6 +293,13 @@ err_r: Dee_CLEAR(result); goto end_0;
 DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeProcess_F(Cwd)(
  DEE_A_IN_OBJECT(DeeProcessObject) const *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
+ if (DeeProcess_IS_SELF(self)) {
+#ifdef WIDE
+  return DeeFS_WideGetCwd();
+#else
+  return DeeFS_Utf8GetCwd();
+#endif
+ }
  if (!DeeProcess_IS_REF(self)) {
   DeeProcess_ACQUIRE(self);
   if (!DeeProcess_STARTED(self)) {

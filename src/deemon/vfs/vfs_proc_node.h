@@ -81,7 +81,8 @@ struct DeeVFSProcPIDView {
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type;  /*< '/proc/[PID]' */
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSProcPIDNode *DeeVFSProcPIDNode_NewFromProcess(DEE_A_IN DeeProcessObject *proc);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSProcPIDNode *DeeVFSProcPIDNode_NewFromPID(DEE_A_IN DWORD pid);
-extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe; /*< '/proc/[PID]/exe' */
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe;     /*< '/proc/[PID]/exe' */
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cwd;     /*< '/proc/[PID]/cwd' */
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cmdline; /*< '/proc/[PID]/cmdline' */
 //////////////////////////////////////////////////////////////////////////
 
