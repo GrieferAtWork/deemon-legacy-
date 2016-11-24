@@ -2709,10 +2709,12 @@ static DeeObject *_deestring_F(tp_cmp_lo)(DEE_STRINGOBJECT *lhs, DeeObject *rhs)
   if DEE_UNLIKELY(DeeObject_Cast(DEE_CHAR,rhs,&temp) != 0) return NULL;
   DeeReturn_Bool(*DEE_STRING_STR(lhs) < temp);
  } else {
-  DeeError_SetStringf(&DeeErrorType_NotImplemented,
-                      "Not implemented: string.__lo__(%s)",
-                      DeeType_NAME(Dee_TYPE(rhs)));
-  return NULL;
+  int result;
+  if DEE_UNLIKELY((rhs = DeeString_F(Cast)(rhs)) == NULL) return NULL;
+  result = Dee_F(StrCmpLen)(DEE_STRING_SIZE(lhs),DEE_STRING_STR(lhs),
+                            DEE_STRING_SIZE(rhs),DEE_STRING_STR(rhs));
+  Dee_DECREF(rhs);
+  DeeReturn_Bool(result < 0);
  }
 }
 static DeeObject *_deestring_F(tp_cmp_le)(DEE_STRINGOBJECT *lhs, DeeObject *rhs) {
@@ -2727,10 +2729,12 @@ static DeeObject *_deestring_F(tp_cmp_le)(DEE_STRINGOBJECT *lhs, DeeObject *rhs)
   if DEE_UNLIKELY(DeeObject_Cast(DEE_CHAR,rhs,&temp) != 0) return NULL;
   DeeReturn_Bool(*DEE_STRING_STR(lhs) <= temp);
  } else {
-  DeeError_SetStringf(&DeeErrorType_NotImplemented,
-                      "Not implemented: string.__le__(%s)",
-                      DeeType_NAME(Dee_TYPE(rhs)));
-  return NULL;
+  int result;
+  if DEE_UNLIKELY((rhs = DeeString_F(Cast)(rhs)) == NULL) return NULL;
+  result = Dee_F(StrCmpLen)(DEE_STRING_SIZE(lhs),DEE_STRING_STR(lhs),
+                            DEE_STRING_SIZE(rhs),DEE_STRING_STR(rhs));
+  Dee_DECREF(rhs);
+  DeeReturn_Bool(result <= 0);
  }
 }
 static DeeObject *_deestring_F(tp_cmp_eq)(DEE_STRINGOBJECT *lhs, DeeObject *rhs) {
@@ -2745,10 +2749,12 @@ static DeeObject *_deestring_F(tp_cmp_eq)(DEE_STRINGOBJECT *lhs, DeeObject *rhs)
   if DEE_UNLIKELY(DeeObject_Cast(DEE_CHAR,rhs,&temp) != 0) return NULL;
   DeeReturn_Bool(*DEE_STRING_STR(lhs) == temp);
  } else {
-  DeeError_SetStringf(&DeeErrorType_NotImplemented,
-                      "Not implemented: string.__eq__(%s)",
-                      DeeType_NAME(Dee_TYPE(rhs)));
-  return NULL;
+  int result;
+  if DEE_UNLIKELY((rhs = DeeString_F(Cast)(rhs)) == NULL) return NULL;
+  result = Dee_F(StrCmpLen)(DEE_STRING_SIZE(lhs),DEE_STRING_STR(lhs),
+                            DEE_STRING_SIZE(rhs),DEE_STRING_STR(rhs));
+  Dee_DECREF(rhs);
+  DeeReturn_Bool(result == 0);
  }
 }
 static DeeObject *_deestring_F(tp_cmp_ne)(DEE_STRINGOBJECT *lhs, DeeObject *rhs) {
@@ -2763,10 +2769,12 @@ static DeeObject *_deestring_F(tp_cmp_ne)(DEE_STRINGOBJECT *lhs, DeeObject *rhs)
   if DEE_UNLIKELY(DeeObject_Cast(DEE_CHAR,rhs,&temp) != 0) return NULL;
   DeeReturn_Bool(*DEE_STRING_STR(lhs) != temp);
  } else {
-  DeeError_SetStringf(&DeeErrorType_NotImplemented,
-                      "Not implemented: string.__ne__(%s)",
-                      DeeType_NAME(Dee_TYPE(rhs)));
-  return NULL;
+  int result;
+  if DEE_UNLIKELY((rhs = DeeString_F(Cast)(rhs)) == NULL) return NULL;
+  result = Dee_F(StrCmpLen)(DEE_STRING_SIZE(lhs),DEE_STRING_STR(lhs),
+                            DEE_STRING_SIZE(rhs),DEE_STRING_STR(rhs));
+  Dee_DECREF(rhs);
+  DeeReturn_Bool(result != 0);
  }
 }
 static DeeObject *_deestring_F(tp_cmp_gr)(DEE_STRINGOBJECT *lhs, DeeObject *rhs) {
@@ -2781,10 +2789,12 @@ static DeeObject *_deestring_F(tp_cmp_gr)(DEE_STRINGOBJECT *lhs, DeeObject *rhs)
   if DEE_UNLIKELY(DeeObject_Cast(DEE_CHAR,rhs,&temp) != 0) return NULL;
   DeeReturn_Bool(*DEE_STRING_STR(lhs) > temp);
  } else {
-  DeeError_SetStringf(&DeeErrorType_NotImplemented,
-                      "Not implemented: string.__gr__(%s)",
-                      DeeType_NAME(Dee_TYPE(rhs)));
-  return NULL;
+  int result;
+  if DEE_UNLIKELY((rhs = DeeString_F(Cast)(rhs)) == NULL) return NULL;
+  result = Dee_F(StrCmpLen)(DEE_STRING_SIZE(lhs),DEE_STRING_STR(lhs),
+                            DEE_STRING_SIZE(rhs),DEE_STRING_STR(rhs));
+  Dee_DECREF(rhs);
+  DeeReturn_Bool(result > 0);
  }
 }
 static DeeObject *_deestring_F(tp_cmp_ge)(DEE_STRINGOBJECT *lhs, DeeObject *rhs) {
@@ -2799,10 +2809,12 @@ static DeeObject *_deestring_F(tp_cmp_ge)(DEE_STRINGOBJECT *lhs, DeeObject *rhs)
   if DEE_UNLIKELY(DeeObject_Cast(DEE_CHAR,rhs,&temp) != 0) return NULL;
   DeeReturn_Bool(*DEE_STRING_STR(lhs) >= temp);
  } else {
-  DeeError_SetStringf(&DeeErrorType_NotImplemented,
-                      "Not implemented: string.__ge__(%s)",
-                      DeeType_NAME(Dee_TYPE(rhs)));
-  return NULL;
+  int result;
+  if DEE_UNLIKELY((rhs = DeeString_F(Cast)(rhs)) == NULL) return NULL;
+  result = Dee_F(StrCmpLen)(DEE_STRING_SIZE(lhs),DEE_STRING_STR(lhs),
+                            DEE_STRING_SIZE(rhs),DEE_STRING_STR(rhs));
+  Dee_DECREF(rhs);
+  DeeReturn_Bool(result >= 0);
  }
 }
 static DeeObject *_deestring_F(tp_add)(DEE_STRINGOBJECT *lhs, DeeObject *rhs) {
