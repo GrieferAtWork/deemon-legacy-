@@ -586,11 +586,13 @@ DEE_DECL_END
 #define WIDE
 #include "vfs_core.unicode_impl.inl"
 #include "vfs_core.unicode_impl.inl"
+
 #include "vfs_native_mount.c.inl"
 #include "vfs_native_node.c.inl"
-#include "vfs_virtual_stdfile.c.inl"
-#include "vfs_virtual_dir.c.inl"
 #include "vfs_root.c.inl"
+#include "vfs_virtual_dir.c.inl"
+#include "vfs_virtual_nullfile.c.inl"
+#include "vfs_virtual_stdfile.c.inl"
 #endif
 
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */

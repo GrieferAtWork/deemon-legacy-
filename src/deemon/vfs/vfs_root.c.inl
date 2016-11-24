@@ -27,6 +27,7 @@
 #include <deemon/__conf.inl>
 #include <deemon/vfs/vfs_root.h>
 #include <deemon/vfs/vfs_virtual_stdfile.h>
+#include <deemon/vfs/vfs_virtual_nullfile.h>
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
@@ -35,12 +36,16 @@ extern struct DeeVFSVirtualDirNode _deevfs_dev;
 static struct DeeVFSVirtualStdFileNode _deevfs_dev_stdin  = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_deevfs_dev,STD_INPUT_HANDLE);
 static struct DeeVFSVirtualStdFileNode _deevfs_dev_stdout = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_deevfs_dev,STD_OUTPUT_HANDLE);
 static struct DeeVFSVirtualStdFileNode _deevfs_dev_stderr = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_deevfs_dev,STD_ERROR_HANDLE);
+static struct DeeVFSNode _deevfs_dev_null = DeeVFSNode_INIT(&DeeVFSVirtualNULLFileNode_Type,(struct DeeVFSNode *)&_deevfs_dev);
+static struct DeeVFSNode _deevfs_dev_zero = DeeVFSNode_INIT(&DeeVFSVirtualZEROFileNode_Type,(struct DeeVFSNode *)&_deevfs_dev);
 
 
 static struct DeeVFSVirtualDirEntry _deevfs_dev_nodes[] = {
+ {"null",  (struct DeeVFSNode *)&_deevfs_dev_null},
+ {"stderr",(struct DeeVFSNode *)&_deevfs_dev_stderr},
  {"stdin", (struct DeeVFSNode *)&_deevfs_dev_stdin},
  {"stdout",(struct DeeVFSNode *)&_deevfs_dev_stdout},
- {"stderr",(struct DeeVFSNode *)&_deevfs_dev_stderr},
+ {"zero",  (struct DeeVFSNode *)&_deevfs_dev_zero},
  {NULL,NULL},
 };
 struct DeeVFSVirtualDirNode _deevfs_dev =
