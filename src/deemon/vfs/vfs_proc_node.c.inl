@@ -30,6 +30,7 @@
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/vfs/vfs_proc_node.h>
 #include <deemon/vfs/vfs_root.h>
+#include <deemon/vfs/vfs_virtual_file.h>
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
@@ -184,12 +185,14 @@ DeeVFSProcPIDNode_NewFromPID(DEE_A_IN DWORD pid) {
 static void DEE_CALL _deevfs_procpidnode_quit(struct DeeVFSProcPIDNode *self) {
  Dee_DECREF(self->vpn_proc);
 }
-#define DEE_VFSPROCPIDMEMBER_NONE  0
-#define DEE_VFSPROCPIDMEMBER_EXE   1
-#define DEE_VFSPROCPIDMEMBER_BEGIN 1
-#define DEE_VFSPROCPIDMEMBER_END   2
+#define DEE_VFSPROCPIDMEMBER_NONE    0
+#define DEE_VFSPROCPIDMEMBER_EXE     1
+#define DEE_VFSPROCPIDMEMBER_CMDLINE 2
+#define DEE_VFSPROCPIDMEMBER_BEGIN   1
+#define DEE_VFSPROCPIDMEMBER_END     3
 static int DeeVFSProcPIDNode_GetMemberID(char const *name) {
  if (strcmp(name,"exe") == 0) return DEE_VFSPROCPIDMEMBER_EXE;
+ if (strcmp(name,"cmdline") == 0) return DEE_VFSPROCPIDMEMBER_CMDLINE;
  return DEE_VFSPROCPIDMEMBER_NONE;
 }
 static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
@@ -197,6 +200,7 @@ static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
  struct DeeVFSNode *result; DeeVFSNodeType const *node_type;
  switch (member_id) {
   case DEE_VFSPROCPIDMEMBER_EXE: node_type = &DeeVFSProcPIDNode_Type_exe; break;
+  case DEE_VFSPROCPIDMEMBER_CMDLINE: node_type = &DeeVFSProcPIDNode_Type_cmdline; break;
   default: DEE_BUILTIN_UNREACHABLE();
  }
  if ((result = DeeVFSNode_ALLOC(struct DeeVFSNode)) == NULL) return NULL;
@@ -207,6 +211,7 @@ static DeeObject *DEE_CALL _deevfs_procpidnode_nameof(
  struct DeeVFSProcPIDNode *DEE_UNUSED(self), struct DeeVFSNode *child) {
  DeeVFSNodeType const *node_type = child->vn_type;
  if (node_type == &DeeVFSProcPIDNode_Type_exe) DeeReturn_STATIC_STRING("exe");
+ if (node_type == &DeeVFSProcPIDNode_Type_cmdline) DeeReturn_STATIC_STRING("cmdline");
  DEE_ASSERTF(0,"%R is not a parent of /proc/[PID]",
              DeeVFSNode_Filename(child));
  DEE_BUILTIN_UNREACHABLE();
@@ -250,7 +255,6 @@ static int DEE_CALL _deevfs_procpidview_vvt_yield(
  *result = DeeVFSProcPIDNode_GetMember((struct DeeVFSProcPIDNode *)self->vpv_view.vv_node,member_id);
  return *result ? 0 : -1;
 }
-
 static struct _DeeVFSViewTypeData _deevfs_procpidnode_vnt_view = {
  sizeof(struct DeeVFSVirtualDirView),
  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))&_deevfs_procpidnode_walk,
@@ -274,6 +278,28 @@ static DeeObject *DEE_CALL _deevfs_procpidnode_exe_readlink(struct DeeVFSNode *s
 struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe = { /*< '/proc/[PID]/exe' */
  {NULL,(DeeObject *(DEE_CALL *)(struct DeeVFSNode *))&_deevfs_procpidnode_exe_readlink},
  NULL,DeeVFSNoopNodeType_FileData,NULL};
+//////////////////////////////////////////////////////////////////////////
+static int DEE_CALL _deevfs_procpidnode_cmdline_open(struct DeeVFSVirtualFile *self) {
+ DeeObject *process,*cmdline;
+ DEE_ASSERT(self->vff_file.vf_node->vn_parent &&
+            self->vff_file.vf_node->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ process = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vff_file.vf_node->vn_parent)->vpn_proc;
+ if DEE_UNLIKELY((cmdline = DeeProcess_Cmd(process)) == NULL) return -1;
+ DeeVFSVirtualFile_InitWithInheritedText(self,cmdline);
+ return 0;
+}
+static struct _DeeVFSFileTypeData _deevfs_procpidnode_cmdline_vnt_file = {
+ sizeof(struct DeeVFSVirtualFile),
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_procpidnode_cmdline_open,
+ (void(DEE_CALL *)(struct DeeVFSFile *))                                     &DeeVFSVirtualFile_Quit,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &DeeVFSVirtualFile_Read,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &DeeVFSVirtualFile_Seek,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+};
+struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cmdline = { /*< '/proc/[PID]/cmdline' */
+ {NULL,NULL},NULL,&_deevfs_procpidnode_cmdline_vnt_file,NULL};
 // --- DeeVFSProcPIDNode_Type ---
 //////////////////////////////////////////////////////////////////////////
 

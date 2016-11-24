@@ -156,7 +156,9 @@ struct DeeVFSFile {
 #define DeeVFSFile_HasSeek(self)             ((self)->vf_type->vnt_file->vft_seek!=NULL)
 #define DeeVFSFile_HasFlush(self)            ((self)->vf_type->vnt_file->vft_flush!=NULL)
 #define DeeVFSFile_HasTrunc(self)            ((self)->vf_type->vnt_file->vft_trunc!=NULL)
-#define DeeVFSFile_Quit(self)                ((self)->vf_type->vnt_file->vft_quit ? (*(self)->vf_type->vnt_file->vft_quit)(self) : (void)0)
+#define DeeVFSFile_Quit(self) \
+ ((self)->vf_type->vnt_file->vft_quit ? (*(self)->vf_type->vnt_file->vft_quit)(self) : (void)0,\
+  DeeVFSNode_DECREF((self)->vf_node))
 #define DeeVFSFile_Delete(self)              (DeeVFSFile_Quit(self),free_nn(self))
 #define DeeVFSFile_Read(self,p,s,rs)         (DEE_ASSERTF(DeeVFSFile_HasRead(self),"Can't read file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file->vft_read)(self,p,s,rs))
 #define DeeVFSFile_Write(self,p,s,ws)        (DEE_ASSERTF(DeeVFSFile_HasWrite(self),"Can't write file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file->vft_write)(self,p,s,ws))
