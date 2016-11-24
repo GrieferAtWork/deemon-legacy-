@@ -80,7 +80,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideSetEnv(
  Dee_DECREF(envname_ob);
  return 0;
 #else
- DeeObject *envname_ob; int result;
+ DeeObject *envname_ob,*envvalue_ob; int result;
  if DEE_UNLIKELY((envname_ob = DeeUtf8String_FromWideString(envname)) == NULL) return -1;
  if DEE_UNLIKELY((envvalue_ob = DeeUtf8String_FromWideString(envvalue)) == NULL) { Dee_DECREF(envname_ob); return -1; }
  result = DeeNFS_Utf8SetEnvObject(envname_ob,envvalue_ob);

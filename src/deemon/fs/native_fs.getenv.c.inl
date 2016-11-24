@@ -80,7 +80,7 @@ DeeNFS_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
  result = DeeNFS_Utf8GetEnvObject(newenvname);
  Dee_DECREF(newenvname);
  if DEE_UNLIKELY(!result) return NULL;
- newresult = DeeWideString_FromWideStringWithLength(DeeUtf8String_SIZE(result),
+ newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
                                                     DeeUtf8String_STR(result));
  Dee_DECREF(result);
  return newresult;
@@ -120,7 +120,7 @@ DeeNFS_WideGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname) {
  result = DeeSysFS_Utf8GetEnvObject(newenvname);
  Dee_DECREF(newenvname);
  if DEE_UNLIKELY(!result) return NULL;
- newresult = DeeWideString_FromWideStringWithLength(DeeUtf8String_SIZE(result),
+ newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
                                                     DeeUtf8String_STR(result));
  Dee_DECREF(result);
  return newresult;
@@ -151,6 +151,7 @@ DeeNFS_Utf8TryGetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
  newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
                                                     DeeWideString_STR(result));
  Dee_DECREF(result);
+ if DEE_UNLIKELY(!newresult) goto err_h1;
  return newresult;
 #else
  DeeObject *result;
@@ -179,6 +180,7 @@ DeeNFS_WideTryGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
  newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
                                                     DeeUtf8String_STR(result));
  Dee_DECREF(result);
+ if DEE_UNLIKELY(!newresult) goto err_h1;
  return newresult;
 #else
  DeeObject *result;
@@ -202,6 +204,7 @@ DeeNFS_Utf8TryGetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname) 
  newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
                                                     DeeWideString_STR(result));
  Dee_DECREF(result);
+ if DEE_UNLIKELY(!newresult) goto err_h1;
  return newresult;
 #else
  DeeObject *result;
@@ -225,6 +228,7 @@ DeeNFS_WideTryGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname) 
  newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
                                                     DeeUtf8String_STR(result));
  Dee_DECREF(result);
+ if DEE_UNLIKELY(!newresult) goto err_h1;
  return newresult;
 #else
  DeeObject *result;

@@ -924,7 +924,7 @@ module fs {
 	//        Equivalent to:
 	//        >> for (x: fs::dir(fs::path::head(path))) if (x.wmatch(fs::path::tail(path))) { ... }
 	//        NOTE: If the query is a widestring, items are yielded as widestrings
-	local class query {
+	local const class query {
 		this(__pattern) { this.__pattern = __pattern; }
 		operator for() {
 			local __pat = fs::path::tail(this.__pattern);

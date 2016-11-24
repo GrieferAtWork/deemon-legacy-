@@ -32,6 +32,9 @@
 #include <deemon/fs/native_fs.h>
 #include <deemon/fs/native_filefd.h>
 
+#if !defined(DEE_NFS_HAVE_OSCOPY) && defined(DEE_NFS_HAVE_COPY)
+#include DEE_INCLUDE_MEMORY_API()
+#endif /* ... */
 
 DEE_DECL_BEGIN
 

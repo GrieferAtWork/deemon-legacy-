@@ -290,10 +290,6 @@ make("IsFiFo");
 make("IsSocket");
 make("IsAbs");
 make("Exists");
-make("Chdir");
-make("Unlink");
-make("RmDir");
-make("Remove");
 ]]]*/
 #if !defined(DeeSysFS_Utf8IsFileObject) && defined(DeeSysFS_Utf8IsFile)
 #define DeeSysFS_Utf8IsFileObject(path,result,...) DeeSysFS_Utf8IsFile(DeeUtf8String_STR(path),result,__VA_ARGS__)
@@ -373,32 +369,32 @@ make("Remove");
 #if !defined(DeeSysFS_WideExistsObject) && defined(DeeSysFS_WideExists)
 #define DeeSysFS_WideExistsObject(path,result,...) DeeSysFS_WideExists(DeeWideString_STR(path),result,__VA_ARGS__)
 #endif
-#if !defined(DeeSysFS_Utf8ChdirObject) && defined(DeeSysFS_Utf8Chdir)
-#define DeeSysFS_Utf8ChdirObject(path,result,...) DeeSysFS_Utf8Chdir(DeeUtf8String_STR(path),result,__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_WideChdirObject) && defined(DeeSysFS_WideChdir)
-#define DeeSysFS_WideChdirObject(path,result,...) DeeSysFS_WideChdir(DeeWideString_STR(path),result,__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8UnlinkObject) && defined(DeeSysFS_Utf8Unlink)
-#define DeeSysFS_Utf8UnlinkObject(path,result,...) DeeSysFS_Utf8Unlink(DeeUtf8String_STR(path),result,__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_WideUnlinkObject) && defined(DeeSysFS_WideUnlink)
-#define DeeSysFS_WideUnlinkObject(path,result,...) DeeSysFS_WideUnlink(DeeWideString_STR(path),result,__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8RmDirObject) && defined(DeeSysFS_Utf8RmDir)
-#define DeeSysFS_Utf8RmDirObject(path,result,...) DeeSysFS_Utf8RmDir(DeeUtf8String_STR(path),result,__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_WideRmDirObject) && defined(DeeSysFS_WideRmDir)
-#define DeeSysFS_WideRmDirObject(path,result,...) DeeSysFS_WideRmDir(DeeWideString_STR(path),result,__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8RemoveObject) && defined(DeeSysFS_Utf8Remove)
-#define DeeSysFS_Utf8RemoveObject(path,result,...) DeeSysFS_Utf8Remove(DeeUtf8String_STR(path),result,__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_WideRemoveObject) && defined(DeeSysFS_WideRemove)
-#define DeeSysFS_WideRemoveObject(path,result,...) DeeSysFS_WideRemove(DeeWideString_STR(path),result,__VA_ARGS__)
-#endif
 //[[[end]]]
 
+#if !defined(DeeSysFS_Utf8ChdirObject) && defined(DeeSysFS_Utf8Chdir)
+#define DeeSysFS_Utf8ChdirObject(path,...) DeeSysFS_Utf8Chdir(DeeUtf8String_STR(path),__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_WideChdirObject) && defined(DeeSysFS_WideChdir)
+#define DeeSysFS_WideChdirObject(path,...) DeeSysFS_WideChdir(DeeWideString_STR(path),__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_Utf8UnlinkObject) && defined(DeeSysFS_Utf8Unlink)
+#define DeeSysFS_Utf8UnlinkObject(path,...) DeeSysFS_Utf8Unlink(DeeUtf8String_STR(path),__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_WideUnlinkObject) && defined(DeeSysFS_WideUnlink)
+#define DeeSysFS_WideUnlinkObject(path,...) DeeSysFS_WideUnlink(DeeWideString_STR(path),__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_Utf8RmDirObject) && defined(DeeSysFS_Utf8RmDir)
+#define DeeSysFS_Utf8RmDirObject(path,...) DeeSysFS_Utf8RmDir(DeeUtf8String_STR(path),__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_WideRmDirObject) && defined(DeeSysFS_WideRmDir)
+#define DeeSysFS_WideRmDirObject(path,...) DeeSysFS_WideRmDir(DeeWideString_STR(path),__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_Utf8RemoveObject) && defined(DeeSysFS_Utf8Remove)
+#define DeeSysFS_Utf8RemoveObject(path,...) DeeSysFS_Utf8Remove(DeeUtf8String_STR(path),__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_WideRemoveObject) && defined(DeeSysFS_WideRemove)
+#define DeeSysFS_WideRemoveObject(path,...) DeeSysFS_WideRemove(DeeWideString_STR(path),__VA_ARGS__)
+#endif
 #if !defined(DeeSysFS_Utf8TryMkDirObject) && defined(DeeSysFS_Utf8TryMkDir)
 #define DeeSysFS_Utf8TryMkDirObject(path,mode) DeeSysFS_Utf8TryMkDir(DeeUtf8String_STR(path),mode)
 #endif

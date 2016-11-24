@@ -295,6 +295,9 @@ do{\
 
 
 #define DEE_UNIXSYS_UTF8ENUMENV_ENVVALUE_ZERO_TERMINATED
+#ifndef environ
+extern char **environ;
+#endif
 #define DeeUnixSys_Utf8EnumEnv(enum,...) \
 do{\
  char **_env_iter,*_env_one,*_env_value_begin;\
@@ -302,12 +305,15 @@ do{\
   _env_value_begin = _env_one;\
   while (*_env_value_begin && *_env_value_begin != '=') ++_env_value_begin;\
   if (!*_env_value_begin) continue;\
-  enum((Dee_size_t)(_env_value_begin-_env_one),_env_one),\
+  enum((Dee_size_t)(_env_value_begin-_env_one),_env_one,\
        strlen(_env_value_begin+1),_env_value_begin,__VA_ARGS__);\
  }\
 }while(0)
 
 #if DEE_HAVE__WENVIRON
+/*#ifndef _wenviron
+extern wchar_t **_wenviron;
+#endif*/
 #define DEE_UNIXSYS_WIDEENUMENV_ENVVALUE_ZERO_TERMINATED
 #define DeeUnixSys_WideEnumEnv(enum,...) \
 do{\
@@ -316,7 +322,7 @@ do{\
   _env_value_begin = _env_one;\
   while (*_env_value_begin && *_env_value_begin != '=') ++_env_value_begin;\
   if (!*_env_value_begin) continue;\
-  enum((Dee_size_t)(_env_value_begin-_env_one),_env_one),\
+  enum((Dee_size_t)(_env_value_begin-_env_one),_env_one,\
        strlen(_env_value_begin+1),_env_value_begin,__VA_ARGS__);\
  }\
 }while(0)
@@ -331,6 +337,10 @@ do{\
 
 
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_PWD_H
+#ifdef DEE_PRIVATE_DECL_DEE_UID_T
+DEE_PRIVATE_DECL_DEE_UID_T
+#undef DEE_PRIVATE_DECL_DEE_UID_T
+#endif
 #define DeeUnixSys_Utf8GetHome DeeUnixSys_Utf8GetHome
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeUnixSys_Utf8GetHome(void) {
  DeeObject *result;
@@ -352,10 +362,10 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeUnixSys
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *)
 DeeUnixSys_Utf8GetUserHome(DEE_A_IN_Z Dee_Utf8Char const *username) {
  struct passwd *pd;
- pd = getpwnam(user); // TODO: getpwnam_r
+ pd = getpwnam(username); // TODO: getpwnam_r
  if DEE_UNLIKELY(!pd) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "getpwnam(%q) : %K",user,
+                      "getpwnam(%q) : %K",username,
                       DeeSystemError_ToString(DeeSystemError_Consume()));
   return NULL;
  }
@@ -402,7 +412,6 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeUnixSys
 #define DeeUnixSys_Utf8GetTimes(path,atime,ctime,mtime,...) \
 do{\
  struct stat _stat_st;\
- _wstat\
  if DEE_UNLIKELY(stat(path,&_stat_st) == -1) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "stat(%q) : %K",path,\
@@ -462,7 +471,7 @@ do{\
    _tm_val[1].tv_usec = (long)((*mtime) % 1000);\
   } else _tm_val[1].tv_sec = st.st_mtime,_tm_val[1].tv_usec = 0;\
  }\
- if DEE_UNLIKELY(utimes(path,tm_val) == -1) {\
+ if DEE_UNLIKELY(utimes(path,_tm_val) == -1) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "utimes(%q,{{%ld,%ld},{%ld,%ld}}) : %K",path,\
                       (long)_tm_val[0].tv_sec,(long)_tm_val[0].tv_usec,\
@@ -541,6 +550,11 @@ do{\
  }\
 }while(0)
 #endif /* DEE_HAVE_READLINK */
+
+#define DeeUnixSys_Utf8IsAbs(path,result,...) do{ *(result) = (path)[0] == '/'; }while(0)
+#define DeeUnixSys_WideIsAbs(path,result,...) do{ *(result) = (path)[0] == '/'; }while(0)
+#define DeeUnixSysFS_Utf8IsAbs DeeUnixSys_Utf8IsAbs
+#define DeeUnixSysFS_WideIsAbs DeeUnixSys_WideIsAbs
 
 
 #if 0 /* TODO */
@@ -663,6 +677,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsMount)(DEE_A_IN_Z DEE_CHAR const *pat
 #endif
 #ifdef DeeUnixSysFS_Utf8Readlink
 #define DeeSysFS_Utf8Readlink    DeeUnixSysFS_Utf8Readlink
+#endif
+#ifdef DeeUnixSysFS_Utf8IsAbs
+#define DeeSysFS_Utf8IsAbs       DeeUnixSysFS_Utf8IsAbs
+#endif
+#ifdef DeeUnixSysFS_WideIsAbs
+#define DeeSysFS_WideIsAbs       DeeUnixSysFS_WideIsAbs
 #endif
 
 DEE_DECL_END

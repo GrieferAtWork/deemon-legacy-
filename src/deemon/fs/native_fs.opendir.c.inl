@@ -63,7 +63,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeNFS_WideOpendir(DEE_A_IN_Z Dee_WideChar const
  DeeObject *u8path,*result;
  DEE_ASSERT(path);
  if ((u8path = DeeUtf8String_FromWideString(path)) == NULL) return NULL;
- result = (DeeObject *)DeeNFSUtf8View_OpenPath(u8path);
+ result = (DeeObject *)DeeNFSUtf8View_OpenPathObject(u8path);
  Dee_DECREF(u8path);
  return result;
 #endif

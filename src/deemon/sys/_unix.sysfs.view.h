@@ -76,6 +76,10 @@ struct DeeUnixSysFSUtf8View {
  struct DeeAtomicMutex unx_lock;
 };
 
+// v Returns true for "." and ".."
+#define DeeUnixSys_ISIGNOREDPATHNAME(path)\
+ ((path)[0] == '.' && (!(path)[1] || ((path)[1] == '.' && !(path)[2])))
+
 #define DeeUnixSysFSUtf8View_Acquire(self) DeeAtomicMutex_AcquireRelaxed(&(self)->unx_lock)
 #define DeeUnixSysFSUtf8View_Release(self) DeeAtomicMutex_Release(&(self)->unx_lock)
 
@@ -101,19 +105,21 @@ do{\
    {__VA_ARGS__;}\
   }\
   _uv_name = (self)->unx_dp->d_name;\
-  if (!(_uv_name[0] == '.' && (!_uv_name[1] || (_uv_name[1] == '.' && !_uv_name[2])))) break;\
+  if (!DeeUnixSys_ISIGNOREDPATHNAME(_uv_name)) break;\
  }\
  DeeAtomicMutex_Init(&(self)->unx_lock);\
 }while(0)
 #define DeeUnixSysFSUtf8View_IsDone(self) ((self)->unx_dp == NULL)
 #define DeeUnixSysFSUtf8View_AdvanceAndReleaseOnError(self,...) \
 do{\
+ char const *_uv_name;\
  errno = 0;\
  if DEE_UNLIKELY(((self)->unx_dp = readdir((self)->unx_dfd)) == NULL) {\
   int _uv_error = errno; DIR *_uv_dfd;\
   if (_uv_error == 0) {\
    closedir((self)->unx_dfd);\
    (self)->unx_dfd = NULL;\
+   break;\
   } else {\
    _uv_dfd = (self)->unx_dfd;\
    DeeUnixSysFSUtf8View_Release(self);\
@@ -123,39 +129,41 @@ do{\
    {__VA_ARGS__;}\
   }\
  }\
-}while(0)
+ _uv_name = (self)->unx_dp->d_name;\
+ if (!DeeUnixSys_ISIGNOREDPATHNAME(_uv_name)) break;\
+}while(1)
 
 #define DEE_UNIXSYSFS_UTF8VIEW_GETFILENAMESTRLOCKED_NEVER_NULL
 #define DEE_UNIXSYSFS_UTF8VIEW_GETFILENAMESTRLOCKED_ZERO_TERMINATED
-#define DeeUnixSysFSUtf8View_GetFilenameStrLocked(self) ((self)->unx_dfd->d_name)
+#define DeeUnixSysFSUtf8View_GetFilenameStrLocked(self) ((self)->unx_dp->d_name)
 #ifdef _D_EXACT_NAMLEN
-#define DeeUnixSysFSUtf8View_GetFilenameSizeLocked(self) _D_EXACT_NAMLEN((self)->unx_dfd)
+#define DeeUnixSysFSUtf8View_GetFilenameSizeLocked(self) _D_EXACT_NAMLEN((self)->unx_dp)
 #elif defined(_DIRENT_HAVE_D_NAMLEN)
-#define DeeUnixSysFSUtf8View_GetFilenameSizeLocked(self) ((self)->unx_dfd->d_namlen)
+#define DeeUnixSysFSUtf8View_GetFilenameSizeLocked(self) ((self)->unx_dp->d_namlen)
 #endif
 
-#define DeeUnixSysFSUtf8View_IsHiddenAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dfd->d_name[0]=='.');}while(0)
+#define DeeUnixSysFSUtf8View_IsHiddenAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dp->d_name[0]=='.');}while(0)
 #ifdef _DIRENT_HAVE_D_TYPE
 #ifdef DT_BLK
-#define DeeUnixSysFSUtf8View_IsBlockDevAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dfd->d_type==DT_BLK);}while(0)
+#define DeeUnixSysFSUtf8View_IsBlockDevAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dp->d_type==DT_BLK);}while(0)
 #endif
 #ifdef DT_CHR
-#define DeeUnixSysFSUtf8View_IsCharDevAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dfd->d_type==DT_CHR);}while(0)
+#define DeeUnixSysFSUtf8View_IsCharDevAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dp->d_type==DT_CHR);}while(0)
 #endif
 #ifdef DT_DIR
-#define DeeUnixSysFSUtf8View_IsDirAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dfd->d_type==DT_DIR);}while(0)
+#define DeeUnixSysFSUtf8View_IsDirAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dp->d_type==DT_DIR);}while(0)
 #endif
 #ifdef DT_FIFO
-#define DeeUnixSysFSUtf8View_IsFiFoAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dfd->d_type==DT_FIFO);}while(0)
+#define DeeUnixSysFSUtf8View_IsFiFoAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dp->d_type==DT_FIFO);}while(0)
 #endif
 #ifdef DT_LNK
-#define DeeUnixSysFSUtf8View_IsLinkAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dfd->d_type==DT_LNK);}while(0)
+#define DeeUnixSysFSUtf8View_IsLinkAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dp->d_type==DT_LNK);}while(0)
 #endif
 #ifdef DT_REG
-#define DeeUnixSysFSUtf8View_IsFileAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dfd->d_type==DT_REG);}while(0)
+#define DeeUnixSysFSUtf8View_IsFileAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dp->d_type==DT_REG);}while(0)
 #endif
 #ifdef DT_SOCK
-#define DeeUnixSysFSUtf8View_IsSocketAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dfd->d_type==DT_SOCK);}while(0)
+#define DeeUnixSysFSUtf8View_IsSocketAndReleaseOnError(self,result,...) do{*(result)=((self)->unx_dp->d_type==DT_SOCK);}while(0)
 #endif
 #endif
 

@@ -590,12 +590,16 @@ DeeFS_F(PathExpandUserObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
 
 static DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *_DeeFS_F(PathAbsObject)(
  DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path, DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *cwd) {
- DEE_CHAR const *path_begin,*path_end,*cwd_begin,*cwd_end;
+ DEE_CHAR const *path_begin,*path_end,*cwd_begin,*cwd_end; int error;
  DeeObject *result,*real_cwd,*new_cwd; DEE_CHAR *result_iter;
  DEE_ASSERT(DeeObject_Check(path) && DEE_STRING_Check(path));
  DEE_ASSERT(DeeObject_Check(cwd) && DEE_STRING_Check(cwd));
- if (_DeeFS_F(IsAbs)(DEE_STRING_STR(path))) DeeReturn_NEWREF(path);
- if (!_DeeFS_F(IsAbs)(DEE_STRING_STR(cwd))) {
+ if ((error = _DeeFS_F(IsAbs)(DEE_STRING_STR(path))) != 0) {
+  if DEE_UNLIKELY(error < 0) return NULL;
+  DeeReturn_NEWREF(path);
+ }
+ if ((error = _DeeFS_F(IsAbs)(DEE_STRING_STR(cwd))) <= 0) {
+  if DEE_UNLIKELY(error < 0) return NULL;
   // Make sure 'cwd' is absolute
   if DEE_UNLIKELY((real_cwd = DeeFS_F(GetCwd)()) == NULL) return NULL;
   new_cwd = _DeeFS_F(PathAbsObject)(cwd,real_cwd);
@@ -651,16 +655,18 @@ skip_path_sep:
 
 static DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *_DeeFS_F(PathRelObject)(
  DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path, DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *cwd) {
- DEE_CHAR const *path_begin,*path_end,*path_part,*cwd_begin,*cwd_end,*cwd_part;
+ DEE_CHAR const *path_begin,*path_end,*path_part,*cwd_begin,*cwd_end,*cwd_part; int error;
  DEE_CHAR *result_iter; unsigned int up_refs; DeeObject *result,*real_cwd = NULL,*temp;
- if (!_DeeFS_F(IsAbs)(DEE_STRING_STR(path))) {
+ if ((error = _DeeFS_F(IsAbs)(DEE_STRING_STR(path))) <= 0) {
+  if DEE_UNLIKELY(error < 0) return NULL;
   if DEE_UNLIKELY((real_cwd = DeeFS_F(GetCwd)()) == NULL) {err_p: Dee_DECREF(path); return NULL; }
   if DEE_UNLIKELY((temp = _DeeFS_F(PathAbsObject)(path,real_cwd)) == NULL) {
 err_rc_p: Dee_DECREF(real_cwd); goto err_p;
   }
   Dee_INHERIT_REF(path,temp);
  } else Dee_INCREF(path);
- if (!_DeeFS_F(IsAbs)(DEE_STRING_STR(cwd))) {
+ if DEE_UNLIKELY((error = _DeeFS_F(IsAbs)(DEE_STRING_STR(cwd))) <= 0) {
+  if DEE_UNLIKELY(error < 0) return NULL;
   if (!real_cwd && DEE_UNLIKELY((real_cwd = DeeFS_F(GetCwd)()) == NULL)) { Dee_DECREF(cwd); goto err_p; }
   if DEE_UNLIKELY((temp = _DeeFS_F(PathAbsObject)(cwd,real_cwd)) == NULL) goto err_rc_p;
   Dee_INHERIT_REF(cwd,temp);

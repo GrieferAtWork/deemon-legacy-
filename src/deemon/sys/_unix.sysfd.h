@@ -143,19 +143,19 @@ do{\
 #define DEE_UNIX_SYSFD_FLUSH_FUNC     fdatasync
 #endif
 #ifdef DEE_UNIX_SYSFD_FLUSH_FUNC
-#define DeeUnixSysFD_Flush(self,...)\
+#define DeeUnixSys_FDFlush(fd,...)\
 do{\
- if (DEE_UNIX_SYSFD_FLUSH_FUNC(self) == -1) {\
+ if (DEE_UNIX_SYSFD_FLUSH_FUNC(fd) == -1) {\
   DeeError_SetStringf(&DeeErrorType_IOError,\
                       DEE_PP_STR(DEE_UNIX_SYSFD_FLUSH_FUNC) "(%d) : %K",\
-                      (self)->unx_fd,DeeSystemError_ToString(DeeSystemError_Consume()));\
+                      fd,DeeSystemError_ToString(DeeSystemError_Consume()));\
   {__VA_ARGS__;}\
  }\
 }while(0)
 #endif /* DEE_UNIX_SYSFD_FLUSH_FUNC */
 
 
-#if DEE_HAVE_FSYNC
+#if DEE_HAVE_FTRUNCATE
 #define DEE_UNIX_SYSFD_TRUNC_FUNC     ftruncate
 #endif
 #ifdef DEE_UNIX_SYSFD_TRUNC_FUNC
@@ -173,6 +173,9 @@ do{\
 #endif /* DEE_UNIX_SYSFD_TRUNC_FUNC */
 
 
+#ifdef DeeUnixSys_FDFlush
+#define DeeUnixSysFD_Flush(self,...) DeeUnixSys_FDFlush((self)->unx_fd,__VA_ARGS__)
+#endif /* DeeUnixSys_FDFlush */
 #ifdef DeeUnixSys_FDTrunc
 #define DeeUnixSysFD_Trunc(self,...) DeeUnixSys_FDTrunc((self)->unx_fd,__VA_ARGS__)
 #endif /* DeeUnixSys_FDTrunc */
@@ -196,6 +199,7 @@ do{\
 
 //////////////////////////////////////////////////////////////////////////
 // === DeeUnixSysFileFD ===
+#define DeeUnixSysFileFD DeeUnixSysFileFD
 struct DeeUnixSysFileFD { DEE_UNIX_SYSFD_HEAD };
 
 #ifdef O_LARGEFILE
@@ -272,18 +276,14 @@ DEE_STATIC_INLINE(void) _deeunix_quick_itosw(Dee_WideChar *out, int v) {
  do *--out = '0'+(used_v%10); while ((used_v /= 10) != 0);
 }
 
-#define DeeUnixSysFD_DoGetName     DeeUnixSysFD_DoGetUtf8Name
-#define DeeUnixSysFD_DoGetUtf8Name DeeUnixSysFD_DoGetUtf8Name
-#define DeeUnixSysFD_DoGetWideName DeeUnixSysFD_DoGetWideName
-#ifndef DEE_PRIVATE_NFS_READLINK_DECLARED
-#define DEE_PRIVATE_NFS_READLINK_DECLARED
-extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path);
-extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideReadlink(DEE_A_IN_Z Dee_WideChar const *path);
+#ifndef DEE_PRIVATE_NFS_UTF8READLINK_DECLARED
+#define DEE_PRIVATE_NFS_UTF8READLINK_DECLARED
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
+DeeNFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path);
 #endif
 DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetUtf8Name(int fd) { Dee_Utf8Char buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _deeunix_quick_itos8(buffer+15,fd); return DeeNFS_Utf8Readlink(buffer); }
-DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetWideName(int fd) { Dee_WideChar buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _deeunix_quick_itosw(buffer+15,fd); return DeeNFS_WideReadlink(buffer); }
+#define DeeUnixSysFD_DoGetUtf8Name        DeeUnixSysFD_DoGetUtf8Name
 #define DeeUnixSysFileFD_Utf8Filename(ob) DeeUnixSysFD_DoGetUtf8Name((ob)->unx_fd)
-#define DeeUnixSysFileFD_WideFilename(ob) DeeUnixSysFD_DoGetWideName((ob)->unx_fd)
 
 
 #if DEE_HAVE_FSTAT
@@ -300,9 +300,9 @@ do{\
                       DeeSystemError_ToString(DeeSystemError_Consume()));\
   {__VA_ARGS__;}\
  }\
- if (atime) *(atime) = DeeTime_TimeT2Mseconds(st.st_atime);\
- if (ctime) *(ctime) = DeeTime_TimeT2Mseconds(st.st_ctime);\
- if (mtime) *(mtime) = DeeTime_TimeT2Mseconds(st.st_mtime);\
+ if (atime) *(atime) = DeeTime_TimeT2Mseconds(_ut_st.st_atime);\
+ if (ctime) *(ctime) = DeeTime_TimeT2Mseconds(_ut_st.st_ctime);\
+ if (mtime) *(mtime) = DeeTime_TimeT2Mseconds(_ut_st.st_mtime);\
 }while(0)
 #define DeeSysFileFD_GetTimes(self,atime,ctime,mtime,...)\
  DeeUnixSys_FDGetTimes((self)->unx_fd,atime,ctime,mtime,__VA_ARGS__)
@@ -519,14 +519,23 @@ do{\
 #define DeeSysFD_GET_STDERR  DeeUnixSysFD_GET_STDERR
 #endif
 
+#ifdef DeeUnixSysFileFD
 #define DeeSysFileFD                   DeeUnixSysFileFD
+#ifdef DeeUnixSysFileFD_Utf8Init
 #define DeeSysFileFD_Utf8Init          DeeUnixSysFileFD_Utf8Init
+#endif
+#ifdef DeeUnixSysFileFD_WideInit
 #define DeeSysFileFD_WideInit          DeeUnixSysFileFD_WideInit
+#endif
+#ifdef DeeUnixSysFileFD_Utf8InitObject
 #define DeeSysFileFD_Utf8InitObject    DeeUnixSysFileFD_Utf8InitObject
+#endif
+#ifdef DeeUnixSysFileFD_WideInitObject
 #define DeeSysFileFD_WideInitObject    DeeUnixSysFileFD_WideInitObject
-#define DeeSysFileFD_Filename          DeeUnixSysFileFD_WideFilename
+#endif
+#ifdef DeeUnixSysFileFD_Utf8Filename
 #define DeeSysFileFD_Utf8Filename      DeeUnixSysFileFD_Utf8Filename
-#define DeeSysFileFD_WideFilename      DeeUnixSysFileFD_WideFilename
+#endif
 #ifdef DeeUnixSysFileFD_IsFile
 #define DeeSysFileFD_IsFile            DeeUnixSysFileFD_IsFile
 #endif
@@ -563,13 +572,14 @@ do{\
 #ifdef DeeUnixSysFileFD_Chown
 #define DeeSysFileFD_Chown            DeeUnixSysFileFD_Chown
 #endif
+#endif /* DeeUnixSysFileFD */
 
-
-#if DEE_HAVE_PIPE
+#ifdef DeeUnixSysPipeFD
 #define DeeSysPipeFD         DeeUnixSysPipeFD
+#ifdef DeeSysPipeFD_Init
 #define DeeSysPipeFD_Init    DeeUnixSysPipeFD_Init
-#endif /* DEE_HAVE_PIPE */
-
+#endif
+#endif /* DeeUnixSysPipeFD */
 #undef DEE_UNIX_SYSFD_HEAD
 
 DEE_DECL_END

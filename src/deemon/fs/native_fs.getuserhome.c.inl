@@ -95,7 +95,7 @@ DeeNFS_Utf8GetUserHomeObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *usernam
  if DEE_UNLIKELY((username_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(username),DeeUtf8String_STR(username))) == NULL) return NULL;
  result = DeeSysFS_WideGetUserHomeObject(username_ob);
- Dee_DECREF(path_ob);
+ Dee_DECREF(username_ob);
  return result;
 #else
  (void)username;
@@ -113,7 +113,7 @@ DeeNFS_WideGetUserHomeObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *usernam
  if DEE_UNLIKELY((username_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(username),DeeWideString_STR(username))) == NULL) return NULL;
  result = DeeSysFS_Utf8GetUserHomeObject(username_ob);
- Dee_DECREF(path_ob);
+ Dee_DECREF(username_ob);
  return result;
 #else
  (void)username;
