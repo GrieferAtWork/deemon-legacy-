@@ -259,26 +259,27 @@ static void _DeeVFSError_MaxLinkIndirectionReached(char const *path) {
 DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LLocateAt_impl(
  DEE_A_INOUT struct DeeVFSLocateState *state,
  DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z char const *path) {
- struct DeeVFSNode *newroot,*result,*newresult;
+ struct DeeVFSNode *result,*newresult;
  char *part; Dee_size_t partsize; int error;
  char const *path_iter,*part_begin;
  DEE_ASSERTF(!DEE_VFS_ISSEP(path[0]),
              "Given path %q isn't a relative path to %R",
              path,DeeVFSNode_Filename(root));
- if DEE_UNLIKELY((error = DeeVFSNode_IsLink(root)) < 0) return NULL;
- if (error) {
-  if DEE_UNLIKELY(++state->vld_link_ind == DEE_VFS_MAX_LINK_INDIRECTION) {
-   _DeeVFSError_MaxLinkIndirectionReached(state->vld_startpath);
-   return NULL;
-  }
-  if DEE_UNLIKELY((newroot = DeeVFSNode_WalkLink_impl(state,root)) == NULL) return NULL;
-  result = DeeVFS_LLocateAt_impl(state,newroot,path);
-  DeeVFSNode_DECREF(newroot);
-  return result;
- }
  DeeVFSNode_INCREF(root); result = root;
  path_iter = path;
  while (*path_iter) {
+  while (1) {
+   if DEE_UNLIKELY((error = DeeVFSNode_IsLink(result)) < 0) return NULL;
+   if (!error) break;
+   if DEE_UNLIKELY(++state->vld_link_ind == DEE_VFS_MAX_LINK_INDIRECTION) {
+    _DeeVFSError_MaxLinkIndirectionReached(state->vld_startpath);
+    return NULL;
+   }
+   newresult = DeeVFSNode_WalkLink_impl(state,result);
+   DeeVFSNode_DECREF(result);
+   if DEE_UNLIKELY(!newresult) return NULL;
+   result = newresult;
+  }
   if (!DeeVFSNode_HasWalk(result)) {
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        "Can't walk virtual path %R with %q",

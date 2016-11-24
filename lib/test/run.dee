@@ -78,15 +78,7 @@ for (local f: dirtree("tests")) {
 }
 
 
-#if defined(__POSIX__) || __has_extension(vfs)
-#define HAVE_VFS
-#endif
-
-#ifdef HAVE_VFS
 deemon_exe = fs::readlink("/proc/self/exe");
-#else
-deemon_exe = "deemon";
-#endif
 args = ["-I "+fs::path::join(fs::getcwd(),"include")];
 
 for (local x: tests) {
@@ -110,7 +102,6 @@ for (local x: tests) {
 		print "\nTest failed with:",error,"\n";
 		return error;
 	}
-#if defined(HAVE_VFS) || 1
 	if (!fast_mode) {
 		// Run the same test again, but this time generate a compiled source file
 		// NOTE: We stream the data through a pipe as
@@ -140,7 +131,6 @@ for (local x: tests) {
 			return error;
 		}
 	}
-#endif
 }
 
 print "\n>>> Everything OK <<<\n";

@@ -41,26 +41,6 @@ DEE_DECL_BEGIN
 
 
 
-DEE_A_RET_EXCEPT_REF struct DeeVFSProcPIDNode *
-DeeVFSProcPIDNode_NewFromProcess(DEE_A_IN DeeProcessObject *proc) {
- struct DeeVFSProcPIDNode *result;
- DEE_ASSERT(DeeObject_Check(proc) && DeeProcess_Check(proc));
- if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSProcPIDNode)) == NULL) return NULL;
- DeeVFSNode_InitWithParent(&result->vpn_node,&DeeVFSProcPIDNode_Type,DeeVFS_Proc);
- Dee_INCREF(result->vpn_proc = proc);
- return result;
-}
-DEE_A_RET_EXCEPT_REF struct DeeVFSProcPIDNode *
-DeeVFSProcPIDNode_NewFromPID(DEE_A_IN DWORD pid) {
- DeeProcessObject *proc; struct DeeVFSProcPIDNode *result;
- if DEE_UNLIKELY((proc = (DeeProcessObject *)DeeProcess_Win32NewFromID(pid)) == NULL) return NULL;
- result = DeeVFSProcPIDNode_NewFromProcess(proc);
- Dee_DECREF(proc);
- return result;
-}
-
-
-
 //////////////////////////////////////////////////////////////////////////
 // +++ DeeVFSProcNode_Type +++
 struct DeeVFSVirtualDirEntry const DeeVFSProc_VirtualEntries[] = {
@@ -184,23 +164,127 @@ struct DeeVFSNodeType const DeeVFSProcNode_Type = {
 
 //////////////////////////////////////////////////////////////////////////
 // +++ DeeVFSProcPIDNode_Type +++
+DEE_A_RET_EXCEPT_REF struct DeeVFSProcPIDNode *
+DeeVFSProcPIDNode_NewFromProcess(DEE_A_IN DeeProcessObject *proc) {
+ struct DeeVFSProcPIDNode *result;
+ DEE_ASSERT(DeeObject_Check(proc) && DeeProcess_Check(proc));
+ if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSProcPIDNode)) == NULL) return NULL;
+ DeeVFSNode_InitWithParent(&result->vpn_node,&DeeVFSProcPIDNode_Type,DeeVFS_Proc);
+ Dee_INCREF(result->vpn_proc = proc);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSProcPIDNode *
+DeeVFSProcPIDNode_NewFromPID(DEE_A_IN DWORD pid) {
+ DeeProcessObject *proc; struct DeeVFSProcPIDNode *result;
+ if DEE_UNLIKELY((proc = (DeeProcessObject *)DeeProcess_Win32NewFromID(pid)) == NULL) return NULL;
+ result = DeeVFSProcPIDNode_NewFromProcess(proc);
+ Dee_DECREF(proc);
+ return result;
+}
 static void DEE_CALL _deevfs_procpidnode_quit(struct DeeVFSProcPIDNode *self) {
  Dee_DECREF(self->vpn_proc);
 }
+#define DEE_VFSPROCPIDMEMBER_NONE  0
+#define DEE_VFSPROCPIDMEMBER_EXE   1
+#define DEE_VFSPROCPIDMEMBER_BEGIN 1
+#define DEE_VFSPROCPIDMEMBER_END   2
+static int DeeVFSProcPIDNode_GetMemberID(char const *name) {
+ if (strcmp(name,"exe") == 0) return DEE_VFSPROCPIDMEMBER_EXE;
+ return DEE_VFSPROCPIDMEMBER_NONE;
+}
+static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
+ struct DeeVFSProcPIDNode *self, int member_id) {
+ struct DeeVFSNode *result; DeeVFSNodeType const *node_type;
+ switch (member_id) {
+  case DEE_VFSPROCPIDMEMBER_EXE: node_type = &DeeVFSProcPIDNode_Type_exe; break;
+  default: DEE_BUILTIN_UNREACHABLE();
+ }
+ if ((result = DeeVFSNode_ALLOC(struct DeeVFSNode)) == NULL) return NULL;
+ DeeVFSNode_InitWithParent(result,node_type,&self->vpn_node);
+ return result;
+}
+static DeeObject *DEE_CALL _deevfs_procpidnode_nameof(
+ struct DeeVFSProcPIDNode *DEE_UNUSED(self), struct DeeVFSNode *child) {
+ DeeVFSNodeType const *node_type = child->vn_type;
+ if (node_type == &DeeVFSProcPIDNode_Type_exe) DeeReturn_STATIC_STRING("exe");
+ DEE_ASSERTF(0,"%R is not a parent of /proc/[PID]",
+             DeeVFSNode_Filename(child));
+ DEE_BUILTIN_UNREACHABLE();
+}
+
+static struct DeeVFSNode *DEE_CALL _deevfs_procpidnode_walk(
+ struct DeeVFSProcPIDNode *self, char const *name) {
+ int member = DeeVFSProcPIDNode_GetMemberID(name);
+ if (member == DEE_VFSPROCPIDMEMBER_NONE) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Failed to find %q in %R",name,
+                      DeeVFSNode_Filename((struct DeeVFSNode *)self));
+  return NULL;
+ }
+ return DeeVFSProcPIDNode_GetMember(self,member);
+}
+static int DEE_CALL _deevfs_procpidview_vvt_open(struct DeeVFSProcPIDView *self) {
+ DEE_ASSERT(self->vpv_view.vv_node->vn_type == &DeeVFSProcPIDNode_Type);
+ self->vpv_proc = ((struct DeeVFSProcPIDNode *)self->vpv_view.vv_node)->vpn_proc;
+ Dee_INCREF(self->vpv_proc);
+ self->vpv_member = DEE_VFSPROCPIDMEMBER_BEGIN;
+ return 0;
+}
+static void DEE_CALL _deevfs_procpidview_vvt_quit(
+ struct DeeVFSProcPIDView *self) { Dee_DECREF(self->vpv_proc); }
+static int DEE_CALL _deevfs_procpidview_vvt_curr(
+ struct DeeVFSProcPIDView *self, struct DeeVFSNode **result) {
+ int member_id;
+ member_id = DeeAtomicInt_Load(self->vpv_member,memory_order_seq_cst);
+ if (member_id >= DEE_VFSPROCPIDMEMBER_END) return 1;
+ DEE_ASSERT(member_id >= DEE_VFSPROCPIDMEMBER_BEGIN);
+ *result = DeeVFSProcPIDNode_GetMember((struct DeeVFSProcPIDNode *)self->vpv_view.vv_node,member_id);
+ return *result ? 0 : -1;
+}
+static int DEE_CALL _deevfs_procpidview_vvt_yield(
+ struct DeeVFSProcPIDView *self, struct DeeVFSNode **result) {
+ int member_id;
+ member_id = DeeAtomicInt_FetchInc(self->vpv_member,memory_order_seq_cst);
+ if (member_id >= DEE_VFSPROCPIDMEMBER_END) { DeeAtomicInt_FetchDec(self->vpv_member,memory_order_seq_cst); return 1; }
+ DEE_ASSERT(member_id >= DEE_VFSPROCPIDMEMBER_BEGIN);
+ *result = DeeVFSProcPIDNode_GetMember((struct DeeVFSProcPIDNode *)self->vpv_view.vv_node,member_id);
+ return *result ? 0 : -1;
+}
+
 static struct _DeeVFSViewTypeData _deevfs_procpidnode_vnt_view = {
  sizeof(struct DeeVFSVirtualDirView),
- (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))NULL, // TODO
- (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *)) NULL, // TODO
- (int (DEE_CALL *)(struct DeeVFSView *))                            NULL, // TODO
- (void (DEE_CALL *)(struct DeeVFSView *))                           NULL, // TODO
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       NULL, // TODO
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       NULL, // TODO
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))&_deevfs_procpidnode_walk,
+ (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *)) &_deevfs_procpidnode_nameof,
+ (int (DEE_CALL *)(struct DeeVFSView *))                            &_deevfs_procpidview_vvt_open,
+ (void (DEE_CALL *)(struct DeeVFSView *))                           &_deevfs_procpidview_vvt_quit,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_procpidview_vvt_curr,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_procpidview_vvt_yield,
 };
 struct DeeVFSNodeType const DeeVFSProcPIDNode_Type = {
  {(void (DEE_CALL *)(struct DeeVFSNode *))&_deevfs_procpidnode_quit,NULL},
  NULL,DeeVFSNoopNodeType_FileData,&_deevfs_procpidnode_vnt_view};
+
+//////////////////////////////////////////////////////////////////////////
+static DeeObject *DEE_CALL _deevfs_procpidnode_exe_readlink(struct DeeVFSNode *self) {
+ DeeObject *process;
+ DEE_ASSERT(self->vn_parent && self->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ process = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vn_parent)->vpn_proc;
+ return DeeProcess_Exe(process);
+}
+struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe = { /*< '/proc/[PID]/exe' */
+ {NULL,(DeeObject *(DEE_CALL *)(struct DeeVFSNode *))&_deevfs_procpidnode_exe_readlink},
+ NULL,DeeVFSNoopNodeType_FileData,NULL};
 // --- DeeVFSProcPIDNode_Type ---
 //////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
 
 
 
@@ -212,7 +296,6 @@ static DeeObject *DEE_CALL _deevfs_procself_readlink(struct DeeVFSNode *DEE_UNUS
  DWORD pid = GetCurrentProcessId();
  return DeeString_FromUInt32(pid);
 }
-
 struct DeeVFSNodeType const DeeVFSProcSelfNode_Type = {
  {NULL,(DeeObject *(DEE_CALL *)(struct DeeVFSNode *))&_deevfs_procself_readlink},
  NULL,DeeVFSNoopNodeType_FileData,NULL};

@@ -41,37 +41,57 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 DEE_DECL_BEGIN
 
-struct DeeVFSProcPIDNode {
- struct DeeVFSNode           vpn_node; /*< Underlying node. */
- DEE_A_REF DeeProcessObject *vpn_proc; /*< Process associated with this node. */
-};
+extern struct DeeVFSNode _DeeVFS_Proc;
+extern struct DeeVFSNode _DeeVFS_ProcSelf;
+#define DeeVFS_Proc     ((struct DeeVFSNode *)&_DeeVFS_Proc)
+#define DeeVFS_ProcSelf ((struct DeeVFSNode *)&_DeeVFS_ProcSelf)
+
+
+
 
 //////////////////////////////////////////////////////////////////////////
-// Native VFS node: A filesystem node that points back into the 
+// "/proc" (Virtual directory; views of this yield ids of all running processes, as well as select virtual elements) 
 struct DeeVFSProcView {
  struct DeeVFSView                   vpr_view;    /*< Underlying view. */
  DEE_A_REF DeeListObject            *vpr_procs;   /*< [1..1][const] List of processes. */
            DeeProcessObject        **vpr_procpos; /*< [1..1][0..1] Current position in the process list. */
            DeeProcessObject        **vpr_procend; /*< [?..?][0..1] End of the process list. */
  // NOTE: The following data is used when the list of process ids ends
- struct DeeVFSVirtualDirEntry const *vpr_pos;  /*< [1..1] Next virtual directory entry. */
- struct DeeAtomicMutex               vpr_lock; /*< Yield-lock. */
+ struct DeeVFSVirtualDirEntry const *vpr_pos;     /*< [1..1] Next virtual directory entry. */
+ struct DeeAtomicMutex               vpr_lock;    /*< Yield-lock. */
 };
-
 extern struct DeeVFSVirtualDirEntry const DeeVFSProc_VirtualEntries[];    /*< List of non-process id entries in '/proc' */
-extern struct DeeVFSVirtualDirEntry const DeeVFSProcPID_VirtualEntries[]; /*< List of non-process id entries in '/proc/[PID]' */
+extern struct DeeVFSNodeType const DeeVFSProcNode_Type;     /*< '/proc' */
+//////////////////////////////////////////////////////////////////////////
 
-extern struct DeeVFSNode _DeeVFS_Proc;
-extern struct DeeVFSNode _DeeVFS_ProcSelf;
-#define DeeVFS_Proc     ((struct DeeVFSNode *)&_DeeVFS_Proc)
-#define DeeVFS_ProcSelf ((struct DeeVFSNode *)&_DeeVFS_ProcSelf)
 
-extern struct DeeVFSNodeType const DeeVFSProcNode_Type;     /*< '/proc'       (Virtual directory; views of this yield ids of all running processes, as well as select virtual elements) */
-extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type;  /*< '/proc/[PID]' (Virtual directory; provides utilities for querying information about a process) */
-extern struct DeeVFSNodeType const DeeVFSProcSelfNode_Type; /*< '/proc/self'  (Symblic link; when read returns the current process' id) */
 
+
+//////////////////////////////////////////////////////////////////////////
+// "/proc/[PID]" (Virtual directory; provides utilities for querying information about a process)
+struct DeeVFSProcPIDNode {
+ struct DeeVFSNode           vpn_node; /*< Underlying node. */
+ DEE_A_REF DeeProcessObject *vpn_proc; /*< Process associated with this node. */
+};
+struct DeeVFSProcPIDView {
+ struct DeeVFSView           vpv_view;   /*< Underlying view. */
+ DEE_A_REF DeeProcessObject *vpv_proc;   /*< Process associated with this view. */
+ /*atomic*/int               vpv_member; /*< Member ID. */
+};
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type;  /*< '/proc/[PID]' */
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSProcPIDNode *DeeVFSProcPIDNode_NewFromProcess(DEE_A_IN DeeProcessObject *proc);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSProcPIDNode *DeeVFSProcPIDNode_NewFromPID(DEE_A_IN DWORD pid);
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe; /*< '/proc/[PID]/exe' */
+//////////////////////////////////////////////////////////////////////////
+
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// "/proc/self" (Symblic link; when read, returns the current process' id)
+extern struct DeeVFSNodeType const DeeVFSProcSelfNode_Type; /*< '/proc/self' */
+//////////////////////////////////////////////////////////////////////////
+
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
