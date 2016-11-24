@@ -25,6 +25,7 @@
 #endif
 
 #include <deemon/__conf.inl>
+#include <deemon/vfs/vfs_proc_node.h>
 #include <deemon/vfs/vfs_root.h>
 #include <deemon/vfs/vfs_virtual_stdfile.h>
 #include <deemon/vfs/vfs_virtual_nullfile.h>
@@ -32,12 +33,12 @@
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
 
-extern struct DeeVFSVirtualDirNode _deevfs_dev;
-static struct DeeVFSVirtualStdFileNode _deevfs_dev_stdin  = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_deevfs_dev,STD_INPUT_HANDLE);
-static struct DeeVFSVirtualStdFileNode _deevfs_dev_stdout = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_deevfs_dev,STD_OUTPUT_HANDLE);
-static struct DeeVFSVirtualStdFileNode _deevfs_dev_stderr = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_deevfs_dev,STD_ERROR_HANDLE);
-static struct DeeVFSNode _deevfs_dev_null = DeeVFSNode_INIT(&DeeVFSVirtualNULLFileNode_Type,(struct DeeVFSNode *)&_deevfs_dev);
-static struct DeeVFSNode _deevfs_dev_zero = DeeVFSNode_INIT(&DeeVFSVirtualZEROFileNode_Type,(struct DeeVFSNode *)&_deevfs_dev);
+extern struct DeeVFSVirtualDirNode _DeeVFS_Dev;
+static struct DeeVFSVirtualStdFileNode _deevfs_dev_stdin  = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_DeeVFS_Dev,STD_INPUT_HANDLE);
+static struct DeeVFSVirtualStdFileNode _deevfs_dev_stdout = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_DeeVFS_Dev,STD_OUTPUT_HANDLE);
+static struct DeeVFSVirtualStdFileNode _deevfs_dev_stderr = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_DeeVFS_Dev,STD_ERROR_HANDLE);
+static struct DeeVFSNode _deevfs_dev_null = DeeVFSNode_INIT(&DeeVFSVirtualNULLFileNode_Type,(struct DeeVFSNode *)&_DeeVFS_Dev);
+static struct DeeVFSNode _deevfs_dev_zero = DeeVFSNode_INIT(&DeeVFSVirtualZEROFileNode_Type,(struct DeeVFSNode *)&_DeeVFS_Dev);
 
 
 static struct DeeVFSVirtualDirEntry _deevfs_dev_nodes[] = {
@@ -48,17 +49,15 @@ static struct DeeVFSVirtualDirEntry _deevfs_dev_nodes[] = {
  {"zero",  (struct DeeVFSNode *)&_deevfs_dev_zero},
  {NULL,NULL},
 };
-struct DeeVFSVirtualDirNode _deevfs_dev =
+struct DeeVFSVirtualDirNode _DeeVFS_Dev =
  DeeVFSVirtualDirNode_INIT(DeeVFS_Root,_deevfs_dev_nodes);
-
-
-
-struct DeeVFSNativeMountNode _DeeVFSNative_Root =
- {DeeVFSNode_INIT(&DeeVFSNativeMountNode_Type,DeeVFS_Root)};
+struct DeeVFSNode _DeeVFSNative_Root =
+  DeeVFSNode_INIT(&DeeVFSNativeMountNode_Type,DeeVFS_Root);
 
 static struct DeeVFSVirtualDirEntry _deevfs_root_nodes[] = {
- {"dev",(struct DeeVFSNode *)&_deevfs_dev},
+ {"dev",  (struct DeeVFSNode *)&_DeeVFS_Dev},
  {"mount",DeeVFSNative_Root},
+ {"proc", DeeVFS_Proc},
  {NULL,NULL},
 };
 

@@ -42,8 +42,9 @@ DEE_DECL_BEGIN
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *)
 DeeVFSView_GetCurrentNode(struct DeeVFSView const *self) {
  struct DeeVFSNode *result; int error;
- if (!self->vv_type->vnt_view.vvt_curr) return NULL;
- error = (*self->vv_type->vnt_view.vvt_curr)((struct DeeVFSView *)self,&result);
+ DEE_ASSERTF(self->vv_type->vnt_view,"How did you create file view?");
+ if (!self->vv_type->vnt_view->vvt_curr) return NULL;
+ error = (*self->vv_type->vnt_view->vvt_curr)((struct DeeVFSView *)self,&result);
  if (error == 0) return result;
  if (error > 0) {
   DeeError_SET_STRING(&DeeErrorType_SystemError,

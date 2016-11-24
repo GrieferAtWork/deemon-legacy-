@@ -44,45 +44,19 @@ static int DEE_CALL _deevfs_virtualstdfilefile_vft_open(
  return 0;
 }
 
-
-
-struct DeeVFSNodeType const DeeVFSVirtualStdFileNode_Type = {
- { sizeof(struct DeeVFSVirtualStdFileNode), // vnt_node
-  (void (DEE_CALL *)(struct DeeVFSNode *))                                                                                              NULL,
-  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))                                                                   NULL,
-  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                                                                    NULL,
-  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *))                                                                                        NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t *))                                                                                  NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t ))                                                                                   NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t *,DEE_A_OUT Dee_gid_t *))                                                             NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t,DEE_A_IN Dee_gid_t))                                                                  NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t *,DEE_A_OUT_OPT Dee_timetick_t *,DEE_A_OUT_OPT Dee_timetick_t *))                NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t const *,DEE_A_IN_OPT Dee_timetick_t const *,DEE_A_IN_OPT Dee_timetick_t const *))NULL,
- },{ sizeof(struct DeeVFSNativeFile),// vnt_file
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_virtualstdfilefile_vft_open,
-  (void(DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_quit,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_nativefile_vft_read,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_nativefile_vft_write,
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &_deevfs_nativefile_vft_seek,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_flush,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_trunc,
- },{ 0, // vnt_view
-  (int (DEE_CALL *)(struct DeeVFSView *))                     NULL,
-  (void (DEE_CALL *)(struct DeeVFSView *))                    NULL,
-  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))NULL,
-  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))NULL,
- }
+static struct _DeeVFSFileTypeData _deevfs_virtualstdfile_vft_file = {
+ sizeof(struct DeeVFSNativeFile),// vnt_file
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_virtualstdfilefile_vft_open,
+ (void(DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_quit,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_nativefile_vft_read,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_nativefile_vft_write,
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &_deevfs_nativefile_vft_seek,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_flush,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_trunc,
 };
 
+struct DeeVFSNodeType const DeeVFSVirtualStdFileNode_Type = {
+ {NULL,NULL},NULL,&_deevfs_virtualstdfile_vft_file,NULL};
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */

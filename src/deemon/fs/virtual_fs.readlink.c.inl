@@ -43,11 +43,11 @@ call_native: return DeeNFS_Utf8Readlink(path);
  }
  if (DeeVFS_Utf8IsVirtualPath(path)) {
   do ++path; while (DEE_VFS_ISSEP(*path));
-  node = DeeVFS_Utf8LocateAt(DeeVFS_Root,path);
+  node = DeeVFS_Utf8LLocateAt(DeeVFS_Root,path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
-  node = DeeVFS_Utf8LocateAt(cwd,path);
+  node = DeeVFS_Utf8LLocateAt(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!node) return NULL;
@@ -64,11 +64,11 @@ call_native: return DeeNFS_WideReadlink(path);
  }
  if (DeeVFS_WideIsVirtualPath(path)) {
   do ++path; while (DEE_VFS_ISSEP(*path));
-  node = DeeVFS_WideLocateAt(DeeVFS_Root,path);
+  node = DeeVFS_WideLLocateAt(DeeVFS_Root,path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
-  node = DeeVFS_WideLocateAt(cwd,path);
+  node = DeeVFS_WideLLocateAt(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!node) return NULL;
@@ -86,11 +86,11 @@ call_native: return DeeNFS_Utf8ReadlinkObject(path);
  if (DeeVFS_Utf8IsVirtualPathObject(path)) {
   Dee_Utf8Char const *path_begin = DeeUtf8String_STR(path);
   do ++path_begin; while (DEE_VFS_ISSEP(*path_begin));
-  node = DeeVFS_Utf8LocateAt(DeeVFS_Root,path_begin);
+  node = DeeVFS_Utf8LLocateAt(DeeVFS_Root,path_begin);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
-  node = DeeVFS_Utf8LocateAtObject(cwd,path);
+  node = DeeVFS_Utf8LLocateAtObject(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!node) return NULL;
@@ -108,11 +108,11 @@ call_native: return DeeNFS_WideReadlinkObject(path);
  if (DeeVFS_WideIsVirtualPathObject(path)) {
   Dee_WideChar const *path_begin = DeeWideString_STR(path);
   do ++path_begin; while (DEE_VFS_ISSEP(*path_begin));
-  node = DeeVFS_WideLocateAt(DeeVFS_Root,path_begin);
+  node = DeeVFS_WideLLocateAt(DeeVFS_Root,path_begin);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
-  node = DeeVFS_WideLocateAtObject(cwd,path);
+  node = DeeVFS_WideLLocateAtObject(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!node) return NULL;

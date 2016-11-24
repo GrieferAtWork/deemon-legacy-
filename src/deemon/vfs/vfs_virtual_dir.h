@@ -36,8 +36,8 @@ struct DeeVFSVirtualDirEntry {
  struct DeeVFSNode *node; /* [1..1] Node associated with this entry. */
 };
 struct DeeVFSVirtualDirNode {
- struct DeeVFSNode             vdn_node;     /*< Underlying node. */
- struct DeeVFSVirtualDirEntry *vdn_children; /*< [1..1] Vector of children nodes. */
+ struct DeeVFSNode                   vdn_node;     /*< Underlying node. */
+ struct DeeVFSVirtualDirEntry const *vdn_children; /*< [1..1] Vector of children nodes. */
 };
 #define DeeVFSVirtualDirNode_INIT(parent,children) \
  {DeeVFSNode_INIT(&DeeVFSVirtualDirNode_Type,parent),children}
@@ -46,12 +46,14 @@ struct DeeVFSVirtualDirFile {
  struct DeeVFSFile vdf_file; /*< Underlying file. */
 };
 struct DeeVFSVirtualDirView {
- struct DeeVFSView             vdv_view; /*< Underlying view. */
- struct DeeVFSVirtualDirEntry *vdv_pos;  /*< [1..1] Next directory entry. */
- struct DeeAtomicMutex         vdv_lock; /*< Yield-lock. */
+ struct DeeVFSView                   vdv_view; /*< Underlying view. */
+ struct DeeVFSVirtualDirEntry const *vdv_pos;  /*< [1..1] Next directory entry. */
+ struct DeeAtomicMutex               vdv_lock; /*< Yield-lock. */
 };
 
 extern struct DeeVFSNodeType const DeeVFSVirtualDirNode_Type;
+extern int DEE_CALL _deevfs_virtualdirview_vvt_curr(struct DeeVFSVirtualDirView *self, struct DeeVFSNode **result);
+extern int DEE_CALL _deevfs_virtualdirview_vvt_yield(struct DeeVFSVirtualDirView *self, struct DeeVFSNode **result);
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */

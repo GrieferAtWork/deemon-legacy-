@@ -110,15 +110,17 @@ static DeeObject *DEE_CALL _deevfsview_tp_repr(DeeVFSViewObject *self) {
 }
 static int DEE_CALL _deevfsview_tp_bool(DeeVFSViewObject *self) {
  struct DeeVFSNode *node; int error;
- if (!self->vv_view.vv_type->vnt_view.vvt_curr) return 0;
- error = (*self->vv_view.vv_type->vnt_view.vvt_curr)((struct DeeVFSView *)self,&node);
+ DEE_ASSERTF(self->vv_view.vv_type->vnt_view,"How did you create file view?");
+ if (!self->vv_view.vv_type->vnt_view->vvt_curr) return 0;
+ error = (*self->vv_view.vv_type->vnt_view->vvt_curr)((struct DeeVFSView *)self,&node);
  if (error == 0) { DeeVFSNode_DECREF(node); return 1; }
  return DEE_UNLIKELY(error < 0) ? error : 0;
 }
 static DeeObject *DEE_CALL _deevfsview_tp_not(DeeVFSViewObject *self) {
  struct DeeVFSNode *node; int error;
- if (!self->vv_view.vv_type->vnt_view.vvt_curr) DeeReturn_True;
- error = (*self->vv_view.vv_type->vnt_view.vvt_curr)((struct DeeVFSView *)self,&node);
+ DEE_ASSERTF(self->vv_view.vv_type->vnt_view,"How did you create file view?");
+ if (!self->vv_view.vv_type->vnt_view->vvt_curr) DeeReturn_True;
+ error = (*self->vv_view.vv_type->vnt_view->vvt_curr)((struct DeeVFSView *)self,&node);
  if (error == 0) { DeeVFSNode_DECREF(node); DeeReturn_False; }
  if DEE_UNLIKELY(error < 0) return NULL;
  DeeReturn_True;
@@ -126,8 +128,9 @@ static DeeObject *DEE_CALL _deevfsview_tp_not(DeeVFSViewObject *self) {
 static int DEE_CALL _deevfsview_tp_seq_iter_next(
  DeeVFSViewObject *self, DeeObject **result) {
  int error; struct DeeVFSNode *node;
- if DEE_UNLIKELY(!self->vv_view.vv_type->vnt_view.vvt_yield) return 1;
- error = (*self->vv_view.vv_type->vnt_view.vvt_yield)(&self->vv_view,&node);
+ DEE_ASSERTF(self->vv_view.vv_type->vnt_view,"How did you create file view?");
+ if DEE_UNLIKELY(!self->vv_view.vv_type->vnt_view->vvt_yield) return 1;
+ error = (*self->vv_view.vv_type->vnt_view->vvt_yield)(&self->vv_view,&node);
  if DEE_UNLIKELY(error != 0) return error;
  *result = DeeVFSNode_Name(node);
  DeeVFSNode_DECREF(node);

@@ -75,9 +75,18 @@ again:
 }
 
 //////////////////////////////////////////////////////////////////////////
-// Node VTable
+// File VTable
+static int DEE_CALL _deevfs_nativemountfile_vft_open(
+ struct DeeVFSNativeMountFile *DEE_UNUSED(self),
+ Dee_openmode_t DEE_UNUSED(openmode), Dee_mode_t DEE_UNUSED(permissions)) {
+ return 0;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// View VTable
 static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativemountnode_vnt_walk(
- struct DeeVFSNativeMountNode *self, char const *name) {
+ struct DeeVFSNode *self, char const *name) {
  DeeVFSNativeNode *result; DeeObject *newpath;
  if DEE_UNLIKELY((newpath = DeeString_Newf("%s:",name)) == NULL) return NULL;
  if (GetFileAttributesA(DeeString_STR(newpath)) == INVALID_FILE_ATTRIBUTES) {
@@ -89,33 +98,21 @@ static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativemountnode_vnt_walk(
   return NULL;
  }
  if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(DeeVFSNativeNode)) == NULL) { Dee_DECREF(newpath); return NULL; }
- DeeVFSNode_InitWithParent(&result->vnn_node,&DeeVFSNativeNode_Type,&self->vmn_node);
+ DeeVFSNode_InitWithParent(&result->vnn_node,&DeeVFSNativeNode_Type,self);
  Dee_INHERIT_REF(result->vnn_path,*(DeeStringObject **)&newpath);
  return result;
 }
 static DeeObject *DEE_CALL _deevfs_nativemountnode_vnt_nameof(
- struct DeeVFSNativeMountNode *self, struct DeeVFSNativeNode *child) {
+ struct DeeVFSNode *self, struct DeeVFSNativeNode *child) {
  char const *begin,*end,*iter;
  DEE_ASSERTF(DeeVFSNode_IsNative(&child->vnn_node),"Node %r is not a child of %r",
-             DeeVFSNode_Filename(&child->vnn_node),DeeVFSNode_Filename(&self->vmn_node));
+             DeeVFSNode_Filename(&child->vnn_node),DeeVFSNode_Filename(self));
  (void)self;
  end = (begin = iter = DeeString_STR(child->vnn_path))+DeeString_SIZE(child->vnn_path);
  while (iter != end && *iter != ':') ++iter;
  if (iter == end) DeeReturn_NEWREF(child->vnn_path);
  return DeeString_NewWithLength((Dee_size_t)(iter-begin),begin);
 }
-
-//////////////////////////////////////////////////////////////////////////
-// File VTable
-static int DEE_CALL _deevfs_nativemountfile_vft_open(
- struct DeeVFSNativeMountFile *DEE_UNUSED(self),
- Dee_openmode_t DEE_UNUSED(openmode), Dee_mode_t DEE_UNUSED(permissions)) {
- return 0;
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-// View VTable
 static int DEE_CALL _deevfs_nativemountview_vvt_open(struct DeeVFSNativeMountView *self) {
  if DEE_UNLIKELY((self->vmv_drives = DeeWin32Sys_GetDriveStrings()) == NULL) return -1;
  self->vmv_drivespos = self->vmv_drives;
@@ -175,44 +172,19 @@ static int DEE_CALL _deevfs_nativemountview_vvt_yield(
  return 0;
 }
 
-
+static struct _DeeVFSViewTypeData _deevfs_nativemountnode_vnt_view = {
+ sizeof(struct DeeVFSNativeMountView),
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))&_deevfs_nativemountnode_vnt_walk,
+ (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *)) &_deevfs_nativemountnode_vnt_nameof,
+ (int (DEE_CALL *)(struct DeeVFSView *))                            &_deevfs_nativemountview_vvt_open,
+ (void (DEE_CALL *)(struct DeeVFSView *))                           &_deevfs_nativemountview_vvt_quit,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_nativemountview_vvt_curr,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_nativemountview_vvt_yield,
+};
 
 struct DeeVFSNodeType const DeeVFSNativeMountNode_Type = {
- { sizeof(struct DeeVFSNativeMountNode), // vnt_node
-  (void (DEE_CALL *)(struct DeeVFSNode *))                                                                                              NULL,
-  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))                                                                   &_deevfs_nativemountnode_vnt_walk,
-  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                                                                    &_deevfs_nativemountnode_vnt_nameof,
-  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *))                                                                                        NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t *))                                                                                  NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t ))                                                                                   NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t *,DEE_A_OUT Dee_gid_t *))                                                             NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t,DEE_A_IN Dee_gid_t))                                                                  NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t *,DEE_A_OUT_OPT Dee_timetick_t *,DEE_A_OUT_OPT Dee_timetick_t *))                NULL,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t const *,DEE_A_IN_OPT Dee_timetick_t const *,DEE_A_IN_OPT Dee_timetick_t const *))NULL,
- },{ sizeof(struct DeeVFSNativeMountFile),// vnt_file
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_nativemountfile_vft_open,
-  (void(DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
- },{ sizeof(struct DeeVFSNativeMountView), // vnt_view
-  (int (DEE_CALL *)(struct DeeVFSView *))                     &_deevfs_nativemountview_vvt_open,
-  (void (DEE_CALL *)(struct DeeVFSView *))                    &_deevfs_nativemountview_vvt_quit,
-  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_nativemountview_vvt_curr,
-  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_nativemountview_vvt_yield,
- }
-};
+ {NULL,NULL},NULL,DeeVFSNoopNodeType_FileData,
+ &_deevfs_nativemountnode_vnt_view};
 
 
 DEE_DECL_END

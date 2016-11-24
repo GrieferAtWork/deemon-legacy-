@@ -31,8 +31,6 @@ DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
 // Native VFS node: A filesystem node that points back into the 
-struct DeeVFSNativeMountNode { struct DeeVFSNode vmn_node; /*< Underlying node. */};
-struct DeeVFSNativeMountFile { struct DeeVFSFile vmf_file; /*< Underlying file. */};
 struct DeeVFSNativeMountView {
  struct DeeVFSView          vmv_view;      /*< Underlying view. */
  char                      *vmv_drives;    /*< [1..1] Drive strings. */

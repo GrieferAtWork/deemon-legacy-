@@ -47,14 +47,15 @@ void _DeeVFSNode_Delete(DEE_A_IN struct DeeVFSNode *self) {
 
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WriteFilename(
  DEE_A_INOUT struct DeeStringWriter *writer, DEE_A_IN struct DeeVFSNode const *node) {
- DeeObject *name; int error;
+ DeeObject *name; int error; struct _DeeVFSViewTypeData *viewtype;
  DeeObject *(DEE_CALL *nameofproc)(struct DeeVFSNode *,struct DeeVFSNode *);
  DEE_ASSERT(writer); DEE_ASSERT(node);
  if (!node->vn_parent) return 0;
  if (DeeVFSNode_WriteFilename(writer,node->vn_parent) != 0) return -1;
  if (DeeStringWriter_WriteChar(writer,DEE_VFS_SEP) != 0) return -1;
- nameofproc = node->vn_parent->vn_type->vnt_node.vnt_nameof;
- if (!nameofproc) return DeeStringWriter_WriteChar(writer,'?');
+ viewtype = node->vn_parent->vn_type->vnt_view;
+ if DEE_UNLIKELY(!viewtype || (nameofproc = viewtype->vnt_nameof) == NULL)
+  return DeeStringWriter_WriteChar(writer,'?');
  if ((name = (*nameofproc)(node->vn_parent,(struct DeeVFSNode *)node)) == NULL) return -1;
  DEE_ASSERT(DeeObject_Check(name) && DeeString_Check(name));
  error = DeeStringWriter_WriteStringWithLength(writer,DeeString_SIZE(name),DeeString_STR(name));
@@ -63,11 +64,12 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WriteFilename(
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *
 DeeVFSNode_Name(DEE_A_IN struct DeeVFSNode const *node) {
- DeeObject *(DEE_CALL *nameof_func)(struct DeeVFSNode *,struct DeeVFSNode *);
+ struct _DeeVFSViewTypeData *viewtype;
+ DeeObject *(DEE_CALL *nameofproc)(struct DeeVFSNode *,struct DeeVFSNode *);
  if DEE_UNLIKELY(!node->vn_parent) DeeReturn_STATIC_STRING("/");
- nameof_func = node->vn_parent->vn_type->vnt_node.vnt_nameof;
- if DEE_UNLIKELY(!nameof_func) DeeReturn_STATIC_STRING("?");
- return (*nameof_func)(node->vn_parent,(struct DeeVFSNode *)node);
+ viewtype = node->vn_parent->vn_type->vnt_view;
+ if DEE_UNLIKELY(!viewtype || (nameofproc = viewtype->vnt_nameof) == NULL) DeeReturn_STATIC_STRING("?");
+ return (*nameofproc)(node->vn_parent,(struct DeeVFSNode *)node);
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *
 DeeVFSNode_Filename(DEE_A_IN struct DeeVFSNode const *node) {
@@ -96,12 +98,12 @@ DeeVFSNode_Pathname(DEE_A_IN struct DeeVFSNode const *node) {
 
 DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFSNode_HasHiddenFilename(
  DEE_A_IN struct DeeVFSNode const *self) {
- DeeObject *node_name; int result;
+ DeeObject *node_name; int result; struct _DeeVFSViewTypeData *viewtype;
  DeeObject *(DEE_CALL *nameofproc)(struct DeeVFSNode *,struct DeeVFSNode *);
  DEE_ASSERT(self);
  if DEE_UNLIKELY(!self->vn_parent) return 0;
- nameofproc = self->vn_parent->vn_type->vnt_node.vnt_nameof;
- if DEE_UNLIKELY(!nameofproc) return 0;
+ viewtype = self->vn_parent->vn_type->vnt_view;
+ if DEE_UNLIKELY(!viewtype || (nameofproc = viewtype->vnt_nameof) == NULL) return 0;
  node_name = (*nameofproc)(self->vn_parent,(struct DeeVFSNode *)self);
  if DEE_UNLIKELY(!node_name) return -1;
  DEE_ASSERT(DeeObject_Check(node_name) &&
@@ -123,36 +125,41 @@ DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self)
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetTimes(
  DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT_OPT Dee_timetick_t *atime,
  DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime) {
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_gettimes) {
+ struct _DeeVFSPropTypeData *proptype; DEE_ASSERT(self);
+ proptype = self->vn_type->vnt_prop;
+ if (!proptype || !proptype->vnt_gettimes) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Can't read time for %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
- return (*self->vn_type->vnt_node.vnt_gettimes)(self,atime,ctime,mtime);
+ return (*proptype->vnt_gettimes)(self,atime,ctime,mtime);
 }
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_SetTimes(
       DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_OPT Dee_timetick_t const *atime,
  DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_settimes) {
+ struct _DeeVFSPropTypeData *proptype; DEE_ASSERT(self);
+ proptype = self->vn_type->vnt_prop;
+ if (!proptype || !proptype->vnt_settimes) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Can't write time for %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
- return (*self->vn_type->vnt_node.vnt_settimes)(self,atime,ctime,mtime);
+ return (*proptype->vnt_settimes)(self,atime,ctime,mtime);
 }
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetMod(
  DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_mode_t *mode) {
- int error;
+ int error; struct _DeeVFSPropTypeData *proptype;
+ struct _DeeVFSFileTypeData *filetype;
  DEE_ASSERT(self); DEE_ASSERT(mode);
- if (self->vn_type->vnt_node.vnt_getmod)
-  return (*self->vn_type->vnt_node.vnt_getmod)(self,mode);
- *mode = (Dee_mode_t)(self->vn_type->vnt_file.vft_write ? 0222 : 0000);
- if (self->vn_type->vnt_node.vnt_isexecutable) {
-  error = (*self->vn_type->vnt_node.vnt_isexecutable)(self);
+ proptype = self->vn_type->vnt_prop;
+ if (proptype && proptype->vnt_getmod)
+  return (*proptype->vnt_getmod)(self,mode);
+ filetype = self->vn_type->vnt_file;
+ *mode = (Dee_mode_t)((filetype && filetype->vft_open && filetype->vft_write) ? 0222 : 0000);
+ if (proptype && proptype->vnt_isexecutable) {
+  error = (*proptype->vnt_isexecutable)(self);
   if (error < 0) return error;
   if (error) *mode |= 0111;
  } else if (DeeVFSNode_HasView(self)) {
@@ -163,50 +170,53 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetMod(
 }
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chmod(
  DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_mode_t mode) {
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_chmod) {
+ struct _DeeVFSPropTypeData *proptype; DEE_ASSERT(self);
+ proptype = self->vn_type->vnt_prop;
+ if (!proptype || !proptype->vnt_chmod) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Can't chmod %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
- return (*self->vn_type->vnt_node.vnt_chmod)(self,mode);
+ return (*proptype->vnt_chmod)(self,mode);
 }
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetOwn(
  DEE_A_INOUT struct DeeVFSNode *self,
  DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) {
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_getown) {
+ struct _DeeVFSPropTypeData *proptype; DEE_ASSERT(self);
+ proptype = self->vn_type->vnt_prop;
+ if (!proptype || !proptype->vnt_getown) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Can't getown %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
- return (*self->vn_type->vnt_node.vnt_getown)(self,owner,group);
+ return (*proptype->vnt_getown)(self,owner,group);
 }
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(
  DEE_A_INOUT struct DeeVFSNode *self,
  DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
- DEE_ASSERT(self);
- if (!self->vn_type->vnt_node.vnt_chown) {
+ struct _DeeVFSPropTypeData *proptype; DEE_ASSERT(self);
+ proptype = self->vn_type->vnt_prop;
+ if (!proptype || !proptype->vnt_chown) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Can't chown %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
- return (*self->vn_type->vnt_node.vnt_chown)(self,owner,group);
+ return (*proptype->vnt_chown)(self,owner,group);
 }
 
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeVFSNode_Utf8Readlink(DEE_A_INOUT struct DeeVFSNode *self) {
- if (!self->vn_type->vnt_node.vnt_link) {
+ if (!self->vn_type->vnt_node.vnt_readlink) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Can't readlink %R",
                       DeeVFSNode_Filename(self));
   return NULL;
  }
- return (*self->vn_type->vnt_node.vnt_link)(self);
+ return (*self->vn_type->vnt_node.vnt_readlink)(self);
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 DeeVFSNode_WideReadlink(DEE_A_INOUT struct DeeVFSNode *self) {
@@ -231,7 +241,9 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
   do ++link_str; while (DEE_VFS_ISSEP(link_str[0]));
   result = DeeVFS_LLocateAt_impl(state,DeeVFS_Root,link_str);
  } else { // Relative link
-  result = DeeVFS_LLocateAt_impl(state,self,link_str);
+  DEE_ASSERTF(self->vn_parent,"Node %R without parent is a link",
+              DeeVFSNode_Filename(self));
+  result = DeeVFS_LLocateAt_impl(state,self->vn_parent,link_str);
  }
  Dee_DECREF(link_path);
  return result;
@@ -248,17 +260,18 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LLocateAt_impl(
  DEE_A_INOUT struct DeeVFSLocateState *state,
  DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z char const *path) {
  struct DeeVFSNode *newroot,*result,*newresult;
- char *part; Dee_size_t partsize;
+ char *part; Dee_size_t partsize; int error;
  char const *path_iter,*part_begin;
  DEE_ASSERTF(!DEE_VFS_ISSEP(path[0]),
              "Given path %q isn't a relative path to %R",
              path,DeeVFSNode_Filename(root));
- if (DeeVFSNode_IsLink(root)) {
+ if DEE_UNLIKELY((error = DeeVFSNode_IsLink(root)) < 0) return NULL;
+ if (error) {
   if DEE_UNLIKELY(++state->vld_link_ind == DEE_VFS_MAX_LINK_INDIRECTION) {
    _DeeVFSError_MaxLinkIndirectionReached(state->vld_startpath);
    return NULL;
   }
-  newroot = DeeVFSNode_WalkLink_impl(state,root);
+  if DEE_UNLIKELY((newroot = DeeVFSNode_WalkLink_impl(state,root)) == NULL) return NULL;
   result = DeeVFS_LLocateAt_impl(state,newroot,path);
   DeeVFSNode_DECREF(newroot);
   return result;
@@ -296,7 +309,10 @@ err_r:
     }
     memcpy(part,part_begin,partsize*sizeof(char));
     part[partsize] = 0;
-    newresult = (*result->vn_type->vnt_node.vnt_walk)(result,part);
+    DEE_ASSERTF(result->vn_type->vnt_view &&
+                result->vn_type->vnt_view->vnt_walk,
+                "Already checked above");
+    newresult = (*result->vn_type->vnt_view->vnt_walk)(result,part);
     free_nn(part);
     if DEE_UNLIKELY(!newresult) goto err_r;
     DeeVFSNode_DECREF(result);
@@ -311,9 +327,11 @@ err_r:
 DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LocateAt_impl(
  DEE_A_INOUT struct DeeVFSLocateState *state,
  DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z char const *path) {
- struct DeeVFSNode *result,*newresult;
+ struct DeeVFSNode *result,*newresult; int error;
  if DEE_UNLIKELY((result = DeeVFS_LLocateAt_impl(state,root,path)) == NULL) return NULL;
- while (DeeVFSNode_IsLink(result)) {
+ while (1) {
+  if DEE_UNLIKELY((error = DeeVFSNode_IsLink(result)) < 0) return NULL;
+  if (!error) break;
   if DEE_UNLIKELY(++state->vld_link_ind == DEE_VFS_MAX_LINK_INDIRECTION) {
    _DeeVFSError_MaxLinkIndirectionReached(state->vld_startpath);
    DeeVFSNode_DECREF(result);
@@ -580,6 +598,18 @@ void DeeVFS_Shutdown(void) {
 
 
 
+static int DEE_CALL _deevfs_noopnode_vft_open(
+ struct DeeVFSFile *DEE_UNUSED(self),
+ Dee_openmode_t DEE_UNUSED(openmode),
+ Dee_mode_t DEE_UNUSED(permissions)) {
+ return 0;
+}
+struct _DeeVFSFileTypeData _DeeVFSNoopNodeType_FileData = {
+ sizeof(struct DeeVFSFile),&_deevfs_noopnode_vft_open,
+ NULL,NULL,NULL,NULL,NULL,NULL};
+
+
+
 DEE_DECL_END
 
 #ifndef __INTELLISENSE__
@@ -593,6 +623,7 @@ DEE_DECL_END
 #include "vfs_virtual_dir.c.inl"
 #include "vfs_virtual_nullfile.c.inl"
 #include "vfs_virtual_stdfile.c.inl"
+#include "vfs_proc_node.c.inl"
 #endif
 
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */

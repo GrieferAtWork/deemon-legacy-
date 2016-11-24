@@ -66,12 +66,13 @@ struct DeeVFSFile;
 struct DeeVFSView;
 
 struct _DeeVFSNodeTypeData {
- Dee_size_t vnt_size; /*< Instance size. */
  // +++ Node callbacks
  void                                          (DEE_CALL *vnt_quit)(DEE_A_INOUT struct DeeVFSNode *self); /*< destructor. */
- DEE_A_RET_EXCEPT_REF struct DeeVFSNode       *(DEE_CALL *vnt_walk)(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_Z char const *name); /*< a/b/c/d... */
- DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *(DEE_CALL *vnt_nameof)(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_INOUT struct DeeVFSNode *child); /*< Returns the name of a given child. */
- DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *(DEE_CALL *vnt_link)(DEE_A_INOUT struct DeeVFSNode *self); /*< readlink. */
+ DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *(DEE_CALL *vnt_readlink)(DEE_A_INOUT struct DeeVFSNode *self); /*< readlink. */
+ // --- Node callbacks
+};
+struct _DeeVFSPropTypeData {
+ // +++ Node callbacks
  DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_isfile)(DEE_A_INOUT struct DeeVFSNode *self);
  DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_isdir)(DEE_A_INOUT struct DeeVFSNode *self);
  DEE_A_RET_EXCEPT_FAIL(-1,0) int               (DEE_CALL *vnt_islink)(DEE_A_INOUT struct DeeVFSNode *self);
@@ -104,19 +105,26 @@ struct _DeeVFSFileTypeData {
 struct _DeeVFSViewTypeData {
  Dee_size_t vvt_size; /*< Instance size. */
  // +++ View callbacks
-        DEE_A_RET_EXCEPT(-1) int (DEE_CALL *vvt_open)(DEE_A_INOUT struct DeeVFSView *self); /*< opendir() (Only initialize non-common data). */
-                            void (DEE_CALL *vvt_quit)(DEE_A_INOUT struct DeeVFSView *self);
- DEE_A_RET_EXCEPT_FAIL(-1,1) int (DEE_CALL *vvt_curr)(DEE_A_INOUT struct DeeVFSView *self, DEE_A_OUT DEE_A_REF struct DeeVFSNode **result); /*< Returns the current node. */
- DEE_A_RET_EXCEPT_FAIL(-1,1) int (DEE_CALL *vvt_yield)(DEE_A_INOUT struct DeeVFSView *self, DEE_A_OUT DEE_A_REF struct DeeVFSNode **result); /*< readdir() */
+ DEE_A_RET_EXCEPT_REF struct DeeVFSNode       *(DEE_CALL *vnt_walk)(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_Z char const *name); /*< a/b/c/d... */
+ DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *(DEE_CALL *vnt_nameof)(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_INOUT struct DeeVFSNode *child); /*< Returns the name of a given child. */
+                      DEE_A_RET_EXCEPT(-1) int (DEE_CALL *vvt_open)(DEE_A_INOUT struct DeeVFSView *self); /*< opendir() (Only initialize non-common data). */
+                                          void (DEE_CALL *vvt_quit)(DEE_A_INOUT struct DeeVFSView *self);
+               DEE_A_RET_EXCEPT_FAIL(-1,1) int (DEE_CALL *vvt_curr)(DEE_A_INOUT struct DeeVFSView *self, DEE_A_OUT DEE_A_REF struct DeeVFSNode **result); /*< Returns the current node. */
+               DEE_A_RET_EXCEPT_FAIL(-1,1) int (DEE_CALL *vvt_yield)(DEE_A_INOUT struct DeeVFSView *self, DEE_A_OUT DEE_A_REF struct DeeVFSNode **result); /*< readdir() */
  // --- View callbacks
 };
 
 struct DeeVFSNodeType {
  // NOTE: All callbacks can be NULL, which is considered Not-Implemented
- struct _DeeVFSNodeTypeData vnt_node;
- struct _DeeVFSFileTypeData vnt_file;
- struct _DeeVFSViewTypeData vnt_view;
+ struct _DeeVFSNodeTypeData  vnt_node;
+ struct _DeeVFSPropTypeData *vnt_prop;
+ struct _DeeVFSFileTypeData *vnt_file;
+ struct _DeeVFSViewTypeData *vnt_view;
 };
+extern struct _DeeVFSFileTypeData _DeeVFSNoopNodeType_FileData;
+#define DeeVFSNoopNodeType_FileData (&_DeeVFSNoopNodeType_FileData)
+
+
 #define DeeVFSNodeType_AllocFile(self) ((struct DeeVFSFile *)(DEE_ASSERTF((self)->vnt_file.vft_size,"Node type doesn't support file-routines"),malloc_nz((self)->vnt_file.vft_size)))
 #define DeeVFSNodeType_AllocNode(self) ((struct DeeVFSNode *)malloc_nz((self)->vnt_node.vnt_size))
 #define DeeVFSNodeType_AllocView(self) ((struct DeeVFSView *)(DEE_ASSERTF((self)->vnt_view.vvt_size,"Node type doesn't support view-routines"),malloc_nz((self)->vnt_view.vvt_size)))
@@ -129,8 +137,9 @@ struct DeeVFSView {
 };
 #define DeeVFSView_Quit(self) \
 do{\
- if ((self)->vv_type->vnt_view.vvt_quit)\
-  (*(self)->vv_type->vnt_view.vvt_quit)(self);\
+ DEE_ASSERT((self)->vv_type->vnt_view);\
+ if ((self)->vv_type->vnt_view->vvt_quit)\
+  (*(self)->vv_type->vnt_view->vvt_quit)(self);\
  DeeVFSNode_DECREF((self)->vv_node);\
 }while(0)
 #define DeeVFSView_Delete(self) do{ DeeVFSView_Quit(self); free_nn(self); }while(0)
@@ -142,18 +151,18 @@ struct DeeVFSFile {
            struct DeeVFSNodeType const *vf_type; /*< [1..1] Node type (alias for 'vf_node->vn_type'). */
  /* User-specific data... */
 };
-#define DeeVFSFile_HasRead(self)             ((self)->vf_type->vnt_file.vft_read!=NULL)
-#define DeeVFSFile_HasWrite(self)            ((self)->vf_type->vnt_file.vft_write!=NULL)
-#define DeeVFSFile_HasSeek(self)             ((self)->vf_type->vnt_file.vft_seek!=NULL)
-#define DeeVFSFile_HasFlush(self)            ((self)->vf_type->vnt_file.vft_flush!=NULL)
-#define DeeVFSFile_HasTrunc(self)            ((self)->vf_type->vnt_file.vft_trunc!=NULL)
-#define DeeVFSFile_Quit(self)                ((self)->vf_type->vnt_file.vft_quit ? (*(self)->vf_type->vnt_file.vft_quit)(self) : (void)0)
+#define DeeVFSFile_HasRead(self)             ((self)->vf_type->vnt_file->vft_read!=NULL)
+#define DeeVFSFile_HasWrite(self)            ((self)->vf_type->vnt_file->vft_write!=NULL)
+#define DeeVFSFile_HasSeek(self)             ((self)->vf_type->vnt_file->vft_seek!=NULL)
+#define DeeVFSFile_HasFlush(self)            ((self)->vf_type->vnt_file->vft_flush!=NULL)
+#define DeeVFSFile_HasTrunc(self)            ((self)->vf_type->vnt_file->vft_trunc!=NULL)
+#define DeeVFSFile_Quit(self)                ((self)->vf_type->vnt_file->vft_quit ? (*(self)->vf_type->vnt_file->vft_quit)(self) : (void)0)
 #define DeeVFSFile_Delete(self)              (DeeVFSFile_Quit(self),free_nn(self))
-#define DeeVFSFile_Read(self,p,s,rs)         (DEE_ASSERTF(DeeVFSFile_HasRead(self),"Can't read file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_read)(self,p,s,rs))
-#define DeeVFSFile_Write(self,p,s,ws)        (DEE_ASSERTF(DeeVFSFile_HasWrite(self),"Can't write file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_write)(self,p,s,ws))
-#define DeeVFSFile_Seek(self,off,whence,pos) (DEE_ASSERTF(DeeVFSFile_HasSeek(self),"Can't seek file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_seek)(self,off,whence,pos))
-#define DeeVFSFile_Flush(self)               (DEE_ASSERTF(DeeVFSFile_HasFlush(self),"Can't flush file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_flush)(self))
-#define DeeVFSFile_Trunc(self)               (DEE_ASSERTF(DeeVFSFile_HasTrunc(self),"Can't trunc file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file.vft_trunc)(self))
+#define DeeVFSFile_Read(self,p,s,rs)         (DEE_ASSERTF(DeeVFSFile_HasRead(self),"Can't read file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file->vft_read)(self,p,s,rs))
+#define DeeVFSFile_Write(self,p,s,ws)        (DEE_ASSERTF(DeeVFSFile_HasWrite(self),"Can't write file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file->vft_write)(self,p,s,ws))
+#define DeeVFSFile_Seek(self,off,whence,pos) (DEE_ASSERTF(DeeVFSFile_HasSeek(self),"Can't seek file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file->vft_seek)(self,off,whence,pos))
+#define DeeVFSFile_Flush(self)               (DEE_ASSERTF(DeeVFSFile_HasFlush(self),"Can't flush file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file->vft_flush)(self))
+#define DeeVFSFile_Trunc(self)               (DEE_ASSERTF(DeeVFSFile_HasTrunc(self),"Can't trunc file %R",DeeVFSNode_Filename((self)->vf_node)),(*(self)->vf_type->vnt_file->vft_trunc)(self))
 
 
 typedef Dee_uint16_t Dee_vfsnode_refcnt_t;
@@ -184,25 +193,26 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeVFSNode_Name(DEE_A_IN st
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeVFSNode_Filename(DEE_A_IN struct DeeVFSNode const *node);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeVFSNode_Pathname(DEE_A_IN struct DeeVFSNode const *node);
 
-#define DeeVFSNode_HasOpen(self)   ((self)->vn_type->vnt_file.vft_open!=NULL)
-#define DeeVFSNode_HasView(self)   ((self)->vn_type->vnt_view.vvt_open!=NULL)
-#define DeeVFSNode_HasLink(self)   ((self)->vn_type->vnt_node.vnt_link!=NULL)
-#define DeeVFSNode_HasWalk(self)   ((self)->vn_type->vnt_node.vnt_walk!=NULL)
+#define DeeVFSNodeType_HASPROP(self,prop) ((self)->vnt_prop && (self)->vnt_prop->prop)
+#define DeeVFSNode_HasOpen(self)     ((self)->vn_type->vnt_file && (self)->vn_type->vnt_file->vft_open)
+#define DeeVFSNode_HasView(self)     ((self)->vn_type->vnt_view && (self)->vn_type->vnt_view->vvt_open)
+#define DeeVFSNode_HasWalk(self)     ((self)->vn_type->vnt_view && (self)->vn_type->vnt_view->vnt_walk)
+#define DeeVFSNode_HasReadlink(self) ((self)->vn_type->vnt_node.vnt_readlink!=NULL)
 
 extern struct DeeVFSNodeType const DeeVFSNativeNode_Type; // Implemented in "vfs_native_node.c.inl"
 #define DeeVFSNode_IsNative(self) ((self)->vn_type == &DeeVFSNativeNode_Type)
 
 //////////////////////////////////////////////////////////////////////////
 // Generic node attribute query functions
-#define DeeVFSNode_IsFile(self)       ((self)->vn_type->vnt_node.vnt_isfile ? (*(self)->vn_type->vnt_node.vnt_isfile)(self) : DeeVFSNode_HasOpen(self))
-#define DeeVFSNode_IsDir(self)        ((self)->vn_type->vnt_node.vnt_isdir  ? (*(self)->vn_type->vnt_node.vnt_isdir )(self) : DeeVFSNode_HasView(self))
-#define DeeVFSNode_IsLink(self)       ((self)->vn_type->vnt_node.vnt_islink ? (*(self)->vn_type->vnt_node.vnt_islink)(self) : DeeVFSNode_HasLink(self))
-#define DeeVFSNode_IsHidden(self)     ((self)->vn_type->vnt_node.vnt_ishidden ? (*(self)->vn_type->vnt_node.vnt_ishidden)(self) : DeeVFSNode_HasHiddenFilename(self))
-#define DeeVFSNode_IsExecutable(self) ((self)->vn_type->vnt_node.vnt_isexecutable ? (*(self)->vn_type->vnt_node.vnt_isexecutable)(self) : 0)
-#define DeeVFSNode_IsCharDev(self)    ((self)->vn_type->vnt_node.vnt_ischardev && (*(self)->vn_type->vnt_node.vnt_ischardev)(self))
-#define DeeVFSNode_IsBlockDev(self)   ((self)->vn_type->vnt_node.vnt_isblockdev && (*(self)->vn_type->vnt_node.vnt_isblockdev)(self))
-#define DeeVFSNode_IsFiFo(self)       ((self)->vn_type->vnt_node.vnt_isfifo && (*(self)->vn_type->vnt_node.vnt_isfifo)(self))
-#define DeeVFSNode_IsSocket(self)     ((self)->vn_type->vnt_node.vnt_issocket && (*(self)->vn_type->vnt_node.vnt_issocket)(self))
+#define DeeVFSNode_IsFile(self)       (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_isfile)       ? (*(self)->vn_type->vnt_prop->vnt_isfile)(self) : (DeeVFSNode_HasOpen(self) && (self)->vn_type->vnt_file != DeeVFSNoopNodeType_FileData))
+#define DeeVFSNode_IsDir(self)        (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_isdir)        ? (*(self)->vn_type->vnt_prop->vnt_isdir )(self) : DeeVFSNode_HasView(self))
+#define DeeVFSNode_IsLink(self)       (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_islink)       ? (*(self)->vn_type->vnt_prop->vnt_islink)(self) : DeeVFSNode_HasReadlink(self))
+#define DeeVFSNode_IsHidden(self)     (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_ishidden)     ? (*(self)->vn_type->vnt_prop->vnt_ishidden)(self) : DeeVFSNode_HasHiddenFilename(self))
+#define DeeVFSNode_IsExecutable(self) (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_isexecutable) ? (*(self)->vn_type->vnt_prop->vnt_isexecutable)(self) : 0)
+#define DeeVFSNode_IsCharDev(self)    (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_ischardev)    && (*(self)->vn_type->vnt_prop->vnt_ischardev)(self))
+#define DeeVFSNode_IsBlockDev(self)   (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_isblockdev)   && (*(self)->vn_type->vnt_prop->vnt_isblockdev)(self))
+#define DeeVFSNode_IsFiFo(self)       (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_isfifo)       && (*(self)->vn_type->vnt_prop->vnt_isfifo)(self))
+#define DeeVFSNode_IsSocket(self)     (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_issocket)     && (*(self)->vn_type->vnt_prop->vnt_issocket)(self))
 extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFSNode_HasHiddenFilename(DEE_A_IN struct DeeVFSNode const *self);
 extern DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self);
 #define DeeVFSNode_IsMount DeeVFSNode_IsMount
@@ -221,13 +231,13 @@ extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(DEE_A_INOUT struct DeeVFSNode *
 
 #define DeeVFSNode_Walk(self,elemname) \
  (DEE_ASSERTF(DeeVFSNode_HasWalk(self),"Can't walk node %R",DeeVFSNode_Filename(self)),\
-             (*(self)->vn_type->vnt_node.vnt_walk)(self,elemname))
+             (*(self)->vn_type->vnt_view->vnt_walk)(self,elemname))
 
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFSNode_Utf8Readlink(DEE_A_INOUT struct DeeVFSNode *self);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFSNode_WideReadlink(DEE_A_INOUT struct DeeVFSNode *self);
 #define DeeVFSNode_DoReadlink(self) \
- (DEE_ASSERTF(DeeVFSNode_HasWalk(self),"Node is not a link: %R",DeeVFSNode_Filename(self)),\
-             (*(self)->vn_type->vnt_node.vnt_link)(self))
+ (DEE_ASSERTF(DeeVFSNode_HasReadlink(self),"Node is not a link: %R",DeeVFSNode_Filename(self)),\
+             (*(self)->vn_type->vnt_node.vnt_readlink)(self))
 
 struct DeeVFSLocateState;
 //////////////////////////////////////////////////////////////////////////
@@ -237,29 +247,29 @@ struct DeeVFSLocateState;
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
  DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_INOUT struct DeeVFSNode *self);
 
-#define _DeeVFSNode_GetViewBufferSize(self) (self)->vn_type->vnt_view.vvt_size
+#define _DeeVFSNode_GetViewBufferSize(self) (self)->vn_type->vnt_view->vvt_size
 #define _DeeVFSNode_OpenViewBuffer(self,buf)\
- (DEE_ASSERTF(DeeVFSNode_HasOpen(self),"Can't view node %R",DeeVFSNode_Filename(self)),\
+ (DEE_ASSERTF(DeeVFSNode_HasView(self),"Can't view node %R",DeeVFSNode_Filename(self)),\
   ((struct DeeVFSView *)(buf))->vv_node = (self),DeeVFSNode_INCREF(self),\
   ((struct DeeVFSView *)(buf))->vv_type = (self)->vn_type,\
-  ((*(self)->vn_type->vnt_view.vvt_open)((struct DeeVFSView *)(buf)) != 0)\
+  ((*(self)->vn_type->vnt_view->vvt_open)((struct DeeVFSView *)(buf)) != 0)\
   ? (DeeVFSNode_DECREF(self),-1) : 0)
 
 
 // Size of the buffer that should be passed to '_DeeVFSNode_OpenFileBuffer'.
-#define _DeeVFSNode_GetFileBufferSize(self) (self)->vn_type->vnt_file.vft_size
+#define _DeeVFSNode_GetFileBufferSize(self) (self)->vn_type->vnt_file->vft_size
 // Opens the file of a node inside the given buffer memory
 //  - Returns non-zero on error.
 #define _DeeVFSNode_OpenFileBuffer(self,buf,mode,perms)\
  (DEE_ASSERTF(DeeVFSNode_HasOpen(self),"Can't open node %R",DeeVFSNode_Filename(self)),\
   DeeVFSNode_INCREF(self),((struct DeeVFSFile *)(buf))->vf_node = (self),\
                           ((struct DeeVFSFile *)(buf))->vf_type = (self)->vn_type,\
-  ((*(self)->vn_type->vnt_file.vft_open)((struct DeeVFSFile *)(buf),mode,perms) != 0)\
+  ((*(self)->vn_type->vnt_file->vft_open)((struct DeeVFSFile *)(buf),mode,perms) != 0)\
   ? (DeeVFSNode_DECREF(self),-1) : 0)
 
 
 #ifndef DEE_VFS_MAX_LINK_INDIRECTION
-#define DEE_VFS_MAX_LINK_INDIRECTION 1024
+#define DEE_VFS_MAX_LINK_INDIRECTION 256
 #endif /* !DEE_VFS_MAX_LINK_INDIRECTION */
 struct DeeVFSLocateState {
  char const  *vld_startpath; /*< [1..1] Original start path. */

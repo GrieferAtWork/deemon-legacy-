@@ -34,7 +34,7 @@ extern struct DeeVFSVirtualDirNode _DeeVFS_Root;
 
 // '/native/': Mounting point for the native filesystem
 // NOTE: On windows, this is a folder filled with directories matching all drive names.
-extern struct DeeVFSNativeMountNode _DeeVFSNative_Root;
+extern struct DeeVFSNode _DeeVFSNative_Root;
 #define DeeVFSNative_Root ((struct DeeVFSNode *)&_DeeVFSNative_Root)
 
 DEE_DECL_END

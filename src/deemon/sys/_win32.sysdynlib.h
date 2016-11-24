@@ -23,7 +23,6 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
-#include <deemon/virtual_fs.h.inl>
 #include <deemon/string.h>
 
 //////////////////////////////////////////////////////////////////////////

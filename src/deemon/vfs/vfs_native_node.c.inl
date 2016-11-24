@@ -73,7 +73,7 @@ static DeeObject *DEE_CALL _deevfs_nativenode_vnt_nameof(
  while(result != resultmin && result[-1] != '\\') --result;
  return DeeString_NewWithLength((Dee_size_t)(end-result),result);
 }
-static DeeObject *DEE_CALL _deevfs_nativenode_vnt_link(DEE_A_INOUT struct DeeVFSNativeNode *self) {
+static DeeObject *DEE_CALL _deevfs_nativenode_vnt_readlink(DEE_A_INOUT struct DeeVFSNativeNode *self) {
  return DeeNFS_ReadlinkObject((DeeObject *)self->vnn_path);
 }
 static int DEE_CALL _deevfs_nativenode_vnt_isfile(DEE_A_INOUT struct DeeVFSNativeNode *self) {
@@ -238,54 +238,56 @@ again:
  if DEE_UNLIKELY(!*result) return -1;
  return 0;
 }
-
-
+static struct _DeeVFSPropTypeData _deevfs_nativenode_vnt_prop = {
+ (int (DEE_CALL *)(struct DeeVFSNode *))                                                                     &_deevfs_nativenode_vnt_isfile,
+ (int (DEE_CALL *)(struct DeeVFSNode *))                                                                     &_deevfs_nativenode_vnt_isdir,
+ (int (DEE_CALL *)(struct DeeVFSNode *))                                                                     &_deevfs_nativenode_vnt_islink,
+ (int (DEE_CALL *)(struct DeeVFSNode *))                                                                     &_deevfs_nativenode_vnt_ishidden,
+ (int (DEE_CALL *)(struct DeeVFSNode *))                                                                     &_deevfs_nativenode_vnt_isexecutable,
+ (int (DEE_CALL *)(struct DeeVFSNode *))                                                                     &_deevfs_nativenode_vnt_ischardev,
+ (int (DEE_CALL *)(struct DeeVFSNode *))                                                                     &_deevfs_nativenode_vnt_isblockdev,
+ (int (DEE_CALL *)(struct DeeVFSNode *))                                                                     &_deevfs_nativenode_vnt_isfifo,
+ (int (DEE_CALL *)(struct DeeVFSNode *))                                                                     &_deevfs_nativenode_vnt_issocket,
+ (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t *))                                                        &_deevfs_nativenode_vnt_getmod,
+ (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t ))                                                         &_deevfs_nativenode_vnt_chmod,
+ (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t *,Dee_gid_t *))                                             &_deevfs_nativenode_vnt_getown,
+ (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t,Dee_gid_t))                                                 &_deevfs_nativenode_vnt_chown,
+ (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t *,Dee_timetick_t *,Dee_timetick_t *))                  &_deevfs_nativenode_vnt_gettimes,
+ (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t const *,Dee_timetick_t const *,Dee_timetick_t const *))&_deevfs_nativenode_vnt_settimes,
+};
+#ifdef DeeSysFileFD
+static struct _DeeVFSFileTypeData _deevfs_nativenode_vnt_file = {
+ sizeof(struct DeeVFSNativeFile),
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_nativefile_vft_open,
+ (void(DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_quit,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_nativefile_vft_read,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_nativefile_vft_write,
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &_deevfs_nativefile_vft_seek,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_flush,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_trunc,
+};
+#endif
+static struct _DeeVFSViewTypeData _deevfs_nativenode_vnt_view = {
+ sizeof(struct DeeVFSNativeView),
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))&_deevfs_nativenode_vnt_walk,
+ (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *)) &_deevfs_nativenode_vnt_nameof,
+ (int (DEE_CALL *)(struct DeeVFSView *))                            &_deevfs_nativeview_vvt_open,
+ (void (DEE_CALL *)(struct DeeVFSView *))                           &_deevfs_nativeview_vvt_quit,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_nativeview_vvt_curr,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_nativeview_vvt_yield,
+};
 
 struct DeeVFSNodeType const DeeVFSNativeNode_Type = {
- { sizeof(struct DeeVFSNativeNode), // vnt_node
-  (void (DEE_CALL *)(struct DeeVFSNode *))                                                                                              &_deevfs_nativenode_vnt_quit,
-  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))                                                                   &_deevfs_nativenode_vnt_walk,
-  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                                                                    &_deevfs_nativenode_vnt_nameof,
-  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *))                                                                                        &_deevfs_nativenode_vnt_link,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               &_deevfs_nativenode_vnt_isfile,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               &_deevfs_nativenode_vnt_isdir,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               &_deevfs_nativenode_vnt_islink,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               &_deevfs_nativenode_vnt_ishidden,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               &_deevfs_nativenode_vnt_isexecutable,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               &_deevfs_nativenode_vnt_ischardev,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               &_deevfs_nativenode_vnt_isblockdev,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               &_deevfs_nativenode_vnt_isfifo,
-  (int (DEE_CALL *)(struct DeeVFSNode *))                                                                                               &_deevfs_nativenode_vnt_issocket,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t *))                                                                                  &_deevfs_nativenode_vnt_getmod,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_mode_t ))                                                                                   &_deevfs_nativenode_vnt_chmod,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t *,DEE_A_OUT Dee_gid_t *))                                                             &_deevfs_nativenode_vnt_getown,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_uid_t,DEE_A_IN Dee_gid_t))                                                                  &_deevfs_nativenode_vnt_chown,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t *,DEE_A_OUT_OPT Dee_timetick_t *,DEE_A_OUT_OPT Dee_timetick_t *))                &_deevfs_nativenode_vnt_gettimes,
-  (int (DEE_CALL *)(struct DeeVFSNode *,Dee_timetick_t const *,DEE_A_IN_OPT Dee_timetick_t const *,DEE_A_IN_OPT Dee_timetick_t const *))&_deevfs_nativenode_vnt_settimes,
- },{ sizeof(struct DeeVFSNativeFile),// vnt_file
+ {(void (DEE_CALL *)(struct DeeVFSNode *))      &_deevfs_nativenode_vnt_quit,
+  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *))&_deevfs_nativenode_vnt_readlink,
+ },
+ &_deevfs_nativenode_vnt_prop,
 #ifdef DeeSysFileFD
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_nativefile_vft_open,
-  (void(DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_quit,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_nativefile_vft_read,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_nativefile_vft_write,
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &_deevfs_nativefile_vft_seek,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_flush,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_vft_trunc,
+ &_deevfs_nativenode_vnt_file,
 #else
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           NULL,
-  (void(DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
-  (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+ NULL,
 #endif
- },{ sizeof(struct DeeVFSNativeView), // vnt_view
-  (int (DEE_CALL *)(struct DeeVFSView *))                     &_deevfs_nativeview_vvt_open,
-  (void (DEE_CALL *)(struct DeeVFSView *))                    &_deevfs_nativeview_vvt_quit,
-  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_nativeview_vvt_curr,
-  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))&_deevfs_nativeview_vvt_yield,
- }
+ &_deevfs_nativenode_vnt_view
 };
 
 

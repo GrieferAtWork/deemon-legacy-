@@ -76,11 +76,11 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int VFS_FUNC(HasProperty)(
 call_native: return NFS_FUNC(HasProperty)(path,prop);
  }
  if (VFS_FUNC(IsVirtualPath)(path)) {
-  filenode = VFS_FUNC(Locate)(path);
+  filenode = VFS_FUNC(LLocate)(path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
-  filenode = VFS_FUNC(LocateWithCWD)(cwd,path);
+  filenode = VFS_FUNC(LLocateWithCWD)(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!filenode) { DeeError_HandledOne(); return 0; }
