@@ -18,17 +18,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__WIN32_SYSFD_FILENAME_C_INL
-#define GUARD_DEEMON_SYS__WIN32_SYSFD_FILENAME_C_INL 1
+#ifndef GUARD_DEEMON_FS_EXPAND_FS_C
+#define GUARD_DEEMON_FS_EXPAND_FS_C 1
+#define DEE_LIMITED_API 1
 
-#include <deemon/sys/_win32.sysfd.h>
+#include <deemon/__conf.inl>
 
-// NOTE: This file is part of the /src/deemon/file.c compilation unit
+DEE_DECL_BEGIN
+
+DEE_DECL_END
 
 #ifndef __INTELLISENSE__
-#define WIDE
-#include "_win32.sysfd.filename.impl.inl"
-#include "_win32.sysfd.filename.impl.inl"
+#include "expand_fs.chdir.c.inl"
+#include "expand_fs.chmod.c.inl"
+#include "expand_fs.chown.c.inl"
+#include "expand_fs.copy.c.inl"
+#include "expand_fs.getmod.c.inl"
+#include "expand_fs.getown.c.inl"
+#include "expand_fs.gettimes.c.inl"
+#include "expand_fs.hasproperty.c.inl"
+#include "expand_fs.link.c.inl"
+#include "expand_fs.mkdir.c.inl"
+#include "expand_fs.move.c.inl"
+#include "expand_fs.open.c.inl"
+#include "expand_fs.opendir.c.inl"
+#include "expand_fs.readlink.c.inl"
+#include "expand_fs.remove.c.inl"
+#include "expand_fs.rmdir.c.inl"
+#include "expand_fs.settimes.c.inl"
+#include "expand_fs.unlink.c.inl"
 #endif
 
-#endif /* !GUARD_DEEMON_SYS__WIN32_SYSFD_FILENAME_C_INL */
+#endif /* !GUARD_DEEMON_FS_EXPAND_FS_C */

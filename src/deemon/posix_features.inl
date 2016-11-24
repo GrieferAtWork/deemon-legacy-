@@ -31,7 +31,7 @@
 #include <features.h>
 #endif
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_UNISTD_H
-#include <unistd.h> // _POSIX_PRIORITY_SCHEDULING, _POSIX_TIMERS
+#include <unistd.h> // _POSIX_PRIORITY_SCHEDULING, _POSIX_TIMERS, _POSIX_SYNCHRONIZED_IO
 #endif
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 #endif /* ... */
@@ -165,6 +165,28 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE__WSETENV
+#define DEE_HAVE__WSETENV 0
+#endif
+
+#ifndef DEE_HAVE_PUTENV
+#if (defined(_SVID_SOURCE) && _SVID_SOURCE)\
+ || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE)\
+ || (defined(_MSC_VER))
+# define DEE_HAVE_PUTENV 1
+#else
+# define DEE_HAVE_PUTENV 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WPUTENV
+#if defined(_MSC_VER)
+# define DEE_HAVE__WPUTENV 1
+#else
+# define DEE_HAVE__WPUTENV 0
+#endif
+#endif
+
 #ifndef DEE_HAVE_UNSETENV
 #if (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)\
  || (defined(_BSD_SOURCE) && _BSD_SOURCE)
@@ -172,6 +194,10 @@
 #else
 # define DEE_HAVE_UNSETENV 0
 #endif
+#endif
+
+#ifndef DEE_HAVE__WUNSETENV
+#define DEE_HAVE__WUNSETENV 0
 #endif
 
 #ifndef DEE_HAVE_READLINK
@@ -332,7 +358,8 @@
 
 #ifndef DEE_HAVE_FDATASYNC
 #if (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 199309L)\
- || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)
+ || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)\
+ && (defined(_POSIX_SYNCHRONIZED_IO) && _POSIX_SYNCHRONIZED_IO > 0)
 # define DEE_HAVE_FDATASYNC 1
 #else
 # define DEE_HAVE_FDATASYNC 0
@@ -409,12 +436,67 @@
 #define DEE_HAVE_PWRITE DEE_HAVE_PREAD
 #endif
 
-
 #ifndef DEE_HAVE__WOPEN
 #if defined(_MSC_VER)
 # define DEE_HAVE__WOPEN 1
 #else
 # define DEE_HAVE__WOPEN 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WGETCWD
+#if defined(_MSC_VER)
+# define DEE_HAVE__WGETCWD 1
+#else
+# define DEE_HAVE__WGETCWD 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WCHDIR
+#if defined(_MSC_VER)
+# define DEE_HAVE__WCHDIR 1
+#else
+# define DEE_HAVE__WCHDIR 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WGETENV
+#if defined(_MSC_VER)
+# define DEE_HAVE__WGETENV 1
+#else
+# define DEE_HAVE__WGETENV 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WENVIRON
+#if defined(_MSC_VER)
+# define DEE_HAVE__WENVIRON 1
+#else
+# define DEE_HAVE__WENVIRON 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WSTAT
+#if defined(_MSC_VER)
+# define DEE_HAVE__WSTAT 1
+#else
+# define DEE_HAVE__WSTAT 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WMKDIR
+#if defined(_MSC_VER)
+# define DEE_HAVE__WMKDIR 1
+#else
+# define DEE_HAVE__WMKDIR 0
+#endif
+#endif
+
+#ifndef DEE_HAVE__WRMDIR
+#if defined(_MSC_VER)
+# define DEE_HAVE__WRMDIR 1
+#else
+# define DEE_HAVE__WRMDIR 0
 #endif
 #endif
 

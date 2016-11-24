@@ -106,6 +106,14 @@
 //   >> }
 
 
+// TODO: Optimization:
+//   >> 'a ? true : false'  --> '!!a'
+//   >> 'a ? false : false' --> '!(!!a)'
+//   >> 'a ? : false'       --> '!!a'
+//   >> 'a ? b : false'     --> 'a && b'
+//   >> 'a ? true : b'      --> 'a || b'
+//   >> 'a ? a : false'     --> '!!a' // Only if 'a' has no side-effects
+
 #ifdef _MSC_VER
 #pragma warning(disable: 4514) // Unreferenced inline function removed
 #endif

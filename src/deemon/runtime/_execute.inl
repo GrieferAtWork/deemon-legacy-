@@ -148,16 +148,32 @@ static int _intellisense_rt_execute(
 #ifdef DEE_DEBUG
 #define RT_DEBUG_CHECK_VALID_ARG(id)\
  DEE_ASSERTF((id) < frame.f_argc,\
-             "Invalid argument id: %I16u",(id))
+             "%O(%I32d) : %O : +%.4Ix : Invalid argument id: %I16u",\
+             _DeeStackFrame_File(&frame),\
+             _DeeStackFrame_Line(&frame)+1,\
+             _DeeStackFrame_Func(&frame),\
+             (Dee_size_t)((code-1)-frame.f_code->co_code),(id))
 #define RT_DEBUG_CHECK_VALID_ARG32(id)\
  DEE_ASSERTF((id) < frame.f_argc,\
-             "Invalid argument id: %I32u",(id))
+             "%O(%I32d) : %O : +%.4Ix : Invalid argument id: %I32u",\
+             _DeeStackFrame_File(&frame),\
+             _DeeStackFrame_Line(&frame)+1,\
+             _DeeStackFrame_Func(&frame),\
+             (Dee_size_t)((code-1)-frame.f_code->co_code),(id))
 #define RT_DEBUG_CHECK_VALID_REF(id)\
  DEE_ASSERTF((id) < frame.f_refc,\
-             "Invalid reference id: %I16u",(id))
+             "%O(%I32d) : %O : +%.4Ix : Invalid reference id: %I16u",\
+             _DeeStackFrame_File(&frame),\
+             _DeeStackFrame_Line(&frame)+1,\
+             _DeeStackFrame_Func(&frame),\
+             (Dee_size_t)((code-1)-frame.f_code->co_code),(id))
 #define RT_DEBUG_CHECK_VALID_REF32(id)\
  DEE_ASSERTF((id) < frame.f_refc,\
-             "Invalid reference id: %I32u",(id))
+             "%O(%I32d) : %O : +%.4Ix : Invalid reference id: %I32u",\
+             _DeeStackFrame_File(&frame),\
+             _DeeStackFrame_Line(&frame)+1,\
+             _DeeStackFrame_Func(&frame),\
+             (Dee_size_t)((code-1)-frame.f_code->co_code),(id))
 #else
 #define RT_DEBUG_CHECK_VALID_ARG(id)   (void)0
 #define RT_DEBUG_CHECK_VALID_ARG32(id) (void)0
@@ -167,23 +183,40 @@ static int _intellisense_rt_execute(
 
 #define RT_DEBUG_CHECK_VALID_LOCAL(id)\
  DEE_ASSERTF((id) < frame.f_code->co_nlocals,\
-             "Invalid local id: %I16u",(id))
+             "%O(%I32d) : %O : +%.4Ix : Invalid local id: %I16u",\
+             _DeeStackFrame_File(&frame),\
+             _DeeStackFrame_Line(&frame)+1,\
+             _DeeStackFrame_Func(&frame),\
+             (Dee_size_t)((code-1)-frame.f_code->co_code),(id))
 #define RT_DEBUG_CHECK_VALID_LOCAL32(id)\
  DEE_ASSERTF((id) < frame.f_code->co_nlocals,\
-             "Invalid local id: %I32u",(id))
+             "%O(%I32d) : %O : +%.4Ix : Invalid local id: %I32u",\
+             _DeeStackFrame_File(&frame),\
+             _DeeStackFrame_Line(&frame)+1,\
+             _DeeStackFrame_Func(&frame),\
+             (Dee_size_t)((code-1)-frame.f_code->co_code),(id))
 #define RT_DEBUG_CHECK_VALID_CONST(id)\
  DEE_ASSERTF((id) < DeeTuple_SIZE(frame.f_code->co_consts),\
-             "Invalid constant/static id: %I16u",(id))
+             "%O(%I32d) : %O : +%.4Ix : Invalid constant/static id: %I16u",\
+             _DeeStackFrame_File(&frame),\
+             _DeeStackFrame_Line(&frame)+1,\
+             _DeeStackFrame_Func(&frame),\
+             (Dee_size_t)((code-1)-frame.f_code->co_code),(id))
 #define RT_DEBUG_CHECK_VALID_CONST32(id)\
  DEE_ASSERTF((id) < DeeTuple_SIZE(frame.f_code->co_consts),\
-             "Invalid constant/static id: %I32u",(id))
+             "%O(%I32d) : %O : +%.4Ix : Invalid constant/static id: %I32u",\
+             _DeeStackFrame_File(&frame),\
+             _DeeStackFrame_Line(&frame)+1,\
+             _DeeStackFrame_Func(&frame),\
+             (Dee_size_t)((code-1)-frame.f_code->co_code),(id))
 
 
 #define RT_DEBUG_CHECK_STACK(n) \
  DEE_ASSERTF((Dee_size_t)(stack_end-stack)>=(Dee_size_t)(n),\
-             "%O(%I32d) : +%.4Ix Stack is too small",\
+             "%O(%I32d) : %O : +%.4Ix : Stack is too small",\
              _DeeStackFrame_File(&frame),\
              _DeeStackFrame_Line(&frame)+1,\
+             _DeeStackFrame_Func(&frame),\
              (Dee_size_t)((code-1)-frame.f_code->co_code))
 #define RT_DEBUG_CHECK_STACK32 RT_DEBUG_CHECK_STACK
 #define RT_STACK_SLOT(n)        stack_end[-((n)+1)]
@@ -222,12 +255,18 @@ do{\
 #define RT_STACK_ADDR(n)        (stack_end-(n))
 #define RT_STACK_ADDR32(n)      (stack_end-(n))
 #define RT_CODE_ADDR()          code
-#if DEE_CONFIG_HAVE_MSVC_MEMORY_DEBUG && defined(DEE_DEBUG)
-#define RT_HANDLE_EXCEPTION     do{DEE_ASSERTF(thread_self->t_exception!=NULL,"No exception set");_CrtCheckMemory();goto handle_exception;}while(0)
+#ifdef DEE_DEBUG
+#define RT_ASSERT_EXCEPTION_OCCURRED() \
+ DEE_ASSERTF(ERROR_OCCURRED,"%O(%I32d) : %O : +%.4Ix : No exception set",\
+            _DeeStackFrame_File(&frame),_DeeStackFrame_Line(&frame)+1,\
+            _DeeStackFrame_Func(&frame),_DeeStackFrame_Addr(&frame))
+#endif
+#if DEE_CONFIG_HAVE_MSVC_MEMORY_DEBUG && defined(RT_ASSERT_EXCEPTION_OCCURRED)
+#define RT_HANDLE_EXCEPTION     do{RT_ASSERT_EXCEPTION_OCCURRED();_CrtCheckMemory();goto handle_exception;}while(0)
 #elif DEE_CONFIG_HAVE_MSVC_MEMORY_DEBUG
 #define RT_HANDLE_EXCEPTION     do{_CrtCheckMemory();goto handle_exception;}while(0)
-#elif defined(DEE_DEBUG)
-#define RT_HANDLE_EXCEPTION     do{DEE_ASSERTF(thread_self->t_exception!=NULL,"No exception set");goto handle_exception;}while(0)
+#elif defined(RT_ASSERT_EXCEPTION_OCCURRED)
+#define RT_HANDLE_EXCEPTION     do{RT_ASSERT_EXCEPTION_OCCURRED();goto handle_exception;}while(0)
 #else
 #define RT_HANDLE_EXCEPTION     goto handle_exception
 #endif
@@ -279,7 +318,19 @@ next_op:
 #define TARGET(op)              case op: TARGET_DEBUG(#op,op)
 #endif
 #ifdef DEE_DEBUG
-#define DISPATCH() do{DEE_ASSERTF(!ERROR_OCCURRED,"DISPATCH() reached with exception set");goto next_op;}while(0)
+#define DISPATCH() \
+do{\
+ if (!_DeeFlag_NoAssert && ERROR_OCCURRED) {\
+  DeeObject **_stack_iter = stack_end;\
+  while (_stack_iter-- != stack) DEE_LDEBUG("[STACK %Id] %r\n",_stack_iter-stack,*_stack_iter);\
+  DEE_ASSERTF(0,"%O(%I32d) : %O : +%.4Ix : DISPATCH() reached with exception set",\
+              _DeeStackFrame_File(&frame),\
+              _DeeStackFrame_Line(&frame)+1,\
+              _DeeStackFrame_Func(&frame),\
+              (Dee_size_t)((code-1)-frame.f_code->co_code));\
+ }\
+ goto next_op;\
+}while(0)
 #else
 #define DISPATCH() goto next_op
 #endif
@@ -3884,6 +3935,8 @@ ill_instr:
 #undef RT_DEBUG_CHECK_VALID_LOCAL32
 #undef RT_DEBUG_CHECK_VALID_REF32
 #undef RT_DEBUG_CHECK_VALID_ARG32
+#undef RT_ASSERT_EXCEPTION_OCCURRED
+#undef RT_HANDLE_EXCEPTION
 end:
 #if DEE_CONFIG_LANGUAGE_HAVE_EXCEPTIONS
  // We may still have unhandled exceptions that were hidden because of finally handlers

@@ -421,6 +421,15 @@
 #endif
 #endif
 
+#ifndef DEE_ENVIRONMENT_HAVE_INCLUDE_DIRECT_H
+#if __has_include(<direct.h>) || defined(_MSC_VER) || \
+    defined(HAVE_DIRECT_H) || defined(HAVE_INCLUDE_DIRECT_H)
+#define DEE_ENVIRONMENT_HAVE_INCLUDE_DIRECT_H 1
+#else
+#define DEE_ENVIRONMENT_HAVE_INCLUDE_DIRECT_H 0
+#endif
+#endif
+
 #ifndef DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
 #if __has_include(<stdio.h>) || 1 || \
     defined(HAVE_STDIO_H) || defined(HAVE_INCLUDE_STDIO_H)
@@ -927,15 +936,15 @@
 #endif
 #endif /* !DEE_ATTRIBUTE_DEPRECATED */
 
-#ifndef DEE_MACRO_DEPRECATED
+#ifndef DEE_DEPRECATED_MACRO
 #if defined(_MSC_VER) || defined(__DEEMON__)
-# define DEE_MACRO_DEPRECATED(new)\
+# define DEE_DEPRECATED_MACRO(new)\
   DEE_COMPILER_PRAGMA(message(__FILE__ "(" DEE_PP_STR(__LINE__) ") : Warning : Deprecated macro. Use " DEE_PP_STR(#new) " instead!")) new
 #elif defined(__GNUC__)
-# define DEE_MACRO_DEPRECATED(new)\
+# define DEE_DEPRECATED_MACRO(new)\
   DEE_COMPILER_PRAGMA(message __FILE__ ":" DEE_PP_STR(__LINE__) ": Warning : Deprecated macro. Use " DEE_PP_STR(#new) " instead!")) new
 #else
-# define DEE_MACRO_DEPRECATED(new)
+# define DEE_DEPRECATED_MACRO(new)
 #endif
 #endif
 
@@ -1683,15 +1692,19 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #endif
 
 #ifndef DEE_UNUSED
-#if defined(__cplusplus) || defined(__DEEMON__)
-# define DEE_UNUSED(x) /* nothing */
+#if defined(__LCLINT__)
+# define DEE_UNUSED(x) /*@unused@*/ x
 #elif defined(__GNUC__)
-# define DEE_UNUSED(x) DEE_ATTRIBUTE_UNUSED x
-#else
+# define DEE_UNUSED(x) x DEE_ATTRIBUTE_UNUSED
+#elif defined(__cplusplus) || defined(__DEEMON__)
+# define DEE_UNUSED(x) /* nothing */
+#elif defined(_MSC_VER)
 # define DEE_UNUSED(x) x
-#if defined(_MSC_VER) && defined(DEE_LIMITED_DEX)
-# pragma warning(disable: 4100) /* This is just getting too annoying... */
+#ifdef DEE_LIMITED_DEX
+# pragma warning(disable: 4100)
 #endif
+#else
+# define DEE_UNUSED(x) DEE_ATTRIBUTE_UNUSED x
 #endif
 #endif /* !DEE_UNUSED */
 
@@ -1866,9 +1879,6 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
     defined(DEE_PLATFORM_WINDOWS) && \
     defined(DEE_LIMITED_API)
 // Just for syntax highlighting
-#define DEE_TYPES_SIZEOF_UID_T  4
-#define DEE_TYPES_SIZEOF_GID_T  4
-#define DEE_TYPES_SIZEOF_MODE_T 4
 #define DEE_TYPES_SIZEOF_PID_T  4
 typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_UID_T)  uid_t;
 typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_GID_T)  gid_t;

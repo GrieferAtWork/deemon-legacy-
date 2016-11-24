@@ -115,8 +115,8 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsCharDev(DEE_A_IN
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsBlockDev(DEE_A_IN_Z Dee_WideChar const *path);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsFiFo(DEE_A_IN_Z Dee_WideChar const *path);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeVFS_WideIsSocket(DEE_A_IN_Z Dee_WideChar const *path);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeVFS_Utf8ReadLink(DEE_A_IN_Z Dee_Utf8Char const *path);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeVFS_WideReadLink(DEE_A_IN_Z Dee_WideChar const *path);
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeVFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path);
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeVFS_WideReadlink(DEE_A_IN_Z Dee_WideChar const *path);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFS_Utf8ReadReFsLink(DEE_A_IN_Z Dee_Utf8Char const *path);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideReadReFsLink(DEE_A_IN_Z Dee_WideChar const *path);
 

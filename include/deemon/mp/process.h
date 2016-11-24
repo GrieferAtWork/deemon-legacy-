@@ -98,9 +98,9 @@ struct DeeProcessObject {
  DEE_A_REF DeeAnyStringObject *p_exe;      /*< [1..1] Process executable. */
  DEE_A_REF DeeAnyStringObject *p_args;     /*< [1..1] Process arguments. */
  DEE_A_REF DeeListObject      *p_environ;  /*< [0..1] Execution environment - list<tuple<string,string>>. */
- DEE_A_REF DeeFileObject      *p_stdin;    /*< [0..1] File object overriding stdin (must be a file.io / pipe). */
- DEE_A_REF DeeFileObject      *p_stdout;   /*< [0..1] File object overriding stdout (must be a file.io / pipe). */
- DEE_A_REF DeeFileObject      *p_stderr;   /*< [0..1] File object overriding stderr (must be a file.io / pipe). */
+ DEE_A_REF DeeFileFDObject    *p_stdin;    /*< [0..1] File object overriding stdin. */
+ DEE_A_REF DeeFileFDObject    *p_stdout;   /*< [0..1] File object overriding stdout. */
+ DEE_A_REF DeeFileFDObject    *p_stderr;   /*< [0..1] File object overriding stderr. */
  DEE_A_REF DeeAnyStringObject *p_cwd;      /*< [0..1] Current working directory of the child process. */
  double                        p_priority; /*< 0.0 - 1.0 normalized process priority. */
 };

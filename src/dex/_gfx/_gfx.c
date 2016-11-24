@@ -267,7 +267,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeSurface_TryNewFromPNGStream(
 DEE_A_RET_EXCEPT_REF DeeSurfaceObject *DeeSurface_NewFromFilename(
  DEE_A_IN DeeSurfaceTypeObject const *stype, DEE_A_INOUT DeeObject *filename) {
  DeeObject *fp; DeeSurfaceObject *result;
- if DEE_UNLIKELY((fp = DeeFileIO_NewObject(filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((fp = DeeFile_OpenObject(filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeSurface_NewFromStream(stype,fp);
  Dee_DECREF(fp);
  return result;
@@ -307,7 +307,7 @@ DEE_A_RET_EXCEPT(-1) int DeeSurface_SavePNGFile(
                       error,lodepng_error_text(error));
   return -1;
  }
- if DEE_UNLIKELY((fp = DeeFileIO_NewObject(filename,"w")) == NULL) {
+ if DEE_UNLIKELY((fp = DeeFile_OpenObject(filename,DEE_OPENMODE('w',0))) == NULL) {
 /*err_buffer:*/ free_nn(buffer); return -1;
  }
  error2 = DeeFile_WriteAll(fp,buffer,buffersize);

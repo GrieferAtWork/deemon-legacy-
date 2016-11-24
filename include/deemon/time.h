@@ -74,6 +74,11 @@ DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 
 DEE_OBJECT_DEF(DeeTimeObject);
 
+#ifdef DEE_PRIVATE_DECL_DEE_TIMETICK_T
+DEE_PRIVATE_DECL_DEE_TIMETICK_T /*< TODO: Fully integrate. */
+#undef DEE_PRIVATE_DECL_DEE_TIMETICK_T
+#endif
+
 enum DeeTimeDiffKind{
  DeeTimeKind_DEFAULT = 0,
  // We need a different system for months and years,
@@ -92,9 +97,9 @@ struct DeeTimeObject {
  DEE_OBJECT_HEAD
  Dee_uint16_t  tm_diff_kind;
  union{
-  Dee_uint64_t tm_msecs;  /*< kind == DeeTimeKind_DEFAULT: Milliseconds since 01.01.0000. */
-  Dee_uint64_t tm_months; /*< kind == DeeTimeKind_MONTHS:  Months since 01.01.0000. */
-  Dee_uint64_t tm_years;  /*< kind == DeeTimeKind_YEARS:   Years since 01.01.0000. */
+  Dee_timetick_t tm_msecs;  /*< kind == DeeTimeKind_DEFAULT: Milliseconds since 01.01.0000. */
+  Dee_timetick_t tm_months; /*< kind == DeeTimeKind_MONTHS:  Months since 01.01.0000. */
+  Dee_timetick_t tm_years;  /*< kind == DeeTimeKind_YEARS:   Years since 01.01.0000. */
  }
 #if !DEE_COMPILER_HAVE_UNNAMED_UNION
 #define tm_msecs  _tm_timedata.tm_msecs
@@ -206,15 +211,15 @@ struct tm;
 #define DeeTime_NewFromLocalTimeT(t) DeeTime_New(DeeTime_TimeT2Mseconds(t))
 DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *) DeeTime_NewFromTimeT(DEE_A_IN Dee_time_t t);
 #define DeeTime_NewFromTm(t) DeeTime_New(DeeTimeTick_FromTm(t))
-DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *) DeeTime_NewFromYears(DEE_A_IN Dee_uint64_t years);
-DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *) DeeTime_NewFromMonths(DEE_A_IN Dee_uint64_t months);
-DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *) DeeTime_New(DEE_A_IN Dee_uint64_t ticks);
-#define DeeTime_NewFromWeeks(n_weeks)       DeeTime_New(DeeTime_Weeks2Mseconds(n_weeks))
-#define DeeTime_NewFromDays(n_days)         DeeTime_New(DeeTime_Days2Mseconds(n_days))
-#define DeeTime_NewFromHours(n_hours)       DeeTime_New(DeeTime_Hours2Mseconds(n_hours))
-#define DeeTime_NewFromMinutes(n_minutes)   DeeTime_New(DeeTime_Minutes2Mseconds(n_minutes))
-#define DeeTime_NewFromSeconds(n_seconds)   DeeTime_New(DeeTime_Seconds2Mseconds(n_seconds))
-#define DeeTime_NewFromMSeconds             DeeTime_New
+DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *) DeeTime_NewFromYears(DEE_A_IN Dee_timetick_t years);
+DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *) DeeTime_NewFromMonths(DEE_A_IN Dee_timetick_t months);
+DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeTimeObject) *) DeeTime_New(DEE_A_IN Dee_timetick_t ticks);
+#define DeeTime_NewFromWeeks(n_weeks)       DeeTime_New((Dee_timetick_t)DeeTime_Weeks2Mseconds(n_weeks))
+#define DeeTime_NewFromDays(n_days)         DeeTime_New((Dee_timetick_t)DeeTime_Days2Mseconds(n_days))
+#define DeeTime_NewFromHours(n_hours)       DeeTime_New((Dee_timetick_t)DeeTime_Hours2Mseconds(n_hours))
+#define DeeTime_NewFromMinutes(n_minutes)   DeeTime_New((Dee_timetick_t)DeeTime_Minutes2Mseconds(n_minutes))
+#define DeeTime_NewFromSeconds(n_seconds)   DeeTime_New((Dee_timetick_t)DeeTime_Seconds2Mseconds(n_seconds))
+#define DeeTime_NewFromMSeconds(m_mseconds) DeeTime_New((Dee_timetick_t)(n_mseconds))
 
 
 //////////////////////////////////////////////////////////////////////////

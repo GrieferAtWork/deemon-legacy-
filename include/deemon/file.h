@@ -22,15 +22,18 @@
 #define GUARD_DEEMON_FILE_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/optional/file.openmode.h>
 #include <deemon/optional/string_forward.h>
 #include <deemon/optional/std/stdarg.h>
 #include <deemon/optional/std/string.h>
+#include <deemon/optional/fs_api.fsapimode.h>
+#include <deemon/optional/fs_api.modechange.h>
+#include <deemon/string.h>
+#include <deemon/type.h>
 #ifdef DEE_LIMITED_DEX
 #include <deemon/__bswap_intrin.inl>
 #include <deemon/optional/atomic_mutex.h>
 #include <deemon/optional/object_decl.h>
-#include <deemon/string.h>
-#include <deemon/type.h>
 #endif
 #ifdef DEE_LIMITED_API
 #include <deemon/error.h>
@@ -59,21 +62,29 @@ DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 DEE_PRIVATE_DECL_DEE_FILE_TYPEOBJECT
 #undef DEE_PRIVATE_DECL_DEE_FILE_TYPEOBJECT
 #endif
-
-DEE_OBJECT_DEF(DeeFileObject);
-DEE_OBJECT_DEF(DeeFileIteratorObject);
-DEE_OBJECT_DEF(DeeFileWriterObject);
-DEE_OBJECT_DEF(DeeFileReaderObject);
-DEE_OBJECT_DEF(DeeFileJoinedObject);
-
-#if DEE_PLATFORM_HAVE_IO
-DEE_OBJECT_DEF(DeeFileIOObject);
-#endif /* DEE_PLATFORM_HAVE_IO */
-
 #ifdef DEE_PRIVATE_DECL_DEE_MODE_T
 DEE_PRIVATE_DECL_DEE_MODE_T
 #undef DEE_PRIVATE_DECL_DEE_MODE_T
 #endif
+#ifdef DEE_PRIVATE_DECL_DEE_UID_T
+DEE_PRIVATE_DECL_DEE_UID_T
+#undef DEE_PRIVATE_DECL_DEE_UID_T
+#endif
+#ifdef DEE_PRIVATE_DECL_DEE_GID_T
+DEE_PRIVATE_DECL_DEE_GID_T
+#undef DEE_PRIVATE_DECL_DEE_GID_T
+#endif
+
+DEE_OBJECT_DEF(DeeFileObject);
+DEE_OBJECT_DEF(DeeFileFDObject);
+DEE_OBJECT_DEF(DeeFileIOObject);
+DEE_OBJECT_DEF(DeeFileIteratorObject);
+DEE_OBJECT_DEF(DeeFileWriterObject);
+DEE_OBJECT_DEF(DeeFileReaderObject);
+DEE_OBJECT_DEF(DeeFileJoinedObject);
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+DEE_OBJECT_DEF(DeeVFSFileObject);
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #ifdef DEE_LIMITED_DEX
 struct _DeeFileTypeIOOperators {
@@ -121,251 +132,39 @@ DEE_FUNC_DECL(int) _DeeGenericContext_tp_io_writeat_from_tp_io_writeseek(struct 
 #define DeeFileType_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeFileType_Type)
 DEE_DATA_DECL(DeeTypeObject) DeeFileType_Type;
 
-#define DEE_FILE_FLAG_NONE               0x00000000
-#define DEE_FILE_FLAG_SKIP_READLINE_LF   0x00000001 /*< If true: skip the first character in read_line it it's a '\n'. */
-#if DEE_PLATFORM_HAVE_IO
-#define DEE_FILE_FLAG_IO_DELETE_ON_CLOSE 0x80000000 /*< Used by file.io (delete file when the handle is closed). */
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-#define DEE_FILE_FLAG_IO_VFSFILE         0x40000000 /*< Virtual file system file. */
-#endif
-#endif
-
 #ifdef DEE_LIMITED_DEX
+#define DEE_PRIVATE_FILEFLAG_NONE           DEE_UINT32_C(0x00000000)
+#define DEE_PRIVATE_FILEFLAG_SKIPREADLINELF DEE_UINT32_C(0x00000001) /*< If true: skip the first character in read_line it it's a '\n'. */
+#define DEE_PRIVATE_FILEFLAG_FD_VALID       DEE_UINT32_C(0x01000000) /*< The stored file descriptor is valid. */
+#define DEE_PRIVATE_FILEFLAG_FD_OWNED       DEE_UINT32_C(0x02000000) /*< The stored file descriptor is owned. */
+#define DEE_PRIVATE_FILEFLAG_STDINIT        DEE_UINT32_C(0x04000000) /*< [atomic] An std-handle is initialized. */
+#define DEE_PRIVATE_FILEFLAG_IO_DELONCLOSE  DEE_UINT32_C(0x40000000) /*< Used by file.io (delete file when the handle is closed). */
+#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#define DEE_PRIVATE_FILEFLAG_VFS_VALID      DEE_PRIVATE_FILEFLAG_FD_VALID /*< Valid VFS file. */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS*/
+
 #define DEE_FILE_OBJECT_HEAD \
  DEE_OBJECT_HEAD_EX(DeeFileTypeObject) \
  struct DeeAtomicMutex fo_lock;  /*< File lock. */\
  Dee_uint32_t          fo_flags; /*< flags. */
 struct DeeFileObject { DEE_FILE_OBJECT_HEAD }; // Common base class
 #define DEE_FILE_OBJECT_HEAD_INIT(tp) \
- DEE_OBJECT_HEAD_INIT(tp),DeeAtomicMutex_INIT(),DEE_FILE_FLAG_NONE
+ DEE_OBJECT_HEAD_INIT(tp),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_NONE
 #define DEE_FILE_OBJECT_HEAD_INIT_REF(tp,refs) \
- DEE_OBJECT_HEAD_INIT_REF(tp,refs),DeeAtomicMutex_INIT(),DEE_FILE_FLAG_NONE
+ DEE_OBJECT_HEAD_INIT_REF(tp,refs),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_NONE
 #define DeeFile_LOCK(ob)    (&((DeeFileObject *)Dee_REQUIRES_POINTER(ob))->fo_lock)
 #define DeeFile_ACQUIRE(ob) DeeAtomicMutex_AcquireRelaxed(DeeFile_LOCK(ob))
 #define DeeFile_RELEASE(ob) DeeAtomicMutex_Release(DeeFile_LOCK(ob))
 #define DeeFile_FLAGS(ob) ((DeeFileObject *)Dee_REQUIRES_POINTER(ob))->fo_flags
-#define _DeeFile_Init(ob)\
- (DeeAtomicMutex_Init(&(ob)->fo_lock),\
- (ob)->fo_flags=DEE_FILE_FLAG_NONE)
-#define _DeeFile_InitCopy(ob,right)\
- (DeeAtomicMutex_Init(&(ob)->fo_lock),\
- (ob)->fo_flags=(right)->fo_flags)
-#define _DeeFile_InitMove _DeeFile_InitCopy
+#define _DeeFile_Init(ob)           (DeeAtomicMutex_Init(&(ob)->fo_lock),(ob)->fo_flags=DEE_PRIVATE_FILEFLAG_NONE)
+#define _DeeFile_InitCopy(ob,right) (DeeAtomicMutex_Init(&(ob)->fo_lock),(ob)->fo_flags=(right)->fo_flags)
+#define _DeeFile_InitMove            _DeeFile_InitCopy
 #endif
-
-
-
-typedef Dee_uint16_t Dee_openmode_t;
-#define DEE_OPENMODE_READ            DEE_UINT16_C(0x0000)
-#define DEE_OPENMODE_WRITE           DEE_UINT16_C(0x0001)
-#define DEE_OPENMODE_APPEND          DEE_UINT16_C(0x0002)
-#define DEE_OPENMODE_FLAG_UPDATE     DEE_UINT16_C(0x0004) // flag
-#define DEE_OPENMODE_MASKMODE        DEE_UINT16_C(0x0003) // last 2 bits
-#define DEE_OPENMODE_MASKBASIC       DEE_UINT16_C(0x0007) // last 3 bits
-#define DEE_OPENMODE_ISREAD(mode)    (((mode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_READ)
-#define DEE_OPENMODE_ISWRITE(mode)   (((mode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_WRITE)
-#define DEE_OPENMODE_ISAPPEND(mode)  (((mode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_APPEND)
-#define DEE_OPENMODE_HASUPDATE(mode) (((mode)&DEE_OPENMODE_FLAG_UPDATE)!=0)
-
-//////////////////////////////////////////////////////////////////////////
-// >> Dee_openmode_t DEE_OPENMODE(char rwa, bool update);
-// Returns a basic open mode:
-// @param rwa:    A character, that is either 'r', 'w' or 'a'
-// @param update: A boolean, indicating if a file should be opened in update mode
-#define DEE_OPENMODE(rwa,update)\
-(((rwa) == 'r' ?  DEE_OPENMODE_READ :\
-  (rwa) == 'w' ?  DEE_OPENMODE_WRITE :\
-/*(rwa) == 'a' ?*/DEE_OPENMODE_APPEND\
-)|((update) ? DEE_OPENMODE_FLAG_UPDATE : 0))
-
-
-
-#if DEE_DEPRECATED_API_VERSION(100,102,104)
-#define DEE_FILE_MODE_READ        DEE_MACRO_DEPRECATED(DEE_OPENMODE_READ)
-#define DEE_FILE_MODE_WRITE       DEE_MACRO_DEPRECATED(DEE_OPENMODE_WRITE)
-#define DEE_FILE_MODE_APPEND      DEE_MACRO_DEPRECATED(DEE_OPENMODE_APPEND)
-#define DEE_FILE_FLAG_UPDATE      DEE_MACRO_DEPRECATED(DEE_OPENMODE_FLAG_UPDATE)
-#define DEE_FILE_MASK_MODE        DEE_MACRO_DEPRECATED(DEE_OPENMODE_MASKMODE)
-#define DEE_FILE_MASK_BASIC_MODE  DEE_MACRO_DEPRECATED(DEE_OPENMODE_MASKBASIC)
-#endif
-
-
 
 #ifdef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
 DEE_PRIVATE_DECL_DEE_FILEDESCR_T
 #undef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
 #endif
-
-#ifdef DEE_LIMITED_DEX
-#define DEE_PRIVATE_FILEFLAG_FD_VALID      DEE_UINT32_C(0x10000000) /*< The stored file descriptor is valid. */
-#define DEE_PRIVATE_FILEFLAG_FD_OWNED      DEE_UINT32_C(0x20000000) /*< The stored file descriptor is owned. */
-#define DEE_PRIVATE_FILEFD_DESCRITOR_SIZE  DEE_TYPES_SIZEOF_DEE_FILEDESCR_T
-struct DeeFileFDObject {
- DEE_FILE_OBJECT_HEAD
- Dee_uint32_t fd_users; /*< [atomic,inc:lock(fo_lock)] Amount of threads currently using this file-descriptor (incrementing requires a lock to 'fo_lock'). */
- Dee_uint8_t  fd_data[DEE_PRIVATE_FILEFD_DESCRITOR_SIZE]; /*< File descriptor data (only writable when 'fo_lock' is owned and 'fd_users' is '0') */
-};
-
-#define DeeFileFD_InitBasic(ob,flags)\
- (DeeAtomicMutex_Init(&(ob)->fo_lock)\
- ,(ob)->fo_flags = (flags),(ob)->fd_users = 0)
-
-//////////////////////////////////////////////////////////////////////////
-// Acquire shared access to a given file descriptor
-// >> You, and any other thread is allowed to execute any system-operation
-//    on the descriptor, knowing that the descriptor will not just randomly
-//    be closed before you release the your ticket.
-// >> The provided block of code is executed if the descriptor is (no longer) valid.
-#define DeeFileFD_ACQUIRE_SHARED(ob,...)\
-do{\
- DeeFile_ACQUIRE(ob);\
- if (((ob)->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID)==0)\
- { DeeFile_RELEASE(ob); {__VA_ARGS__;} } else {\
-  DeeAtomic32_FetchInc((ob)->fd_users,memory_order_seq_cst);\
-  DeeFile_RELEASE(ob);\
- }\
-}while(0)
-#define DeeFileFD_RELEASE_SHARED(ob)\
- DeeAtomic32_FetchDec((ob)->fd_users,memory_order_seq_cst)
-
-//////////////////////////////////////////////////////////////////////////
-// Acquire exclusive access to a given file descriptor
-// >> Only you are allowed to operate on a given descriptor.
-//    Such a ticket is required for closing a descriptor.
-// >> The provided block of code is executed if the descriptor is (no longer) valid.
-#define DeeFileFD_ACQUIRE_EXCLUSIVE(ob,...)\
-do{\
- DeeFile_ACQUIRE(ob);\
- while (1) {\
-  if (((ob)->fo_flags&DEE_PRIVATE_FILEFLAG_FD_VALID)==0)\
-  { DeeFile_RELEASE(ob); {__VA_ARGS__;} break; }\
-  /* NOTE: No need for atomically loading 'fd_users' \
-           here (compare against 0 - quirk) */\
-  if ((ob)->fd_users == 0) break; /*< We did it! */\
-  DeeFile_RELEASE(ob);\
-  /* Sleep a bit while waiting for other threads \
-     to finish (and hope this isn't a deadlock...). */\
-  DeeThread_SleepNoInterrupt(1);\
-  DeeFile_ACQUIRE(ob);\
- }\
-}while(0)
-#define DeeFileFD_RELEASE_EXCLUSIVE(ob) DeeFile_RELEASE(ob)
-
-#endif
-
-#if DEE_PLATFORM_HAVE_IO
-#ifdef DEE_LIMITED_DEX
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-struct DeeFileIOVFSType {
- int  (*vfs_read)(DeeFileIOObject *self, void *p, Dee_size_t s, Dee_size_t *rs);
- int  (*vfs_write)(DeeFileIOObject *self, void const *p, Dee_size_t s, Dee_size_t *ws);
- int  (*vfs_seek)(DeeFileIOObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos);
- int  (*vfs_flush)(DeeFileIOObject *self);
- int  (*vfs_trunc)(DeeFileIOObject *self);
- void (*vfs_close)(DeeFileIOObject *self);
-};
-#endif
-DEE_COMPILER_MSVC_WARNING_PUSH(4201)
-struct DeeFileIOObject {
- DEE_FILE_OBJECT_HEAD
-union{
- DEE_A_REF DeeUtf8StringObject *fio_utf8file; /*< [1..1] Utf8 name of the file that was opened. */
- DEE_A_REF DeeWideStringObject *fio_widefile; /*< [1..1] Wide name of the file that was opened. */
-}
-#if !DEE_COMPILER_HAVE_UNNAMED_UNION
-#define fio_utf8file _fio_filename.fio_utf8file
-#define fio_widefile _fio_filename.fio_widefile
- _fio_filename
-#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
-;
- Dee_uint16_t                   fio_mode;     /*< The mode the file was opened under. */
-#if DEE_PLATFORM_HAVE_IO_HANDLE || \
-    DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H || \
-    DEE_CONFIG_RUNTIME_HAVE_VFS
- union{
-#if DEE_PLATFORM_HAVE_IO_HANDLE
-  Dee_filedescr_t               fio_handle;   /*< [0..1] File handle. */
-#elif DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
-  /*FILE*/void                 *fio_handle;   /*< [0..1] File handle. */
-#endif
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-  struct {
-   struct DeeFileIOVFSType *fio_type; /*< [1..1] VFS Type. */
-   void                    *fio_data; /*< [?..?] VFS Data. */
-  } fio_vfs;
-#endif
- }
-#if !DEE_COMPILER_HAVE_UNNAMED_UNION
-#if DEE_PLATFORM_HAVE_IO_HANDLE || DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
-#define fio_handle _fio_handledata.fio_handle
-#endif /* DEE_PLATFORM_HAVE_IO_HANDLE || DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H */
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-#define fio_vfs    _fio_handledata.fio_vfs
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
- _fio_handledata
-#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
-#endif
- ;
-};
-DEE_COMPILER_MSVC_WARNING_POP
-#endif /* DEE_LIMITED_DEX */
-#endif /* DEE_PLATFORM_HAVE_IO */
-
-
-//////////////////////////////////////////////////////////////////////////
-// Parse the open mode for a file
-// >> Raises a ValueError if the mode is malformed
-DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeFile_ParseMode(
- DEE_A_IN_Z char const *mode, DEE_A_OUT Dee_uint16_t *result) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_RET_OBJECT(DeeStringObject) *)
- DeeFile_ModeToString(DEE_A_IN Dee_uint16_t mode);
-
-
-#ifdef DEE_LIMITED_DEX
-struct DeeFileWriterObject {
- DEE_FILE_OBJECT_HEAD
- char           *fw_pos;    /*< [0..1] Current position within the writer. */
- DeeStringWriter fw_writer; /*< The string writer we are writing to. */
-};
-
-struct DeeFileReaderObject {
- DEE_FILE_OBJECT_HEAD
- DEE_A_REF DeeAnyStringObject *fr_string; /*< [1..1] The string we are iterating. */
- Dee_uint8_t const            *fr_pos;    /*< [1..1] Current position within the string. */
- Dee_uint8_t const            *fr_end;    /*< [1..1] End of the string. */
-};
-#define _DeeFileReader_SET_STRING(ob,str_,on_err)\
-do{\
- Dee_DECREF(((DeeFileReaderObject *)Dee_REQUIRES_POINTER(ob))->fr_string);\
- _DeeFileReader_SET_INITIAL_STRING(ob,str_,on_err);\
-}while(0)
-#define _DeeFileReader_SET_INITIAL_STRING(ob,str_,on_err)\
-do{\
- if (DeeAnyString_Check(str_)) {\
-  Dee_INCREF(((DeeFileReaderObject *)(ob))->fr_string = (DeeAnyStringObject *)Dee_REQUIRES_POINTER(str_));\
-  ((DeeFileReaderObject *)(ob))->fr_end = (((DeeFileReaderObject *)(ob))->fr_pos = \
-   (Dee_uint8_t *)DeeAnyString_DATAV(str_))+DeeAnyString_DATAC(str_);\
- } else if (DeeNone_Check(str_)) {\
-  Dee_INCREF(((DeeFileReaderObject *)(ob))->fr_string = (DeeAnyStringObject *)Dee_EmptyString);\
-  ((DeeFileReaderObject *)(ob))->fr_end = \
-  ((DeeFileReaderObject *)(ob))->fr_pos = \
-   (Dee_uint8_t *)DeeString_STR(Dee_EmptyString);\
- } else {\
-  DeeError_SetStringf(&DeeErrorType_TypeError,"Unexpected type (expected: any string; got: %s)",\
-                      DeeType_NAME(Dee_TYPE(str_)));\
-  on_err;\
- }\
-}while(0)
-
-
-struct DeeFileJoinedObject {
- DEE_FILE_OBJECT_HEAD
- DEE_A_REF DeeFileObject *fj_fa; /*< [1..1] First output stream. */
- DEE_A_REF DeeFileObject *fj_fb; /*< [1..1] Second output stream. */
-};
-#define DeeFileJoined_FA(ob) ((DeeObject *)((DeeFileJoinedObject *)Dee_REQUIRES_POINTER(ob))->fj_fa)
-#define DeeFileJoined_FB(ob) ((DeeObject *)((DeeFileJoinedObject *)Dee_REQUIRES_POINTER(ob))->fj_fb)
-#endif /* !DEE_LIMITED_DEX */
 
 
 // v 'DeeFile_Check' checks for any type that is derived from 'file'
@@ -373,8 +172,10 @@ struct DeeFileJoinedObject {
 //     NOTE: Also checks for additional user defined sub-classes
 #define DeeFile_Check(ob)            DeeObject_InstanceOf(ob,(DeeTypeObject *)&DeeFile_Type)
 #define DeeFile_CheckExact(ob)       DeeObject_InstanceOfExact(ob,(DeeTypeObject *)&DeeFile_Type)
-#define DeeFileIO_Check(ob)          DeeObject_InstanceOf(ob,(DeeTypeObject *)&DeeFileIO_Type)
-#define DeeFileIO_CheckExact(ob)     DeeObject_InstanceOfExact(ob,(DeeTypeObject *)&DeeFileIO_Type)
+#define DeeFileFD_Check(ob)          DeeObject_InstanceOf(ob,(DeeTypeObject *)&DeeFileFD_Type)
+#define DeeFileFD_CheckExact(ob)     DeeObject_InstanceOfExact(ob,(DeeTypeObject *)&DeeFileFD_Type)
+#define DeeFileIO_Check(ob)      DeeObject_InstanceOf(ob,(DeeTypeObject *)&DeeFileIO_Type)
+#define DeeFileIO_CheckExact(ob) DeeObject_InstanceOfExact(ob,(DeeTypeObject *)&DeeFileIO_Type)
 #define DeeFileWriter_Check(ob)      DeeObject_InstanceOf(ob,(DeeTypeObject *)&DeeFileWriter_Type)
 #define DeeFileWriter_CheckExact(ob) DeeObject_InstanceOfExact(ob,(DeeTypeObject *)&DeeFileWriter_Type)
 #define DeeFileReader_Check(ob)      DeeObject_InstanceOf(ob,(DeeTypeObject *)&DeeFileReader_Type)
@@ -385,12 +186,18 @@ struct DeeFileJoinedObject {
                                                      // -read- -write- -seek- -trunc-
 DEE_DATA_DECL(DeeFileTypeObject) DeeFile_Type;       // yes     yes     yes    yes
 DEE_DATA_DECL(DeeFileTypeObject) DeeFileFD_Type;     // maybe   maybe   maybe  maybe
-#if DEE_PLATFORM_HAVE_IO
 DEE_DATA_DECL(DeeFileTypeObject) DeeFileIO_Type;     // maybe   maybe   maybe  maybe
-#endif
 DEE_DATA_DECL(DeeFileTypeObject) DeeFileReader_Type; // yes     no      yes    no
 DEE_DATA_DECL(DeeFileTypeObject) DeeFileWriter_Type; // yes     yes     yes    yes
 DEE_DATA_DECL(DeeFileTypeObject) DeeFileJoined_Type; // no      maybe   maybe  maybe
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+DEE_DATA_DECL(DeeFileTypeObject) DeeFileVFS_Type;    // maybe   maybe   maybe  maybe
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
+
+#define DeeFileIterator_Check(ob)      DeeObject_InstanceOf(ob,&DeeFileIterator_Type)
+#define DeeFileIterator_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeFileIterator_Type)
+DEE_DATA_DECL(DeeTypeObject) DeeFileIterator_Type;
+
 
 #ifdef DEE_LIMITED_API
 #ifdef DEE_PLATFORM_WINDOWS
@@ -404,17 +211,6 @@ extern DeeFileTypeObject DeeFileWin32Dbg_Type;       // no      yes     no     n
 #define DEE_SEEK_END 2
 
 
-#ifdef DEE_LIMITED_DEX
-struct DeeFileIteratorObject {
- DEE_OBJECT_HEAD
- DEE_A_REF DeeFileObject *fi_file; /*< [1..1] The file we are reading from. */
-};
-#endif
-
-DEE_DATA_DECL(DeeTypeObject) DeeFileIterator_Type;
-#define DeeFileIterator_Check(ob)      DeeObject_InstanceOf(ob,&DeeFileIterator_Type)
-#define DeeFileIterator_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeFileIterator_Type)
-
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -425,49 +221,66 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileWriterObject) *)
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileReaderObject) *) DeeFileReader_New(
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *str_) DEE_ATTRIBUTE_NONNULL((1));
 
-#if DEE_PLATFORM_HAVE_IO
+
+typedef DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *(DEE_CALL *PDEEFILE_UTF8OPENEX)(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *(DEE_CALL *PDEEFILE_WIDEOPENEX)(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *(DEE_CALL *PDEEFILE_UTF8OPENEXOBJECT)(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+typedef DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *(DEE_CALL *PDEEFILE_WIDEOPENEXOBJECT)(DEE_A_IN_OBJECT(DeeWideStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1));
+
 //////////////////////////////////////////////////////////////////////////
 // Create a new file object
-// >> DeeFileIO_NewTemporary()              -- Creates a temporary file (file will be deleted when closed if 'delete_when_closed != 0')
-// >> DeeFileIO_New / DeeFileIO_NewObject   -- Creates a file at a given path (the path is expanded)
-// >> _DeeFileIO_New / _DeeFileIO_NewObject -- Creates a file at a given path (the path is not expanded)
-#define DEE_FILEIO_NEWTEMPORARY_FLAG_NONE               DEE_UINT32_C(0x00000000)
-#define DEE_FILEIO_NEWTEMPORARY_FLAG_DELETE_WHEN_CLOSED DEE_UINT32_C(0x00000001)
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *)
- DeeFileIO_NewTemporary(DEE_A_IN Dee_uint32_t flags);
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) DeeFileIO_Utf8NewEx(
- DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) DeeFileIO_WideNewEx(
- DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) DeeFileIO_NewObjectEx(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) _DeeFileIO_Utf8NewEx(
- DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) _DeeFileIO_WideNewEx(
- DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) _DeeFileIO_NewObjectEx(
- DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2));
-#define DEE_FILEIO_DEFAULT_PERMISSIONS 0644
-#define DeeFileIO_Utf8New(file,mode)    DeeFileIO_Utf8NewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define DeeFileIO_WideNew(file,mode)    DeeFileIO_WideNewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define DeeFileIO_NewObject(file,mode)  DeeFileIO_NewObjectEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define DeeFileIO_New(file,mode)        DeeFileIO_NewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define DeeFileIO_NewEx                 DeeFileIO_Utf8NewEx
-#define _DeeFileIO_Utf8New(file,mode)   _DeeFileIO_Utf8NewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define _DeeFileIO_WideNew(file,mode)   _DeeFileIO_WideNewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define _DeeFileIO_NewObject(file,mode) _DeeFileIO_NewObjectEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define _DeeFileIO_New(file,mode)       _DeeFileIO_NewEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define _DeeFileIO_NewEx                _DeeFileIO_Utf8NewEx
-#endif /* DEE_PLATFORM_HAVE_IO */
+// >> DeeFile_OpenTemporary()             -- Creates a temporary file (file will be deleted when closed if 'delete_when_closed != 0')
+// >> DeeFile_Open / DeeFile_OpenObject   -- Creates a file at a given path (the path is expanded)
+// >> _DeeFile_Open / _DeeFile_OpenObject -- Creates a file at a given path (the path is not expanded)
+#define DEE_FILE_OPENTEMPORARY_FLAG_NONE               DEE_UINT32_C(0x00000000)
+#define DEE_FILE_OPENTEMPORARY_FLAG_DELETE_WHEN_CLOSED DEE_UINT32_C(0x00000001)
+DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *) DeeFile_OpenTemporary(DEE_A_IN Dee_uint32_t flags);
+#define DeeFile_Utf8OpenEx         DeeFS_GETFUNCTION_v102(PDEEFILE_UTF8OPENEX,160)
+#define DeeFile_WideOpenEx         DeeFS_GETFUNCTION_v102(PDEEFILE_WIDEOPENEX,161)
+#define DeeFile_Utf8OpenExObject   DeeFS_GETFUNCTION_v102(PDEEFILE_UTF8OPENEXOBJECT,162)
+#define DeeFile_WideOpenExObject   DeeFS_GETFUNCTION_v102(PDEEFILE_WIDEOPENEXOBJECT,163)
+#define _DeeFile_Utf8OpenEx        DeeFS_GETFUNCTION_v102(PDEEFILE_UTF8OPENEX,164)
+#define _DeeFile_WideOpenEx        DeeFS_GETFUNCTION_v102(PDEEFILE_WIDEOPENEX,165)
+#define _DeeFile_Utf8OpenExObject  DeeFS_GETFUNCTION_v102(PDEEFILE_UTF8OPENEXOBJECT,166)
+#define _DeeFile_WideOpenExObject  DeeFS_GETFUNCTION_v102(PDEEFILE_WIDEOPENEXOBJECT,167)
 
-#ifdef DEE_LIMITED_API
-extern DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIteratorObject) *DeeFile_IterSelf(
- DEE_A_INOUT_OBJECT(DeeFileObject) *self) DEE_ATTRIBUTE_NONNULL((1));
-#endif
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *)
+DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
+ DeeObject *result;
+ if (DeeWideString_Check(file)) return DeeFile_WideOpenExObject(file,openmode,permissions);
+ if DEE_UNLIKELY((file = DeeUtf8String_Cast(file)) == NULL) return NULL;
+ result = DeeFile_Utf8OpenExObject(file,openmode,permissions);
+ Dee_DECREF(file);
+ return result;
+}
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *)
+_DeeFile_OpenObjectEx(DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
+ DeeObject *result;
+ if (DeeWideString_Check(file)) return _DeeFile_WideOpenExObject(file,openmode,permissions);
+ if DEE_UNLIKELY((file = DeeUtf8String_Cast(file)) == NULL) return NULL;
+ result = _DeeFile_Utf8OpenExObject(file,openmode,permissions);
+ Dee_DECREF(file);
+ return result;
+}
+
+#define DEE_FILEIO_DEFAULT_PERMISSIONS 0644
+#define DeeFile_Utf8Open(file,mode)    DeeFile_Utf8OpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
+#define DeeFile_WideOpen(file,mode)    DeeFile_WideOpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
+#define DeeFile_OpenObject(file,mode)  DeeFile_OpenObjectEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
+#define DeeFile_Open(file,mode)        DeeFile_OpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
+#define DeeFile_OpenEx                 DeeFile_Utf8OpenEx
+#define _DeeFile_Utf8Open(file,mode)   _DeeFile_Utf8OpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
+#define _DeeFile_WideOpen(file,mode)   _DeeFile_WideOpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
+#define _DeeFile_OpenObject(file,mode) _DeeFile_OpenObjectEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
+#define _DeeFile_Open(file,mode)       _DeeFile_OpenEx(file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
+#define _DeeFile_OpenEx                _DeeFile_Utf8OpenEx
+
+
+
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TRead(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs) DEE_ATTRIBUTE_NONNULL((1,2,5));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TWrite(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *ws) DEE_ATTRIBUTE_NONNULL((1,2,5));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TReadAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs) DEE_ATTRIBUTE_NONNULL((1,2,5));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TWriteAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *ws) DEE_ATTRIBUTE_NONNULL((1,2,5));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TReadAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *rs) DEE_ATTRIBUTE_NONNULL((1,2,6));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TWriteAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s, DEE_A_OUT Dee_size_t *ws) DEE_ATTRIBUTE_NONNULL((1,2,6));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TReadAll(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_OUT_WB(s) void *p, DEE_A_IN Dee_size_t s) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TWriteAll(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN_RB(s) void const *p, DEE_A_IN Dee_size_t s) DEE_ATTRIBUTE_NONNULL((1,2));
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFile_TReadAllAt(DEE_A_IN_TYPEOBJECT(DeeFileTypeObject) const *tp_self, DEE_A_INOUT_OBJECT(DeeFileObject) *self, DEE_A_IN Dee_uint64_t pos, DEE_A_OUT_WB(s) void *p, DEE_A_IN Dee_size_t s) DEE_ATTRIBUTE_NONNULL((1,2));
@@ -686,6 +499,7 @@ DEE_FUNC_DECL(DEE_A_EXEC void) DeeFile_SetStd(
  DEE_A_IN enum DeeStdPrinter printer, DEE_A_INOUT_OBJECT(DeeFileObject) *fp) DEE_ATTRIBUTE_NONNULL((2));
 DEE_FUNC_DECL(DEE_A_EXEC void) DeeFile_DelStd(DEE_A_IN enum DeeStdPrinter printer);
 DEE_FUNC_DECL(DEE_A_EXEC void) DeeFile_ResetStd(void);
+
 // Helper functions/macros for printing to std files
 #if DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS
 #define /*DEE_A_EXEC*/ DeeFile_StdWriteAll(printer,p,s) DEE_GCC_EXTENSION({int _temp_result;DeeObject*const _temp_fp=DeeFile_Std(printer);_temp_result=DeeFile_WriteAll(_temp_fp,p,s);Dee_DECREF(_temp_fp);_temp_result;})
@@ -711,56 +525,105 @@ DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileJoinedObject) *) DeeFileJoined_New(
  DEE_A_INOUT_OBJECT(DeeFileObject) *fa, DEE_A_INOUT_OBJECT(DeeFileObject) *fb) DEE_ATTRIBUTE_NONNULL((1,2));
 
-//////////////////////////////////////////////////////////////////////////
-// API functions for FileIO
-#if DEE_PLATFORM_HAVE_IO
-#ifdef DEE_LIMITED_DEX
-#define DeeFileIO_FILE(ob)   ((DeeObject *)((DeeFileIOObject *)Dee_REQUIRES_POINTER(ob))->fio_utf8file)
-#define DeeFileIO_MODE(ob)   ((DeeFileIOObject *)Dee_REQUIRES_POINTER(ob))->fio_mode
-#define DeeFileIO_HANDLE(ob) ((DeeFileIOObject *)Dee_REQUIRES_POINTER(ob))->fio_handle
-#endif /* !DEE_LIMITED_DEX */
 
-DEE_FUNC_DECL(DEE_A_RET_OBJECT_REF(DeeAnyStringObject) *) DeeFileIO_File(DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_RET_OBJECT(DeeUtf8StringObject) *) DeeFileIO_Mode(DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
 
-#if DEE_PLATFORM_HAVE_IO_HANDLE
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_Utf8ReOpenEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_WideReOpenEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_ReOpenObjectEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFileIO_Utf8ReOpenEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFileIO_WideReOpenEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2,3));
-DEE_FUNC_DECL(DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFileIO_ReOpenObjectEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) DEE_ATTRIBUTE_NONNULL((1,2,3));
-#define DeeFileIO_Utf8ReOpen(self,file,mode)    DeeFileIO_Utf8ReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define DeeFileIO_WideReOpen(self,file,mode)    DeeFileIO_WideReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define DeeFileIO_ReOpenObject(self,file,mode)  DeeFileIO_ReOpenObjectEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define DeeFileIO_ReOpen(self,file,mode)        DeeFileIO_ReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define DeeFileIO_ReOpenEx                      DeeFileIO_Utf8ReOpenEx
-#define _DeeFileIO_Utf8ReOpen(self,file,mode)   _DeeFileIO_Utf8ReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define _DeeFileIO_WideReOpen(self,file,mode)   _DeeFileIO_WideReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define _DeeFileIO_ReOpenObject(self,file,mode) _DeeFileIO_ReOpenObjectEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define _DeeFileIO_ReOpen(self,file,mode)       _DeeFileIO_ReOpenEx(self,file,mode,DEE_FILEIO_DEFAULT_PERMISSIONS)
-#define _DeeFileIO_ReOpenEx                     _DeeFileIO_Utf8ReOpenEx
-#endif /* DEE_PLATFORM_HAVE_IO_HANDLE */
 
 //////////////////////////////////////////////////////////////////////////
-// Optimized size getter for file.io files
-// NOTE: Only faster on some platforms
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_Size(
- DEE_A_IN_OBJECT(DeeFileObject) const *self, DEE_A_OUT Dee_uint64_t *size);
+// API functions for FP Api
+DEE_FUNC_DECL(DEE_A_RET_OBJECT_REF(DeeUtf8StringObject) *) DeeFileIO_Utf8Filename(DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_RET_OBJECT_REF(DeeWideStringObject) *) DeeFileIO_WideFilename(DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeFileIO_Filename DeeFileIO_Utf8Filename
+
+//////////////////////////////////////////////////////////////////////////
+// Return platform-specific handles/file-descriptors
+// of a given file-fd-based file object.
+// Such objects include 'pipe', 'file.io' and 'sockets'
+// To keep these functions thread-safe and allow the caller to
+// safely use the handles/file-descriptors, use of them is
+// tracked through acquisition and release of their values.
+// NOTES:
+//   - Only use the handle for as little time as possible, and never execute
+//     anything marked with DEE_A_EXEC while you're still holding a ticket.
+//   - Don't forget to release the handle once you're done using it.
+//   - If the stored handle was closed (e.g.: by calling DeeFile_Close), or
+//     is otherwise invalid, nothing will be stored in '*result' and the
+//     acquire function returns non-zero.
+//   - If the handle was successfully retrieved and is now protected,
+//     it will be stored in '*result' and the function returns zero.
+//   - When calling 'win32_handle' or 'posix_fileno' from usercode,
+//     the user has no way of keeping the handle alive, other than
+//     controlling its lifetime himself. Keep in mind, that with
+//     power comes responsibility, and don't get mad when you can't
+//     figure out a deadlock that you brought on yourself.
+//   - Also keep in mind, that these only exist on windows/posix.
+//     More platforms might be added in the future, but each
+//     one will have its own set of functions.
+// WARNING:
+//   - Do not attempt to close the handle through
+//     system-specific calls, such as 'CloseHandle' or 'close'.
+//     - Deemon tracks the validity of a handle/fd internally and
+//       relies of the fact that only it is allowed to destroy them.
+//   - If you do wish to close the handle, don't use their of these function
+//     and simply use 'DeeFile_Close' to close the file like you would any other.
+//   - This only affects closing operations that allow the system to re-use
+//     the handle/fd after the specific close call returns, meaning that
+//     functions such as 'shutdown' (used by sockets) can still be called.
+//////////////////////////////////////////////////////////////////////////
+// >> HANDLE fd_handle;
+// >> if (DeeFileFD_Win32AcquireHandle(fp,&fd_handle) != 0) {
+// >>   success = FALSE;
+// >> } else {
+// >>   success = GetFileInformationByHandle(fd_handle,&info);
+// >>   DeeFileFD_Win32ReleaseHandle(fp);
+// >> }
+#ifdef DEE_PLATFORM_WINDOWS
+DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT(1) int) DeeFileFD_Win32AcquireHandle(
+ DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT /*PHANDLE*/ void **result) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeFileFD_Win32ReleaseHandle _DeeFileFD_PrivateReleaseTicket
+#endif
+#ifdef DEE_PLATFORM_UNIX
+DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT(1) int) DeeFileFD_PosixAcquireFileno(
+ DEE_A_INOUT_OBJECT(DeeFileFDObject) *self, DEE_A_OUT int *result) DEE_ATTRIBUTE_NONNULL((1));
+#define DeeFileFD_PosixReleaseFileno _DeeFileFD_PrivateReleaseTicket
+#endif
+
+#if defined(DEE_PLATFORM_WINDOWS) || defined(DEE_PLATFORM_UNIX)
+DEE_FUNC_DECL(void) _DeeFileFD_PrivateReleaseTicket(
+ DEE_A_INOUT_OBJECT(DeeFileFDObject) *self) DEE_ATTRIBUTE_NONNULL((1));
+#endif
+
+
+#if DEE_DEPRECATED_API_VERSION(100,102,104)
+#define DeeFileIO_NewTemporary(flags)                   DEE_DEPRECATED_MACRO(DeeFile_OpenTemporary(flags))
+#define DEE_FILEIO_NEWTEMPORARY_FLAG_NONE               DEE_DEPRECATED_MACRO(DEE_FILE_OPENTEMPORARY_FLAG_NONE)
+#define DEE_FILEIO_NEWTEMPORARY_FLAG_DELETE_WHEN_CLOSED DEE_DEPRECATED_MACRO(DEE_FILE_OPENTEMPORARY_FLAG_DELETE_WHEN_CLOSED)
+#define DeeFileIO_New(file,mode)                        DEE_DEPRECATED_MACRO(DeeFile_Open(file,DeeFile_TryParseMode(mode)))
+#define DeeFileIO_Utf8New(file,mode)                    DEE_DEPRECATED_MACRO(DeeFile_Utf8Open(file,DeeFile_TryParseMode(mode)))
+#define DeeFileIO_WideNew(file,mode)                    DEE_DEPRECATED_MACRO(DeeFile_WideOpen(file,DeeFile_TryParseMode(mode)))
+#define DeeFileIO_NewObject(file,mode)                  DEE_DEPRECATED_MACRO(DeeFile_OpenObject(file,DeeFile_TryParseMode(mode)))
+#define DeeFileIO_NewEx(file,mode,perms)                DEE_DEPRECATED_MACRO(DeeFile_OpenEx(file,DeeFile_TryParseMode(mode),perms))
+#define DeeFileIO_Utf8NewEx(file,mode,perms)            DEE_DEPRECATED_MACRO(DeeFile_Utf8OpenEx(file,DeeFile_TryParseMode(mode),perms))
+#define DeeFileIO_WideNewEx(file,mode,perms)            DEE_DEPRECATED_MACRO(DeeFile_WideOpenEx(file,DeeFile_TryParseMode(mode),perms))
+#define DeeFileIO_NewObjectEx(file,mode,perms)          DEE_DEPRECATED_MACRO(DeeFile_OpenObjectEx(file,DeeFile_TryParseMode(mode),perms))
+#define _DeeFileIO_New(file,mode)                       DEE_DEPRECATED_MACRO(DeeFile_Open(file,DeeFile_TryParseMode(mode)))
+#define _DeeFileIO_Utf8New(file,mode)                   DEE_DEPRECATED_MACRO(DeeFile_Utf8Open(file,DeeFile_TryParseMode(mode)))
+#define _DeeFileIO_WideNew(file,mode)                   DEE_DEPRECATED_MACRO(DeeFile_WideOpen(file,DeeFile_TryParseMode(mode)))
+#define _DeeFileIO_NewObject(file,mode)                 DEE_DEPRECATED_MACRO(DeeFile_OpenObject(file,DeeFile_TryParseMode(mode)))
+#define _DeeFileIO_NewEx(file,mode,perms)               DEE_DEPRECATED_MACRO(DeeFile_OpenEx(file,DeeFile_TryParseMode(mode),perms))
+#define _DeeFileIO_Utf8NewEx(file,mode,perms)           DEE_DEPRECATED_MACRO(DeeFile_Utf8OpenEx(file,DeeFile_TryParseMode(mode),perms))
+#define _DeeFileIO_WideNewEx(file,mode,perms)           DEE_DEPRECATED_MACRO(DeeFile_WideOpenEx(file,DeeFile_TryParseMode(mode),perms))
+#define _DeeFileIO_NewObjectEx(file,mode,perms)         DEE_DEPRECATED_MACRO(DeeFile_OpenObjectEx(file,DeeFile_TryParseMode(mode),perms))
+#endif
 
 struct DeeTupleObject;
 struct DeeTimeObject;
 //////////////////////////////////////////////////////////////////////////
 // Returns a 3-elem tuple equivalent to
 // 'pack(DeeFileIO_GetATime(self),DeeFileIO_GetCTime(self),DeeFileIO_GetMTime(self))'
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTupleObject) *) DeeFileIO_GetTimes(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *) DeeFileIO_GetATime(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *) DeeFileIO_GetCTime(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *) DeeFileIO_GetMTime(
- DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTupleObject) *) DeeFileIO_GetTimes(DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *) DeeFileIO_GetATime(DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *) DeeFileIO_GetCTime(DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeTimeObject) *) DeeFileIO_GetMTime(DEE_A_IN_OBJECT(DeeFileIOObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
 #define DeeFileIO_SetATime(ob,tm_access)       DeeFileIO_SetTimes2(ob,tm_access,NULL,NULL)
 #define DeeFileIO_SetCTime(ob,tm_creation)     DeeFileIO_SetTimes2(ob,NULL,tm_creation,NULL)
 #define DeeFileIO_SetMTime(ob,tm_modification) DeeFileIO_SetTimes2(ob,NULL,NULL,tm_modification)
@@ -776,12 +639,34 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_SetTimes2(
  DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) *tm_creation,
  DEE_A_IN_OBJECT_OPT(struct DeeTimeObject) *tm_modification)
  DEE_ATTRIBUTE_NONNULL((1));
-#endif /* DEE_PLATFORM_HAVE_IO */
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsFile(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsDir(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsLink(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsDrive(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsMount(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsHidden(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsExecutable(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsCharDev(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsBlockDev(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsFiFo(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFileIO_IsSocket(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp) DEE_ATTRIBUTE_NONNULL((1));
+
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_GetMod(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp, DEE_A_OUT Dee_mode_t *mode) DEE_ATTRIBUTE_NONNULL((1,2));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_ChmodEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *fp, DEE_A_IN Dee_size_t mcc, DEE_A_IN_R(mcc) Dee_modechange_t const *mcv) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_Chmod(DEE_A_INOUT_OBJECT(DeeFileIOObject) *fp, DEE_A_IN Dee_mode_t mode) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_Chown(DEE_A_INOUT_OBJECT(DeeFileIOObject) *fp, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_GetOwn(DEE_A_IN_OBJECT(DeeFileIOObject) const *fp, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group) DEE_ATTRIBUTE_NONNULL((1,2,3));
+DEE_STATIC_INLINE(DEE_A_EXEC DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_RET_EXCEPT(-1) int) DeeFileIO_ChmodString(DEE_A_INOUT_OBJECT(DeeFileIOObject) *fp, DEE_A_IN_Z char const *mode) { Dee_modechange_t change; if (DeeFS_ParseModeChange(mode,&change) != 0) return -1; return DeeFileIO_ChmodEx(fp,1,&change); }
 
 
 //////////////////////////////////////////////////////////////////////////
 // API functions for FileStringWriter
 #ifdef DEE_LIMITED_DEX
+struct DeeFileWriterObject {
+ DEE_FILE_OBJECT_HEAD
+ char           *fw_pos;    /*< [0..1] Current position within the writer. */
+ DeeStringWriter fw_writer; /*< The string writer we are writing to. */
+};
 #define DeeFileWriter_POS(ob)    ((DeeFileWriterObject *)Dee_REQUIRES_POINTER(ob))->fw_pos
 #define DeeFileWriter_WRITER(ob) (&((DeeFileWriterObject *)Dee_REQUIRES_POINTER(ob))->fw_writer)
 #define DeeFileWriter_PACK(ob)   DeeStringWriter_Pack(DeeFileWriter_WRITER(ob))
@@ -799,6 +684,12 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *) DeeF
 //////////////////////////////////////////////////////////////////////////
 // API functions for FileStringReader
 #ifdef DEE_LIMITED_DEX
+struct DeeFileReaderObject {
+ DEE_FILE_OBJECT_HEAD
+ DEE_A_REF DeeAnyStringObject *fr_string; /*< [1..1] The string we are iterating. */
+ Dee_uint8_t const            *fr_pos;    /*< [1..1] Current position within the string. */
+ Dee_uint8_t const            *fr_end;    /*< [1..1] End of the string. */
+};
 #define DeeFileReader_POS(ob)    ((DeeFileReaderObject *)Dee_REQUIRES_POINTER(ob))->fr_pos
 #define DeeFileReader_END(ob)    ((DeeFileReaderObject *)Dee_REQUIRES_POINTER(ob))->fr_end
 #define DeeFileReader_STRING(ob) ((DeeObject *)((DeeFileReaderObject *)Dee_REQUIRES_POINTER(ob))->fr_string)
@@ -809,13 +700,6 @@ DEE_FUNC_DECL(DEE_A_RET_OBJECT_REF(DeeAnyStringObject) *) DeeFileReader_String(
  DEE_A_IN_OBJECT(DeeFileReaderObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
 
 
-#if DEE_PLATFORM_HAVE_PIPES
-#ifdef GUARD_DEEMON_PIPE_H
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_filedescr_t)
-DeePipe_Handle(DEE_A_IN_OBJECT(DeePipeObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-#endif
-#endif
-
 #ifdef DEE_LIMITED_API
 extern DEE_A_EXEC void _deefile_invalid_seek_mode(DEE_A_IN int mode);
 #endif
@@ -824,18 +708,12 @@ DEE_DECL_END
 
 #ifdef __cplusplus
 #if DEE_PLATFORM_HAVE_IO
-#undef DeeFileIO_NewEx
-#undef DeeFileIO_ReOpenEx
-#undef _DeeFileIO_NewEx
-#undef _DeeFileIO_ReOpenEx
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) DeeFileIO_NewEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) { return DeeFileIO_Utf8NewEx(file,mode,permissions); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) DeeFileIO_NewEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) { return DeeFileIO_WideNewEx(file,mode,permissions); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) _DeeFileIO_NewEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) { return _DeeFileIO_Utf8NewEx(file,mode,permissions); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) _DeeFileIO_NewEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) { return _DeeFileIO_WideNewEx(file,mode,permissions); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_ReOpenEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) { return DeeFileIO_Utf8ReOpenEx(self,file,mode,permissions); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) DeeFileIO_ReOpenEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) { return DeeFileIO_WideReOpenEx(self,file,mode,permissions); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFileIO_ReOpenEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) { return _DeeFileIO_Utf8ReOpenEx(self,file,mode,permissions); }
-DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2,3)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFileIO_ReOpenEx(DEE_A_INOUT_OBJECT(DeeFileIOObject) *self, DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN_Z char const *mode, DEE_A_IN Dee_mode_t permissions) { return _DeeFileIO_WideReOpenEx(self,file,mode,permissions); }
+#undef DeeFile_OpenEx
+#undef _DeeFile_OpenEx
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) DeeFile_OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) { return DeeFile_Utf8OpenEx(file,openmode,permissions); }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) DeeFile_OpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) { return DeeFile_WideOpenEx(file,openmode,permissions); }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) _DeeFile_OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) { return _DeeFile_Utf8OpenEx(file,openmode,permissions); }
+DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) _DeeFile_OpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) { return _DeeFile_WideOpenEx(file,openmode,permissions); }
 #endif /* DEE_PLATFORM_HAVE_IO */
 #endif /* __cplusplus */
 

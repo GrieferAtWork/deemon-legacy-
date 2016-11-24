@@ -128,7 +128,7 @@ extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeGeneric_MergeSort(
  DEE_A_IN Dee_size_t c,
  DEE_A_ON_ALWAYS(DEE_A_IN_R(c)) DeeObject *const *in_v,
  DEE_A_ON_ALWAYS(DEE_A_OUT_W(c)) DeeObject **out_v,
- DEE_A_IN _DeeGeneric_MergeSortPred pred_lo, void *closure) ;
+ DEE_A_IN _DeeGeneric_MergeSortPred pred_lo, void *closure);
 extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeGeneric_SortPredCmpLo(
  DEE_A_INOUT DeeObject *a, DEE_A_INOUT DeeObject *b, void *closure);
 extern DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int _DeeGeneric_SortPredUserFunc(

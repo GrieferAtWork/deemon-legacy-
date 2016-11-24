@@ -47,6 +47,8 @@
 #include <deemon/none.h>
 #include <deemon/string.h>
 #include <deemon/tuple.h>
+#include <deemon/sys/sysfs.h>
+#include <deemon/file/file.fd.h>
 #include "unicode/char_traits.inl"
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include "virtual_fs.h.inl"
@@ -135,7 +137,7 @@ static int _DeeProcess_PosixCreate(
 DEE_STATIC_INLINE(void) _DeeProcess_PosixFreeStringList(DEE_A_IN char **listv);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeProcess_PosixSplitArgv(DEE_A_IN_Z char const *exe, DEE_A_IN_Z char const *args, DEE_A_OUT char ***argv);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeProcess_PosixSplitEnv(DEE_A_IN DeeListObject *env, DEE_A_OUT char ***envv);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *) _DeeProcess_PosixGetCmd(DEE_A_IN DeeProcessHandle pid) ;
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *) _DeeProcess_PosixGetCmd(DEE_A_IN DeeProcessHandle pid);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeProcess_PosixSetPriority(DEE_A_IN pid_t self, DEE_A_IN double priority);
 #endif
 
@@ -282,7 +284,7 @@ DEE_STATIC_INLINE(void) _deewin32_acquire_se_debug_privilege(void) {
   static Dee_WideChar const debug_privilege[] = {
    'S','e','D','e','b','u','g','P','r','i','v','i','l','e','g','e','\0'};
   // Acquire the debug privilege that will allow us to open all the processes (at least if we're admin)
-  (void)_Dee_Win32AcquireProcessPrivilege(debug_privilege);
+  DeeWin32Sys_AcquirePrivilege(debug_privilege);
  });
 }
 
@@ -665,7 +667,7 @@ _DeeProcess_PosixGetCmd(DEE_A_IN DeeProcessHandle pid) {
  DeeObject *file,*filename,*data,*result;
  char *iter,*end,*dst;
  if ((filename = DeeString_Newf("/proc/%d/cmdline",pid)) == NULL) return NULL;
- file = DeeFileIO_NewObject(filename,"r");
+ file = DeeFile_OpenObject(filename,DEE_OPENMODE('r',0));
  Dee_DECREF(filename);
  if (!file) return NULL;
  data = DeeFile_ReadData(file,(Dee_size_t)-1);
@@ -782,27 +784,30 @@ DeeProcess_NewObject(DEE_A_IN_OBJECT(DeeStringObject) const *cmd) {
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeProcessObject) *DeeProcess_NewExObject(
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *exe, DEE_A_IN_OBJECT(DeeAnyStringObject) const *args) {
- DeeProcessObject *result; DeeObject *temp;
+ DeeProcessObject *result;
  DEE_ASSERT(DeeObject_Check(exe));
  DEE_ASSERT(DeeObject_Check(args));
  if ((exe = DeeFS_PathExpandObject(exe)) == NULL) return NULL;
  if (DeeWideString_Check(args)) Dee_INCREF(args);
  else if ((args = DeeWideString_Cast(args)) == NULL) { result = NULL; goto err_exe; }
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (DeeWideString_Check(exe)) {
-  if (DeeVFS_WideIsVirtualPath(DeeWideString_STR(exe))) {
-   if ((temp = DeeVFS_WideReadReFsLink(DeeWideString_STR(exe))) == NULL) goto err_args_r;
-   Dee_DECREF(exe);
-   Dee_INHERIT_REF(exe,temp);
-  }
- } else {
-  if (DeeUtf8String_InplaceCast((DeeObject const **)&exe) != 0) {
+ {
+  DeeObject *temp;
+  if (DeeWideString_Check(exe)) {
+   if (DeeVFS_WideIsVirtualPath(DeeWideString_STR(exe))) {
+    if ((temp = DeeVFS_WideReadReFsLink(DeeWideString_STR(exe))) == NULL) goto err_args_r;
+    Dee_DECREF(exe);
+    Dee_INHERIT_REF(exe,temp);
+   }
+  } else {
+   if (DeeUtf8String_InplaceCast((DeeObject const **)&exe) != 0) {
 err_args_r: result = NULL; goto err_args;
-  }
-  if (DeeVFS_Utf8IsVirtualPath(DeeUtf8String_STR(exe))) {
-   if ((temp = DeeVFS_Utf8ReadReFsLink(DeeUtf8String_STR(exe))) == NULL) goto err_args_r;
-   Dee_DECREF(exe);
-   Dee_INHERIT_REF(exe,temp);
+   }
+   if (DeeVFS_Utf8IsVirtualPath(DeeUtf8String_STR(exe))) {
+    if ((temp = DeeVFS_Utf8ReadReFsLink(DeeUtf8String_STR(exe))) == NULL) goto err_args_r;
+    Dee_DECREF(exe);
+    Dee_INHERIT_REF(exe,temp);
+   }
   }
  }
 #endif
@@ -812,7 +817,13 @@ err_args_r: result = NULL; goto err_args;
   DeeProcess_INIT_NONREF(result);
   Dee_INHERIT_REF(result->p_exe,*(DeeAnyStringObject **)&exe);
   Dee_INHERIT_REF(result->p_args,*(DeeAnyStringObject **)&args);
- } else {err_args: Dee_DECREF(args);err_exe: Dee_DECREF(exe); }
+ } else {
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+err_args:
+#endif
+  Dee_DECREF(args);
+err_exe: Dee_DECREF(exe);
+ }
  return (DeeObject *)result;
 }
 
@@ -904,19 +915,13 @@ err_cmdlinegen:
  memset(&info,0,sizeof(STARTUPINFOA));
  info.cb = sizeof(STARTUPINFOA);
  info.dwFlags = STARTF_USESTDHANDLES;
- // Lock all files to gain exclusive rights to their handles
- if (_self->p_stdin) DeeFile_ACQUIRE(_self->p_stdin);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_ACQUIRE(_self->p_stdout);
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_ACQUIRE(_self->p_stderr);
 #define IMPORT_HANDLE(dst,src,default)\
 do{\
- if (((dst) = (src) ? (DeePipe_Check(src)\
-  ? DeePipe_HANDLE(src) : DeeFileIO_HANDLE(src)\
- ) : INVALID_HANDLE_VALUE) != INVALID_HANDLE_VALUE) {\
+ /* TODO: Throw an error if the source fd was closed. */\
+ if ((src) && DeeFileFD_Win32AcquireHandle((DeeObject *)(src),&(dst)) == 0) {\
   if (!SetHandleInformation(dst,HANDLE_FLAG_INHERIT,1)) goto err_hinfo;\
+  /* TODO: We should probably keep the tickets until the process has started. */\
+  DeeFileFD_Win32ReleaseHandle((DeeObject *)(src));\
  } else {\
   if (!DuplicateHandle(\
    GetCurrentProcess(),GetStdHandle(default),\
@@ -976,12 +981,6 @@ do{\
   goto err_ulock_files;
  }
  _self ->p_handle = detached ? DEE_PROCESS_INVALID_HANDLE : pinfo.hProcess;
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_RELEASE(_self->p_stderr);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_RELEASE(_self->p_stdout);
- if (_self->p_stdin) DeeFile_RELEASE(_self->p_stdin);
  DeeProcess_RELEASE(self);
 
  if (detached && !CloseHandle(pinfo.hProcess)) SetLastError(0);
@@ -994,12 +993,6 @@ do{\
 err_hinfo:
  DeeError_SystemError("SetHandleInformation");
 err_ulock_files:
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_RELEASE(_self->p_stderr);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_RELEASE(_self->p_stdout);
- if (_self->p_stdin) DeeFile_RELEASE(_self->p_stdin);
  DeeProcess_RELEASE(self);
  Dee_XDECREF(usedcwd);
  Dee_DECREF(cmdline);
@@ -1009,8 +1002,7 @@ err_ulock_files:
 #elif defined(DEE_PLATFORM_UNIX)
 DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeProcess_Start(
  DEE_A_INOUT_OBJECT(DeeProcessObject) *self, DEE_A_IN int detached) {
- DeeObject *used_exe,*used_args;
- char **argv,**envv; int result;
+ DeeObject *used_exe,*used_args; char **argv,**envv; int result;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  DeeProcess_ACQUIRE(self);
@@ -1041,34 +1033,27 @@ DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeProcess_Start(
   }
  }
 #endif
-#define hof(x) (DeePipe_Check(x)?DeePipe_HANDLE(x):DeeFileIO_HANDLE(x))
  // Lock all files to gain exclusive access to their handles
- if (_self->p_stdin) DeeFile_ACQUIRE(_self->p_stdin);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_ACQUIRE(_self->p_stdout);
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_ACQUIRE(_self->p_stderr);
+ if (_self->p_stdin)  DeeFileFD_ACQUIRE_SHARED(_self->p_stdin,{ DeeError_SetStringf(&DeeErrorType_IOError,"process.stdin was closed"); result = -1; goto end_afterstdin; });
+ if (_self->p_stdout) DeeFileFD_ACQUIRE_SHARED(_self->p_stdout,{ DeeError_SetStringf(&DeeErrorType_IOError,"process.stdout was closed"); result = -1; goto end_afterstdout; });
+ if (_self->p_stderr) DeeFileFD_ACQUIRE_SHARED(_self->p_stderr,{ DeeError_SetStringf(&DeeErrorType_IOError,"process.stderr was closed"); result = -1; goto end_afterstderr; });
  // TODO: Have another pipe that the child process can use to
  //       talk back if starting the process caused an error.
- result = _DeeProcess_PosixCreate(
-  DeeString_STR(used_exe),argv,envv,
-  _self->p_cwd ? DeeString_STR(_self->p_cwd) : NULL,
-  _self->p_stdin ? hof(_self->p_stdin) : -1,
-  _self->p_stdout ? hof(_self->p_stdout) : -1,
-  _self->p_stderr ? hof(_self->p_stderr) : -1,
-  &_self->p_handle);
- if (_self->p_stderr &&
-     _self->p_stderr != _self->p_stdout &&
-     _self->p_stderr != _self->p_stdin) DeeFile_RELEASE(_self->p_stderr);
- if (_self->p_stdout &&
-     _self->p_stdout != _self->p_stdin) DeeFile_RELEASE(_self->p_stdout);
- if (_self->p_stdin) DeeFile_RELEASE(_self->p_stdin);
+ result = _DeeProcess_PosixCreate(DeeString_STR(used_exe),argv,envv,
+                                  _self->p_cwd ? DeeString_STR(_self->p_cwd) : NULL,
+                                  _self->p_stdin ? ((DeeFileFDObject *)_self->p_stdin)->fd_descr.unx_fd : -1,
+                                  _self->p_stdout ? ((DeeFileFDObject *)_self->p_stdout)->fd_descr.unx_fd : -1,
+                                  _self->p_stderr ? ((DeeFileFDObject *)_self->p_stderr)->fd_descr.unx_fd : -1,
+                                  &_self->p_handle);
+ if (_self->p_stderr) DeeFileFD_RELEASE_SHARED(_self->p_stderr);
+end_afterstderr:
+ if (_self->p_stdout) DeeFileFD_RELEASE_SHARED(_self->p_stdout);
+end_afterstdout:
+ if (_self->p_stdin) DeeFileFD_RELEASE_SHARED(_self->p_stdin);
+end_afterstdin:
  if (envv) _DeeProcess_PosixFreeStringList(envv);
  _DeeProcess_PosixFreeStringList(argv);
-#undef hof
-end2:
- DeeProcess_RELEASE(self);
+end2: DeeProcess_RELEASE(self);
 end:
  Dee_DECREF(used_args);
  Dee_DECREF(used_exe);
@@ -1197,7 +1182,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_SetCwd(
  DEE_A_IN_OBJECT(DeeProcessObject) *self,
  DEE_A_IN_OBJECT(DeeAnyStringObject) const *cwd) {
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
- if (DeeProcess_IS_SELF(self)) return DeeFS_ChDirObject(cwd);
+ if (DeeProcess_IS_SELF(self)) return DeeFS_ChdirObject(cwd);
  if (DeeProcess_IS_REF(self)) { _deeprocess_error_is_ref(self); return -1; }
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) {
@@ -1419,11 +1404,11 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileObject) *DeeProcess_GetStderr(
 DEE_A_RET_EXCEPT(-1) int DeeProcess_SetStdin(
  DEE_A_INOUT_OBJECT(DeeProcessObject) *self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *fp) {
- DeeFileObject *old_file;
+ DeeFileFDObject *old_file;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  DEE_ASSERT(DeeObject_Check(fp));
  if (DeeProcess_IS_SELF(self)) { if (DeeObject_InplaceGetInstance(&fp,(DeeTypeObject *)&DeeFile_Type) != 0) return -1; DeeFile_SetStd(DEE_STDIN,fp); return 0; }
- if (!DeeFileIO_Check(fp) && DeeObject_InplaceGetInstance(&fp,(DeeTypeObject *)&DeePipe_Type) != 0) return -1;
+ if (DeeObject_InplaceGetInstance(&fp,(DeeTypeObject *)&DeeFileFD_Type) != 0) return -1;
  if (DeeProcess_IS_REF(self)) { _deeprocess_error_is_ref(self); return -1; }
  DEE_LVERBOSE2("Setting process handle : stdin : %k -> %k\n",self,fp);
  DeeProcess_ACQUIRE(self);
@@ -1433,7 +1418,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_SetStdin(
   return -1;
  }
  old_file = _self->p_stdin;
- Dee_INCREF(_self->p_stdin = (DeeFileObject *)fp);
+ Dee_INCREF(_self->p_stdin = (DeeFileFDObject *)fp);
  Dee_XDECREF(old_file);
  DeeProcess_RELEASE(self);
  return 0;
@@ -1441,7 +1426,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_SetStdin(
 DEE_A_RET_EXCEPT(-1) int DeeProcess_SetStdout(
  DEE_A_INOUT_OBJECT(DeeProcessObject) *self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *fp) {
- DeeFileObject *old_file;
+ DeeFileFDObject *old_file;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  DEE_ASSERT(DeeObject_Check(fp));
  if (DeeProcess_IS_SELF(self)) { if (DeeObject_InplaceGetInstance(&fp,(DeeTypeObject *)&DeeFile_Type) != 0) return -1; DeeFile_SetStd(DEE_STDOUT,fp); return 0; }
@@ -1455,7 +1440,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_SetStdout(
   return -1;
  }
  old_file = _self->p_stdout;
- Dee_INCREF(_self->p_stdout = (DeeFileObject *)fp);
+ Dee_INCREF(_self->p_stdout = (DeeFileFDObject *)fp);
  Dee_XDECREF(old_file);
  DeeProcess_RELEASE(self);
  return 0;
@@ -1463,7 +1448,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_SetStdout(
 DEE_A_RET_EXCEPT(-1) int DeeProcess_SetStderr(
  DEE_A_INOUT_OBJECT(DeeProcessObject) *self,
  DEE_A_INOUT_OBJECT(DeeFileObject) *fp) {
- DeeFileObject *old_file;
+ DeeFileFDObject *old_file;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  DEE_ASSERT(DeeObject_Check(fp));
  if (DeeProcess_IS_SELF(self)) { if (DeeObject_InplaceGetInstance(&fp,(DeeTypeObject *)&DeeFile_Type) != 0) return -1; DeeFile_SetStd(DEE_STDERR,fp); return 0; }
@@ -1477,14 +1462,14 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_SetStderr(
   return -1;
  }
  old_file = _self->p_stderr;
- Dee_INCREF(_self->p_stderr = (DeeFileObject *)fp);
+ Dee_INCREF(_self->p_stderr = (DeeFileFDObject *)fp);
  Dee_XDECREF(old_file);
  DeeProcess_RELEASE(self);
  return 0;
 }
 DEE_A_RET_EXCEPT(-1) int DeeProcess_DelStdin(
  DEE_A_INOUT_OBJECT(DeeProcessObject) *self) {
- DeeFileObject *old_file;
+ DeeFileFDObject *old_file;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  if (DeeProcess_IS_SELF(self)) { DeeFile_DelStd(DEE_STDIN); return 0; }
  if (DeeProcess_IS_REF(self)) { _deeprocess_error_is_ref(self); return -1; }
@@ -1502,7 +1487,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_DelStdin(
 }
 DEE_A_RET_EXCEPT(-1) int DeeProcess_DelStdout(
  DEE_A_INOUT_OBJECT(DeeProcessObject) *self) {
- DeeFileObject *old_file;
+ DeeFileFDObject *old_file;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  if (DeeProcess_IS_SELF(self)) { DeeFile_DelStd(DEE_STDOUT); return 0; }
  if (DeeProcess_IS_REF(self)) { _deeprocess_error_is_ref(self); return -1; }
@@ -1520,7 +1505,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_DelStdout(
 }
 DEE_A_RET_EXCEPT(-1) int DeeProcess_DelStderr(
  DEE_A_INOUT_OBJECT(DeeProcessObject) *self) {
- DeeFileObject *old_file;
+ DeeFileFDObject *old_file;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  if (DeeProcess_IS_SELF(self)) { DeeFile_DelStd(DEE_STDERR); return 0; }
  if (DeeProcess_IS_REF(self)) { _deeprocess_error_is_ref(self); return -1; }
@@ -1654,7 +1639,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeProcess_GetEnviron(
  DEE_A_IN_OBJECT(DeeProcessObject) const *self) {
  DeeObject *result;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
- if (DeeProcess_IS_SELF(self)) return DeeFS_ListEnv();
+ if (DeeProcess_IS_SELF(self)) return DeeFS_EnumEnv();
  if (DeeProcess_IS_REF(self)) { _deeprocess_error_is_ref(self); return NULL; }
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) {
@@ -1665,7 +1650,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeProcess_GetEnviron(
  } 
  Dee_XINCREF(result = (DeeObject *)_self->p_environ);
  DeeProcess_RELEASE(self);
- return result ? result : DeeFS_ListEnv();
+ return result ? result : DeeFS_EnumEnv();
 }
 DEE_A_RET_EXCEPT(-1) int DeeProcess_SetEnviron(
  DEE_A_IN_OBJECT(DeeProcessObject) *self, DEE_A_INOUT_OBJECT(DeeListObject) *env) {

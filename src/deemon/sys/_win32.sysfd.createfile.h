@@ -24,14 +24,14 @@
 DEE_DECL_BEGIN
 #endif
 
-#define DEE_WIN32_DO_CREATEFILEW(filename,dwDesiredAccess,dwCreationDisposition,dwFlagsAndAttributes)\
- CreateFileW(filename,dwDesiredAccess,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,dwCreationDisposition,dwFlagsAndAttributes,NULL)
+#define DEE_WIN32_DO_CREATEFILEW(filename,dwDesiredAccess,dwShareMode,dwCreationDisposition,dwFlagsAndAttributes)\
+ CreateFileW(filename,dwDesiredAccess,dwShareMode,NULL,dwCreationDisposition,dwFlagsAndAttributes,NULL)
 
 
 #ifndef TRY_CREATE
-static DEE_ATTRIBUTE_UNUSED void _DeeWin32SysFileFD_ThrowCreateFileError(
+static DEE_ATTRIBUTE_UNUSED void _DeeWin32Sys_ThrowCreateFileError(
  DWORD error, Dee_WideChar const *filename, DWORD dwDesiredAccess,
- DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
+ DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
  DeeTypeObject *used_error_type;
  switch (error) {
   case ERROR_FILE_NOT_FOUND:
@@ -40,27 +40,28 @@ static DEE_ATTRIBUTE_UNUSED void _DeeWin32SysFileFD_ThrowCreateFileError(
   default:                used_error_type = &DeeErrorType_IOError; break;
  }
  DeeError_SetStringf(used_error_type,
-                     "CreateFileW(%r,%lu,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,%lu,%lu,NULL) : %K",
-                     filename,dwDesiredAccess,dwCreationDisposition,dwFlagsAndAttributes,
+                     "CreateFileW(%lq,%lu,%lu,NULL,%lu,%lu,NULL) : %K",
+                     filename,dwDesiredAccess,dwShareMode,dwCreationDisposition,dwFlagsAndAttributes,
                      DeeSystemError_Win32ToString(error));
 }
 #endif
 
 #ifdef TRY_CREATE
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideTryInitObject
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideTryCreateFileObject
 #else
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideInitObject
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideCreateFileObject
 #endif
-(struct DeeWin32SysFileFD *self, DeeObject const *filename,
- DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
- Dee_size_t filename_size; Dee_WideChar const *wfilename;
+(DeeObject const *filename, DWORD dwDesiredAccess,
+ DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
+ Dee_size_t filename_size; Dee_WideChar const *wfilename; HANDLE result;
  DEE_ASSERT(DeeObject_Check(filename) && DeeWideString_Check(filename));
  wfilename = DeeWideString_STR(filename);
- self->w32_handle = DEE_WIN32_DO_CREATEFILEW(wfilename,dwDesiredAccess,
-                                             dwCreationDisposition,dwFlagsAndAttributes);
- if (self->w32_handle != INVALID_HANDLE_VALUE) return TRUE;
- if (wfilename[0] != '\\' || wfilename[1] != '\\' ||
-     wfilename[2] != '?' || wfilename[3] != '\\') {
+ result = DEE_WIN32_DO_CREATEFILEW(wfilename,dwDesiredAccess,dwShareMode,
+                                   dwCreationDisposition,dwFlagsAndAttributes);
+ if DEE_LIKELY(result != INVALID_HANDLE_VALUE) return result;
+ if ((wfilename[0] != '\\' || wfilename[1] != '\\'
+   || wfilename[2] != '?' || wfilename[3] != '\\')
+   && wfilename[0] && wfilename[1] == ':') {
   Dee_WideChar *uncwfilename,*dst_string;
   // Create UNC filename
   filename_size = DeeWideString_SIZE(filename);
@@ -70,52 +71,49 @@ DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideInitObject
 #ifndef TRY_CREATE
    DeeError_NoMemory();
 #endif
-   return FALSE;
+   return INVALID_HANDLE_VALUE;
   }
   dst_string = uncwfilename;
   *dst_string++ = '\\';
   *dst_string++ = '\\';
   *dst_string++ = '?';
   *dst_string++ = '\\';
-  memcpy(dst_string,filename,filename_size*sizeof(Dee_WideChar));
+  memcpy(dst_string,DeeWideString_STR(filename),filename_size*sizeof(Dee_WideChar));
   dst_string[filename_size] = 0;
-  self->w32_handle = DEE_WIN32_DO_CREATEFILEW(uncwfilename,dwDesiredAccess,
-                                              dwCreationDisposition,dwFlagsAndAttributes);
+  result = DEE_WIN32_DO_CREATEFILEW(uncwfilename,dwDesiredAccess,dwShareMode,
+                                    dwCreationDisposition,dwFlagsAndAttributes);
 #ifndef TRY_CREATE
-  if (self->w32_handle == INVALID_HANDLE_VALUE) {
-   _DeeWin32SysFileFD_ThrowCreateFileError(GetLastError(),uncwfilename,dwDesiredAccess,
-                                           dwCreationDisposition,dwFlagsAndAttributes);
-   free_nn(uncwfilename);
-   return FALSE;
+  if (result == INVALID_HANDLE_VALUE) {
+   _DeeWin32Sys_ThrowCreateFileError(GetLastError(),uncwfilename,dwDesiredAccess,
+                                     dwShareMode,dwCreationDisposition,dwFlagsAndAttributes);
   }
 #endif
   free_nn(uncwfilename);
  }
-#ifdef TRY_CREATE
- return self->w32_handle != INVALID_HANDLE_VALUE;
-#else
+#ifndef TRY_CREATE
  else {
-  _DeeWin32SysFileFD_ThrowCreateFileError(GetLastError(),DeeWideString_STR(filename),dwDesiredAccess,
-                                          dwCreationDisposition,dwFlagsAndAttributes);
-  return FALSE;
+  _DeeWin32Sys_ThrowCreateFileError(GetLastError(),DeeWideString_STR(filename),dwDesiredAccess,
+                                    dwShareMode,dwCreationDisposition,dwFlagsAndAttributes);
+  return INVALID_HANDLE_VALUE;
  }
- return TRUE;
 #endif
+ return result;
 }
 
 #ifdef TRY_CREATE
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideTryInit
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideTryCreateFile
 #else
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideInit
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideCreateFile
 #endif
-(struct DeeWin32SysFileFD *self, Dee_WideChar const *filename,
- DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
- Dee_size_t filename_size;
- self->w32_handle = DEE_WIN32_DO_CREATEFILEW(filename,dwDesiredAccess,
-                                             dwCreationDisposition,dwFlagsAndAttributes);
- if (self->w32_handle != INVALID_HANDLE_VALUE) return TRUE;
- if (filename && (filename[0] != '\\' || filename[1] != '\\' ||
-                  filename[2] != '?' || filename[3] != '\\')) {
+(Dee_WideChar const *filename, DWORD dwDesiredAccess,
+ DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
+ Dee_size_t filename_size; HANDLE result;
+ result = DEE_WIN32_DO_CREATEFILEW(filename,dwDesiredAccess,dwShareMode,
+                                   dwCreationDisposition,dwFlagsAndAttributes);
+ if DEE_LIKELY(result != INVALID_HANDLE_VALUE) return result;
+ if ((filename[0] != '\\' || filename[1] != '\\'
+   || filename[2] != '?' || filename[3] != '\\')
+   && filename[0] && filename[1] == ':') {
   Dee_WideChar *uncwfilename,*dst_string;
   // Create UNC filename
   filename_size = Dee_WideStrLen(filename);
@@ -125,7 +123,7 @@ DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideInit
 #ifndef TRY_CREATE
    DeeError_NoMemory();
 #endif
-   return FALSE;
+   return INVALID_HANDLE_VALUE;
   }
   dst_string = uncwfilename;
   *dst_string++ = '\\';
@@ -134,77 +132,73 @@ DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoWideInit
   *dst_string++ = '\\';
   memcpy(dst_string,filename,filename_size*sizeof(Dee_WideChar));
   dst_string[filename_size] = 0;
-  self->w32_handle = DEE_WIN32_DO_CREATEFILEW(uncwfilename,dwDesiredAccess,
-                                              dwCreationDisposition,dwFlagsAndAttributes);
+  result = DEE_WIN32_DO_CREATEFILEW(uncwfilename,dwDesiredAccess,dwShareMode,
+                                    dwCreationDisposition,dwFlagsAndAttributes);
 #ifndef TRY_CREATE
-  if (self->w32_handle == INVALID_HANDLE_VALUE) {
-   _DeeWin32SysFileFD_ThrowCreateFileError(GetLastError(),uncwfilename,dwDesiredAccess,
-                                           dwCreationDisposition,dwFlagsAndAttributes);
-   free_nn(uncwfilename);
-   return FALSE;
+  if (result == INVALID_HANDLE_VALUE) {
+   _DeeWin32Sys_ThrowCreateFileError(GetLastError(),uncwfilename,dwDesiredAccess,
+                                     dwShareMode,dwCreationDisposition,dwFlagsAndAttributes);
   }
 #endif
   free_nn(uncwfilename);
  }
-#ifdef TRY_CREATE
- return self->w32_handle != INVALID_HANDLE_VALUE;
-#else
+#ifndef TRY_CREATE
  else {
-  _DeeWin32SysFileFD_ThrowCreateFileError(GetLastError(),filename,dwDesiredAccess,
-                                          dwCreationDisposition,dwFlagsAndAttributes);
-  return FALSE;
+  _DeeWin32Sys_ThrowCreateFileError(GetLastError(),filename,dwDesiredAccess,
+                                    dwShareMode,dwCreationDisposition,dwFlagsAndAttributes);
+  return INVALID_HANDLE_VALUE;
  }
- return TRUE;
 #endif
+ return result;
 }
 
 
 #ifdef TRY_CREATE
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoUtf8TryInitObject
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8TryCreateFileObject
 #else
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoUtf8InitObject
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8CreateFileObject
 #endif
-(struct DeeWin32SysFileFD *self, DeeObject const *filename,
- DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
- DeeObject *wfilename; BOOL result;
+(DeeObject const *filename, DWORD dwDesiredAccess,
+ DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
+ DeeObject *wfilename; HANDLE result;
  DEE_ASSERT(DeeObject_Check(filename) && DeeUtf8String_Check(filename));
  if DEE_UNLIKELY((wfilename = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(filename),DeeUtf8String_STR(filename))) == NULL) {
 #ifndef TRY_CREATE
   DeeError_HandledOne();
 #endif
-  return FALSE;
+  return INVALID_HANDLE_VALUE;
  }
 #ifdef TRY_CREATE
- result = DeeWin32SysFileFD_DoWideTryInitObject(self,wfilename,dwDesiredAccess,
-                                                dwCreationDisposition,dwFlagsAndAttributes);
+ result = DeeWin32Sys_WideTryCreateFileObject(wfilename,dwDesiredAccess,dwShareMode,
+                                              dwCreationDisposition,dwFlagsAndAttributes);
 #else
- result = DeeWin32SysFileFD_DoWideInitObject(self,wfilename,dwDesiredAccess,
-                                             dwCreationDisposition,dwFlagsAndAttributes);
+ result = DeeWin32Sys_WideCreateFileObject(wfilename,dwDesiredAccess,dwShareMode,
+                                           dwCreationDisposition,dwFlagsAndAttributes);
 #endif
  Dee_DECREF(wfilename);
  return result;
 }
 #ifdef TRY_CREATE
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoUtf8TryInit
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8TryCreateFile
 #else
-DEE_STATIC_INLINE(BOOL) DeeWin32SysFileFD_DoUtf8Init
+DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_Utf8CreateFile
 #endif
-(struct DeeWin32SysFileFD *self, Dee_Utf8Char const *filename,
- DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
- DeeObject *wfilename; BOOL result;
+(Dee_Utf8Char const *filename, DWORD dwDesiredAccess,
+ DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
+ DeeObject *wfilename; HANDLE result;
  if ((wfilename = DeeWideString_FromUtf8String(filename)) == NULL) {
 #ifndef TRY_CREATE
   DeeError_HandledOne();
 #endif
-  return FALSE;
+  return INVALID_HANDLE_VALUE;
  }
 #ifdef TRY_CREATE
- result = DeeWin32SysFileFD_DoWideTryInitObject(self,wfilename,dwDesiredAccess,
-                                                dwCreationDisposition,dwFlagsAndAttributes);
+ result = DeeWin32Sys_WideTryCreateFileObject(wfilename,dwDesiredAccess,dwShareMode,
+                                              dwCreationDisposition,dwFlagsAndAttributes);
 #else
- result = DeeWin32SysFileFD_DoWideInitObject(self,wfilename,dwDesiredAccess,
-                                             dwCreationDisposition,dwFlagsAndAttributes);
+ result = DeeWin32Sys_WideCreateFileObject(wfilename,dwDesiredAccess,dwShareMode,
+                                           dwCreationDisposition,dwFlagsAndAttributes);
 #endif
  Dee_DECREF(wfilename);
  return result;

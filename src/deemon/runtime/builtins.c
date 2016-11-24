@@ -311,7 +311,7 @@ DeeObject *const _DeeBuiltin_ID2Type[] = {
  /*0x00B8*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_ishidden,
  /*0x00B9*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_exists,
  /*0x00BA*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_remove,
- /*0x00BB*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_rmfile,
+ /*0x00BB*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_unlink,
  /*0x00BC*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_mkdir,
  /*0x00BD*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_rmdir,
  /*0x00BE*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_copy,
@@ -319,8 +319,8 @@ DeeObject *const _DeeBuiltin_ID2Type[] = {
  /*0x00C0*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_link,
  /*0x00C1*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_readlink,
  /*0x00C2*/(DeeObject *)&DeeBuiltinFunction___builtin_assertion_failed,
- /*0x00C3*/(DeeObject *)&DeeFSDir_Type,
- /*0x00C4*/(DeeObject *)&DeeFSDirIterator_Type,
+ /*0x00C3*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_opendir, // Used-to-be: DeeFSDir_Type
+ /*0x00C4*/(DeeObject *)Dee_None, // [UNUSED] Used-to-be: &DeeFSDirIterator_Type,
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
  /*0x00C5*/(DeeObject *)&DeeBuiltinFunction___builtin_memcpy,
  /*0x00C6*/(DeeObject *)&DeeBuiltinFunction___builtin_memmove,
@@ -403,8 +403,8 @@ DeeObject *const _DeeBuiltin_ID2Type[] = {
  /*0x00E9*/(DeeObject *)Dee_None,
  /*0x00EA*/(DeeObject *)Dee_None,
 #endif
- /*0x00EB*/(DeeObject *)&DeeFSQuery_Type,
- /*0x00EC*/(DeeObject *)&DeeFSQueryIterator_Type,
+ /*0x00EB*/(DeeObject *)Dee_None, // [UNUSED] Used-to-be: &DeeFSQuery_Type,
+ /*0x00EC*/(DeeObject *)Dee_None, // [UNUSED] Used-to-be: &DeeFSQueryIterator_Type,
 #ifdef DEE_PLATFORM_WINDOWS
  /*0x00ED*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_win32hardlink,
  /*0x00EE*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_win32modulename,

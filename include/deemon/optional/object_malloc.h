@@ -38,6 +38,10 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 #undef DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 #endif
+#ifdef DEE_PRIVATE_DECL_DEE_SIZE_TYPES
+DEE_PRIVATE_DECL_DEE_SIZE_TYPES
+#undef DEE_PRIVATE_DECL_DEE_SIZE_TYPES
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 // v frees the object without calling the destructor

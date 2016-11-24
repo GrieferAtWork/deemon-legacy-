@@ -473,8 +473,6 @@ _DeeType_IteratorType(DEE_A_IN DeeTypeObject const *seq_type) {
  if (seq_type == &DeeSubRangeIterator_Type) return &DeeSubRangeIterator_Type;
  if (seq_type == &DeeZipIterator_Type) return &DeeZipIterator_Type;
  if (DeeType_IsSameOrDerived(seq_type,(DeeTypeObject *)&DeeFile_Type)) return &DeeFileIterator_Type;
- if (seq_type == &DeeFSDir_Type) return &DeeFSDirIterator_Type;
- if (seq_type == &DeeFSQuery_Type) return &DeeFSQueryIterator_Type;
  if (DeeType_GET_SLOT(seq_type,tp_seq_iter_self) == &DeeObject_Copy ||
      DeeType_GET_SLOT(seq_type,tp_seq_iter_self) == &_DeeGeneric_ReturnSelf
      ) return seq_type; // This applies to a bunch of types

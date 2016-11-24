@@ -158,22 +158,22 @@ struct file::io: ::deemon::file {
  public: /* public methods */
   inline DEE_A_RET_WUNUSED Dee_uint64_t size() const { Dee_uint64_t result; if (::DeeFileIO_Size(this->ob_ptr,&result) != 0) detail::throw_last_error(); return result; }
  public: /* public methods */
-  inline DEE_A_RET_WUNUSED file::io tmp() { return file::io(DeeFileIO_NewTemporary(1),detail::tag_ref_or_err()); }
-  inline DEE_A_RET_WUNUSED file::io tmp(DEE_A_IN bool delete_when_closed) { return file::io(DeeFileIO_NewTemporary((Dee_uint32_t)(delete_when_closed ? DEE_FILEIO_NEWTEMPORARY_FLAG_DELETE_WHEN_CLOSED : DEE_FILEIO_NEWTEMPORARY_FLAG_NONE)),detail::tag_ref_or_err()); }
+  inline DEE_A_RET_WUNUSED file::io tmp() { return file::io(DeeFile_OpenTemporary(1),detail::tag_ref_or_err()); }
+  inline DEE_A_RET_WUNUSED file::io tmp(DEE_A_IN bool delete_when_closed) { return file::io(DeeFile_OpenTemporary((Dee_uint32_t)(delete_when_closed ? DEE_FILE_OPENTEMPORARY_FLAG_DELETE_WHEN_CLOSED : DEE_FILE_OPENTEMPORARY_FLAG_NONE)),detail::tag_ref_or_err()); }
  public: /* public constructor / destructor */
   inline io(): ::deemon::file(::DeeType_NewInstanceDefault((::DeeTypeObject *)&::DeeFileIO_Type),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN_Z ::Dee_Utf8Char const *filename): ::deemon::file(::DeeFileIO_Utf8New(filename,"r"),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN_Z ::Dee_WideChar const *filename): ::deemon::file(::DeeFileIO_WideNew(filename,"r"),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN_Z ::Dee_Utf8Char const *filename, DEE_A_IN_Z char const *mode): ::deemon::file(::DeeFileIO_Utf8New(filename,mode),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN_Z ::Dee_WideChar const *filename, DEE_A_IN_Z char const *mode): ::deemon::file(::DeeFileIO_WideNew(filename,mode),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN ::DeeObject const *filename): ::deemon::file(::DeeFileIO_NewObject(filename,"r"),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN ::DeeObject const *filename, DEE_A_IN_Z char const *mode): ::deemon::file(::DeeFileIO_NewObject(filename,mode),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN_Z ::Dee_Utf8Char const *filename, tag_noexpand): ::deemon::file(::_DeeFileIO_Utf8New(filename,"r"),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN_Z ::Dee_WideChar const *filename, tag_noexpand): ::deemon::file(::_DeeFileIO_WideNew(filename,"r"),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN_Z ::Dee_Utf8Char const *filename, DEE_A_IN_Z char const *mode, tag_noexpand): ::deemon::file(::_DeeFileIO_Utf8New(filename,mode),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN_Z ::Dee_WideChar const *filename, DEE_A_IN_Z char const *mode, tag_noexpand): ::deemon::file(::_DeeFileIO_WideNew(filename,mode),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN ::DeeObject const *filename, tag_noexpand): ::deemon::file(::_DeeFileIO_NewObject(filename,"r"),detail::tag_ref_or_err()) {}
-  inline explicit io(DEE_A_IN ::DeeObject const *filename, DEE_A_IN_Z char const *mode, tag_noexpand): ::deemon::file(::_DeeFileIO_NewObject(filename,mode),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN_Z ::Dee_Utf8Char const *filename): ::deemon::file(::DeeFile_Utf8Open(filename,"r"),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN_Z ::Dee_WideChar const *filename): ::deemon::file(::DeeFile_WideOpen(filename,"r"),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN_Z ::Dee_Utf8Char const *filename, DEE_A_IN_Z char const *mode): ::deemon::file(::DeeFile_Utf8Open(filename,mode),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN_Z ::Dee_WideChar const *filename, DEE_A_IN_Z char const *mode): ::deemon::file(::DeeFile_WideOpen(filename,mode),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN ::DeeObject const *filename): ::deemon::file(::DeeFile_OpenObject(filename,"r"),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN ::DeeObject const *filename, DEE_A_IN_Z char const *mode): ::deemon::file(::DeeFile_OpenObject(filename,mode),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN_Z ::Dee_Utf8Char const *filename, tag_noexpand): ::deemon::file(::_DeeFile_Utf8Open(filename,"r"),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN_Z ::Dee_WideChar const *filename, tag_noexpand): ::deemon::file(::_DeeFile_WideOpen(filename,"r"),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN_Z ::Dee_Utf8Char const *filename, DEE_A_IN_Z char const *mode, tag_noexpand): ::deemon::file(::_DeeFile_Utf8Open(filename,mode),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN_Z ::Dee_WideChar const *filename, DEE_A_IN_Z char const *mode, tag_noexpand): ::deemon::file(::_DeeFile_WideOpen(filename,mode),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN ::DeeObject const *filename, tag_noexpand): ::deemon::file(::_DeeFile_OpenObject(filename,"r"),detail::tag_ref_or_err()) {}
+  inline explicit io(DEE_A_IN ::DeeObject const *filename, DEE_A_IN_Z char const *mode, tag_noexpand): ::deemon::file(::_DeeFile_OpenObject(filename,mode),detail::tag_ref_or_err()) {}
  DEE_OBJECT_SUBCLASS_DEFAULT_CTOR(io,deemon::file,DeeFileIO_Check)
 };
 

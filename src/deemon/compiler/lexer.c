@@ -1180,7 +1180,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_IncludeFileStream(
  DEE_A_INOUT_OBJECT(DeeFileObject) *filestream) {
  int result; DeeObject *filedata;
  if (DeeFileIO_Check(filestream)) {
-  if ((filedata = DeeUtf8String_Cast(DeeFileIO_FILE(filestream))) == NULL) return -1;
+  if ((filedata = DeeFileIO_Utf8Filename(filestream)) == NULL) return -1;
   result = _DeeLexer_IncludeFileStreamWithRealName(
    self,filestream,DeeUtf8String_STR(filedata),DeeUtf8String_STR(filedata));
   Dee_DECREF(filedata);
@@ -1197,7 +1197,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_IncludeFileStreamEx(
  DEE_A_IN_Z char const *disp_filename) {
  int result; DeeObject *filedata;
  if (DeeFileIO_Check(filestream)) {
-  if ((filedata = DeeUtf8String_Cast(DeeFileIO_FILE(filestream))) == NULL) return -1;
+  if ((filedata = DeeFileIO_Utf8Filename(filestream)) == NULL) return -1;
   result = _DeeLexer_IncludeFileStreamWithRealName(
    self,filestream,DeeUtf8String_STR(filedata),disp_filename);
   Dee_DECREF(filedata);
@@ -1220,7 +1220,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_Utf8IncludeFilenameEx(
  DeeObject *file_ob; int temp;
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
  DEE_ASSERT(filename);
- if ((file_ob = DeeFileIO_Utf8New(filename,"r")) == NULL) return -1;
+ if ((file_ob = DeeFile_Utf8Open(filename,DEE_OPENMODE('r',0))) == NULL) return -1;
  temp = _DeeLexer_IncludeFileStreamWithRealName(self,file_ob,filename,disp_filename);
  Dee_DECREF(file_ob);
  return temp;
@@ -1232,7 +1232,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_WideIncludeFilename(
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
  DEE_ASSERT(filename);
  if ((utf8_filename = DeeUtf8String_FromWideString(filename)) == NULL) return -1;
- if ((file_ob = DeeFileIO_WideNew(filename,"r")) == NULL) { Dee_DECREF(utf8_filename); return -1; }
+ if ((file_ob = DeeFile_WideOpen(filename,DEE_OPENMODE('r',0))) == NULL) { Dee_DECREF(utf8_filename); return -1; }
  temp = _DeeLexer_IncludeFileStreamWithRealName(
   self,file_ob,DeeUtf8String_STR(utf8_filename),DeeUtf8String_STR(utf8_filename));
  Dee_DECREF(utf8_filename);
@@ -1247,7 +1247,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_WideIncludeFilenameEx(
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
  DEE_ASSERT(filename);
  if ((utf8_filename = DeeUtf8String_FromWideString(filename)) == NULL) return -1;
- if ((file_ob = DeeFileIO_WideNew(filename,"r")) == NULL) { Dee_DECREF(utf8_filename); return -1; }
+ if ((file_ob = DeeFile_WideOpen(filename,DEE_OPENMODE('r',0))) == NULL) { Dee_DECREF(utf8_filename); return -1; }
  temp = _DeeLexer_IncludeFileStreamWithRealName(
   self,file_ob,DeeUtf8String_STR(utf8_filename),disp_filename);
  Dee_DECREF(utf8_filename);
@@ -1267,7 +1267,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_IncludeFilenameObjectEx(
  DeeObject *file_ob; int temp;
  DEE_ASSERT(DeeObject_Check(self) && DeeLexer_Check(self));
  DEE_ASSERT(DeeObject_Check(filename) && DeeString_Check(filename));
- if ((file_ob = DeeFileIO_NewObject((DeeObject *)filename,"r")) == NULL) return -1;
+ if ((file_ob = DeeFile_OpenObject((DeeObject *)filename,DEE_OPENMODE('r',0))) == NULL) return -1;
  temp = _DeeLexer_IncludeFileStreamWithRealName(
   self,file_ob,DeeString_STR(filename),disp_filename);
  Dee_DECREF(file_ob);
@@ -2184,7 +2184,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_WideFormatFilenameEx(
 DEE_A_RET_EXCEPT(-1) int DeeLexer_FormatFilenameObject(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *filename) {
  DeeObject *filestream; int result; // Must open in read/update mode
- if DEE_UNLIKELY((filestream = DeeFileIO_NewObject(filename,"r+")) == NULL) return -1;
+ if DEE_UNLIKELY((filestream = DeeFile_OpenObject(filename,DEE_OPENMODE('r',1))) == NULL) return -1;
  result = DeeLexer_FormatFileStream(self,filestream,filestream);
  Dee_DECREF(filestream);
  return result;
@@ -2193,7 +2193,7 @@ DEE_A_RET_EXCEPT(-1) int DeeLexer_FormatFilenameObjectEx(
  DEE_A_INOUT_OBJECT(DeeLexerObject) *self, DEE_A_IN_OBJECT(DeeAnyStringObject) const *filename,
  DEE_A_IN struct DeeDeemonFormatConfig const *config) {
  DeeObject *filestream; int result; // Must open in read/update mode
- if DEE_UNLIKELY((filestream = DeeFileIO_NewObject(filename,"r+")) == NULL) return -1;
+ if DEE_UNLIKELY((filestream = DeeFile_OpenObject(filename,DEE_OPENMODE('r',1))) == NULL) return -1;
  result = DeeLexer_FormatFileStreamEx(self,filestream,filestream,config);
  Dee_DECREF(filestream);
  return result;
@@ -2339,7 +2339,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoFormatFileStreamEx(
  if DEE_UNLIKELY(!root_file) goto err;
  if (DeeFileIO_Check(in)) {
   DeeObject *temp_ob;
-  if DEE_UNLIKELY((temp_ob = DeeUtf8String_Cast(DeeFileIO_FILE(in))) == NULL) goto err2_;
+  if DEE_UNLIKELY((temp_ob = DeeFileIO_Utf8Filename(in)) == NULL) goto err2_;
   result = _TPPFile_SetName(root_file,DeeUtf8String_STR(temp_ob));
   Dee_DECREF(temp_ob);
   if DEE_UNLIKELY(result != 0) goto err2_;
@@ -2463,32 +2463,37 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeLexer_DoSafeFormatFileStreamEx(
  DEE_A_IN DeeLexerObject *self, DEE_A_INOUT_OBJECT(DeeFileObject) *in,
  DEE_A_INOUT_OBJECT(DeeFileObject) *out, DEE_A_IN struct DeeDeemonFormatConfig const *config) {
  if (DeeFileIO_Check(out)) {
-  DeeObject *out_mode,*temp_fp,*out_filename,*temp_filename; int temp;
-  if DEE_UNLIKELY((temp_fp = DeeFileIO_NewTemporary(DEE_FILEIO_NEWTEMPORARY_FLAG_NONE)) == NULL) return -1;
+  DeeObject *temp_fp,*out_filename,*temp_filename; int temp;
+  if DEE_UNLIKELY((temp_fp = DeeFile_OpenTemporary(DEE_FILE_OPENTEMPORARY_FLAG_NONE)) == NULL) return -1;
   if DEE_UNLIKELY((_DeeLexer_DoFormatFileStreamEx(self,in,temp_fp,config)) != 0) {
-   DeeFile_Close(temp_fp);
+   DeeObject *temp_filename;
    DeeError_PUSH_STATE() {
-    if DEE_UNLIKELY(_DeeFS_RmFileObject(DeeFileIO_FILE(temp_fp)) != 0)
-     DeeError_Handled();
+#ifdef DEE_PLATFORM_WINDOWS
+    if ((temp_filename = DeeFileIO_WideFilename(temp_fp)) == NULL) DeeError_Handled();
+#else
+    if ((temp_filename = DeeFileIO_Utf8Filename(temp_fp)) == NULL) DeeError_Handled();
+#endif
+    else {
+     DeeFile_Close(temp_fp);
+     if DEE_UNLIKELY(_DeeFS_UnlinkObject(temp_filename) != 0) DeeError_Handled();
+     Dee_DECREF(temp_filename);
+    }
    } DeeError_POP_STATE();
    Dee_DECREF(temp_fp);
    return -1;
   }
-  Dee_INCREF(temp_filename = DeeFileIO_FILE(temp_fp));
-  Dee_INCREF(out_filename = DeeFileIO_FILE(out));
-  out_mode = DeeFileIO_Mode(out);
+  if DEE_UNLIKELY((temp_filename = DeeFileIO_Utf8Filename(temp_fp)) == NULL) { temp = -1; goto end_tempfp; }
+  if DEE_UNLIKELY((out_filename = DeeFileIO_Utf8Filename(out)) == NULL) { temp = -1; goto end_tempfilename; }
   DeeFile_Close(temp_fp);
   DeeFile_Close(out);
   // Even if we crash after the rmfile, the user
   // could still recover his data from '/tmp/'
-  if (DEE_UNLIKELY(_DeeFS_RmFileObject(out_filename) != 0)
+  if (DEE_UNLIKELY(_DeeFS_UnlinkObject(out_filename) != 0)
    || DEE_UNLIKELY(_DeeFS_MoveObject(temp_filename,out_filename) != 0)
-  // v better not re-open the file. What if it was opened with "w"
-// || DEE_UNLIKELY(DeeFileIO_ReOpenObject(out,out_filename,DeeString_STR(out_mode)) != 0)
    ) temp = -1; else temp = 0;
-  Dee_DECREF(temp_filename);
-  Dee_DECREF(temp_fp);
   Dee_DECREF(out_filename);
+end_tempfilename: Dee_DECREF(temp_filename);
+end_tempfp: Dee_DECREF(temp_fp);
   return temp;
  } else {
   return _DeeLexer_DoFormatFileStreamEx(self,in,out,config);
@@ -2684,14 +2689,17 @@ static DeeObject *_deelexer_return(
 }
 static DeeObject *_deelexer_include(
  DeeObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
- DeeObject *include_ob; char const *disp_filename = NULL;
+ DeeObject *include_ob,*filenameob; char const *disp_filename = NULL; int error;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o|s:include",&include_ob,&disp_filename) != 0) return NULL;
  if (DeeFile_Check(include_ob)) {
-  if DEE_UNLIKELY(DeeLexer_IncludeFileStreamEx(
-   self,include_ob,disp_filename ? disp_filename
-   : DeeFileIO_Check(include_ob)
-   ? DeeString_STR(DeeFileIO_FILE(include_ob))
-   : "<file>") != 0) return NULL;
+  if (disp_filename) filenameob = NULL;
+  else if (DeeFileIO_Check(include_ob)) {
+   if ((filenameob = DeeFileIO_Filename(include_ob)) == NULL) return NULL;
+   disp_filename = DeeString_STR(filenameob);
+  } else filenameob = NULL,disp_filename = "<file>";
+  error = DeeLexer_IncludeFileStreamEx(self,include_ob,disp_filename);
+  Dee_XDECREF(filenameob);
+  if DEE_UNLIKELY(error != 0) return NULL;
  } else {
   if DEE_UNLIKELY(DeeError_TypeError_CheckTypeExact(include_ob,&DeeString_Type) != 0) return NULL;
   if DEE_UNLIKELY(DeeLexer_IncludeFilenameObjectEx(self,include_ob,disp_filename

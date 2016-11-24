@@ -1185,7 +1185,7 @@ binary_integral_call_attr:
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_setmtime
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_settimes
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_remove
-   || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_rmfile
+   || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_unlink
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_mkdir
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_rmdir
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_copy

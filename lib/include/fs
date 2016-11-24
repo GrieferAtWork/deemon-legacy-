@@ -81,6 +81,7 @@
 #pragma push_macro("exists")
 #pragma push_macro("remove")
 #pragma push_macro("rmfile")
+#pragma push_macro("unlink")
 #pragma push_macro("mkdir")
 #pragma push_macro("rmdir")
 #pragma push_macro("copy_")
@@ -151,6 +152,7 @@
 #undef exists
 #undef remove
 #undef rmfile
+#undef unlink
 #undef mkdir
 #undef rmdir
 #undef copy_
@@ -621,10 +623,11 @@ module fs {
 	local const remove = __builtin_object(0x00BA);
 
 	//////////////////////////////////////////////////////////////////////////
-	// >> function fs::rmfile(string.T path) -> none
+	// >> function fs::unlink(string.T path) -> none
 	//    @throws Error.SystemError: Failed to remove the given file
 	//        Removes a given path (must be a file)
-	local const rmfile = __builtin_object(0x00BB);
+	local const unlink = __builtin_object(0x00BB);
+	local const rmfile = __builtin_object(0x00BB); // Old name (keep for backwards compatibility)
 
 	//////////////////////////////////////////////////////////////////////////
 	// >> function fs::mkdir(string.T path, mode_t mode = 0755) -> none
@@ -664,11 +667,14 @@ module fs {
 	local const move_ = __builtin_object(0x00BF);
 
 	//////////////////////////////////////////////////////////////////////////
-	// >> function fs::link(string.T src, string.T dst) -> none
+	// >> function fs::link(string.T link_name, string.T target_name) -> none
 	//    @throws Error.SystemError: Failed to link the given file
-	//        Creates a link to 'src' at 'dst'
+	//        Creates a link to 'target_name' at 'link_name'
 	//        NOTE: Under windows, the process must be granted
 	//              the "SeCreateSymbolicLinkPrivilege" right.
+	//    === CHANGES === 
+	//        - Starting in v102, the arguments are swapped when
+	//          compared against their order in v100-v101
 	local const link = __builtin_object(0x00C0);
 
 	//////////////////////////////////////////////////////////////////////////
@@ -897,17 +903,19 @@ module fs {
 #endif
 
 	//////////////////////////////////////////////////////////////////////////
-	// >> fs::dir(string.T path) -> fs::dir
-	// >> fs::dir(file.io path) -> fs::dir
+	// >> function fs::dir(string.T path) -> iterable;
+	// >> function fs::dir(file.io path) -> iterable;
 	//    @throws Error.SystemError: Failed to stat the given path
 	//        Iterable object that can be used to list all objects in a directory
 	//        >> // List all files+folders in the user home directory
 	//        >> for (f: fs::dir("~")) print f;
-	//        NOTE: If a widestring is used to open the dir, items are yielded as widestrings
+	//        NOTE: The encoding of strings yielded is platform-dependent,
+	//              and may be based on the encoding of the given string
 	local const dir = __builtin_object(0x00C3);
+	//local const opendir = __builtin_object(0x00C3); // TODO: Maybe?
 
 	//////////////////////////////////////////////////////////////////////////
-	// >> fs::query(string.T query) -> fs::query
+	// >> function fs::query(string.T query) -> iterable;
 	//    @throws Error.SystemError: Failed to stat the path of the given query
 	//        Like dir, but the constructor takes a wildcard-enabled query string
 	//        used to determine which items should be displayed.
@@ -916,7 +924,16 @@ module fs {
 	//        Equivalent to:
 	//        >> for (x: fs::dir(fs::path::head(path))) if (x.wmatch(fs::path::tail(path))) { ... }
 	//        NOTE: If the query is a widestring, items are yielded as widestrings
-	local const query = __builtin_object(0x00EB);
+	local const class query {
+		this(__pattern) { this.__pattern = __pattern; }
+		operator for() {
+			local __pat = fs::path::tail(this.__pattern);
+			for (local __name: fs::dir(fs::path::head(this.__pattern))) {
+				if (__name.wmatch(__pat)) yield __name;
+			}
+		}
+	};
+
 }
 
 #undef __DEEMON_WFS_FUNC
@@ -971,6 +988,7 @@ module fs {
 #pragma pop_macro("exists")
 #pragma pop_macro("remove")
 #pragma pop_macro("rmfile")
+#pragma pop_macro("unlink")
 #pragma pop_macro("mkdir")
 #pragma pop_macro("rmdir")
 #pragma pop_macro("copy_")

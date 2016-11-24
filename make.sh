@@ -118,6 +118,7 @@ check_include_available "asm/types.h"
 check_include_available "bluetooth.h"
 check_include_available "bluetooth/bluetooth.h"
 check_include_available "debug_new.h"
+check_include_available "direct.h"
 check_include_available "dirent.h"
 check_include_available "errno.h"
 check_include_available "fcntl.h"
@@ -296,9 +297,16 @@ compile_deemon() {
 	update_object_file "$source_path/deemon/dict.c"
 	update_object_file "$source_path/deemon/enum_attributes.c"
 	update_object_file "$source_path/deemon/error.c"
-	update_object_file "$source_path/deemon/file.c"
+	update_object_file "$source_path/deemon/file/file.c"
 	update_object_file "$source_path/deemon/float.c"
 	update_object_file "$source_path/deemon/foreign_function.c"
+	update_object_file "$source_path/deemon/fs/dynamic_fs.c"
+	update_object_file "$source_path/deemon/fs/expand_fs.c"
+	update_object_file "$source_path/deemon/fs/fs.c"
+	update_object_file "$source_path/deemon/fs/native_fs.c"
+	update_object_file "$source_path/deemon/fs/objects/native_view.c"
+	update_object_file "$source_path/deemon/fs/objects/vfs_view.c"
+	update_object_file "$source_path/deemon/fs/virtual_fs.c"
 	update_object_file "$source_path/deemon/fs_api.c"
 	update_object_file "$source_path/deemon/gc.c"
 	update_object_file "$source_path/deemon/generic_vtable.c"
@@ -368,6 +376,13 @@ link_deemon() {
 		"$build_path/file.c.o" \
 		"$build_path/float.c.o" \
 		"$build_path/foreign_function.c.o" \
+		"$build_path/dynamic_fs.c.o" \
+		"$build_path/expand_fs.c.o" \
+		"$build_path/fs.c.o" \
+		"$build_path/native_fs.c.o" \
+		"$build_path/native_view.c.o" \
+		"$build_path/vfs_view.c.o" \
+		"$build_path/virtual_fs.c.o" \
 		"$build_path/fs_api.c.o" \
 		"$build_path/gc.c.o" \
 		"$build_path/generic_vtable.c.o" \
@@ -438,6 +453,13 @@ link_deemon_static() {
 		"$build_path/file.c.o" \
 		"$build_path/float.c.o" \
 		"$build_path/foreign_function.c.o" \
+		"$build_path/dynamic_fs.c.o" \
+		"$build_path/expand_fs.c.o" \
+		"$build_path/fs.c.o" \
+		"$build_path/native_fs.c.o" \
+		"$build_path/native_view.c.o" \
+		"$build_path/vfs_view.c.o" \
+		"$build_path/virtual_fs.c.o" \
 		"$build_path/fs_api.c.o" \
 		"$build_path/gc.c.o" \
 		"$build_path/generic_vtable.c.o" \

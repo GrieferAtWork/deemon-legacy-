@@ -321,7 +321,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeProcess_F(Cwd)(
  DeeObject *result,*filename;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  filename = DeeString_Newf("/proc/%d/cwd",DeeProcess_HANDLE(self));
- result = _DeeFS_ReadLinkObject(filename);
+ result = _DeeFS_ReadlinkObject(filename);
  Dee_DECREF(filename);
  return result;
 #else

@@ -35,7 +35,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 #include DEE_INCLUDE_MEMORY_API()
 
-// include/*
+// /include/*
 #include <deemon/bool.h>
 #include <deemon/cfunction.h>
 #include <deemon/class.h>
@@ -69,10 +69,13 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include <deemon/value.h>
 #include <deemon/weakref.h>
 
-// src/*
+// /src/*
 #include <deemon/__xconf.inl>
 #include <deemon/compiler/xast.h>
 #include <deemon/compiler/sast.h>
+#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#include <deemon/vfs/vfs_core.h>
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
 
 // */ (nano...)
 
@@ -470,6 +473,11 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
  //       so no user code should be able to run here!
  _DeeClassType_Finalize();
 #endif
+
+#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+ // Shutdown the virtual file system.
+ DeeVFS_Shutdown();
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
 
  // Clear all structured type caches (pointer types, lvalue types, foreign_function types, ...)
  DeeStructuredType_Shutdown();
@@ -1215,7 +1223,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeLoadCompiled_FileStream(
 DEE_A_RET_EXCEPT_REF DeeObject *DeeLoadCompiled_Filename(
  DEE_A_IN_Z char const *filename) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_New(filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_Open(filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeLoadCompiled_FileStream(filestream);
  Dee_DECREF(filestream);
  return result;
@@ -1223,7 +1231,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeLoadCompiled_Filename(
 DEE_A_RET_EXCEPT_REF DeeObject *DeeLoadCompiled_FilenameObject(
  DEE_A_IN_OBJECT(DeeStringObject) const *filename) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_NewObject((DeeObject *)filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_OpenObject((DeeObject *)filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeLoadCompiled_FileStream(filestream);
  Dee_DECREF(filestream);
  return result;
@@ -1252,12 +1260,10 @@ DEE_A_RET_EXCEPT(-1) int DeeSaveCompiled_FilenameObject(
  DEE_A_INOUT DeeObject *compiled_object,
  DEE_A_IN_OBJECT(DeeStringObject) const *filename) {
  DeeObject *file_stream; int result;
- if DEE_UNLIKELY((file_stream = DeeFileIO_NewObject((DeeObject *)filename,"w")) == NULL) return -1;
+ if DEE_UNLIKELY((file_stream = DeeFile_OpenObjectEx((
+  DeeObject *)filename,DEE_OPENMODE('w',0),0777)) == NULL) return -1;
  result = DeeSaveCompiled_FileStream(compiled_object,file_stream);
  Dee_DECREF(file_stream);
-#ifdef DEE_PLATFORM_UNIX // Make the file executable
- if DEE_LIKELY(result == 0) result = DeeFS_ChmodObject((DeeObject *)filename,0777);
-#endif
  return result;
 }
 
@@ -1291,7 +1297,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeLoad_Filename(
  DEE_A_IN_Z char const *filename,
  DEE_A_IN_OPT struct DeeCompilerConfig const *config) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_New(filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_Open(filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeLoad_FileStreamEx(filestream,filename,config);
  Dee_DECREF(filestream);
  return result;
@@ -1301,7 +1307,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeLoad_FilenameEx(
  DEE_A_IN_Z char const *disp_filename,
  DEE_A_IN_OPT struct DeeCompilerConfig const *config) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_New(filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_Open(filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeLoad_FileStreamEx(filestream,disp_filename,config);
  Dee_DECREF(filestream);
  return result;
@@ -1310,7 +1316,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeLoad_FilenameObject(
  DEE_A_IN_OBJECT(DeeStringObject) const *filename,
  DEE_A_IN_OPT struct DeeCompilerConfig const *config) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_NewObject((DeeObject *)filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_OpenObject((DeeObject *)filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeLoad_FileStreamEx(filestream,DeeString_STR(filename),config);
  Dee_DECREF(filestream);
  return result;
@@ -1320,7 +1326,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeLoad_FilenameObjectEx(
  DEE_A_IN_Z char const *disp_filename,
  DEE_A_IN_OPT struct DeeCompilerConfig const *config) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_NewObject((DeeObject *)filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_OpenObject((DeeObject *)filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeLoad_FileStreamEx(filestream,disp_filename,config);
  Dee_DECREF(filestream);
  return result;
@@ -1354,7 +1360,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeExec_FilenameArgs(
  DEE_A_IN_OPT struct DeeCompilerConfig const *config,
  DEE_A_IN_OBJECT(DeeTupleObject) *args) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_New(filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_Open(filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeExec_FileStreamExArgs(filestream,filename,config,args);
  Dee_DECREF(filestream);
  return result;
@@ -1365,7 +1371,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeExec_FilenameExArgs(
  DEE_A_IN_OPT struct DeeCompilerConfig const *config,
  DEE_A_IN_OBJECT(DeeTupleObject) *args) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_New(filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_Open(filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeExec_FileStreamExArgs(filestream,disp_filename,config,args);
  Dee_DECREF(filestream);
  return result;
@@ -1375,7 +1381,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeExec_FilenameObjectArgs(
  DEE_A_IN_OPT struct DeeCompilerConfig const *config,
  DEE_A_IN_OBJECT(DeeTupleObject) *args) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_NewObject((DeeObject *)filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_OpenObject((DeeObject *)filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeExec_FileStreamExArgs(filestream,DeeString_STR(filename),config,args);
  Dee_DECREF(filestream);
  return result;
@@ -1386,7 +1392,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeExec_FilenameObjectExArgs(
  DEE_A_IN_OPT struct DeeCompilerConfig const *config,
  DEE_A_IN_OBJECT(DeeTupleObject) *args) {
  DeeObject *filestream,*result;
- if DEE_UNLIKELY((filestream = DeeFileIO_NewObject((DeeObject *)filename,"r")) == NULL) return NULL;
+ if DEE_UNLIKELY((filestream = DeeFile_OpenObject((DeeObject *)filename,DEE_OPENMODE('r',0))) == NULL) return NULL;
  result = DeeExec_FileStreamExArgs(filestream,disp_filename,config,args);
  Dee_DECREF(filestream);
  return result;
@@ -1942,24 +1948,6 @@ DEE_A_RET_NOEXCEPT(0) int Dee_HasWildFeatures(
 }
 
 
-#define HAVE_TEST_CALLBACK
-
-#ifdef HAVE_TEST_CALLBACK
-DEE_DECL_END
-#include <deemon/sys/sysfd.h>
-DEE_DECL_BEGIN
-static void _dee_test(int argc, char **argv) {
- struct DeeSysFileFD fd;
- DeeSysFileFD_Utf8Init(&fd,"file.txt",DEE_OPENMODE('w',0),0644,goto end);
- DEE_LDEBUG("Opened file: %R",DeeSysFileFD_Utf8Filename(&fd));
- DeeSysFD_Quit(&fd);
- (void)argc,argv;
-end:
- while (!DeeError_Print("Error during testing\n",1));
-}
-#endif
-
-
 DEE_A_RET_EXCEPT(-1) int Dee_Main(
  DEE_A_IN int argc, DEE_A_IN_R(argc) char **argv, DEE_A_OUT_OPT int *retval) {
 #define DEE_CMD_MODE_DEFAULT      0
@@ -1983,9 +1971,6 @@ DEE_A_RET_EXCEPT(-1) int Dee_Main(
  DeeObject *fp,*lexer,*func,*script_file;
  struct DeeCompilerConfig config;
  struct DeePreprocessConfig pp_config = {NULL,1,0,0,0,0};
-#ifdef HAVE_TEST_CALLBACK
- _dee_test(argc,argv);
-#endif
  ++argv,--argc; // consume the exe file argument
  // Setup the compiler
  if DEE_UNLIKELY((lexer = DeeLexer_New()) == NULL) goto err_always;
@@ -2108,7 +2093,7 @@ DEE_A_RET_EXCEPT(-1) int Dee_Main(
   if (CHECK_L("keep-comments")) { DeeLexer_LEXER(lexer)->l_flags |= TPPLexer_FLAG_TOK_COMMENTS; } else
   if (CHECK("o","out")) { if (argc) { --argc;
    Dee_XDECREF(pp_config.output_file);
-   if DEE_UNLIKELY((pp_config.output_file = DeeFileIO_New(*argv++,"w")) == NULL) goto err_0;
+   if DEE_UNLIKELY((pp_config.output_file = DeeFile_OpenEx(*argv++,DEE_OPENMODE('w',0),0775)) == NULL) goto err_0;
   } } else
   if (*arg == 'C') { if DEE_UNLIKELY(_dee_parsearg_C(&config,arg+1) != 0) goto err_0; } else
   if (CHECK_S("i")) {
@@ -2178,7 +2163,7 @@ DEE_A_RET_EXCEPT(-1) int Dee_Main(
   Dee_uint32_t version;
   DeeMarshalVersion marshal_ver;
   int temp;
-  if DEE_UNLIKELY((input_stream = DeeFileIO_New(*argv,"r")) == NULL) {
+  if DEE_UNLIKELY((input_stream = DeeFile_Open(*argv,DEE_OPENMODE('r',0))) == NULL) {
 err_io:
    Dee_DECREF(lexer);
    goto err_1;
@@ -2232,8 +2217,10 @@ parse_and_compile:
   goto end_script;
  } else if (mode == DEE_CMD_MODE_FORMAT) {
   DeeObject *input_stream;
-  if DEE_UNLIKELY((input_stream = DeeFileIO_New(
-   *argv,pp_config.output_file ? "r" : "r+")) == NULL) goto err_lex1;
+  if DEE_UNLIKELY((input_stream = DeeFile_Open(
+   *argv,(Dee_openmode_t)(pp_config.output_file
+   ? DEE_OPENMODE('r',0) : DEE_OPENMODE('r',1))
+   )) == NULL) goto err_lex1;
   result = DeeLexer_FormatFileStream(
    lexer,input_stream,pp_config.output_file
    ? pp_config.output_file : input_stream);
@@ -2254,12 +2241,6 @@ exec_func2:
   // Output compiled code to file
   if (pp_config.output_file) {
    if DEE_UNLIKELY(DeeSaveCompiled_FileStream(func,pp_config.output_file) != 0) goto err_2;
-#ifdef DEE_PLATFORM_UNIX
-   // v should always be the case, but might not be forever...
-   if (DeeFileIO_Check(pp_config.output_file)) {
-    if DEE_UNLIKELY(DeeFileIO_Chmod(pp_config.output_file,0777) != 0) goto err_2;
-   }
-#endif
    Dee_CLEAR(pp_config.output_file);
   }
 
