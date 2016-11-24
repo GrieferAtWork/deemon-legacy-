@@ -469,6 +469,7 @@ do{\
 //////////////////////////////////////////////////////////////////////////
 // === DeeUnixSysPipeFD ===
 #if DEE_HAVE_PIPE
+#define DeeUnixSysPipeFD DeeUnixSysPipeFD
 struct DeeUnixSysPipeFD { DEE_UNIX_SYSFD_HEAD };
 #define DeeUnixSysPipeFD_Init(reader,writer,...)\
 do{\
@@ -576,7 +577,7 @@ do{\
 
 #ifdef DeeUnixSysPipeFD
 #define DeeSysPipeFD         DeeUnixSysPipeFD
-#ifdef DeeSysPipeFD_Init
+#ifdef DeeUnixSysPipeFD_Init
 #define DeeSysPipeFD_Init    DeeUnixSysPipeFD_Init
 #endif
 #endif /* DeeUnixSysPipeFD */
