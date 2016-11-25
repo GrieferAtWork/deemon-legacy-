@@ -366,16 +366,17 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LocateAt_impl(
  struct DeeVFSNode *result,*newresult; int error;
  if DEE_UNLIKELY((result = DeeVFS_LLocateAt_impl(state,root,path)) == NULL) return NULL;
  while (1) {
-  if DEE_UNLIKELY((error = DeeVFSNode_IsLink(result)) < 0) return NULL;
+  if DEE_UNLIKELY((error = DeeVFSNode_IsLink(result)) < 0) goto err_r;
   if (!error) break;
   if DEE_UNLIKELY(++state->vld_link_ind == DEE_VFS_MAX_LINK_INDIRECTION) {
    _DeeVFSError_MaxLinkIndirectionReached(state->vld_startpath);
+err_r:
    DeeVFSNode_DECREF(result);
    return NULL;
   }
   newresult = DeeVFSNode_WalkLink_impl(state,result);
   DeeVFSNode_DECREF(result);
-  if (!newresult) return NULL;
+  if DEE_UNLIKELY(!newresult) return NULL;
   result = newresult;
  }
  return result;
@@ -654,6 +655,7 @@ DEE_DECL_END
 #include "vfs_core.unicode_impl.inl"
 
 #include "vfs_native_mount.c.inl"
+#include "vfs_native_netmount.c.inl"
 #include "vfs_native_node.c.inl"
 #include "vfs_proc_node.c.inl"
 #include "vfs_root.c.inl"

@@ -63,11 +63,11 @@ static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativenode_vnt_walk(
  Dee_INHERIT_REF(result->vnn_path,*(DeeStringObject **)&newpath);
  return result;
 }
-static DeeObject *DEE_CALL _deevfs_nativenode_vnt_nameof(
- struct DeeVFSNativeNode *self, struct DeeVFSNativeNode *child) {
+extern DeeObject *DEE_CALL _deevfs_nativenode_vnt_nameof(
+ struct DeeVFSNode *self, struct DeeVFSNativeNode *child) {
  char const *end,*result,*resultmin;
  DEE_ASSERTF(DeeVFSNode_IsNative(&child->vnn_node),"Node %r is not a child of %r",
-             DeeVFSNode_Filename(&child->vnn_node),DeeVFSNode_Filename(&self->vnn_node));
+             DeeVFSNode_Filename(&child->vnn_node),DeeVFSNode_Filename(self));
  (void)self;
  end = result = (resultmin = DeeString_STR(child->vnn_path))+DeeString_SIZE(child->vnn_path);
  while(result != resultmin && result[-1] != '\\') --result;
@@ -294,7 +294,7 @@ struct DeeVFSNodeType const DeeVFSNativeNode_Type = {
 #ifdef DeeNativeFileFD
  &_deevfs_nativenode_vnt_file,
 #else
- NULL,
+ DeeVFSNoopNodeType_FileData,
 #endif
  &_deevfs_nativenode_vnt_view
 };

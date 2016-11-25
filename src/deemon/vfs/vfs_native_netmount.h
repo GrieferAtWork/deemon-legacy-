@@ -18,54 +18,54 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_VFS_VFS_NATIVE_NODE_H
-#define GUARD_DEEMON_VFS_VFS_NATIVE_NODE_H 1
+#ifndef GUARD_DEEMON_VFS_VFS_NATIVE_NETMOUNT_H
+#define GUARD_DEEMON_VFS_VFS_NATIVE_NETMOUNT_H 1
 
 #include <deemon/__conf.inl>
-
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
-#include <deemon/vfs/vfs_core.h>
-#include <deemon/sys/sysfd.h>
+
 #include <deemon/optional/atomic_mutex.h>
-#include <deemon/fs/native_view.wide.h>
+#include <deemon/string.h>
+#include <deemon/vfs/vfs_core.h>
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 #include <Windows.h>
+#include <lm.h>
 DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
-
 
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
-// Native VFS node: A filesystem node that points back into the 
-struct DeeVFSNativeNode {
- struct DeeVFSNode          vnn_node; /*< Underlying node. */
- DEE_A_REF DeeStringObject *vnn_path; /*< [1..1] Absolute, native path to this node (NOT trail terminated). */
+struct DeeVFSNetServerNode {
+ struct DeeVFSNode          vnm_node; /*< Underlying node. */
+ DEE_A_REF DeeStringObject *vnm_name; /*< Name of this server. */
 };
-struct DeeVFSNativeFile {
- struct DeeVFSFile   vnf_file; /*< Underlying file. */
-#ifdef DeeSysFileFD
- struct DeeSysFileFD vnf_fd;   /*< Native file descriptor. */
-#endif
+struct DeeVFSNetServerView {
+ struct DeeVFSView nsv_view;   /*< Underlying view. */
+ struct DeeAtomicMutex nsv_lock; /*< Lock for everything below */
+ DEE_A_REF DeeWideStringObject *nsv_server; /*< [1..1] Name of server. */
+ PSHARE_INFO_502   nsv_pBegin; /*< [0..1] Begin of server list. */
+ PSHARE_INFO_502   nsv_pEnd;   /*< [0..1] End of server list. */
+ PSHARE_INFO_502   nsv_pCurr;  /*< [0..1] Record for the current server. */
+ DWORD             nsv_dwResumeHandle;
+ int               nsv_hasresume;
 };
-struct DeeVFSNativeView {
- struct DeeVFSView     vnv_view; /*< Underlying view. */
- // v TODO: This can be a 'DeeSysFSWideView'
- struct DeeNFSWideView vnv_dir;
+struct DeeVFSNetMountView {
+ struct DeeVFSView nmv_view;   /*< Underlying view. */
+ struct DeeAtomicMutex nmv_lock; /*< Lock for everything below */
+ LPSERVER_INFO_101 nmv_pBegin; /*< [0..1] Begin of server list. */
+ LPSERVER_INFO_101 nmv_pEnd;   /*< [0..1] End of server list. */
+ LPSERVER_INFO_101 nmv_pCurr;  /*< [0..1] Record for the current server. */
+ DWORD             nmv_dwResumeHandle;
+ int               nmv_hasresume;
 };
 
-
-extern void DEE_CALL _deevfs_nativefile_quit(struct DeeVFSNativeFile *self);
-extern int DEE_CALL _deevfs_nativefile_vft_read(DEE_A_INOUT struct DeeVFSNativeFile *self, void *p, Dee_size_t s, Dee_size_t *rs);
-extern int DEE_CALL _deevfs_nativefile_vft_write(DEE_A_INOUT struct DeeVFSNativeFile *self, void const *p, Dee_size_t s, Dee_size_t *ws);
-extern int DEE_CALL _deevfs_nativefile_vft_seek(DEE_A_INOUT struct DeeVFSNativeFile *self, Dee_int64_t off, int whence, Dee_uint64_t *pos);
-extern int DEE_CALL _deevfs_nativefile_vft_flush(DEE_A_INOUT struct DeeVFSNativeFile *self);
-extern int DEE_CALL _deevfs_nativefile_vft_trunc(DEE_A_INOUT struct DeeVFSNativeFile *self);
-extern DeeObject *DEE_CALL _deevfs_nativenode_vnt_nameof(struct DeeVFSNode *self, struct DeeVFSNativeNode *child);
+extern struct DeeVFSNodeType const DeeVFSNetServerNode_Type; /*< "/net/[SERVER]" */
+extern struct DeeVFSNodeType const DeeVFSNetMountNode_Type;  /*< "/net" */
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
-#endif /* !GUARD_DEEMON_VFS_VFS_NATIVE_NODE_H */
+#endif /* !GUARD_DEEMON_VFS_VFS_NATIVE_NETMOUNT_H */

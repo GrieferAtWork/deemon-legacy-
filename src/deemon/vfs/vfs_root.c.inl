@@ -27,6 +27,7 @@
 #include <deemon/__conf.inl>
 #include <deemon/vfs/vfs_proc_node.h>
 #include <deemon/vfs/vfs_root.h>
+#include <deemon/vfs/vfs_native_netmount.h>
 #include <deemon/vfs/vfs_virtual_stdfile.h>
 #include <deemon/vfs/vfs_virtual_nullfile.h>
 #include <deemon/vfs/vfs_virtual_randomfile.h>
@@ -66,10 +67,12 @@ struct DeeVFSNodeType DeeVFSTmpLinkNode_Type = {
  DeeVFSNoopNodeType_FileData,NULL};
 struct DeeVFSNode _DeeVFS_Tmp = DeeVFSNode_INIT(&DeeVFSTmpLinkNode_Type,DeeVFS_Root);
 
+struct DeeVFSNode _DeeVFS_Net = DeeVFSNode_INIT(&DeeVFSNetMountNode_Type,DeeVFS_Root);
 
 static struct DeeVFSVirtualDirEntry _deevfs_root_nodes[] = {
  {"dev",  (struct DeeVFSNode *)&_DeeVFS_Dev},
  {"mount",DeeVFS_Mount},
+ {"net",  (struct DeeVFSNode *)&_DeeVFS_Net},
  {"proc", DeeVFS_Proc},
  {"tmp",  (struct DeeVFSNode *)&_DeeVFS_Tmp},
  {NULL,NULL},
