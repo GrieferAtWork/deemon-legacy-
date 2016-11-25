@@ -38,6 +38,7 @@ static int DEE_CALL _deevfs_nullfile_vft_read(struct DeeVFSFile *DEE_UNUSED(self
 static int DEE_CALL _deevfs_zerofile_vft_read(struct DeeVFSFile *DEE_UNUSED(self), void *p, Dee_size_t s, Dee_size_t *rs) { memset(p,0,*rs = s); return 0; }
 static int DEE_CALL _deevfs_nullfile_vft_write(struct DeeVFSFile *DEE_UNUSED(self), void const *DEE_UNUSED(p), Dee_size_t s, Dee_size_t *ws) { *ws = s; return 0; }
 static int DEE_CALL _deevfs_nullfile_vft_seek(struct DeeVFSFile *DEE_UNUSED(self), Dee_int64_t DEE_UNUSED(off), int DEE_UNUSED(whence), Dee_uint64_t *pos) { if (pos) *pos = 0; return 0; }
+static int DEE_CALL _deevfs_zerofile_vft_seek(struct DeeVFSFile *DEE_UNUSED(self), Dee_int64_t DEE_UNUSED(off), int DEE_UNUSED(whence), Dee_uint64_t *pos) { if (pos) *pos = (Dee_uint64_t)-1; return 0; }
 static int DEE_CALL _deevfs_nullfile_vft_flush(struct DeeVFSFile *DEE_UNUSED(self)) { return 0; }
 static int DEE_CALL _deevfs_nullfile_vft_trunc(struct DeeVFSFile *DEE_UNUSED(self)) { return 0; }
 
@@ -57,7 +58,7 @@ static struct _DeeVFSFileTypeData _deevfs_zerofile_vft_file = {
  (void(DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
  (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_zerofile_vft_read,
  (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_nullfile_vft_write,
- (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &_deevfs_nullfile_vft_seek,
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &_deevfs_zerofile_vft_seek,
  (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nullfile_vft_flush,
  (int (DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nullfile_vft_trunc,
 };
