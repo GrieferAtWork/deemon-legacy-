@@ -29,7 +29,7 @@
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/vfs/vfs_virtual_randomfile.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
@@ -112,6 +112,6 @@ struct DeeVFSNodeType const DeeVFSVirtualURandomFileNode_Type = {
  {NULL,NULL},NULL,&_deevfs_urandomfile_vft_file,NULL};
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_RANDOMFILE_C_INL */

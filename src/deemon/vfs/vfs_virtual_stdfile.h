@@ -26,7 +26,7 @@
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/fs/native_filefd.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
@@ -41,6 +41,6 @@ struct DeeVFSVirtualStdFileNode {
 extern struct DeeVFSNodeType const DeeVFSVirtualStdFileNode_Type;
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_STDFILE_H */

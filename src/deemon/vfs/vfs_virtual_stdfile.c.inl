@@ -30,7 +30,7 @@
 #include <deemon/vfs/vfs_native_node.h>
 #include <deemon/vfs/vfs_virtual_stdfile.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
@@ -59,6 +59,6 @@ struct DeeVFSNodeType const DeeVFSVirtualStdFileNode_Type = {
  {NULL,NULL},NULL,&_deevfs_virtualstdfile_vft_file,NULL};
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_STDFILE_C_INL */

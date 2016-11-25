@@ -31,7 +31,7 @@
 #include <deemon/vfs/vfs_virtual_nullfile.h>
 #include <deemon/vfs/vfs_virtual_randomfile.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 extern struct DeeVFSVirtualDirNode _DeeVFS_Dev;
@@ -79,6 +79,6 @@ struct DeeVFSVirtualDirNode _DeeVFS_Root =
  DeeVFSVirtualDirNode_INIT(NULL,_deevfs_root_nodes);
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_ROOT_C_INL */

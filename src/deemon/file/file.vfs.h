@@ -25,7 +25,7 @@
 #endif
 
 #include "file.fd.h"
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/file.h>
 #include <deemon/vfs/vfs_core.h>
 
@@ -75,6 +75,6 @@ do{\
 
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_FILE_VFS_H */

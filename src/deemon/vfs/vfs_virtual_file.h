@@ -25,7 +25,7 @@
 #include <deemon/optional/atomic_mutex.h>
 #include <deemon/vfs/vfs_core.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
@@ -65,6 +65,6 @@ extern int DEE_CALL DeeVFSVirtualFile_Seek(struct DeeVFSFile *self, Dee_int64_t 
 
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_FILE_H */

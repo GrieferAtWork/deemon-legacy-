@@ -50,9 +50,6 @@
 #include <deemon/sys/sysfs.h>
 #include <deemon/file/file.fd.h>
 #include "unicode/char_traits.inl"
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-#include "virtual_fs.h.inl"
-#endif
 #include DEE_INCLUDE_MEMORY_API()
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
@@ -792,27 +789,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeProcessObject) *DeeProcess_NewExObject(
  if ((exe = DeeFS_PathExpandObject(exe)) == NULL) return NULL;
  if (DeeWideString_Check(args)) Dee_INCREF(args);
  else if ((args = DeeWideString_Cast(args)) == NULL) { result = NULL; goto err_exe; }
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- {
-  DeeObject *temp;
-  if (DeeWideString_Check(exe)) {
-   if (DeeVFS_WideIsVirtualPath(DeeWideString_STR(exe))) {
-    if ((temp = DeeVFS_WideReadReFsLink(DeeWideString_STR(exe))) == NULL) goto err_args_r;
-    Dee_DECREF(exe);
-    Dee_INHERIT_REF(exe,temp);
-   }
-  } else {
-   if (DeeUtf8String_InplaceCast((DeeObject const **)&exe) != 0) {
-err_args_r: result = NULL; goto err_args;
-   }
-   if (DeeVFS_Utf8IsVirtualPath(DeeUtf8String_STR(exe))) {
-    if ((temp = DeeVFS_Utf8ReadReFsLink(DeeUtf8String_STR(exe))) == NULL) goto err_args_r;
-    Dee_DECREF(exe);
-    Dee_INHERIT_REF(exe,temp);
-   }
-  }
- }
-#endif
+ // TODO: VFS
  if ((result = DeeObject_MALLOCF(DeeProcessObject,"Process")) != NULL) {
   DeeObject_INIT(result,&DeeProcess_Type);
   result->p_flags = DEE_PROCESS_FLAG_NOREF;
@@ -820,9 +797,6 @@ err_args_r: result = NULL; goto err_args;
   Dee_INHERIT_REF(result->p_exe,*(DeeAnyStringObject **)&exe);
   Dee_INHERIT_REF(result->p_args,*(DeeAnyStringObject **)&args);
  } else {
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-err_args:
-#endif
   Dee_DECREF(args);
 err_exe: Dee_DECREF(exe);
  }

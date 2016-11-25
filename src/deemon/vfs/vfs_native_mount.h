@@ -26,7 +26,7 @@
 #include <deemon/string.h>
 #include <deemon/vfs/vfs_core.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
@@ -43,6 +43,6 @@ extern DEE_A_RET_EXCEPT(NULL) char *DeeWin32Sys_GetDriveStrings(void);
 #define DeeWin32Sys_FreeDriveStrings(drives) free_nn(drives)
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_NATIVE_MOUNT_H */

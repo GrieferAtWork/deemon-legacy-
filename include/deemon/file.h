@@ -82,9 +82,6 @@ DEE_OBJECT_DEF(DeeFileIteratorObject);
 DEE_OBJECT_DEF(DeeFileWriterObject);
 DEE_OBJECT_DEF(DeeFileReaderObject);
 DEE_OBJECT_DEF(DeeFileJoinedObject);
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-DEE_OBJECT_DEF(DeeVFSFileObject);
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #ifdef DEE_LIMITED_DEX
 struct _DeeFileTypeIOOperators {
@@ -139,9 +136,9 @@ DEE_DATA_DECL(DeeTypeObject) DeeFileType_Type;
 #define DEE_PRIVATE_FILEFLAG_FD_OWNED       DEE_UINT32_C(0x02000000) /*< The stored file descriptor is owned. */
 #define DEE_PRIVATE_FILEFLAG_STDINIT        DEE_UINT32_C(0x04000000) /*< [atomic] An std-handle is initialized. */
 #define DEE_PRIVATE_FILEFLAG_IO_DELONCLOSE  DEE_UINT32_C(0x40000000) /*< Used by file.io (delete file when the handle is closed). */
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #define DEE_PRIVATE_FILEFLAG_VFS_VALID      DEE_PRIVATE_FILEFLAG_FD_VALID /*< Valid VFS file. */
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS*/
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #define DEE_FILE_OBJECT_HEAD \
  DEE_OBJECT_HEAD_EX(DeeFileTypeObject) \
@@ -190,9 +187,6 @@ DEE_DATA_DECL(DeeFileTypeObject) DeeFileIO_Type;     // maybe   maybe   maybe  m
 DEE_DATA_DECL(DeeFileTypeObject) DeeFileReader_Type; // yes     no      yes    no
 DEE_DATA_DECL(DeeFileTypeObject) DeeFileWriter_Type; // yes     yes     yes    yes
 DEE_DATA_DECL(DeeFileTypeObject) DeeFileJoined_Type; // no      maybe   maybe  maybe
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-DEE_DATA_DECL(DeeFileTypeObject) DeeFileVFS_Type;    // maybe   maybe   maybe  maybe
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #define DeeFileIterator_Check(ob)      DeeObject_InstanceOf(ob,&DeeFileIterator_Type)
 #define DeeFileIterator_CheckExact(ob) DeeObject_InstanceOfExact(ob,&DeeFileIterator_Type)

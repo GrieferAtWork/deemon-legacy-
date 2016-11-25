@@ -32,7 +32,7 @@
 #include <deemon/deemonrun.h>
 #include <deemon/fs/native_fs.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 
@@ -664,6 +664,6 @@ DEE_DECL_END
 #include "vfs_virtual_stdfile.c.inl"
 #endif
 
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_CORE_C */

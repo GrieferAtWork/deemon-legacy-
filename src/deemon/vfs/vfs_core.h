@@ -29,7 +29,7 @@
 #include <deemon/optional/file.openmode.h>
 #include DEE_INCLUDE_MEMORY_API()
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 #ifdef DEE_PRIVATE_DECL_DEE_SIZE_TYPES
@@ -416,6 +416,6 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideForceNativeR
 extern void DeeVFS_Shutdown(void);
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_CORE_H */

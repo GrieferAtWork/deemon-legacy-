@@ -23,7 +23,7 @@
 #define DEE_LIMITED_API 1
 
 #include <deemon/__conf.inl>
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/string.h>
 #include <deemon/type.h>
 #include <deemon/fs/native_fs.h>
@@ -220,6 +220,6 @@ end_nativesrc: Dee_DECREF(native_src);
 }
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_COPY_C_INL */

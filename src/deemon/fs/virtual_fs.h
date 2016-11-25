@@ -22,7 +22,7 @@
 #define GUARD_DEEMON_FS_VIRTUAL_FS_H 1
 
 #include <deemon/__conf.inl>
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/optional/fs_api.fileproperty.h>
 #include <deemon/vfs/vfs_core.h>
 
@@ -179,6 +179,6 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFS_WideReadlinkObje
 #define DeeVFS_ReadlinkObject        DeeVFS_Utf8ReadlinkObject
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_H */

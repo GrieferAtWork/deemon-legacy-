@@ -23,7 +23,7 @@
 
 #include <deemon/__conf.inl>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/vfs/vfs_virtual_dir.h>
 #include <deemon/sys/sysfd.h>
@@ -96,6 +96,6 @@ extern struct DeeVFSNodeType const DeeVFSProcSelfNode_Type; /*< '/proc/self' */
 
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_PROC_NODE_H */

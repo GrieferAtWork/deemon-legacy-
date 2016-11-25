@@ -24,7 +24,7 @@
 #include <deemon/__conf.inl>
 #include <deemon/vfs/vfs_core.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
@@ -35,6 +35,6 @@ extern struct DeeVFSNodeType const DeeVFSVirtualNULLFileNode_Type;
 extern struct DeeVFSNodeType const DeeVFSVirtualZEROFileNode_Type;
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_NULLFILE_H */

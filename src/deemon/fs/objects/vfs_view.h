@@ -22,7 +22,7 @@
 #define GUARD_DEEMON_FS_VFS_VIEW_H 1
 
 #include <deemon/__conf.inl>
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/optional/object_decl.h>
 #include <deemon/type.h>
 #include <deemon/fs/virtual_view.h>
@@ -43,6 +43,6 @@ extern DEE_A_RET_NOEXCEPT_REF DeeVFSViewObject *
 extern DeeTypeObject DeeVFSView_Type;
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_FS_VFS_VIEW_H */

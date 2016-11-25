@@ -25,7 +25,7 @@
 #endif
 
 #include <deemon/__conf.inl>
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/file.h>
 #include <deemon/file/file.fd.h>
 #include <deemon/file/file.vfs.h>
@@ -211,6 +211,6 @@ DeeFileTypeObject DeeFileVFS_Type = {
 };
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_FILE_VFS_C_INL */

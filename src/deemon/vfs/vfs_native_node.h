@@ -23,7 +23,7 @@
 
 #include <deemon/__conf.inl>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/sys/sysfd.h>
 #include <deemon/optional/atomic_mutex.h>
@@ -66,6 +66,6 @@ extern int DEE_CALL _deevfs_nativefile_vft_trunc(DEE_A_INOUT struct DeeVFSNative
 
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_NATIVE_NODE_H */

@@ -47,13 +47,6 @@ DEE_DATA_DECL(int) _DeeFlag_Verbose; // deemonrun.c
 DEE_DATA_DECL(int) DeeFlag_NoSignalHandlers; // signalhandler.c
 #endif /* DEE_CONFIG_RUNTIME_HAVE_SIGNAL_HANDLERS */
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-//////////////////////////////////////////////////////////////////////////
-// Enable the virutal file system
-// NOTE: Can be initialized with 'DEEMON_NOVFS' (s.a.: 'DEE_AUTOCONF_VARNAME_DEEMON_NOVFS')
-DEE_DATA_DECL(int) DeeFlag_NoVFS; // fs_api.c
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
-
 #if DEE_CONFIG_RUNTIME_HAVE_STACKLIMIT_CHECKS
 //////////////////////////////////////////////////////////////////////////
 // Set the maximum stack limit (aka. stack recursion) for deemon usercode

@@ -73,9 +73,9 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include <deemon/__xconf.inl>
 #include <deemon/compiler/xast.h>
 #include <deemon/compiler/sast.h>
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/vfs/vfs_core.h>
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 // */ (nano...)
 
@@ -213,9 +213,6 @@ void _DeeFlag_SetVerboseString(char const *value) {
 #if DEE_CONFIG_RUNTIME_HAVE_SIGNAL_HANDLERS
 extern void _DeeFlag_SetNoSignalHandlersString(char const *value);
 #endif /* DEE_CONFIG_RUNTIME_HAVE_SIGNAL_HANDLERS */
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-extern void _DeeFlag_SetNoVFSString(char const *value);
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #if DEE_XCONFIG_RUNTIME_HAVE_INIT_QUIT_RECURSION
 static /*atomic*/unsigned int _dee_initquit_recursion = 0;
@@ -318,11 +315,6 @@ DEE_A_RET_EXCEPT(-1) int Dee_InitializeEx(DEE_A_IN Dee_uint32_t flags) {
  // NOTE: No need for atomics in here because usercode hasn't been executed yet
  DEE_INIT_ENV(DEE_AUTOCONF_VARNAME_DEEMON_STACKLIMIT,
               _Dee_SetStackLimitString,Dee_StackLimit = DEE_XCONFIG_RUNTIME_DEFAULT_STACKLIMIT);
-#endif
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- // Enable/Disable the vfs based on the environment config
- DEE_INIT_ENV(DEE_AUTOCONF_VARNAME_DEEMON_NOVFS,
-              _DeeFlag_SetNoVFSString,DeeFlag_NoVFS = 0);
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_SIGNAL_HANDLERS
  // Initialize the no-signal-handler flag based on environment config
@@ -474,10 +466,10 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
  _DeeClassType_Finalize();
 #endif
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
  // Shutdown the virtual file system.
  DeeVFS_Shutdown();
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
  // Clear all structured type caches (pointer types, lvalue types, foreign_function types, ...)
  DeeStructuredType_Shutdown();

@@ -224,7 +224,7 @@ struct DeeFSApi {
 enum{s=sizeof(struct DeeFSApi)/sizeof(void *)};
 DEE_COMPILER_STRUCTURE_PACKED_END
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2 && ((\
+#if DEE_CONFIG_RUNTIME_HAVE_VFS && ((\
     DEE_FSAPIMODE_DEFAULT&DEE_FSAPIMODE_ENABLEVFS)!=0)
 #define _DeeDFS(x) &DeeVFS_##x
 #else
@@ -433,10 +433,10 @@ DEE_A_RET_WUNUSED Dee_fsapimode_t DeeFS_GetAPIMode(void) {
  DeeAtomicMutex_Acquire(&DeeFSApi_ActiveLock);
  if (DeeFSApi_Active._fa_utf8chdir != DeeFSApi_Active.fa_utf8chdir
      ) result |= DEE_FSAPIMODE_EXPANDVARS;
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
  if (DeeFSApi_Active.fa_utf8getcwd == &DeeVFS_Utf8GetCwd)
   result |= DEE_FSAPIMODE_ENABLEVFS;
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
  DeeAtomicMutex_Release(&DeeFSApi_ActiveLock);
  return result;
 }
@@ -608,14 +608,14 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_SetAPIMode(DEE_A_IN Dee_fsapimode_t mode) {
   return -1;
  }
  DeeAtomicMutex_Acquire(&DeeFSApi_ActiveLock);
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
  if ((mode&DEE_FSAPIMODE_ENABLEVFS)!=0) {
   // Link against the virtual file system
 #define MAP(name,api) DeeFSApi_Active.name = &DeeVFS_##api;
   MAP_PRIVATE_FSAPI_EXPORTS(MAP)
 #undef MAP
  } else
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
  {
   // Directly link against the native filesystem
 #define MAP(name,api) DeeFSApi_Active.name = &DeeNFS_##api;

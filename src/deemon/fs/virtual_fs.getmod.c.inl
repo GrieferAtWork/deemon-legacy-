@@ -23,7 +23,7 @@
 #define DEE_LIMITED_API 1
 
 #include <deemon/__conf.inl>
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/fs/virtual_fs.h>
 #include <deemon/fs/native_fs.h>
@@ -109,6 +109,6 @@ call_native: return DeeNFS_WideGetModObject(path,mode);
 }
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_GETMOD_C_INL */

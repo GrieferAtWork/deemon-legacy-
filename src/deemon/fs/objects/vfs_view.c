@@ -23,7 +23,7 @@
 #define DEE_LIMITED_API 1
 
 #include <deemon/__conf.inl>
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/bool.h>
 #include <deemon/error.h>
 #include <deemon/fs/objects/vfs_view.h>

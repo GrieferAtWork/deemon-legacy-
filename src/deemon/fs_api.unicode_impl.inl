@@ -437,11 +437,6 @@ DeeFS_F(PathJoinObject)(DEE_A_IN Dee_size_t pathc, DEE_A_IN_R(pathc) DeeObject c
    if DEE_UNLIKELY(DeeStringWriter_F(WriteMyStringWithLength)(
     &writer,(Dee_size_t)(path_end-path_begin),path_begin) != 0) goto err_elem;
   }
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-  else if (iter == pathv && IS_SEP(*DEE_STRING_STR(elem))) {
-   if DEE_UNLIKELY(DeeStringWriter_F(WriteChar)(&writer,DEE_CHAR_C(SEP)) != 0) goto err_elem;
-  }
-#endif
   Dee_DECREF(elem);
   ++iter;
  }

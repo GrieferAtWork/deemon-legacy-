@@ -586,7 +586,6 @@ ml64.exe /c /Cx /Fo $(IntermediateOutputPath)/ffi_win64.obj $(IntermediateOutput
     <None Include="..\src\deemon\file\file.win32_debug.h.inl" />
     <None Include="..\src\deemon\file\file.writer.inl" />
     <None Include="..\src\deemon\file\file_type.inl" />
-    <None Include="..\src\deemon\file\old\old_file.io.inl" />
     <None Include="..\src\deemon\float_impl.inl" />
     <None Include="..\src\deemon\foreign_function.callback_impl.inl" />
     <None Include="..\src\deemon\foreign_function.closure.inl" />

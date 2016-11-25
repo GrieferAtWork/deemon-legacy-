@@ -25,7 +25,7 @@
 #include <deemon/vfs/vfs_virtual_dir.h>
 #include <deemon/vfs/vfs_native_mount.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS2
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 // The root node of the entire virtual file system
@@ -39,6 +39,6 @@ extern struct DeeVFSNode _DeeVFSNative_Root;
 #define DeeVFS_Mount      DeeVFSNative_Root
 
 DEE_DECL_END
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_ROOT_H */

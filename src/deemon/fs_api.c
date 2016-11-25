@@ -55,9 +55,6 @@
 #include <deemon/sys/sysfs.h>
 #include <deemon/sys/sysfd.h>
 #include <deemon/unicode/char_traits.inl>
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-#include <deemon/virtual_fs.h.inl>
-#endif
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 #ifdef DEE_PLATFORM_WINDOWS
@@ -124,24 +121,6 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 DEE_DECL_BEGIN
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-int DeeFlag_NoVFS = 0;
-
-extern void _DeeFlag_SetNoVFSString(char const *value);
-void _DeeFlag_SetNoVFSString(char const *value) {
- int new_flag;
- if (!*value) new_flag = 0;
- else if (DeeString_ToNumber(int,value,&new_flag) != 0) {
-  DeeError_Print("[ignored] Invalid integer value in '$" DEE_AUTOCONF_VARNAME_DEEMON_NOVFS
-                 "' (defaulting to '0')\n",1);
-  new_flag = 0;
- } else new_flag = !!new_flag;
- DEE_LVERBOSE1("Setting: 'DeeFlag_NoVFS = %d;'\n",new_flag);
- DeeFlag_NoVFS = new_flag;
-}
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
-
-
 #ifdef DEE_PLATFORM_WINDOWS
 #define CMP_PATH_C(a,b) (DEE_CH_TO_UPPER(a)==DEE_CH_TO_UPPER(b))
 #else
@@ -175,9 +154,6 @@ extern void _Dee_SetStackLimitString(char const *value);
 #if DEE_CONFIG_RUNTIME_HAVE_SIGNAL_HANDLERS
 extern void _DeeFlag_SetNoSignalHandlersString(char const *value);
 #endif
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-extern void _DeeFlag_SetNoVFSString(char const *value);
-#endif
 #if DEE_CONFIG_RUNTIME_HAVE_SOCKET_API
 extern void _DeeSocket_SetMaxUDPPacketSizeString(char const *value);
 extern void _DeeSocket_SetDefaultMaxBacklogString(char const *value);
@@ -200,9 +176,6 @@ static void DeeFS_Utf8ReconfigureEnv(
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_SIGNAL_HANDLERS
  if (DEE_FS_UTF8_PLATCMP(name,DEE_AUTOCONF_VARNAME_DEEMON_NOSIGHANDLERS) == 0) _DeeFlag_SetNoSignalHandlersString(value); else
-#endif
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (DEE_FS_UTF8_PLATCMP(name,DEE_AUTOCONF_VARNAME_DEEMON_NOVFS) == 0) _DeeFlag_SetNoVFSString(value); else
 #endif
 #if DEE_CONFIG_RUNTIME_HAVE_SOCKET_API
  if (DEE_FS_UTF8_PLATCMP(name,DEE_AUTOCONF_VARNAME_DEEMON_UDPPACKETSIZE) == 0) _DeeSocket_SetMaxUDPPacketSizeString(value); else
@@ -776,22 +749,6 @@ DEE_A_RET_EXCEPT(-1) int _DeeFS_ProgressCallObject(double progress, void *closur
 DEE_A_RET_EXCEPT(-1) int _DeeFS_Utf8CopyWithProgress(
  DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst,
  DEE_A_IN DeeFS_ProcessFunc progress, void *closure) {
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (_DeeVFS_Utf8IsVirtualPath(src)) {
-  DeeObject *src_path; int result;
-  if DEE_UNLIKELY((src_path = DeeVFS_Utf8ReadReFsLink(src)) == NULL) return -1;
-  result = _DeeFS_Utf8CopyWithProgress(DeeUtf8String_STR(src_path),dst,progress,closure);
-  Dee_DECREF(src_path);
-  return result;
- }
- if (_DeeVFS_Utf8IsVirtualPath(dst)) {
-  DeeObject *dst_path; int result;
-  if DEE_UNLIKELY((dst_path = DeeVFS_Utf8ReadReFsLink(dst)) == NULL) return -1;
-  result = _DeeFS_Utf8CopyWithProgress(src,DeeUtf8String_STR(dst_path),progress,closure);
-  Dee_DECREF(dst_path);
-  return result;
- }
-#endif
 #ifdef DEE_PLATFORM_WINDOWS
  {
   struct _deefs_win32_copywithprogress_systemcallback_data data;
@@ -853,22 +810,6 @@ post_error:
 DEE_A_RET_EXCEPT(-1) int _DeeFS_WideCopyWithProgress(
  DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst,
  DEE_A_IN DeeFS_ProcessFunc progress, void *closure) {
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (_DeeVFS_WideIsVirtualPath(src)) {
-  DeeObject *src_path; int result;
-  if DEE_UNLIKELY((src_path = DeeVFS_WideReadReFsLink(src)) == NULL) return -1;
-  result = _DeeFS_WideCopyWithProgress(DeeWideString_STR(src_path),dst,progress,closure);
-  Dee_DECREF(src_path);
-  return result;
- }
- if (_DeeVFS_WideIsVirtualPath(dst)) {
-  DeeObject *dst_path; int result;
-  if DEE_UNLIKELY((dst_path = DeeVFS_WideReadReFsLink(dst)) == NULL) return -1;
-  result = _DeeFS_WideCopyWithProgress(src,DeeWideString_STR(dst_path),progress,closure);
-  Dee_DECREF(dst_path);
-  return result;
- }
-#endif
 #ifdef DEE_PLATFORM_WINDOWS
  {
   struct _deefs_win32_copywithprogress_systemcallback_data data;
