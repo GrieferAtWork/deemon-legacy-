@@ -45,8 +45,21 @@
 #define DEE_STRPRINTF        ""
 #endif
 
+#ifdef WIDE
+#define vld_startpath vld_wstartpath
+#else
+#define vld_startpath vld_8startpath
+#endif
+
 
 DEE_DECL_BEGIN
+
+static void DeeVFS_F(ErrorMaxLinkIndirectionReached)(DEE_CHAR const *path) {
+ DeeError_SetStringf(&DeeErrorType_ValueError,
+                     "Max level of link indirection reached: %" DEE_STRPRINTF "q",path);
+}
+
+
 
 
 DEE_A_RET_EXCEPT(-1) int DeeVFSNode_F(WriteFilename)(
@@ -114,7 +127,7 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_F(LLocateAt_impl)(
    if DEE_UNLIKELY((error = DeeVFSNode_IsLink(result)) < 0) return NULL;
    if (!error) break;
    if DEE_UNLIKELY(++state->vld_link_ind == DEE_VFS_MAX_LINK_INDIRECTION) {
-    _DeeVFSError_MaxLinkIndirectionReached(state->vld_startpath);
+    DeeVFS_F(ErrorMaxLinkIndirectionReached)(state->vld_startpath);
     return NULL;
    }
    newresult = DeeVFSNode_WalkLink_impl(state,result);
@@ -234,18 +247,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeVFS_F(GetCwd)(void) {
 }
 
 DEE_A_RET_EXCEPT(-1) int DeeVFS_F(Chdir)(DEE_A_IN_Z DEE_CHAR const *path) {
-#ifdef WIDE
- DeeObject *charpath;
-#endif
  struct DeeVFSNode *oldcwd,*newcwd; int error;
  if (DeeVFS_F(IsVirtualPath)(path)) { // Absolute virtual path
-#ifdef WIDE
-  if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL) return -1;
-  newcwd = DeeVFS_Locate(DeeString_STR(charpath));
-  Dee_DECREF(charpath);
-#else
-  newcwd = DeeVFS_Locate(path);
-#endif
+  newcwd = DeeVFS_F(Locate)(path);
   if DEE_UNLIKELY(!newcwd) return -1;
   error = DeeVFS_SetCwdNode(newcwd);
   Dee_DECREF(newcwd);
@@ -269,13 +273,7 @@ walk_relative:
  DeeVFSNode_INCREF(oldcwd);
  DeeAtomicMutex_Release(&DeeVFS_CWD_lock);
  // Walk a relative path within the virtual filesystem
-#ifdef WIDE
- if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL) return -1;
- newcwd = DeeVFS_LocateAt(oldcwd,DeeString_STR(charpath));
- Dee_DECREF(charpath);
-#else
- newcwd = DeeVFS_LocateAt(oldcwd,path);
-#endif
+ newcwd = DeeVFS_F(LocateAt)(oldcwd,path);
  if DEE_UNLIKELY(!newcwd) {err_oldcwd: DeeVFSNode_DECREF(oldcwd); return -1; }
  if (DeeVFSNode_IsNative(newcwd) && DeeVFSNativeNode_NFS_Chdir(newcwd) != 0) {
   DeeVFSNode_DECREF(newcwd);
@@ -306,9 +304,6 @@ walk_relative:
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeVFS_F(ForceNativePathObject)(DEE_A_IN_OBJECT(DEESTRINGOBJECT) const *path) {
-#ifdef WIDE
- DeeObject *charpath;
-#endif
  struct DeeVFSNode *cwd,*resultpath; DeeObject *result;
  if (DeeVFS_F(IsAbsoluteNativePathObject)(path)) {
   // Simple case: 'path' is an absolute, native filesystem path --> Just re-return it
@@ -318,14 +313,7 @@ retpath:
  if (DeeVFS_F(IsVirtualPathObject)(path)) {
   DEE_CHAR const *path_begin = DeeString_F(STR)(path);
   do ++path_begin; while (DEE_VFS_ISSEP(*path_begin));
-#ifdef WIDE
-  if DEE_UNLIKELY((charpath = DeeString_FromWideStringWithLength(
-   DeeString_F(SIZE)(path)-(path_begin-DeeString_F(STR)(path)),path_begin)) == NULL) return NULL;
-  resultpath = DeeVFS_LocateAt(DeeVFS_Root,DeeString_STR(charpath));
-  Dee_DECREF(charpath);
-#else
-  resultpath = DeeVFS_LocateAt(DeeVFS_Root,path_begin);
-#endif
+  resultpath = DeeVFS_F(LocateAt)(DeeVFS_Root,path_begin);
  } else {
   if ((cwd = DeeVFS_GetCwdNode()) == NULL) {
    // No virtual CWD node set --> 'path' must be relative within the native filesystem
@@ -339,15 +327,7 @@ retpath:
    goto retpath;
   }
   // Expand the given path based on what we just learned from 'cwd'
-#ifdef WIDE
-  if DEE_UNLIKELY((charpath = DeeString_FromWideStringWithLength(
-   DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL)
-  { DeeVFSNode_DECREF(cwd); return NULL; }
-  resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(charpath));
-  Dee_DECREF(charpath);
-#else
-  resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(path));
-#endif
+  resultpath = DeeVFS_F(LocateAt)(cwd,DeeString_F(STR)(path));
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!resultpath) return NULL;
@@ -370,9 +350,6 @@ retpath:
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeVFS_F(ForceNativePath)(DEE_A_IN_Z DEE_CHAR const *path) {
-#ifdef WIDE
- DeeObject *charpath;
-#endif
  struct DeeVFSNode *cwd,*resultpath; DeeObject *result;
  if (DeeVFS_F(IsAbsoluteNativePath)(path)) {
   // Simple case: 'path' is an absolute, native filesystem path --> Just re-return it
@@ -381,13 +358,7 @@ retpath:
  }
  if (DeeVFS_F(IsVirtualPath)(path)) {
   do ++path; while (DEE_VFS_ISSEP(*path));
-#ifdef WIDE
-  if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL) return NULL;
-  resultpath = DeeVFS_LocateAt(DeeVFS_Root,DeeString_STR(charpath));
-  Dee_DECREF(charpath);
-#else
-  resultpath = DeeVFS_LocateAt(DeeVFS_Root,path);
-#endif
+  resultpath = DeeVFS_F(LocateAt)(DeeVFS_Root,path);
  } else {
   if ((cwd = DeeVFS_GetCwdNode()) == NULL) {
    // No virtual CWD node set --> 'path' must be relative within the native filesystem
@@ -401,14 +372,7 @@ retpath:
    goto retpath;
   }
   // Expand the given path based on what we just learned from 'cwd'
-#ifdef WIDE
-  if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL)
-  { DeeVFSNode_DECREF(cwd); return NULL; }
-  resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(charpath));
-  Dee_DECREF(charpath);
-#else
-  resultpath = DeeVFS_LocateAt(cwd,path);
-#endif
+  resultpath = DeeVFS_F(LocateAt)(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!resultpath) return NULL;
@@ -431,23 +395,13 @@ retpath:
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeVFS_F(ForceNativePathWithCwd)(
  DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z DEE_CHAR const *path) {
  struct DeeVFSNode *resultpath; DeeObject *result;
-#ifdef WIDE
- DeeObject *charpath;
-#endif
  DEE_ASSERT(cwd);
  DEE_ASSERT(path);
  DEE_ASSERT(!DeeVFS_F(IsVirtualPath)(path));
  DEE_ASSERT(!DeeVFS_F(IsAbsoluteNativePath)(path));
  DEE_ASSERT(!DeeVFSNode_IsNative(cwd));
  // Expand the given path based on what we just learned from 'cwd'
-#ifdef WIDE
- if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL)
- { DeeVFSNode_DECREF(cwd); return NULL; }
- resultpath = DeeVFS_LocateAt(cwd,DeeString_STR(charpath));
- Dee_DECREF(charpath);
-#else
- resultpath = DeeVFS_LocateAt(cwd,path);
-#endif
+ resultpath = DeeVFS_F(LocateAt)(cwd,path);
  if DEE_UNLIKELY(!resultpath) return NULL;
  if DEE_UNLIKELY(!DeeVFSNode_IsNative(resultpath)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -466,20 +420,11 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeVFS_F(ForceNativePathWit
 }
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *
 DeeVFS_F(ForceNativeRootPath)(DEE_A_IN_Z DEE_CHAR const *path) {
-#ifdef WIDE
- DeeObject *charpath;
-#endif
  struct DeeVFSNode *resultpath; DeeObject *result;
  DEE_ASSERT(path);
  DEE_ASSERT(DeeVFS_F(IsVirtualPath)(path));
  do ++path; while (DEE_VFS_ISSEP(*path));
-#ifdef WIDE
- if DEE_UNLIKELY((charpath = DeeString_FromWideString(path)) == NULL) return NULL;
- resultpath = DeeVFS_LocateAt(DeeVFS_Root,DeeString_STR(charpath));
- Dee_DECREF(charpath);
-#else
- resultpath = DeeVFS_LocateAt(DeeVFS_Root,path);
-#endif
+ resultpath = DeeVFS_F(LocateAt)(DeeVFS_Root,path);
  if DEE_UNLIKELY(!resultpath) return NULL;
  if DEE_UNLIKELY(!DeeVFSNode_IsNative(resultpath)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -498,6 +443,85 @@ DeeVFS_F(ForceNativeRootPath)(DEE_A_IN_Z DEE_CHAR const *path) {
 }
 
 
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *
+DeeVFS_F(LLocate)(DEE_A_IN_Z DEE_CHAR const *path) {
+ struct DeeVFSLocateState state;
+ struct DeeVFSNode *result,*cwd;
+ state.vld_startpath = path;
+ state.vld_link_ind = 0;
+ if (DEE_VFS_ISSEP(*path)) { // Absolute path
+  do ++path; while (DEE_VFS_ISSEP(*path));
+  return DeeVFS_F(LLocateAt_impl)(&state,DeeVFS_Root,path);
+ }
+ if DEE_UNLIKELY((cwd = DeeVFS_GetCwdNode()) == NULL) return NULL;
+ result = DeeVFS_F(LLocateAt_impl)(&state,cwd,path);
+ DeeVFSNode_DECREF(cwd);
+ return result;
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *
+DeeVFS_F(Locate)(DEE_A_IN_Z DEE_CHAR const *path) {
+ struct DeeVFSLocateState state;
+ struct DeeVFSNode *result,*cwd;
+ state.vld_startpath = path;
+ state.vld_link_ind = 0;
+ if (DEE_VFS_ISSEP(*path)) { // Absolute path
+  do ++path; while (DEE_VFS_ISSEP(*path));
+  return DeeVFS_F(LocateAt_impl)(&state,DeeVFS_Root,path);
+ }
+ if DEE_UNLIKELY((cwd = DeeVFS_GetCwdNode()) == NULL) return NULL;
+ result = DeeVFS_F(LocateAt_impl)(&state,cwd,path);
+ DeeVFSNode_DECREF(cwd);
+ return result;
+}
+
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_F(LocateAt_impl)(
+ DEE_A_INOUT struct DeeVFSLocateState *state,
+ DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z DEE_CHAR const *path) {
+ struct DeeVFSNode *result,*newresult; int error;
+ if DEE_UNLIKELY((result = DeeVFS_F(LLocateAt_impl)(state,root,path)) == NULL) return NULL;
+ while (1) {
+  if DEE_UNLIKELY((error = DeeVFSNode_IsLink(result)) < 0) goto err_r;
+  if (!error) break;
+  if DEE_UNLIKELY(++state->vld_link_ind == DEE_VFS_MAX_LINK_INDIRECTION) {
+    DeeVFS_F(ErrorMaxLinkIndirectionReached)(state->vld_startpath);
+err_r:
+   DeeVFSNode_DECREF(result);
+   return NULL;
+  }
+  newresult = DeeVFSNode_WalkLink_impl(state,result);
+  DeeVFSNode_DECREF(result);
+  if DEE_UNLIKELY(!newresult) return NULL;
+  result = newresult;
+ }
+ return result;
+}
+
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_F(LLocateWithCWD)(
+ DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z DEE_CHAR const *path) {
+ struct DeeVFSLocateState state;
+ DEE_ASSERT(cwd);
+ state.vld_startpath = path;
+ state.vld_link_ind = 0;
+ if (DEE_VFS_ISSEP(*path)) { // Absolute path
+  do ++path; while (DEE_VFS_ISSEP(*path));
+  return DeeVFS_F(LLocateAt_impl)(&state,DeeVFS_Root,path);
+ }
+ return DeeVFS_F(LLocateAt_impl)(&state,cwd,path);
+}
+DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_F(LocateWithCWD)(
+ DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z DEE_CHAR const *path) {
+ struct DeeVFSLocateState state;
+ DEE_ASSERT(cwd);
+ state.vld_startpath = path;
+ state.vld_link_ind = 0;
+ if (DEE_VFS_ISSEP(*path)) { // Absolute path
+  do ++path; while (DEE_VFS_ISSEP(*path));
+  return DeeVFS_F(LocateAt_impl)(&state,DeeVFS_Root,path);
+ }
+ return DeeVFS_F(LocateAt_impl)(&state,cwd,path);
+}
+
+
 
 #undef DEESTRINGOBJECT
 #undef DEESTRINGWRITER
@@ -508,6 +532,7 @@ DeeVFS_F(ForceNativeRootPath)(DEE_A_IN_Z DEE_CHAR const *path) {
 #undef DeeNFS_F
 #undef DEE_CHAR
 #undef DEE_STRPRINTF
+#undef vld_startpath
 #ifdef WIDE
 #undef WIDE
 #endif

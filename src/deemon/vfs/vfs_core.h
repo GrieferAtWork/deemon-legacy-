@@ -286,29 +286,32 @@ extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
 #define DEE_VFS_MAX_LINK_INDIRECTION 256
 #endif /* !DEE_VFS_MAX_LINK_INDIRECTION */
 struct DeeVFSLocateState {
- char const  *vld_startpath; /*< [1..1] Original start path. */
- unsigned int vld_link_ind;  /*< Current level of link indirection. */
+union{
+ Dee_Utf8Char const *vld_8startpath; /*< [1..1] Original start path. */
+ Dee_WideChar const *vld_wstartpath; /*< [1..1] Original start path. */
+}
+#if !DEE_COMPILER_HAVE_UNNAMED_UNION
+#define vld_8startpath  _vld_startpath.vld_8startpath
+#define vld_wstartpath  _vld_startpath.vld_wstartpath
+ _vld_startpath
+#endif /* !DEE_COMPILER_HAVE_UNNAMED_UNION */
+;
+ unsigned int        vld_link_ind;   /*< Current level of link indirection. */
 };
 
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Utf8LLocateAt_impl(DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_Utf8Char const *path);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateAt_impl(DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Utf8LocateAt_impl(DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_Utf8Char const *path);
 extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateAt_impl(DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path);
+
+DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_Utf8LLocateAt(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_Utf8Char const *path) { struct DeeVFSLocateState state; state.vld_link_ind = 0,state.vld_8startpath = path; return DeeVFS_Utf8LLocateAt_impl(&state,root,path); }
+DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_WideLLocateAt(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path) { struct DeeVFSLocateState state; state.vld_link_ind = 0,state.vld_wstartpath = path; return DeeVFS_WideLLocateAt_impl(&state,root,path); }
+DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_Utf8LocateAt(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_Utf8Char const *path) { struct DeeVFSLocateState state; state.vld_link_ind = 0,state.vld_8startpath = path; return DeeVFS_Utf8LocateAt_impl(&state,root,path); }
+DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_WideLocateAt(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path) { struct DeeVFSLocateState state; state.vld_link_ind = 0,state.vld_wstartpath = path; return DeeVFS_WideLocateAt_impl(&state,root,path); }
 #define DeeVFS_LLocateAt_impl DeeVFS_Utf8LLocateAt_impl
 #define DeeVFS_LocateAt_impl  DeeVFS_Utf8LocateAt_impl
-
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_LLocateAt(
- DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z char const *path) {
- struct DeeVFSLocateState state;
- state.vld_link_ind = 0,state.vld_startpath = path;
- return DeeVFS_LLocateAt_impl(&state,root,path);
-}
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_LocateAt(
- DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z char const *path) {
- struct DeeVFSLocateState state;
- state.vld_link_ind = 0,state.vld_startpath = path;
- return DeeVFS_LocateAt_impl(&state,root,path);
-}
+#define DeeVFS_LLocateAt      DeeVFS_Utf8LLocateAt
+#define DeeVFS_LocateAt       DeeVFS_Utf8LocateAt
 
 #define DEE_VFS_SEP    '/'
 #define DEE_VFS_ALTSEP '\\'
@@ -338,10 +341,18 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_LocateAt(
 // -> Returns NULL if the node could not be found
 // NOTE: 'DeeVFS_LLocate' will return a link if the last portion of the given path
 //       is a symbolic link, while 'DeeVFS_Locate' still follows that link.
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LLocate(DEE_A_IN_Z char const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Locate(DEE_A_IN_Z char const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z char const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z char const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Utf8LLocate(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocate(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Utf8Locate(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocate(DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Utf8LLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Utf8LocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
+#define DeeVFS_LLocate        DeeVFS_Utf8LLocate
+#define DeeVFS_Locate         DeeVFS_Utf8Locate
+#define DeeVFS_LLocateWithCWD DeeVFS_Utf8LLocateWithCWD
+#define DeeVFS_LocateWithCWD  DeeVFS_Utf8LocateWithCWD
 
 //////////////////////////////////////////////////////////////////////////
 // Locates a native file/directory, and returns a virtual node associated with it.
@@ -368,31 +379,18 @@ extern void DeeVFS_DelCwdNode(void);
 //    the node associated with the native CWD if no virtual has been set.
 extern DEE_A_RET_NOEXCEPT_REF struct DeeVFSNode *DeeVFS_GetActiveCwdNode(void);
 
-#define DeeVFS_Utf8LLocate        DeeVFS_LLocate
-#define DeeVFS_Utf8Locate         DeeVFS_Locate
-#define DeeVFS_Utf8LLocateWithCWD DeeVFS_LLocateWithCWD
-#define DeeVFS_Utf8LocateWithCWD  DeeVFS_LocateWithCWD
-#define DeeVFS_Utf8LLocateAt      DeeVFS_LLocateAt
-#define DeeVFS_Utf8LocateAt       DeeVFS_LocateAt
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocate(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocate(DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateWithCWD(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateWithCWDObject(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateWithCWDObject(DEE_A_IN struct DeeVFSNode *cwd, DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateAt(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateAt(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateAtObject(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateAtObject(DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-
 #define DeeVFS_Utf8LLocateObject(path)            DeeVFS_Utf8LLocate(DeeUtf8String_STR(path))
+#define DeeVFS_WideLLocateObject(path)            DeeVFS_WideLLocate(DeeWideString_STR(path))
 #define DeeVFS_Utf8LocateObject(path)             DeeVFS_Utf8Locate(DeeUtf8String_STR(path))
+#define DeeVFS_WideLocateObject(path)             DeeVFS_WideLocate(DeeWideString_STR(path))
 #define DeeVFS_Utf8LLocateWithCWDObject(cwd,path) DeeVFS_Utf8LLocateWithCWD(cwd,DeeUtf8String_STR(path))
+#define DeeVFS_WideLLocateWithCWDObject(cwd,path) DeeVFS_WideLLocateWithCWD(cwd,DeeWideString_STR(path))
 #define DeeVFS_Utf8LocateWithCWDObject(cwd,path)  DeeVFS_Utf8LocateWithCWD(cwd,DeeUtf8String_STR(path))
+#define DeeVFS_WideLocateWithCWDObject(cwd,path)  DeeVFS_WideLocateWithCWD(cwd,DeeWideString_STR(path))
 #define DeeVFS_Utf8LLocateAtObject(root,path)     DeeVFS_Utf8LLocateAt(root,DeeUtf8String_STR(path))
+#define DeeVFS_WideLLocateAtObject(root,path)     DeeVFS_WideLLocateAt(root,DeeWideString_STR(path))
 #define DeeVFS_Utf8LocateAtObject(root,path)      DeeVFS_Utf8LocateAt(root,DeeUtf8String_STR(path))
+#define DeeVFS_WideLocateAtObject(root,path)      DeeVFS_WideLocateAt(root,DeeWideString_STR(path))
 
 
 //////////////////////////////////////////////////////////////////////////
