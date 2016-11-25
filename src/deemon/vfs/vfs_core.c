@@ -655,12 +655,13 @@ DEE_DECL_END
 
 #include "vfs_native_mount.c.inl"
 #include "vfs_native_node.c.inl"
+#include "vfs_proc_node.c.inl"
 #include "vfs_root.c.inl"
 #include "vfs_virtual_dir.c.inl"
 #include "vfs_virtual_file.c.inl"
 #include "vfs_virtual_nullfile.c.inl"
+#include "vfs_virtual_randomfile.c.inl"
 #include "vfs_virtual_stdfile.c.inl"
-#include "vfs_proc_node.c.inl"
 #endif
 
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */

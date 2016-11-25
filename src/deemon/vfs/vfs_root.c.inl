@@ -29,6 +29,7 @@
 #include <deemon/vfs/vfs_root.h>
 #include <deemon/vfs/vfs_virtual_stdfile.h>
 #include <deemon/vfs/vfs_virtual_nullfile.h>
+#include <deemon/vfs/vfs_virtual_randomfile.h>
 
 #if DEE_CONFIG_RUNTIME_HAVE_VFS2
 DEE_DECL_BEGIN
@@ -37,16 +38,20 @@ extern struct DeeVFSVirtualDirNode _DeeVFS_Dev;
 static struct DeeVFSVirtualStdFileNode _deevfs_dev_stdin  = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_DeeVFS_Dev,STD_INPUT_HANDLE);
 static struct DeeVFSVirtualStdFileNode _deevfs_dev_stdout = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_DeeVFS_Dev,STD_OUTPUT_HANDLE);
 static struct DeeVFSVirtualStdFileNode _deevfs_dev_stderr = DeeVFSVirtualStdFileNode_INIT((struct DeeVFSNode *)&_DeeVFS_Dev,STD_ERROR_HANDLE);
+static struct DeeVFSNode _deevfs_dev_random = DeeVFSNode_INIT(&DeeVFSVirtualRandomFileNode_Type,(struct DeeVFSNode *)&_DeeVFS_Dev);
+static struct DeeVFSNode _deevfs_dev_urandom = DeeVFSNode_INIT(&DeeVFSVirtualURandomFileNode_Type,(struct DeeVFSNode *)&_DeeVFS_Dev);
 static struct DeeVFSNode _deevfs_dev_null = DeeVFSNode_INIT(&DeeVFSVirtualNULLFileNode_Type,(struct DeeVFSNode *)&_DeeVFS_Dev);
 static struct DeeVFSNode _deevfs_dev_zero = DeeVFSNode_INIT(&DeeVFSVirtualZEROFileNode_Type,(struct DeeVFSNode *)&_DeeVFS_Dev);
 
 
 static struct DeeVFSVirtualDirEntry _deevfs_dev_nodes[] = {
- {"null",  (struct DeeVFSNode *)&_deevfs_dev_null},
- {"stderr",(struct DeeVFSNode *)&_deevfs_dev_stderr},
- {"stdin", (struct DeeVFSNode *)&_deevfs_dev_stdin},
- {"stdout",(struct DeeVFSNode *)&_deevfs_dev_stdout},
- {"zero",  (struct DeeVFSNode *)&_deevfs_dev_zero},
+ {"null",   (struct DeeVFSNode *)&_deevfs_dev_null},
+ {"random", (struct DeeVFSNode *)&_deevfs_dev_random},
+ {"stderr", (struct DeeVFSNode *)&_deevfs_dev_stderr},
+ {"stdin",  (struct DeeVFSNode *)&_deevfs_dev_stdin},
+ {"stdout", (struct DeeVFSNode *)&_deevfs_dev_stdout},
+ {"urandom",(struct DeeVFSNode *)&_deevfs_dev_urandom},
+ {"zero",   (struct DeeVFSNode *)&_deevfs_dev_zero},
  {NULL,NULL},
 };
 struct DeeVFSVirtualDirNode _DeeVFS_Dev =

@@ -78,7 +78,7 @@ DEE_A_RET_EXCEPT(-1) int DeeRandom_SystemURandom(
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if DEE_UNLIKELY(!CryptAcquireContext(&hCryptProv,NULL,NULL,PROV_RSA_FULL,CRYPT_VERIFYCONTEXT)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "CryptAcquireContext() : %K",
+                      "CryptAcquireContext(...) : %K",
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
   return -1;
  }
