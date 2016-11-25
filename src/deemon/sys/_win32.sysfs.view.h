@@ -76,10 +76,11 @@ do{\
  _wv_patternend[0] = '\\';\
  _wv_patternend[1] = '*';\
  _wv_patternend[2] = 0;\
- DEE_LVERBOSE_SYS("FindFirstFileW(%lq)\n",_wv_pattern);\
+ DEE_LVERBOSE_SYS("FindFirstFileW(%lq)...",_wv_pattern);\
  (self)->w32_hview = FindFirstFileW(_wv_pattern,&(self)->w32_viewdata);\
  if ((self)->w32_hview == INVALID_HANDLE_VALUE) {\
   _wv_error = GetLastError();\
+  DEE_LVERBOSE_SYS(" FAILED\n");\
   if (_wv_error == ERROR_FILE_NOT_FOUND) {\
    free_nn(_wv_pattern);\
   } else {\
@@ -91,6 +92,7 @@ do{\
   }\
  } else {\
   free_nn(_wv_pattern);\
+  DEE_LVERBOSE_SYS(" %lq\n",(self)->w32_viewdata.cFileName);\
   /* Skip '.' and '..' (always located at the start of views) */\
   while (DeeWin32SysFSWideViewNL_ISIGNOREDENTRY(self)) {\
    DEE_LVERBOSE_SYS("FindNextFileW(%p)...",(self)->w32_hview);\
@@ -123,7 +125,7 @@ do{\
 
 #define DeeWin32SysFSWideViewNL_Advance(self,...) \
 do{\
- DEE_LVERBOSE_SYS("FindNextFileW(%p)...\n",(self)->w32_hview);\
+ DEE_LVERBOSE_SYS("FindNextFileW(%p)...",(self)->w32_hview);\
  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
   DWORD _wv_error = GetLastError();\
   DEE_LVERBOSE_SYSR(" FAILED\n");\
@@ -164,7 +166,7 @@ do{DeeWin32SysFSWideViewNL_InitObject(self,path,__VA_ARGS__);DeeAtomicMutex_Init
 
 #define DeeWin32SysFSWideView_AdvanceAndReleaseOnError(self,...) \
 do{\
- DEE_LVERBOSE_SYS("FindNextFileW(%p)...\n",(self)->w32_hview);\
+ DEE_LVERBOSE_SYS("FindNextFileW(%p)...",(self)->w32_hview);\
  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
   DWORD _wv_error = GetLastError();\
   DEE_LVERBOSE_SYSR(" FAILED\n");\

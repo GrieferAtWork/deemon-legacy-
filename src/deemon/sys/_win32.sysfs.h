@@ -49,6 +49,34 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 DEE_DECL_BEGIN
 
+#define DeeWin32_GetEnvironmentVariableA(lpName,lpBuffer,nSize) \
+ (DEE_LVERBOSE_SYS("GetEnvironmentVariableA(%q,%p,%lu)\n",lpName,lpBuffer,(DWORD)(nSize)),\
+  GetEnvironmentVariableA(lpName,lpBuffer,nSize))
+#define DeeWin32_GetEnvironmentVariableW(lpName,lpBuffer,nSize) \
+ (DEE_LVERBOSE_SYS("GetEnvironmentVariableW(%lq,%p,%lu)\n",lpName,lpBuffer,(DWORD)(nSize)),\
+  GetEnvironmentVariableW(lpName,lpBuffer,nSize))
+#define DeeWin32_GetCurrentDirectoryA(nBufferLength,lpBuffer) \
+ (DEE_LVERBOSE_SYS("GetCurrentDirectoryA(%lu,%p)\n",(DWORD)(nBufferLength),lpBuffer),\
+  GetCurrentDirectoryA(nBufferLength,lpBuffer))
+#define DeeWin32_GetCurrentDirectoryW(nBufferLength,lpBuffer) \
+ (DEE_LVERBOSE_SYS("GetCurrentDirectoryW(%lu,%p)\n",(DWORD)(nBufferLength),lpBuffer),\
+  GetCurrentDirectoryW(nBufferLength,lpBuffer))
+#define DeeWin32_SetEnvironmentVariableA(lpName,lpValue) \
+ (DEE_LVERBOSE_SYS("SetEnvironmentVariableA(%q,%q)\n",lpName,lpValue),\
+  SetEnvironmentVariableA(lpName,lpValue))
+#define DeeWin32_SetEnvironmentVariableW(lpName,lpValue) \
+ (DEE_LVERBOSE_SYS("SetEnvironmentVariableW(%lq,%lq)\n",lpName,lpValue),\
+  SetEnvironmentVariableW(lpName,lpValue))
+
+#define DeeWin32_SetCurrentDirectoryA(lpPathName) \
+ (DEE_LVERBOSE_SYS("SetCurrentDirectoryA(%q)\n",lpPathName),\
+  SetCurrentDirectoryA(lpPathName))
+#define DeeWin32_SetCurrentDirectoryW(lpPathName) \
+ (DEE_LVERBOSE_SYS("SetCurrentDirectoryW(%lq)\n",lpPathName),\
+  SetCurrentDirectoryW(lpPathName))
+
+
+
 // TODO: The \\?\ prefix only works for absolute paths!
 //    >> When prepending it, we have to ensure that the path is absolute.
 //       And when it isn't, we need to make it be (using the real cwd)!
@@ -78,7 +106,7 @@ do{\
  if DEE_UNLIKELY((*(result) = DeeUtf8String_NewSized((\
   _wc_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD))) == NULL) {__VA_ARGS__;}\
  while (1) {\
-  _wc_temp = GetCurrentDirectoryA(_wc_bufsize+1,DeeUtf8String_STR(*(result)));\
+  _wc_temp = DeeWin32_GetCurrentDirectoryA(_wc_bufsize+1,DeeUtf8String_STR(*(result)));\
   if DEE_UNLIKELY(!_wc_temp) {\
    DeeError_SetStringf(&DeeErrorType_SystemError,"GetCurrentDirectoryA() : %K",\
                        DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
@@ -95,7 +123,7 @@ do{\
  if DEE_UNLIKELY((*(result) = DeeWideString_NewSized((\
   _wc_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD))) == NULL) {__VA_ARGS__;}\
  while (1) {\
-  _wc_temp = GetCurrentDirectoryW(_wc_bufsize+1,DeeWideString_STR(*(result)));\
+  _wc_temp = DeeWin32_GetCurrentDirectoryW(_wc_bufsize+1,DeeWideString_STR(*(result)));\
   if DEE_UNLIKELY(!_wc_temp) {\
    DeeError_SetStringf(&DeeErrorType_SystemError,"GetCurrentDirectoryW() : %K",\
                        DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
@@ -111,7 +139,7 @@ do{\
 
 #define DeeWin32SysFS_Utf8Chdir(path,...)\
 do{\
- if DEE_UNLIKELY(!SetCurrentDirectoryA(path)) {\
+ if DEE_UNLIKELY(!DeeWin32_SetCurrentDirectoryA(path)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "SetCurrentDirectoryA(%q) : %K",path,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
@@ -120,7 +148,7 @@ do{\
 }while(0)
 #define DeeWin32SysFS_WideChdir(path,...)\
 do{\
- if DEE_UNLIKELY(!SetCurrentDirectoryW(path)) {\
+ if DEE_UNLIKELY(!DeeWin32_SetCurrentDirectoryW(path)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "SetCurrentDirectoryW(%lq) : %K",path,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
@@ -134,7 +162,7 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *) DeeWin32
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeWideStringObject) *) DeeWin32Sys_WideTryGetEnv(DEE_A_IN_Z Dee_WideChar const *envname);
 #define DeeWin32Sys_Utf8HasEnv(envname,result,...) \
 do{\
- if (GetEnvironmentVariableA(envname,NULL,0)==0) {\
+ if (DeeWin32_GetEnvironmentVariableA(envname,NULL,0)==0) {\
   DWORD error = GetLastError();\
   if (error == ERROR_ENVVAR_NOT_FOUND) *(result) = 0;\
   else {\
@@ -147,7 +175,7 @@ do{\
 }while(0)
 #define DeeWin32Sys_WideHasEnv(envname,result,...) \
 do{\
- if (GetEnvironmentVariableW(envname,NULL,0)==0) {\
+ if (DeeWin32_GetEnvironmentVariableW(envname,NULL,0)==0) {\
   DWORD error = GetLastError();\
   if (error == ERROR_ENVVAR_NOT_FOUND) *(result) = 0;\
   else {\
@@ -160,7 +188,7 @@ do{\
 }while(0)
 #define DeeWin32Sys_Utf8DelEnv(envname,...) \
 do{\
- if (!SetEnvironmentVariableA(envname,NULL)) {\
+ if (!DeeWin32_SetEnvironmentVariableA(envname,NULL)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "SetEnvironmentVariableA(%q,NULL) : %K",envname,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
@@ -169,16 +197,16 @@ do{\
 }while(0)
 #define DeeWin32Sys_WideDelEnv(envname,...) \
 do{\
- if (!SetEnvironmentVariableW(envname,NULL)) {\
+ if (!DeeWin32_SetEnvironmentVariableW(envname,NULL)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
-                      "GetEnvironmentVariableW(%lq,NULL,0) : %K",envname,\
+                      "SetEnvironmentVariableW(%lq,NULL,0) : %K",envname,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
   {__VA_ARGS__;}\
  }\
 }while(0)
 #define DeeWin32Sys_Utf8SetEnv(envname,newvalue,...) \
 do{\
- if (!SetEnvironmentVariableA(envname,newvalue)) {\
+ if (!DeeWin32_SetEnvironmentVariableA(envname,newvalue)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "SetEnvironmentVariableA(%q,%q) : %K",envname,newvalue,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
@@ -187,7 +215,7 @@ do{\
 }while(0)
 #define DeeWin32Sys_WideSetEnv(envname,newvalue,...) \
 do{\
- if (!SetEnvironmentVariableW(envname,newvalue)) {\
+ if (!DeeWin32_SetEnvironmentVariableW(envname,newvalue)) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "GetEnvironmentVariableW(%lq,%lq,0) : %K",envname,newvalue,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\

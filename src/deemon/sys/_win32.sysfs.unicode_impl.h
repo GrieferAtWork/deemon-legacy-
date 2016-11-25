@@ -50,8 +50,8 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
 DeeWin32Sys_F(GetEnv)(DEE_A_IN_Z DEE_CHAR const *envname) {
  DWORD error; DeeObject *result;
  if DEE_UNLIKELY((result = DeeString_F(NewSized)(DEE_XCONFIG_FSBUFSIZE_WIN32GETENV)) == NULL) return NULL;
- error = WIN32_F(GetEnvironmentVariable)(envname,DeeString_F(STR)(result),
-                                         DEE_XCONFIG_FSBUFSIZE_WIN32GETENV+1);
+ error = WIN32_F(DeeWin32_GetEnvironmentVariable)(envname,DeeString_F(STR)(result),
+                                                  DEE_XCONFIG_FSBUFSIZE_WIN32GETENV+1);
  if DEE_UNLIKELY(error == 0) {
 not_found: error = DeeSystemError_Win32Consume();
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -64,7 +64,7 @@ not_found: error = DeeSystemError_Win32Consume();
 again:
   if DEE_UNLIKELY(DeeString_F(Resize)(&result,error-1) != 0)
   {err_r: Dee_DECREF(result); return NULL; }
-  error = WIN32_F(GetEnvironmentVariable)(envname,DeeString_F(STR)(result),error);
+  error = WIN32_F(DeeWin32_GetEnvironmentVariable)(envname,DeeString_F(STR)(result),error);
   if DEE_UNLIKELY(error == 0) goto not_found;
   // ** this could happen, if the variable changed between the 2 calls
   if DEE_UNLIKELY(error > DeeString_F(SIZE)(result)) goto again;
@@ -77,12 +77,12 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DEESTRINGOBJECT) *)
 DeeWin32Sys_F(TryGetEnv)(DEE_A_IN_Z DEE_CHAR const *envname) {
  DWORD error; DeeObject *result;
  if DEE_UNLIKELY((result = DeeString_F(NewSized)(DEE_XCONFIG_FSBUFSIZE_WIN32GETENV)) == NULL) {err_h: DeeError_HandledOne(); return NULL; }
- error = WIN32_F(GetEnvironmentVariable)(envname,DeeString_F(STR)(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETENV+1);
+ error = WIN32_F(DeeWin32_GetEnvironmentVariable)(envname,DeeString_F(STR)(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETENV+1);
  if (error == 0) {not_found: SetLastError(0); Dee_DECREF(result); return NULL; }
  if DEE_UNLIKELY(error > DEE_XCONFIG_FSBUFSIZE_WIN32GETENV) {
 again:
   if DEE_UNLIKELY(DeeString_F(Resize)(&result,error-1) != 0) {err_r: Dee_DECREF(result); goto err_h; }
-  error = WIN32_F(GetEnvironmentVariable)(envname,DeeString_F(STR)(result),error);
+  error = WIN32_F(DeeWin32_GetEnvironmentVariable)(envname,DeeString_F(STR)(result),error);
   if (error == 0) goto not_found;
   // ** this could happen, if the variable changed between the 2 calls
   if (error > DeeString_F(SIZE)(result)) goto again;
@@ -119,6 +119,7 @@ DeeWin32Sys_F(GetTokenUserHome)(DEE_A_IN HANDLE hToken) {
                       "(...) : Not implemented");
   return NULL;
  }
+ DEE_LVERBOSE_SYS(DEE_PP_STR(WIN32_F(GetUserProfileDirectory)) "(%p,NULL,%p)\n",hToken,&req_size);
  if DEE_UNLIKELY(!(*WIN32_F(p_GetUserProfileDirectory))(hToken,NULL,&req_size)) {
   error = DeeSystemError_Win32Consume();
   if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
@@ -130,6 +131,7 @@ err_api:
   }
  }
  if DEE_UNLIKELY((result = DeeString_F(NewSized)(req_size-1)) == NULL) return NULL;
+ DEE_LVERBOSE_SYS(DEE_PP_STR(WIN32_F(GetUserProfileDirectory)) "(%p,%p,%p)\n",hToken,DeeString_F(STR)(result),&req_size);
  if DEE_UNLIKELY(!(*WIN32_F(p_GetUserProfileDirectory))
                  (hToken,DeeString_F(STR)(result),&req_size)) {
   Dee_DECREF(result);
