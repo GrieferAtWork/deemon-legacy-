@@ -176,37 +176,6 @@ win_home_api:
  return DeeWin32Sys_F(GetProcessUserHome)(GetCurrentProcess());
 }
 
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *) DeeWin32Sys_F(GetTmp)(void) {
- DeeObject *result; DWORD temp; DWORD error;
- if DEE_UNLIKELY((result = DeeString_F(NewSized)(DEE_XCONFIG_FSBUFSIZE_WIN32GETTMP)) == NULL) return NULL;
- temp = WIN32_F(GetTempPath)(DEE_XCONFIG_FSBUFSIZE_WIN32GETTMP+1,DeeString_F(STR)(result));
- if DEE_UNLIKELY(!temp) {
-err: error = DeeSystemError_Win32Consume();
-  Dee_DECREF(result);
-  if DEE_UNLIKELY(!error) DEERETURN_EMPTYSTRING;
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      DEE_PP_STR(WIN32_F(GetTempPath)) "(%lu,...) : %K",
-                      (DWORD)(DeeString_F(SIZE)(result)+1),
-                      DeeSystemError_Win32ToString(error));
-  return NULL;
- }
- if DEE_UNLIKELY(temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETTMP) {
-again:
-  if DEE_UNLIKELY(DeeString_F(Resize)(&result,temp) != 0) {
-err_r: Dee_DECREF(result); return NULL;
-  }
-  temp = WIN32_F(GetTempPath)(temp+1,DeeString_F(STR)(result));
-  if DEE_UNLIKELY(!temp) goto err;
-  if DEE_UNLIKELY(temp > DeeString_F(SIZE)(result)) goto again;
-  if (temp < DeeString_F(SIZE)(result)) {
-   if DEE_UNLIKELY(DeeString_F(Resize)(&result,temp) != 0) goto err_r;
-  }
- } else {
-  if DEE_UNLIKELY(DeeString_F(Resize)(&result,temp) != 0) goto err_r;
- }
- return result;
-}
-
 DEE_COMPILER_PREFAST_WARNING_PUSH(6387)
 DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeWin32Sys_F(GetDllDirectory)(void) {
 #ifdef WIDE

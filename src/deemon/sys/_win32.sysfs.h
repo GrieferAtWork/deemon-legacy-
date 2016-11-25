@@ -206,11 +206,44 @@ do{\
 #define DeeWin32SysFS_Utf8SetEnv    DeeWin32Sys_Utf8SetEnv
 #define DeeWin32SysFS_WideSetEnv    DeeWin32Sys_WideSetEnv
 
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeWin32Sys_Utf8GetTmp(void);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeWin32Sys_WideGetTmp(void);
+#define DeeWin32Sys_Utf8GetTmp(result,...) \
+do{\
+ DWORD _wc_temp,_wc_bufsize;\
+ if DEE_UNLIKELY((*(result) = DeeUtf8String_NewSized((\
+  _wc_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32GETTMP))) == NULL) {__VA_ARGS__;}\
+ while (1) {\
+  _wc_temp = GetTempPathA(_wc_bufsize+1,DeeUtf8String_STR(*(result)));\
+  if DEE_UNLIKELY(!_wc_temp) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"GetTempPathA() : %K",\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   Dee_DECREF(*(result));\
+   {__VA_ARGS__;}\
+  }\
+  if DEE_UNLIKELY(DeeUtf8String_Resize(result,_wc_temp) != 0) { Dee_DECREF(*(result)); {__VA_ARGS__;}}\
+  if (_wc_temp <= _wc_bufsize) break;\
+ }\
+}while(0)
+#define DeeWin32Sys_WideGetTmp(result,...) \
+do{\
+ DWORD _wc_temp,_wc_bufsize;\
+ if DEE_UNLIKELY((*(result) = DeeWideString_NewSized((\
+  _wc_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32GETTMP))) == NULL) {__VA_ARGS__;}\
+ while (1) {\
+  _wc_temp = GetTempPathW(_wc_bufsize+1,DeeWideString_STR(*(result)));\
+  if DEE_UNLIKELY(!_wc_temp) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"GetTempPathW() : %K",\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   Dee_DECREF(*(result));\
+   {__VA_ARGS__;}\
+  }\
+  if DEE_UNLIKELY(DeeWideString_Resize(result,_wc_temp) != 0) { Dee_DECREF(*(result)); {__VA_ARGS__;}}\
+  if (_wc_temp <= _wc_bufsize) break;\
+ }\
+}while(0)
+
+
 #define DeeWin32SysFS_Utf8GetTmp DeeWin32Sys_Utf8GetTmp
 #define DeeWin32SysFS_WideGetTmp DeeWin32Sys_WideGetTmp
-
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeWin32Sys_Utf8GetDllDirectory(void);
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeWin32Sys_WideGetDllDirectory(void);
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeWin32Sys_Utf8GetSystemDirectory(void);

@@ -71,8 +71,8 @@
 // >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8GetUserHomeObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
 // >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideGetUserHomeObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8GetTmp(void);
-// >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideGetTmp(void);
+// >> [[optional]] void DeeSysFS_Utf8GetTmp(DEE_A_OUT_OBJECT(DeeUtf8StringObject) **result, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideGetTmp(DEE_A_OUT_OBJECT(DeeWideStringObject) **result, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
 // >> [[optional]] void DeeSysFS_Utf8GetTimes(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideGetTimes(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT_OPT Dee_timetick_t *atime, DEE_A_OUT_OPT Dee_timetick_t *ctime, DEE_A_OUT_OPT Dee_timetick_t *mtime, CODE on_error);
@@ -180,6 +180,8 @@
 # include <deemon/sys/_win32.sysfs.h>
 #elif defined(DEE_PLATFORM_UNIX)
 # include <deemon/sys/_unix.sysfs.h>
+#elif 1
+// Stub: Everything is optional...
 #elif !defined(__DEEMON__)
 # error "No Filesystem implementation for this platform"
 #endif

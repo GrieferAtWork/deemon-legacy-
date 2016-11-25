@@ -390,7 +390,6 @@
     <ClInclude Include="..\src\deemon\sys\_nothread.systls.h" />
     <ClInclude Include="..\src\deemon\sys\_pthread.systls.h" />
     <ClInclude Include="..\src\deemon\sys\_stub.sysdynlib.h" />
-    <ClInclude Include="..\src\deemon\sys\_stub.sysfd.h" />
     <ClInclude Include="..\src\deemon\sys\_stub.systls.h" />
     <ClInclude Include="..\src\deemon\sys\_unix.sysdynlib.h" />
     <ClInclude Include="..\src\deemon\sys\_unix.sysfd.h" />

@@ -412,6 +412,24 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE_UNLINK
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_UNISTD_H \
+ ||(DEE_ENVIRONMENT_HAVE_INCLUDE_IO_H && defined(_MSC_VER))
+# define DEE_HAVE_UNLINK 1
+#else
+# define DEE_HAVE_UNLINK 0
+#endif
+#endif
+
+#ifndef DEE_HAVE_RMDIR
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_UNISTD_H \
+ ||(DEE_ENVIRONMENT_HAVE_INCLUDE_IO_H && defined(_MSC_VER))
+# define DEE_HAVE_RMDIR 1
+#else
+# define DEE_HAVE_RMDIR 0
+#endif
+#endif
+
 #ifndef DEE_HAVE_RENAME
 #if (DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H) \
  || (defined(DEE_PLATFORM_UNIX))
@@ -507,6 +525,5 @@
 # define DEE_HAVE_PIPE 0
 #endif
 #endif
-
 
 #endif /* !GUARD_DEEMON_POSIX_FEATURES_INL */

@@ -367,24 +367,22 @@ DeeUnixSys_Utf8GetUserHome(DEE_A_IN_Z Dee_Utf8Char const *username) {
 #endif
 
 
-#define DeeUnixSys_Utf8GetTmp DeeUnixSys_Utf8GetTmp
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeUnixSys_Utf8GetTmp(void) {
 #ifdef P_tmpdir
- // NOTE: According to this:
- // http://www.gnu.org/software/libc/manual/html_node/Temporary-Files.html#index-P_005ftmpdir-1608
- // 'P_tmpdir' is a 'char const *', meaning we can't 'sizeof()' its length
- // (And while we probably still could, lets better not count on that...)
- return DeeUtf8String_New(P_tmpdir);
+// NOTE: According to this:
+// http://www.gnu.org/software/libc/manual/html_node/Temporary-Files.html#index-P_005ftmpdir-1608
+// 'P_tmpdir' is a 'char const *', meaning we can't 'sizeof()' its length
+// (And while we probably still could, lets better not count on that...)
+#define DeeUnixSys_Utf8GetTmp(result,...) \
+do{if DEE_UNLIKELY((*(result) = DeeUtf8String_New(P_tmpdir)) == NULL){__VA_ARGS__;}}while(0)
 #else
- DEERETURN_STATIC_STRING_EX(4,{'/','t','m','p'});
+#define DeeUnixSys_Utf8GetTmp(result,...) \
+do{DeeString_NEW_STATIC_EX(_tmp_path,4,{'/','t','m','p'});\
+   Dee_INCREF(*(result) = (DeeObject *)&_tmp_path);}while(0)
 #endif
-}
 
 #ifdef _wP_tmpdir
-#define DeeUnixSys_WideGetTmp DeeUnixSys_WideGetTmp
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeUnixSys_WideGetTmp(void) {
- return DeeWideString_New(_wP_tmpdir);
-}
+#define DeeUnixSys_WideGetTmp(result,...) \
+do{if DEE_UNLIKELY((*(result) = DeeWideString_New(_wP_tmpdir)) == NULL){__VA_ARGS__;}}while(0)
 #endif
 
 #ifdef DeeUnixSys_Utf8GetTmp
@@ -701,7 +699,55 @@ do{\
 #define DeeUnixSysFS_Utf8Exists DeeUnixSys_Utf8Exists
 #endif
 
+#if !DEE_HAVE_REMOVE && DEE_HAVE_UNLINK && DEE_HAVE_RMDIR
+#undef DEE_HAVE_REMOVE
+#define DEE_HAVE_REMOVE 1
+#define remove(path) ((unlink(path) == -1 && rmdir(path) == -1) ? -1 : 0)
+#endif
 
+#if DEE_HAVE_REMOVE
+#define DeeUnixSys_Utf8Remove(path,...) \
+do{\
+ if DEE_UNLIKELY(remove(path) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"remove(%q) : %K",path,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif
+
+#if DEE_HAVE_UNLINK
+#define DeeUnixSys_Utf8Unlink(path,...) \
+do{\
+ if DEE_UNLIKELY(unlink(path) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"unlink(%q) : %K",path,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif
+
+#if DEE_HAVE_RMDIR
+#define DeeUnixSys_Utf8RmDir(path,...) \
+do{\
+ if DEE_UNLIKELY(rmdir(path) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"rmdir(%q) : %K",path,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif
+
+
+#ifdef DeeUnixSys_Utf8Remove
+#define DeeUnixSysFS_Utf8Remove DeeUnixSys_Utf8Remove
+#endif
+#ifdef DeeUnixSys_Utf8Unlink
+#define DeeUnixSysFS_Utf8Unlink DeeUnixSys_Utf8Unlink
+#endif
+#ifdef DeeUnixSys_Utf8RmDir
+#define DeeUnixSysFS_Utf8RmDir DeeUnixSys_Utf8RmDir
+#endif
 
 
 
@@ -818,6 +864,15 @@ do{\
 #endif
 #ifdef DeeUnixSysFS_Utf8Exists
 #define DeeSysFS_Utf8Exists DeeUnixSysFS_Utf8Exists
+#endif
+#ifdef DeeUnixSysFS_Utf8Remove
+#define DeeSysFS_Utf8Remove DeeUnixSysFS_Utf8Remove
+#endif
+#ifdef DeeUnixSysFS_Utf8Unlink
+#define DeeSysFS_Utf8Unlink DeeUnixSysFS_Utf8Unlink
+#endif
+#ifdef DeeUnixSysFS_Utf8RmDir
+#define DeeSysFS_Utf8RmDir DeeUnixSysFS_Utf8RmDir
 #endif
 
 DEE_DECL_END

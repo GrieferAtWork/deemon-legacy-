@@ -60,8 +60,8 @@ DEE_DECL_BEGIN
 DeeError_NEW_STATIC(_dee_notimplemented_gettmp,&DeeErrorType_NotImplemented,"gettmp");
 #endif
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetTmp(void) {
-#ifdef DEE_NFS_HAVE_GETENV
  DeeObject *result;
+#ifdef DEE_NFS_HAVE_GETENV
 /*[[[deemon DEE_PRINTTEMPDIRNAMES(DEE_TEMPDIRENVNAMES,"Utf8"); ]]]*/
  static Dee_Utf8Char const name_TMPDIR[7] = {'T','M','P','D','I','R',0};
  static Dee_Utf8Char const name_TMP[4] = {'T','M','P',0};
@@ -75,10 +75,11 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetTmp(void) {
 #endif /* DEE_NFS_HAVE_GETENV */
  {
 #ifdef DeeSysFS_Utf8GetTmp
-  return DeeSysFS_Utf8GetTmp();
+  DeeSysFS_Utf8GetTmp(&result,return NULL);
+  return result;
 #elif defined(DeeSysFS_WideGetTmp)
   DeeObject *newresult;
-  if DEE_UNLIKELY((result = DeeSysFS_WideGetTmp()) == NULL) return NULL;
+  DeeSysFS_WideGetTmp(&result,return NULL);
   newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
                                                      DeeWideString_STR(result));
   Dee_DECREF(result);
@@ -90,8 +91,8 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetTmp(void) {
  }
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetTmp(void) {
-#ifdef DEE_NFS_HAVE_GETENV
  DeeObject *result;
+#ifdef DEE_NFS_HAVE_GETENV
 /*[[[deemon DEE_PRINTTEMPDIRNAMES(DEE_TEMPDIRENVNAMES,"Wide"); ]]]*/
  static Dee_WideChar const name_TMPDIR[7] = {'T','M','P','D','I','R',0};
  static Dee_WideChar const name_TMP[4] = {'T','M','P',0};
@@ -105,10 +106,11 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetTmp(void) {
 #endif /* DEE_NFS_HAVE_GETENV */
  {
 #ifdef DeeSysFS_WideGetTmp
-  return DeeSysFS_WideGetTmp();
+  DeeSysFS_WideGetTmp(&result,return NULL);
+  return result;
 #elif defined(DeeSysFS_Utf8GetTmp)
   DeeObject *newresult;
-  if DEE_UNLIKELY((result = DeeSysFS_Utf8GetTmp()) == NULL) return NULL;
+  DeeSysFS_Utf8GetTmp(&result,return NULL);
   newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
                                                      DeeUtf8String_STR(result));
   Dee_DECREF(result);
