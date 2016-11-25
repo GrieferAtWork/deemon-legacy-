@@ -190,6 +190,7 @@ _DeeProcess_Utf8Win32Exe(DEE_A_IN HANDLE hprocess) {
    GetProcAddress(hKernel32,"QueryFullProcessImageNameA") : NULL;
  });
  if (!p_QueryFullProcessImageNameA) {
+  // TODO: Use the cwdline hax to figure out the executable name
   DeeError_SET_STRING(&DeeErrorType_SystemError,"Not implemented: QueryFullProcessImageNameA");
   return NULL;
  }

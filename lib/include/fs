@@ -231,6 +231,217 @@
 #	undef posix
 #endif
 
+//////////////////////////////////////////////////////////////////////////
+// === VFS ===
+//////////////////////////////////////////////////////////////////////////
+//
+// The VFS is a virtual filesystem available for windows-base host system,
+// that is enabled by default and is used to simulate a unix/posix-style
+// environment helpful for easily creating platform-independent code.
+//
+// - Note though, that besides simulating the bare-bones of posix, the VFS
+//   also adds its own twists on simplifying working with windows. (see below)
+// - The integration of the VFS happens seamlessly, allowing any kind of
+//   function taking a path as argument, not just from <fs>, but also including
+//   functions like 'file.open' to take virtual paths, as well as resolve
+//   relative paths if 'chdir' was used to navigate inside of the VFS.
+// - Starting in v102, the VFS got an overhaul, now allowing you to navigate
+//   inside of it using 'chdir', as well as adding new and more functions.
+// - When inside the VFS (such as after calling 'chdir("/")'), all relative
+//   paths are resolved to the cwd, meaning relative to some point within the VFS.
+// - An absolute virtual path always starts with a "/" character, meaning that
+//   in order to access a node from part of the VFS, a path must either start
+//   with "/", or 'chdir' must be used with a path starting with 'chdir'
+//
+// Host-System integration:
+// - Since most host system don't just allow any string to be set as the
+//   ~real~ CWD, deemon will not attempt to update the actual CWD of its
+//   host, such as though system-calls like 'SetCurrentDirectoryW',
+//   but will keep its virtual CWD to itself.
+//   - An exception to this rule is made when the current virtual path
+//     lies with the host's (aka ~real~) filesystem:
+//     >> chdir("/mount/c/windows"); // Set the virtual path to 'C:\Windows'
+//     The call in the previous line will actually notify the host system
+//     of a change in the current working directory. Some other special
+//     paths, or virtual, symbolic links pointing into the hosts filesystem
+//     (such as "/tmp") will also update the ~real~ CWD.
+// - Deemon is not designed to intercept actual system-calls, meaning
+//   mixing natice API calls with functions from deemon's runtime is possible,
+//   though they should not be expected to always know about what the other did:
+//   >> extern "Kernel32.dll": none SetCurrentDirectoryW(string.wide path);
+//   >>
+//   >> SetCurrentDirectoryW(L"C:\\Windows");
+//   >> print fs::getcwd(); // Prints "C:\\Windows"
+//   >>
+//   >> fs::chdir("/");
+//   >> print fs::getcwd(); // Prints "/"
+//   >>
+//   >> SetCurrentDirectoryW(L"C:\\");
+//   >> print fs::getcwd(); // Still prints "/"
+//   >>
+// - Once the cwd is placed inside the VFS, deemon will no longer ask
+//   its host system for what the current CWD is, but simply use the
+//   virtual path designated as CWD.
+// - To get deemon to once again listen to its host, the cwd must
+//   be set to an absolute path using the host path syntax.
+//   NOTE: Even when a virtual path is used that points back into the
+//         the host filesystem, deemon will continue to use the virtual
+//         name for that path, instead of asking the host system.
+//   >> fs::chdir("C:\\");
+//   >> print fs::getcwd(); // Prints "C:\\" (cwd isn't virtual)
+//   >> fs::chdir("/mount/c/");
+//   >>
+//   >> print fs::getcwd(); // Prints "/mount/c" (cwd is virtual, but host cwd hasn't changed ("/mount/c" == "C:\\"))
+//   >> fs::chdir("C:\\");
+//   >>
+//   >> print fs::getcwd(); // Prints "C:\\" again (cwd is no longer virtual)
+//
+//////////////////////////////////////////////////////////////////////////
+//
+// The following is a full overview of what is current being provided by
+// the VFS, featuring explainations and references to explain the behavior
+// of all provided nodes.
+// Note, that more features may be added in the future.
+//
+//  # [D] "/" (root)
+//  |
+//  |
+//  +----# [D] "/dev" (device files)
+//  |    |
+//  |    +----# [F] "/dev/null"  (r/w)
+//  |    |        - All written data is dropped
+//  |    |        - Can't be read from (empty file)
+//  |    |
+//  |    +----# [F] "/dev/random" (r)
+//  |    |        - Random data. Generated using 'CryptGenRandom'
+//  |    |          https://msdn.microsoft.com/en-us/library/windows/desktop/aa379942(v=vs.85).aspx
+//  |    |
+//  |    +----# [F] "stderr" (r/w; usually just w)
+//  |    |        - The host-set file for 'stderr' (same as 'file.io.stderr')
+//  |    |          NOTE: When you overwritre 'file.io.stderr', this file may, or may not
+//  |    |                update and could possibly still describe the original file for stderr.
+//  |    |
+//  |    +----# [F] "stdin" (r/w; usually just r)
+//  |    |        - The host-set file for 'stdin' (same as 'file.io.stdin')
+//  |    |          NOTE: *ditto* (from stderr)
+//  |    |
+//  |    +----# [F] "stdout" (r/w; usually just w)
+//  |    |        - The host-set file for 'stdout' (same as 'file.io.stdout')
+//  |    |          NOTE: *ditto* (from stderr)
+//  |    |
+//  |    +----# [F] "/dev/urandom" (r)
+//  |    |        - Unlimited, fast random data. Generated using 'random' (from #include <random>)
+//  |    |
+//  |    +----# [F] "/dev/zero" (r/w)
+//  |             - All written data is dropped
+//  |             - Can be read from, and return all zeros
+//  |               WARNING: This file has an infinite size and attempting to
+//  |                        read all of it will result in all available memory
+//  |                        being consumed before an Error.NoMemory is thrown.
+//  |
+//  +----# [D] "/mount" (entry point to the host filesystem)
+//  |    |
+//  |    +----# [D|N] "/mount/[DRIVE_LETTER]"
+//  |             - Referrs to the root directory of a given drive.
+//  |             - Note, that paths located beyond (and including) this point
+//  |               are special, in that they can be used to referr to real
+//  |               files required by the host system when passed though deemon.
+//  |               Also note, that changing the cwd to be located past this point
+//  |               will inform the host of that change.
+//  |             HINT: You can use 'fs::dir("/mount")' to enumerate all available
+//  |                   drives letters, just as returned by 'fs::win32::drives()'.
+//  |
+//  +----# [D] "/net" (entry point to windows' share system)
+//  |    |        HINT: You can use 'fs::dir("/net")' to enumerate all visible
+//  |    |              windows-share/samba servers within your network.
+//  |    |              Note though, that doing so may take quite a while (up to 1-2 minutes).
+//  |    |
+//  |    +----# [D] "/net/[SERVER_NAME]"
+//  |         |   - Referss to the root index of a given share-server.
+//  |         |   - This is a special directory of shares exported by the server
+//  |         |     specified by 'SERVER_NAME", and translating to a native path '\\[SERVER_NAME]'
+//  |         |   - Unlike usually in windows, you can use 'fs::dir("/net/[SERVER_NAME]")'
+//  |         |     to enumerate all visible shares exported by the server. And unlike
+//  |         |     trying to enumerate all visible share-servers, this process usually
+//  |         |     doesn't take too long.
+//  |         |   WARNING: Deemon is not capable to prompting you for any passwords required
+//  |         |            to access a given share, meaning you have to save access data
+//  |         |            within windows to be able to access network shares from deemon.
+//  |         |
+//  |         +----# [D|N] "/net/[SERVER_NAME]/[SHARE_NAME]"
+//  |                  - The root directory of the share from a given share-server.
+//  |                  - Just like "/mount", this path is part of the host's native
+//  |                    file system, allowing you to 'chdir' inside of it.
+//  |                  - The path "/net/[SERVER_NAME]/[SHARE_NAME]" is equal to:
+//  |                    >> '\\[SERVER_NAME]\[SHARE_NAME]'
+//  |
+//  +----# [D] "/proc"
+//  |    |
+//  |    +----# [D] "/proc/[PID]"
+//  |    |    |   - Referrs to special directory capable of interacting
+//  |    |    |     with the process described by the given "[PID]".
+//  |    |    |   HINT: You can use 'for (x: fs::dir("/proc")) if (x.isdigit()) x',
+//  |    |    |         to enumerate all ids of all processes running (and visible to you)
+//  |    |    |         resulting in the same list of ids, as referred to
+//  |    |    |         by 'process.enum()' from '<process>'.
+//  |    |    |
+//  |    |    +----# [F] "/proc/[PID]/cmdline"
+//  |    |    |        - A file that, when read returns the commandline
+//  |    |    |          used to start a given process.
+//  |    |    |        - Note, that on windows a process can simply modify its commandline
+//  |    |    |          to resemble anything. So when reading from this, use the information
+//  |    |    |          learned with caution, as it might not be correct.
+//  |    |    |          (Though its as correct as it'll get on windows)
+//  |    |    |        WARNING: Due to there not being an official way of figuring
+//  |    |    |                 out such information about a process that isn't you,
+//  |    |    |                 deemon has to use some kind-of shady looking hacks
+//  |    |    |                 to get this information.
+//  |    |    |                 The code has been tested and is working, as well as safe,
+//  |    |    |                 though if I was an anti-malware application, I'd flag
+//  |    |    |                 anything using the calls used by deemon to implement this...
+//  |    |    |           NOTE: Also affects "/proc/[PID]/cwd"
+//  |    |    |
+//  |    |    +----# [L] "/proc/[PID]/cwd" --> "[getcwd(PID)]"
+//  |    |    |        - A link that, when read, points to the cwd of the given PID, as know to windows.
+//  |    |    |          Note, that if PID describes another instance of deemon, you are only able
+//  |    |    |          to read the cwd, as known to windows, but not a possibly set virtual CWD.
+//  |    |    |
+//  |    |    +----# [F] "/proc/[PID]/exe" --> "[QueryFullProcessImageName(PID)]"
+//  |    |             - A link, that when read, points to the absolute path of
+//  |    |               the executable run by PID.
+//  |    |
+//  |    +----# [L] "/proc/self" --> "/proc/[process.self().id()]"
+//  |             - A symbolic link describing the "/proc/[PID]" entry for the current process.
+//  |
+//  +----# [L] "/tmp" --> "[fs::gettmp()]"
+//           - A symbolic link pointing to what is designated as the
+//             temporary directory by the host system.
+//           - Note, that his link ALWAYS returns the same value as fs::gettmp(),
+//             and is also updated when one of the environment variables capable
+//             of affecting fs::gettmp() is updated.
+//           - WARNING: Though changable by setting $TEMP, as well as a few other variables,
+//                      this path does not change when such a variable is set on unix.
+//
+//
+// INDEX:
+//   - [D]: Directory (fs::isdir(...) == true)
+//   - [F]: File (fs::isfile(...) == true)
+//   - [L]: Link (fs::islink(...) == true; readlink can be used)
+//   - [N]: Native path (part of the native filesystem)
+//
+//////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////
+// === UNC ===
+//////////////////////////////////////////////////////////////////////////
+//
+// You'll never have to deal with this. - When one of your paths gets too
+// long, deemon will automatically prepend '\\?\' in any system call for you.
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+
 module fs {
 
 	//////////////////////////////////////////////////////////////////////////
@@ -672,7 +883,7 @@ module fs {
 	//        Creates a link to 'target_name' at 'link_name'
 	//        NOTE: Under windows, the process must be granted
 	//              the "SeCreateSymbolicLinkPrivilege" right.
-	//    === CHANGES === 
+	//    === CHANGES ===
 	//        - Starting in v102, the arguments are swapped when
 	//          compared against their order in v100-v101
 	local const link = __builtin_object(0x00C0);
@@ -911,6 +1122,8 @@ module fs {
 	//        >> for (f: fs::dir("~")) print f;
 	//        NOTE: The encoding of strings yielded is platform-dependent,
 	//              and may be based on the encoding of the given string
+	//        NOTE: On windows, this function can be used to enumerate virtual directories
+	//              s.a.: VFS above
 	local const dir = __builtin_object(0x00C3);
 	//local const opendir = __builtin_object(0x00C3); // TODO: Maybe?
 
