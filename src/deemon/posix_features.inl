@@ -557,4 +557,47 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE_UTIMES
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_TIME_H
+# define DEE_HAVE_UTIMES 1
+#else
+# define DEE_HAVE_UTIMES 0
+#endif
+#endif
+
+#ifndef DEE_HAVE_UTIME
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_UTIME_H\
+ && DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_TYPES_H
+# define DEE_HAVE_UTIME 1
+#else
+# define DEE_HAVE_UTIME 0
+#endif
+#endif
+
+#ifndef DEE_HAVE_FUTIMES
+#if (defined(_BSD_SOURCE) && _BSD_SOURCE)\
+  && DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_TIME_H
+# define DEE_HAVE_FUTIMES 1
+#else
+# define DEE_HAVE_FUTIMES 0
+#endif
+#endif
+
+/*
+  A: We've already used utime, utimes, futimes and lutimes. What are we supposed to call this new one?
+  B: Just call it funtimes, or better yet: futimens.
+  A: But that sounds so similar to...
+  B: I'M THE BDFL! SO CALL FUTIMENS!
+*/
+#ifndef DEE_HAVE_FUTIMENS
+#if ((defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 700)\
+  || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L) \
+  || (defined(_GNU_SOURCE) && _GNU_SOURCE))\
+  && DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_STAT_H
+# define DEE_HAVE_FUTIMENS 1
+#else
+# define DEE_HAVE_FUTIMENS 0
+#endif
+#endif
+
 #endif /* !GUARD_DEEMON_POSIX_FEATURES_INL */
