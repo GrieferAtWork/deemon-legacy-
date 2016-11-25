@@ -588,6 +588,10 @@ do{\
    free_nn(uncpath);\
   } else if (DeeWin32Sys_ISNOTFOUNDERROR(_fa_error)) {\
    *(result) = (notfound_attr);\
+  } else if (_fa_error == ERROR_NOT_READY) {\
+   /* It's probably just some kind of drive... */\
+   /* TODO: Confirm that! */\
+   *(result) = FILE_ATTRIBUTE_DEVICE|FILE_ATTRIBUTE_DIRECTORY;\
   } else {\
    DeeError_SetStringf(&DeeErrorType_SystemError,_fa_errorfmt,path,\
                        DeeSystemError_Win32ToString(_fa_error));\
