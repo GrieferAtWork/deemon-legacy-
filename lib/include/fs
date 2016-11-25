@@ -432,11 +432,18 @@
 //////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////
-// === UNC ===
+// === Windows' UNC paths ===
 //////////////////////////////////////////////////////////////////////////
 //
 // You'll never have to deal with this. - When one of your paths gets too
 // long, deemon will automatically prepend '\\?\' in any system call for you.
+//
+// And yes: In deemon you can easily create directory structures that
+//          even windows explorer will not allow you to view
+//         (Because microsoft doesn't care that their own freaking explorer
+//          is limited to their stupid 260 character MAX_PATH rule)
+//          --> So when creating some absurdly long path, remember that
+//              you might need to use deemon again to remove it...
 //
 //////////////////////////////////////////////////////////////////////////
 
