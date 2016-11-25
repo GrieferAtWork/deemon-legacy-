@@ -48,25 +48,25 @@ call_native: return DeeNFS_Utf8Link(link_name,target_name);
  } else native_target_name = NULL;
  if (!native_link_name) {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-call_native_target_name:
+//call_native_target_name:
    if (!native_target_name) goto call_native;
    error = DeeNFS_Utf8Link(link_name,DeeUtf8String_STR(native_target_name));
    Dee_DECREF(native_target_name);
    return error;
   }
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_target_name; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_target_name; }
   native_link_name = DeeVFS_Utf8ForceNativePathWithCwd(cwd,link_name);
   if DEE_UNLIKELY(!native_link_name) { DeeVFSNode_DECREF(cwd); return -1; }
  } else cwd = NULL;
  if (!native_target_name) {
   if (!cwd) {
    if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-call_native_link_name:
+//call_native_link_name:
     error = DeeNFS_Utf8Link(DeeUtf8String_STR(native_link_name),target_name);
     Dee_DECREF(native_link_name);
     return error;
    }
-   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_link_name; }
+   // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_link_name; }
   }
   native_target_name = DeeVFS_Utf8ForceNativePathWithCwd(cwd,target_name);
   DeeVFSNode_DECREF(cwd);
@@ -93,25 +93,25 @@ call_native: return DeeNFS_WideLink(link_name,target_name);
  } else native_target_name = NULL;
  if (!native_link_name) {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-call_native_target_name:
+//call_native_target_name:
    if (!native_target_name) goto call_native;
    error = DeeNFS_WideLink(link_name,DeeWideString_STR(native_target_name));
    Dee_DECREF(native_target_name);
    return error;
   }
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_target_name; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_target_name; }
   native_link_name = DeeVFS_WideForceNativePathWithCwd(cwd,link_name);
   if DEE_UNLIKELY(!native_link_name) { DeeVFSNode_DECREF(cwd); return -1; }
  } else cwd = NULL;
  if (!native_target_name) {
   if (!cwd) {
    if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-call_native_link_name:
+//call_native_link_name:
     error = DeeNFS_WideLink(DeeWideString_STR(native_link_name),target_name);
     Dee_DECREF(native_link_name);
     return error;
    }
-   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_link_name; }
+   // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_link_name; }
   }
   native_target_name = DeeVFS_WideForceNativePathWithCwd(cwd,target_name);
   DeeVFSNode_DECREF(cwd);
@@ -140,25 +140,25 @@ call_native: return DeeNFS_Utf8LinkObject(link_name,target_name);
  } else native_target_name = NULL;
  if (!native_link_name) {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-call_native_target_name:
+//call_native_target_name:
    if (!native_target_name) goto call_native;
    error = DeeNFS_Utf8LinkObject(link_name,native_target_name);
    Dee_DECREF(native_target_name);
    return error;
   }
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_target_name; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_target_name; }
   native_link_name = DeeVFS_Utf8ForceNativePathWithCwdObject(cwd,link_name);
   if DEE_UNLIKELY(!native_link_name) { DeeVFSNode_DECREF(cwd); return -1; }
  } else cwd = NULL;
  if (!native_target_name) {
   if (!cwd) {
    if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-call_native_link_name:
+//call_native_link_name:
     error = DeeNFS_Utf8LinkObject(native_link_name,target_name);
     Dee_DECREF(native_link_name);
     return error;
    }
-   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_link_name; }
+   // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_link_name; }
   }
   native_target_name = DeeVFS_Utf8ForceNativePathWithCwdObject(cwd,target_name);
   DeeVFSNode_DECREF(cwd);
@@ -187,25 +187,25 @@ call_native: return DeeNFS_WideLinkObject(link_name,target_name);
  } else native_target_name = NULL;
  if (!native_link_name) {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-call_native_target_name:
+//call_native_target_name:
    if (!native_target_name) goto call_native;
    error = DeeNFS_WideLinkObject(link_name,native_target_name);
    Dee_DECREF(native_target_name);
    return error;
   }
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_target_name; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_target_name; }
   native_link_name = DeeVFS_WideForceNativePathWithCwdObject(cwd,link_name);
   if DEE_UNLIKELY(!native_link_name) { DeeVFSNode_DECREF(cwd); return -1; }
  } else cwd = NULL;
  if (!native_target_name) {
   if (!cwd) {
    if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
-call_native_link_name:
+//call_native_link_name:
     error = DeeNFS_WideLinkObject(native_link_name,target_name);
     Dee_DECREF(native_link_name);
     return error;
    }
-   if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_link_name; }
+   // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native_link_name; }
   }
   native_target_name = DeeVFS_WideForceNativePathWithCwdObject(cwd,target_name);
   DeeVFSNode_DECREF(cwd);

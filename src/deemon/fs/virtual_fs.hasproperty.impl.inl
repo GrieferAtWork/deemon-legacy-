@@ -79,7 +79,7 @@ call_native: return NFS_FUNC(HasProperty)(path,prop);
   filenode = VFS_FUNC(LLocate)(path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
   filenode = VFS_FUNC(LLocateWithCWD)(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }

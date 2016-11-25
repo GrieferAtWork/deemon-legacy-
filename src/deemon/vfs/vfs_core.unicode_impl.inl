@@ -107,7 +107,12 @@ walk_relative:
 #else
  newcwd = DeeVFS_LocateAt(oldcwd,path);
 #endif
- if DEE_UNLIKELY(!newcwd) { DeeVFSNode_DECREF(oldcwd); return -1; }
+ if DEE_UNLIKELY(!newcwd) {err_oldcwd: DeeVFSNode_DECREF(oldcwd); return -1; }
+ if (DeeVFSNode_IsNative(newcwd) && DeeNFS_ChdirObject((
+  DeeObject *)((struct DeeVFSNativeNode *)newcwd)->vnn_path) != 0) {
+  DeeVFSNode_DECREF(newcwd);
+  goto err_oldcwd;
+ }
  DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);
  // Make sure that the cwd wasn't changed by another thread in the meantime
  if (oldcwd != DeeVFS_CWD) {

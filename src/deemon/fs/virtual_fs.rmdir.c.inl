@@ -42,7 +42,7 @@ call_native: return DeeNFS_Utf8RmDir(path);
   native_path = DeeVFS_Utf8ForceNativeRootPath(path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
   native_path = DeeVFS_Utf8ForceNativePathWithCwd(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
@@ -61,7 +61,7 @@ call_native: return DeeNFS_WideRmDir(path);
   native_path = DeeVFS_WideForceNativeRootPath(path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
   native_path = DeeVFS_WideForceNativePathWithCwd(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }

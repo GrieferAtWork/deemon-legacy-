@@ -295,6 +295,10 @@
 //   >> fs::chdir("C:\\");
 //   >>
 //   >> print fs::getcwd(); // Prints "C:\\" again (cwd is no longer virtual)
+// - The VFS is mounted as read-only, meaning that you 
+//   can't create  new files in any non-native directories.
+//   NOTE: Obviously you can do something like 'file.open("/tmp/my_temp_file.txt","w")',
+//         but what I'm talking about is something like 'file.open("/new_file.txt","w")'
 //
 //////////////////////////////////////////////////////////////////////////
 //
@@ -348,6 +352,7 @@
 //  |               files required by the host system when passed though deemon.
 //  |               Also note, that changing the cwd to be located past this point
 //  |               will inform the host of that change.
+//  |             - Calling 'fs::ismount("/mount/[DRIVE_LETTER]")' will return true
 //  |             HINT: You can use 'fs::dir("/mount")' to enumerate all available
 //  |                   drives letters, just as returned by 'fs::win32::drives()'.
 //  |
@@ -455,7 +460,7 @@ module fs {
 	// >> function fs::getcwd() -> string.utf8
 	// >> function fs::wgetcwd() -> string.wide
 	//    @throws Error.SystemError: Failed to retrive the current working directory
-	//    @return: The current working directory, as indicated by the OS
+	//    @return: The current working directory, as indicated by the OS/VFS
 	local const getcwd = __builtin_object(0x009A);
 	__DEEMON_WFS_FUNC(local const wgetcwd = __builtin_object(0x0199))
 
@@ -470,13 +475,17 @@ module fs {
 	// >> function fs::wtmp() -> string.wide
 	//    @throws Error.SystemError
 	//    @return: The path to a folder that can be used for temporary files.
-	//        1. Checks for a 'TMPDIR' environmental variable
-	//        2. Checks for a 'TEMP' environmental variable
-	//        3. Checks for a 'TMP' environmental variable
-	//        4. [__WINDOWS__] Use 'GetTempPath' to get the tmp path as designated by the OS
-	//        4. [__POSIX__]   Use the 'P_tmpdir' macro
-	//        5. [__POSIX__]   Return "/tmp"
+	//        1. Checks for a '$TMPDIR' environmental variable
+	//        2. Checks for a '$TMP' environmental variable
+	//        3. Checks for a '$TEMP' environmental variable
+	//        4. Checks for a '$TEMPDIR' environmental variable
+	//        5. [__WINDOWS__] Use 'GetTempPath' to get the tmp path as designated by the OS
+	//        5. [__POSIX__]   Use the 'P_tmpdir' macro
+	//        6. [__POSIX__]   Return "/tmp"
 	//        NOTE: If the vfs is enabled, you can use "/tmp" in regular paths under windows
+	//        NOTE: The order of envvar evaluation is reminicent
+	//              of and compatible with 'boost::filesystem'.
+	//    CHANGE: v102 added '$TEMPDIR', and swapped the order of '$TMP' and '$TEMP'
 	local const tmp = __builtin_object(0x0164);
 	__DEEMON_WFS_FUNC(local const wtmp = __builtin_object(0x019A))
 
@@ -486,7 +495,7 @@ module fs {
 	//    @throws Error.SystemError - Too many temporary files created
 	//    @return: A filename that can be used for a temporary file.
 	//        The filename is build like this:
-	//        >> "<path>/<prefix><XXXX>.tmp"
+	//        >> "[path]/[prefix][XXXX].tmp"
 	//        Where XXXX is a four-digit hex-code used
 	//        to ensure that the filename is unique.
 	local const tmpname = __builtin_object(0x0168);

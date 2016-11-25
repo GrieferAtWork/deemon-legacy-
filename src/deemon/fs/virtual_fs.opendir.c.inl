@@ -46,7 +46,7 @@ call_native: return DeeNFS_Utf8Opendir(path);
   node = DeeVFS_Utf8LocateAt(DeeVFS_Root,path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
   node = DeeVFS_Utf8LocateAt(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
@@ -68,7 +68,7 @@ call_native: return DeeNFS_WideOpendir(path);
   node = DeeVFS_WideLocateAt(DeeVFS_Root,path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
   node = DeeVFS_WideLocateAt(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
@@ -91,7 +91,7 @@ call_native: return DeeNFS_Utf8OpendirObject(path);
   node = DeeVFS_Utf8LocateAt(DeeVFS_Root,path_begin);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
   node = DeeVFS_Utf8LocateAtObject(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
@@ -114,7 +114,7 @@ call_native: return DeeNFS_WideOpendirObject(path);
   node = DeeVFS_WideLocateAt(DeeVFS_Root,path_begin);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
   node = DeeVFS_WideLocateAtObject(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
