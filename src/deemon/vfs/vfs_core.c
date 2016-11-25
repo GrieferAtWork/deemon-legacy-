@@ -249,22 +249,10 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_GetCwdNode(void) {
  return result;
 }
 DEE_A_RET_EXCEPT(-1) int DeeVFS_SetCwdNode(DEE_A_IN struct DeeVFSNode *cwd) {
- struct DeeVFSNode *old_cwd,*link_dest; int temp;
+ struct DeeVFSNode *old_cwd;
  DEE_ASSERT(cwd);
- if ((temp = DeeVFSNode_IsLink(cwd)) != 0) {
-  struct DeeVFSLocateState state;
-  if DEE_UNLIKELY(temp < 0) return temp;
-  state.vld_8startpath = NULL;
-  state.vld_link_ind = 0;
-  if DEE_UNLIKELY((link_dest = DeeVFSNode_WalkLink_impl(&state,cwd)) == NULL) return -1;
-  // Update the native CWD directory
-  temp = DeeVFSNode_IsNative(link_dest) ? DeeVFSNativeNode_NFS_Chdir(link_dest) : 0;
-  DeeVFSNode_DECREF(link_dest);
-  if (temp != 0) return temp;
- } else {
-  // Update the native CWD directory
-  if (DeeVFSNode_IsNative(cwd) && DeeVFSNativeNode_NFS_Chdir(cwd) != 0) return -1;
- }
+ // Update the native CWD directory
+ if (DeeVFSNode_IsNative(cwd) && DeeVFSNativeNode_NFS_Chdir(cwd) != 0) return -1;
  DeeVFSNode_INCREF(cwd); // New reference for 'DeeVFS_CWD'
  DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);
  old_cwd = DeeVFS_CWD; DeeVFS_CWD = cwd;

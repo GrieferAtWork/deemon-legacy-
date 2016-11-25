@@ -47,7 +47,11 @@ struct DeeVFSNativeNode {
 #define DeeVFSNativeNode_PATH(self)\
   (DeeObject *)(((struct DeeVFSNativeNode *)self)->vnn_path)
 
-#define DeeVFSNativeNode_NFS_Chdir(self)                      (DeeUtf8String_Check(DeeVFSNativeNode_PATH(self)) ? DeeNFS_Utf8ChdirObject(DeeVFSNativeNode_PATH(self)) : DeeNFS_WideChdirObject(DeeVFSNativeNode_PATH(self)))
+extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideChdirDriveRoot(DEE_A_IN Dee_WideChar drive_name);
+#define DeeVFSNativeNode_NFS_Chdir(self) \
+(DeeUtf8String_Check(DeeVFSNativeNode_PATH(self))\
+ ? (DeeUtf8String_SIZE(DeeVFSNativeNode_PATH(self)) != 2 ? DeeNFS_Utf8ChdirObject(DeeVFSNativeNode_PATH(self)) : DeeNFS_WideChdirDriveRoot((Dee_WideChar)DeeUtf8String_STR(DeeVFSNativeNode_PATH(self))[0]))\
+ : (DeeWideString_SIZE(DeeVFSNativeNode_PATH(self)) != 2 ? DeeNFS_WideChdirObject(DeeVFSNativeNode_PATH(self)) : DeeNFS_WideChdirDriveRoot((Dee_WideChar)DeeWideString_STR(DeeVFSNativeNode_PATH(self))[0])))
 #define DeeVFSNativeNode_NFS_GetTimes(self,atime,ctime,mtime) (DeeUtf8String_Check(DeeVFSNativeNode_PATH(self)) ? DeeNFS_Utf8GetTimesObject(DeeVFSNativeNode_PATH(self),atime,ctime,mtime) : DeeNFS_WideGetTimesObject(DeeVFSNativeNode_PATH(self),atime,ctime,mtime))
 #define DeeVFSNativeNode_NFS_SetTimes(self,atime,ctime,mtime) (DeeUtf8String_Check(DeeVFSNativeNode_PATH(self)) ? DeeNFS_Utf8SetTimesObject(DeeVFSNativeNode_PATH(self),atime,ctime,mtime) : DeeNFS_WideSetTimesObject(DeeVFSNativeNode_PATH(self),atime,ctime,mtime))
 #define DeeVFSNativeNode_NFS_GetMod(self,mode)                (DeeUtf8String_Check(DeeVFSNativeNode_PATH(self)) ? DeeNFS_Utf8GetModObject(DeeVFSNativeNode_PATH(self),mode) : DeeNFS_WideGetModObject(DeeVFSNativeNode_PATH(self),mode))

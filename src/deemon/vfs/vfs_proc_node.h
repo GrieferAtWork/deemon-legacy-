@@ -84,6 +84,7 @@ extern DEE_A_RET_EXCEPT_REF struct DeeVFSProcPIDNode *DeeVFSProcPIDNode_NewFromP
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe;     /*< '/proc/[PID]/exe' */
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cwd;     /*< '/proc/[PID]/cwd' */
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cmdline; /*< '/proc/[PID]/cmdline' */
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_root;    /*< '/proc/[PID]/root' */
 //////////////////////////////////////////////////////////////////////////
 
 
