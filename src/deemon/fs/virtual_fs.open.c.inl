@@ -53,7 +53,7 @@ call_native: return DeeNFS_Utf8Open(file,openmode,permissions);
  }
  if DEE_UNLIKELY(!filenode) return NULL;
  result = DeeVFSNode_IsNative(filenode)
-  ? DeeNFS_Utf8OpenObject((DeeObject *)((struct DeeVFSNativeNode *)filenode)->vnn_path,openmode,permissions)
+  ? DeeVFSNativeNode_NFS_Open(filenode,openmode,permissions)
   : (DeeObject *)DeeFileVFS_OpenNode(filenode,openmode,permissions);
  DeeVFSNode_DECREF(filenode);
  return result;
@@ -75,7 +75,7 @@ call_native: return DeeNFS_WideOpen(file,openmode,permissions);
  }
  if DEE_UNLIKELY(!filenode) return NULL;
  result = DeeVFSNode_IsNative(filenode)
-  ? DeeNFS_WideOpenObject((DeeObject *)((struct DeeVFSNativeNode *)filenode)->vnn_path,openmode,permissions)
+  ? DeeVFSNativeNode_NFS_Open(filenode,openmode,permissions)
   : (DeeObject *)DeeFileVFS_OpenNode(filenode,openmode,permissions);
  DeeVFSNode_DECREF(filenode);
  return result;
@@ -97,7 +97,7 @@ call_native: return DeeNFS_Utf8OpenObject(file,openmode,permissions);
  }
  if DEE_UNLIKELY(!filenode) return NULL;
  result = DeeVFSNode_IsNative(filenode)
-  ? DeeNFS_Utf8OpenObject((DeeObject *)((struct DeeVFSNativeNode *)filenode)->vnn_path,openmode,permissions)
+  ? DeeVFSNativeNode_NFS_Open(filenode,openmode,permissions)
   : (DeeObject *)DeeFileVFS_OpenNode(filenode,openmode,permissions);
  DeeVFSNode_DECREF(filenode);
  return result;
@@ -119,7 +119,7 @@ call_native: return DeeNFS_WideOpenObject(file,openmode,permissions);
  }
  if DEE_UNLIKELY(!filenode) return NULL;
  result = DeeVFSNode_IsNative(filenode)
-  ? DeeNFS_WideOpenObject((DeeObject *)((struct DeeVFSNativeNode *)filenode)->vnn_path,openmode,permissions)
+  ? DeeVFSNativeNode_NFS_Open(filenode,openmode,permissions)
   : (DeeObject *)DeeFileVFS_OpenNode(filenode,openmode,permissions);
  DeeVFSNode_DECREF(filenode);
  return result;

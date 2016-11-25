@@ -62,15 +62,28 @@ static void DEE_CALL _deevfs_netservernode_vnt_quit(struct DeeVFSNetServerNode *
  Dee_DECREF(self->vnm_name);
 }
 static struct DeeVFSNativeNode *DEE_CALL _deevfs_netservernode_vnt_walk(
- struct DeeVFSNetServerNode *self, char const *name) {
+ struct DeeVFSNetServerNode *self, Dee_Utf8Char const *name, Dee_size_t name_size) {
  struct DeeVFSNativeNode *result;
+ static Dee_Utf8Char const _fmt[] = {'\\','\\','%','k','\\','%','$','s',0};
  if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) return NULL;
  // Server-share path
- result->vnn_path = (DeeStringObject *)DeeString_Newf("\\\\%k\\%s",self->vnm_name,name);
+ result->vnn_path = (DeeAnyStringObject *)DeeUtf8String_Newf(_fmt,self->vnm_name,name_size,name);
  if (!result->vnn_path) { DeeVFSNode_FREE(result); return NULL; }
  DeeVFSNode_InitWithParent(&result->vnn_node,&DeeVFSNativeNode_Type,&self->vnm_node);
  return result;
 }
+static struct DeeVFSNativeNode *DEE_CALL _deevfs_netservernode_vnt_wwalk(
+ struct DeeVFSNetServerNode *self, Dee_WideChar const *name, Dee_size_t name_size) {
+ struct DeeVFSNativeNode *result;
+ static Dee_WideChar const _fmt[] = {'\\','\\','%','k','\\','%','l','$','s',0};
+ if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) return NULL;
+ // Server-share path
+ result->vnn_path = (DeeAnyStringObject *)DeeWideString_Newf(_fmt,self->vnm_name,name_size,name);
+ if (!result->vnn_path) { DeeVFSNode_FREE(result); return NULL; }
+ DeeVFSNode_InitWithParent(&result->vnn_node,&DeeVFSNativeNode_Type,&self->vnm_node);
+ return result;
+}
+
 static int DEE_CALL _deevfs_netserverview_vvt_open(
  struct DeeVFSNetServerView *self) {
  DeeObject *servername; NET_API_STATUS nStatus;
@@ -167,6 +180,8 @@ static int DEE_CALL DeeVFSNetServerView_GetCurrentNode(
  struct DeeVFSNetServerView *self, struct DeeVFSNativeNode **result, int advance) {
  PSHARE_INFO_502 my_info; int error;
  Dee_WideChar *wname; Dee_size_t wname_size;
+ static Dee_WideChar const _fmt1[] = {'\\','\\','%','k','\\'/* shrugs... */ ,'\\',0};
+ static Dee_WideChar const _fmt2[] = {'\\','\\','%','k','\\','%','l','$','s','\\',0};
 again:
  DeeAtomicMutex_AcquireRelaxed(&self->nsv_lock);
  if ((error = _DeeVFSNetServerView_GetInfoLocked(self,&my_info)) != 0) {
@@ -178,8 +193,7 @@ again:
   if (advance) ++self->nsv_pCurr;
   DeeAtomicMutex_Release(&self->nsv_lock);
   if ((*result = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) return -1;
-  (*result)->vnn_path = (DeeStringObject *)DeeString_Newf(
-   "\\\\%k\\" /* shrugs... */ "\\",self->nsv_server);
+  (*result)->vnn_path = (DeeAnyStringObject *)DeeWideString_Newf(_fmt1,self->nsv_server);
   if DEE_UNLIKELY(!(*result)->vnn_path) goto err_rnode;
   return 0;
  }
@@ -189,14 +203,11 @@ again:
   DeeError_NoMemory();
   return -1;
  }
- memcpy(wname,my_info->shi502_netname,
-        wname_size*sizeof(Dee_WideChar));
+ memcpy(wname,my_info->shi502_netname,wname_size*sizeof(Dee_WideChar));
  if (advance) ++self->nsv_pCurr;
  DeeAtomicMutex_Release(&self->nsv_lock);
  if ((*result = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) { free_nn(wname); return -1; }
- (*result)->vnn_path = (DeeStringObject *)DeeString_Newf("\\\\%k\\%.*ls",
-                                                         self->nsv_server,
-                                                         (unsigned)wname_size,wname);
+ (*result)->vnn_path = (DeeAnyStringObject *)DeeWideString_Newf(_fmt1,self->nsv_server,wname_size,wname);
  free_nn(wname);
  if (!(*result)->vnn_path) {err_rnode: DeeVFSNode_FREE(*result); return -1; }
  DeeVFSNode_InitWithParent(&(*result)->vnn_node,
@@ -215,12 +226,13 @@ static int DEE_CALL _deevfs_netserverview_vvt_yield(
 }
 static struct _DeeVFSViewTypeData _deevfs_netserver_vnt_view = {
  sizeof(struct DeeVFSNetServerView),
- (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))&_deevfs_netservernode_vnt_walk,
- (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *)) &_deevfs_nativenode_vnt_nameof,
- (int (DEE_CALL *)(struct DeeVFSView *))                            &_deevfs_netserverview_vvt_open,
- (void (DEE_CALL *)(struct DeeVFSView *))                           &_deevfs_netserverview_vvt_quit,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_netserverview_vvt_curr,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_netserverview_vvt_yield,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_netservernode_vnt_walk,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))&_deevfs_netservernode_vnt_wwalk,
+ (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_nativenode_vnt_nameof,
+ (int (DEE_CALL *)(struct DeeVFSView *))                                               &_deevfs_netserverview_vvt_open,
+ (void (DEE_CALL *)(struct DeeVFSView *))                                              &_deevfs_netserverview_vvt_quit,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_netserverview_vvt_curr,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_netserverview_vvt_yield,
 };
 
 struct DeeVFSNodeType const DeeVFSNetServerNode_Type = {
@@ -242,10 +254,11 @@ struct DeeVFSNodeType const DeeVFSNetServerNode_Type = {
 
 
 static struct DeeVFSNetServerNode *DEE_CALL _deevfs_netmountnode_vnt_walk(
- struct DeeVFSNode *self, char const *name) {
+ struct DeeVFSNode *self, char const *name, Dee_size_t name_size) {
  struct DeeVFSNetServerNode *result;
  if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSNetServerNode)) == NULL) return NULL;
- if DEE_UNLIKELY((result->vnm_name = (DeeStringObject *)DeeString_New(name)) == NULL) { DeeVFSNode_FREE(result); return NULL; }
+ if DEE_UNLIKELY((result->vnm_name = (DeeStringObject *)DeeString_NewWithLength(
+  name_size,name)) == NULL) { DeeVFSNode_FREE(result); return NULL; }
  DeeVFSNode_InitWithParent(&result->vnm_node,&DeeVFSNetServerNode_Type,self);
  return result;
 }
@@ -387,12 +400,13 @@ static int DEE_CALL _deevfs_netmountview_vvt_yield(
 
 static struct _DeeVFSViewTypeData _deevfs_netmount_vnt_view = {
  sizeof(struct DeeVFSNetMountView),
- (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))&_deevfs_netmountnode_vnt_walk,
- (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *)) &_deevfs_netmountnode_vnt_nameof,
- (int (DEE_CALL *)(struct DeeVFSView *))                            &_deevfs_netmountview_vvt_open,
- (void (DEE_CALL *)(struct DeeVFSView *))                           &_deevfs_netmountview_vvt_quit,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_netmountview_vvt_curr,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_netmountview_vvt_yield,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_netmountnode_vnt_walk,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))NULL, // TODO
+ (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_netmountnode_vnt_nameof,
+ (int (DEE_CALL *)(struct DeeVFSView *))                                               &_deevfs_netmountview_vvt_open,
+ (void (DEE_CALL *)(struct DeeVFSView *))                                              &_deevfs_netmountview_vvt_quit,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_netmountview_vvt_curr,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_netmountview_vvt_yield,
 };
 
 struct DeeVFSNodeType const DeeVFSNetMountNode_Type = {

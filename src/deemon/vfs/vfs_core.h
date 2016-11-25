@@ -105,12 +105,13 @@ struct _DeeVFSFileTypeData {
 struct _DeeVFSViewTypeData {
  Dee_size_t vvt_size; /*< Instance size. */
  // +++ View callbacks
- DEE_A_RET_EXCEPT_REF struct DeeVFSNode       *(DEE_CALL *vnt_walk)(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_Z char const *name); /*< a/b/c/d... */
- DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *(DEE_CALL *vnt_nameof)(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_INOUT struct DeeVFSNode *child); /*< Returns the name of a given child. */
-                      DEE_A_RET_EXCEPT(-1) int (DEE_CALL *vvt_open)(DEE_A_INOUT struct DeeVFSView *self); /*< opendir() (Only initialize non-common data). */
-                                          void (DEE_CALL *vvt_quit)(DEE_A_INOUT struct DeeVFSView *self);
-               DEE_A_RET_EXCEPT_FAIL(-1,1) int (DEE_CALL *vvt_curr)(DEE_A_INOUT struct DeeVFSView *self, DEE_A_OUT DEE_A_REF struct DeeVFSNode **result); /*< Returns the current node. */
-               DEE_A_RET_EXCEPT_FAIL(-1,1) int (DEE_CALL *vvt_yield)(DEE_A_INOUT struct DeeVFSView *self, DEE_A_OUT DEE_A_REF struct DeeVFSNode **result); /*< readdir() */
+ DEE_A_RET_EXCEPT_REF struct DeeVFSNode          *(DEE_CALL *vnt_walk)(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_R(name_size) char const *name, DEE_A_IN Dee_size_t name_size); /*< a/b/c/d... */
+ DEE_A_RET_EXCEPT_REF struct DeeVFSNode          *(DEE_CALL *vnt_wwalk)(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN_R(name_size) Dee_WideChar const *name, DEE_A_IN Dee_size_t name_size); /*< a/b/c/d... */
+ DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *(DEE_CALL *vnt_nameof)(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_INOUT struct DeeVFSNode *child); /*< Returns the name of a given child. */
+                         DEE_A_RET_EXCEPT(-1) int (DEE_CALL *vvt_open)(DEE_A_INOUT struct DeeVFSView *self); /*< opendir() (Only initialize non-common data). */
+                                             void (DEE_CALL *vvt_quit)(DEE_A_INOUT struct DeeVFSView *self);
+                  DEE_A_RET_EXCEPT_FAIL(-1,1) int (DEE_CALL *vvt_curr)(DEE_A_INOUT struct DeeVFSView *self, DEE_A_OUT DEE_A_REF struct DeeVFSNode **result); /*< Returns the current node. */
+                  DEE_A_RET_EXCEPT_FAIL(-1,1) int (DEE_CALL *vvt_yield)(DEE_A_INOUT struct DeeVFSView *self, DEE_A_OUT DEE_A_REF struct DeeVFSNode **result); /*< readdir() */
  // --- View callbacks
 };
 
@@ -189,16 +190,25 @@ extern void _DeeVFSNode_Delete(DEE_A_IN struct DeeVFSNode *self);
 #define DeeVFSNode_DECREF(self) ((!DeeAtomic16_DecFetch((self)->vn_refcnt,memory_order_seq_cst))?_DeeVFSNode_Delete(self):(void)0)
 #define DeeVFSNode_INCREF(self) (void)DeeAtomic16_FetchInc((self)->vn_refcnt,memory_order_seq_cst)
 
-extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WriteFilename(
- DEE_A_INOUT struct DeeStringWriter *writer, DEE_A_IN struct DeeVFSNode const *node);
-extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeVFSNode_Name(DEE_A_IN struct DeeVFSNode const *node);
-extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeVFSNode_Filename(DEE_A_IN struct DeeVFSNode const *node);
-extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeStringObject) *DeeVFSNode_Pathname(DEE_A_IN struct DeeVFSNode const *node);
+extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Utf8WriteFilename(
+ DEE_A_INOUT struct DeeUtf8StringWriter *writer, DEE_A_IN struct DeeVFSNode const *node);
+extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_WideWriteFilename(
+ DEE_A_INOUT struct DeeWideStringWriter *writer, DEE_A_IN struct DeeVFSNode const *node);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeAnyStringObject) *DeeVFSNode_Name(DEE_A_IN struct DeeVFSNode const *node);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFSNode_Utf8Filename(DEE_A_IN struct DeeVFSNode const *node);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFSNode_WideFilename(DEE_A_IN struct DeeVFSNode const *node);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFSNode_Utf8Pathname(DEE_A_IN struct DeeVFSNode const *node);
+extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFSNode_WidePathname(DEE_A_IN struct DeeVFSNode const *node);
+#define DeeVFSNode_Pathname  DeeVFSNode_Utf8Filename
+#define DeeVFSNode_Filename  DeeVFSNode_Utf8Pathname
+
 
 #define DeeVFSNodeType_HASPROP(self,prop) ((self)->vnt_prop && (self)->vnt_prop->prop)
 #define DeeVFSNode_HasOpen(self)     ((self)->vn_type->vnt_file && (self)->vn_type->vnt_file->vft_open)
 #define DeeVFSNode_HasView(self)     ((self)->vn_type->vnt_view && (self)->vn_type->vnt_view->vvt_open)
-#define DeeVFSNode_HasWalk(self)     ((self)->vn_type->vnt_view && (self)->vn_type->vnt_view->vnt_walk)
+#define DeeVFSNode_HasWalk(self)     ((self)->vn_type->vnt_view && ((self)->vn_type->vnt_view->vnt_walk || (self)->vn_type->vnt_view->vnt_wwalk))
+#define DeeVFSNode_HasUtf8Walk(self) ((self)->vn_type->vnt_view && (self)->vn_type->vnt_view->vnt_walk)
+#define DeeVFSNode_HasWideWalk(self) ((self)->vn_type->vnt_view && (self)->vn_type->vnt_view->vnt_wwalk)
 #define DeeVFSNode_HasReadlink(self) ((self)->vn_type->vnt_node.vnt_readlink!=NULL)
 
 extern struct DeeVFSNodeType const DeeVFSNativeNode_Type; // Implemented in "vfs_native_node.c.inl"
@@ -216,9 +226,8 @@ extern struct DeeVFSNodeType const DeeVFSNativeNode_Type; // Implemented in "vfs
 #define DeeVFSNode_IsFiFo(self)       (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_isfifo)       && (*(self)->vn_type->vnt_prop->vnt_isfifo)(self))
 #define DeeVFSNode_IsSocket(self)     (DeeVFSNodeType_HASPROP((self)->vn_type,vnt_issocket)     && (*(self)->vn_type->vnt_prop->vnt_issocket)(self))
 extern DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeVFSNode_HasHiddenFilename(DEE_A_IN struct DeeVFSNode const *self);
-extern DEE_A_RET_WUNUSED int DeeVFSNode_IsMount(DEE_A_IN struct DeeVFSNode const *self);
-#define DeeVFSNode_IsMount DeeVFSNode_IsMount
-#define DeeVFSNode_IsDrive DeeVFSNode_IsMount
+#define DeeVFSNode_IsDrive(self) (DeeVFSNode_IsNative(self) && DeeVFSNativeNode_IsDrive(self))
+#define DeeVFSNode_IsMount        DeeVFSNode_IsDrive
 
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetTimes(
  DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT_OPT Dee_timetick_t *atime,
@@ -231,9 +240,12 @@ extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chmod(DEE_A_INOUT struct DeeVFSNode *
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetOwn(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group);
 extern DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(DEE_A_INOUT struct DeeVFSNode *self, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group);
 
-#define DeeVFSNode_Walk(self,elemname) \
- (DEE_ASSERTF(DeeVFSNode_HasWalk(self),"Can't walk node %R",DeeVFSNode_Filename(self)),\
-             (*(self)->vn_type->vnt_view->vnt_walk)(self,elemname))
+#define DeeVFSNode_Utf8Walk(self,name,name_size) \
+ (DEE_ASSERTF((self)->vn_type->vnt_view->vnt_walk,"Can't walk node %R in utf-8 mode",DeeVFSNode_Filename(self)),\
+             (*(self)->vn_type->vnt_view->vnt_walk)(self,name,name_size))
+#define DeeVFSNode_WideWalk(self,name,name_size) \
+ (DEE_ASSERTF((self)->vn_type->vnt_view->vnt_wwalk,"Can't walk node %R in wide mode",DeeVFSNode_Filename(self)),\
+             (*(self)->vn_type->vnt_view->vnt_wwalk)(self,name,name_size))
 
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFSNode_Utf8Readlink(DEE_A_INOUT struct DeeVFSNode *self);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFSNode_WideReadlink(DEE_A_INOUT struct DeeVFSNode *self);
@@ -278,12 +290,12 @@ struct DeeVFSLocateState {
  unsigned int vld_link_ind;  /*< Current level of link indirection. */
 };
 
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LLocateAt_impl(
- DEE_A_INOUT struct DeeVFSLocateState *state,
- DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z char const *path);
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LocateAt_impl(
- DEE_A_INOUT struct DeeVFSLocateState *state,
- DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z char const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Utf8LLocateAt_impl(DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLLocateAt_impl(DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Utf8LocateAt_impl(DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateAt_impl(DEE_A_INOUT struct DeeVFSLocateState *state, DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z Dee_WideChar const *path);
+#define DeeVFS_LLocateAt_impl DeeVFS_Utf8LLocateAt_impl
+#define DeeVFS_LocateAt_impl  DeeVFS_Utf8LocateAt_impl
 
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_REF struct DeeVFSNode *) DeeVFS_LLocateAt(
  DEE_A_IN struct DeeVFSNode *root, DEE_A_IN_Z char const *path) {
@@ -333,7 +345,14 @@ extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LocateWithCWD(DEE_A_IN str
 
 //////////////////////////////////////////////////////////////////////////
 // Locates a native file/directory, and returns a virtual node associated with it.
-extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_LocateNative(DEE_A_IN_Z char const *path);
+#ifdef DEE_PLATFORM_WINDOWS
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_Utf8LocateNative(DEE_A_IN_Z Dee_Utf8Char const *path);
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_WideLocateNative(DEE_A_IN_Z Dee_WideChar const *path);
+#else
+#define DeeVFS_Utf8LocateNative  DeeVFS_Utf8LLocate
+#define DeeVFS_WideLocateNative  DeeVFS_WideLLocate
+#endif
+#define DeeVFS_LocateNative DeeVFS_Utf8LocateNative
 
 //////////////////////////////////////////////////////////////////////////
 // Get/Set the current directory within the virtual file System.

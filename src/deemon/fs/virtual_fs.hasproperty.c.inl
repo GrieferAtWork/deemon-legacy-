@@ -25,6 +25,7 @@
 #endif
 
 #include <deemon/__conf.inl>
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include <deemon/error.h>
 #include <deemon/fs/native_fs.h>
 #include <deemon/fs/virtual_fs.h>
@@ -32,6 +33,7 @@
 #include <deemon/string.h>
 #include <deemon/type.h>
 #include <deemon/vfs/vfs_core.h>
+#include <deemon/vfs/vfs_native_node.h>
 #ifndef __INTELLISENSE__
 #define WIDE
 #define OBJECT
@@ -42,6 +44,6 @@
 #include "virtual_fs.hasproperty.impl.inl"
 #include "virtual_fs.hasproperty.impl.inl"
 #endif
-
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_ISBLOCKDEV_C_INL */

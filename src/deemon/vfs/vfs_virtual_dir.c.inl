@@ -35,13 +35,13 @@ DEE_DECL_BEGIN
 //////////////////////////////////////////////////////////////////////////
 // Node VTable
 static struct DeeVFSNode *DEE_CALL _deevfs_virtualdirnode_vnt_walk(
- struct DeeVFSVirtualDirNode *self, char const *name) {
+ struct DeeVFSVirtualDirNode *self, char const *name, Dee_size_t name_size) {
  struct DeeVFSVirtualDirEntry const *iter;
  iter = self->vdn_children;
  while (1) {
   if (!iter->name) break;
   DEE_ASSERT(iter->node);
-  if (strcmp(iter->name,name) == 0) {
+  if (strncmp(iter->name,name,name_size) == 0) {
    DeeVFSNode_INCREF(iter->node);
    return iter->node;
   }
@@ -103,12 +103,13 @@ int DEE_CALL _deevfs_virtualdirview_vvt_yield(
 
 static struct _DeeVFSViewTypeData _deevfs_virtualdirnode_vnt_view = {
  sizeof(struct DeeVFSVirtualDirView),
- (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))&_deevfs_virtualdirnode_vnt_walk,
- (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *)) &_deevfs_virtualdirnode_vnt_nameof,
- (int (DEE_CALL *)(struct DeeVFSView *))                            &_deevfs_virtualdirview_vvt_open,
- (void (DEE_CALL *)(struct DeeVFSView *))                           NULL,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_virtualdirview_vvt_curr,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_virtualdirview_vvt_yield,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_virtualdirnode_vnt_walk,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))NULL,
+ (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_virtualdirnode_vnt_nameof,
+ (int (DEE_CALL *)(struct DeeVFSView *))                                               &_deevfs_virtualdirview_vvt_open,
+ (void (DEE_CALL *)(struct DeeVFSView *))                                              NULL,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_virtualdirview_vvt_curr,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_virtualdirview_vvt_yield,
 };
 
 struct DeeVFSNodeType const DeeVFSVirtualDirNode_Type = {

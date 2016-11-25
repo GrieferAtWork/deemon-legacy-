@@ -1115,6 +1115,62 @@ wu:  switch (length) {
 #endif
      default:      if DEE_UNLIKELY(DeeStringWriter_F(SpecWriteChar)(self,(char)DEE_VA_ARG(args,DEE_MINUINT_T(DEE_TYPES_SIZEOF_CHAR)),&spec) != 0) result = -1; break;
     } break;
+    case DEE_CHAR_C('$'): {
+     Dee_size_t str_size;
+     union{
+      char const          *str_;
+      Dee_WideChar const  *strw;
+      Dee_Utf8Char const  *str8;
+      Dee_Utf16Char const *str16;
+      Dee_Utf32Char const *str32;
+     } str_;
+     ch = *fmt++;
+     str_size = DEE_VA_ARG(args,Dee_size_t);
+     str_.str_ = DEE_VA_ARG(args,char const *);
+     DEE_ASSERTF(ch == 's' || ch == 'q',"Expected 's' or 'q' after '%$', but got %.1q",fmt);
+     DEE_ASSERTF(!str_size || str_.str_,
+                 "NULL-strings are not allowed to be used with '%$s'/'%$q', "
+                 "unless the size is 0 (but is's %Iu)",str_size);
+     if (str_size) switch (length) {
+#ifdef DEE_TYPES_SIZEOF_WCHAR_T
+      case len_l: {
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteWideStringWithLength)(self,str_size,str_.strw,&spec)
+                                        : DeeStringWriter_F(SpecWriteQuotedWideStringWithLength)(self,str_size,str_.strw,&spec)
+          ) != 0) result = -1;
+      } break;
+#endif
+#ifdef DEE_TYPES_UINT8_T
+      case len_I8: {
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteUtf8StringWithLength)(self,str_size,str_.str8,&spec)
+                                        : DeeStringWriter_F(SpecWriteQuotedUtf8StringWithLength)(self,str_size,str_.str8,&spec)
+          ) != 0) result = -1;
+      } break;
+#endif
+#ifdef DEE_TYPES_UINT16_T
+      case len_I16: {
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteUtf16StringWithLength)(self,str_size,str_.str16,&spec)
+                                        : DeeStringWriter_F(SpecWriteQuotedUtf16StringWithLength)(self,str_size,str_.str16,&spec)
+          ) != 0) result = -1;
+      } break;
+#endif
+#ifdef DEE_TYPES_UINT32_T
+      case len_I32: {
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteUtf32StringWithLength)(self,str_size,str_.str32,&spec)
+                                        : DeeStringWriter_F(SpecWriteQuotedUtf32StringWithLength)(self,str_size,str_.str32,&spec)
+          ) != 0) result = -1;
+      } break;
+#endif
+      default:
+#ifdef DEE_TYPES_SIZEOF_CHAR
+      {
+       if DEE_UNLIKELY((ch != DEE_CHAR_C('q') ? DeeStringWriter_F(SpecWriteStringWithLength)(self,str_size,str_.str_,&spec)
+                                        : DeeStringWriter_F(SpecWriteQuotedStringWithLength)(self,str_size,str_.str_,&spec)
+          ) != 0) result = -1;
+      }
+#endif
+      break;
+     }
+    } break;
     case DEE_CHAR_C('s'):
     case DEE_CHAR_C('q'): {
      union{

@@ -51,10 +51,11 @@ struct DeeVFSVirtualDirEntry const DeeVFSProc_VirtualEntries[] = {
 struct DeeVFSNode _DeeVFS_Proc = DeeVFSNode_INIT(&DeeVFSProcNode_Type,DeeVFS_Root);
 
 static struct DeeVFSNode *DEE_CALL _deevfs_procnode_vnt_walk(
- struct DeeVFSNode *DEE_UNUSED(self), char const *name) {
- DWORD pid = 0; char const *iter = name;
+ struct DeeVFSNode *DEE_UNUSED(self), Dee_Utf8Char const *name, Dee_size_t name_size) {
+ DWORD pid = 0; Dee_Utf8Char const *iter,*end;
  struct DeeVFSVirtualDirEntry const *eiter;
- while (*iter) {
+ end = (iter = name)+name_size;
+ while (iter != end) {
   if (*iter < '0' || *iter > '9') goto nopid;
   pid = (pid*10)+(*iter-'0');
   ++iter;
@@ -62,11 +63,31 @@ static struct DeeVFSNode *DEE_CALL _deevfs_procnode_vnt_walk(
  return (struct DeeVFSNode *)DeeVFSProcPIDNode_NewFromPID(pid);
 nopid:
  for (eiter = DeeVFSProc_VirtualEntries; eiter->name; ++eiter) {
-  if (strcmp(eiter->name,name) == 0) { DeeVFSNode_INCREF(eiter->node); return eiter->node; }
+  if (Dee_Utf8StrNCmp(eiter->name,name,name_size) == 0) { DeeVFSNode_INCREF(eiter->node); return eiter->node; }
  }
  DeeError_SetStringf(&DeeErrorType_SystemError,
-                     "Failed to find %q in \"/proc\"",
-                     name);
+                     "Failed to find %$q in \"/proc\"",
+                     name_size,name);
+ return NULL;
+}
+static struct DeeVFSNode *DEE_CALL _deevfs_procnode_vnt_wwalk(
+ struct DeeVFSNode *DEE_UNUSED(self), Dee_WideChar const *name, Dee_size_t name_size) {
+ DWORD pid = 0; Dee_WideChar const *iter,*end;
+ struct DeeVFSVirtualDirEntry const *eiter;
+ end = (iter = name)+name_size;
+ while (iter != end) {
+  if (*iter < '0' || *iter > '9') goto nopid;
+  pid = (pid*10)+(*iter-'0');
+  ++iter;
+ }
+ return (struct DeeVFSNode *)DeeVFSProcPIDNode_NewFromPID(pid);
+nopid:
+ for (eiter = DeeVFSProc_VirtualEntries; eiter->name; ++eiter) {
+  if (Dee_WideStrNCmp(eiter->name,name,name_size) == 0) { DeeVFSNode_INCREF(eiter->node); return eiter->node; }
+ }
+ DeeError_SetStringf(&DeeErrorType_SystemError,
+                     "Failed to find %l$q in \"/proc\"",
+                     name_size,name);
  return NULL;
 }
 static DeeObject *DEE_CALL _deevfs_procnode_vnt_nameof(
@@ -143,12 +164,13 @@ static int DEE_CALL _deevfs_procview_vvt_yield(
 
 static struct _DeeVFSViewTypeData _deevfs_procnode_vnt_view = {
  sizeof(struct DeeVFSProcView),
- (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))&_deevfs_procnode_vnt_walk,
- (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *)) &_deevfs_procnode_vnt_nameof,
- (int (DEE_CALL *)(struct DeeVFSView *))                            &_deevfs_procview_vvt_open,
- (void (DEE_CALL *)(struct DeeVFSView *))                           &_deevfs_procview_vvt_quit,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_procview_vvt_curr,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_procview_vvt_yield,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_procnode_vnt_walk,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))&_deevfs_procnode_vnt_wwalk,
+ (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_procnode_vnt_nameof,
+ (int (DEE_CALL *)(struct DeeVFSView *))                                               &_deevfs_procview_vvt_open,
+ (void (DEE_CALL *)(struct DeeVFSView *))                                              &_deevfs_procview_vvt_quit,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_procview_vvt_curr,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_procview_vvt_yield,
 };
 struct DeeVFSNodeType const DeeVFSProcNode_Type = {
  {NULL,NULL},NULL,DeeVFSNoopNodeType_FileData,
@@ -191,10 +213,12 @@ static void DEE_CALL _deevfs_procpidnode_quit(struct DeeVFSProcPIDNode *self) {
 #define DEE_VFSPROCPIDMEMBER_EXE     3
 #define DEE_VFSPROCPIDMEMBER_BEGIN   1
 #define DEE_VFSPROCPIDMEMBER_END     4
-static int DeeVFSProcPIDNode_GetMemberID(char const *name) {
- if (strcmp(name,"cmdline") == 0) return DEE_VFSPROCPIDMEMBER_CMDLINE;
- if (strcmp(name,"cwd") == 0) return DEE_VFSPROCPIDMEMBER_CWD;
- if (strcmp(name,"exe") == 0) return DEE_VFSPROCPIDMEMBER_EXE;
+static int DeeVFSProcPIDNode_GetMemberID(char const *name, Dee_size_t name_size) {
+#define CHECK(s) (name_size == (sizeof(s)/sizeof(char))-1 && memcmp(name,s,sizeof(s)-sizeof(char)) == 0)
+ if (CHECK("cmdline")) return DEE_VFSPROCPIDMEMBER_CMDLINE;
+ if (CHECK("cwd")) return DEE_VFSPROCPIDMEMBER_CWD;
+ if (CHECK("exe")) return DEE_VFSPROCPIDMEMBER_EXE;
+#undef CHECK
  return DEE_VFSPROCPIDMEMBER_NONE;
 }
 static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
@@ -222,11 +246,11 @@ static DeeObject *DEE_CALL _deevfs_procpidnode_nameof(
 }
 
 static struct DeeVFSNode *DEE_CALL _deevfs_procpidnode_walk(
- struct DeeVFSProcPIDNode *self, char const *name) {
- int member = DeeVFSProcPIDNode_GetMemberID(name);
+ struct DeeVFSProcPIDNode *self, char const *name, Dee_size_t name_size) {
+ int member = DeeVFSProcPIDNode_GetMemberID(name,name_size);
  if (member == DEE_VFSPROCPIDMEMBER_NONE) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "Failed to find %q in %R",name,
+                      "Failed to find %$q in %R",name_size,name,
                       DeeVFSNode_Filename((struct DeeVFSNode *)self));
   return NULL;
  }
@@ -261,12 +285,13 @@ static int DEE_CALL _deevfs_procpidview_vvt_yield(
 }
 static struct _DeeVFSViewTypeData _deevfs_procpidnode_vnt_view = {
  sizeof(struct DeeVFSVirtualDirView),
- (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,char const *))&_deevfs_procpidnode_walk,
- (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *)) &_deevfs_procpidnode_nameof,
- (int (DEE_CALL *)(struct DeeVFSView *))                            &_deevfs_procpidview_vvt_open,
- (void (DEE_CALL *)(struct DeeVFSView *))                           &_deevfs_procpidview_vvt_quit,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_procpidview_vvt_curr,
- (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))       &_deevfs_procpidview_vvt_yield,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_procpidnode_walk,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))NULL,
+ (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_procpidnode_nameof,
+ (int (DEE_CALL *)(struct DeeVFSView *))                                               &_deevfs_procpidview_vvt_open,
+ (void (DEE_CALL *)(struct DeeVFSView *))                                              &_deevfs_procpidview_vvt_quit,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_procpidview_vvt_curr,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_procpidview_vvt_yield,
 };
 struct DeeVFSNodeType const DeeVFSProcPIDNode_Type = {
  {(void (DEE_CALL *)(struct DeeVFSNode *))&_deevfs_procpidnode_quit,NULL},

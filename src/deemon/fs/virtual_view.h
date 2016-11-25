@@ -52,7 +52,7 @@ DeeVFSView_GetCurrentNode(struct DeeVFSView const *self) {
  }
  return NULL;
 }
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeStringObject) *)
+DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeAnyStringObject) *)
 DeeVFSView_GetFilenameObject(struct DeeVFSView const *self) {
  struct DeeVFSNode *node; DeeObject *result;
  if DEE_UNLIKELY((node = DeeVFSView_GetCurrentNode(self)) == NULL) return NULL;
