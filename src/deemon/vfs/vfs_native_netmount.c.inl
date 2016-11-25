@@ -180,8 +180,8 @@ static int DEE_CALL DeeVFSNetServerView_GetCurrentNode(
  struct DeeVFSNetServerView *self, struct DeeVFSNativeNode **result, int advance) {
  PSHARE_INFO_502 my_info; int error;
  Dee_WideChar *wname; Dee_size_t wname_size;
- static Dee_WideChar const _fmt1[] = {'\\','\\','%','k','\\'/* shrugs... */ ,'\\',0};
- static Dee_WideChar const _fmt2[] = {'\\','\\','%','k','\\','%','l','$','s','\\',0};
+ static Dee_WideChar const _fmt1[] = {'\\','\\','%','k','\\'/* shrugs... */ ,0};
+ static Dee_WideChar const _fmt2[] = {'\\','\\','%','k','\\','%','l','$','s',0};
 again:
  DeeAtomicMutex_AcquireRelaxed(&self->nsv_lock);
  if ((error = _DeeVFSNetServerView_GetInfoLocked(self,&my_info)) != 0) {
@@ -207,7 +207,7 @@ again:
  if (advance) ++self->nsv_pCurr;
  DeeAtomicMutex_Release(&self->nsv_lock);
  if ((*result = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) { free_nn(wname); return -1; }
- (*result)->vnn_path = (DeeAnyStringObject *)DeeWideString_Newf(_fmt1,self->nsv_server,wname_size,wname);
+ (*result)->vnn_path = (DeeAnyStringObject *)DeeWideString_Newf(_fmt2,self->nsv_server,wname_size,wname);
  free_nn(wname);
  if (!(*result)->vnn_path) {err_rnode: DeeVFSNode_FREE(*result); return -1; }
  DeeVFSNode_InitWithParent(&(*result)->vnn_node,

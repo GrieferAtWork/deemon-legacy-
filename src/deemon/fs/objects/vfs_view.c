@@ -80,10 +80,14 @@ static DeeVFSViewObject *DEE_CALL _deevfsview_tp_any_new(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeObject *args) {
  DeeVFSViewObject *result; DeeObject *path; struct DeeVFSNode *node;
  if (DeeTuple_Unpack(args,"o:vfs_view",&path) != 0) return NULL;
- if ((path = DeeString_Cast(path)) == NULL) return NULL;
- node = DeeVFS_Locate(DeeString_STR(path));
- Dee_DECREF(path);
- if (!node) return NULL;
+ if (DeeWideString_Check(path)) {
+  node = DeeVFS_WideLocateObject(path);
+ } else {
+  if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return NULL;
+  node = DeeVFS_Utf8LocateObject(path);
+  Dee_DECREF(path);
+ }
+ if DEE_UNLIKELY(!node) return NULL;
  result = DeeVFSView_OpenNode(node);
  DeeVFSNode_DECREF(node);
  return result;

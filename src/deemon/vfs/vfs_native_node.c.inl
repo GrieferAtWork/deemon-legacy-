@@ -42,7 +42,7 @@ DEE_COMPILER_MSVC_WARNING_POP
 DEE_DECL_BEGIN
 
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideChdirDriveRoot(DEE_A_IN Dee_WideChar drive_name) {
- // Without the \-character at the end, calling 'SetCurrentDirectory("C:")' will
+ // Without the \ character at the end, calling 'SetCurrentDirectory("C:")' will
  // only switch the cwd of the c-drive, but not actually set that cwd to its root.
  // >> SetCurrentDirectory("C:"); // Not what we want
  // >> SetCurrentDirectory("C:\\"); // Different, and what we want!

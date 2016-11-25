@@ -406,14 +406,20 @@
 //  |    |    |                 anything using the calls used by deemon to implement this...
 //  |    |    |           NOTE: Also affects "/proc/[PID]/cwd"
 //  |    |    |
-//  |    |    +----# [L] "/proc/[PID]/cwd" --> "[getcwd(PID)]"
+//  |    |    +----# [L] "/proc/[PID]/cwd" --> "[fs::getcwd(PID)]"
 //  |    |    |        - A link that, when read, points to the cwd of the given PID, as know to windows.
 //  |    |    |          Note, that if PID describes another instance of deemon, you are only able
 //  |    |    |          to read the cwd, as known to windows, but not a possibly set virtual CWD.
 //  |    |    |
 //  |    |    +----# [F] "/proc/[PID]/exe" --> "[QueryFullProcessImageName(PID)]"
-//  |    |             - A link, that when read, points to the absolute path of
-//  |    |               the executable run by PID.
+//  |    |    |        - A link, that when read, points to the absolute path of
+//  |    |    |          the executable run by PID.
+//  |    |    |
+//  |    |    +----# [L] "/proc/[PID]/root" --> "[fs::path::head(fs::getcwd(PID))]"
+//  |    |             - Alias for cwd, but points to the drive's root
+//  |    |               associated with "/proc/[PID]/cwd".
+//  |    |             WARNING: This function suffers from the same consequences as 'cmdline' and 'cwd'
+//  |    |     
 //  |    |
 //  |    +----# [L] "/proc/self" --> "/proc/[process.self().id()]"
 //  |             - A symbolic link describing the "/proc/[PID]" entry for the current process.

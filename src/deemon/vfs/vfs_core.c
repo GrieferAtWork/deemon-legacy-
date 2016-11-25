@@ -84,7 +84,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetTimes(
  proptype = self->vn_type->vnt_prop;
  if (!proptype || !proptype->vnt_gettimes) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "Can't read time for %R",
+                      "Can't read time for virtual path %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
@@ -97,7 +97,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_SetTimes(
  proptype = self->vn_type->vnt_prop;
  if (!proptype || !proptype->vnt_settimes) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "Can't write time for %R",
+                      "Can't write time for virtual path %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
@@ -129,7 +129,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chmod(
  proptype = self->vn_type->vnt_prop;
  if (!proptype || !proptype->vnt_chmod) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "Can't chmod %R",
+                      "Can't chmod virtual path %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
@@ -142,7 +142,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_GetOwn(
  proptype = self->vn_type->vnt_prop;
  if (!proptype || !proptype->vnt_getown) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "Can't getown %R",
+                      "Can't getown virtual path %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
@@ -155,7 +155,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(
  proptype = self->vn_type->vnt_prop;
  if (!proptype || !proptype->vnt_chown) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "Can't chown %R",
+                      "Can't chown virtual path %R",
                       DeeVFSNode_Filename(self));
   return -1;
  }
@@ -167,7 +167,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeVFSNode_Utf8Readlink(DEE_A_INOUT struct DeeVFSNode *self) {
  if (!self->vn_type->vnt_node.vnt_readlink) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "Can't readlink %R",
+                      "Can't readlink virtual path %R",
                       DeeVFSNode_Filename(self));
   return NULL;
  }

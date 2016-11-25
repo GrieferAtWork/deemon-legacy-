@@ -80,8 +80,8 @@ extern DEE_A_RET_EXCEPT(-1) int DeeNFS_WideChdirDriveRoot(DEE_A_IN Dee_WideChar 
 #define DeeVFSNativeNode_NFS_IsMount(self)                    (DeeUtf8String_Check(DeeVFSNativeNode_PATH(self)) ? DeeNFS_Utf8IsMountObject(DeeVFSNativeNode_PATH(self)) : DeeNFS_WideIsMountObject(DeeVFSNativeNode_PATH(self)))
 #define DeeVFSNativeNode_IsDrive(self) \
 (DeeUtf8String_Check(DeeVFSNativeNode_PATH(self))\
- ? (DeeUtf8String_SIZE(DeeVFSNativeNode_PATH(self)) == 2 && DeeUtf8String_STR(DeeVFSNativeNode_PATH(self))[1] == ':')\
- : (DeeWideString_SIZE(DeeVFSNativeNode_PATH(self)) == 2 && DeeWideString_STR(DeeVFSNativeNode_PATH(self))[1] == ':'))
+ ? (DeeUtf8String_SIZE(DeeVFSNativeNode_PATH(self)) == 2/* && DeeUtf8String_STR(DeeVFSNativeNode_PATH(self))[1] == ':'*/)\
+ : (DeeWideString_SIZE(DeeVFSNativeNode_PATH(self)) == 2/* && DeeWideString_STR(DeeVFSNativeNode_PATH(self))[1] == ':'*/))
 
 
 struct DeeVFSNativeFile {
