@@ -261,10 +261,20 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
  struct DeeVFSNode *result;
  DeeObject *link_path; char const *link_str;
  if DEE_UNLIKELY((link_path = DeeVFSNode_DoReadlink(self)) == NULL) return NULL;
+ DEE_ASSERT(DeeObject_Check(link_path) && DeeString_Check(link_path));
  link_str = DeeString_STR(link_path);
  if (DEE_VFS_ISSEP(link_str[0])) { // Absolute link
   do ++link_str; while (DEE_VFS_ISSEP(link_str[0]));
   result = DeeVFS_LLocateAt_impl(state,DeeVFS_Root,link_str);
+ } else if (DeeVFS_Utf8IsAbsoluteNativePath(link_str)) {
+  // Absolute path within the native filesystem
+  if ((result = (struct DeeVFSNode *)DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) != NULL) {
+   // NOTE: We initialize the node's parent as ourselves, which though technically
+   //       not being correct, is much faster than trying to find the real native node.
+   DeeVFSNode_InitWithParent(result,&DeeVFSNativeNode_Type,self);
+   ((struct DeeVFSNativeNode *)result)->vnn_path = (DeeStringObject *)link_path; // Inherit reference
+   return result; // Skip the decref on link_path (we inherited that reference)
+  }
  } else { // Relative link
   DEE_ASSERTF(self->vn_parent,"Node %R without parent is a link",
               DeeVFSNode_Filename(self));

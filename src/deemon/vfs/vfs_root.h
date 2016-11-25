@@ -36,6 +36,7 @@ extern struct DeeVFSVirtualDirNode _DeeVFS_Root;
 // NOTE: On windows, this is a folder filled with directories matching all drive names.
 extern struct DeeVFSNode _DeeVFSNative_Root;
 #define DeeVFSNative_Root ((struct DeeVFSNode *)&_DeeVFSNative_Root)
+#define DeeVFS_Mount      DeeVFSNative_Root
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS2 */

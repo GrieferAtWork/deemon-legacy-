@@ -54,10 +54,19 @@ struct DeeVFSVirtualDirNode _DeeVFS_Dev =
 struct DeeVFSNode _DeeVFSNative_Root =
   DeeVFSNode_INIT(&DeeVFSNativeMountNode_Type,DeeVFS_Root);
 
+
+static DeeObject *DEE_CALL _deevfs_tmplink_vnt_readlink(struct DeeVFSNode *DEE_UNUSED(self)) { return DeeNFS_GetTmp(); }
+struct DeeVFSNodeType DeeVFSTmpLinkNode_Type = {
+ {NULL,&_deevfs_tmplink_vnt_readlink},NULL,
+ DeeVFSNoopNodeType_FileData,NULL};
+struct DeeVFSNode _DeeVFS_Tmp = DeeVFSNode_INIT(&DeeVFSTmpLinkNode_Type,DeeVFS_Root);
+
+
 static struct DeeVFSVirtualDirEntry _deevfs_root_nodes[] = {
  {"dev",  (struct DeeVFSNode *)&_DeeVFS_Dev},
- {"mount",DeeVFSNative_Root},
+ {"mount",DeeVFS_Mount},
  {"proc", DeeVFS_Proc},
+ {"tmp",  (struct DeeVFSNode *)&_DeeVFS_Tmp},
  {NULL,NULL},
 };
 
