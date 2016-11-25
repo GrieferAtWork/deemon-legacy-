@@ -83,6 +83,24 @@
 // >> [[optional]] void DeeSysFS_Utf8SetTimesObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideSetTimesObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN_OPT Dee_timetick_t const *atime, DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
+// >> [[optional]] void DeeSysFS_Utf8GetMod(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT Dee_mode_t *mode, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideGetMod(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT Dee_mode_t *mode, CODE on_error);
+// >> [[optional]] void DeeSysFS_Utf8GetModObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_OUT Dee_mode_t *mode, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideGetModObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_OUT Dee_mode_t *mode, CODE on_error);
+// >> [[optional]] void DeeSysFS_Utf8Chmod(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideChmod(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode, CODE on_error);
+// >> [[optional]] void DeeSysFS_Utf8ChmodObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideChmodObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode, CODE on_error);
+//////////////////////////////////////////////////////////////////////////
+// >> [[optional]] void DeeSysFS_Utf8GetOwn(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideGetOwn(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group, CODE on_error);
+// >> [[optional]] void DeeSysFS_Utf8GetOwnObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideGetOwnObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_OUT Dee_uid_t *owner, DEE_A_OUT Dee_gid_t *group, CODE on_error);
+// >> [[optional]] void DeeSysFS_Utf8Chown(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideChown(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group, CODE on_error);
+// >> [[optional]] void DeeSysFS_Utf8ChownObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideChownObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group, CODE on_error);
+//////////////////////////////////////////////////////////////////////////
 // >> [[optional]] void DeeSysFS_Utf8IsFile(DEE_A_IN_Z Dee_Utf8Char const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideIsFile(DEE_A_IN_Z Dee_WideChar const *path, int *result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8IsFileObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, int *result, CODE on_error);
@@ -207,35 +225,17 @@
 #if !defined(DeeSysFS_WideHasEnvObject) && defined(DeeSysFS_WideHasEnv)
 #define DeeSysFS_WideHasEnvObject(envname,result,...) DeeSysFS_WideHasEnv(DeeWideString_STR(envname),result,__VA_ARGS__)
 #endif
-#if !defined(DeeSysFS_Utf8TryHasEnvObject) && defined(DeeSysFS_Utf8TryHasEnv)
-#define DeeSysFS_Utf8TryHasEnvObject(envname) DeeSysFS_Utf8TryHasEnv(DeeUtf8String_STR(envname))
-#endif
-#if !defined(DeeSysFS_WideTryHasEnvObject) && defined(DeeSysFS_WideTryHasEnv)
-#define DeeSysFS_WideTryHasEnvObject(envname) DeeSysFS_WideTryHasEnv(DeeWideString_STR(envname))
-#endif
 #if !defined(DeeSysFS_Utf8DelEnvObject) && defined(DeeSysFS_Utf8DelEnv)
 #define DeeSysFS_Utf8DelEnvObject(envname,...) DeeSysFS_Utf8DelEnv(DeeUtf8String_STR(envname),__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideDelEnvObject) && defined(DeeSysFS_WideDelEnv)
 #define DeeSysFS_WideDelEnvObject(envname,...) DeeSysFS_WideDelEnv(DeeWideString_STR(envname),__VA_ARGS__)
 #endif
-#if !defined(DeeSysFS_Utf8TryDelEnvObject) && defined(DeeSysFS_Utf8TryDelEnv)
-#define DeeSysFS_Utf8TryDelEnvObject(envname) DeeSysFS_Utf8TryDelEnv(DeeUtf8String_STR(envname))
-#endif
-#if !defined(DeeSysFS_WideTryDelEnvObject) && defined(DeeSysFS_WideTryDelEnv)
-#define DeeSysFS_WideTryDelEnvObject(envname) DeeSysFS_WideTryDelEnv(DeeWideString_STR(envname))
-#endif
 #if !defined(DeeSysFS_Utf8SetEnvObject) && defined(DeeSysFS_Utf8SetEnv)
 #define DeeSysFS_Utf8SetEnvObject(envname,newvalue,...) DeeSysFS_Utf8SetEnv(DeeUtf8String_STR(envname),DeeUtf8String_STR(newvalue),__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideSetEnvObject) && defined(DeeSysFS_WideSetEnv)
 #define DeeSysFS_WideSetEnvObject(envname,newvalue,...) DeeSysFS_WideSetEnv(DeeWideString_STR(envname),DeeWideString_STR(newvalue),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TrySetEnvObject) && defined(DeeSysFS_Utf8TrySetEnv)
-#define DeeSysFS_Utf8TrySetEnvObject(envname,newvalue) DeeSysFS_Utf8TrySetEnv(DeeUtf8String_STR(envname),DeeUtf8String_STR(newvalue))
-#endif
-#if !defined(DeeSysFS_WideTrySetEnvObject) && defined(DeeSysFS_WideTrySetEnv)
-#define DeeSysFS_WideTrySetEnvObject(envname,newvalue) DeeSysFS_WideTrySetEnv(DeeWideString_STR(envname),DeeWideString_STR(newvalue))
 #endif
 
 #if !defined(DeeSysFS_Utf8GetUserHomeObject) && defined(DeeSysFS_Utf8GetUserHome)
@@ -251,23 +251,36 @@
 #if !defined(DeeSysFS_WideGetTimesObject) && defined(DeeSysFS_WideGetTimes)
 #define DeeSysFS_WideGetTimesObject(path,atime,ctime,mtime,...) DeeSysFS_WideGetTimes(DeeWideString_STR(path),atime,ctime,mtime,__VA_ARGS__)
 #endif
-#if !defined(DeeSysFS_Utf8TryGetTimesObject) && defined(DeeSysFS_Utf8TryGetTimes)
-#define DeeSysFS_Utf8TryGetTimesObject(path,atime,ctime,mtime) DeeSysFS_Utf8TryGetTimes(DeeUtf8String_STR(path),atime,ctime,mtime)
-#endif
-#if !defined(DeeSysFS_WideTryGetTimesObject) && defined(DeeSysFS_WideTryGetTimes)
-#define DeeSysFS_WideTryGetTimesObject(path,atime,ctime,mtime) DeeSysFS_WideTryGetTimes(DeeWideString_STR(path),atime,ctime,mtime)
-#endif
 #if !defined(DeeSysFS_Utf8SetTimesObject) && defined(DeeSysFS_Utf8SetTimes)
 #define DeeSysFS_Utf8SetTimesObject(path,atime,ctime,mtime,...) DeeSysFS_Utf8SetTimes(DeeUtf8String_STR(path),atime,ctime,mtime,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideSetTimesObject) && defined(DeeSysFS_WideSetTimes)
 #define DeeSysFS_WideSetTimesObject(path,atime,ctime,mtime,...) DeeSysFS_WideSetTimes(DeeWideString_STR(path),atime,ctime,mtime,__VA_ARGS__)
 #endif
-#if !defined(DeeSysFS_Utf8TrySetTimesObject) && defined(DeeSysFS_Utf8TrySetTimes)
-#define DeeSysFS_Utf8TrySetTimesObject(path,atime,ctime,mtime) DeeSysFS_Utf8TrySetTimes(DeeUtf8String_STR(path),atime,ctime,mtime)
+
+#if !defined(DeeSysFS_Utf8GetModObject) && defined(DeeSysFS_Utf8GetMod)
+#define DeeSysFS_Utf8GetModObject(path,mode,...) DeeSysFS_Utf8GetMod(DeeUtf8String_STR(path),mode,__VA_ARGS__)
 #endif
-#if !defined(DeeSysFS_WideTrySetTimesObject) && defined(DeeSysFS_WideTrySetTimes)
-#define DeeSysFS_WideTrySetTimesObject(path,atime,ctime,mtime) DeeSysFS_WideTrySetTimes(DeeWideString_STR(path),atime,ctime,mtime)
+#if !defined(DeeSysFS_WideGetModObject) && defined(DeeSysFS_WideGetMod)
+#define DeeSysFS_WideGetModObject(path,mode,...) DeeSysFS_WideGetMod(DeeWideString_STR(path),mode,__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_Utf8ChmodObject) && defined(DeeSysFS_Utf8Chmod)
+#define DeeSysFS_Utf8ChmodObject(path,mode,...) DeeSysFS_Utf8Chmod(DeeUtf8String_STR(path),mode,__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_WideChmodObject) && defined(DeeSysFS_WideChmod)
+#define DeeSysFS_WideChmodObject(path,mode,...) DeeSysFS_WideChmod(DeeWideString_STR(path),mode,__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_Utf8GetownObject) && defined(DeeSysFS_Utf8Getown)
+#define DeeSysFS_Utf8GetownObject(path,owner,group,...) DeeSysFS_Utf8Getown(DeeUtf8String_STR(path),owner,group,__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_WideGetownObject) && defined(DeeSysFS_WideGetown)
+#define DeeSysFS_WideGetownObject(path,owner,group,...) DeeSysFS_WideGetown(DeeWideString_STR(path),owner,group,__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_Utf8ChownObject) && defined(DeeSysFS_Utf8Chown)
+#define DeeSysFS_Utf8ChownObject(path,owner,group,...) DeeSysFS_Utf8Chown(DeeUtf8String_STR(path),owner,group,__VA_ARGS__)
+#endif
+#if !defined(DeeSysFS_WideChownObject) && defined(DeeSysFS_WideChown)
+#define DeeSysFS_WideChownObject(path,owner,group,...) DeeSysFS_WideChown(DeeWideString_STR(path),owner,group,__VA_ARGS__)
 #endif
 
 /*[[[deemon
@@ -397,23 +410,11 @@ make("Exists");
 #if !defined(DeeSysFS_WideRemoveObject) && defined(DeeSysFS_WideRemove)
 #define DeeSysFS_WideRemoveObject(path,...) DeeSysFS_WideRemove(DeeWideString_STR(path),__VA_ARGS__)
 #endif
-#if !defined(DeeSysFS_Utf8TryMkDirObject) && defined(DeeSysFS_Utf8TryMkDir)
-#define DeeSysFS_Utf8TryMkDirObject(path,mode) DeeSysFS_Utf8TryMkDir(DeeUtf8String_STR(path),mode)
-#endif
-#if !defined(DeeSysFS_WideTryMkDirObject) && defined(DeeSysFS_WideTryMkDir)
-#define DeeSysFS_WideTryMkDirObject(path,mode) DeeSysFS_WideTryMkDir(DeeWideString_STR(path),mode)
-#endif
 #if !defined(DeeSysFS_Utf8MkDirObject) && defined(DeeSysFS_Utf8MkDir)
 #define DeeSysFS_Utf8MkDirObject(path,mode,...) DeeSysFS_Utf8MkDir(DeeUtf8String_STR(path),mode,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideMkDirObject) && defined(DeeSysFS_WideMkDir)
 #define DeeSysFS_WideMkDirObject(path,mode,...) DeeSysFS_WideMkDir(DeeWideString_STR(path),mode,__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryCopyObject) && defined(DeeSysFS_Utf8TryCopy)
-#define DeeSysFS_Utf8TryCopyObject(src,dst) DeeSysFS_Utf8TryCopy(DeeUtf8String_STR(src),DeeUtf8String_STR(dst))
-#endif
-#if !defined(DeeSysFS_WideTryCopyObject) && defined(DeeSysFS_WideTryCopy)
-#define DeeSysFS_WideTryCopyObject(src,dst) DeeSysFS_WideTryCopy(DeeWideString_STR(src),DeeWideString_STR(dst))
 #endif
 #if !defined(DeeSysFS_Utf8CopyObject) && defined(DeeSysFS_Utf8Copy)
 #define DeeSysFS_Utf8CopyObject(src,dst,...) DeeSysFS_Utf8Copy(DeeUtf8String_STR(src),DeeUtf8String_STR(dst),__VA_ARGS__)
@@ -421,23 +422,11 @@ make("Exists");
 #if !defined(DeeSysFS_WideCopyObject) && defined(DeeSysFS_WideCopy)
 #define DeeSysFS_WideCopyObject(src,dst,...) DeeSysFS_WideCopy(DeeWideString_STR(src),DeeWideString_STR(dst),__VA_ARGS__)
 #endif
-#if !defined(DeeSysFS_Utf8TryMoveObject) && defined(DeeSysFS_Utf8TryMove)
-#define DeeSysFS_Utf8TryMoveObject(src,dst) DeeSysFS_Utf8TryMove(DeeUtf8String_STR(src),DeeUtf8String_STR(dst))
-#endif
-#if !defined(DeeSysFS_WideTryMoveObject) && defined(DeeSysFS_WideTryMove)
-#define DeeSysFS_WideTryMoveObject(src,dst) DeeSysFS_WideTryMove(DeeWideString_STR(src),DeeWideString_STR(dst))
-#endif
 #if !defined(DeeSysFS_Utf8MoveObject) && defined(DeeSysFS_Utf8Move)
 #define DeeSysFS_Utf8MoveObject(src,dst,...) DeeSysFS_Utf8Move(DeeUtf8String_STR(src),DeeUtf8String_STR(dst),__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideMoveObject) && defined(DeeSysFS_WideMove)
 #define DeeSysFS_WideMoveObject(src,dst,...) DeeSysFS_WideMove(DeeWideString_STR(src),DeeWideString_STR(dst),__VA_ARGS__)
-#endif
-#if !defined(DeeSysFS_Utf8TryLinkObject) && defined(DeeSysFS_Utf8TryLink)
-#define DeeSysFS_Utf8TryLinkObject(link_name,target_name) DeeSysFS_Utf8TryLink(DeeUtf8String_STR(link_name),DeeUtf8String_STR(target_name))
-#endif
-#if !defined(DeeSysFS_WideTryLinkObject) && defined(DeeSysFS_WideTryLink)
-#define DeeSysFS_WideTryLinkObject(link_name,target_name) DeeSysFS_WideTryLink(DeeWideString_STR(link_name),DeeWideString_STR(target_name))
 #endif
 #if !defined(DeeSysFS_Utf8LinkObject) && defined(DeeSysFS_Utf8Link)
 #define DeeSysFS_Utf8LinkObject(link_name,target_name,...) DeeSysFS_Utf8Link(DeeUtf8String_STR(link_name),DeeUtf8String_STR(target_name),__VA_ARGS__)
@@ -456,12 +445,6 @@ make("Exists");
 // Link the default encoding to the mapped functions
 #ifdef DeeSysFS_Utf8GetCwd
 #define DeeSysFS_GetCwd DeeSysFS_Utf8GetCwd
-#endif
-#ifdef DeeSysFS_Utf8TryChdir
-#define DeeSysFS_TryChdir DeeSysFS_Utf8TryChdir
-#endif
-#ifdef DeeSysFS_Utf8TryChdirObject
-#define DeeSysFS_TryChdirObject DeeSysFS_Utf8TryChdirObject
 #endif
 #ifdef DeeSysFS_Utf8Chdir
 #define DeeSysFS_Chdir DeeSysFS_Utf8Chdir
@@ -485,38 +468,20 @@ make("Exists");
 #ifdef DeeSysFS_Utf8HasEnv
 #define DeeSysFS_HasEnv DeeSysFS_Utf8HasEnv
 #endif
-#ifdef DeeSysFS_Utf8TryHasEnv
-#define DeeSysFS_TryHasEnv DeeSysFS_Utf8TryHasEnv
-#endif
 #ifdef DeeSysFS_Utf8HasEnvObject
 #define DeeSysFS_HasEnvObject DeeSysFS_Utf8HasEnvObject
-#endif
-#ifdef DeeSysFS_Utf8TryHasEnvObject
-#define DeeSysFS_TryHasEnvObject DeeSysFS_Utf8TryHasEnvObject
 #endif
 #ifdef DeeSysFS_Utf8DelEnv
 #define DeeSysFS_DelEnv DeeSysFS_Utf8DelEnv
 #endif
-#ifdef DeeSysFS_Utf8TryDelEnv
-#define DeeSysFS_TryDelEnv DeeSysFS_Utf8TryDelEnv
-#endif
 #ifdef DeeSysFS_Utf8DelEnvObject
 #define DeeSysFS_DelEnvObject DeeSysFS_Utf8DelEnvObject
-#endif
-#ifdef DeeSysFS_Utf8TryDelEnvObject
-#define DeeSysFS_TryDelEnvObject DeeSysFS_Utf8TryDelEnvObject
 #endif
 #ifdef DeeSysFS_Utf8SetEnv
 #define DeeSysFS_SetEnv DeeSysFS_Utf8SetEnv
 #endif
-#ifdef DeeSysFS_Utf8TrySetEnv
-#define DeeSysFS_TrySetEnv DeeSysFS_Utf8TrySetEnv
-#endif
 #ifdef DeeSysFS_Utf8SetEnvObject
 #define DeeSysFS_SetEnvObject DeeSysFS_Utf8SetEnvObject
-#endif
-#ifdef DeeSysFS_Utf8TrySetEnvObject
-#define DeeSysFS_TrySetEnvObject DeeSysFS_Utf8TrySetEnvObject
 #endif
 #ifdef DeeSysFS_Utf8EnumEnv
 #define DeeSysFS_EnumEnv DeeSysFS_Utf8EnumEnv
@@ -535,26 +500,39 @@ make("Exists");
 #ifdef DeeSysFS_Utf8GetTimes
 #define DeeSysFS_GetTimes DeeSysFS_Utf8GetTimes
 #endif
-#ifdef DeeSysFS_Utf8TryGetTimes
-#define DeeSysFS_TryGetTimes DeeSysFS_Utf8TryGetTimes
-#endif
 #ifdef DeeSysFS_Utf8GetTimesObject
 #define DeeSysFS_GetTimesObject DeeSysFS_Utf8GetTimesObject
-#endif
-#ifdef DeeSysFS_Utf8TryGetTimesObject
-#define DeeSysFS_TryGetTimesObject DeeSysFS_Utf8TryGetTimesObject
 #endif
 #ifdef DeeSysFS_Utf8SetTimes
 #define DeeSysFS_SetTimes DeeSysFS_Utf8SetTimes
 #endif
-#ifdef DeeSysFS_Utf8TrySetTimes
-#define DeeSysFS_TrySetTimes DeeSysFS_Utf8TrySetTimes
-#endif
 #ifdef DeeSysFS_Utf8SetTimesObject
 #define DeeSysFS_SetTimesObject DeeSysFS_Utf8SetTimesObject
 #endif
-#ifdef DeeSysFS_Utf8TrySetTimesObject
-#define DeeSysFS_TrySetTimesObject DeeSysFS_Utf8TrySetTimesObject
+
+#ifdef DeeSysFS_Utf8GetMod
+#define DeeSysFS_GetMod DeeSysFS_Utf8GetMod
+#endif
+#ifdef DeeSysFS_Utf8GetModObject
+#define DeeSysFS_GetModObject DeeSysFS_Utf8GetModObject
+#endif
+#ifdef DeeSysFS_Utf8Chmod
+#define DeeSysFS_Chmod DeeSysFS_Utf8Chmod
+#endif
+#ifdef DeeSysFS_Utf8ChmodObject
+#define DeeSysFS_ChmodObject DeeSysFS_Utf8ChmodObject
+#endif
+#ifdef DeeSysFS_Utf8GetOwn
+#define DeeSysFS_GetOwn DeeSysFS_Utf8GetOwn
+#endif
+#ifdef DeeSysFS_Utf8GetOwnObject
+#define DeeSysFS_GetOwnObject DeeSysFS_Utf8GetOwnObject
+#endif
+#ifdef DeeSysFS_Utf8Chown
+#define DeeSysFS_Chown DeeSysFS_Utf8Chown
+#endif
+#ifdef DeeSysFS_Utf8ChownObject
+#define DeeSysFS_ChownObject DeeSysFS_Utf8ChownObject
 #endif
 
 #endif /* !GUARD_DEEMON_SYS_SYSFS_H */

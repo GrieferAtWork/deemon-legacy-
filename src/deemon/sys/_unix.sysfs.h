@@ -392,6 +392,7 @@ do{if DEE_UNLIKELY((*(result) = DeeWideString_New(_wP_tmpdir)) == NULL){__VA_ARG
 #define DeeUnixSysFS_WideGetTmp DeeUnixSys_WideGetTmp
 #endif
 
+#if DEE_HAVE_STAT
 #define DeeUnixSys_Utf8GetTimes(path,atime,ctime,mtime,...) \
 do{\
  struct stat _stat_st;\
@@ -405,6 +406,7 @@ do{\
  if (ctime) *(ctime) = DeeTime_TimeT2Mseconds(_stat_st.st_ctime);\
  if (mtime) *(mtime) = DeeTime_TimeT2Mseconds(_stat_st.st_mtime);\
 }while(0)
+#endif /* DEE_HAVE_STAT */
 #if DEE_HAVE__WSTAT
 #define DeeUnixSys_WideGetTimes(path,atime,ctime,mtime,...) \
 do{\
@@ -419,13 +421,16 @@ do{\
  if (ctime) *(ctime) = DeeTime_TimeT2Mseconds(_stat_st.st_ctime);\
  if (mtime) *(mtime) = DeeTime_TimeT2Mseconds(_stat_st.st_mtime);\
 }while(0)
-#endif
+#endif /* DEE_HAVE__WSTAT */
 
+#ifdef DeeUnixSys_Utf8GetTimes
 #define DeeUnixSysFS_Utf8GetTimes DeeUnixSys_Utf8GetTimes
+#endif
 #ifdef DeeUnixSys_WideGetTimes
 #define DeeUnixSysFS_WideGetTimes DeeUnixSys_WideGetTimes
 #endif
 
+#if DEE_HAVE_STAT
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_TIME_H
 #define DeeUnixSys_Utf8SetTimes(path,atime,ctime,mtime,...) \
  DeeUnixSys_Utf8SetTimes_impl(path,atime,mtime,__VA_ARGS__)
@@ -494,6 +499,7 @@ do{\
  }\
 }while(0)
 #endif
+#endif /* DEE_HAVE_STAT */
 
 #ifdef DeeUnixSys_Utf8SetTimes
 #define DeeUnixSysFS_Utf8SetTimes DeeUnixSys_Utf8SetTimes
@@ -539,9 +545,10 @@ do{\
 #define DeeUnixSysFS_Utf8IsAbs DeeUnixSys_Utf8IsAbs
 #define DeeUnixSysFS_WideIsAbs DeeUnixSys_WideIsAbs
 
+#if DEE_HAVE_STAT
 // As described here:
 // http://stackoverflow.com/questions/10410513/function-or-a-systemcall-similar-to-mountpoint-command-in-linux
-// Minor modifications were made, as described here:
+// Minor modifications were made, as implemented here:
 // https://fossies.org/linux/misc/sysvinit-2.88.tar.gz:a/sysvinit-2.88/src/mountpoint.c
 #define DeeUnixSys_Utf8IsMountWithLength(path,path_size,result,...) \
 do{\
@@ -576,16 +583,24 @@ do{\
  *(result) = (_mp.st_dev != _mp_parent.st_dev)\
           || (_mp.st_dev == _mp_parent.st_dev && _mp.st_ino == _mp_parent.st_ino);\
 }while(0)
+#endif /* DEE_HAVE_STAT */
+#ifdef DeeUnixSys_Utf8IsMountWithLength
 #define DeeUnixSys_Utf8IsMount(path,result,...) \
  DeeUnixSys_Utf8IsMountWithLength(path,strlen(path),result,__VA_ARGS__)
 #define DeeUnixSys_Utf8IsMountObject(path,result,...) \
  DeeUnixSys_Utf8IsMountWithLength(DeeUtf8String_STR(path),DeeUtf8String_SIZE(path),result,__VA_ARGS__)
+#endif /* DeeUnixSys_Utf8IsMountWithLength */
+#ifdef DeeUnixSys_Utf8IsMount
 #define DeeUnixSysFS_Utf8IsMount       DeeUnixSys_Utf8IsMount
+#endif
+#ifdef DeeUnixSys_Utf8IsMountObject
 #define DeeUnixSysFS_Utf8IsMountObject DeeUnixSys_Utf8IsMountObject
+#endif
 
 #define DEE_UNIXSYS_PRIVATE_ISNOTFOUNDERROR(eno)\
  ((eno) == ENOENT || (eno) == ENAMETOOLONG || (eno) == ENOTDIR)
 
+#if DEE_HAVE_STAT
 #define DeeUnixSys_Utf8HasProperty(path,result,prop_query,...) \
 do{\
  struct stat _hp_st; int _hp_error;\
@@ -600,6 +615,7 @@ do{\
   *(result) = prop_query(_hp_st.st_mode);\
  }\
 }while(0)
+#endif /* DEE_HAVE_STAT */
 #if DEE_HAVE_LSTAT
 #define DeeUnixSys_Utf8LHasProperty(path,result,prop_query,...) \
 do{\
@@ -639,16 +655,19 @@ do{\
 #endif
 #endif
 
+#ifdef DeeUnixSys_Utf8HasProperty
 #ifdef S_ISREG
 #define DeeUnixSys_Utf8IsFile(path,result,...)       DeeUnixSys_Utf8HasProperty(path,result,S_ISREG,__VA_ARGS__)
 #endif
 #ifdef S_ISDIR
 #define DeeUnixSys_Utf8IsDir(path,result,...)        DeeUnixSys_Utf8HasProperty(path,result,S_ISDIR,__VA_ARGS__)
 #endif
+#endif /* DeeUnixSys_Utf8HasProperty */
 #if defined(S_ISLNK) && defined(DeeUnixSys_Utf8LHasProperty)
 #define DeeUnixSys_Utf8IsLink(path,result,...)       DeeUnixSys_Utf8LHasProperty(path,result,S_ISLNK,__VA_ARGS__)
 #endif
 #define DeeUnixSys_Utf8IsHidden(path,result,...)     do{*(result) = *(path) == '.';}while(0)
+#ifdef DeeUnixSys_Utf8HasProperty
 #define DEE_UNIXSYS_PRIVATE_S_ISEXECUTABLE(x)     (((x)&0111)!=0)
 #define DeeUnixSys_Utf8IsExecutable(path,result,...) DeeUnixSys_Utf8HasProperty(path,result,DEE_UNIXSYS_PRIVATE_S_ISEXECUTABLE,__VA_ARGS__)
 #ifdef S_ISCHR
@@ -665,6 +684,7 @@ do{\
 #endif
 #define DEE_UNIXSYS_PRIVATE_S_EXISTS(x)              1
 #define DeeUnixSys_Utf8Exists(path,result,...)       DeeUnixSys_Utf8HasProperty(path,result,DEE_UNIXSYS_PRIVATE_S_EXISTS,__VA_ARGS__)
+#endif /* DeeUnixSys_Utf8HasProperty */
 
 
 
@@ -749,7 +769,69 @@ do{\
 #define DeeUnixSysFS_Utf8RmDir DeeUnixSys_Utf8RmDir
 #endif
 
+#if DEE_HAVE_STAT
+#define DeeUnixSys_Utf8GetMod(path,mode,...) \
+do{\
+ struct stat _gm_st;\
+ if DEE_UNLIKELY(stat(path,&_gm_st) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"stat(%q) : %K",path,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ *(mode) = _gm_st.st_mode&0777;\
+}while(0)
+#define DeeUnixSys_Utf8GetOwn(path,owner,group,...) \
+do{\
+ struct stat _gm_st;\
+ if DEE_UNLIKELY(stat(path,&_gm_st) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"stat(%q) : %K",path,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ *(owner) = _gm_st.st_uid;\
+ *(group) = _gm_st.st_gid;\
+}while(0)
+#endif /* DEE_HAVE_STAT */
 
+#if DEE_HAVE_CHMOD
+#define DeeUnixSys_Utf8Chmod(path,mode,...) \
+do{\
+ if DEE_UNLIKELY(chmod(path,mode) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"chmod(%q,%.4I"\
+                      DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_MODE_T))\
+                      "o) : %K",path,(Dee_mode_t)(mode),\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif
+
+#if DEE_HAVE_CHOWN
+#define DeeUnixSys_Utf8Chown(path,owner,group,...) \
+do{\
+ if DEE_UNLIKELY(chown(path,owner,group) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"chown(%q,"\
+                      "%I" DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_UID_T)) "u,"\
+                      "%I" DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_GID_T)) "u,"\
+                      ") : %K",path,(Dee_uid_t)(owner),(Dee_gid_t)(group),\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif
+
+#ifdef DeeUnixSys_Utf8GetMod
+#define DeeUnixSysFS_Utf8GetMod DeeUnixSys_Utf8GetMod
+#endif
+#ifdef DeeUnixSys_Utf8Chmod
+#define DeeUnixSysFS_Utf8Chmod  DeeUnixSys_Utf8Chmod
+#endif
+#ifdef DeeUnixSys_Utf8GetOwn
+#define DeeUnixSysFS_Utf8GetOwn DeeUnixSys_Utf8GetOwn
+#endif
+#ifdef DeeUnixSys_Utf8Chown
+#define DeeUnixSysFS_Utf8Chown  DeeUnixSys_Utf8Chown
+#endif
 
 
 
@@ -873,6 +955,18 @@ do{\
 #endif
 #ifdef DeeUnixSysFS_Utf8RmDir
 #define DeeSysFS_Utf8RmDir DeeUnixSysFS_Utf8RmDir
+#endif
+#ifdef DeeUnixSysFS_Utf8GetMod
+#define DeeSysFS_Utf8GetMod DeeUnixSysFS_Utf8GetMod
+#endif
+#ifdef DeeUnixSysFS_Utf8Chmod
+#define DeeSysFS_Utf8Chmod DeeUnixSysFS_Utf8Chmod
+#endif
+#ifdef DeeUnixSysFS_Utf8GetOwn
+#define DeeSysFS_Utf8GetOwn DeeUnixSysFS_Utf8GetOwn
+#endif
+#ifdef DeeUnixSysFS_Utf8Chown
+#define DeeSysFS_Utf8Chown DeeUnixSysFS_Utf8Chown
 #endif
 
 DEE_DECL_END

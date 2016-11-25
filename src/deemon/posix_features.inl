@@ -229,6 +229,14 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE_CHOWN
+#if defined(DEE_PLATFORM_UNIX)
+# define DEE_HAVE_CHOWN 1
+#else
+# define DEE_HAVE_CHOWN 0
+#endif
+#endif
+
 #ifndef DEE_HAVE_FCHOWN
 #if (defined(_BSD_SOURCE) && _BSD_SOURCE)\
  || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)\
@@ -238,6 +246,15 @@
 # define DEE_HAVE_FCHOWN 1
 #else
 # define DEE_HAVE_FCHOWN 0
+#endif
+#endif
+
+#ifndef DEE_HAVE_CHMOD
+#if defined(DEE_PLATFORM_UNIX)\
+ || defined(_MSC_VER)
+# define DEE_HAVE_CHMOD 1
+#else
+# define DEE_HAVE_CHMOD 0
 #endif
 #endif
 
@@ -253,8 +270,22 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE_STAT
+#if defined(DEE_PLATFORM_UNIX)\
+ || defined(_MSC_VER)
+# define DEE_HAVE_STAT 1
+#else
+# define DEE_HAVE_STAT 0
+#endif
+#endif
+
 #ifndef DEE_HAVE_FSTAT
-#define DEE_HAVE_FSTAT  1
+#if defined(DEE_PLATFORM_UNIX)\
+ || defined(_MSC_VER)
+# define DEE_HAVE_FSTAT  1
+#else
+# define DEE_HAVE_FSTAT  0
+#endif
 #endif
 
 #ifndef DEE_HAVE_LSTAT
