@@ -60,6 +60,7 @@
 #include <utime.h>
 #endif /* ... */
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
+#include DEE_INCLUDE_MEMORY_API()
 
 DEE_DECL_BEGIN
 
@@ -551,90 +552,77 @@ do{\
 }while(0)
 #endif /* DEE_HAVE_READLINK */
 
-#define DeeUnixSys_Utf8IsAbs(path,result,...) do{ *(result) = (path)[0] == '/'; }while(0)
-#define DeeUnixSys_WideIsAbs(path,result,...) do{ *(result) = (path)[0] == '/'; }while(0)
+#define DeeUnixSys_Utf8IsAbs(path,result,...) do{ *(result) = *(path) == '/'; }while(0)
+#define DeeUnixSys_WideIsAbs(path,result,...) do{ *(result) = *(path) == '/'; }while(0)
 #define DeeUnixSysFS_Utf8IsAbs DeeUnixSys_Utf8IsAbs
 #define DeeUnixSysFS_WideIsAbs DeeUnixSys_WideIsAbs
 
+// As described here:
+// http://stackoverflow.com/questions/10410513/function-or-a-systemcall-similar-to-mountpoint-command-in-linux
+// Minor modifications were made, as described here:
+// https://fossies.org/linux/misc/sysvinit-2.88.tar.gz:a/sysvinit-2.88/src/mountpoint.c
+#define DeeUnixSys_Utf8IsMountWithLength(path,path_size,result,...) \
+do{\
+ struct stat _mp,_mp_parent; int _temp;\
+ char *_path_parent,*_path_end; Dee_size_t _path_size;\
+ if DEE_UNLIKELY(stat(path,&_mp) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"stat(%q) : %K",path,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+ _path_size = (path_size);\
+ while DEE_UNLIKELY((_path_parent = (char *)malloc_nz((_path_size+4)*sizeof(char))) == NULL) {\
+  if DEE_LIKELY(Dee_CollectMemory()) continue;\
+  DeeError_NoMemory();\
+  {__VA_ARGS__;}\
+ }\
+ _path_end = _path_parent+_path_size;\
+ if (_path_size) {\
+  memcpy(_path_parent,path,_path_size*sizeof(char));\
+  if (_path_end[-1] != '/') *_path_end++ = '/';\
+ }\
+ *_path_end++ = '.';\
+ *_path_end++ = '.';\
+ *_path_end++ = 0;\
+ if DEE_UNLIKELY(stat(_path_parent,&_mp_parent) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"stat(%q) : %K",_path_parent,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  free_nn(_path_parent);\
+  {__VA_ARGS__;}\
+ }\
+ free_nn(_path_parent);\
+ *(result) = (_mp.st_dev != _mp_parent.st_dev)\
+          || (_mp.st_dev == _mp_parent.st_dev && _mp.st_ino == _mp_parent.st_ino);\
+}while(0)
+#define DeeUnixSys_Utf8IsMount(path,result,...) \
+ DeeUnixSys_Utf8IsMountWithLength(path,strlen(path),result,__VA_ARGS__)
+#define DeeUnixSys_Utf8IsMountObject(path,result,...) \
+ DeeUnixSys_Utf8IsMountWithLength(DeeUtf8String_STR(path),DeeUtf8String_SIZE(path),result,__VA_ARGS__)
+#define DeeUnixSysFS_Utf8IsMount       DeeUnixSys_Utf8IsMount
+#define DeeUnixSysFS_Utf8IsMountObject DeeUnixSys_Utf8IsMountObject
 
-#if 0 /* TODO */
-DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsMount)(DEE_A_IN_Z DEE_CHAR const *path) {
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- if (_DeeVFS_F(IsVirtualPath)(path)) return DeeVFS_F(IsMount)(path);
-#endif
- {
-#ifdef DEE_PLATFORM_WINDOWS
-  return _DeeFS_F(IsDrive)(path);
-#elif defined(WIDE)
-  DeeObject *path_ob; int result;
-  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) return -1;
-  result = _DeeFS_Utf8IsMount(DeeUtf8String_STR(path_ob));
-  Dee_DECREF(path_ob);
-  return result;
-#elif defined(DEE_PLATFORM_UNIX)
-  // As described here:
-  // http://stackoverflow.com/questions/10410513/function-or-a-systemcall-similar-to-mountpoint-command-in-linux
-  struct stat mp,mp_parent; int temp;
-  char *path_parent,*path_end; Dee_size_t path_size;
-  if DEE_UNLIKELY((temp = _deefs_posix_try_stat(path,&mp)) != 0)
-   return DEE_UNLIKELY(temp < 0) ? temp : 0;
-  path_size = strlen(path);
-#if DEE_HAVE_ALLOCA
-#ifdef _PREFAST_
-#pragma warning(push)
-#pragma warning(disable: 6255)
-#endif
-  path_parent = (char *)alloca((path_size+4)*sizeof(char));
-#ifdef _PREFAST_
-#pragma warning(pop)
-#endif
-#else
-  while DEE_UNLIKELY((path_parent = (char *)malloc_nz(
-   (path_size+4)*sizeof(char))) == NULL) {
-   if DEE_LIKELY(Dee_CollectMemory()) continue;
-   DeeError_NoMemory();
-   return -1;
-  }
-#endif
-  path_end = path_parent+path_size;
-  if (path_size) {
-   memcpy(path_parent,path,path_size*sizeof(char));
-   if (!IS_SEP(path_end[-1])) *path_end++ = SEP;
-  }
-  *path_end++ = '.';
-  *path_end++ = '.';
-  *path_end++ = '\0';
-  if DEE_UNLIKELY((temp = _deefs_posix_try_stat(path_parent,&mp_parent)) != 0) {
-#if !DEE_HAVE_ALLOCA
-   free_nn(path_parent);
-#endif
-   return DEE_UNLIKELY(temp < 0) ? temp : 0;
-  }
-#if !DEE_HAVE_ALLOCA
-  free_nn(path_parent);
-#endif
-  return mp.st_dev != mp_parent.st_dev;
-#else
-  (void)path;
-  return 0;
-#endif
- }
-}
-#endif
 
+#ifdef DeeUnixSysFS_Utf8GetCwd
 #define DeeSysFS_Utf8GetCwd      DeeUnixSysFS_Utf8GetCwd
+#endif
 #ifdef DeeUnixSysFS_WideGetCwd
 #define DeeSysFS_WideGetCwd      DeeUnixSysFS_WideGetCwd
 #endif
+#ifdef DeeUnixSysFS_Utf8Chdir
 #define DeeSysFS_Utf8Chdir       DeeUnixSysFS_Utf8Chdir
+#endif
 #ifdef DeeUnixSysFS_WideChdir
 #define DeeSysFS_WideChdir       DeeUnixSysFS_WideChdir
 #endif
+#ifdef DeeUnixSysFS_Utf8GetEnv
 #define DeeSysFS_Utf8GetEnv      DeeUnixSysFS_Utf8GetEnv
+#endif
 #ifdef DeeUnixSysFS_WideGetEnv
 #define DeeSysFS_WideGetEnv      DeeUnixSysFS_WideGetEnv
 #endif
+#ifdef DeeUnixSysFS_Utf8HasEnv
 #define DeeSysFS_Utf8HasEnv      DeeUnixSysFS_Utf8HasEnv
+#endif
 #ifdef DeeUnixSysFS_WideHasEnv
 #define DeeSysFS_WideHasEnv      DeeUnixSysFS_WideHasEnv
 #endif
@@ -650,8 +638,10 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsMount)(DEE_A_IN_Z DEE_CHAR const *pat
 #ifdef DeeUnixSysFS_WideSetEnv
 #define DeeSysFS_WideSetEnv      DeeUnixSysFS_WideSetEnv
 #endif
+#ifdef DeeUnixSysFS_Utf8EnumEnv
 #define DEE_SYSFS_UTF8ENUMENV_ENVVALUE_ZERO_TERMINATED
 #define DeeSysFS_Utf8EnumEnv     DeeUnixSysFS_Utf8EnumEnv
+#endif
 #ifdef DeeUnixSysFS_WideEnumEnv
 #define DEE_SYSFS_WIDEENUMENV_ENVVALUE_ZERO_TERMINATED
 #define DeeSysFS_WideEnumEnv     DeeUnixSysFS_WideEnumEnv
@@ -668,7 +658,9 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsMount)(DEE_A_IN_Z DEE_CHAR const *pat
 #ifdef DeeUnixSysFS_WideGetTmp
 #define DeeSysFS_WideGetTmp      DeeUnixSysFS_WideGetTmp
 #endif
+#ifdef DeeUnixSysFS_Utf8GetTimes
 #define DeeSysFS_Utf8GetTimes    DeeUnixSysFS_Utf8GetTimes
+#endif
 #ifdef DeeUnixSysFS_WideGetTimes
 #define DeeSysFS_WideGetTimes    DeeUnixSysFS_WideGetTimes
 #endif
@@ -683,6 +675,12 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int _DeeFS_F(IsMount)(DEE_A_IN_Z DEE_CHAR const *pat
 #endif
 #ifdef DeeUnixSysFS_WideIsAbs
 #define DeeSysFS_WideIsAbs       DeeUnixSysFS_WideIsAbs
+#endif
+#ifdef DeeUnixSysFS_Utf8IsMount
+#define DeeSysFS_Utf8IsMount       DeeUnixSysFS_Utf8IsMount
+#endif
+#ifdef DeeUnixSysFS_Utf8IsMountObject
+#define DeeSysFS_Utf8IsMountObject DeeUnixSysFS_Utf8IsMountObject
 #endif
 
 DEE_DECL_END
