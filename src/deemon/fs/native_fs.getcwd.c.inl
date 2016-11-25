@@ -40,11 +40,13 @@ DeeError_NEW_STATIC(_dee_notimplemented_getcwd,&DeeErrorType_NotImplemented,"get
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetCwd(void) {
  DeeObject *result;
 #ifdef DeeSysFS_Utf8GetCwd
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  DeeSysFS_Utf8GetCwd(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
  return result;
 #else
  DeeObject *newresult;
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  DeeSysFS_WideGetCwd(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
  newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
@@ -56,11 +58,13 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetCwd(void) {
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetCwd(void) {
  DeeObject *result;
 #ifdef DeeSysFS_WideGetCwd
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  DeeSysFS_WideGetCwd(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
  return result;
 #else
  DeeObject *newresult;
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  DeeSysFS_Utf8GetCwd(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
  newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),

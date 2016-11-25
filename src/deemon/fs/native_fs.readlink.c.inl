@@ -41,17 +41,20 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeNFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path) {
 #ifdef DeeSysFS_Utf8Readlink
  DeeObject *result; DEE_ASSERT(path);
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  DeeSysFS_Utf8Readlink(path,&result,return NULL);
  return result;
 #elif defined(DeeSysFS_Utf8ReadlinkObject)
  DeeObject *result,*path_ob; DEE_ASSERT(path);
  if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return NULL; })
  DeeSysFS_Utf8ReadlinkObject(path_ob,&result,{ Dee_DECREF(path_ob); return NULL; });
  Dee_DECREF(path_ob);
  return result;
 #else
  DeeObject *result,*path_ob; DEE_ASSERT(path);
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8String(path)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return NULL; })
  DeeSysFS_WideReadlinkObject(path_ob,&result,{ Dee_DECREF(path_ob); return NULL; });
  Dee_DECREF(path_ob);
  return result;
@@ -61,17 +64,20 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 DeeNFS_WideReadlink(DEE_A_IN_Z Dee_WideChar const *path) {
 #ifdef DeeSysFS_WideReadlink
  DeeObject *result; DEE_ASSERT(path);
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  DeeSysFS_WideReadlink(path,&result,return NULL);
  return result;
 #elif defined(DeeSysFS_WideReadlinkObject)
  DeeObject *result,*path_ob; DEE_ASSERT(path);
  if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return NULL; })
  DeeSysFS_WideReadlinkObject(path_ob,&result,{ Dee_DECREF(path_ob); return NULL; });
  Dee_DECREF(path_ob);
  return result;
 #else
  DeeObject *result,*path_ob; DEE_ASSERT(path);
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideString(path)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return NULL; })
  DeeSysFS_Utf8ReadlinkObject(path_ob,&result,{ Dee_DECREF(path_ob); return NULL; });
  Dee_DECREF(path_ob);
  return result;
@@ -82,6 +88,7 @@ DeeNFS_Utf8ReadlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
 #ifdef DeeSysFS_Utf8ReadlinkObject
  DeeObject *result;
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  DeeSysFS_Utf8ReadlinkObject(path,&result,return NULL);
  return result;
 #else
@@ -89,6 +96,7 @@ DeeNFS_Utf8ReadlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return NULL; })
  DeeSysFS_WideReadlinkObject(path_ob,&result,{ Dee_DECREF(path_ob); return NULL; });
  Dee_DECREF(path_ob);
  return result;
@@ -99,6 +107,7 @@ DeeNFS_WideReadlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
 #ifdef DeeSysFS_WideReadlinkObject
  DeeObject *result;
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  DeeSysFS_WideReadlinkObject(path,&result,return NULL);
  return result;
 #else
@@ -106,6 +115,7 @@ DeeNFS_WideReadlinkObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return NULL; })
  DeeSysFS_Utf8ReadlinkObject(path_ob,&result,{ Dee_DECREF(path_ob); return NULL; });
  Dee_DECREF(path_ob);
  return result;

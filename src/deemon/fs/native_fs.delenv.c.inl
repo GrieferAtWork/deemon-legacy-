@@ -40,11 +40,13 @@ DeeError_NEW_STATIC(_dee_notimplemented_delenv,&DeeErrorType_NotImplemented,"del
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8DelEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
  DEE_ASSERT(envname);
 #ifdef DeeSysFS_Utf8DelEnv
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8DelEnv(envname,return -1);
  return 0;
 #elif defined(DeeSysFS_Utf8DelEnvObject)
  DeeObject *envname_ob;
  if DEE_UNLIKELY((envname_ob = DeeUtf8String_New(envname)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(envname_ob); return -1; })
  DeeSysFS_Utf8DelEnvObject(envname_ob,{ Dee_DECREF(envname_ob); return -1; });
  Dee_DECREF(envname_ob);
  return 0;
@@ -59,11 +61,13 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8DelEnv(DEE_A_IN_Z Dee_Utf8Char const *envnam
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideDelEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
  DEE_ASSERT(envname);
 #ifdef DeeSysFS_WideDelEnv
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideDelEnv(envname,return -1);
  return 0;
 #elif defined(DeeSysFS_WideDelEnvObject)
  DeeObject *envname_ob;
  if DEE_UNLIKELY((envname_ob = DeeWideString_New(envname)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(envname_ob); return -1; })
  DeeSysFS_WideDelEnvObject(envname_ob,{ Dee_DECREF(envname_ob); return -1; });
  Dee_DECREF(envname_ob);
  return 0;
@@ -78,12 +82,14 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideDelEnv(DEE_A_IN_Z Dee_WideChar const *envnam
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8DelEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname) {
  DEE_ASSERT(DeeObject_Check(envname) && DeeUtf8String_Check(envname));
 #ifdef DeeSysFS_Utf8DelEnvObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8DelEnvObject(envname,return -1);
  return 0;
 #else
  DeeObject *envname_ob;
  if DEE_UNLIKELY((envname_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(envname),DeeUtf8String_STR(envname))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(envname_ob); return -1; })
  DeeSysFS_WideDelEnvObject(envname_ob,{ Dee_DECREF(envname_ob); return -1; });
  Dee_DECREF(envname_ob);
  return 0;
@@ -92,12 +98,14 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8DelEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringOb
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideDelEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname) {
  DEE_ASSERT(DeeObject_Check(envname) && DeeWideString_Check(envname));
 #ifdef DeeSysFS_WideDelEnvObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideDelEnvObject(envname,return -1);
  return 0;
 #else
  DeeObject *envname_ob;
  if DEE_UNLIKELY((envname_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(envname),DeeWideString_STR(envname))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(envname_ob); return -1; })
  DeeSysFS_Utf8DelEnvObject(envname_ob,{ Dee_DECREF(envname_ob); return -1; });
  Dee_DECREF(envname_ob);
  return 0;

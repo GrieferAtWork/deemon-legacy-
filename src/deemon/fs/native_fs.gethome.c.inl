@@ -37,9 +37,11 @@ DeeError_NEW_STATIC(_dee_notimplemented_gethome,&DeeErrorType_NotImplemented,"ge
 #endif
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetHome(void) {
 #ifdef DeeSysFS_Utf8GetHome
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_Utf8GetHome();
 #elif defined(DeeSysFS_WideGetHome)
  DeeObject *result,*newresult;
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  if DEE_UNLIKELY((result = DeeSysFS_WideGetHome()) == NULL) return NULL;
  newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
                                                     DeeWideString_STR(result));
@@ -52,9 +54,11 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetHome(void) {
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetHome(void) {
 #ifdef DeeSysFS_WideGetHome
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_WideGetHome();
 #elif defined(DeeSysFS_Utf8GetHome)
  DeeObject *result,*newresult;
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  if DEE_UNLIKELY((result = DeeSysFS_Utf8GetHome()) == NULL) return NULL;
  newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
                                                     DeeUtf8String_STR(result));

@@ -2511,7 +2511,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVarDeclStorage_InitCopy(
  DEE_A_IN struct DeeVarDeclStorage const *right) {
  DEE_ASSERT(self);
  DEE_ASSERT(right);
- _DeeVarDeclStorage_InitCopy(self,right,{ return -1; });
+ _DeeVarDeclStorage_InitCopy(self,right,return -1);
  return 0;
 }
 void DeeVarDeclStorage_Quit(DEE_A_IN struct DeeVarDeclStorage *self) {

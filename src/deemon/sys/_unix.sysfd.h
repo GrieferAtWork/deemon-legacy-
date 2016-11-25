@@ -263,14 +263,8 @@ do{\
 
 
 
-DEE_STATIC_INLINE(void) _deeunix_quick_itos8(Dee_Utf8Char *out, int v) {
- int used_v = v,len = 0; Dee_Utf8Char *used_out;
- do ++len; while ((used_v /= 10) != 0);
- used_v = v,used_out = out+len;
- do *--out = '0'+(used_v%10); while ((used_v /= 10) != 0);
-}
-DEE_STATIC_INLINE(void) _deeunix_quick_itosw(Dee_WideChar *out, int v) {
- int used_v = v,len = 0; Dee_WideChar *used_out;
+DEE_STATIC_INLINE(void) _deeunix_quick_itos(char *out, int v) {
+ int used_v = v,len = 0; char *used_out;
  do ++len; while ((used_v /= 10) != 0);
  used_v = v,used_out = out+len;
  do *--out = '0'+(used_v%10); while ((used_v /= 10) != 0);
@@ -281,7 +275,11 @@ DEE_STATIC_INLINE(void) _deeunix_quick_itosw(Dee_WideChar *out, int v) {
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeNFS_Utf8Readlink(DEE_A_IN_Z Dee_Utf8Char const *path);
 #endif
-DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetUtf8Name(int fd) { Dee_Utf8Char buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'}; _deeunix_quick_itos8(buffer+15,fd); return DeeNFS_Utf8Readlink(buffer); }
+DEE_STATIC_INLINE(DeeObject *) DeeUnixSysFD_DoGetUtf8Name(int fd) {
+ Dee_Utf8Char buffer[32] = {'/','p','r','o','c','/','s','e','l','f','/','f','d','/'};
+ _deeunix_quick_itos(buffer+15,fd);
+ return DeeNFS_Utf8Readlink(buffer);
+}
 #define DeeUnixSysFD_DoGetUtf8Name        DeeUnixSysFD_DoGetUtf8Name
 #define DeeUnixSysFileFD_Utf8Filename(ob) DeeUnixSysFD_DoGetUtf8Name((ob)->unx_fd)
 

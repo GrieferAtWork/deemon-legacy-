@@ -40,18 +40,22 @@ DeeError_NEW_STATIC(_dee_notimplemented_remove,&DeeErrorType_NotImplemented,"rem
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8Remove(DEE_A_IN_Z Dee_Utf8Char const *path) {
  DEE_ASSERT(path);
 #ifdef DeeSysFS_Utf8Remove
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8Remove(path,return -1);
  return 0;
 #elif defined(DeeSysFS_Utf8RemoveObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8RemoveObject(path_ob,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
 #elif defined(DeeSysFS_Utf8Unlink) && defined(DeeSysFS_Utf8RmDir)
+ DEE_NFS_CHECKINTERRUPT(return 1);
  DeeSysFS_Utf8Unlink(path,goto try2);
 try2:
  if (DeeError_HandleOne(&DeeErrorType_SystemError)) {
+  DEE_NFS_CHECKINTERRUPT(return 1);
   DeeSysFS_Utf8RmDir(path,return -1);
   return 0;
  }
@@ -67,18 +71,22 @@ try2:
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideRemove(DEE_A_IN_Z Dee_WideChar const *path) {
  DEE_ASSERT(path);
 #ifdef DeeSysFS_WideRemove
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideRemove(path,return -1);
  return 0;
 #elif defined(DeeSysFS_WideRemoveObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideRemoveObject(path_ob,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
 #elif defined(DeeSysFS_WideUnlink) && defined(DeeSysFS_WideRmDir)
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideUnlink(path,goto try2);
 try2:
  if (DeeError_HandleOne(&DeeErrorType_SystemError)) {
+  DEE_NFS_CHECKINTERRUPT(return -1)
   DeeSysFS_WideRmDir(path,return -1);
   return 0;
  }
@@ -94,19 +102,23 @@ try2:
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8RemoveObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
 #ifdef DeeSysFS_Utf8RemoveObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8RemoveObject(path,return -1);
  return 0;
 #elif defined(DeeSysFS_WideRemoveObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideRemoveObject(path_ob,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
 #elif defined(DeeSysFS_Utf8UnlinkObject) && defined(DeeSysFS_Utf8RmDirObject)
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8UnlinkObject(path,goto try2);
 try2:
  if (DeeError_HandleOne(&DeeErrorType_SystemError)) {
+  DEE_NFS_CHECKINTERRUPT(return -1)
   DeeSysFS_Utf8RmDirObject(path,return -1);
   return 0;
  }
@@ -123,19 +135,23 @@ try2:
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideRemoveObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
 #ifdef DeeSysFS_WideRemoveObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideRemoveObject(path,return -1);
  return 0;
 #elif defined(DeeSysFS_Utf8RemoveObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8RemoveObject(path_ob,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
 #elif defined(DeeSysFS_WideUnlinkObject) && defined(DeeSysFS_WideRmDirObject)
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideUnlinkObject(path,goto try2);
 try2:
  if (DeeError_HandleOne(&DeeErrorType_SystemError)) {
+  DEE_NFS_CHECKINTERRUPT(return -1)
   DeeSysFS_WideRmDirObject(path,return -1);
   return 0;
  }

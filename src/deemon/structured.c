@@ -1171,7 +1171,7 @@ DEE_A_RET_EXCEPT(-1) int DeeStructured_TSetData(
   DeeLValueType_BASE(tp_right),(DeeTypeObject *)tp_self)) {
   DEE_LVALUE_SIGNALHANDLER_BEGIN { // Lvalue to same/derived object --> memcpy
    memcpy(self,DeeLValue_ADDR(right),DeeType_GET_SLOT(tp_self,tp_p_instance_size));
-  } DEE_LVALUE_SIGNALHANDLER_END({ return -1; });
+  } DEE_LVALUE_SIGNALHANDLER_END(return -1);
 #endif
  } else if (tp_self == &DeeSuper_Type) {
   return DeeStructured_TSetData(tp_self,self,DeeSuper_TYPE(right),DeeSuper_SELF(right));
@@ -1194,7 +1194,7 @@ DEE_A_RET_EXCEPT(-1) int DeeStructured_DelData(
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeStructuredType_Check(tp_self));
  DEE_LVALUE_SIGNALHANDLER_BEGIN { // Fill memory with zero
   memset(self,0,DeeType_GET_SLOT(tp_self,tp_p_instance_size));
- } DEE_LVALUE_SIGNALHANDLER_END({ return -1; });
+ } DEE_LVALUE_SIGNALHANDLER_END(return -1);
  return 0;
 }
 

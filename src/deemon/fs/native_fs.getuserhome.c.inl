@@ -39,11 +39,13 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeNFS_Utf8GetUserHome(DEE_A_IN_Z Dee_Utf8Char const *username) {
  DEE_ASSERT(username);
 #ifdef DeeSysFS_Utf8GetUserHome
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_Utf8GetUserHome(username);
 #elif defined(DeeSysFS_Utf8GetUserHomeObject)
  DeeObject *username_ob,*result;
  if DEE_UNLIKELY((username_ob = DeeUtf8String_New(username)) == NULL) return NULL;
- result = DeeSysFS_Utf8GetUserHomeObject(username);
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(username_ob); return NULL; })
+ result = DeeSysFS_Utf8GetUserHomeObject(username_ob);
  Dee_DECREF(username_ob);
  return result;
 #elif defined(DeeSysFS_WideGetUserHomeObject)\
@@ -64,11 +66,13 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 DeeNFS_WideGetUserHome(DEE_A_IN_Z Dee_WideChar const *username) {
  DEE_ASSERT(username);
 #ifdef DeeSysFS_WideGetUserHome
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_WideGetUserHome(username);
 #elif defined(DeeSysFS_WideGetUserHomeObject)
  DeeObject *username_ob,*result;
  if DEE_UNLIKELY((username_ob = DeeWideString_New(username)) == NULL) return NULL;
- result = DeeSysFS_WideGetUserHomeObject(username);
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(username_ob); return NULL; })
+ result = DeeSysFS_WideGetUserHomeObject(username_ob);
  Dee_DECREF(username_ob);
  return result;
 #elif defined(DeeSysFS_Utf8GetUserHomeObject)\
@@ -89,11 +93,13 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeNFS_Utf8GetUserHomeObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *username) {
  DEE_ASSERT(DeeObject_Check(username) && DeeUtf8String_Check(username));
 #ifdef DeeSysFS_Utf8GetUserHomeObject
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_Utf8GetUserHomeObject(username);
 #elif defined(DeeSysFS_WideGetUserHomeObject)
  DeeObject *username_ob,*result;
  if DEE_UNLIKELY((username_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(username),DeeUtf8String_STR(username))) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(username_ob); return NULL; })
  result = DeeSysFS_WideGetUserHomeObject(username_ob);
  Dee_DECREF(username_ob);
  return result;
@@ -107,11 +113,13 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 DeeNFS_WideGetUserHomeObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *username) {
  DEE_ASSERT(DeeObject_Check(username) && DeeWideString_Check(username));
 #ifdef DeeSysFS_WideGetUserHomeObject
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_WideGetUserHomeObject(username);
 #elif defined(DeeSysFS_Utf8GetUserHomeObject)
  DeeObject *username_ob,*result;
  if DEE_UNLIKELY((username_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(username),DeeWideString_STR(username))) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(username_ob); return NULL; })
  result = DeeSysFS_Utf8GetUserHomeObject(username_ob);
  Dee_DECREF(username_ob);
  return result;

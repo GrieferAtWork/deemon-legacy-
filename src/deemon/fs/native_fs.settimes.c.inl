@@ -45,11 +45,13 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8SetTimes(
  DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
  DEE_ASSERT(path);
 #ifdef DeeSysFS_Utf8SetTimes
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8SetTimes(path,atime,ctime,mtime,return -1);
  return 0;
 #elif defined(DeeSysFS_Utf8SetTimesObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8SetTimesObject(path_ob,atime,ctime,mtime,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
@@ -62,7 +64,9 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8SetTimes(
  return result;
 #else
  struct DeeNativeFileFD fd;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,return -1);
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_SetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
@@ -73,11 +77,13 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideSetTimes(
  DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
  DEE_ASSERT(path);
 #ifdef DeeSysFS_WideSetTimes
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideSetTimes(path,atime,ctime,mtime,return -1);
  return 0;
 #elif defined(DeeSysFS_WideSetTimesObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideSetTimesObject(path_ob,atime,ctime,mtime,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
@@ -90,7 +96,9 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideSetTimes(
  return result;
 #else
  struct DeeNativeFileFD fd;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,return -1);
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_SetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
@@ -101,18 +109,22 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8SetTimesObject(
               DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
 #ifdef DeeSysFS_Utf8SetTimesObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8SetTimesObject(path,atime,ctime,mtime,return -1);
  return 0;
 #elif defined(DeeSysFS_WideSetTimesObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideSetTimesObject(path_ob,atime,ctime,mtime,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
 #else
  struct DeeNativeFileFD fd;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,return -1);
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_SetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
@@ -123,18 +135,21 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideSetTimesObject(
               DEE_A_IN_OPT Dee_timetick_t const *ctime, DEE_A_IN_OPT Dee_timetick_t const *mtime) {
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
 #ifdef DeeSysFS_WideSetTimesObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideSetTimesObject(path,atime,ctime,mtime,return -1);
  return 0;
 #elif defined(DeeSysFS_Utf8SetTimesObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8SetTimesObject(path_ob,atime,ctime,mtime,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
 #else
  struct DeeNativeFileFD fd;
  DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,return -1);
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_SetTimes(&fd,atime,ctime,mtime,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;

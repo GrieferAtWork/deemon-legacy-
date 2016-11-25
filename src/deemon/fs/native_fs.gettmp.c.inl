@@ -75,10 +75,12 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetTmp(void) {
 #endif /* DEE_NFS_HAVE_GETENV */
  {
 #ifdef DeeSysFS_Utf8GetTmp
+  DEE_NFS_CHECKINTERRUPT(return NULL)
   DeeSysFS_Utf8GetTmp(&result,return NULL);
   return result;
 #elif defined(DeeSysFS_WideGetTmp)
   DeeObject *newresult;
+  DEE_NFS_CHECKINTERRUPT(return NULL)
   DeeSysFS_WideGetTmp(&result,return NULL);
   newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
                                                      DeeWideString_STR(result));
@@ -106,10 +108,12 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetTmp(void) {
 #endif /* DEE_NFS_HAVE_GETENV */
  {
 #ifdef DeeSysFS_WideGetTmp
+  DEE_NFS_CHECKINTERRUPT(return NULL)
   DeeSysFS_WideGetTmp(&result,return NULL);
   return result;
 #elif defined(DeeSysFS_Utf8GetTmp)
   DeeObject *newresult;
+  DEE_NFS_CHECKINTERRUPT(return NULL)
   DeeSysFS_Utf8GetTmp(&result,return NULL);
   newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
                                                      DeeUtf8String_STR(result));

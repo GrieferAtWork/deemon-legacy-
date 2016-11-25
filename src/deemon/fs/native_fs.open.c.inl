@@ -45,6 +45,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeNFS_Utf8Open(
  DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
  DeeFileIOObject *result;
  if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeFileIOObject)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ DeeObject_Free(result); return NULL; })
  DeeNativeFileFD_Utf8Init(&result->io_descr,file,openmode,permissions,
                           { DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
@@ -57,6 +58,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeNFS_WideOpen(
  DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
  DeeFileIOObject *result;
  if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeFileIOObject)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ DeeObject_Free(result); return NULL; })
  DeeNativeFileFD_WideInit(&result->io_descr,file,openmode,permissions,
                           { DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
@@ -69,6 +71,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeNFS_Utf8OpenObject(
  DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
  DeeFileIOObject *result;
  if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeFileIOObject)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ DeeObject_Free(result); return NULL; })
  DeeNativeFileFD_Utf8InitObject(&result->io_descr,file,openmode,permissions,
                                 { DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);
@@ -81,6 +84,7 @@ DEE_A_RET_EXCEPT_REF DeeObject *DeeNFS_WideOpenObject(
  DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) {
  DeeFileIOObject *result;
  if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeFileIOObject)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ DeeObject_Free(result); return NULL; })
  DeeNativeFileFD_WideInitObject(&result->io_descr,file,openmode,permissions,
                                 { DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,(DeeTypeObject *)&DeeFileIO_Type);

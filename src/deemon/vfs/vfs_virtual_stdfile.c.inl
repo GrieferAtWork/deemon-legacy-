@@ -26,6 +26,7 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/string.h>
+#include <deemon/fs/native_fs.h>
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/vfs/vfs_native_node.h>
 #include <deemon/vfs/vfs_virtual_stdfile.h>
@@ -38,6 +39,7 @@ DEE_DECL_BEGIN
 static int DEE_CALL _deevfs_virtualstdfilefile_vft_open(
  struct DeeVFSNativeFile *self,
  Dee_openmode_t DEE_UNUSED(openmode), Dee_mode_t DEE_UNUSED(permissions)) {
+ DEE_NFS_CHECKINTERRUPT(return -1)
  self->vnf_fd.w32_handle = GetStdHandle(((
   struct DeeVFSVirtualStdFileNode *)self->vnf_file.vf_node)->std_handleid);
  self->vnf_fd.w32_openmode = DEE_OPENMODE('w',1);

@@ -41,11 +41,13 @@ DeeNFS_Utf8HasEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
  DEE_ASSERT(envname);
 #ifdef DeeSysFS_Utf8HasEnv
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8HasEnv(envname,&result,return -1);
  return result;
 #elif defined(DeeSysFS_Utf8HasEnvObject)
  DeeObject *newenvname; int result;
  if DEE_UNLIKELY((newenvname = DeeUtf8String_New(envname)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(newenvname); return -1; })
  DeeSysFS_Utf8HasEnvObject(envname,&result,{ Dee_DECREF(newenvname); return -1; });
  Dee_DECREF(newenvname);
  return result;
@@ -62,11 +64,13 @@ DeeNFS_WideHasEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
  DEE_ASSERT(envname);
 #ifdef DeeSysFS_WideHasEnv
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideHasEnv(envname,&result,return -1);
  return result;
 #elif defined(DeeSysFS_WideHasEnvObject)
  DeeObject *newenvname; int result;
  if DEE_UNLIKELY((newenvname = DeeWideString_New(envname)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(newenvname); return -1; })
  DeeSysFS_WideHasEnvObject(envname,&result,{ Dee_DECREF(newenvname); return -1; });
  Dee_DECREF(newenvname);
  return result;
@@ -83,12 +87,14 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8HasEnvObject(
  DEE_ASSERT(DeeObject_Check(envname) && DeeUtf8String_Check(envname));
 #ifdef DeeSysFS_Utf8HasEnvObject
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8HasEnvObject(envname,&result,return -1);
  return result;
 #else
  DeeObject *newenvname; int result;
  if DEE_UNLIKELY((newenvname = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(envname),DeeUtf8String_STR(envname))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(newenvname); return -1; })
  DeeSysFS_WideHasEnvObject(newenvname,&result,{ Dee_DECREF(newenvname); return -1; });
  Dee_DECREF(newenvname);
  return result;
@@ -99,12 +105,14 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideHasEnvObject(
  DEE_ASSERT(DeeObject_Check(envname) && DeeWideString_Check(envname));
 #ifdef DeeSysFS_WideHasEnvObject
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideHasEnvObject(envname,&result,return -1);
  return result;
 #else
  DeeObject *newenvname; int result;
  if DEE_UNLIKELY((newenvname = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(envname),DeeWideString_STR(envname))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(newenvname); return -1; })
  DeeSysFS_Utf8HasEnvObject(newenvname,&result,{ Dee_DECREF(newenvname); return -1; });
  Dee_DECREF(newenvname);
  return result;

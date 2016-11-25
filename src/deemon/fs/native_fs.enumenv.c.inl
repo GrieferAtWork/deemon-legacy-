@@ -39,6 +39,7 @@ DeeError_NEW_STATIC(_dee_notimplemented_enumenv,&DeeErrorType_NotImplemented,"en
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeNFS_WideEnumEnv(void) {
 #ifdef DeeSysFS_Utf8EnumEnv
  DeeObject *result;
+ DEE_NFS_CHECKINTERRUPT(return NULL);
  if DEE_UNLIKELY((result = DeeList_New()) == NULL) return NULL;
 #define DO_ENUM(key_size,key,val_size,val,...)\
 do{\
@@ -58,6 +59,7 @@ do{\
  return result;
 #elif defined(DeeSysFS_WideEnumEnv)
  DeeObject *result;
+ DEE_NFS_CHECKINTERRUPT(return NULL);
  if DEE_UNLIKELY((result = DeeList_New()) == NULL) return NULL;
 #define DO_ENUM(key_size,key,val_size,val,...)\
 do{\
@@ -83,6 +85,7 @@ do{\
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *DeeNFS_Utf8EnumEnv(void) {
 #ifdef DeeSysFS_WideEnumEnv
  DeeObject *result;
+ DEE_NFS_CHECKINTERRUPT(return NULL);
  if DEE_UNLIKELY((result = DeeList_New()) == NULL) return NULL;
 #define DO_ENUM(key_size,key,val_size,val,...)\
 do{\
@@ -102,6 +105,7 @@ do{\
  return result;
 #elif defined(DeeSysFS_Utf8EnumEnv)
  DeeObject *result;
+ DEE_NFS_CHECKINTERRUPT(return NULL);
  if DEE_UNLIKELY((result = DeeList_New()) == NULL) return NULL;
 #define DO_ENUM(key_size,key,val_size,val,...)\
 do{\

@@ -43,11 +43,13 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8{name}(DEE_A_IN_Z Dee_Utf8Char const 
  DEE_ASSERT(path);
 #ifdef DeeSysFS_Utf8{name}
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8{name}(path,&result,return -1);
  return result;
 #elif defined(DeeSysFS_Utf8{name}Object)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({{ Dee_DECREF(path_ob); return -1; }})
  DeeSysFS_Utf8{name}Object(path_ob,&result,{{ Dee_DECREF(path_ob); return -1; }});
  Dee_DECREF(path_ob);
  return result;
@@ -60,7 +62,9 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8{name}(DEE_A_IN_Z Dee_Utf8Char const 
  return result;
 #else
  struct DeeNativeFileFD fd; int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,{{ DeeError_HandledOne(); return 0; }});
+ DEE_NFS_CHECKINTERRUPT({{ DeeNativeFileFD_Quit(&fd); return -1; }})
  DeeSysFileFD_{name}(&fd,&result,{{ DeeNativeFileFD_Quit(&fd); return -1; }});
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -70,11 +74,13 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Wide{name}(DEE_A_IN_Z Dee_WideChar const 
  DEE_ASSERT(path);
 #ifdef DeeSysFS_Wide{name}
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Wide{name}(path,&result,return -1);
  return result;
 #elif defined(DeeSysFS_Wide{name}Object)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({{ Dee_DECREF(path_ob); return -1; }})
  DeeSysFS_Wide{name}Object(path_ob,&result,{{ Dee_DECREF(path_ob); return -1; }});
  Dee_DECREF(path_ob);
  return result;
@@ -87,7 +93,9 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Wide{name}(DEE_A_IN_Z Dee_WideChar const 
  return result;
 #else
  struct DeeNativeFileFD fd; int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,{{ DeeError_HandledOne(); return 0; }});
+ DEE_NFS_CHECKINTERRUPT({{ DeeNativeFileFD_Quit(&fd); return -1; }})
  DeeSysFileFD_{name}(&fd,&result,{{ DeeNativeFileFD_Quit(&fd); return -1; }});
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -97,18 +105,22 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8{name}Object(DEE_A_IN_OBJECT(DeeUtf8S
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
 #ifdef DeeSysFS_Utf8{name}Object
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8{name}Object(path,&result,return -1);
  return result;
 #elif defined(DeeSysFS_Wide{name}Object)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({{ Dee_DECREF(path_ob); return -1; }})
  DeeSysFS_Wide{name}Object(path_ob,&result,{{ Dee_DECREF(path_ob); return -1; }});
  Dee_DECREF(path_ob);
  return result;
 #else
  struct DeeNativeFileFD fd; int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,{{ DeeError_HandledOne(); return 0; }});
+ DEE_NFS_CHECKINTERRUPT({{ DeeNativeFileFD_Quit(&fd); return -1; }})
  DeeSysFileFD_{name}(&fd,&result,{{ DeeNativeFileFD_Quit(&fd); return -1; }});
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -118,18 +130,22 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Wide{name}Object(DEE_A_IN_OBJECT(DeeWideS
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
 #ifdef DeeSysFS_Wide{name}Object
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Wide{name}Object(path,&result,return -1);
  return result;
 #elif defined(DeeSysFS_Utf8{name}Object)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({{ Dee_DECREF(path_ob); return -1; }})
  DeeSysFS_Utf8{name}Object(path_ob,&result,{{ Dee_DECREF(path_ob); return -1; }});
  Dee_DECREF(path_ob);
  return result;
 #else
  struct DeeNativeFileFD fd; int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,{{ DeeError_HandledOne(); return 0; }});
+ DEE_NFS_CHECKINTERRUPT({{ DeeNativeFileFD_Quit(&fd); return -1; }})
  DeeSysFileFD_{name}(&fd,&result,{{ DeeNativeFileFD_Quit(&fd); return -1; }});
  DeeNativeFileFD_Quit(&fd);
  return result;

@@ -40,11 +40,13 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeNFS_Utf8GetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
  DEE_ASSERT(envname);
 #ifdef DeeSysFS_Utf8GetEnv
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_Utf8GetEnv(envname);
 #elif defined(DeeSysFS_Utf8GetEnvObject)
  DeeObject *newenvname,*result;
  if DEE_UNLIKELY((newenvname = DeeUtf8String_New(envname)) == NULL) return NULL;
- result = DeeSysFS_Utf8GetEnvObject(envname);
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(newenvname); return NULL; })
+ result = DeeSysFS_Utf8GetEnvObject(newenvname);
  Dee_DECREF(newenvname);
  return result;
 #elif defined(DeeSysFS_WideGetEnvObject)\
@@ -59,18 +61,26 @@ DeeNFS_Utf8GetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
  Dee_DECREF(result);
  return newresult;
 #else
- return DeeNFS_Utf8TryGetEnv(envname);
+ DeeObject *result;
+ DEE_NFS_CHECKINTERRUPT(return NULL)
+ if ((result = DeeNFS_Utf8TryGetEnv(envname)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Unknown env variable: %q",envname);
+ }
+ return result;
 #endif
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 DeeNFS_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
  DEE_ASSERT(envname);
 #ifdef DeeSysFS_WideGetEnv
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_WideGetEnv(envname);
 #elif defined(DeeSysFS_WideGetEnvObject)
  DeeObject *newenvname,*result;
  if DEE_UNLIKELY((newenvname = DeeWideString_New(envname)) == NULL) return NULL;
- result = DeeSysFS_WideGetEnvObject(envname);
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(newenvname); return NULL; })
+ result = DeeSysFS_WideGetEnvObject(newenvname);
  Dee_DECREF(newenvname);
  return result;
 #elif defined(DeeSysFS_Utf8GetEnvObject)\
@@ -85,18 +95,26 @@ DeeNFS_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
  Dee_DECREF(result);
  return newresult;
 #else
- return DeeNFS_WideTryGetEnv(envname);
+ DeeObject *result;
+ DEE_NFS_CHECKINTERRUPT(return NULL)
+ if ((result = DeeNFS_WideTryGetEnv(envname)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Unknown env variable: %lq",envname);
+ }
+ return result;
 #endif
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeNFS_Utf8GetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname) {
  DEE_ASSERT(DeeObject_Check(envname) && DeeUtf8String_Check(envname));
 #ifdef DeeSysFS_Utf8GetEnvObject
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_Utf8GetEnvObject(envname);
 #elif defined(DeeSysFS_WideGetEnvObject)
  DeeObject *newenvname,*result;
  if DEE_UNLIKELY((newenvname = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(envname),DeeUtf8String_STR(envname))) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(newenvname); return NULL; })
  result = DeeSysFS_WideGetEnvObject(newenvname);
  Dee_DECREF(newenvname);
  if DEE_UNLIKELY(!result) return NULL;
@@ -105,18 +123,26 @@ DeeNFS_Utf8GetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname) {
  Dee_DECREF(result);
  return newresult;
 #else
- return DeeNFS_Utf8TryGetEnvObject(envname);
+ DeeObject *result;
+ DEE_NFS_CHECKINTERRUPT(return NULL)
+ if ((result = DeeNFS_Utf8TryGetEnvObject(envname)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Unknown env variable: %r",envname);
+ }
+ return result;
 #endif
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 DeeNFS_WideGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname) {
  DEE_ASSERT(DeeObject_Check(envname) && DeeWideString_Check(envname));
 #ifdef DeeSysFS_WideGetEnvObject
+ DEE_NFS_CHECKINTERRUPT(return NULL)
  return DeeSysFS_WideGetEnvObject(envname);
 #elif defined(DeeSysFS_Utf8GetEnvObject)
  DeeObject *newenvname,*result,*newresult;
  if DEE_UNLIKELY((newenvname = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(envname),DeeWideString_STR(envname))) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(newenvname); return NULL; })
  result = DeeSysFS_Utf8GetEnvObject(newenvname);
  Dee_DECREF(newenvname);
  if DEE_UNLIKELY(!result) return NULL;
@@ -125,7 +151,13 @@ DeeNFS_WideGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname) {
  Dee_DECREF(result);
  return newresult;
 #else
- return DeeNFS_WideTryGetEnvObject(envname);
+ DeeObject *result;
+ DEE_NFS_CHECKINTERRUPT(return NULL)
+ if ((result = DeeNFS_WideTryGetEnvObject(envname)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "Unknown env variable: %r",envname);
+ }
+ return result;
 #endif
 }
 

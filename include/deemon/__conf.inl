@@ -289,6 +289,11 @@ DEE_DECL_BEGIN DEE_FUNC_DECL(DEE_ATTRIBUTE_NORETURN void) _Dee_AbnormalTerminati
 # define DEE_LVERBOSE4R DEE_LDEBUG
 #endif /* !DEE_DEBUG */
 
+//////////////////////////////////////////////////////////////////////////
+// Verbose tracing of system calls
+#define DEE_LVERBOSE_SYS  DEE_LVERBOSE2
+#define DEE_LVERBOSE_SYSR DEE_LVERBOSE2R
+
 
 
 #ifdef __INTELLISENSE__
@@ -318,23 +323,17 @@ static void __intellisense__DEE_ABNORMAL_TERMINATION(void);
 #undef DEE_LVERBOSE4
 #undef DEE_LVERBOSE4R
 static void __intellisense__DEE_LDEBUG(char const *fmt, ...);
-static void __intellisense__DEE_LVERBOSE1(char const *fmt, ...);
-static void __intellisense__DEE_LVERBOSE1R(char const *fmt, ...);
-static void __intellisense__DEE_LVERBOSE2(char const *fmt, ...);
-static void __intellisense__DEE_LVERBOSE2R(char const *fmt, ...);
-static void __intellisense__DEE_LVERBOSE3(char const *fmt, ...);
-static void __intellisense__DEE_LVERBOSE3R(char const *fmt, ...);
-static void __intellisense__DEE_LVERBOSE4(char const *fmt, ...);
-static void __intellisense__DEE_LVERBOSE4R(char const *fmt, ...);
-#define DEE_LDEBUG     __intellisense__DEE_LDEBUG
-#define DEE_LVERBOSE1  __intellisense__DEE_LVERBOSE1
-#define DEE_LVERBOSE1R __intellisense__DEE_LVERBOSE1R
-#define DEE_LVERBOSE2  __intellisense__DEE_LVERBOSE2
-#define DEE_LVERBOSE2R __intellisense__DEE_LVERBOSE2R
-#define DEE_LVERBOSE3  __intellisense__DEE_LVERBOSE3
-#define DEE_LVERBOSE3R __intellisense__DEE_LVERBOSE3R
-#define DEE_LVERBOSE4  __intellisense__DEE_LVERBOSE4
-#define DEE_LVERBOSE4R __intellisense__DEE_LVERBOSE4R
+static void __intellisense__DEE_LVERBOSE(char const *fmt, ...);
+#define DEE_LDEBUG       __intellisense__DEE_LDEBUG
+#define DEE_LVERBOSE1    __intellisense__DEE_LVERBOSE
+#define DEE_LVERBOSE1R   __intellisense__DEE_LVERBOSE
+#define DEE_LVERBOSE2    __intellisense__DEE_LVERBOSE
+#define DEE_LVERBOSE2R   __intellisense__DEE_LVERBOSE
+#define DEE_LVERBOSE3    __intellisense__DEE_LVERBOSE
+#define DEE_LVERBOSE3R   __intellisense__DEE_LVERBOSE
+#define DEE_LVERBOSE4    __intellisense__DEE_LVERBOSE
+#define DEE_LVERBOSE4R   __intellisense__DEE_LVERBOSE
+#define DEE_LVERBOSE_SYS __intellisense__DEE_LVERBOSE
 #endif
 
 #ifdef _PREFAST_

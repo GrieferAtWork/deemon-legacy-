@@ -27,6 +27,9 @@
 #include <deemon/sys/sysfs.view.h>
 #include <deemon/sys/sysfs.h>
 #include <deemon/sys/sysfd.h>
+#ifndef DEE_WITHOUT_THREADS
+#include <deemon/mp/thread.h>
+#endif
 
 DEE_DECL_BEGIN
 
@@ -272,6 +275,14 @@ DEE_PRIVATE_DECL_DEE_OBJECT
  || defined(DeeSysFS_WideReadlinkObject)
 #define DEE_NFS_HAVE_READLINK
 #endif
+
+
+#ifndef DEE_WITHOUT_THREADS
+#define DEE_NFS_CHECKINTERRUPT(...) if DEE_UNLIKELY(DeeThread_CheckInterrupt()!=0){__VA_ARGS__;}
+#else
+#define DEE_NFS_CHECKINTERRUPT(...) /* nothing */
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////
 // === FS_API Exports for linking against native filesystem APIS ===

@@ -127,7 +127,7 @@ static int _deefilereader_tp_any_ctor(
  DeeTypeObject *DEE_UNUSED(tp_self), DeeFileReaderObject *self, DeeObject *args) {
  DeeObject *arg;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:file.reader",&arg) != 0) return -1;
- _DeeFileReader_SET_INITIAL_STRING(self,arg,{ return -1; });
+ _DeeFileReader_SET_INITIAL_STRING(self,arg,return -1);
  _DeeFile_Init(self);
  return 0;
 }

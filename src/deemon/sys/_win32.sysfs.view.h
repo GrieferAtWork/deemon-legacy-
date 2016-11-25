@@ -76,6 +76,7 @@ do{\
  _wv_patternend[0] = '\\';\
  _wv_patternend[1] = '*';\
  _wv_patternend[2] = 0;\
+ DEE_LVERBOSE_SYS("FindFirstFileW(%lq)\n",_wv_pattern);\
  (self)->w32_hview = FindFirstFileW(_wv_pattern,&(self)->w32_viewdata);\
  if ((self)->w32_hview == INVALID_HANDLE_VALUE) {\
   _wv_error = GetLastError();\
@@ -92,8 +93,10 @@ do{\
   free_nn(_wv_pattern);\
   /* Skip '.' and '..' (always located at the start of views) */\
   while (DeeWin32SysFSWideViewNL_ISIGNOREDENTRY(self)) {\
+   DEE_LVERBOSE_SYS("FindNextFileW(%p)...",(self)->w32_hview);\
    if DEE_UNLIKELY(!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
     _wv_error = GetLastError();\
+    DEE_LVERBOSE_SYSR(" FAILED\n");\
     FindClose((self)->w32_hview);\
     if (_wv_error == ERROR_NO_MORE_FILES) {\
      (self)->w32_hview = INVALID_HANDLE_VALUE;\
@@ -105,6 +108,7 @@ do{\
      {__VA_ARGS__;}\
     }\
    }\
+   DEE_LVERBOSE_SYSR(" %lq\n",(self)->w32_viewdata.cFileName);\
   }\
  }\
 }while(0)
@@ -119,8 +123,10 @@ do{\
 
 #define DeeWin32SysFSWideViewNL_Advance(self,...) \
 do{\
+ DEE_LVERBOSE_SYS("FindNextFileW(%p)...\n",(self)->w32_hview);\
  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
   DWORD _wv_error = GetLastError();\
+  DEE_LVERBOSE_SYSR(" FAILED\n");\
   FindClose((self)->w32_hview);\
   if (_wv_error == ERROR_NO_MORE_FILES) {\
    (self)->w32_hview = INVALID_HANDLE_VALUE;\
@@ -131,6 +137,7 @@ do{\
    {__VA_ARGS__;}\
   }\
  }\
+ DEE_LVERBOSE_SYSR(" %lq\n",(self)->w32_viewdata.cFileName);\
 }while(0)
 
 #define DeeWin32SysFSWideViewNL_TryIsFile(self)   (((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==0)
@@ -157,10 +164,12 @@ do{DeeWin32SysFSWideViewNL_InitObject(self,path,__VA_ARGS__);DeeAtomicMutex_Init
 
 #define DeeWin32SysFSWideView_AdvanceAndReleaseOnError(self,...) \
 do{\
+ DEE_LVERBOSE_SYS("FindNextFileW(%p)...\n",(self)->w32_hview);\
  if (!FindNextFileW((self)->w32_hview,&(self)->w32_viewdata)) {\
-  DWORD _wv_error;\
+  DWORD _wv_error = GetLastError();\
+  DEE_LVERBOSE_SYSR(" FAILED\n");\
   FindClose((self)->w32_hview);\
-  if ((_wv_error = GetLastError()) == ERROR_NO_MORE_FILES) {\
+  if (_wv_error == ERROR_NO_MORE_FILES) {\
    (self)->w32_hview = INVALID_HANDLE_VALUE;\
   } else {\
    HANDLE _wv_hview = (self)->w32_hview;\
@@ -171,6 +180,7 @@ do{\
    {__VA_ARGS__;}\
   }\
  }\
+ DEE_LVERBOSE_SYSR(" %lq\n",(self)->w32_viewdata.cFileName);\
 }while(0)
 
 

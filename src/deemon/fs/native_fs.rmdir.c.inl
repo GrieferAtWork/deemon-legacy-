@@ -40,11 +40,13 @@ DeeError_NEW_STATIC(_dee_notimplemented_rmdir,&DeeErrorType_NotImplemented,"rmdi
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8RmDir(DEE_A_IN_Z Dee_Utf8Char const *path) {
  DEE_ASSERT(path);
 #ifdef DeeSysFS_Utf8RmDir
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8RmDir(path,return -1);
  return 0;
 #elif defined(DeeSysFS_Utf8RmDirObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8RmDirObject(path_ob,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
@@ -59,11 +61,13 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8RmDir(DEE_A_IN_Z Dee_Utf8Char const *path) {
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideRmDir(DEE_A_IN_Z Dee_WideChar const *path) {
  DEE_ASSERT(path);
 #ifdef DeeSysFS_WideRmDir
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideRmDir(path,return -1);
  return 0;
 #elif defined(DeeSysFS_WideRmDirObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideRmDirObject(path_ob,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
@@ -78,12 +82,14 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideRmDir(DEE_A_IN_Z Dee_WideChar const *path) {
 DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8RmDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
 #ifdef DeeSysFS_Utf8RmDirObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8RmDirObject(path,return -1);
  return 0;
 #else
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideRmDirObject(path_ob,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
@@ -92,12 +98,14 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8RmDirObject(DEE_A_IN_OBJECT(DeeUtf8StringObj
 DEE_A_RET_EXCEPT(-1) int DeeNFS_WideRmDirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
 #ifdef DeeSysFS_WideRmDirObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideRmDirObject(path,return -1);
  return 0;
 #else
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8RmDirObject(path_ob,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;

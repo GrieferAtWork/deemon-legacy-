@@ -26,6 +26,7 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/__xconf.inl>
+#include <deemon/fs/native_fs.h>
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/vfs/vfs_native_node.h>
 #include <deemon/vfs/vfs_native_mount.h>
@@ -51,7 +52,7 @@ no_mem:
  }
  used_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32DRIVES;
 again:
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) { free_nn(buffer); return NULL; }
+ DEE_NFS_CHECKINTERRUPT({ free_nn(buffer); return NULL; })
  if DEE_UNLIKELY((req_bufsize = GetLogicalDriveStringsA(used_bufsize,buffer)) == 0) {
   free_nn(buffer);
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -89,6 +90,7 @@ static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativemountnode_vnt_walk(
  struct DeeVFSNode *self, char const *name) {
  DeeVFSNativeNode *result; DeeObject *newpath;
  if DEE_UNLIKELY((newpath = DeeString_Newf("%s:",name)) == NULL) return NULL;
+#if 0
  if (GetFileAttributesA(DeeString_STR(newpath)) == INVALID_FILE_ATTRIBUTES) {
   // Invalid path
   DeeError_SetStringf(&DeeErrorType_SystemError,
@@ -97,6 +99,7 @@ static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativemountnode_vnt_walk(
   Dee_DECREF(newpath);
   return NULL;
  }
+#endif
  if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(DeeVFSNativeNode)) == NULL) { Dee_DECREF(newpath); return NULL; }
  DeeVFSNode_InitWithParent(&result->vnn_node,&DeeVFSNativeNode_Type,self);
  Dee_INHERIT_REF(result->vnn_path,*(DeeStringObject **)&newpath);

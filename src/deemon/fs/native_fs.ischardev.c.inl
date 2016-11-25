@@ -43,11 +43,13 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsCharDev(DEE_A_IN_Z Dee_Utf8Char con
  DEE_ASSERT(path);
 #ifdef DeeSysFS_Utf8IsCharDev
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8IsCharDev(path,&result,return -1);
  return result;
 #elif defined(DeeSysFS_Utf8IsCharDevObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8IsCharDevObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
@@ -60,7 +62,9 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsCharDev(DEE_A_IN_Z Dee_Utf8Char con
  return result;
 #else
  struct DeeNativeFileFD fd; int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_IsCharDev(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -70,11 +74,13 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsCharDev(DEE_A_IN_Z Dee_WideChar con
  DEE_ASSERT(path);
 #ifdef DeeSysFS_WideIsCharDev
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideIsCharDev(path,&result,return -1);
  return result;
 #elif defined(DeeSysFS_WideIsCharDevObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideIsCharDevObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
@@ -87,7 +93,9 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsCharDev(DEE_A_IN_Z Dee_WideChar con
  return result;
 #else
  struct DeeNativeFileFD fd; int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_IsCharDev(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -97,18 +105,22 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_Utf8IsCharDevObject(DEE_A_IN_OBJECT(DeeUt
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
 #ifdef DeeSysFS_Utf8IsCharDevObject
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8IsCharDevObject(path,&result,return -1);
  return result;
 #elif defined(DeeSysFS_WideIsCharDevObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideIsCharDevObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
 #else
  struct DeeNativeFileFD fd; int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_IsCharDev(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;
@@ -118,18 +130,22 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeNFS_WideIsCharDevObject(DEE_A_IN_OBJECT(DeeWi
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
 #ifdef DeeSysFS_WideIsCharDevObject
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideIsCharDevObject(path,&result,return -1);
  return result;
 #elif defined(DeeSysFS_Utf8IsCharDevObject)
  DeeObject *path_ob; int result;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8IsCharDevObject(path_ob,&result,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return result;
 #else
  struct DeeNativeFileFD fd; int result;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,{ DeeError_HandledOne(); return 0; });
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_IsCharDev(&fd,&result,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return result;

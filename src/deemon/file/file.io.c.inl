@@ -266,7 +266,7 @@ static int DEE_CALL _deefileio_tp_any_ctor(
 #ifdef DEE_PLATFORM_WINDOWS
 # define local_ERROR_HANDLER { Dee_DECREF(file); return -1; }
 #else
-# define local_ERROR_HANDLER { return -1; }
+# define local_ERROR_HANDLER return -1
 #endif
 #ifdef DeeSysFileFD_WideInitObject
   DeeSysFileFD_WideInitObject(&self->io_descr,(DeeObject *)file,openmode,permissions,local_ERROR_HANDLER);

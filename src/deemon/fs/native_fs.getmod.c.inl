@@ -43,11 +43,13 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8GetMod(
  DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT Dee_mode_t *mode) {
  DEE_ASSERT(path);
 #ifdef DeeSysFS_Utf8GetMod
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8GetMod(path,mode,return -1);
  return 0;
 #elif defined(DeeSysFS_Utf8GetModObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8GetModObject(path_ob,mode,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
@@ -60,7 +62,9 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8GetMod(
  return result;
 #else
  struct DeeNativeFileFD fd;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_Utf8Init(&fd,path,DEE_OPENMODE('r',0),0,return -1);
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_GetMod(&fd,mode,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
@@ -70,11 +74,13 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideGetMod(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT Dee_mode_t *mode) {
  DEE_ASSERT(path);
 #ifdef DeeSysFS_WideGetMod
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideGetMod(path,mode,return -1);
  return 0;
 #elif defined(DeeSysFS_WideGetModObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeWideString_New(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideGetModObject(path_ob,mode,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
@@ -87,7 +93,9 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideGetMod(
  return result;
 #else
  struct DeeNativeFileFD fd;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_WideInit(&fd,path,DEE_OPENMODE('r',0),0,return -1);
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_GetMod(&fd,mode,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
@@ -97,18 +105,22 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_Utf8GetModObject(
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_OUT Dee_mode_t *mode) {
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
 #ifdef DeeSysFS_Utf8GetModObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_Utf8GetModObject(path,mode,return -1);
  return 0;
 #elif defined(DeeSysFS_WideGetModObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeWideString_FromUtf8StringWithLength(
   DeeUtf8String_SIZE(path),DeeUtf8String_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_WideGetModObject(path_ob,mode,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
 #else
  struct DeeNativeFileFD fd;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_Utf8InitObject(&fd,path,DEE_OPENMODE('r',0),0,return -1);
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_GetMod(&fd,mode,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;
@@ -118,18 +130,22 @@ DEE_A_RET_EXCEPT(-1) int DeeNFS_WideGetModObject(
  DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_OUT Dee_mode_t *mode) {
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
 #ifdef DeeSysFS_WideGetModObject
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeSysFS_WideGetModObject(path,mode,return -1);
  return 0;
 #elif defined(DeeSysFS_Utf8GetModObject)
  DeeObject *path_ob;
  if DEE_UNLIKELY((path_ob = DeeUtf8String_FromWideStringWithLength(
   DeeWideString_SIZE(path),DeeWideString_STR(path))) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path_ob); return -1; })
  DeeSysFS_Utf8GetModObject(path_ob,mode,{ Dee_DECREF(path_ob); return -1; });
  Dee_DECREF(path_ob);
  return 0;
 #else
  struct DeeNativeFileFD fd;
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_WideInitObject(&fd,path,DEE_OPENMODE('r',0),0,return -1);
+ DEE_NFS_CHECKINTERRUPT({ DeeNativeFileFD_Quit(&fd); return -1; })
  DeeSysFileFD_GetMod(&fd,mode,{ DeeNativeFileFD_Quit(&fd); return -1; });
  DeeNativeFileFD_Quit(&fd);
  return 0;

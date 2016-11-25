@@ -26,6 +26,7 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
+#include <deemon/fs/native_fs.h>
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/vfs/vfs_virtual_randomfile.h>
 
@@ -37,6 +38,7 @@ DEE_DECL_BEGIN
 static int DEE_CALL _deevfs_randomfile_vft_open(
  struct DeeVFSRandomFile *self, Dee_openmode_t DEE_UNUSED(openmode),
  Dee_mode_t DEE_UNUSED(permissions)) {
+ DEE_NFS_CHECKINTERRUPT(return -1)
  if DEE_UNLIKELY(!CryptAcquireContext(&self->vr_hCryptProv,NULL,NULL,PROV_RSA_FULL,CRYPT_VERIFYCONTEXT)) {
   DeeError_SetStringf(&DeeErrorType_SystemError,"CryptAcquireContext(...) : %K",
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
@@ -54,8 +56,10 @@ static int DEE_CALL _deevfs_randomfile_vft_read(
 #ifdef DEE_PLATFORM_64_BIT
  while (s) {
   DWORD chunk = (DWORD)(s > 0xFFFFFFFF ? 0xFFFFFFFF : s);
+  DEE_NFS_CHECKINTERRUPT(return -1)
   if DEE_UNLIKELY(!CryptGenRandom(self->vr_hCryptProv,(DWORD)chunk,(BYTE *)p))
 #else
+  DEE_NFS_CHECKINTERRUPT(return -1)
   if DEE_UNLIKELY(!CryptGenRandom(self->vr_hCryptProv,(DWORD)s,(BYTE *)p))
 #endif
   {
@@ -75,6 +79,7 @@ static int DEE_CALL _deevfs_urandomfile_vft_open(
  struct DeeVFSURandomFile *self,
  Dee_openmode_t DEE_UNUSED(openmode),
  Dee_mode_t DEE_UNUSED(permissions)) {
+ DEE_NFS_CHECKINTERRUPT(return -1)
  DeeRandomNumberGenerator_Randomize(&self->vur_rng);
  return 0;
 }

@@ -53,6 +53,7 @@ DEE_A_RET_EXCEPT_REF DeeNFSUtf8ViewObject *
 DeeNFSUtf8View_OpenPath(DEE_A_IN_Z Dee_Utf8Char const *path) {
  DeeNFSUtf8ViewObject *result;
  if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeNFSUtf8ViewObject)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ DeeObject_Free(result); return NULL; })
  DeeNFSUtf8View_Init(&result->nwv_view,path,{ DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,&DeeNFSUtf8View_Type);
  return result;
@@ -61,6 +62,7 @@ DEE_A_RET_EXCEPT_REF DeeNFSUtf8ViewObject *
 DeeNFSUtf8View_OpenPathObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path) {
  DeeNFSUtf8ViewObject *result;
  if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeNFSUtf8ViewObject)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ DeeObject_Free(result); return NULL; })
  DeeNFSUtf8View_InitObject(&result->nwv_view,path,{ DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,&DeeNFSUtf8View_Type);
  return result;
@@ -70,6 +72,7 @@ static int DEE_CALL _deenfsutf8view_tp_any_ctor(
  DeeObject *path;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:native_utf8view",&path) != 0) return -1;
  if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path); return -1; })
  DeeNFSUtf8View_InitObject(&self->nwv_view,path,{ Dee_DECREF(path); return -1; });
  Dee_DECREF(path);
  return 0;
@@ -80,6 +83,7 @@ static void DEE_CALL _deenfsutf8view_tp_dtor(DeeNFSUtf8ViewObject *self) {
 static int DEE_CALL _deenfsutf8view_tp_seq_iter_next(
  DeeNFSUtf8ViewObject *self, DeeObject **result) {
 again:
+ DEE_NFS_CHECKINTERRUPT(return -1);
  DeeNFSUtf8View_Acquire(&self->nwv_view);
  if (DeeNFSUtf8View_IsDone(&self->nwv_view)) { DeeNFSUtf8View_Release(&self->nwv_view); return 1; }
  if ((*result = DeeNFSUtf8View_TryGetFilenameObjectLocked(&self->nwv_view)) == NULL) {
@@ -111,6 +115,7 @@ static DeeObject *DEE_CALL _deenfsutf8view_tp_repr(DeeNFSUtf8ViewObject *self) {
 }
 static int DEE_CALL _deenfsutf8view_tp_bool(DeeNFSUtf8ViewObject *self) {
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1);
  DeeNFSUtf8View_Acquire(&self->nwv_view);
  result = !DeeNFSUtf8View_IsDone(&self->nwv_view);
  DeeNFSUtf8View_Release(&self->nwv_view);
@@ -118,6 +123,7 @@ static int DEE_CALL _deenfsutf8view_tp_bool(DeeNFSUtf8ViewObject *self) {
 }
 static DeeObject *DEE_CALL _deenfsutf8view_tp_not(DeeNFSUtf8ViewObject *self) {
  int result;
+ DEE_NFS_CHECKINTERRUPT(return NULL);
  DeeNFSUtf8View_Acquire(&self->nwv_view);
  result = DeeNFSUtf8View_IsDone(&self->nwv_view);
  DeeNFSUtf8View_Release(&self->nwv_view);
@@ -160,6 +166,7 @@ DEE_A_RET_EXCEPT_REF DeeNFSWideViewObject *
 DeeNFSWideView_OpenPath(DEE_A_IN_Z Dee_WideChar const *path) {
  DeeNFSWideViewObject *result;
  if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeNFSWideViewObject)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ DeeObject_Free(result); return NULL; })
  DeeNFSWideView_Init(&result->nwv_view,path,{ DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,&DeeNFSWideView_Type);
  return result;
@@ -168,6 +175,7 @@ DEE_A_RET_EXCEPT_REF DeeNFSWideViewObject *
 DeeNFSWideView_OpenPathObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path) {
  DeeNFSWideViewObject *result;
  if DEE_UNLIKELY((result = DeeObject_MALLOC(DeeNFSWideViewObject)) == NULL) return NULL;
+ DEE_NFS_CHECKINTERRUPT({ DeeObject_Free(result); return NULL; })
  DeeNFSWideView_InitObject(&result->nwv_view,path,{ DeeObject_Free(result); return NULL; });
  DeeObject_INIT(result,&DeeNFSWideView_Type);
  return result;
@@ -177,6 +185,7 @@ static int DEE_CALL _deenfswideview_tp_any_ctor(
  DeeObject *path;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"o:native_wideview",&path) != 0) return -1;
  if DEE_UNLIKELY((path = DeeWideString_Cast(path)) == NULL) return -1;
+ DEE_NFS_CHECKINTERRUPT({ Dee_DECREF(path); return -1; })
  DeeNFSWideView_InitObject(&self->nwv_view,path,{ Dee_DECREF(path); return -1; });
  Dee_DECREF(path);
  return 0;
@@ -187,6 +196,7 @@ static void DEE_CALL _deenfswideview_tp_dtor(DeeNFSWideViewObject *self) {
 static int DEE_CALL _deenfswideview_tp_seq_iter_next(
  DeeNFSWideViewObject *self, DeeObject **result) {
 again:
+ DEE_NFS_CHECKINTERRUPT(return -1);
  DeeNFSWideView_Acquire(&self->nwv_view);
  if (DeeNFSWideView_IsDone(&self->nwv_view)) { DeeNFSWideView_Release(&self->nwv_view); return 1; }
  if ((*result = DeeNFSWideView_TryGetFilenameObjectLocked(&self->nwv_view)) == NULL) {
@@ -218,6 +228,7 @@ static DeeObject *DEE_CALL _deenfswideview_tp_repr(DeeNFSWideViewObject *self) {
 }
 static int DEE_CALL _deenfswideview_tp_bool(DeeNFSWideViewObject *self) {
  int result;
+ DEE_NFS_CHECKINTERRUPT(return -1);
  DeeNFSWideView_Acquire(&self->nwv_view);
  result = !DeeNFSWideView_IsDone(&self->nwv_view);
  DeeNFSWideView_Release(&self->nwv_view);
@@ -225,6 +236,7 @@ static int DEE_CALL _deenfswideview_tp_bool(DeeNFSWideViewObject *self) {
 }
 static DeeObject *DEE_CALL _deenfswideview_tp_not(DeeNFSWideViewObject *self) {
  int result;
+ DEE_NFS_CHECKINTERRUPT(return NULL);
  DeeNFSWideView_Acquire(&self->nwv_view);
  result = DeeNFSWideView_IsDone(&self->nwv_view);
  DeeNFSWideView_Release(&self->nwv_view);
