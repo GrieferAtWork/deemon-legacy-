@@ -108,10 +108,13 @@ DeeWin32Sys_F(GetTokenUserHome)(DEE_A_IN HANDLE hToken) {
 #endif
  DEE_ATOMIC_ONCE({
   HMODULE hUserenv;
-  WIN32_F(p_GetUserProfileDirectory) = (WIN32_F(LPGETUSERPROFILEDIRECTORY))(
-   ((hUserenv = GetModuleHandle(TEXT("USERENV"))) != NULL)
-   ? GetProcAddress(hUserenv,WIN32_F(s_GetUserProfileDirectory))
-   : DeeSharedLib_PoolTryImport("userenv.dll",WIN32_F(s_GetUserProfileDirectory)));
+  if ((hUserenv = GetModuleHandle(TEXT("USERENV"))) != NULL) {
+   *(FARPROC *)&WIN32_F(p_GetUserProfileDirectory) =
+    GetProcAddress(hUserenv,WIN32_F(s_GetUserProfileDirectory));
+  } else {
+   *(void **)&WIN32_F(p_GetUserProfileDirectory) =
+    DeeSharedLib_PoolTryImport("userenv.dll",WIN32_F(s_GetUserProfileDirectory));
+  }
  });
  if DEE_UNLIKELY(!WIN32_F(p_GetUserProfileDirectory)) {
   DeeError_SET_STRING(&DeeErrorType_SystemError,

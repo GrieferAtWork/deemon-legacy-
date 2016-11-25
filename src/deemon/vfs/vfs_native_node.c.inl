@@ -136,7 +136,7 @@ static int DEE_CALL _deevfs_nativefile_vft_open(
  struct DeeVFSNativeFile *self, Dee_openmode_t openmode, Dee_mode_t permissions) {
  DEE_NFS_CHECKINTERRUPT(return -1)
  DeeNativeFileFD_Utf8InitObject(&self->vnf_fd,(DeeObject *)((
-  DeeVFSNativeNode *)self->vnf_file.vf_node)->vnn_path,
+  struct DeeVFSNativeNode *)self->vnf_file.vf_node)->vnn_path,
   openmode,permissions,return -1);
  return 0;
 }

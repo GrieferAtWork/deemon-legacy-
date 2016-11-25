@@ -611,7 +611,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_SetCwdNode(DEE_A_IN struct DeeVFSNode *cwd) {
  struct DeeVFSNode *old_cwd;
  DEE_ASSERT(cwd);
  if (DeeVFSNode_IsNative(cwd)) { // Update the native CWD directory
-  if (DeeNFS_ChdirObject((DeeObject *)((DeeVFSNativeNode *)cwd)->vnn_path) != 0) return -1;
+  if (DeeNFS_ChdirObject((DeeObject *)((struct DeeVFSNativeNode *)cwd)->vnn_path) != 0) return -1;
  }
  DeeVFSNode_INCREF(cwd); // New reference for 'DeeVFS_CWD'
  DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);

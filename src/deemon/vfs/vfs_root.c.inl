@@ -53,7 +53,7 @@ static struct DeeVFSVirtualDirEntry _deevfs_dev_nodes[] = {
  {"stdout", (struct DeeVFSNode *)&_deevfs_dev_stdout},
  {"urandom",(struct DeeVFSNode *)&_deevfs_dev_urandom},
  {"zero",   (struct DeeVFSNode *)&_deevfs_dev_zero},
- {NULL,NULL},
+ {NULL,NULL}, // sentinal
 };
 struct DeeVFSVirtualDirNode _DeeVFS_Dev =
  DeeVFSVirtualDirNode_INIT(DeeVFS_Root,_deevfs_dev_nodes);
@@ -75,7 +75,7 @@ static struct DeeVFSVirtualDirEntry _deevfs_root_nodes[] = {
  {"net",  (struct DeeVFSNode *)&_DeeVFS_Net},
  {"proc", DeeVFS_Proc},
  {"tmp",  (struct DeeVFSNode *)&_DeeVFS_Tmp},
- {NULL,NULL},
+ {NULL,NULL}, // sentinal
 };
 
 struct DeeVFSVirtualDirNode _DeeVFS_Root =

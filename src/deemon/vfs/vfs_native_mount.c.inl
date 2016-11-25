@@ -75,20 +75,12 @@ again:
  return buffer;
 }
 
-//////////////////////////////////////////////////////////////////////////
-// File VTable
-static int DEE_CALL _deevfs_nativemountfile_vft_open(
- struct DeeVFSNativeMountFile *DEE_UNUSED(self),
- Dee_openmode_t DEE_UNUSED(openmode), Dee_mode_t DEE_UNUSED(permissions)) {
- return 0;
-}
-
 
 //////////////////////////////////////////////////////////////////////////
 // View VTable
 static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativemountnode_vnt_walk(
  struct DeeVFSNode *self, char const *name) {
- DeeVFSNativeNode *result; DeeObject *newpath;
+ struct DeeVFSNativeNode *result; DeeObject *newpath;
  if DEE_UNLIKELY((newpath = DeeString_Newf("%s:",name)) == NULL) return NULL;
 #if 0
  if (GetFileAttributesA(DeeString_STR(newpath)) == INVALID_FILE_ATTRIBUTES) {
@@ -100,7 +92,7 @@ static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativemountnode_vnt_walk(
   return NULL;
  }
 #endif
- if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(DeeVFSNativeNode)) == NULL) { Dee_DECREF(newpath); return NULL; }
+ if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) { Dee_DECREF(newpath); return NULL; }
  DeeVFSNode_InitWithParent(&result->vnn_node,&DeeVFSNativeNode_Type,self);
  Dee_INHERIT_REF(result->vnn_path,*(DeeStringObject **)&newpath);
  return result;
@@ -128,7 +120,7 @@ static void DEE_CALL _deevfs_nativemountview_vvt_quit(struct DeeVFSNativeMountVi
 static int DEE_CALL _deevfs_nativemountview_vvt_curr(
  struct DeeVFSNativeMountView *self, struct DeeVFSNativeNode **result) {
  struct DeeVFSNativeNode *result_node;
- if DEE_UNLIKELY((result_node = DeeVFSNode_ALLOC(DeeVFSNativeNode)) == NULL) return -1;
+ if DEE_UNLIKELY((result_node = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) return -1;
  if DEE_UNLIKELY((result_node->vnn_path = (DeeStringObject *)DeeString_NewSized(2)) == NULL) {
 /*err_r:*/ DeeVFSNode_FREE(result); return -1;
  }
@@ -152,7 +144,7 @@ static int DEE_CALL _deevfs_nativemountview_vvt_curr(
 static int DEE_CALL _deevfs_nativemountview_vvt_yield(
  struct DeeVFSNativeMountView *self, struct DeeVFSNativeNode **result) {
  struct DeeVFSNativeNode *result_node;
- if DEE_UNLIKELY((result_node = DeeVFSNode_ALLOC(DeeVFSNativeNode)) == NULL) return -1;
+ if DEE_UNLIKELY((result_node = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) return -1;
  if DEE_UNLIKELY((result_node->vnn_path = (DeeStringObject *)DeeString_NewSized(2)) == NULL) {
 /*err_r:*/ DeeVFSNode_FREE(result_node); return -1;
  }

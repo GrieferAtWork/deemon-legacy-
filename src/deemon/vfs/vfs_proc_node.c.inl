@@ -199,7 +199,7 @@ static int DeeVFSProcPIDNode_GetMemberID(char const *name) {
 }
 static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
  struct DeeVFSProcPIDNode *self, int member_id) {
- struct DeeVFSNode *result; DeeVFSNodeType const *node_type;
+ struct DeeVFSNode *result; struct DeeVFSNodeType const *node_type;
  switch (member_id) {
   case DEE_VFSPROCPIDMEMBER_CMDLINE: node_type = &DeeVFSProcPIDNode_Type_cmdline; break;
   case DEE_VFSPROCPIDMEMBER_CWD: node_type = &DeeVFSProcPIDNode_Type_cwd; break;
@@ -212,7 +212,7 @@ static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
 }
 static DeeObject *DEE_CALL _deevfs_procpidnode_nameof(
  struct DeeVFSProcPIDNode *DEE_UNUSED(self), struct DeeVFSNode *child) {
- DeeVFSNodeType const *node_type = child->vn_type;
+ struct DeeVFSNodeType const *node_type = child->vn_type;
  if (node_type == &DeeVFSProcPIDNode_Type_cmdline) DeeReturn_STATIC_STRING("cmdline");
  if (node_type == &DeeVFSProcPIDNode_Type_cwd) DeeReturn_STATIC_STRING("cwd");
  if (node_type == &DeeVFSProcPIDNode_Type_exe) DeeReturn_STATIC_STRING("exe");

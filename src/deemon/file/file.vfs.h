@@ -31,6 +31,7 @@
 
 DEE_DECL_BEGIN
 
+DEE_OBJECT_DEF(DeeFileVFSObject);
 struct DeeFileVFSObject {
  DEE_FILE_OBJECT_HEAD
  Dee_uint32_t      vf_users; /*< [atomic,inc:lock(fo_lock)] Amount of threads currently using this file-descriptor (incrementing requires a lock to 'fo_lock'). */

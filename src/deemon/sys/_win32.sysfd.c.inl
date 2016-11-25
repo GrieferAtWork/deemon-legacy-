@@ -54,17 +54,20 @@ static Dee_WideChar const _deewin32sys_sKERNAL32[] = {'K','E','R','N','E','L','3
 typedef HANDLE (WINAPI *LPDEEWIN32REOPENFILE)(HANDLE hOriginalFile, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwFlags);
 static char const *_deewin32sys_sReOpenFile = "ReOpenFile";
 static LPDEEWIN32REOPENFILE _deewin32sys_pReOpenFile = NULL;
-static DeeAtomicOnceFlag _deewin32sys_pReOpenFile_loaded = DeeAtomicOnceFlag_INIT();
+static struct DeeAtomicOnceFlag _deewin32sys_pReOpenFile_loaded = DeeAtomicOnceFlag_INIT();
+#define _deewin32sys_pReOpenFile_LOAD()\
+ DeeAtomicOnceFlag_RUN(&_deewin32sys_pReOpenFile_loaded,{\
+  *(FARPROC *)&_deewin32sys_pReOpenFile = GetProcAddress(\
+  GetModuleHandleW(_deewin32sys_sKERNAL32),_deewin32sys_sReOpenFile);\
+ })
+
 
 
 HANDLE DeeWin32Sys_TryReOpenFile(
  HANDLE hOriginalFile, DWORD dwDesiredAccess,
  DWORD dwShareMode, DWORD dwFlagsAndAttributes) {
  DeeObject *filename; HANDLE result;
- DeeAtomicOnceFlag_RUN(&_deewin32sys_pReOpenFile_loaded,{
-  *(FARPROC *)_deewin32sys_pReOpenFile = GetProcAddress(
-  GetModuleHandleW(_deewin32sys_sKERNAL32),_deewin32sys_sReOpenFile);
- });
+ _deewin32sys_pReOpenFile_LOAD();
  if (_deewin32sys_pReOpenFile) return (*_deewin32sys_pReOpenFile)(hOriginalFile,dwDesiredAccess,dwShareMode,dwFlagsAndAttributes);
  if ((filename = DeeWin32Sys_WideGetHandleFilename(hOriginalFile)) == NULL) { DeeError_HandledOne(); return INVALID_HANDLE_VALUE; }
  result = DeeWin32Sys_WideTryCreateFileObject(filename,dwDesiredAccess,dwShareMode,
@@ -76,10 +79,7 @@ HANDLE DeeWin32Sys_ReOpenFile(
  HANDLE hOriginalFile, DWORD dwDesiredAccess,
  DWORD dwShareMode, DWORD dwFlagsAndAttributes) {
  DeeObject *filename; HANDLE result;
- DeeAtomicOnceFlag_RUN(&_deewin32sys_pReOpenFile_loaded,{
-  *(FARPROC *)_deewin32sys_pReOpenFile = GetProcAddress(
-  GetModuleHandleW(_deewin32sys_sKERNAL32),_deewin32sys_sReOpenFile);
- });
+ _deewin32sys_pReOpenFile_LOAD();
  if (_deewin32sys_pReOpenFile) {
   result = (*_deewin32sys_pReOpenFile)(hOriginalFile,dwDesiredAccess,dwShareMode,dwFlagsAndAttributes);
   if (result == INVALID_HANDLE_VALUE) {
@@ -108,7 +108,7 @@ BOOL DeeWin32Sys_CreateSymbolicLinkW(
   'c','L','i','n','k','P','r','i','v','i','l','e','g','e',0};
  static BOOL has_privilege = FALSE;
  DEE_ATOMIC_ONCE({
-  *(FARPROC *)pCreateSymbolicLinkW = GetProcAddress(
+  *(FARPROC *)&pCreateSymbolicLinkW = GetProcAddress(
   GetModuleHandleW(_deewin32sys_sKERNAL32),sCreateSymbolicLinkW);
  });
  if (!pCreateSymbolicLinkW) { SetLastError(ERROR_PROC_NOT_FOUND); return FALSE; }

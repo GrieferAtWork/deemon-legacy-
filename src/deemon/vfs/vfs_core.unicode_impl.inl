@@ -187,10 +187,10 @@ retpath:
  }
 #ifdef WIDE
  result = DeeWideString_FromStringWithLength(
-  DeeString_SIZE(((DeeVFSNativeNode *)resultpath)->vnn_path),
-  DeeString_STR(((DeeVFSNativeNode *)resultpath)->vnn_path));
+  DeeString_SIZE(((struct DeeVFSNativeNode *)resultpath)->vnn_path),
+  DeeString_STR(((struct DeeVFSNativeNode *)resultpath)->vnn_path));
 #else
- Dee_INCREF(result = (DeeObject *)((DeeVFSNativeNode *)resultpath)->vnn_path);
+ Dee_INCREF(result = (DeeObject *)((struct DeeVFSNativeNode *)resultpath)->vnn_path);
 #endif
  DeeVFSNode_DECREF(resultpath);
  return result;
@@ -254,10 +254,10 @@ retpath:
  }
 #ifdef WIDE
  result = DeeWideString_FromStringWithLength(
-  DeeString_SIZE(((DeeVFSNativeNode *)resultpath)->vnn_path),
-  DeeString_STR(((DeeVFSNativeNode *)resultpath)->vnn_path));
+  DeeString_SIZE(((struct DeeVFSNativeNode *)resultpath)->vnn_path),
+  DeeString_STR(((struct DeeVFSNativeNode *)resultpath)->vnn_path));
 #else
- Dee_INCREF(result = (DeeObject *)((DeeVFSNativeNode *)resultpath)->vnn_path);
+ Dee_INCREF(result = (DeeObject *)((struct DeeVFSNativeNode *)resultpath)->vnn_path);
 #endif
  DeeVFSNode_DECREF(resultpath);
  return result;
@@ -297,10 +297,10 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *DeeVFS_F(ForceNativePathWit
  }
 #ifdef WIDE
  result = DeeWideString_FromStringWithLength(
-  DeeString_SIZE(((DeeVFSNativeNode *)resultpath)->vnn_path),
-  DeeString_STR(((DeeVFSNativeNode *)resultpath)->vnn_path));
+  DeeString_SIZE(((struct DeeVFSNativeNode *)resultpath)->vnn_path),
+  DeeString_STR(((struct DeeVFSNativeNode *)resultpath)->vnn_path));
 #else
- Dee_INCREF(result = (DeeObject *)((DeeVFSNativeNode *)resultpath)->vnn_path);
+ Dee_INCREF(result = (DeeObject *)((struct DeeVFSNativeNode *)resultpath)->vnn_path);
 #endif
  DeeVFSNode_DECREF(resultpath);
  return result;
@@ -335,10 +335,10 @@ DeeVFS_F(ForceNativeRootPath)(DEE_A_IN_Z DEE_CHAR const *path) {
  }
 #ifdef WIDE
  result = DeeWideString_FromStringWithLength(
-  DeeString_SIZE(((DeeVFSNativeNode *)resultpath)->vnn_path),
-  DeeString_STR(((DeeVFSNativeNode *)resultpath)->vnn_path));
+  DeeString_SIZE(((struct DeeVFSNativeNode *)resultpath)->vnn_path),
+  DeeString_STR(((struct DeeVFSNativeNode *)resultpath)->vnn_path));
 #else
- Dee_INCREF(result = (DeeObject *)((DeeVFSNativeNode *)resultpath)->vnn_path);
+ Dee_INCREF(result = (DeeObject *)((struct DeeVFSNativeNode *)resultpath)->vnn_path);
 #endif
  DeeVFSNode_DECREF(resultpath);
  return result;

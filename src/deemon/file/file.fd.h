@@ -83,8 +83,8 @@ struct DeeFileFDObject {
 };
 
 #ifdef DeeSysFD
-# define DeeFileFDObject_INIT_REF_INVALID(tp,ref)      {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_NONE,0,{/* don't initialize */}}
-# define DeeFileFDObject_INIT_REF_LATER(tp,ref)        {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID,0,{/* don't initialize */}}
+# define DeeFileFDObject_INIT_REF_INVALID(tp,ref)      {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_NONE,0,/*{ don't initialize }*/}
+# define DeeFileFDObject_INIT_REF_LATER(tp,ref)        {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID,0,/*{ don't initialize }*/}
 # define DeeFileFDObject_INIT_REF_VALID(tp,ref,descr)  {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID,0,descr}
 # define DeeFileFDObject_INIT_REF_OWNED(tp,ref,descr)  {DEE_OBJECT_HEAD_INIT_REF(tp,ref),DeeAtomicMutex_INIT(),DEE_PRIVATE_FILEFLAG_FD_VALID|DEE_PRIVATE_FILEFLAG_FD_OWNED,0,descr}
 #else
