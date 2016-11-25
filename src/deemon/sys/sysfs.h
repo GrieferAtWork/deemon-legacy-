@@ -24,8 +24,8 @@
 #include <deemon/__conf.inl>
 
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8GetCwd(void);
-// >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideGetCwd(void);
+// >> [[optional]] void DeeSysFS_Utf8GetCwd(DEE_A_OUT_OBJECT(DeeUtf8StringObject) **result, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideGetCwd(DEE_A_OUT_OBJECT(DeeWideStringObject) **result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8Chdir(DEE_A_IN_Z Dee_Utf8Char const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideChdir(DEE_A_IN_Z Dee_WideChar const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8ChdirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_error);

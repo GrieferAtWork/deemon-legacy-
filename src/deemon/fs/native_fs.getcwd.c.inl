@@ -35,36 +35,44 @@ DEE_DECL_BEGIN
 #ifndef DEE_NFS_HAVE_GETCWD
 DeeError_NEW_STATIC(_dee_notimplemented_getcwd,&DeeErrorType_NotImplemented,"getcwd");
 #endif
+
+#ifdef DEE_NFS_HAVE_GETCWD
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetCwd(void) {
+ DeeObject *result;
 #ifdef DeeSysFS_Utf8GetCwd
- return DeeSysFS_Utf8GetCwd();
-#elif defined(DeeSysFS_WideGetCwd)
- DeeObject *result,*newresult;
- if DEE_UNLIKELY((result = DeeSysFS_WideGetCwd()) == NULL) return NULL;
+ DeeSysFS_Utf8GetCwd(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
+ return result;
+#else
+ DeeObject *newresult;
+ DeeSysFS_WideGetCwd(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
  newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
                                                     DeeWideString_STR(result));
  Dee_DECREF(result);
  return newresult;
-#else
- DeeError_Throw((DeeObject *)&_dee_notimplemented_getcwd);
- return NULL;
 #endif
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetCwd(void) {
+ DeeObject *result;
 #ifdef DeeSysFS_WideGetCwd
- return DeeSysFS_WideGetCwd();
-#elif defined(DeeSysFS_Utf8GetCwd)
- DeeObject *result,*newresult;
- if DEE_UNLIKELY((result = DeeSysFS_Utf8GetCwd()) == NULL) return NULL;
+ DeeSysFS_WideGetCwd(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
+ return result;
+#else
+ DeeObject *newresult;
+ DeeSysFS_Utf8GetCwd(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
  newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
                                                     DeeUtf8String_STR(result));
  Dee_DECREF(result);
  return newresult;
-#else
- DeeError_Throw((DeeObject *)&_dee_notimplemented_getcwd);
- return NULL;
 #endif
 }
+#else
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeNFS_Utf8GetCwd(void) { DeeError_Throw((DeeObject *)&_dee_notimplemented_getcwd); return NULL; }
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeNFS_WideGetCwd(void) { DeeError_Throw((DeeObject *)&_dee_notimplemented_getcwd); return NULL; }
+#endif
 
 DEE_DECL_END
 

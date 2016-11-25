@@ -302,7 +302,6 @@ compile_deemon() {
 	update_object_file "$source_path/deemon/foreign_function.c"
 	update_object_file "$source_path/deemon/fs/dynamic_fs.c"
 	update_object_file "$source_path/deemon/fs/expand_fs.c"
-	update_object_file "$source_path/deemon/fs/fs.c"
 	update_object_file "$source_path/deemon/fs/native_fs.c"
 	update_object_file "$source_path/deemon/fs/objects/native_view.c"
 	update_object_file "$source_path/deemon/fs/objects/vfs_view.c"
@@ -378,7 +377,6 @@ link_deemon() {
 		"$build_path/foreign_function.c.o" \
 		"$build_path/dynamic_fs.c.o" \
 		"$build_path/expand_fs.c.o" \
-		"$build_path/fs.c.o" \
 		"$build_path/native_fs.c.o" \
 		"$build_path/native_view.c.o" \
 		"$build_path/vfs_view.c.o" \
@@ -455,7 +453,6 @@ link_deemon_static() {
 		"$build_path/foreign_function.c.o" \
 		"$build_path/dynamic_fs.c.o" \
 		"$build_path/expand_fs.c.o" \
-		"$build_path/fs.c.o" \
 		"$build_path/native_fs.c.o" \
 		"$build_path/native_view.c.o" \
 		"$build_path/vfs_view.c.o" \

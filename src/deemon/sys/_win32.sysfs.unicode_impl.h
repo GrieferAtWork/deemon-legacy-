@@ -46,32 +46,6 @@
 
 DEE_DECL_BEGIN
 
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *) DeeWin32Sys_F(GetCwd)(void) {
- DWORD temp; DeeObject *result;
- if DEE_UNLIKELY((result = DeeString_F(NewSized)(DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD)) == NULL) return NULL;
- temp = WIN32_F(GetCurrentDirectory)(DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD+1,DeeString_F(STR)(result));
- if DEE_UNLIKELY(!temp) {
-err: DeeError_SetStringf(&DeeErrorType_SystemError,
-                         DEE_PP_STR(WIN32_F(GetCurrentDirectory)) "() : %K",
-                         DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
-err_r: Dee_DECREF(result);
-  return NULL;
- }
- if (temp > DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD) {
-again:
-  if DEE_UNLIKELY(DeeString_F(Resize)(&result,temp) != 0) goto err_r;
-  temp = WIN32_F(GetCurrentDirectory)(temp+1,DeeString_F(STR)(result));
-  if DEE_UNLIKELY(!temp) goto err;
-  if DEE_UNLIKELY(temp > DeeString_F(SIZE)(result)) goto again;
-  if (temp < DeeString_F(SIZE)(result)) {
-   if DEE_UNLIKELY(DeeString_F(Resize)(&result,temp) != 0) goto err_r;
-  }
- } else {
-  if DEE_UNLIKELY(DeeString_F(Resize)(&result,temp) != 0) goto err_r;
- }
- return result;
-}
-
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
 DeeWin32Sys_F(GetEnv)(DEE_A_IN_Z DEE_CHAR const *envname) {
  DWORD error; DeeObject *result;

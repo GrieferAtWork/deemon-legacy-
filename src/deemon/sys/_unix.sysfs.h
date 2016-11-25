@@ -77,51 +77,35 @@ DEE_STATIC_INLINE(int) DeeUnixSys_CheckGetCwdError(void) {
  return 0;
 }
 
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeUnixSys_Utf8GetCwd(void) {
- Dee_size_t bufsize,last_size = 0; DeeObject *result; Dee_Utf8Char *cwd_start; int error;
- if DEE_UNLIKELY((result = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD)) == NULL) return NULL;
- if DEE_UNLIKELY(!getcwd(DeeUtf8String_STR(result),DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD)) {
-  if DEE_UNLIKELY(DeeUnixSys_CheckGetCwdError() != 0) {err_r: Dee_DECREF(result); return NULL; }
-  if DEE_UNLIKELY(DeeUtf8String_Resize(&result,(bufsize = (
-   last_size = DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD)*2)) != 0) goto err_r;
-  while DEE_UNLIKELY(!getcwd(DeeUtf8String_STR(result),bufsize)) {
-   Dee_size_t new_size;
-   if DEE_UNLIKELY(DeeUnixSys_CheckGetCwdError() != 0) goto err_r;
-   if DEE_UNLIKELY(DeeUtf8String_Resize(&result,(new_size = bufsize*2)) != 0) goto err_r;
-   last_size = bufsize,bufsize = new_size;
-  }
- }
- cwd_start = DeeUtf8String_STR(result)+last_size;
- while (*cwd_start) ++cwd_start;
- last_size = (Dee_size_t)(cwd_start-DeeUtf8String_STR(result));
- bufsize = DeeUtf8String_SIZE(result);
- if (last_size != bufsize && DEE_UNLIKELY(DeeUtf8String_Resize(&result,last_size) != 0)) goto err_r;
- return result;
-}
+#define DeeUnixSys_Utf8GetCwd(result,...) \
+do{\
+ Dee_size_t _uc_bufsize,_uc_last_size = 0; Dee_Utf8Char *_uc_cwd_start; int _uc_error;\
+ if DEE_UNLIKELY((*(result) = DeeUtf8String_NewSized((\
+  _uc_bufsize = DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD))) == NULL) {__VA_ARGS__;}\
+ while DEE_UNLIKELY(!getcwd(DeeUtf8String_STR(*(result)),_uc_bufsize)) {\
+  if DEE_UNLIKELY(DeeUnixSys_CheckGetCwdError() != 0 || DeeUtf8String_Resize(\
+   result,(_uc_bufsize = (_uc_last_size = _uc_bufsize)*2)) != 0) { Dee_DECREF(*(result)); {__VA_ARGS__;} }\
+ }\
+ _uc_last_size += Dee_Utf8StrLen(DeeUtf8String_STR(*(result))+_uc_last_size);\
+ if (_uc_last_size != _uc_bufsize && DEE_UNLIKELY(DeeUtf8String_Resize(\
+  result,_uc_last_size) != 0)) { Dee_DECREF(*(result)); {__VA_ARGS__;} }\
+}while(0)
 #define DeeUnixSysFS_Utf8GetCwd DeeUnixSys_Utf8GetCwd
 
 #if DEE_HAVE__WGETCWD
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeUnixSys_WideGetCwd(void) {
- Dee_size_t bufsize,last_size = 0; DeeObject *result; Dee_WideChar *cwd_start; int error;
- if DEE_UNLIKELY((result = DeeWideString_NewSized(DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD)) == NULL) return NULL;
- if DEE_UNLIKELY(!_wgetcwd(DeeWideString_STR(result),DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD)) {
-  if DEE_UNLIKELY(DeeUnixSys_CheckGetCwdError() != 0) {err_r: Dee_DECREF(result); return NULL; }
-  if DEE_UNLIKELY(DeeWideString_Resize(&result,(bufsize = (
-   last_size = DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD)*2)) != 0) goto err_r;
-  while DEE_UNLIKELY(!_wgetcwd(DeeWideString_STR(result),bufsize)) {
-   Dee_size_t new_size;
-   if DEE_UNLIKELY(DeeUnixSys_CheckGetCwdError() != 0) goto err_r;
-   if DEE_UNLIKELY(DeeWideString_Resize(&result,(new_size = bufsize*2)) != 0) goto err_r;
-   last_size = bufsize,bufsize = new_size;
-  }
- }
- cwd_start = DeeWideString_STR(result)+last_size;
- while (*cwd_start) ++cwd_start;
- last_size = (Dee_size_t)(cwd_start-DeeWideString_STR(result));
- bufsize = DeeWideString_SIZE(result);
- if (last_size != bufsize && DEE_UNLIKELY(DeeWideString_Resize(&result,last_size) != 0)) goto err_r;
- return result;
-}
+#define DeeUnixSys_WideGetCwd(result,...) \
+do{\
+ Dee_size_t _uc_bufsize,_uc_last_size = 0; Dee_WideChar *_uc_cwd_start; int _uc_error;\
+ if DEE_UNLIKELY((*(result) = DeeWideString_NewSized((\
+  _uc_bufsize = DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD))) == NULL) {__VA_ARGS__;}\
+ while DEE_UNLIKELY(!_wgetcwd(DeeWideString_STR(*(result)),_uc_bufsize)) {\
+  if DEE_UNLIKELY(DeeUnixSys_CheckGetCwdError() != 0 || DeeWideString_Resize(\
+   result,(_uc_bufsize = (_uc_last_size = _uc_bufsize)*2)) != 0) { Dee_DECREF(*(result)); {__VA_ARGS__;} }\
+ }\
+ _uc_last_size += Dee_WideStrLen(DeeWideString_STR(*(result))+_uc_last_size);\
+ if (_uc_last_size != _uc_bufsize && DEE_UNLIKELY(DeeWideString_Resize(\
+  result,_uc_last_size) != 0)) { Dee_DECREF(*(result)); {__VA_ARGS__;} }\
+}while(0)
 #define DeeUnixSysFS_WideGetCwd DeeUnixSys_WideGetCwd
 #endif
 

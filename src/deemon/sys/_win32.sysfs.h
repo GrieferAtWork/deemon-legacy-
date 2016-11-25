@@ -72,8 +72,40 @@ DEE_PRIVATE_DECL_DEE_TIMETICK_T
  (err)==ERROR_BAD_NETPATH||(err)==ERROR_BAD_NET_NAME)
 
 
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeWin32Sys_Utf8GetCwd(void);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeWin32Sys_WideGetCwd(void);
+#define DeeWin32Sys_Utf8GetCwd(result,...) \
+do{\
+ DWORD _wc_temp,_wc_bufsize;\
+ if DEE_UNLIKELY((*(result) = DeeUtf8String_NewSized((\
+  _wc_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD))) == NULL) {__VA_ARGS__;}\
+ while (1) {\
+  _wc_temp = GetCurrentDirectoryA(_wc_bufsize+1,DeeUtf8String_STR(*(result)));\
+  if DEE_UNLIKELY(!_wc_temp) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"GetCurrentDirectoryA() : %K",\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   Dee_DECREF(*(result));\
+   {__VA_ARGS__;}\
+  }\
+  if DEE_UNLIKELY(DeeUtf8String_Resize(result,_wc_temp) != 0) { Dee_DECREF(*(result)); {__VA_ARGS__;}}\
+  if (_wc_temp <= _wc_bufsize) break;\
+ }\
+}while(0)
+#define DeeWin32Sys_WideGetCwd(result,...) \
+do{\
+ DWORD _wc_temp,_wc_bufsize;\
+ if DEE_UNLIKELY((*(result) = DeeWideString_NewSized((\
+  _wc_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32GETCWD))) == NULL) {__VA_ARGS__;}\
+ while (1) {\
+  _wc_temp = GetCurrentDirectoryW(_wc_bufsize+1,DeeWideString_STR(*(result)));\
+  if DEE_UNLIKELY(!_wc_temp) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"GetCurrentDirectoryW() : %K",\
+                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   Dee_DECREF(*(result));\
+   {__VA_ARGS__;}\
+  }\
+  if DEE_UNLIKELY(DeeWideString_Resize(result,_wc_temp) != 0) { Dee_DECREF(*(result)); {__VA_ARGS__;}}\
+  if (_wc_temp <= _wc_bufsize) break;\
+ }\
+}while(0)
 #define DeeWin32SysFS_Utf8GetCwd DeeWin32Sys_Utf8GetCwd
 #define DeeWin32SysFS_WideGetCwd DeeWin32Sys_WideGetCwd
 

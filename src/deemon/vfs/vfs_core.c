@@ -210,32 +210,38 @@ DEE_A_RET_EXCEPT(-1) int DeeVFSNode_Chown(
 
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *
 DeeVFSNode_Utf8Readlink(DEE_A_INOUT struct DeeVFSNode *self) {
- DeeObject *result,*newresult;
  if (!self->vn_type->vnt_node.vnt_readlink) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "Can't readlink %R",
                       DeeVFSNode_Filename(self));
   return NULL;
  }
- result = (*self->vn_type->vnt_node.vnt_readlink)(self);
- if DEE_UNLIKELY(!result) return NULL;
- DEE_ASSERT(DeeObject_Check(result) && DeeString_Check(result));
- if (DeeString_SIZE(result) >= 2 && DeeString_STR(result)[1] == ':') {
-  char *native_begin = DeeString_STR(result)+3;
-  while (DEE_VFS_ISSEP(*native_begin)) ++native_begin;
-  // Native path --> Convert into virtual path
-  newresult = DeeString_Newf("/mount/%c/%.*s",
-                             DeeString_STR(result)[0],
-                             (unsigned)(DeeString_SIZE(result)-
-                             (native_begin-DeeString_STR(result))),
-                             native_begin);
-  Dee_DECREF(result);
-  if DEE_UNLIKELY(!newresult) return NULL;
-  native_begin = DeeString_STR(newresult);
-  while (*native_begin) { if (*native_begin == '\\') *native_begin = '/'; ++native_begin; }
-  return newresult;
+#if 1
+ return (*self->vn_type->vnt_node.vnt_readlink)(self);
+#else
+ {
+  DeeObject *result,*newresult;
+  result = (*self->vn_type->vnt_node.vnt_readlink)(self);
+  if DEE_UNLIKELY(!result) return NULL;
+  DEE_ASSERT(DeeObject_Check(result) && DeeString_Check(result));
+  if (DeeString_SIZE(result) >= 2 && DeeString_STR(result)[1] == ':') {
+   char *native_begin = DeeString_STR(result)+3;
+   while (DEE_VFS_ISSEP(*native_begin)) ++native_begin;
+   // Native path --> Convert into virtual path
+   newresult = DeeString_Newf("/mount/%c/%.*s",
+                              DeeString_STR(result)[0],
+                              (unsigned)(DeeString_SIZE(result)-
+                              (native_begin-DeeString_STR(result))),
+                              native_begin);
+   Dee_DECREF(result);
+   if DEE_UNLIKELY(!newresult) return NULL;
+   native_begin = DeeString_STR(newresult);
+   while (*native_begin) { if (*native_begin == '\\') *native_begin = '/'; ++native_begin; }
+   return newresult;
+  }
+  return result;
  }
- return result;
+#endif
 }
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *
 DeeVFSNode_WideReadlink(DEE_A_INOUT struct DeeVFSNode *self) {
