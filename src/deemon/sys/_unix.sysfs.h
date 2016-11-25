@@ -585,6 +585,127 @@ do{\
 #define DeeUnixSysFS_Utf8IsMount       DeeUnixSys_Utf8IsMount
 #define DeeUnixSysFS_Utf8IsMountObject DeeUnixSys_Utf8IsMountObject
 
+#define DEE_UNIXSYS_PRIVATE_ISNOTFOUNDERROR(eno)\
+ ((eno) == ENOENT || (eno) == ENAMETOOLONG || (eno) == ENOTDIR)
+
+#define DeeUnixSys_Utf8HasProperty(path,result,prop_query,...) \
+do{\
+ struct stat _hp_st; int _hp_error;\
+ if DEE_UNLIKELY(stat(path,&_hp_st) == -1) {\
+  _hp_error = errno;\
+  if (DEE_UNIXSYS_PRIVATE_ISNOTFOUNDERROR(_hp_error)) *(result) = 0; else {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"stat(%q) : %K",path,\
+                       DeeSystemError_ToString(_hp_error));\
+   {__VA_ARGS__;}\
+  }\
+ } else {\
+  *(result) = prop_query(_hp_st.st_mode);\
+ }\
+}while(0)
+#if DEE_HAVE_LSTAT
+#define DeeUnixSys_Utf8LHasProperty(path,result,prop_query,...) \
+do{\
+ struct stat _hp_st; int _hp_error;\
+ if DEE_UNLIKELY(lstat(path,&_hp_st) == -1) {\
+  _hp_error = errno;\
+  if (DEE_UNIXSYS_PRIVATE_ISNOTFOUNDERROR(_hp_error)) *(result) = 0; else {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"lstat(%q) : %K",path,\
+                       DeeSystemError_ToString(_hp_error));\
+   {__VA_ARGS__;}\
+  }\
+ } else {\
+  *(result) = prop_query(_hp_st.st_mode);\
+ }\
+}while(0)
+#endif
+
+#ifndef S_ISDIR
+#ifdef S_IFDIR
+# define S_ISDIR(x) (((x)&S_IFDIR)!=0)
+#elif defined(_S_IFDIR)
+# define S_ISDIR(x) (((x)&_S_IFDIR)!=0)
+#endif
+#endif
+#ifndef S_ISREG
+#ifdef S_IFREG
+# define S_ISREG(x) (((x)&S_IFREG)!=0)
+#elif defined(_S_IFREG)
+# define S_ISREG(x) (((x)&_S_IFREG)!=0)
+#endif
+#endif
+#ifndef S_ISLNK
+#ifdef S_IFLNK
+# define S_ISLNK(x) (((x)&S_IFLNK)!=0)
+#elif defined(_S_IFLNK)
+# define S_ISLNK(x) (((x)&_S_IFLNK)!=0)
+#endif
+#endif
+
+#ifdef S_ISREG
+#define DeeUnixSys_Utf8IsFile(path,result,...)       DeeUnixSys_Utf8HasProperty(path,result,S_ISREG,__VA_ARGS__)
+#endif
+#ifdef S_ISDIR
+#define DeeUnixSys_Utf8IsDir(path,result,...)        DeeUnixSys_Utf8HasProperty(path,result,S_ISDIR,__VA_ARGS__)
+#endif
+#if defined(S_ISLNK) && defined(DeeUnixSys_Utf8LHasProperty)
+#define DeeUnixSys_Utf8IsLink(path,result,...)       DeeUnixSys_Utf8LHasProperty(path,result,S_ISLNK,__VA_ARGS__)
+#endif
+#define DeeUnixSys_Utf8IsHidden(path,result,...)     do{*(result) = *(path) == '.';}while(0)
+#define DEE_UNIXSYS_PRIVATE_S_ISEXECUTABLE(x)     (((x)&0111)!=0)
+#define DeeUnixSys_Utf8IsExecutable(path,result,...) DeeUnixSys_Utf8HasProperty(path,result,DEE_UNIXSYS_PRIVATE_S_ISEXECUTABLE,__VA_ARGS__)
+#ifdef S_ISCHR
+#define DeeUnixSys_Utf8IsCharDev(path,result,...)    DeeUnixSys_Utf8HasProperty(path,result,S_ISCHR,__VA_ARGS__)
+#endif
+#ifdef S_ISBLK
+#define DeeUnixSys_Utf8IsBlockDev(path,result,...)   DeeUnixSys_Utf8HasProperty(path,result,S_ISBLK,__VA_ARGS__)
+#endif
+#ifdef S_ISFIFO
+#define DeeUnixSys_Utf8IsFiFo(path,result,...)       DeeUnixSys_Utf8HasProperty(path,result,S_ISFIFO,__VA_ARGS__)
+#endif
+#ifdef S_ISSOCK
+#define DeeUnixSys_Utf8IsSocket(path,result,...)     DeeUnixSys_Utf8HasProperty(path,result,S_ISREG,__VA_ARGS__)
+#endif
+#define DEE_UNIXSYS_PRIVATE_S_EXISTS(x)              1
+#define DeeUnixSys_Utf8Exists(path,result,...)       DeeUnixSys_Utf8HasProperty(path,result,DEE_UNIXSYS_PRIVATE_S_EXISTS,__VA_ARGS__)
+
+
+
+#ifdef DeeUnixSys_Utf8IsFile
+#define DeeUnixSysFS_Utf8IsFile DeeUnixSys_Utf8IsFile
+#endif
+#ifdef DeeUnixSys_Utf8IsDir
+#define DeeUnixSysFS_Utf8IsDir DeeUnixSys_Utf8IsDir
+#endif
+#ifdef DeeUnixSys_Utf8IsLink
+#define DeeUnixSysFS_Utf8IsLink DeeUnixSys_Utf8IsLink
+#endif
+#ifdef DeeUnixSys_Utf8IsHidden
+#define DeeUnixSysFS_Utf8IsHidden DeeUnixSys_Utf8IsHidden
+#endif
+#ifdef DeeUnixSys_Utf8IsExecutable
+#define DeeUnixSysFS_Utf8IsExecutable DeeUnixSys_Utf8IsExecutable
+#endif
+#ifdef DeeUnixSys_Utf8IsCharDev
+#define DeeUnixSysFS_Utf8IsCharDev DeeUnixSys_Utf8IsCharDev
+#endif
+#ifdef DeeUnixSys_Utf8IsBlockDev
+#define DeeUnixSysFS_Utf8IsBlockDev DeeUnixSys_Utf8IsBlockDev
+#endif
+#ifdef DeeUnixSys_Utf8IsFiFo
+#define DeeUnixSysFS_Utf8IsFiFo DeeUnixSys_Utf8IsFiFo
+#endif
+#ifdef DeeUnixSys_Utf8IsSocket
+#define DeeUnixSysFS_Utf8IsSocket DeeUnixSys_Utf8IsSocket
+#endif
+#ifdef DeeUnixSys_Utf8Exists
+#define DeeUnixSysFS_Utf8Exists DeeUnixSys_Utf8Exists
+#endif
+
+
+
+
+
+
 
 #ifdef DeeUnixSysFS_Utf8GetCwd
 #define DeeSysFS_Utf8GetCwd      DeeUnixSysFS_Utf8GetCwd
@@ -662,9 +783,41 @@ do{\
 #endif
 #ifdef DeeUnixSysFS_Utf8IsMount
 #define DeeSysFS_Utf8IsMount       DeeUnixSysFS_Utf8IsMount
+#define DeeSysFS_Utf8IsDrive       DeeUnixSysFS_Utf8IsMount
 #endif
 #ifdef DeeUnixSysFS_Utf8IsMountObject
 #define DeeSysFS_Utf8IsMountObject DeeUnixSysFS_Utf8IsMountObject
+#define DeeSysFS_Utf8IsDriveObject DeeUnixSysFS_Utf8IsMountObject
+#endif
+#ifdef DeeUnixSysFS_Utf8IsFile
+#define DeeSysFS_Utf8IsFile DeeUnixSysFS_Utf8IsFile
+#endif
+#ifdef DeeUnixSysFS_Utf8IsDir
+#define DeeSysFS_Utf8IsDir DeeUnixSysFS_Utf8IsDir
+#endif
+#ifdef DeeUnixSysFS_Utf8IsLink
+#define DeeSysFS_Utf8IsLink DeeUnixSysFS_Utf8IsLink
+#endif
+#ifdef DeeUnixSysFS_Utf8IsHidden
+#define DeeSysFS_Utf8IsHidden DeeUnixSysFS_Utf8IsHidden
+#endif
+#ifdef DeeUnixSysFS_Utf8IsExecutable
+#define DeeSysFS_Utf8IsExecutable DeeUnixSysFS_Utf8IsExecutable
+#endif
+#ifdef DeeUnixSysFS_Utf8IsCharDev
+#define DeeSysFS_Utf8IsCharDev DeeUnixSysFS_Utf8IsCharDev
+#endif
+#ifdef DeeUnixSysFS_Utf8IsBlockDev
+#define DeeSysFS_Utf8IsBlockDev DeeUnixSysFS_Utf8IsBlockDev
+#endif
+#ifdef DeeUnixSysFS_Utf8IsFiFo
+#define DeeSysFS_Utf8IsFiFo DeeUnixSysFS_Utf8IsFiFo
+#endif
+#ifdef DeeUnixSysFS_Utf8IsSocket
+#define DeeSysFS_Utf8IsSocket DeeUnixSysFS_Utf8IsSocket
+#endif
+#ifdef DeeUnixSysFS_Utf8Exists
+#define DeeSysFS_Utf8Exists DeeUnixSysFS_Utf8Exists
 #endif
 
 DEE_DECL_END
