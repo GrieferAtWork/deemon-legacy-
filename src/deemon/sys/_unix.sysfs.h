@@ -431,33 +431,33 @@ do{\
 #endif
 
 #if DEE_HAVE_STAT
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_TIME_H
+#if DEE_HAVE_UTIMES
 #define DeeUnixSys_Utf8SetTimes(path,atime,ctime,mtime,...) \
  DeeUnixSys_Utf8SetTimes_impl(path,atime,mtime,__VA_ARGS__)
 #define DeeUnixSys_Utf8SetTimes_impl(path,atime,mtime,...) \
 do{\
  struct timeval _tm_val[2];\
  if ((atime) && (mtime)) {\
-  _tm_val[0].tv_sec = (long)DeeTime_TimeT2Mseconds(*atime);\
-  _tm_val[0].tv_usec = (long)((*atime) % 1000);\
-  _tm_val[1].tv_sec = (long)DeeTime_TimeT2Mseconds(*mtime);\
-  _tm_val[1].tv_usec = (long)((*mtime) % 1000);\
+  _tm_val[0].tv_sec  = (long)DeeTime_TimeT2Mseconds(*(atime));\
+  _tm_val[0].tv_usec = (long)(*(atime) % 1000);\
+  _tm_val[1].tv_sec  = (long)DeeTime_TimeT2Mseconds(*(mtime));\
+  _tm_val[1].tv_usec = (long)(*(mtime) % 1000);\
  } else {\
-  struct stat st;\
-  if DEE_UNLIKELY(stat(path,&st) == -1) {\
+  struct stat _tm_st;\
+  if DEE_UNLIKELY(stat(path,&_tm_st) == -1) {\
    DeeError_SetStringf(&DeeErrorType_SystemError,\
                        "stat(%q) : %K",path,\
                        DeeSystemError_ToString(DeeSystemError_Consume()));\
    {__VA_ARGS__;}\
   }\
   if (atime) {\
-   _tm_val[0].tv_sec = (long)DeeTime_TimeT2Mseconds(*atime);\
-   _tm_val[0].tv_usec = (long)((*atime) % 1000);\
-  } else _tm_val[0].tv_sec = st.st_atime,_tm_val[0].tv_usec = 0;\
+   _tm_val[0].tv_sec  = (long)DeeTime_TimeT2Mseconds(*(atime));\
+   _tm_val[0].tv_usec = (long)(*(atime) % 1000);\
+  } else _tm_val[0].tv_sec = _tm_st.st_atime,_tm_val[0].tv_usec = 0;\
   if (mtime) {\
-   _tm_val[1].tv_sec = (long)DeeTime_TimeT2Mseconds(*mtime);\
-   _tm_val[1].tv_usec = (long)((*mtime) % 1000);\
-  } else _tm_val[1].tv_sec = st.st_mtime,_tm_val[1].tv_usec = 0;\
+   _tm_val[1].tv_sec  = (long)DeeTime_TimeT2Mseconds(*(mtime));\
+   _tm_val[1].tv_usec = (long)(*(mtime) % 1000);\
+  } else _tm_val[1].tv_sec = _tm_st.st_mtime,_tm_val[1].tv_usec = 0;\
  }\
  if DEE_UNLIKELY(utimes(path,_tm_val) == -1) {\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
@@ -468,15 +468,14 @@ do{\
   {__VA_ARGS__;}\
  }\
 }while(0)
-#elif DEE_ENVIRONMENT_HAVE_INCLUDE_UTIME_H\
-   && DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_TYPES_H
+#elif DEE_HAVE_UTIME
 #define DeeUnixSys_Utf8SetTimes(path,atime,ctime,mtime,...) \
  DeeUnixSys_Utf8SetTimes_impl(path,atime,mtime,__VA_ARGS__)
 #define DeeUnixSys_Utf8SetTimes_impl(path,atime,mtime,...) \
 do{\
  struct utimbuf _tm_val;\
  if ((atime) && (mtime)) {\
-  _tm_val.actime = (Dee_time_t)DeeTime_TimeT2Mseconds(*(atime));\
+  _tm_val.actime  = (Dee_time_t)DeeTime_TimeT2Mseconds(*(atime));\
   _tm_val.modtime = (Dee_time_t)DeeTime_TimeT2Mseconds(*(mtime));\
  } else {\
   struct stat st;\
@@ -486,7 +485,7 @@ do{\
                        DeeSystemError_ToString(DeeSystemError_Consume()));\
    {__VA_ARGS__;}\
   }\
-  _tm_val.actime = (atime) ? (Dee_time_t)DeeTime_TimeT2Mseconds(*(atime)) : st.st_atime;\
+  _tm_val.actime  = (atime) ? (Dee_time_t)DeeTime_TimeT2Mseconds(*(atime)) : st.st_atime;\
   _tm_val.modtime = (mtime) ? (Dee_time_t)DeeTime_TimeT2Mseconds(*(mtime)) : st.st_mtime;\
  }\
  if DEE_UNLIKELY(utime(path,&_tm_val) == -1) {\

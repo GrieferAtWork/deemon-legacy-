@@ -302,12 +302,97 @@ do{\
  if (ctime) *(ctime) = DeeTime_TimeT2Mseconds(_ut_st.st_ctime);\
  if (mtime) *(mtime) = DeeTime_TimeT2Mseconds(_ut_st.st_mtime);\
 }while(0)
-#define DeeSysFileFD_GetTimes(self,atime,ctime,mtime,...)\
+#define DeeUnixSysFileFD_GetTimes(self,atime,ctime,mtime,...)\
  DeeUnixSys_FDGetTimes((self)->unx_fd,atime,ctime,mtime,__VA_ARGS__)
 #endif /* DEE_HAVE_FSTAT */
 
-// NOTE: Setting filetime is only possible through use of the filename,
-//       which is a fallback case that we're not required to handle!
+
+#if DEE_HAVE_FUTIMENS
+// int futimens(int fd, const struct timespec times[2]);
+#define DeeUnixSys_FDSetTimes_impl(fd,atime,mtime,...) \
+do{\
+ struct timespec _ut_spec[2];\
+ if ((atime) && (mtime)) {\
+  _ut_spec[0].tv_sec = (Dee_time_t)DeeTime_TimeT2Mseconds(*(atime));\
+  _ut_spec[0].tv_nsec = (long)(*(atime) % 1000)*1000000;\
+  _ut_spec[1].tv_sec = (Dee_time_t)DeeTime_TimeT2Mseconds(*(mtime));\
+  _ut_spec[1].tv_nsec = (long)(*(mtime) % 1000)*1000000;\
+ } else {\
+  struct stat _tm_st;\
+  if DEE_UNLIKELY(fstat(fd,&_tm_st) == -1) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "fstat(%d) : %K",fd,\
+                       DeeSystemError_ToString(DeeSystemError_Consume()));\
+   {__VA_ARGS__;}\
+  }\
+  if (atime) {\
+   _ut_spec[0].tv_sec = (Dee_time_t)DeeTime_TimeT2Mseconds(*(atime));\
+   _ut_spec[0].tv_nsec = (long)(*(atime) % 1000)*1000000;\
+  } else _ut_spec[0].tv_sec = _tm_st.st_atime,_ut_spec[0].tv_nsec = 0;\
+  if (mtime) {\
+   _ut_spec[1].tv_sec = (Dee_time_t)DeeTime_TimeT2Mseconds(*(mtime));\
+   _ut_spec[1].tv_nsec = (long)(*(mtime) % 1000)*1000000;\
+  } else _ut_spec[1].tv_sec = _tm_st.st_mtime,_ut_spec[1].tv_nsec = 0;\
+ }\
+ if (futimens(fd,_ut_spec) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,"futimens(%d,{"\
+                      "{%I" DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_TIME_T)) ",%ld},"\
+                      "{%I" DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_TIME_T)) ",%ld}}) : %K",fd,\
+                      _ut_spec[0].tv_sec,_ut_spec[0].tv_nsec,\
+                      _ut_spec[1].tv_sec,_ut_spec[1].tv_nsec,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#elif DEE_HAVE_FUTIMES
+// int futimes(int fd, const struct timeval tv[2]);
+#define DeeUnixSys_FDSetTimes_impl(fd,atime,mtime,...) \
+do{\
+ struct timeval _tm_val[2];\
+ if ((atime) && (mtime)) {\
+  _tm_val[0].tv_sec = (long)DeeTime_TimeT2Mseconds(*(atime));\
+  _tm_val[0].tv_usec = (long)(*(atime) % 1000);\
+  _tm_val[1].tv_sec = (long)DeeTime_TimeT2Mseconds(*(mtime));\
+  _tm_val[1].tv_usec = (long)(*(mtime) % 1000);\
+ } else {\
+  struct stat _tm_st;\
+  if DEE_UNLIKELY(fstat(fd,&_tm_st) == -1) {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"fstat(%d) : %K",fd,\
+                       DeeSystemError_ToString(DeeSystemError_Consume()));\
+   {__VA_ARGS__;}\
+  }\
+  if (atime) {\
+   _tm_val[0].tv_sec = (long)DeeTime_TimeT2Mseconds(*(atime));\
+   _tm_val[0].tv_usec = (long)(*(atime) % 1000);\
+  } else _tm_val[0].tv_sec = _tm_st.st_atime,_tm_val[0].tv_usec = 0;\
+  if (mtime) {\
+   _tm_val[1].tv_sec = (long)DeeTime_TimeT2Mseconds(*(mtime));\
+   _tm_val[1].tv_usec = (long)(*(mtime) % 1000);\
+  } else _tm_val[1].tv_sec = _tm_st.st_mtime,_tm_val[1].tv_usec = 0;\
+ }\
+ if DEE_UNLIKELY(futimes(fd,_tm_val) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "futimes(%d,{{%ld,%ld},{%ld,%ld}}) : %K",fd,\
+                      (long)_tm_val[0].tv_sec,(long)_tm_val[0].tv_usec,\
+                      (long)_tm_val[1].tv_sec,(long)_tm_val[1].tv_usec,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif
+
+#ifdef DeeUnixSys_FDSetTimes_impl
+#define DeeUnixSys_FDSetTimes(fd,atime,ctime,mtime,...)\
+ DeeUnixSys_FDSetTimes_impl(fd,atime,mtime,__VA_ARGS__)
+#endif
+
+#ifdef DeeUnixSys_FDSetTimes
+#define DeeUnixSysFileFD_SetTimes(self,atime,ctime,mtime,...)\
+ DeeUnixSys_FDSetTimes((self)->unx_fd,atime,ctime,mtime,__VA_ARGS__)
+#endif
+
+
+
 #if DEE_HAVE_FSTAT
 #ifndef S_ISDIR
 #ifdef S_IFDIR
@@ -534,6 +619,12 @@ do{\
 #endif
 #ifdef DeeUnixSysFileFD_Utf8Filename
 #define DeeSysFileFD_Utf8Filename      DeeUnixSysFileFD_Utf8Filename
+#endif
+#ifdef DeeUnixSysFileFD_GetTimes
+#define DeeSysFileFD_GetTimes          DeeUnixSysFileFD_GetTimes
+#endif
+#ifdef DeeUnixSysFileFD_SetTimes
+#define DeeSysFileFD_SetTimes          DeeUnixSysFileFD_SetTimes
 #endif
 #ifdef DeeUnixSysFileFD_IsFile
 #define DeeSysFileFD_IsFile            DeeUnixSysFileFD_IsFile
