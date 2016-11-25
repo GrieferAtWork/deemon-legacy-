@@ -428,7 +428,7 @@ DEE_A_RET_EXCEPT(-1) int DeeWin32Window_SetIcon(
    ++line;
   }
  }
- icon_handle = CreateIconFromResource(bmp_data,icon_size,TRUE,0x00030000);
+ icon_handle = CreateIconFromResource(bmp_data,(DWORD)icon_size,TRUE,0x00030000);
  free_nn(bmp_data);
  // Post the new icon
  SendMessageW(hwnd,WM_SETICON,ICON_SMALL,(LPARAM)icon_handle);
@@ -616,7 +616,7 @@ err_r: _DeeObject_DELETE(&DeeWindowSurface_Type,result);
  result->ws_scanline = ((sx*result->ws_pixlsize)+3)&~3;
  info.bmiHeader.biWidth = (LONG)sx;
  info.bmiHeader.biHeight = -(LONG)sy;
- info.bmiHeader.biSizeImage = (LONG)sy*result->ws_scanline;
+ info.bmiHeader.biSizeImage = (DWORD)((LONG)sy*result->ws_scanline);
  result->nw_w32mdc = CreateCompatibleDC(hdc);
  if DEE_UNLIKELY(!result->nw_w32mdc) {
   DeeError_SetStringf(&DeeErrorType_SystemError,

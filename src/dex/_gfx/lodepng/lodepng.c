@@ -41,6 +41,7 @@ DEE_COMPILER_MSVC_WARNING_PUSH(4365 4242 4820)
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) /*Visual Studio: A few warning types are not desired here.*/
 #pragma warning( disable : 4244 ) /*implicit conversions: not warned by gcc -Wall -Wextra and requires too much casts*/
 #pragma warning( disable : 4996 ) /*VS does not like fopen, but fopen_s is not standard C so unusable here*/
+#pragma warning(disable: 4334 4267)
 #endif /*_MSC_VER */
 
 const char* LODEPNG_VERSION_STRING = "20160501";

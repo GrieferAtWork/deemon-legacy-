@@ -192,7 +192,7 @@ DEE_COMPILER_PREFAST_WARNING_PUSH(6001 6102)
 void DeeRandomNumberGenerator_Randomize(
  DEE_A_OUT struct DeeRandomNumberGenerator *self) {
  Dee_uint64_t new_seed;
-#if DEE_TYPES_SIZEOF_POINTER <= 8
+#if DEE_TYPES_SIZEOF_POINTER < 8
 #define ADD_POINTER(seed,p) \
  (seed) ^= ((((Dee_uint64_t)(p) << (((seed)^(Dee_uint64_t)(p))\
       %((8-DEE_TYPES_SIZEOF_POINTER)*8))) ^ (Dee_uint64_t)(p))-1)

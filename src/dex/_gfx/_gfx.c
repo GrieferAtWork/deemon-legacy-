@@ -280,7 +280,8 @@ DEE_A_RET_EXCEPT(-1) int DeeSurface_SavePNGStream(
  if DEE_UNLIKELY((rgba8888 = DeeSurface_Convert(self,&DeeSurfaceType_RGBA8888)) == NULL) return -1;
  error = lodepng_encode_memory(&buffer,&buffersize,
                                (unsigned char const *)rgba8888->s_pixeldata.s_pixels,
-                               rgba8888->s_sizex,rgba8888->s_sizey,LCT_RGBA,8);
+                               (unsigned int)rgba8888->s_sizex,
+                               (unsigned int)rgba8888->s_sizey,LCT_RGBA,8);
  Dee_DECREF(rgba8888);
  if (error != 0) {
   DeeError_SetStringf(&DeeErrorType_ValueError,
@@ -299,7 +300,8 @@ DEE_A_RET_EXCEPT(-1) int DeeSurface_SavePNGFile(
  if DEE_UNLIKELY((rgba8888 = DeeSurface_Convert(self,&DeeSurfaceType_RGBA8888)) == NULL) return -1;
  error = lodepng_encode_memory(&buffer,&buffersize,
                                (unsigned char const *)rgba8888->s_pixeldata.s_pixels,
-                               rgba8888->s_sizex,rgba8888->s_sizey,LCT_RGBA,8);
+                               (unsigned int)rgba8888->s_sizex,
+                               (unsigned int)rgba8888->s_sizey,LCT_RGBA,8);
  Dee_DECREF(rgba8888);
  if (error != 0) {
   DeeError_SetStringf(&DeeErrorType_ValueError,
@@ -485,7 +487,7 @@ static void DEE_CALL _deenoopsurface_st_linellhh(DeeSurfaceObject *DEE_UNUSED(se
 static void DEE_CALL _deenoopsurface_st_xline(DeeSurfaceObject *DEE_UNUSED(self), Dee_size_t DEE_UNUSED(xbegin), Dee_size_t DEE_UNUSED(xend), Dee_size_t DEE_UNUSED(y), struct DeePixel const *DEE_UNUSED(color), DEE_A_IN Dee_blendinfo_t DEE_UNUSED(blend)) {}
 #define _deenoopsurface_st_yline _deenoopsurface_st_xline
 static void DEE_CALL _deenoopsurface_st_blit(DeeSurfaceObject *DEE_UNUSED(self), Dee_size_t DEE_UNUSED(dst_x), Dee_size_t DEE_UNUSED(dst_y), DeeSurfaceObject const *DEE_UNUSED(src), Dee_size_t DEE_UNUSED(src_x), Dee_size_t DEE_UNUSED(src_y), Dee_size_t DEE_UNUSED(sx), Dee_size_t DEE_UNUSED(sy), Dee_blendinfo_t DEE_UNUSED(blend)) {}
-static void DEE_CALL _deenoopsurface_st_stretchblit(DeeSurfaceObject *DEE_UNUSED(self), Dee_size_t DEE_UNUSED(dst_x), Dee_size_t DEE_UNUSED(dst_y), Dee_size_t DEE_UNUSED(dstsx), Dee_size_t DEE_UNUSED(dstsy), DeeSurfaceObject const *DEE_UNUSED(src), double DEE_UNUSED(src_x), double DEE_UNUSED(src_y), double DEE_UNUSED(srcsx), double DEE_UNUSED(srcsy), Dee_blendinfo_t DEE_UNUSED(blend)) {}
+static void DEE_CALL _deenoopsurface_st_stretchblit(DeeSurfaceObject *DEE_UNUSED(self), Dee_size_t DEE_UNUSED(dst_x), Dee_size_t DEE_UNUSED(dst_y), Dee_size_t DEE_UNUSED(dstsx), Dee_size_t DEE_UNUSED(dstsy), DeeSurfaceObject const *DEE_UNUSED(src), Dee_sizefloat_t DEE_UNUSED(src_x), Dee_sizefloat_t DEE_UNUSED(src_y), Dee_sizefloat_t DEE_UNUSED(srcsx), Dee_sizefloat_t DEE_UNUSED(srcsy), Dee_blendinfo_t DEE_UNUSED(blend)) {}
 static void DEE_CALL _deenoopsurface_st_flipx(DeeSurfaceObject *DEE_UNUSED(self), Dee_size_t DEE_UNUSED(xbegin), Dee_size_t DEE_UNUSED(ybegin), Dee_size_t DEE_UNUSED(xend), Dee_size_t DEE_UNUSED(yend)) {}
 #define _deenoopsurface_st_flipy _deenoopsurface_st_flipx
 static void DEE_CALL _deenoopsurface_st_pixelmaskmsb(DeeSurfaceObject *DEE_UNUSED(self), Dee_size_t DEE_UNUSED(x), Dee_size_t DEE_UNUSED(y), Dee_size_t DEE_UNUSED(sx), Dee_size_t DEE_UNUSED(sy), Dee_size_t DEE_UNUSED(line_bytes), void const *DEE_UNUSED(data), struct DeePixel const *DEE_UNUSED(color), Dee_blendinfo_t DEE_UNUSED(blend)) {}
@@ -589,7 +591,8 @@ static DeeSurfaceObject *DEE_CALL _deepixelsurface_tp_any_new(
    _DeeSurface_Blit(result,0,0,(DeeSurfaceObject *)arg0,DEE_BLENDINFO_OVERRIDE);
   } else { // Advanced blit (stretch is required)
    _DeeSurface_StretchBlit(result,0,0,sx,sy,(DeeSurfaceObject *)arg0,0,0,
-                           DeeSurface_SIZEX(arg0),DeeSurface_SIZEY(arg0),
+                           (Dee_sizefloat_t)DeeSurface_SIZEX(arg0),
+                           (Dee_sizefloat_t)DeeSurface_SIZEY(arg0),
                            DEE_BLENDINFO_OVERRIDE);
   }
  } else {

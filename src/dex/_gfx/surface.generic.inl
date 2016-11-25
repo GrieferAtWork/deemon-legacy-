@@ -69,18 +69,18 @@ void DEE_CALL _deesurface_generic_st_yline(
 void DEE_CALL _deesurface_generic_st_linellhh(
  DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sizex,
  Dee_size_t sizey, struct DeePixel const *color, Dee_blendinfo_t blend) {
- double relation; PDeeSurfaceSetPixel setter;
+ Dee_sizefloat_t relation; PDeeSurfaceSetPixel setter;
  Dee_size_t step;
  DEE_ASSERT(sizex != 0);
  DEE_ASSERT(sizey != 0);
  setter = DeeSurface_TYPE(dst)->st_setpixel;
  step = 0;
  if (sizex > sizey) {
-  relation = (double)sizey/(double)sizex;
+  relation = (Dee_sizefloat_t)sizey/(Dee_sizefloat_t)sizex;
   do (*setter)(dst,x+step,y+(Dee_size_t)(relation*step),color,blend);
   while (++step != sizex);
  } else if (sizex < sizey) {
-  relation = (double)sizex/(double)sizey;
+  relation = (Dee_sizefloat_t)sizex/(Dee_sizefloat_t)sizey;
   do (*setter)(dst,x+(Dee_size_t)(relation*step),y+step,color,blend);
   while (++step != sizey);
  } else {
@@ -91,17 +91,17 @@ void DEE_CALL _deesurface_generic_st_linellhh(
 void DEE_CALL _deesurface_generic_st_linelhhl(
  DeeSurfaceObject *dst, Dee_size_t x, Dee_size_t y, Dee_size_t sizex,
  Dee_size_t sizey, struct DeePixel const *color, Dee_blendinfo_t blend) {
- double relation; PDeeSurfaceSetPixel setter;
+ Dee_sizefloat_t relation; PDeeSurfaceSetPixel setter;
  Dee_size_t step;
  DEE_ASSERT(sizex != 0),DEE_ASSERT(sizey != 0);
  setter = DeeSurface_TYPE(dst)->st_setpixel;
  step = 0;
  if (sizex > sizey) {
-  relation = (double)sizey/(double)sizex;
+  relation = (Dee_sizefloat_t)sizey/(Dee_sizefloat_t)sizex;
   do (*setter)(dst,x+step,y-(Dee_size_t)(relation*step),color,blend);
   while (++step != sizex);
  } else if (sizex < sizey) {
-  relation = (double)sizex/(double)sizey;
+  relation = (Dee_sizefloat_t)sizex/(Dee_sizefloat_t)sizey;
   do (*setter)(dst,x+(Dee_size_t)(relation*step),y-step,color,blend);
   while (++step != sizey);
  } else {
@@ -132,26 +132,26 @@ void DEE_CALL _deesurface_generic_st_blit(
 }
 void DEE_CALL _deesurface_generic_st_stretchblit(
  DeeSurfaceObject *dst, Dee_size_t dst_x, Dee_size_t dst_y, Dee_size_t dstsx, Dee_size_t dstsy,
- DeeSurfaceObject const *src, double src_x, double src_y, double srcsx, double srcsy,
+ DeeSurfaceObject const *src, Dee_sizefloat_t src_x, Dee_sizefloat_t src_y, Dee_sizefloat_t srcsx, Dee_sizefloat_t srcsy,
  Dee_blendinfo_t blend) {
  struct DeePixel pixel; Dee_size_t x,y,srcx,srcy;
  PDeeSurfaceGetPixel getter;
  PDeeSurfaceSetPixel setter;
- double srcfacx,srcfacy;
+ Dee_sizefloat_t srcfacx,srcfacy;
  DEE_ASSERT(dst_x+dstsx <= dst->s_sizex); DEE_ASSERT(dstsx != 0);
  DEE_ASSERT(dst_y+dstsy <= dst->s_sizey); DEE_ASSERT(dstsy != 0);
  DEE_ASSERT(src_x >= 0);
  DEE_ASSERT(src_y >= 0);
  DEE_ASSERT((Dee_size_t)(src_x+srcsx) <= src->s_sizex);
  DEE_ASSERT((Dee_size_t)(src_y+srcsy) <= src->s_sizey);
- srcfacx = srcsx/(double)dstsx;
- srcfacy = srcsy/(double)dstsy;
+ srcfacx = srcsx/(Dee_sizefloat_t)dstsx;
+ srcfacy = srcsy/(Dee_sizefloat_t)dstsy;
  setter = DeeSurface_TYPE(dst)->st_setpixel;
  getter = DeeSurface_TYPE(src)->st_getpixel;
  for (y = 0; y != dstsy; ++y) {
-  srcy = (Dee_size_t)(src_y+((double)y*srcfacy));
+  srcy = (Dee_size_t)(src_y+((Dee_sizefloat_t)y*srcfacy));
   for (x = 0; x != dstsx; ++x) {
-   srcx = (Dee_size_t)(src_x+((double)x*srcfacx));
+   srcx = (Dee_size_t)(src_x+((Dee_sizefloat_t)x*srcfacx));
    (*getter)(src,srcx,srcy,&pixel);
    (*setter)(dst,dst_x+x,dst_y+y,&pixel,blend);
   }

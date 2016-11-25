@@ -34,6 +34,9 @@
 
 DEE_DECL_BEGIN
 
+#ifdef DEE_PLATFORM_64_BIT
+DEE_COMPILER_MSVC_WARNING_PUSH(4311 4302)
+#endif
 
 #ifdef DEE_PLATFORM_WINDOWS
 static DWORD WINAPI DeeMic_ThreadMain(DeeMicObject *self) {
@@ -291,6 +294,9 @@ struct DeeDexExportDef DeeDex_Exports[] = {
  DeeDex_EXPORT_END
 };
 
+#ifdef DEE_PLATFORM_64_BIT
+DEE_COMPILER_MSVC_WARNING_POP
+#endif
 
 DEE_DECL_END
 

@@ -72,7 +72,7 @@ DEE_A_RET_EXCEPT(-1) int DeeZLib_CompressEx(
  old_size = DeeStringWriter_SIZE(writer);
  dest = DeeStringWriter_Require(writer,(size_t)max_size);
  if (!dest) return -1;
- error = mz_compress2((unsigned char *)dest,&used_size,(unsigned char const *)p,s,level);
+ error = mz_compress2((unsigned char *)dest,&used_size,(unsigned char const *)p,(mz_ulong)s,level);
  if (error != 0) {
   if (DeeStringWriter_Resize(writer,old_size) != 0) DeeError_Handled();
   DeeZLib_ThrowError(error);
@@ -95,7 +95,8 @@ again:
  if (DeeStringWriter_Resize(writer,old_size+bufsize) != 0) return -1;
  dest = (void *)(DeeStringWriter_ELEM(writer)+old_size);
  used_size = (mz_ulong)bufsize;
- error = mz_uncompress((unsigned char *)dest,&used_size,(unsigned char const *)p,s);
+ error = mz_uncompress((unsigned char *)dest,&used_size,
+                       (unsigned char const *)p,(mz_ulong)s);
  switch (error) {
   case MZ_OK: break; // this is what we want
   case MZ_BUF_ERROR:
