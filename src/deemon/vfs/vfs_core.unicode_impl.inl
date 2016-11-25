@@ -252,7 +252,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_F(Chdir)(DEE_A_IN_Z DEE_CHAR const *path) {
   newcwd = DeeVFS_F(Locate)(path);
   if DEE_UNLIKELY(!newcwd) return -1;
   error = DeeVFS_SetCwdNode(newcwd);
-  Dee_DECREF(newcwd);
+  DeeVFSNode_DECREF(newcwd);
   return error;
  }
  if (DeeVFS_F(IsAbsoluteNativePath)(path)) { // Absolute native path
@@ -483,7 +483,7 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_F(LocateAt_impl)(
   if DEE_UNLIKELY((error = DeeVFSNode_IsLink(result)) < 0) goto err_r;
   if (!error) break;
   if DEE_UNLIKELY(++state->vld_link_ind == DEE_VFS_MAX_LINK_INDIRECTION) {
-    DeeVFS_F(ErrorMaxLinkIndirectionReached)(state->vld_startpath);
+   DeeVFS_F(ErrorMaxLinkIndirectionReached)(state->vld_startpath);
 err_r:
    DeeVFSNode_DECREF(result);
    return NULL;

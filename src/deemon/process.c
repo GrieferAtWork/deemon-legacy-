@@ -30,7 +30,7 @@
 #include <deemon/file.h>
 #include <deemon/list.h>
 #include <deemon/gc.h>
-#include <deemon/fs_api.h>
+#include <deemon/fs/native_fs.h>
 #include <deemon/float.h>
 #include <deemon/time.h>
 #include <deemon/bool.h>

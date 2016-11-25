@@ -295,9 +295,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeProcess_F(Cwd)(
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  if (DeeProcess_IS_SELF(self)) {
 #ifdef WIDE
-  return DeeFS_WideGetCwd();
+  return DeeNFS_WideGetCwd();
 #else
-  return DeeFS_Utf8GetCwd();
+  return DeeNFS_Utf8GetCwd();
 #endif
  }
  if (!DeeProcess_IS_REF(self)) {
@@ -307,9 +307,9 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeProcess_F(Cwd)(
    Dee_XINCREF(result = (DeeObject *)((DeeProcessObject *)self)->p_cwd);
    DeeProcess_RELEASE(self);
 #ifdef WIDE
-   if (!result) result = DeeFS_WideGetCwd(); else
+   if (!result) result = DeeNFS_WideGetCwd(); else
 #else
-   if (!result) result = DeeFS_Utf8GetCwd(); else
+   if (!result) result = DeeNFS_Utf8GetCwd(); else
 #endif
    if (DEE_STRING_InplaceCast((DeeObject const **)&result) == -1) Dee_CLEAR(result);
    return result;
@@ -328,7 +328,7 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DEE_STRINGOBJECT) *DeeProcess_F(Cwd)(
  DeeObject *result,*filename;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
  filename = DeeString_Newf("/proc/%d/cwd",DeeProcess_HANDLE(self));
- result = _DeeFS_ReadlinkObject(filename);
+ result = DeeNFS_ReadlinkObject(filename);
  Dee_DECREF(filename);
  return result;
 #else

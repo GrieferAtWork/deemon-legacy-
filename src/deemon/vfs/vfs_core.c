@@ -197,14 +197,7 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
    do ++link_str; while (DEE_VFS_ISSEP(link_str[0]));
    result = DeeVFS_Utf8LLocateAt_impl(state,DeeVFS_Root,link_str);
   } else if (DeeVFS_Utf8IsAbsoluteNativePath(link_str)) {
-   // Absolute path within the native filesystem
-   if DEE_LIKELY((result = (struct DeeVFSNode *)DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) != NULL) {
-    // NOTE: We initialize the node's parent as ourselves, which though technically
-    //       not being correct, is much faster than trying to find the real native node.
-    DeeVFSNode_InitWithParent(result,&DeeVFSNativeNode_Type,self);
-    ((struct DeeVFSNativeNode *)result)->vnn_path = (DeeAnyStringObject *)link_path; // Inherit reference
-    return result; // Skip the decref on link_path (we inherited that reference)
-   }
+   result = DeeVFS_Utf8LocateNative(link_str);
   } else { // Relative link
    DEE_ASSERTF(self->vn_parent,"Node %R without parent is a link",
                DeeVFSNode_Filename(self));
@@ -216,14 +209,7 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFSNode_WalkLink_impl(
    do ++link_str; while (DEE_VFS_ISSEP(link_str[0]));
    result = DeeVFS_WideLLocateAt_impl(state,DeeVFS_Root,link_str);
   } else if (DeeVFS_WideIsAbsoluteNativePath(link_str)) {
-   // Absolute path within the native filesystem
-   if DEE_LIKELY((result = (struct DeeVFSNode *)DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) != NULL) {
-    // NOTE: We initialize the node's parent as ourselves, which though technically
-    //       not being correct, is much faster than trying to find the real native node.
-    DeeVFSNode_InitWithParent(result,&DeeVFSNativeNode_Type,self);
-    ((struct DeeVFSNativeNode *)result)->vnn_path = (DeeAnyStringObject *)link_path; // Inherit reference
-    return result; // Skip the decref on link_path (we inherited that reference)
-   }
+   result = DeeVFS_WideLocateNative(link_str);
   } else { // Relative link
    DEE_ASSERTF(self->vn_parent,"Node %R without parent is a link",
                DeeVFSNode_Filename(self));
@@ -263,10 +249,21 @@ DEE_A_RET_EXCEPT_REF struct DeeVFSNode *DeeVFS_GetCwdNode(void) {
  return result;
 }
 DEE_A_RET_EXCEPT(-1) int DeeVFS_SetCwdNode(DEE_A_IN struct DeeVFSNode *cwd) {
- struct DeeVFSNode *old_cwd;
+ struct DeeVFSNode *old_cwd,*link_dest; int temp;
  DEE_ASSERT(cwd);
- if (DeeVFSNode_IsNative(cwd)) { // Update the native CWD directory
-  if (DeeVFSNativeNode_NFS_Chdir(cwd) != 0) return -1;
+ if ((temp = DeeVFSNode_IsLink(cwd)) != 0) {
+  struct DeeVFSLocateState state;
+  if DEE_UNLIKELY(temp < 0) return temp;
+  state.vld_8startpath = NULL;
+  state.vld_link_ind = 0;
+  if DEE_UNLIKELY((link_dest = DeeVFSNode_WalkLink_impl(&state,cwd)) == NULL) return -1;
+  // Update the native CWD directory
+  temp = DeeVFSNode_IsNative(link_dest) ? DeeVFSNativeNode_NFS_Chdir(link_dest) : 0;
+  DeeVFSNode_DECREF(link_dest);
+  if (temp != 0) return temp;
+ } else {
+  // Update the native CWD directory
+  if (DeeVFSNode_IsNative(cwd) && DeeVFSNativeNode_NFS_Chdir(cwd) != 0) return -1;
  }
  DeeVFSNode_INCREF(cwd); // New reference for 'DeeVFS_CWD'
  DeeAtomicMutex_Acquire(&DeeVFS_CWD_lock);

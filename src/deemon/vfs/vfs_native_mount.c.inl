@@ -81,8 +81,8 @@ again:
 static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativemountnode_vnt_walk(
  struct DeeVFSNode *self, Dee_Utf8Char const *name, Dee_size_t path_size) {
  struct DeeVFSNativeNode *result; DeeObject *newpath;
- static Dee_Utf8Char const _fmt[] = {'%','.','*','l','s',':',0};
- if DEE_UNLIKELY((newpath = DeeUtf8String_Newf(_fmt,(unsigned)path_size,name)) == NULL) return NULL;
+ static Dee_Utf8Char const _fmt[] = {'%','$','s',':',0};
+ if DEE_UNLIKELY((newpath = DeeUtf8String_Newf(_fmt,path_size,name)) == NULL) return NULL;
  if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) { Dee_DECREF(newpath); return NULL; }
  DeeVFSNode_InitWithParent(&result->vnn_node,&DeeVFSNativeNode_Type,self);
  Dee_INHERIT_REF(result->vnn_path,*(DeeAnyStringObject **)&newpath);
@@ -91,8 +91,8 @@ static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativemountnode_vnt_walk(
 static struct DeeVFSNativeNode *DEE_CALL _deevfs_nativemountnode_vnt_wwalk(
  struct DeeVFSNode *self, Dee_WideChar const *name, Dee_size_t path_size) {
  struct DeeVFSNativeNode *result; DeeObject *newpath;
- static Dee_WideChar const _fmt[] = {'%','.','*','l','s',':',0};
- if DEE_UNLIKELY((newpath = DeeWideString_Newf(_fmt,(unsigned)path_size,name)) == NULL) return NULL;
+ static Dee_WideChar const _fmt[] = {'%','l','$','s',':',0};
+ if DEE_UNLIKELY((newpath = DeeWideString_Newf(_fmt,path_size,name)) == NULL) return NULL;
  if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSNativeNode)) == NULL) { Dee_DECREF(newpath); return NULL; }
  DeeVFSNode_InitWithParent(&result->vnn_node,&DeeVFSNativeNode_Type,self);
  Dee_INHERIT_REF(result->vnn_path,*(DeeAnyStringObject **)&newpath);

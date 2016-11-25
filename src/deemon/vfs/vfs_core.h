@@ -199,8 +199,8 @@ extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFSNode_Utf8Filename
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFSNode_WideFilename(DEE_A_IN struct DeeVFSNode const *node);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeVFSNode_Utf8Pathname(DEE_A_IN struct DeeVFSNode const *node);
 extern DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeVFSNode_WidePathname(DEE_A_IN struct DeeVFSNode const *node);
-#define DeeVFSNode_Pathname  DeeVFSNode_Utf8Filename
-#define DeeVFSNode_Filename  DeeVFSNode_Utf8Pathname
+#define DeeVFSNode_Pathname  DeeVFSNode_Utf8Pathname
+#define DeeVFSNode_Filename  DeeVFSNode_Utf8Filename
 
 
 #define DeeVFSNodeType_HASPROP(self,prop) ((self)->vnt_prop && (self)->vnt_prop->prop)
