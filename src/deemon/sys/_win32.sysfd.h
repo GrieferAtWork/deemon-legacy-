@@ -106,18 +106,18 @@ static BOOL DeeWin32Sys_TryHandleLargeWrite64(HANDLE hFile, void const *p, Dee_u
  return TRUE;
 }
 #if DEE_PLATFORM_ENDIAN == 1234
-#define DEE_WIN32_SYSFD_64LS32(x) ((Dee_uint32_t)(x)+1)
-#define DEE_WIN32_SYSFD_64MS32(x) ((Dee_uint32_t)(x))
+#define DEE_WIN32_SYSFD_64LS32(x) ((Dee_uint32_t *)(x))
+#define DEE_WIN32_SYSFD_64MS32(x) ((Dee_uint32_t *)(x)+1)
 #else
-#define DEE_WIN32_SYSFD_64LS32(x) ((Dee_uint32_t)(x))
-#define DEE_WIN32_SYSFD_64MS32(x) ((Dee_uint32_t)(x)+1)
+#define DEE_WIN32_SYSFD_64LS32(x) ((Dee_uint32_t *)(x)+1)
+#define DEE_WIN32_SYSFD_64MS32(x) ((Dee_uint32_t *)(x))
 #endif
 #define DeeWin32Sys_TryHandleRead64(hFile,p,s,rs) \
  ((s) > DWORD_MAX ? DeeWin32Sys_TryHandleLargeRead64(hFile,p,s,rs)\
   : (*DEE_WIN32_SYSFD_64MS32(rs) = 0,ReadFile(hFile,p,(DWORD)(s),\
     (LPDWORD)DEE_WIN32_SYSFD_64LS32(rs),NULL)))
 #define DeeWin32Sys_TryHandleWrite64(hFile,p,s,ws)\
- ((s) > DWORD_MAX ? DeeWin32SysFD_LargeWrite64(hFile,p,s,ws)\
+ ((s) > DWORD_MAX ? DeeWin32Sys_TryHandleLargeWrite64(hFile,p,s,ws)\
   : (*DEE_WIN32_SYSFD_64MS32(ws) = 0,WriteFile(hFile,p,(DWORD)(s),\
     (LPDWORD)DEE_WIN32_SYSFD_64LS32(ws),NULL)))
 #define DeeWin32Sys_TryHandleReadSize  DeeWin32Sys_TryHandleRead64
@@ -173,12 +173,14 @@ do{\
     if (0) {\
    case ERROR_INVALID_FUNCTION:\
    case ERROR_SEEK_ON_DEVICE:\
-     DeeError_NotImplemented_str("SetFilePointer");\
+     DeeError_NotImplemented_str("seek");\
     }\
     if (0) {\
    default:\
+     DEE_BUILTIN_BREAKPOINT();\
      DeeError_SetStringf(&DeeErrorType_IOError,\
-                         "SetFilePointer(%p,%I64u,%d) : %K",hFile,off,whence,\
+                         "SetFilePointer(%p,%I64d|%I64u,%d) : %K",\
+                         hFile,(Dee_int64_t)(off),(Dee_uint64_t)(off),whence,\
                          DeeSystemError_Win32ToString(_ws_error));\
     }\
     {__VA_ARGS__;}\
