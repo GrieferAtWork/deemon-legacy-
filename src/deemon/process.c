@@ -205,6 +205,7 @@ again:
     Dee_DECREF(result);
     DeeReturn_EmptyUtf8String;
 
+   case ERROR_MORE_DATA:
    case ERROR_INSUFFICIENT_BUFFER:
     // Must increase buffer size
     result_size = (DWORD)(DeeUtf8String_SIZE(result)*2);
@@ -254,6 +255,7 @@ again:
     Dee_DECREF(result);
     DeeReturn_EmptyWideString;
 
+   case ERROR_MORE_DATA:
    case ERROR_INSUFFICIENT_BUFFER:
     // Must increase buffer size
     result_size = (DWORD)(DeeWideString_SIZE(result)*2);

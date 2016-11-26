@@ -125,7 +125,8 @@ DeeWin32Sys_F(GetTokenUserHome)(DEE_A_IN HANDLE hToken) {
  DEE_LVERBOSE_SYS(DEE_PP_STR(WIN32_F(GetUserProfileDirectory)) "(%p,NULL,%p)\n",hToken,&req_size);
  if DEE_UNLIKELY(!(*WIN32_F(p_GetUserProfileDirectory))(hToken,NULL,&req_size)) {
   error = DeeSystemError_Win32Consume();
-  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
+  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER &&
+                  error != ERROR_MORE_DATA) {
 err_api:
    DeeError_SetStringf(&DeeErrorType_SystemError,
                        DEE_PP_STR(WIN32_F(GetUserProfileDirectory)) "(%p,NULL,...) : %K",hToken,

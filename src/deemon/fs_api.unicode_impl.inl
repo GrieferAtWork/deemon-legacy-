@@ -175,9 +175,13 @@ err_r:
   return NULL;
  } else if (temp < bufsize) {
   if DEE_UNLIKELY(DEE_STRING_Resize(&result,temp) != 0) goto err_r;
- } else if (temp == bufsize && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-  if DEE_UNLIKELY(DEE_STRING_Resize(&result,(bufsize *= 2)) != 0) goto err_r;
-  goto again;
+ } else if (temp == bufsize) {
+  DWORD error = GetLastError();
+  if (error == ERROR_INSUFFICIENT_BUFFER ||
+      error == ERROR_MORE_DATA) {
+   if DEE_UNLIKELY(DEE_STRING_Resize(&result,(bufsize *= 2)) != 0) goto err_r;
+   goto again;
+  }
  }
  return result;
 }

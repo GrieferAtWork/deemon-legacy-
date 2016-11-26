@@ -929,7 +929,8 @@ do{\
  _rl_bufsize = DEE_XCONFIG_FSBUFSIZE_WIN32READLINK;\
  while DEE_UNLIKELY(!DeviceIoControl(_rl_hFile,FSCTL_GET_REPARSE_POINT,\
    NULL,0,_rl_buffer,_rl_bufsize,&_rl_bytesreturned,NULL)) {\
-  if ((_rl_error = GetLastError()) == ERROR_INSUFFICIENT_BUFFER) {\
+  _rl_error = GetLastError();\
+  if (_rl_error == ERROR_INSUFFICIENT_BUFFER || _rl_error == ERROR_MORE_DATA) {\
    _rl_bufsize *= 2;\
    while DEE_UNLIKELY((_rl_newbuffer = (REPARSE_DATA_BUFFER *)\
     realloc_nnz(_rl_buffer,_rl_bufsize)) == NULL) {\

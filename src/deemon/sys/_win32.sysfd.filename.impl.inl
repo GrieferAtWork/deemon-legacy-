@@ -188,7 +188,7 @@ mapfilename_again:
    if DEE_UNLIKELY(!CloseHandle(hFileMap)) SetLastError(0);
    return result;
   }
-  if (error == ERROR_INSUFFICIENT_BUFFER) {
+  if (error == ERROR_INSUFFICIENT_BUFFER || error == ERROR_MORE_DATA) {
    // Increase the buffersize and try again
    if DEE_UNLIKELY(DeeString_F(Resize)(&result,DeeString_F(SIZE)(result)*2) != 0) {
 err_r_unmap_vof: Dee_DECREF(result); goto err_unmap_vof;

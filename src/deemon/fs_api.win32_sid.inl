@@ -37,7 +37,8 @@ _DeeFS_Utf8Win32SIDName(DEE_A_IN_OPT PSID sid, DEE_A_IN int full_name) {
   DeeUtf8String_STR(user),&usersize,
   DeeUtf8String_STR(domain),&domainsize,&use)) {
   error = DeeSystemError_Win32Consume();
-  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
+  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER &&
+                  error != ERROR_MORE_DATA) {
 syserr:
    DeeError_SetStringf(&DeeErrorType_SystemError,
                         "LookupAccountSidA(%Iu) : %K",
@@ -76,7 +77,8 @@ _DeeFS_WideWin32SIDName(DEE_A_IN_OPT PSID sid, DEE_A_IN int full_name) {
   DeeWideString_STR(user),&usersize,
   DeeWideString_STR(domain),&domainsize,&use)) {
   error = DeeSystemError_Win32Consume();
-  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
+  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER &&
+                  error != ERROR_MORE_DATA) {
 syserr:
    DeeError_SetStringf(&DeeErrorType_SystemError,
                         "LookupAccountSidW(%Iu) : %K",
@@ -146,7 +148,8 @@ err_r: DeeObject_Free(result); return NULL;
   DeeFSWin32SID_SID(result),&resultsize,
   DeeUtf8String_STR(domain),&domainsize,&use)) {
   error = DeeSystemError_Win32Consume();
-  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
+  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER &&
+                  error != ERROR_MORE_DATA) {
    if DEE_LIKELY(error == ERROR_NONE_MAPPED) {
     Dee_Utf8Char const *iter,*end;
     // This might be a 'user@machine' kind of username
@@ -198,7 +201,8 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeFSWin32SIDObject) *DeeFS_WideWin32NameToSID(
   DeeFSWin32SID_SID(result),&resultsize,
   DeeWideString_STR(domain),&domainsize,&use)) {
   error = DeeSystemError_Win32Consume();
-  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER) {
+  if DEE_UNLIKELY(error != ERROR_INSUFFICIENT_BUFFER &&
+                  error != ERROR_MORE_DATA) {
    if DEE_LIKELY(error == ERROR_NONE_MAPPED) {
     Dee_WideChar const *iter,*end;
     // This might be a 'user@machine' kind of username
@@ -259,7 +263,8 @@ retry:
   Dee_OFFSETOF(DeeFSWin32SIDObject,wsid_data)+sid_size)) == NULL) return NULL;
  if DEE_UNLIKELY(!CopySid(sid_size,DeeFSWin32SID_SID(result),(PSID)sid)) {
   error = DeeSystemError_Win32Consume();
-  if DEE_LIKELY(error == ERROR_INSUFFICIENT_BUFFER) goto retry;
+  if DEE_LIKELY(error == ERROR_INSUFFICIENT_BUFFER ||
+                error == ERROR_MORE_DATA) goto retry;
   DeeObject_Free(result);
 syserr:
   DeeError_SetStringf(&DeeErrorType_SystemError,
