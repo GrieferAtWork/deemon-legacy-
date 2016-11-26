@@ -569,9 +569,12 @@ module fs {
 #if __API_VERSION__ >= 102
 	local const host = __builtin_object(0x0196);
 	local const whost = __builtin_object(0x0198);
-#endif
+	__declspec(__deprecated_("Use fs::host() instead")) local const machine = __builtin_object(0x0196);
+	__declspec(__deprecated_("Use fs::whost() instead")) local const wmachine = __builtin_object(0x0198);
+#else
 	local const machine = __builtin_object(0x0196);
 	__DEEMON_WFS_FUNC(local const wmachine = __builtin_object(0x0198))
+#endif
 
 	module path {
 
@@ -1098,7 +1101,7 @@ module fs {
 	module posix {
 #if __API_VERSION__ >= 101
 #	define __DEPRECATED_ELEVATED_101(name) \
-		__declspec(__deprecated__("Staring in v101, fs::posix::" name " is platform-independent; Use fs::" name " instead"))
+		__declspec(__deprecated_("Staring in v101, fs::posix::" name " is platform-independent; Use fs::" name " instead"))
 #else
 #	define __DEPRECATED_ELEVATED_101(name)
 #endif
