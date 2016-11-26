@@ -630,7 +630,7 @@ do{\
   *(result) = prop_query(_hp_st.st_mode);\
  }\
 }while(0)
-#endif
+#endif /* DEE_HAVE_LSTAT */
 
 #ifndef S_ISDIR
 #ifdef S_IFDIR
@@ -733,7 +733,7 @@ do{\
   {__VA_ARGS__;}\
  }\
 }while(0)
-#endif
+#endif /* DEE_HAVE_REMOVE */
 
 #if DEE_HAVE_UNLINK
 #define DeeUnixSys_Utf8Unlink(path,...) \
@@ -744,7 +744,7 @@ do{\
   {__VA_ARGS__;}\
  }\
 }while(0)
-#endif
+#endif /* DEE_HAVE_UNLINK */
 
 #if DEE_HAVE_RMDIR
 #define DeeUnixSys_Utf8RmDir(path,...) \
@@ -755,7 +755,7 @@ do{\
   {__VA_ARGS__;}\
  }\
 }while(0)
-#endif
+#endif /* DEE_HAVE_RMDIR */
 
 
 #ifdef DeeUnixSys_Utf8Remove

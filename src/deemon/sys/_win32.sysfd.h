@@ -294,7 +294,7 @@ do{\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
   {__VA_ARGS__;}\
  }\
- *(result) = (_fd_attr&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE|FILE_ATTRIBUTE_REPARSE_POINT))==0;\
+ *(result) = (_fd_attr&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==0;\
 }while(0)
 
 #define DeeWin32Sys_HandleIsDir(hFile,result,...) \

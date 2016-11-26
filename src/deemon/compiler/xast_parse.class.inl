@@ -471,15 +471,16 @@ err_const_class_object: Dee_DECREF(const_class_object); goto err_class_base_ast;
  }
 
  if (token.tk_id == '{') {
-  DeeXAstObject *technical_class_base;
+  DeeXAstObject *technical_class_base; TPPTokenID class_name_id;
   if (class_base_ast) Dee_INCREF(technical_class_base = class_base_ast);
   else if ((technical_class_base = DeeXAst_NewConst(
    class_token,(DeeObject *)&DeeObject_Type)) == NULL) goto err_const_class_object;
   if DEE_UNLIKELY(!yield()) {err_technical_class_base: Dee_DECREF(technical_class_base); goto err_const_class_object; }
   while (token.tk_id == ';') if DEE_UNLIKELY(!yield()) goto err_technical_class_base;
+  class_name_id = (TPPTokenID)(class_name ? class_name->tk_token.tk_id : 0);
   while (token.tk_id != '}') {
    old_token_pos = lexer->l_token_pos;
-   if (DeeXAst_ParseConstantClassEntry(const_class_object,class_name->tk_token.tk_id,(
+   if (DeeXAst_ParseConstantClassEntry(const_class_object,class_name_id,(
     DeeObject *)attr->a_name,technical_class_base,DEE_PARSER_ARGS) != 0) goto err_technical_class_base;
    if (lexer->l_token_pos == old_token_pos) break;
   }
