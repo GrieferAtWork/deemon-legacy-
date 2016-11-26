@@ -376,7 +376,7 @@ do{\
    _tm_path_size = Dee_WideStrLen(path);\
    if DEE_UNLIKELY((_tm_unc_path = DeeWideString_NewSized(\
     _tm_path_size+4)) == NULL) { DeeError_HandledOne(); return FALSE; }\
-   memcpy(DeeWideString_STR(_tm_unc_path)+4,path,_tm_path_size);\
+   memcpy(DeeWideString_STR(_tm_unc_path)+4,path,_tm_path_size*sizeof(Dee_WideChar));\
    DeeWideString_STR(_tm_unc_path)[0] = '\\';\
    DeeWideString_STR(_tm_unc_path)[1] = '\\';\
    DeeWideString_STR(_tm_unc_path)[2] = '?';\
