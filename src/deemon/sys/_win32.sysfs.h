@@ -916,6 +916,7 @@ typedef struct _REPARSE_DATA_BUFFER {
 do{\
  HANDLE _rl_hFile; REPARSE_DATA_BUFFER *_rl_buffer,*_rl_newbuffer;\
  DWORD _rl_bufsize,_rl_bytesreturned,_rl_error;\
+ Dee_WideChar const *_rl_begin,*_rl_end;\
  if DEE_UNLIKELY((_rl_hFile = DeeWin32Sys_WideCreateFile(path,0,\
   FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,OPEN_EXISTING,\
   FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT)) == INVALID_HANDLE_VALUE) {__VA_ARGS__;}\
@@ -952,29 +953,27 @@ do{\
  CloseHandle(_rl_hFile);\
  switch (_rl_buffer->ReparseTag) {\
   case IO_REPARSE_TAG_SYMLINK:\
-   *(result) = DeeWideString_NewWithLength(\
-    _rl_buffer->SymbolicLinkReparseBuffer.SubstituteNameLength/sizeof(Dee_WideChar),\
-    _rl_buffer->SymbolicLinkReparseBuffer.PathBuffer+\
-    _rl_buffer->SymbolicLinkReparseBuffer.SubstituteNameOffset/sizeof(Dee_WideChar));\
+   _rl_end = (_rl_begin = _rl_buffer->SymbolicLinkReparseBuffer.PathBuffer+\
+    (_rl_buffer->SymbolicLinkReparseBuffer.SubstituteNameOffset/sizeof(Dee_WideChar)))+\
+    (_rl_buffer->SymbolicLinkReparseBuffer.SubstituteNameLength/sizeof(Dee_WideChar));\
    break;\
-  case IO_REPARSE_TAG_MOUNT_POINT: {\
-   Dee_WideChar const *_rl_begin,*_rl_end;\
+  case IO_REPARSE_TAG_MOUNT_POINT:\
    _rl_end = (_rl_begin = _rl_buffer->MountPointReparseBuffer.PathBuffer+\
     (_rl_buffer->MountPointReparseBuffer.SubstituteNameOffset/sizeof(Dee_WideChar)))+\
     (_rl_buffer->MountPointReparseBuffer.SubstituteNameLength/sizeof(Dee_WideChar));\
-   /* Get rid of that annoying '\??\' prefix */\
-   if (_rl_begin+4 <= _rl_end && (_rl_begin[0] == '\\' || _rl_begin[0] == '/') && _rl_begin[1] == '?' &&\
-       _rl_begin[2] == '?' && (_rl_begin[3] == '\\' || _rl_begin[3] == '/')) _rl_begin += 4;\
-   *(result) = DeeWideString_NewWithLength((Dee_size_t)(_rl_end-_rl_begin),_rl_begin);\
-  } break;\
+   break;\
   default:\
    DeeError_SetStringf(&DeeErrorType_SystemError,\
                        "DeviceIoControl(%p:%lq) : Unknown/Unsupported link type: %lu",\
                        _rl_hFile,path,(unsigned long)_rl_buffer->ReparseTag);\
    free_nn(_rl_buffer);\
    {__VA_ARGS__;}\
-   break;\
  }\
+ /* Get rid of that annoying '\??\' prefix */\
+ if (_rl_begin+4 <= _rl_end\
+  && _rl_begin[0] == '\\' && _rl_begin[1] == '?'\
+  && _rl_begin[2] == '?'  && _rl_begin[3] == '\\') _rl_begin += 4;\
+ *(result) = DeeWideString_NewWithLength((Dee_size_t)(_rl_end-_rl_begin),_rl_begin);\
  free_nn(_rl_buffer);\
  if DEE_UNLIKELY(!*(result)) {__VA_ARGS__;}\
 }while(0)
