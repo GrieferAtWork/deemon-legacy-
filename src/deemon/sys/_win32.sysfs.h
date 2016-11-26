@@ -298,7 +298,6 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeWin32Sy
 do{\
  LPCH _env_vars,_env_line;\
  if DEE_UNLIKELY((_env_vars = GetEnvironmentStringsA()) == NULL) {\
-  Dee_DECREF(result);\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "GetEnvironmentStringsA() : %K",\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
@@ -307,15 +306,14 @@ do{\
  for (_env_line = _env_vars; *_env_line;) {\
   Dee_Utf8Char *_env_value_begin,*_env_line_end;\
   _env_value_begin = _env_line;\
-  /* Skip internal env vars (like per-drive cwd, and others) */\
-  if (*_env_value_begin == '=') continue;\
   while (*_env_value_begin && *_env_value_begin != '=') ++_env_value_begin;\
-  /* No idea what this is about, but lets be safe */\
-  if DEE_UNLIKELY(!*_env_value_begin) continue;\
-  _env_line_end = _env_value_begin+Dee_Utf8StrLen(_env_line);\
-  enum((Dee_size_t)(_env_value_begin-_env_line),_env_line,\
-       (Dee_size_t)(_env_line_end-(_env_value_begin+1)),_env_value_begin+1,\
-       {if DEE_UNLIKELY(!FreeEnvironmentStringsA(_env_vars)) SetLastError(0); {__VA_ARGS__;}});\
+  _env_line_end = _env_value_begin+Dee_Utf8StrLen(_env_value_begin);\
+  /* Skip internal env vars (like per-drive cwd, and others) */\
+  if DEE_UNLIKELY(*_env_value_begin && *_env_line != '=') {\
+   enum((Dee_size_t)(_env_value_begin-_env_line),_env_line,\
+        (Dee_size_t)(_env_line_end-(_env_value_begin+1)),_env_value_begin+1,\
+        {if DEE_UNLIKELY(!FreeEnvironmentStringsA(_env_vars)) SetLastError(0); {__VA_ARGS__;}});\
+  }\
   _env_line = _env_line_end+1;\
  }\
  if DEE_UNLIKELY(!FreeEnvironmentStringsA(_env_vars)) SetLastError(0);\
@@ -324,7 +322,6 @@ do{\
 do{\
  LPWCH _env_vars,_env_line;\
  if DEE_UNLIKELY((_env_vars = GetEnvironmentStringsW()) == NULL) {\
-  Dee_DECREF(result);\
   DeeError_SetStringf(&DeeErrorType_SystemError,\
                       "GetEnvironmentStringsW() : %K",\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
@@ -333,15 +330,14 @@ do{\
  for (_env_line = _env_vars; *_env_line;) {\
   Dee_WideChar *_env_value_begin,*_env_line_end;\
   _env_value_begin = _env_line;\
+  while (*_env_value_begin && *_env_value_begin != '=') ++_env_value_begin;\
+  _env_line_end = _env_value_begin+Dee_WideStrLen(_env_value_begin);\
   /* Skip internal env vars (like per-drive cwd, and others) */\
-  if (*_env_value_begin == DEE_WIDECHAR_C('=')) continue;\
-  while (*_env_value_begin && *_env_value_begin != DEE_WIDECHAR_C('=')) ++_env_value_begin;\
-  /* No idea what this is about, but lets be safe */\
-  if DEE_UNLIKELY(!*_env_value_begin) continue;\
-  _env_line_end = _env_value_begin+Dee_WideStrLen(_env_line);\
-  enum((Dee_size_t)(_env_value_begin-_env_line),_env_line,\
-       (Dee_size_t)(_env_line_end-(_env_value_begin+1)),_env_value_begin+1,\
-       {if DEE_UNLIKELY(!FreeEnvironmentStringsW(_env_vars)) SetLastError(0); {__VA_ARGS__;}});\
+  if DEE_UNLIKELY(*_env_value_begin && *_env_line != '=') {\
+   enum((Dee_size_t)(_env_value_begin-_env_line),_env_line,\
+        (Dee_size_t)(_env_line_end-(_env_value_begin+1)),_env_value_begin+1,\
+        {if DEE_UNLIKELY(!FreeEnvironmentStringsW(_env_vars)) SetLastError(0); {__VA_ARGS__;}});\
+  }\
   _env_line = _env_line_end+1;\
  }\
  if DEE_UNLIKELY(!FreeEnvironmentStringsW(_env_vars)) SetLastError(0);\
