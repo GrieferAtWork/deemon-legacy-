@@ -306,7 +306,7 @@ do{\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
   {__VA_ARGS__;}\
  }\
- *(result) = (_fd_attr&(FILE_ATTRIBUTE_DIRECTORY))!=0;\
+ *(result) = (_fd_attr&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==FILE_ATTRIBUTE_DIRECTORY;\
 }while(0)
 #define DeeWin32Sys_HandleIsLink(hFile,result,...) \
 do{\

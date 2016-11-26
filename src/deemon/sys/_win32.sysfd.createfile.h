@@ -40,7 +40,7 @@ static DEE_ATTRIBUTE_UNUSED void _DeeWin32Sys_ThrowCreateFileError(
   default:                used_error_type = &DeeErrorType_IOError; break;
  }
  DeeError_SetStringf(used_error_type,
-                     "CreateFileW(%lq,%lu,%lu,NULL,%lu,%lu,NULL) : %K",
+                     "CreateFileW(%lq,%#lx,%#lx,NULL,%#lx,%#lx,NULL) : %K",
                      filename,dwDesiredAccess,dwShareMode,dwCreationDisposition,dwFlagsAndAttributes,
                      DeeSystemError_Win32ToString(error));
 }

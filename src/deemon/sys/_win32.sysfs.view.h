@@ -144,7 +144,7 @@ do{\
 
 #define DeeWin32SysFSWideViewNL_TryIsFile(self)   (((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==0)
 #define DeeWin32SysFSWideViewNL_TryIsDir(self)    (((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==(FILE_ATTRIBUTE_DIRECTORY))
-#define DeeWin32SysFSWideViewNL_TryIsLink(self)   (((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==(FILE_ATTRIBUTE_REPARSE_POINT))
+#define DeeWin32SysFSWideViewNL_TryIsLink(self)   (((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_REPARSE_POINT))!=0)
 #define DeeWin32SysFSWideViewNL_TryIsDrive(self)  0
 #define DeeWin32SysFSWideViewNL_TryIsMount(self)  0
 #define DeeWin32SysFSWideViewNL_TryIsHidden(self) (((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_HIDDEN))!=0)
@@ -198,7 +198,7 @@ DEE_STATIC_INLINE(DWORD) DeeWin32SysFSWideView_GetAttributes(struct DeeWin32SysF
 }
 #define DeeWin32SysFSWideView_IsFileAndReleaseOnError(self,result,...)   do{*(result)=(((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==0);}while(0)
 #define DeeWin32SysFSWideView_IsDirAndReleaseOnError(self,result,...)    do{*(result)=(((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==(FILE_ATTRIBUTE_DIRECTORY));}while(0)
-#define DeeWin32SysFSWideView_IsLinkAndReleaseOnError(self,result,...)   do{*(result)=(((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==(FILE_ATTRIBUTE_REPARSE_POINT));}while(0)
+#define DeeWin32SysFSWideView_IsLinkAndReleaseOnError(self,result,...)   do{*(result)=(((self)->w32_viewdata.dwFileAttributes&(FILE_ATTRIBUTE_REPARSE_POINT))!=0);}while(0)
 #define DeeWin32SysFSWideView_IsDriveAndReleaseOnError(self,result,...)  do{*(result)=0;}while(0)
 #define DeeWin32SysFSWideView_IsMountAndReleaseOnError(self,result,...)  do{*(result)=0;}while(0)
 #define DeeWin32SysFSWideView_IsHiddenAndReleaseOnError(self,result,...) do{*(result)=((DeeWin32SysFSWideView_GetAttributes(self)&(FILE_ATTRIBUTE_HIDDEN))!=0);}while(0)

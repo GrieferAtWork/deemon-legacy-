@@ -60,8 +60,26 @@ struct DeeVFSVirtualDirNode _DeeVFS_Dev =
 struct DeeVFSNode _DeeVFSNative_Root =
   DeeVFSNode_INIT(&DeeVFSNativeMountNode_Type,DeeVFS_Root);
 
+static DeeObject *DEE_CALL _deevfs_homelink_vnt_readlink(
+ struct DeeVFSNode *DEE_UNUSED(self)) {
+ DeeObject *home,*result; Dee_Utf8Char *begin,*end;
+ // We assume that the requested home path lies above our own home
+ if DEE_UNLIKELY((home = DeeNFS_Utf8GetHome()) == NULL) return NULL;
+ end = (begin = DeeUtf8String_STR(home))+DeeUtf8String_SIZE(home);
+ while (begin != end &&  DEE_FS_ISSEP(end[-1])) --end;
+ while (begin != end && !DEE_FS_ISSEP(end[-1])) --end;
+ while (begin != end &&  DEE_FS_ISSEP(end[-1])) --end;
+ result = DeeUtf8String_NewWithLength((Dee_size_t)(end-begin),begin);
+ Dee_DECREF(home);
+ return result;
+}
+struct DeeVFSNodeType DeeVFSHomeLinkNode_Type = {
+ {NULL,&_deevfs_homelink_vnt_readlink},NULL,
+ DeeVFSNoopNodeType_FileData,NULL};
+struct DeeVFSNode _DeeVFS_Home = DeeVFSNode_INIT(&DeeVFSHomeLinkNode_Type,DeeVFS_Root);
 
-static DeeObject *DEE_CALL _deevfs_tmplink_vnt_readlink(struct DeeVFSNode *DEE_UNUSED(self)) { return DeeNFS_GetTmp(); }
+static DeeObject *DEE_CALL _deevfs_tmplink_vnt_readlink(
+ struct DeeVFSNode *DEE_UNUSED(self)) { return DeeNFS_GetTmp(); }
 struct DeeVFSNodeType DeeVFSTmpLinkNode_Type = {
  {NULL,&_deevfs_tmplink_vnt_readlink},NULL,
  DeeVFSNoopNodeType_FileData,NULL};
@@ -71,6 +89,7 @@ struct DeeVFSNode _DeeVFS_Net = DeeVFSNode_INIT(&DeeVFSNetMountNode_Type,DeeVFS_
 
 static struct DeeVFSVirtualDirEntry _deevfs_root_nodes[] = {
  {"dev",  (struct DeeVFSNode *)&_DeeVFS_Dev},
+ {"home", (struct DeeVFSNode *)&_DeeVFS_Home},
  {"mount",DeeVFS_Mount},
  {"net",  (struct DeeVFSNode *)&_DeeVFS_Net},
  {"proc", DeeVFS_Proc},

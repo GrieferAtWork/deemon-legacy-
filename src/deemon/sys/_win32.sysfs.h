@@ -615,7 +615,7 @@ do{\
 do{\
  DWORD _if_attr;\
  DeeWin32Sys_WideGetFileAttributesWithLength(path,path_size,&_if_attr,0,__VA_ARGS__);\
- *(result) = (_if_attr&(FILE_ATTRIBUTE_DIRECTORY))!=0;\
+ *(result) = (_if_attr&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))==FILE_ATTRIBUTE_DIRECTORY;\
 }while(0)
 #define DeeWin32Sys_WideIsDir(path,result,...)\
  DeeWin32Sys_WideIsDirWithLength(path,Dee_WideStrLen(path),result,__VA_ARGS__)
@@ -916,7 +916,7 @@ typedef struct _REPARSE_DATA_BUFFER {
 do{\
  HANDLE _rl_hFile; REPARSE_DATA_BUFFER *_rl_buffer,*_rl_newbuffer;\
  DWORD _rl_bufsize,_rl_bytesreturned,_rl_error;\
- if DEE_UNLIKELY((_rl_hFile = DeeWin32Sys_WideCreateFile(path,GENERIC_READ,\
+ if DEE_UNLIKELY((_rl_hFile = DeeWin32Sys_WideCreateFile(path,0,\
   FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,OPEN_EXISTING,\
   FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT)) == INVALID_HANDLE_VALUE) {__VA_ARGS__;}\
  while DEE_UNLIKELY((_rl_buffer = (REPARSE_DATA_BUFFER *)malloc_nz(DEE_XCONFIG_FSBUFSIZE_WIN32READLINK)) == NULL) {\
