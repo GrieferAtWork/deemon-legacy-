@@ -1244,19 +1244,19 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_atexit) {
 // Stuff from the fs api
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_user) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_fs_user") != 0) return NULL;
- return DeeFS_Utf8GetUserName();
+ return DeeFS_Utf8GetUsername();
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wuser) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_fs_wuser") != 0) return NULL;
- return DeeFS_WideGetUserName();
+ return DeeFS_WideGetUsername();
 }
-DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_machine) {
- if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_fs_machine") != 0) return NULL;
- return DeeFS_Utf8GetMachineName();
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_host) {
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_fs_host") != 0) return NULL;
+ return DeeFS_Utf8GetHostname();
 }
-DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wmachine) {
- if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_fs_wmachine") != 0) return NULL;
- return DeeFS_WideGetMachineName();
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_whost) {
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_fs_whost") != 0) return NULL;
+ return DeeFS_WideGetHostname();
 }
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_getcwd) {
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":__builtin_fs_getcwd") != 0) return NULL;

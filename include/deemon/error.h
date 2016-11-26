@@ -559,8 +559,6 @@ extern void _DeeError_TODONotImplemented_impl(
 #endif
 #define DeeError_SystemError(func_name)              do{ DeeString_NEW_STATIC(_system_error_funcname,func_name); _DeeError_SystemError(&DeeErrorType_SystemError,(DeeObject *)&_system_error_funcname); }while(0)
 #define DeeError_SystemErrorExplicit(func_name,code) do{ DeeString_NEW_STATIC(_system_error_funcname,func_name); _DeeError_SystemErrorExplicit(&DeeErrorType_SystemError,(DeeObject *)&_system_error_funcname,(code)); }while(0)
-#define DeeError_IOError(func_name)                  do{ DeeString_NEW_STATIC(_system_error_funcname,func_name); _DeeError_SystemError(&DeeErrorType_IOError,(DeeObject *)&_system_error_funcname); }while(0)
-#define DeeError_IOErrorExplicit(func_name,code)     do{ DeeString_NEW_STATIC(_system_error_funcname,func_name);_DeeError_SystemErrorExplicit(&DeeErrorType_IOError,(DeeObject *)&_system_error_funcname,(code)); }while(0)
 #endif
 
 

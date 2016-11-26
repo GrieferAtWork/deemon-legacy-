@@ -835,15 +835,6 @@ extern int DEE_CALL _deestructured_tp_marshal_put(DeeTypeObject *tp_self, DeeStr
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
 #endif
 
-#if DEE_PLATFORM_HAVE_IO_HANDLE
-#ifdef DEE_PLATFORM_WINDOWS
-#if DEE_CONFIG_RUNTIME_HAVE_POINTERS
-#define DEE_PRIVATE_OBJECT_NEW_Dee_filedescr_t  DeeVoidPointer_New
-#define DEE_PRIVATE_OBJECT_TYPE_Dee_filedescr_t DeeStructuredType_Pointer((DeeTypeObject *)&DeeNone_Type)
-#endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
-#endif /* DEE_PLATFORM_WINDOWS */
-#endif /* DEE_PLATFORM_HAVE_IO_HANDLE */
-
 DEE_DECL_END
 
 #ifdef GUARD_DEEMON_OBJECT_H

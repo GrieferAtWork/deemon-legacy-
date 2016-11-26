@@ -559,48 +559,6 @@ typedef DEE_TYPES_UINT16_T DeeFunctionFlags; enum{\
  struct DeeObject; typedef DEE_A_RET_EXCEPT(-1) int (DEE_CALL *DeeObjectIterateFunc)(\
   DEE_A_INOUT struct DeeObject *elem, DEE_A_IN_OPT void *closure);
 
-
-/*REMOVEME*/#if defined(DEE_PLATFORM_HAVE_IO) && !DEE_PLATFORM_HAVE_IO
-/*REMOVEME*/#define DEE_PLATFORM_HAVE_IO_HANDLE    0
-#elif defined(DEE_PLATFORM_WINDOWS)
-/*REMOVEME*/#define DEE_PLATFORM_HAVE_IO_HANDLE    1
-#define DEE_TYPES_SIZEOF_DEE_FILEDESCR_T DEE_TYPES_SIZEOF_POINTER
-#define DEE_PRIVATE_DECL_DEE_FILEDESCR_T typedef /*HANDLE*/void *Dee_filedescr_t;\
- typedef DEE_ATTRIBUTE_DEPRECATED("'DeeIOHandle' is deprecated; Use 'Dee_filedescr_t' instead") Dee_filedescr_t DeeIOHandle;
-/*REMOVEME*/#define DEE_FILEIO_INVALID_HANDLE      ((void *)((Dee_size_t)-1)) // INVALID_HANDLE_VALUE
-#elif defined(DEE_PLATFORM_UNIX)
-/*REMOVEME*/#define DEE_PLATFORM_HAVE_IO_HANDLE    1
-#define DEE_TYPES_SIZEOF_DEE_FILEDESCR_T DEE_TYPES_SIZEOF_INT
-#define DEE_PRIVATE_DECL_DEE_FILEDESCR_T typedef int Dee_filedescr_t;\
- typedef DEE_ATTRIBUTE_DEPRECATED("'DeeIOHandle' is deprecated; Use 'Dee_filedescr_t' instead") Dee_filedescr_t DeeIOHandle;
-/*REMOVEME*/#define DEE_FILEIO_INVALID_HANDLE      (-1)
-#endif
-
-/*REMOVEME*/#ifndef DEE_PLATFORM_HAVE_IO_HANDLE
-/*REMOVEME*/#define DEE_PLATFORM_HAVE_IO_HANDLE 0
-/*REMOVEME*/#endif
-
-/*REMOVEME*/#ifndef DEE_PLATFORM_HAVE_IO
-/*REMOVEME*/#if DEE_PLATFORM_HAVE_IO_HANDLE || \
-/*REMOVEME*/    DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H
-/*REMOVEME*/# define DEE_PLATFORM_HAVE_IO 1
-/*REMOVEME*/#else
-/*REMOVEME*/# define DEE_PLATFORM_HAVE_IO 0
-/*REMOVEME*/#endif
-/*REMOVEME*/#endif
-
-/*REMOVEME*/#ifndef DEE_PLATFORM_HAVE_PROCESS
-/*REMOVEME*/#if DEE_PLATFORM_HAVE_IO_HANDLE && \
-/*REMOVEME*/   (defined(DEE_PLATFORM_WINDOWS) ||\
-/*REMOVEME*/    defined(DEE_PLATFORM_UNIX))
-/*REMOVEME*/# define DEE_PLATFORM_HAVE_PROCESS 1
-/*REMOVEME*/#else
-/*REMOVEME*/# define DEE_PLATFORM_HAVE_PROCESS 0
-/*REMOVEME*/#endif
-/*REMOVEME*/#endif
-
-
-
 #if defined(DEE_LIMITED_API) && !defined(__INTELLISENSE__) && \
    !defined(DEE_DEBUG) && !defined(_PREFAST_)
 // Only enabled if:
@@ -612,7 +570,7 @@ typedef DEE_TYPES_UINT16_T DeeFunctionFlags; enum{\
 #define DEE_LIMITED_OPTIMIZATIONS
 #endif
 
-#if defined(DEE_LIMITED_API) && \
+#if defined(DEE_LIMITED_DEX) && \
     defined(DEE_PLATFORM_WINDOWS)
 // Just a little helper, so we don't use anything above XP
 #define _WIN32_WINNT _WIN32_WINNT_WINXP

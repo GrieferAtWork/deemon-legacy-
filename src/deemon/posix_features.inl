@@ -229,6 +229,14 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE_GETLOGIN
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_UNISTD_H
+# define DEE_HAVE_GETLOGIN 1
+#else
+# define DEE_HAVE_GETLOGIN 0
+#endif
+#endif
+
 #ifndef DEE_HAVE_CHOWN
 #if defined(DEE_PLATFORM_UNIX)
 # define DEE_HAVE_CHOWN 1
@@ -597,6 +605,18 @@
 # define DEE_HAVE_FUTIMENS 1
 #else
 # define DEE_HAVE_FUTIMENS 0
+#endif
+#endif
+
+
+#ifndef DEE_HAVE_GETHOSTNAME
+#if (defined(_BSD_SOURCE) && _BSD_SOURCE)\
+ || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)\
+ || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)\
+ && DEE_ENVIRONMENT_HAVE_INCLUDE_UNISTD_H
+# define DEE_HAVE_GETHOSTNAME 1
+#else
+# define DEE_HAVE_GETHOSTNAME 0
 #endif
 #endif
 

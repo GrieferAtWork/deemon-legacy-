@@ -166,7 +166,7 @@ gfpbh_again:
                       "MapViewOfFile(%p,FILE_MAP_READ,0,0,1) : %K",hFileMap,
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
 err_filemap:
-  if DEE_UNLIKELY(!CloseHandle(hFileMap)) SetLastError(0);
+  CloseHandle(hFileMap);
   return NULL;
  }
  if DEE_UNLIKELY((result = DeeString_F(NewSized)(
@@ -184,8 +184,8 @@ mapfilename_again:
 #else
    Dee_INCREF(result = Dee_EmptyUtf8String);
 #endif
-   if DEE_UNLIKELY(!UnmapViewOfFile(pMem)) SetLastError(0);
-   if DEE_UNLIKELY(!CloseHandle(hFileMap)) SetLastError(0);
+   UnmapViewOfFile(pMem);
+   CloseHandle(hFileMap);
    return result;
   }
   if (error == ERROR_INSUFFICIENT_BUFFER || error == ERROR_MORE_DATA) {
@@ -199,14 +199,14 @@ err_r_unmap_vof: Dee_DECREF(result); goto err_unmap_vof;
                       "%s(%p,%p,...,%lu) : %K",
                       sGetMappedFileName,pMem,(DWORD)(DeeString_F(SIZE)(result)+1),
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
-err_unmap_vof: if DEE_UNLIKELY(!UnmapViewOfFile(pMem)) SetLastError(0); goto err_filemap;
+err_unmap_vof: UnmapViewOfFile(pMem); goto err_filemap;
  }
  if DEE_LIKELY(error != DeeString_F(SIZE)(result)+1) {
   if DEE_UNLIKELY(DeeString_F(Resize)(&result,(Dee_size_t)error) != 0) goto err_r_unmap_vof;
  }
  // Close the mapping
- if DEE_UNLIKELY(!UnmapViewOfFile(pMem)) SetLastError(0);
- if DEE_UNLIKELY(!CloseHandle(hFileMap)) SetLastError(0);
+ UnmapViewOfFile(pMem);
+ CloseHandle(hFileMap);
 
 #if 0
  // Translate path with device name to drive letters.

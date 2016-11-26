@@ -230,8 +230,8 @@ DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_atexit);
 // Stuff from the fs api
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_user);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wuser);
-DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_machine);
-DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wmachine);
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_host);
+DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_whost);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_getcwd);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_wgetcwd);
 DEE_PRIVATE_DEF_BUILTIN_FUNCTION(__builtin_fs_chdir);

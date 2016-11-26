@@ -47,10 +47,6 @@
 
 DEE_DECL_BEGIN
 
-#ifdef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
-DEE_PRIVATE_DECL_DEE_FILEDESCR_T
-#undef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
-#endif
 #ifdef DEE_PRIVATE_DECL_DEE_OBJECT
 DEE_PRIVATE_DECL_DEE_OBJECT
 #undef DEE_PRIVATE_DECL_DEE_OBJECT
@@ -1130,14 +1126,24 @@ DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) Dee
 #define DeeFS_GetDeemonExecutable DeeFS_Utf8GetDeemonExecutable
 
 // Returns the name of the computer
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8GetMachineName(void);
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WideGetMachineName(void);
-#define DeeFS_GetMachineName DeeFS_Utf8GetMachineName
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8GetHostname(void);
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WideGetHostname(void);
+#define DeeFS_GetHostname DeeFS_Utf8GetHostname
 
 // Returns the name of the current user
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8GetUserName(void);
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WideGetUserName(void);
-#define DeeFS_GetUserName DeeFS_Utf8GetUserName
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8GetUsername(void);
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WideGetUsername(void);
+#define DeeFS_GetUsername DeeFS_Utf8GetUsername
+
+#if DEE_DEPRECATED_API_VERSION(100,102,104)
+#define DeeFS_Utf8GetMachineName DEE_DEPRECATED_MACRO(DeeFS_Utf8GetHostname)
+#define DeeFS_WideGetMachineName DEE_DEPRECATED_MACRO(DeeFS_WideGetHostname)
+#define DeeFS_GetMachineName     DEE_DEPRECATED_MACRO(DeeFS_GetHostname)
+#define DeeFS_Utf8GetUserName    DEE_DEPRECATED_MACRO(DeeFS_Utf8GetUsername)
+#define DeeFS_WideGetUserName    DEE_DEPRECATED_MACRO(DeeFS_WideGetUsername)
+#define DeeFS_GetUserName        DEE_DEPRECATED_MACRO(DeeFS_GetUsername)
+#endif
+
 
 #ifdef DEE_PLATFORM_WINDOWS
 DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeListObject) *) DeeFS_Utf8Win32Drives(void);

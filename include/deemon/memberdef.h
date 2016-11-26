@@ -146,24 +146,10 @@ enum{
 #include <deemon/__tg_members.inl>
 
  DeeMemberType_DeeAtomicMutex = DeeMemberType_ATOMIC|DeeMemberType_uint8_t,
-#if DEE_PLATFORM_HAVE_IO_HANDLE
-#if defined(DEE_PLATFORM_WINDOWS)
- DeeMemberType_Dee_filedescr_t = DeeMemberType_POINTER(DeeMemberType_void),
-#elif defined(DEE_PLATFORM_UNIX)
- DeeMemberType_Dee_filedescr_t = DeeMemberType_int,
-#endif
-#endif
-
-#ifdef DEE_PLATFORM_WINDOWS
- DeeMemberType_SOCKET          = DeeMemberType_POINTER(DeeMemberType_void),
- DeeMemberType_DeeSocketHandle = DeeMemberType_POINTER(DeeMemberType_void),
-#else
- DeeMemberType_SOCKET          = DeeMemberType_int,
- DeeMemberType_DeeSocketHandle = DeeMemberType_int,
-#endif
 
 #ifdef DEE_PLATFORM_WINDOWS
  // Patform-specific types
+ DeeMemberType_SOCKET          = DeeMemberType_POINTER(DeeMemberType_void),
  DeeMemberType_PUCHAR = DeeMemberType_POINTER(DeeMemberType_uchar),
  DeeMemberType_PVOID = DeeMemberType_POINTER(DeeMemberType_void),
  DeeMemberType_LPVOID = DeeMemberType_POINTER(DeeMemberType_void),

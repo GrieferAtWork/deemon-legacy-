@@ -134,11 +134,12 @@ int DEE_CALL _deefilefd_tp_move_ctor(
 int DEE_CALL _deefilefd_tp_any_ctor(
  DeeFileTypeObject *DEE_UNUSED(tp_self),
  DeeFileFDObject *self, DeeObject *args) {
- Dee_filedescr_t new_fd;
 #ifdef DEE_PLATFORM_WINDOWS
+ HANDLE new_fd;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"p:file.fd",&new_fd) != 0) return -1;
- self->fd_descr.w32_handle = (HANDLE)new_fd;
+ self->fd_descr.w32_handle = new_fd;
 #else /* #elif DEE_PLATFORM_UNIX */
+ int new_fd;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,"d:file.fd",&new_fd) != 0) return -1;
  self->fd_descr.unx_fd = new_fd;
 #endif /* ... */

@@ -674,9 +674,9 @@ DeeObject *const _DeeBuiltin_ID2Type[] = {
  /*0x0194*/(DeeObject *)Dee_None,
 #endif
  /*0x0195*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_user,
- /*0x0196*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_machine,
+ /*0x0196*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_host,
  /*0x0197*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_wuser,
- /*0x0198*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_wmachine,
+ /*0x0198*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_whost,
  /*0x0199*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_wgetcwd,
  /*0x019A*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_wgettmp,
  /*0x019B*/(DeeObject *)&DeeBuiltinFunction___builtin_fs_wgethome,

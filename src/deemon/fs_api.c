@@ -52,6 +52,7 @@
 #include <deemon/__alloca.inl>
 #include <deemon/__xconf.inl>
 #include <deemon/posix_features.inl>
+#include <deemon/sys/sysinfo.h>
 #include <deemon/sys/sysfs.h>
 #include <deemon/sys/sysfd.h>
 #include <deemon/unicode/char_traits.inl>
@@ -934,178 +935,100 @@ DeeFS_WideGetDeemonExecutable(void) {
 }
 
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetMachineName(void) {
-#ifdef DEE_PLATFORM_WINDOWS
- DeeObject *result; 
- DWORD error,result_size = 1+MAX_COMPUTERNAME_LENGTH;
- if DEE_UNLIKELY((result = DeeUtf8String_NewSized(MAX_COMPUTERNAME_LENGTH)) == NULL) return NULL;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
- if DEE_UNLIKELY(!GetComputerNameA(DeeUtf8String_STR(result),&result_size)) {
-  error = GetLastError(); SetLastError(0);
-  if (error == ERROR_BUFFER_OVERFLOW) {
-   if DEE_UNLIKELY(DeeUtf8String_Resize(&result,result_size++) != 0) {
-err_r: Dee_DECREF(result); return NULL;
-   }
-   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
-   if DEE_UNLIKELY(!GetComputerNameA(DeeUtf8String_STR(result),&result_size)) {
-    error = GetLastError(); SetLastError(0);
-   } else return result;
-  }
-  DeeError_SystemErrorExplicit("GetComputerNameA",error);
-  goto err_r;
- }
- if (result_size != MAX_COMPUTERNAME_LENGTH &&
-     DEE_UNLIKELY(DeeUtf8String_Resize(&result,result_size) != 0)
-     ) goto err_r;
- return result;
-#elif defined(DEE_PLATFORM_UNIX)
- DeeObject *result; int error; Dee_size_t result_size = 256;
- if DEE_UNLIKELY((result = DeeUtf8String_NewSized(256)) == NULL) return NULL;
- while (1) {
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
-  if DEE_UNLIKELY(gethostname(DeeUtf8String_STR(result),result_size) == 0) break;
-  error = errno; errno = 0;
-#ifdef ENAMETOOLONG
-  if (error == ENAMETOOLONG || error == EINVAL)
-#else
-  if (error == EINVAL)
+#if defined(DeeSysInfo_Utf8GetHostname)\
+ || defined(DeeSysInfo_WideGetHostname)
+#define DEE_FS_HAVE_GETHOSTNAME
 #endif
-  {
-   if DEE_UNLIKELY(DeeUtf8String_Resize(&result,(result_size *= 2)) != 0) {
-err_r: Dee_DECREF(result); return NULL;
-   }
-  } else {
-   DeeError_SystemErrorExplicit("gethostname",error);
-   goto err_r;
-  }
- }
- if DEE_UNLIKELY(DeeUtf8String_Resize(&result,
-  Dee_Utf8StrLen(DeeUtf8String_STR(result))) != 0) goto err_r;
+
+#ifndef DEE_FS_HAVE_GETHOSTNAME
+DeeError_NEW_STATIC(_dee_notimplemented_gethostname,&DeeErrorType_NotImplemented,"gethostname");
+#endif
+
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetHostname(void) {
+#ifdef DeeSysInfo_Utf8GetHostname
+ DeeObject *result;
+ DeeSysInfo_Utf8GetHostname(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
  return result;
+#elif defined(DeeSysInfo_WideGetHostname)
+ DeeObject *result,*newresult;
+ DeeSysInfo_WideGetHostname(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
+ newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
+                                                    DeeWideString_STR(result));
+ Dee_DECREF(result);
+ return newresult;
 #else
- DeeReturn_STATIC_UTF8_STRING_EX(9,{'l','o','c','a','l','h','o','s','t'});
+ DeeError_Throw((DeeObject *)&_dee_notimplemented_gethostname);
+ return NULL;
 #endif
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideGetMachineName(void) {
-#ifdef DEE_PLATFORM_WINDOWS
- DeeObject *result; 
- DWORD error,result_size = 1+MAX_COMPUTERNAME_LENGTH;
- if DEE_UNLIKELY((result = DeeWideString_NewSized(MAX_COMPUTERNAME_LENGTH)) == NULL) return NULL;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
- if DEE_UNLIKELY(!GetComputerNameW(DeeWideString_STR(result),&result_size)) {
-  error = GetLastError(); SetLastError(0);
-  if (error == ERROR_BUFFER_OVERFLOW) {
-   if DEE_UNLIKELY(DeeWideString_Resize(&result,result_size++) != 0) {
-err_r: Dee_DECREF(result); return NULL;
-   }
-   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
-   if DEE_UNLIKELY(!GetComputerNameW(DeeWideString_STR(result),&result_size)) {
-    error = GetLastError(); SetLastError(0);
-   } else return result;
-  }
-  DeeError_SystemErrorExplicit("GetComputerNameW",error);
-  goto err_r;
- }
- if (result_size != MAX_COMPUTERNAME_LENGTH &&
-     DEE_UNLIKELY(DeeWideString_Resize(&result,result_size) != 0)
-     ) goto err_r;
- return result;
-#else
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideGetHostname(void) {
+#ifdef DeeSysInfo_WideGetHostname
  DeeObject *result;
- if (DEE_LIKELY((result = DeeFS_Utf8GetMachineName()) != NULL) &&
-     DEE_UNLIKELY(DeeWideString_InplaceCast((DeeObject const **)&result) != 0)
-     ) Dee_CLEAR(result);
+ DeeSysInfo_WideGetHostname(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
  return result;
+#elif defined(DeeSysInfo_Utf8GetHostname)
+ DeeObject *result,*newresult;
+ DeeSysInfo_Utf8GetHostname(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
+ newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
+                                                    DeeUtf8String_STR(result));
+ Dee_DECREF(result);
+ return newresult;
+#else
+ DeeError_Throw((DeeObject *)&_dee_notimplemented_gethostname);
+ return NULL;
 #endif
 }
 
-DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetUserName(void) {
-#ifdef DEE_PLATFORM_WINDOWS
- DeeObject *result; 
- DWORD error,result_size = 1+UNLEN;
- if DEE_UNLIKELY((result = DeeUtf8String_NewSized(UNLEN)) == NULL) return NULL;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
- if DEE_UNLIKELY(!GetUserNameA(DeeUtf8String_STR(result),&result_size)) {
-  error = GetLastError(); SetLastError(0);
-  if (error == ERROR_BUFFER_OVERFLOW) {
-   if DEE_UNLIKELY(DeeUtf8String_Resize(&result,result_size-1) != 0) {
-err_r: Dee_DECREF(result); return NULL;
-   }
-   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
-   if DEE_UNLIKELY(!GetUserNameA(DeeUtf8String_STR(result),&result_size)) {
-    error = GetLastError(); SetLastError(0);
-   } else return result;
-  }
-  DeeError_SystemErrorExplicit("GetUserNameA",error);
-  goto err_r;
- }
- if (result_size != UNLEN &&
-     DEE_UNLIKELY(DeeUtf8String_Resize(&result,result_size-1) != 0)
-     ) goto err_r;
- return result;
-#elif defined(DEE_PLATFORM_UNIX)
-#if DEE_HAVE_GETLOGIN_R
- DeeObject *result; int error; Dee_size_t result_size = 256;
- if DEE_UNLIKELY((result = DeeUtf8String_NewSized(256)) == NULL) return NULL;
- while (1) {
-  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
-  if DEE_UNLIKELY(getlogin_r(DeeUtf8String_STR(result),result_size) == 0) break;
-  error = errno; errno = 0;
-  if (error == ENOMEM) {
-   if DEE_UNLIKELY(DeeUtf8String_Resize(&result,(result_size *= 2)) != 0) {
-err_r: Dee_DECREF(result); return NULL;
-   }
-  } else {
-   DeeError_SystemErrorExplicit("getlogin_r",error);
-   goto err_r;
-  }
- }
- if DEE_UNLIKELY(DeeUtf8String_Resize(&result,
-  Dee_Utf8StrLen(DeeUtf8String_STR(result))) != 0) goto err_r;
- return result;
-#else
- char const *result;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
- if DEE_UNLIKELY((result = getlogin()) == NULL) {
-  DeeError_SystemError("getlogin");
-  return NULL;
- }
- return DeeUtf8String_New(result);
+
+#if defined(DeeSysInfo_Utf8GetUsername)\
+ || defined(DeeSysInfo_WideGetUsername)
+#define DEE_FS_HAVE_GETUSERNAME
 #endif
+
+#ifndef DEE_FS_HAVE_GETUSERNAME
+DeeError_NEW_STATIC(_dee_notimplemented_getusername,&DeeErrorType_NotImplemented,"getusername");
+#endif
+
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetUsername(void) {
+#ifdef DeeSysInfo_Utf8GetUsername
+ DeeObject *result;
+ DeeSysInfo_Utf8GetUsername(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
+ return result;
+#elif defined(DeeSysInfo_WideGetUsername)
+ DeeObject *result,*newresult;
+ DeeSysInfo_WideGetUsername(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
+ newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
+                                                    DeeWideString_STR(result));
+ Dee_DECREF(result);
+ return newresult;
 #else
- DeeReturn_STATIC_UTF8_STRING_EX(4,{'U','S','E','R'});
+ DeeError_Throw((DeeObject *)&_dee_notimplemented_getusername);
+ return NULL;
 #endif
 }
-DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideGetUserName(void) {
-#ifdef DEE_PLATFORM_WINDOWS
- DeeObject *result; 
- DWORD error,result_size = 1+UNLEN;
- if DEE_UNLIKELY((result = DeeWideString_NewSized(UNLEN)) == NULL) return NULL;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
- if DEE_UNLIKELY(!GetUserNameW(DeeWideString_STR(result),&result_size)) {
-  error = GetLastError(); SetLastError(0);
-  if (error == ERROR_BUFFER_OVERFLOW) {
-   if DEE_UNLIKELY(DeeWideString_Resize(&result,result_size-1) != 0) {
-err_r: Dee_DECREF(result); return NULL;
-   }
-   if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_r;
-   if DEE_UNLIKELY(!GetUserNameW(DeeWideString_STR(result),&result_size)) {
-    error = GetLastError(); SetLastError(0);
-   } else return result;
-  }
-  DeeError_SystemErrorExplicit("GetUserNameW",error);
-  goto err_r;
- }
- if (result_size != UNLEN &&
-     DEE_UNLIKELY(DeeWideString_Resize(&result,result_size-1) != 0)
-     ) goto err_r;
- return result;
-#else
+DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideGetUsername(void) {
+#ifdef DeeSysInfo_WideGetUsername
  DeeObject *result;
- if (DEE_LIKELY((result = DeeFS_Utf8GetUserName()) != NULL) &&
-     DEE_UNLIKELY(DeeWideString_InplaceCast((DeeObject const **)&result) != 0)
-     ) Dee_CLEAR(result);
+ DeeSysInfo_WideGetUsername(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
  return result;
+#elif defined(DeeSysInfo_Utf8GetUsername)
+ DeeObject *result,*newresult;
+ DeeSysInfo_Utf8GetUsername(&result,return NULL);
+ DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
+ newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
+                                                    DeeUtf8String_STR(result));
+ Dee_DECREF(result);
+ return newresult;
+#else
+ DeeError_Throw((DeeObject *)&_dee_notimplemented_getusername);
+ return NULL;
 #endif
 }
 

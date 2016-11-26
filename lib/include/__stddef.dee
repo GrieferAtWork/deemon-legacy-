@@ -25,7 +25,7 @@
 #endif
 
 // Current (maximum) API version
-#define __API_VERSION_MAX__ 101
+#define __API_VERSION_MAX__ 102
 
 #ifndef __API_VERSION__
 // Overwrite this macro before including any headers for

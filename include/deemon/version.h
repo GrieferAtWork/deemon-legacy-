@@ -132,7 +132,7 @@
 // >> __has_extension(platform_process)
 //    Enable the process API
 #ifndef DEE_CONFIG_RUNTIME_HAVE_PROCESS
-#define DEE_CONFIG_RUNTIME_HAVE_PROCESS  DEE_PLATFORM_HAVE_PROCESS
+#define DEE_CONFIG_RUNTIME_HAVE_PROCESS  1
 #endif
 
 //////////////////////////////////////////////////////////////////////////

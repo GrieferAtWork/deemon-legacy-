@@ -4154,13 +4154,16 @@ static struct DeeGetSetDef _deesocket_tp_getsets[] = {
  DEE_GETSETDEF_END_v100
 };
 static struct DeeMemberDef _deesocket_tp_members[] = {
- DEE_MEMBERDEF_RO_v100(DeeSocketObject,s_socket,DeeSocketHandle),
  DEE_MEMBERDEF_NAMED_RO_v100("address_family",DeeSocketObject,s_sock_addr.sa.sa_family,sa_family_t),
  DEE_MEMBERDEF_NAMED_RO_v100("type",DeeSocketObject,s_type,int),
  DEE_MEMBERDEF_NAMED_RO_v100("protocol",DeeSocketObject,s_protocol,int),
 #if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
  DEE_MEMBERDEF_NAMED_RO_v100("__s_lock",DeeSocketObject,s_lock,DeeAtomicMutex),
- DEE_MEMBERDEF_NAMED_RO_v100("__s_socket",DeeSocketObject,s_socket,DeeSocketHandle),
+#ifdef DEE_PLATFORM_WINDOWS
+ DEE_MEMBERDEF_NAMED_RO_v100("__s_socket",DeeSocketObject,s_socket,HANDLE),
+#elif defined(DEE_PLATFORM_POSIX)
+ DEE_MEMBERDEF_NAMED_RO_v100("__s_socket",DeeSocketObject,s_socket,int),
+#endif
  DEE_MEMBERDEF_NAMED_RO_v100("__s_uses",DeeSocketObject,s_uses,Dee_uint16_t),
  DEE_MEMBERDEF_NAMED_RO_v100("__s_flags",DeeSocketObject,s_flags,Dee_uint16_t),
  DEE_MEMBERDEF_NAMED_RO_v100("__s_type",DeeSocketObject,s_type,int),

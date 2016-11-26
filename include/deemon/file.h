@@ -158,12 +158,6 @@ struct DeeFileObject { DEE_FILE_OBJECT_HEAD }; // Common base class
 #define _DeeFile_InitMove            _DeeFile_InitCopy
 #endif
 
-#ifdef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
-DEE_PRIVATE_DECL_DEE_FILEDESCR_T
-#undef DEE_PRIVATE_DECL_DEE_FILEDESCR_T
-#endif
-
-
 // v 'DeeFile_Check' checks for any type that is derived from 'file'
 //   - This applies to 'file', 'file.io', 'file.writer' and 'file.reader'
 //     NOTE: Also checks for additional user defined sub-classes
@@ -474,7 +468,6 @@ DEE_STATIC_INLINE(DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int) _DeeFile_TWriteSwapped64(
 
 
 
-#if DEE_PLATFORM_HAVE_IO
 enum DeeStdPrinter {
  DEE_STDOUT  = 0,
  DEE_STDERR  = 1,
@@ -512,7 +505,6 @@ DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((2)) DEE_A_EXEC DEE_A_RET_EXCEPT(-1) int
 #endif /* !DEE_COMPILER_HAVE_GCC_STATEMENT_EXPRESSIONS */
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 #define /*DEE_A_EXEC*/ DeeFile_STDPRINT(printer,str_) DeeFile_StdWriteAll(printer,str_,(sizeof(str_)/sizeof(char))-1)
-#endif /* DEE_PLATFORM_HAVE_IO */
 
 //////////////////////////////////////////////////////////////////////////
 // Returns a joined file object referencing 'fa' and 'fb' with have to be file objects as well
@@ -701,14 +693,12 @@ extern DEE_A_EXEC void _deefile_invalid_seek_mode(DEE_A_IN int mode);
 DEE_DECL_END
 
 #ifdef __cplusplus
-#if DEE_PLATFORM_HAVE_IO
 #undef DeeFile_OpenEx
 #undef _DeeFile_OpenEx
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) DeeFile_OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) { return DeeFile_Utf8OpenEx(file,openmode,permissions); }
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) DeeFile_OpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) { return DeeFile_WideOpenEx(file,openmode,permissions); }
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) _DeeFile_OpenEx(DEE_A_IN_Z Dee_Utf8Char const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) { return _DeeFile_Utf8OpenEx(file,openmode,permissions); }
 DEE_STATIC_INLINE(DEE_ATTRIBUTE_NONNULL((1,2)) DEE_A_INTERRUPT DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeFileIOObject) *) _DeeFile_OpenEx(DEE_A_IN_Z Dee_WideChar const *file, DEE_A_IN Dee_openmode_t openmode, DEE_A_IN Dee_mode_t permissions) { return _DeeFile_WideOpenEx(file,openmode,permissions); }
-#endif /* DEE_PLATFORM_HAVE_IO */
 #endif /* __cplusplus */
 
 #endif /* !GUARD_DEEMON_FILE_H */

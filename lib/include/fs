@@ -41,6 +41,7 @@
 #pragma push_macro("delenv")
 #pragma push_macro("setenv")
 #pragma push_macro("user")
+#pragma push_macro("host")
 #pragma push_macro("machine")
 #pragma push_macro("path")
 #pragma push_macro("head")
@@ -112,6 +113,7 @@
 #undef delenv
 #undef setenv
 #undef user
+#undef host
 #undef machine
 #undef path
 #undef head
@@ -180,6 +182,7 @@
 #	pragma push_macro("whome")
 #	pragma push_macro("wlistenv")
 #	pragma push_macro("wuser")
+#	pragma push_macro("whost")
 #	pragma push_macro("wmachine")
 #	pragma push_macro("WSEP")
 #	pragma push_macro("WALTSEP")
@@ -190,6 +193,7 @@
 #	undef whome
 #	undef wlistenv
 #	undef wuser
+#	undef whost
 #	undef wmachine
 #	undef WSEP
 #	undef WALTSEP
@@ -548,14 +552,24 @@ module fs {
 	// >> function fs::wuser() -> string.wide
 	//    @throws Error.SystemError
 	//    @return: The name of the user that the deemon process is running under
+	//    WARNING: The return value of this function should not be trusted.
+	//             Do not grant a user special rights based on his name!
+	//             The returned string may depend on unprotected memory
+	//             accessible and modifyable to any given user.
+	//             For secure user identification platform-specific library
+	//             functions, such as 'getuid()' should be loaded and used.
 	local const user = __builtin_object(0x0195);
 	__DEEMON_WFS_FUNC(local const wuser = __builtin_object(0x0197))
 
 	//////////////////////////////////////////////////////////////////////////
-	// >> function fs::machine() -> string.utf8
-	// >> function fs::wmachine() -> string.wide
+	// >> function fs::host() -> string.utf8
+	// >> function fs::whost() -> string.wide
 	//    @throws Error.SystemError
 	//    @return: The name of the machine that deemon is running on
+#if __API_VERSION__ >= 102
+	local const host = __builtin_object(0x0196);
+	local const whost = __builtin_object(0x0198);
+#endif
 	local const machine = __builtin_object(0x0196);
 	__DEEMON_WFS_FUNC(local const wmachine = __builtin_object(0x0198))
 

@@ -1093,7 +1093,7 @@ binary_integral_call_attr:
   if (self == (DeeObject *)&DeeBuiltinFunction___builtin_bswap64) { SET_RESULT_TYPE((DeeTypeObject *)&DeeUInt64_Type); goto unary_integral_call_attr; }
   // Stuff from the fs api
   if (self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_user
-   || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_machine
+   || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_host
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_getcwd
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_gettmp
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_gettmpname
@@ -1112,7 +1112,7 @@ binary_integral_call_attr:
    return DEE_AST_ATTRIBUTE_NONE;
   }
   if (self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_wuser
-   || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_wmachine
+   || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_whost
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_wgetcwd
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_wgettmp
    || self == (DeeObject *)&DeeBuiltinFunction___builtin_fs_wgettmpname
