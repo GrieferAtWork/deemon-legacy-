@@ -896,7 +896,8 @@ static int DEE_CALL _deevfs_procpidnodew32_exitcode_vft_read(
  DEE_ASSERT(self->vf_node->vn_parent->vn_parent && self->vf_node->vn_parent->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
  proc = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vf_node->vn_parent->vn_parent)->vpn_proc;
  pid = DeeProcess_ID(proc);
- if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL) {
+ if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL
+              && (hProcess = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,pid)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
@@ -940,7 +941,8 @@ static int DEE_CALL _deevfs_procpidnodew32_priorityboost_vft_read(
  DEE_ASSERT(self->vf_node->vn_parent->vn_parent && self->vf_node->vn_parent->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
  proc = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vf_node->vn_parent->vn_parent)->vpn_proc;
  pid = DeeProcess_ID(proc);
- if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL) {
+ if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL
+              && (hProcess = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,pid)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
@@ -1010,7 +1012,8 @@ static int DEE_CALL _deevfs_procpidnodew32_priorityclass_vft_read(
  DEE_ASSERT(self->vf_node->vn_parent->vn_parent && self->vf_node->vn_parent->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
  proc = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vf_node->vn_parent->vn_parent)->vpn_proc;
  pid = DeeProcess_ID(proc);
- if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL) {
+ if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL
+              && (hProcess = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,pid)) == NULL) {
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
