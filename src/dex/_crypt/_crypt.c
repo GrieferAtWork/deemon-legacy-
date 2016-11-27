@@ -22,8 +22,6 @@
 #define GUARD_DEEMON_DEX_ZLIB_C 1
 #define DEE_EXTENSION 1
 
-//@ dex.name = _crypt
-
 #include "_crypt.h"
 #include <deemon/__conf.inl>
 #include <deemon/dex.h>

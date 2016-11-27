@@ -57,35 +57,69 @@
 #include <deemon/time.h>
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 
-
 DEE_DECL_BEGIN
 
-#define DEE_UNIX_SYSFD_HEAD  int unx_fd; /*< File descriptor. */
+#define DEE_UNIX_SYSFD_HEAD \
+ int unx_fd; /*< File descriptor. */
 
+#define DeeUnixSysFD DeeUnixSysFD
 struct DeeUnixSysFD { DEE_UNIX_SYSFD_HEAD };
 
-#define DEE_UNIX_SYSFD_SEEK_SET  SEEK_SET
-#define DEE_UNIX_SYSFD_SEEK_CUR  SEEK_CUR
-#define DEE_UNIX_SYSFD_SEEK_END  SEEK_END
+#ifndef DEE_UNIX_SYSFD_SEEK_SET
+#ifdef SEEK_SET
+# define DEE_UNIX_SYSFD_SEEK_SET  SEEK_SET
+#else
+# define DEE_UNIX_SYSFD_SEEK_SET  0
+#endif
+#endif /* !DEE_UNIX_SYSFD_SEEK_SET */
+#ifndef DEE_UNIX_SYSFD_SEEK_CUR
+#ifdef SEEK_CUR
+# define DEE_UNIX_SYSFD_SEEK_CUR  SEEK_CUR
+#else
+# define DEE_UNIX_SYSFD_SEEK_CUR  1
+#endif
+#endif /* !DEE_UNIX_SYSFD_SEEK_CUR */
+#ifndef DEE_UNIX_SYSFD_SEEK_END
+#ifdef SEEK_END
+# define DEE_UNIX_SYSFD_SEEK_END  SEEK_END
+#else
+# define DEE_UNIX_SYSFD_SEEK_END  2
+#endif
+#endif /* !DEE_UNIX_SYSFD_SEEK_END */
 
-#define DeeUnixSysFD_Quit(self) \
- (DEE_UNLIKELY(close((self)->unx_fd) == -1) ? (void)(errno = 0) : (void)0)
+#if DEE_HAVE_CLOSE
+#define DeeUnixSys_FDQuit(fd) (void)close(fd)
+#endif /* DEE_HAVE_CLOSE */
 
-#define DeeUnixSysFD_InitCopy(self,right,...) \
+#ifdef DeeUnixSys_FDQuit
+#define DeeUnixSysFD_Quit(self) DeeUnixSys_FDQuit((self)->unx_fd)
+#endif
+
+#if DEE_HAVE_DUP
+#define DeeUnixSys_FDInitCopy(fd,pfd2,...) \
 do{\
- if DEE_UNLIKELY(((self)->unx_fd = dup((right)->unx_fd)) == -1) {\
-  DeeError_SetStringf(&DeeErrorType_IOError,\
-                      "dup(%d) : %K",(right)->unx_fd,\
+ if DEE_UNLIKELY((*(pfd2) = dup(fd)) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_IOError,"dup(%d) : %K",fd,\
                       DeeSystemError_ToString(DeeSystemError_Consume()));\
   {__VA_ARGS__;}\
  }\
 }while(0)
+#endif /* DEE_HAVE_DUP */
 
+#ifdef DeeUnixSys_FDInitCopy
+#define DeeUnixSysFD_InitCopy(self,right,...) \
+ DeeUnixSys_FDInitCopy((self)->unx_fd,&(right)->unx_fd,__VA_ARGS__)
+#endif /* DeeUnixSys_FDInitCopy */
+
+#ifndef DEE_UNIX_SYSFD_USED_SEEK_FUNCTION
 #if DEE_HAVE_LSEEK64
 # define DEE_UNIX_SYSFD_USED_SEEK_FUNCTION lseek64
-#else
+#elif DEE_HAVE_LSEEK
 # define DEE_UNIX_SYSFD_USED_SEEK_FUNCTION lseek
-#endif
+#endif /* ... */
+#endif /* !DEE_UNIX_SYSFD_USED_SEEK_FUNCTION */
+
+#ifdef DEE_UNIX_SYSFD_USED_SEEK_FUNCTION
 #define DeeUnixSys_FDSeek(fd,off,whence,newpos,...)\
 do{\
  Dee_int64_t _fd_newpos = (Dee_int64_t)DEE_UNIX_SYSFD_USED_SEEK_FUNCTION(fd,off,whence);\
@@ -105,43 +139,80 @@ do{\
  }\
  if (newpos) *(Dee_int64_t *)(newpos) = _fd_newpos;\
 }while(0)
+#endif /* DEE_UNIX_SYSFD_USED_SEEK_FUNCTION */
 
-
-#define DeeUnixSysFD_Seek(self,off,whence,newpos,...)\
- DeeUnixSys_FDSeek((self)->unx_fd,off,whence,newpos,__VA_ARGS__)
-#define DeeUnixSysFD_Read(self,p,s,rs,...)\
+#if DEE_HAVE_READ
+#define DeeUnixSys_FDRead(fd,p,s,rs,...)\
 do{\
- if DEE_UNLIKELY((*(Dee_ssize_t *)(rs) = (Dee_ssize_t)read((self)->unx_fd,p,s)) == -1) {\
+ if DEE_UNLIKELY((*(Dee_ssize_t *)(rs) = (Dee_ssize_t)read(fd,p,s)) == -1) {\
   int _fd_error = errno;\
   if (_fd_error != 0) {\
    DeeError_SetStringf(&DeeErrorType_IOError,\
                        "read(%d,%p,%Iu) : %K",\
-                       (self)->unx_fd,p,(Dee_size_t)(s),\
+                       fd,p,(Dee_size_t)(s),\
                        DeeSystemError_ToString(_fd_error));\
    {__VA_ARGS__;}\
   }\
  }\
 }while(0)
-#define DeeUnixSysFD_Write(self,p,s,ws,...)\
+#endif /* DEE_HAVE_READ */
+
+#if DEE_HAVE_WRITE
+#define DeeUnixSys_FDWrite(fd,p,s,ws,...)\
 do{\
- if DEE_UNLIKELY((*(Dee_ssize_t *)(ws) = (Dee_ssize_t)write((self)->unx_fd,p,s)) == -1) {\
+ if DEE_UNLIKELY((*(Dee_ssize_t *)(ws) = (Dee_ssize_t)write(fd,p,s)) == -1) {\
   int _fd_error = errno;\
   if (_fd_error != 0) {\
    DeeError_SetStringf(&DeeErrorType_IOError,\
                        "write(%d,%p,%Iu:%.*q) : %K",\
-                       (self)->unx_fd,p,(Dee_size_t)(s),(unsigned)(s),p,\
+                       fd,p,(Dee_size_t)(s),(unsigned)(s),p,\
                        DeeSystemError_ToString(_fd_error));\
    {__VA_ARGS__;}\
   }\
  }\
 }while(0)
+#endif /* DEE_HAVE_WRITE */
+
+#if DEE_HAVE_PREAD
+#define DeeUnixSys_FDReadAt(fd,pos,p,s,rs,...)\
+do{\
+ if DEE_UNLIKELY((*(Dee_ssize_t *)(rs) = (Dee_ssize_t)pread(fd,p,s,(off_t)(pos))) == -1) {\
+  int _fd_error = errno;\
+  if (_fd_error != 0) {\
+   DeeError_SetStringf(&DeeErrorType_IOError,\
+                       "pread(%d,%p,%Iu) : %K",\
+                       fd,p,(Dee_size_t)(s),\
+                       DeeSystemError_ToString(_fd_error));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+}while(0)
+#endif /* DEE_HAVE_PREAD */
+
+#if DEE_HAVE_PWRITE
+#define DeeUnixSys_FDWriteAt(fd,pos,p,s,rs,...)\
+do{\
+ if DEE_UNLIKELY((*(Dee_ssize_t *)(rs) = (Dee_ssize_t)pwrite(fd,p,s,(off_t)(pos))) == -1) {\
+  int _fd_error = errno;\
+  if (_fd_error != 0) {\
+   DeeError_SetStringf(&DeeErrorType_IOError,\
+                       "pwrite(%d,%p,%Iu) : %K",\
+                       fd,p,(Dee_size_t)(s),\
+                       DeeSystemError_ToString(_fd_error));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+}while(0)
+#endif /* DEE_HAVE_PWRITE */
 
 
+#ifndef DEE_UNIX_SYSFD_FLUSH_FUNC
 #if DEE_HAVE_FSYNC
-#define DEE_UNIX_SYSFD_FLUSH_FUNC     fsync
+# define DEE_UNIX_SYSFD_FLUSH_FUNC     fsync
 #elif DEE_HAVE_FDATASYNC
-#define DEE_UNIX_SYSFD_FLUSH_FUNC     fdatasync
-#endif
+# define DEE_UNIX_SYSFD_FLUSH_FUNC     fdatasync
+#endif /* ... */
+#endif /* !DEE_UNIX_SYSFD_FLUSH_FUNC */
 #ifdef DEE_UNIX_SYSFD_FLUSH_FUNC
 #define DeeUnixSys_FDFlush(fd,...)\
 do{\
@@ -155,9 +226,11 @@ do{\
 #endif /* DEE_UNIX_SYSFD_FLUSH_FUNC */
 
 
+#ifndef DEE_UNIX_SYSFD_TRUNC_FUNC
 #if DEE_HAVE_FTRUNCATE
-#define DEE_UNIX_SYSFD_TRUNC_FUNC     ftruncate
-#endif
+# define DEE_UNIX_SYSFD_TRUNC_FUNC     ftruncate
+#endif /* DEE_HAVE_FTRUNCATE */
+#endif /* !DEE_UNIX_SYSFD_TRUNC_FUNC */
 #ifdef DEE_UNIX_SYSFD_TRUNC_FUNC
 #define DeeUnixSys_FDTrunc(fd,...)\
 do{\
@@ -173,6 +246,15 @@ do{\
 #endif /* DEE_UNIX_SYSFD_TRUNC_FUNC */
 
 
+#ifdef DeeUnixSys_FDRead
+#define DeeUnixSysFD_Read(self,p,s,rs,...) DeeUnixSys_FDRead((self)->unx_fd,p,s,rs,__VA_ARGS__)
+#endif /* DeeUnixSys_FDRead */
+#ifdef DeeUnixSys_FDWrite
+#define DeeUnixSysFD_Write(self,p,s,ws,...) DeeUnixSys_FDWrite((self)->unx_fd,p,s,ws,__VA_ARGS__)
+#endif /* DeeUnixSys_FDWrite */
+#ifdef DeeUnixSys_FDSeek
+#define DeeUnixSysFD_Seek(self,off,whence,newpos,...) DeeUnixSys_FDSeek((self)->unx_fd,off,whence,newpos,__VA_ARGS__)
+#endif /* DeeUnixSys_FDSeek */
 #ifdef DeeUnixSys_FDFlush
 #define DeeUnixSysFD_Flush(self,...) DeeUnixSys_FDFlush((self)->unx_fd,__VA_ARGS__)
 #endif /* DeeUnixSys_FDFlush */
@@ -568,22 +650,45 @@ do{\
 #endif /* DEE_HAVE_PIPE */
 
 
+#ifdef DEE_UNIX_SYSFD_SEEK_SET
 #define DEE_SYSFD_SEEK_SET  DEE_UNIX_SYSFD_SEEK_SET
+#endif
+#ifdef DEE_UNIX_SYSFD_SEEK_CUR
 #define DEE_SYSFD_SEEK_CUR  DEE_UNIX_SYSFD_SEEK_CUR
+#endif
+#ifdef DEE_UNIX_SYSFD_SEEK_END
 #define DEE_SYSFD_SEEK_END  DEE_UNIX_SYSFD_SEEK_END
+#endif
 
+#ifdef DeeUnixSysFD
 #define DeeSysFD            DeeUnixSysFD
+#ifdef DeeUnixSysFD_Quit
 #define DeeSysFD_Quit       DeeUnixSysFD_Quit
+#endif
+#ifdef DeeUnixSysFD_InitCopy
+#define DeeSysFD_InitCopy   DeeUnixSysFD_InitCopy
+#endif
+#ifdef DeeUnixSysFD_Read
 #define DeeSysFD_Read       DeeUnixSysFD_Read
+#endif
+#ifdef DeeUnixSysFD_Write
 #define DeeSysFD_Write      DeeUnixSysFD_Write
+#endif
+#ifdef DeeUnixSysFD_ReadAt
+#define DeeSysFD_ReadAt     DeeUnixSysFD_ReadAt
+#endif
+#ifdef DeeUnixSysFD_WriteAt
+#define DeeSysFD_WriteAt    DeeUnixSysFD_WriteAt
+#endif
+#ifdef DeeUnixSysFD_Seek
 #define DeeSysFD_Seek       DeeUnixSysFD_Seek
+#endif
 #ifdef DeeUnixSysFD_Flush
 #define DeeSysFD_Flush      DeeUnixSysFD_Flush
 #endif
 #ifdef DeeUnixSysFD_Trunc
 #define DeeSysFD_Trunc      DeeUnixSysFD_Trunc
 #endif
-
 #ifdef DeeUnixSysFD_INIT_STDIN
 #define DeeSysFD_INIT_STDIN  DeeUnixSysFD_INIT_STDIN
 #endif
@@ -602,6 +707,7 @@ do{\
 #ifdef DeeUnixSysFD_GET_STDERR
 #define DeeSysFD_GET_STDERR  DeeUnixSysFD_GET_STDERR
 #endif
+#endif /* DeeUnixSysFD */
 
 #ifdef DeeUnixSysFileFD
 #define DeeSysFileFD                   DeeUnixSysFileFD

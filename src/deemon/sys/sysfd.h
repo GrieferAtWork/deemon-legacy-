@@ -36,6 +36,8 @@
 // >> [[optional]] void DeeSysFD_InitCopy(DEE_A_INOUT struct DeeSysFD *self, DEE_A_INOUT struct DeeSysFD *right, CODE on_error);
 // >> [[optional]] void DeeSysFD_Read(DEE_A_INOUT struct DeeSysFD *self, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN size_t s, DEE_A_OUT size_t *rs, CODE on_error);
 // >> [[optional]] void DeeSysFD_Write(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN_RB(*ws) void const *p, DEE_A_IN size_t s, DEE_A_OUT size_t *ws, CODE on_error);
+// >> [[optional]] void DeeSysFD_ReadAt(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_uint64_t pos, DEE_A_OUT_WB(*rs) void *p, DEE_A_IN size_t s, DEE_A_OUT size_t *rs, CODE on_error);
+// >> [[optional]] void DeeSysFD_WriteAt(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_uint64_t pos, DEE_A_IN_RB(*ws) void const *p, DEE_A_IN size_t s, DEE_A_OUT size_t *ws, CODE on_error);
 //         - Read/Write data, or return false/throw an Error.IOError
 // >> [[optional]] void DeeSysFD_Seek(DEE_A_INOUT struct DeeSysFD *self, DEE_A_IN Dee_int64_t pos, DEE_A_IN int whence, DEE_A_OUT_OPT Dee_uint64_t *newoff, CODE on_error);
 //         - Moves the fd's r/w pointer to a given position, or return false/throw an Error.IOError / Error.RuntimeError.NotImplemented

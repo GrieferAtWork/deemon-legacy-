@@ -97,9 +97,10 @@ struct _DeeFileTypeIOOperators {
  //    allowing for faster reading/writing at a given offset.
  //  - The addition of these operators was made to take advantage of pread/pwrite,
  //    as well as the OVERLAPPED feature of win32's ReadFile function.
- // === NOT SET IN STONE AFTER THIS POINT ===
  // NOTE, that after either one of these operators, the internal file
  //       pointer may or may not have moved to the end DEE_SEEK_SET,@pos+@s.
+ //       It may also be placed at a completely different,
+ //       random position, or not move at all.
  DeeType_SLOT_TYPE(tp_io_readat)  tp_io_readat;  /*< [0..1] Optional read-at operator (combines seek+read). */
  DeeType_SLOT_TYPE(tp_io_writeat) tp_io_writeat; /*< [0..1] Optional write-at operator (combines seek+write). */
 };

@@ -1229,12 +1229,12 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #elif defined(DEE_REQUIRE_ALL_INTEGRAL_TYPES)
 # error No type suitable for int32_t / uint32_t found
 #endif
-#if defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
-# define DEE_PRIVATE_TYPES_INT_8  long long
-# define DEE_PRIVATE_TYPES_UINT_8 unsigned long long
-#elif defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 8
+#if defined(DEE_TYPES_SIZEOF_LONG) && DEE_TYPES_SIZEOF_LONG == 8
 # define DEE_PRIVATE_TYPES_INT_8  long
 # define DEE_PRIVATE_TYPES_UINT_8 unsigned long
+#elif defined(DEE_TYPES_SIZEOF_LLONG) && DEE_TYPES_SIZEOF_LLONG == 8
+# define DEE_PRIVATE_TYPES_INT_8  long long
+# define DEE_PRIVATE_TYPES_UINT_8 unsigned long long
 #elif defined(DEE_TYPES_SIZEOF_CHAR) && DEE_TYPES_SIZEOF_CHAR == 8
 # define DEE_PRIVATE_TYPES_INT_8  signed char
 # define DEE_PRIVATE_TYPES_UINT_8 unsigned char

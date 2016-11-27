@@ -217,28 +217,6 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WidePathExpandUserObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeFS_Utf8PathExpandVarsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeFS_WidePathExpandVarsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_Utf8IsAbsObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path);
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,0) int) DeeFS_WideIsAbsObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path);
-#define _DeeFS_Utf8IsAbsObject(path) _DeeFS_Utf8IsAbs(DeeUtf8String_STR(path))
-#define _DeeFS_WideIsAbsObject(path) _DeeFS_WideIsAbs(DeeWideString_STR(path))
-#ifdef DEE_PLATFORM_WINDOWS
-static DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *_DeeFS_Utf8Win32ReadlinkHandle(DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN HANDLE hfile);
-static DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *_DeeFS_WideWin32ReadlinkHandle(DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN HANDLE hfile);
-static void _deefs_win32_enable_symlink(void);
-#ifndef SYMBOLIC_LINK_FLAG_DIRECTORY
-#define SYMBOLIC_LINK_FLAG_DIRECTORY            (0x1)
-#endif
-#endif
-
-#ifdef DEE_PLATFORM_UNIX
-static int _dee_posix_check_getcwd_error(void);
-static int _deefs_posix_try_stat(char const *path, struct stat *attrib);
-static int _deefs_posix_stat(char const *path, struct stat *attrib);
-static int _deefs_posix_fstat(int fd, DeeObject *path, struct stat *attrib);
-#if DEE_HAVE_LSTAT
-static int _deefs_posix_try_lstat(char const *path, struct stat *attrib);
-#endif
-#endif
 
 #ifdef DEE_PLATFORM_WINDOWS
 #if DEE_CONFIG_RUNTIME_HAVE_AUTO_UNC
@@ -269,29 +247,6 @@ DEE_STATIC_INLINE(int) _deefs_utf8_inc_digit(DEE_A_INOUT Dee_Utf8Char *digit);
 DEE_STATIC_INLINE(int) _deefs_wide_inc_digit(DEE_A_INOUT Dee_WideChar *digit);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _deefs_utf8_inc_tmpname(Dee_Utf8Char *digits);
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _deefs_wide_inc_tmpname(Dee_WideChar *digits);
-
-#ifdef DEE_PLATFORM_WINDOWS
-#ifndef GetEnvironmentStringsA
-#undef GetEnvironmentStrings
-#define GetEnvironmentStringsA GetEnvironmentStrings
-#endif
-#endif
-
-#if !defined(environ) && \
-    !defined(DEE_PLATFORM_WINDOWS)
-extern char **environ;
-#endif
-
-#if !defined(S_ISDIR) && defined(_S_IFDIR)
-#define S_ISDIR(x) (((x)&_S_IFDIR)!=0)
-#endif
-#if !defined(S_ISREG) && defined(_S_IFREG)
-#define S_ISREG(x) (((x)&_S_IFREG)!=0)
-#endif
-#if !defined(S_ISLNK) && defined(_S_IFLNK)
-#define S_ISLNK(x) (((x)&_S_IFLNK)!=0)
-#endif
-
 
 #ifndef __INTELLISENSE__
 #define WIDE
@@ -344,18 +299,6 @@ DeeFS_WidePosixGetProcessName(DEE_A_IN pid_t process) {
  if DEE_UNLIKELY((result = DeeFS_Utf8PosixGetProcessName(process)) == NULL) return NULL;
  if DEE_UNLIKELY(DeeWideString_InplaceCast((DeeObject const **)&result) != 0) Dee_CLEAR(result);
  return result;
-}
-
-static int _dee_posix_check_getcwd_error(void) {
- int error = errno; errno = 0;
- switch (error) {
-  case 0:
-  case ERANGE:
-   return 0;
-  default:
-   DeeError_SystemError("getcwd");
-   return -1;
- }
 }
 #endif
 
@@ -622,75 +565,6 @@ DEE_A_EXEC DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideWin32GetS
 #endif
 
 
-#ifdef DEE_PLATFORM_UNIX
-static int _deefs_posix_stat(char const *path, struct stat *attrib) {
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY(stat(path,attrib) != 0) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "stat(%q) : %K",path,
-                      DeeSystemError_ToString(DeeSystemError_Consume()));
-  return -1;
- }
- return 0;
-}
-static int _deefs_posix_fstat(int fd, DeeObject *path, struct stat *attrib) {
-#if DEE_HAVE_FSTAT
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY(fstat(fd,attrib) != 0) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "fstat(%d:%k) : %K",fd,path,
-                      DeeSystemError_ToString(DeeSystemError_Consume()));
-  return -1;
- }
- return 0;
-#else
- (void)fd;
- if DEE_UNLIKELY((path = DeeUtf8String_Cast(path)) == NULL) return -1;
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) goto err_path;
- if DEE_UNLIKELY(stat(DeeUtf8String_STR(path),attrib) != 0) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "stat(%q) : %K",
-                      DeeUtf8String_STR(path),
-                      DeeSystemError_ToString(DeeSystemError_Consume()));
-err_path:
-  Dee_DECREF(path);
-  return -1;
- }
- Dee_DECREF(path);
- return 0;
-#endif
-}
-static int _deefs_posix_try_stat(
- char const *path, struct stat *attrib) {
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY(stat(path,attrib) != 0) {
-  int error = DeeSystemError_Consume();
-  if (error == ENOTDIR || error == ENOENT) return 1; // Not found
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "stat(%q) : %K",
-                      path,DeeSystemError_ToString(error));
-  return -1;
- }
- return 0;
-}
-#if DEE_HAVE_LSTAT
-static int _deefs_posix_try_lstat(char const *path, struct stat *attrib) {
- if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- if DEE_UNLIKELY(lstat(path,attrib) != 0) {
-  int error = DeeSystemError_Consume();
-  if (error == ENOTDIR || error == ENOENT) return 1; // Not found
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "stat(%q) : %K",
-                      path,DeeSystemError_ToString(error));
-  return -1;
- }
- return 0;
-}
-#endif
-#endif
-
-
-
 #ifdef DEE_PLATFORM_WINDOWS
 struct _deefs_win32_copywithprogress_systemcallback_data {
  DeeFS_ProcessFunc progress;
@@ -947,11 +821,13 @@ DeeError_NEW_STATIC(_dee_notimplemented_gethostname,&DeeErrorType_NotImplemented
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetHostname(void) {
 #ifdef DeeSysInfo_Utf8GetHostname
  DeeObject *result;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  DeeSysInfo_Utf8GetHostname(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
  return result;
 #elif defined(DeeSysInfo_WideGetHostname)
  DeeObject *result,*newresult;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  DeeSysInfo_WideGetHostname(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
  newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
@@ -966,11 +842,13 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetHostname(void) {
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideGetHostname(void) {
 #ifdef DeeSysInfo_WideGetHostname
  DeeObject *result;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  DeeSysInfo_WideGetHostname(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
  return result;
 #elif defined(DeeSysInfo_Utf8GetHostname)
  DeeObject *result,*newresult;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  DeeSysInfo_Utf8GetHostname(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
  newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),
@@ -996,11 +874,13 @@ DeeError_NEW_STATIC(_dee_notimplemented_getusername,&DeeErrorType_NotImplemented
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetUsername(void) {
 #ifdef DeeSysInfo_Utf8GetUsername
  DeeObject *result;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  DeeSysInfo_Utf8GetUsername(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
  return result;
 #elif defined(DeeSysInfo_WideGetUsername)
  DeeObject *result,*newresult;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  DeeSysInfo_WideGetUsername(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
  newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
@@ -1015,11 +895,13 @@ DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeFS_Utf8GetUsername(void) {
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeFS_WideGetUsername(void) {
 #ifdef DeeSysInfo_WideGetUsername
  DeeObject *result;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  DeeSysInfo_WideGetUsername(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeWideString_Check(result));
  return result;
 #elif defined(DeeSysInfo_Utf8GetUsername)
  DeeObject *result,*newresult;
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return NULL;
  DeeSysInfo_Utf8GetUsername(&result,return NULL);
  DEE_ASSERT(DeeObject_Check(result) && DeeUtf8String_Check(result));
  newresult = DeeWideString_FromUtf8StringWithLength(DeeUtf8String_SIZE(result),

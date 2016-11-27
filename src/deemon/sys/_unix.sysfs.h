@@ -757,6 +757,19 @@ do{\
 }while(0)
 #endif /* DEE_HAVE_RMDIR */
 
+#if DEE_HAVE_MKDIR
+#define DeeUnixSys_Utf8MkDir(path,mode,...) \
+do{\
+ if DEE_UNLIKELY(mkdir(path,mode) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "mkdir(%q,%I" DEE_PP_STR(DEE_PP_MUL8(DEE_TYPES_SIZEOF_MODE_T)) "u) : %K",\
+                      path,(Dee_mode_t)(mode),\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif /* DEE_HAVE_RMDIR */
+
 
 #ifdef DeeUnixSys_Utf8Remove
 #define DeeUnixSysFS_Utf8Remove DeeUnixSys_Utf8Remove
@@ -766,6 +779,9 @@ do{\
 #endif
 #ifdef DeeUnixSys_Utf8RmDir
 #define DeeUnixSysFS_Utf8RmDir DeeUnixSys_Utf8RmDir
+#endif
+#ifdef DeeUnixSys_Utf8MkDir
+#define DeeUnixSysFS_Utf8MkDir DeeUnixSys_Utf8MkDir
 #endif
 
 #if DEE_HAVE_STAT
@@ -954,6 +970,9 @@ do{\
 #endif
 #ifdef DeeUnixSysFS_Utf8RmDir
 #define DeeSysFS_Utf8RmDir DeeUnixSysFS_Utf8RmDir
+#endif
+#ifdef DeeUnixSysFS_Utf8MkDir
+#define DeeSysFS_Utf8MkDir DeeUnixSysFS_Utf8MkDir
 #endif
 #ifdef DeeUnixSysFS_Utf8GetMod
 #define DeeSysFS_Utf8GetMod DeeUnixSysFS_Utf8GetMod

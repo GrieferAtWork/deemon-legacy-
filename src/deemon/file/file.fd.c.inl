@@ -270,19 +270,13 @@ static int DEE_CALL _deefilefd_tp_io_read(
  DeeFileFDObject *self, void *p, Dee_size_t s, Dee_size_t *rs) {
 #ifdef DeeSysFD_Read
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- DeeFileFD_ACQUIRE_SHARED(self,{
-  DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed);
-  return -1;
- });
- DeeSysFD_Read(&self->fd_descr,p,s,rs,{
-  DeeFileFD_RELEASE_SHARED(self);
-  return -1;
- });
+ DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return -1; });
+ DeeSysFD_Read(&self->fd_descr,p,s,rs,{ DeeFileFD_RELEASE_SHARED(self); return -1; });
  DeeFileFD_RELEASE_SHARED(self);
  return 0;
 #else
  (void)self,p,s,rs;
- DeeError_NotImplemented_str("file.fd.read");
+ DeeError_NotImplemented_str("read");
  return -1;
 #endif
 }
@@ -290,22 +284,45 @@ static int DEE_CALL _deefilefd_tp_io_write(
  DeeFileFDObject *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
 #ifdef DeeSysFD_Write
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
- DeeFileFD_ACQUIRE_SHARED(self,{
-  DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed);
-  return -1;
- });
- DeeSysFD_Write(&self->fd_descr,p,s,ws,{
-  DeeFileFD_RELEASE_SHARED(self);
-  return -1;
- });
+ DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return -1; });
+ DeeSysFD_Write(&self->fd_descr,p,s,ws,{ DeeFileFD_RELEASE_SHARED(self); return -1; });
  DeeFileFD_RELEASE_SHARED(self);
  return 0;
 #else
  (void)self,p,s,ws;
- DeeError_NotImplemented_str("file.fd.write");
+ DeeError_NotImplemented_str("write");
  return -1;
 #endif
 }
+
+#ifdef DeeSysFD_ReadAt
+#define _pdeefilefd_tp_io_readat &_deefilefd_tp_io_readat
+static int DEE_CALL _deefilefd_tp_io_readat(
+ DeeFileFDObject *self, Dee_uint64_t pos, void *p, Dee_size_t s, Dee_size_t *rs) {
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return -1; });
+ DeeSysFD_ReadAt(&self->fd_descr,pos,p,s,rs,{ DeeFileFD_RELEASE_SHARED(self); return -1; });
+ DeeFileFD_RELEASE_SHARED(self);
+ return 0;
+}
+#else
+#define _pdeefilefd_tp_io_readat DeeType_DEFAULT_SLOT(tp_io_readat)
+#endif
+#ifdef DeeSysFD_WriteAt
+#define _pdeefilefd_tp_io_writeat &_deefilefd_tp_io_writeat
+static int DEE_CALL _deefilefd_tp_io_writeat(
+ DeeFileFDObject *self, Dee_uint64_t pos, void const *p, Dee_size_t s, Dee_size_t *ws) {
+ if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
+ DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return -1; });
+ DeeSysFD_WriteAt(&self->fd_descr,pos,p,s,ws,{ DeeFileFD_RELEASE_SHARED(self); return -1; });
+ DeeFileFD_RELEASE_SHARED(self);
+ return 0;
+}
+#else
+#define _pdeefilefd_tp_io_writeat DeeType_DEFAULT_SLOT(tp_io_writeat)
+#endif
+
+
 static int DEE_CALL _deefilefd_tp_io_seek(
  DeeFileFDObject *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) {
 #ifdef DeeSysFD_Seek
@@ -481,13 +498,15 @@ DeeFileTypeObject DeeFileFD_Type = {
    member(_deefilefd_tp_methods),null,null,null),
   DEE_TYPE_OBJECT_FOOTER_v100
  },
- DEE_FILE_TYPE_OBJECT_IO_v100(
+ DEE_FILE_TYPE_OBJECT_IO_v102(
   member(&_deefilefd_tp_io_read),
   member(&_deefilefd_tp_io_write),
   member(&_deefilefd_tp_io_seek),
   member(&_deefilefd_tp_io_flush),
   member(&_deefilefd_tp_io_trunc),
-  member(_pdeefilefd_tp_io_close))
+  member(_pdeefilefd_tp_io_close),
+  member(_pdeefilefd_tp_io_readat),
+  member(_pdeefilefd_tp_io_writeat))
  DEE_FILE_TYPE_OBJECT_FOOTER_v100
 };
 

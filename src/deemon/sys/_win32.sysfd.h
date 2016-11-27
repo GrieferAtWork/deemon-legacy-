@@ -81,27 +81,31 @@ do{\
 }while(0)
 
 #if DEE_TYPES_SIZEOF_SIZE_T > SIZEOF_DWORD
-static BOOL DeeWin32Sys_TryHandleLargeRead64(HANDLE hFile, void *p, Dee_uint64_t s, Dee_uint64_t *rs) {
- DWORD temp; DEE_ASSERTF(s > DWORD_MAX,"Not a large64 read");
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TryHandleLargeRead64(
+ HANDLE hFile, void *p, Dee_uint64_t s, Dee_uint64_t *rs) {
+ DWORD temp,act_size; DEE_ASSERTF(s > DWORD_MAX,"Not a large64 read");
  if DEE_UNLIKELY(!ReadFile(hFile,p,DWORD_MAX,(LPDWORD)&temp,NULL)) return FALSE;
- *rs = temp;
+ if ((*rs = temp) != DWORD_MAX) return TRUE;
  while (s > temp && temp) {
   *(uintptr_t *)&p += temp; s -= temp;
-  if DEE_UNLIKELY(!ReadFile(hFile,p,s >= DWORD_MAX
-    ? (DWORD)DWORD_MAX : (DWORD)s,(LPDWORD)&temp,NULL)) return FALSE;
+  act_size = s >= DWORD_MAX ? (DWORD)DWORD_MAX : (DWORD)s;
+  if DEE_UNLIKELY(!ReadFile(hFile,p,act_size,(LPDWORD)&temp,NULL)) return FALSE;
   *rs += temp;
+  if (temp != act_size) return TRUE;
  }
  return TRUE;
 }
-static BOOL DeeWin32Sys_TryHandleLargeWrite64(HANDLE hFile, void const *p, Dee_uint64_t s, Dee_uint64_t *ws) {
- DWORD temp; DEE_ASSERTF(s > DWORD_MAX,"Not a large64 write");
+DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TryHandleLargeWrite64(
+ HANDLE hFile, void const *p, Dee_uint64_t s, Dee_uint64_t *ws) {
+ DWORD temp,act_size; DEE_ASSERTF(s > DWORD_MAX,"Not a large64 write");
  if DEE_UNLIKELY(!WriteFile(hFile,p,DWORD_MAX,(LPDWORD)&temp,NULL)) return FALSE;
- *ws = temp;
+ if ((*rs = temp) != DWORD_MAX) return TRUE;
  while (s > temp && temp) {
   *(uintptr_t *)&p += temp; s -= temp;
-  if DEE_UNLIKELY(!WriteFile(hFile,p,s >= DWORD_MAX
-    ? (DWORD)DWORD_MAX : (DWORD)s,(LPDWORD)&temp,NULL)) return FALSE;
-  *ws += temp;
+  act_size = s >= DWORD_MAX ? (DWORD)DWORD_MAX : (DWORD)s;
+  if DEE_UNLIKELY(!WriteFile(hFile,p,act_size,(LPDWORD)&temp,NULL)) return FALSE;
+  *rs += temp;
+  if (temp != act_size) return TRUE;
  }
  return TRUE;
 }
@@ -123,9 +127,18 @@ static BOOL DeeWin32Sys_TryHandleLargeWrite64(HANDLE hFile, void const *p, Dee_u
 #define DeeWin32Sys_TryHandleReadSize  DeeWin32Sys_TryHandleRead64
 #define DeeWin32Sys_TryHandleWriteSize DeeWin32Sys_TryHandleWrite64
 #else
-#define DeeWin32Sys_TryHandleReadSize(hFile,p,s,rs)  ReadFile(hFile,p,s,(LPDWORD)(rs),NULL)
-#define DeeWin32Sys_TryHandleWriteSize(hFile,p,s,rs) WriteFile(hFile,p,s,(LPDWORD)(ws),NULL)
+#define DeeWin32Sys_TryHandleRead32(hFile,p,s,rs)    ReadFile(hFile,p,s,(LPDWORD)(rs),NULL)
+#define DeeWin32Sys_TryHandleWrite32(hFile,p,s,rs)   WriteFile(hFile,p,s,(LPDWORD)(ws),NULL)
 #endif
+
+#ifdef DEE_PLATFORM_64_BIT
+#define DeeWin32Sys_TryHandleReadSize  DeeWin32Sys_TryHandleRead64
+#define DeeWin32Sys_TryHandleWriteSize DeeWin32Sys_TryHandleWrite64
+#else
+#define DeeWin32Sys_TryHandleReadSize  DeeWin32Sys_TryHandleRead32
+#define DeeWin32Sys_TryHandleWriteSize DeeWin32Sys_TryHandleWrite32
+#endif
+
 
 #define DeeWin32Sys_HandleRead(hFile,p,s,rs,...) \
 do{\
@@ -154,8 +167,118 @@ do{\
   }\
  }\
 }while(0)
-#define DeeWin32SysFD_Read(self,p,s,rs,...)  DeeWin32Sys_HandleRead((self)->w32_handle,p,s,rs,__VA_ARGS__)
-#define DeeWin32SysFD_Write(self,p,s,ws,...) DeeWin32Sys_HandleWrite((self)->w32_handle,p,s,ws,__VA_ARGS__)
+
+#ifdef DEE_PLATFORM_64_BIT
+#define DeeWin32Sys_HandleReadAt(hFile,pos,p,s,rs,...) \
+do{\
+ OVERLAPPED _fd_overlapped; DWORD _fd_readsize,_fd_didreadsize;\
+ Dee_uint64_t _fd_usedpos; Dee_uintptr_t _fd_p; Dee_size_t _fd_s;\
+ _fd_overlapped.Internal     = 0;\
+ _fd_overlapped.InternalHigh = 0;\
+ _fd_overlapped.hEvent       = NULL;\
+ _fd_usedpos = (pos),_fd_p = (Dee_uintptr_t)(p),\
+ _fd_s = (s),*(rs) = 0;\
+ while (1) {\
+  _fd_overlapped.Offset     = (DWORD)( _fd_usedpos&DEE_UINT64_C(0x00000000FFFFFFFF));\
+  _fd_overlapped.OffsetHigh = (DWORD)((_fd_usedpos&DEE_UINT64_C(0xFFFFFFFF00000000)) >> 32);\
+  _fd_readsize = _fd_s > DWORD_MAX ? DWORD_MAX : (DWORD)_fd_s;\
+  if DEE_UNLIKELY(!ReadFile(hFile,(LPVOID)_fd_p,_fd_readsize,&_fd_didreadsize,&_fd_overlapped)) {\
+   DWORD _fd_error = GetLastError();\
+   if (_fd_error == ERROR_BROKEN_PIPE) *(rs) = 0;\
+   else {\
+    DeeError_SetStringf(&DeeErrorType_IOError,\
+                        "ReadFile(%p,%p,%Iu,%I64u) : %K",\
+                        hFile,p,(Dee_size_t)(s),(Dee_uint64_t)(pos),\
+                        DeeSystemError_Win32ToString(_fd_error));\
+    {__VA_ARGS__;}\
+   }\
+  }\
+  *(rs)        += _fd_didreadsize;\
+  if (_fd_didreadsize != _fd_readsize) break;\
+  _fd_p        += _fd_didreadsize;\
+  _fd_usedpos  += _fd_didreadsize;\
+  _fd_readsize -= _fd_didreadsize;\
+ }\
+}while(0)
+#define DeeWin32Sys_HandleWriteAt(hFile,pos,p,s,rs,...) \
+do{\
+ OVERLAPPED _fd_overlapped; DWORD _fd_readsize,_fd_didreadsize;\
+ Dee_uint64_t _fd_usedpos; Dee_uintptr_t _fd_p; Dee_size_t _fd_s;\
+ _fd_overlapped.Internal     = 0;\
+ _fd_overlapped.InternalHigh = 0;\
+ _fd_overlapped.hEvent       = NULL;\
+ _fd_usedpos = (pos),_fd_p = (Dee_uintptr_t)(p),\
+ _fd_s = (s),*(rs) = 0;\
+ while (1) {\
+  _fd_overlapped.Offset     = (DWORD)( _fd_usedpos&DEE_UINT64_C(0x00000000FFFFFFFF));\
+  _fd_overlapped.OffsetHigh = (DWORD)((_fd_usedpos&DEE_UINT64_C(0xFFFFFFFF00000000)) >> 32);\
+  _fd_readsize = _fd_s > DWORD_MAX ? DWORD_MAX : (DWORD)_fd_s;\
+  if DEE_UNLIKELY(!WriteFile(hFile,(LPVOID)_fd_p,_fd_readsize,&_fd_didreadsize,&_fd_overlapped)) {\
+   DWORD _fd_error = GetLastError();\
+   if (_fd_error == ERROR_BROKEN_PIPE) *(rs) = 0;\
+   else {\
+    DeeError_SetStringf(&DeeErrorType_IOError,\
+                        "WriteFile(%p,%p,%Iu,%I64u) : %K",\
+                        hFile,p,(Dee_size_t)(s),(Dee_uint64_t)(pos),\
+                        DeeSystemError_Win32ToString(_fd_error));\
+    {__VA_ARGS__;}\
+   }\
+  }\
+  *(rs)        += _fd_didreadsize;\
+  if (_fd_didreadsize != _fd_readsize) break;\
+  _fd_p        += _fd_didreadsize;\
+  _fd_usedpos  += _fd_didreadsize;\
+  _fd_readsize -= _fd_didreadsize;\
+ }\
+}while(0)
+#else
+#define DeeWin32Sys_HandleReadAt(hFile,pos,p,s,rs,...) \
+do{\
+ OVERLAPPED _fd_overlapped;\
+ _fd_overlapped.Internal     = 0;\
+ _fd_overlapped.InternalHigh = 0;\
+ _fd_overlapped.hEvent       = NULL;\
+ _fd_overlapped.Offset       = (DWORD)( (pos)&DEE_UINT64_C(0x00000000FFFFFFFF));\
+ _fd_overlapped.OffsetHigh   = (DWORD)(((pos)&DEE_UINT64_C(0xFFFFFFFF00000000)) >> 32);\
+ if DEE_UNLIKELY(!ReadFile(hFile,p,s,(LPDWORD)(rs),&_fd_overlapped)) {\
+  DWORD _fd_error = GetLastError();\
+  if (_fd_error == ERROR_BROKEN_PIPE) *(rs) = 0;\
+  else {\
+   DeeError_SetStringf(&DeeErrorType_IOError,\
+                       "ReadFile(%p,%p,%Iu,%I64u) : %K",\
+                       hFile,p,(Dee_size_t)(s),(Dee_uint64_t)(pos),\
+                       DeeSystemError_Win32ToString(_fd_error));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+}while(0)
+#define DeeWin32Sys_HandleWriteAt(hFile,pos,p,s,rs,...) \
+do{\
+ OVERLAPPED _fd_overlapped;\
+ _fd_overlapped.Internal     = 0;\
+ _fd_overlapped.InternalHigh = 0;\
+ _fd_overlapped.Offset       = (DWORD)( (pos)&DEE_UINT64_C(0x00000000FFFFFFFF));\
+ _fd_overlapped.OffsetHigh   = (DWORD)(((pos)&DEE_UINT64_C(0xFFFFFFFF00000000)) >> 32);\
+ _fd_overlapped.hEvent       = NULL;\
+ if DEE_UNLIKELY(!WriteFile(hFile,p,s,(LPDWORD)(rs),&_fd_overlapped)) {\
+  DWORD _fd_error = GetLastError();\
+  if (_fd_error == ERROR_BROKEN_PIPE) *(rs) = 0;\
+  else {\
+   DeeError_SetStringf(&DeeErrorType_IOError,\
+                       "WriteFile(%p,%p,%Iu,%I64u) : %K",\
+                       hFile,p,(Dee_size_t)(s),(Dee_uint64_t)(pos),\
+                       DeeSystemError_Win32ToString(_fd_error));\
+   {__VA_ARGS__;}\
+  }\
+ }\
+}while(0)
+#endif
+
+#define DeeWin32SysFD_Read(self,p,s,rs,...)        DeeWin32Sys_HandleRead((self)->w32_handle,p,s,rs,__VA_ARGS__)
+#define DeeWin32SysFD_Write(self,p,s,ws,...)       DeeWin32Sys_HandleWrite((self)->w32_handle,p,s,ws,__VA_ARGS__)
+#define DeeWin32SysFD_ReadAt(self,pos,p,s,rs,...)  DeeWin32Sys_HandleReadAt((self)->w32_handle,pos,p,s,rs,__VA_ARGS__)
+#define DeeWin32SysFD_WriteAt(self,pos,p,s,ws,...) DeeWin32Sys_HandleWriteAt((self)->w32_handle,pos,p,s,ws,__VA_ARGS__)
+
 
 #define DeeWin32SysFD_Seek(self,off,whence,newpos,...) \
  DeeWin32Sys_HandleSeek((self)->w32_handle,off,whence,newpos,__VA_ARGS__)
@@ -192,7 +315,7 @@ do{\
 
 #define DeeWin32SysFD_HandleFlush(hFile,...)\
 do{\
- if (!FlushFileBuffers(hFile)) {\
+ if DEE_UNLIKELY(!FlushFileBuffers(hFile)) {\
   DeeError_SetStringf(&DeeErrorType_IOError,"FlushFileBuffers(%p) : %K",hFile,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
   {__VA_ARGS__;}\
@@ -203,7 +326,7 @@ do{\
 
 #define DeeWin32Sys_HandleTrunc(hFile,...)\
 do{\
- if (!SetEndOfFile(hFile)) {\
+ if DEE_UNLIKELY(!SetEndOfFile(hFile)) {\
   DeeError_SetStringf(&DeeErrorType_IOError,"SetEndOfFile(%p) : %K",hFile,\
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
   {__VA_ARGS__;}\
@@ -702,6 +825,8 @@ do{\
 #define DeeSysFD_Quit       DeeWin32SysFD_Quit
 #define DeeSysFD_Read       DeeWin32SysFD_Read
 #define DeeSysFD_Write      DeeWin32SysFD_Write
+#define DeeSysFD_ReadAt     DeeWin32SysFD_ReadAt
+#define DeeSysFD_WriteAt    DeeWin32SysFD_WriteAt
 #define DeeSysFD_Seek       DeeWin32SysFD_Seek
 #define DeeSysFD_Flush      DeeWin32SysFD_Flush
 #define DeeSysFD_Trunc      DeeWin32SysFD_Trunc

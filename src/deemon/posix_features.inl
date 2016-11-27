@@ -385,6 +385,15 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE_LSEEK
+#if defined(DEE_PLATFORM_UNIX)\
+ || defined(_MSC_VER)
+# define DEE_HAVE_LSEEK 1
+#else
+# define DEE_HAVE_LSEEK 0
+#endif
+#endif
+
 #ifndef DEE_HAVE_FSYNC
 #if (defined(_BSD_SOURCE) && _BSD_SOURCE)\
  || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE)\
@@ -469,6 +478,16 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE_MKDIR
+#if (DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_STAT_H\
+  && DEE_ENVIRONMENT_HAVE_INCLUDE_SYS_TYPES_H)\
+  || (defined(_MSC_VER))
+# define DEE_HAVE_MKDIR 1
+#else
+# define DEE_HAVE_MKDIR 0
+#endif
+#endif
+
 #ifndef DEE_HAVE_RENAME
 #if (DEE_ENVIRONMENT_HAVE_INCLUDE_STDIO_H) \
  || (defined(DEE_PLATFORM_UNIX))
@@ -478,9 +497,40 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE_CLOSE
+#if defined(DEE_PLATFORM_UNIX)\
+ || defined(_MSC_VER)
+# define DEE_HAVE_CLOSE 1
+#else
+# define DEE_HAVE_CLOSE 0
+#endif
+#endif
+
+#ifndef DEE_HAVE_DUP
+#if defined(DEE_PLATFORM_UNIX)\
+ || defined(_MSC_VER)
+# define DEE_HAVE_DUP 1
+#else
+# define DEE_HAVE_DUP 0
+#endif
+#endif
+
+#ifndef DEE_HAVE_READ
+#ifdef DEE_HAVE_WRITE
+# define DEE_HAVE_READ DEE_HAVE_WRITE
+#elif defined(DEE_PLATFORM_UNIX)\
+ || defined(_MSC_VER)
+# define DEE_HAVE_READ 1
+#else
+# define DEE_HAVE_READ 0
+#endif
+#endif
+#ifndef DEE_HAVE_WRITE
+#define DEE_HAVE_WRITE DEE_HAVE_READ
+#endif
 
 #ifndef DEE_HAVE_PREAD
-#if defined(DEE_HAVE_PWRITE)
+#ifdef DEE_HAVE_PWRITE
 # define DEE_HAVE_PREAD DEE_HAVE_PWRITE
 #elif (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)\
    || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L)
