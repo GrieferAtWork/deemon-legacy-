@@ -22,25 +22,31 @@
 #define GUARD_DEEMON_VFS_VFS_NATIVE_MOUNT_H 1
 
 #include <deemon/__conf.inl>
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+#include <deemon/vfs/__vfsconf.inl>
 #include <deemon/optional/atomic_mutex.h>
 #include <deemon/string.h>
 #include <deemon/vfs/vfs_core.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
 // Native VFS node: A filesystem node that points back into the 
+#if DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES
 struct DeeVFSNativeMountView {
  struct DeeVFSView          vmv_view;      /*< Underlying view. */
  char                      *vmv_drives;    /*< [1..1] Drive strings. */
  char                      *vmv_drivespos; /*< [1..1] Next drive string. */
  struct DeeAtomicMutex      vmv_lock;      /*< Yield lock. */
 };
+#endif /* DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
 
 extern struct DeeVFSNodeType const DeeVFSNativeMountNode_Type;
+
+#if DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES
 extern DEE_A_RET_EXCEPT(NULL) char *DeeWin32Sys_GetDriveStrings(void);
 #define DeeWin32Sys_FreeDriveStrings(drives) free_nn(drives)
+#endif /* DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */

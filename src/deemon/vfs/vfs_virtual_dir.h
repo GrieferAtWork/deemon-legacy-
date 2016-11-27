@@ -39,6 +39,8 @@ struct DeeVFSVirtualDirNode {
  struct DeeVFSNode                   vdn_node;     /*< Underlying node. */
  struct DeeVFSVirtualDirEntry const *vdn_children; /*< [1..1] Vector of children nodes. */
 };
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSVirtualDirNode *DeeVFSVirtualDirNode_New(
+ DEE_A_INOUT struct DeeVFSNode *parent, struct DeeVFSVirtualDirEntry const *children);
 #define DeeVFSVirtualDirNode_INIT(parent,children) \
  {DeeVFSNode_INIT(&DeeVFSVirtualDirNode_Type,parent),children}
 

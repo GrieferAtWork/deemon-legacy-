@@ -25,13 +25,17 @@
 #endif
 
 #include <deemon/__conf.inl>
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+#include <deemon/vfs/__vfsconf.inl>
+#if DEE_VFSCONFIG_HAVEFILE_DEV_STDIN\
+ || DEE_VFSCONFIG_HAVEFILE_DEV_STDOUT\
+ || DEE_VFSCONFIG_HAVEFILE_DEV_STDERR
 #include <deemon/string.h>
 #include <deemon/fs/native_fs.h>
 #include <deemon/vfs/vfs_core.h>
 #include <deemon/vfs/vfs_native_node.h>
 #include <deemon/vfs/vfs_virtual_stdfile.h>
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
@@ -61,6 +65,7 @@ struct DeeVFSNodeType const DeeVFSVirtualStdFileNode_Type = {
  {NULL,NULL},NULL,&_deevfs_virtualstdfile_vft_file,NULL};
 
 DEE_DECL_END
+#endif /* ... */
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_STDFILE_C_INL */

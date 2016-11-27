@@ -140,6 +140,7 @@
 //    Enables the virtual filesystem that simulates some of the basic
 //    files as they are found in a posix-style filesystem
 //    NOTE: Can only be enabled on windows
+//    NOTE: Various sub-components can be disabled in /src/deemon/vfs/__vfsconf.inl
 #ifndef DEE_CONFIG_RUNTIME_HAVE_VFS
 #define DEE_CONFIG_RUNTIME_HAVE_VFS 1
 #endif

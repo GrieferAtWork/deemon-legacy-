@@ -26,6 +26,8 @@
 
 #include <deemon/__conf.inl>
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
+#include <deemon/vfs/__vfsconf.inl>
+#if DEE_VFSCONFIG_HAVEFILE_NET
 #include <deemon/error.h>
 #include <deemon/string.h>
 #include <deemon/vfs/vfs_core.h>
@@ -34,24 +36,32 @@
 
 DEE_DECL_BEGIN
 
+#if DEE_VFSCONFIG_HAVE_NET_SCANSERVER
 typedef NET_API_STATUS (NET_API_FUNCTION *LPNETSERVERENUM)(
  LMCSTR servername, DWORD level, LPBYTE *bufptr, DWORD prefmaxlen, LPDWORD entriesread,
  LPDWORD totalentries, DWORD servertype, LMCSTR domain, LPDWORD resume_handle);
+static LPNETSERVERENUM PNetServerEnum = NULL;
+#endif /* DEE_VFSCONFIG_HAVE_NET_SCANSERVER */
+
+#if DEE_VFSCONFIG_HAVE_NET_SCANSHARE
 typedef NET_API_STATUS (NET_API_FUNCTION *LPNETSHAREENUM)(
  LMSTR servername, DWORD level, LPBYTE *bufptr, DWORD prefmaxlen, LPDWORD entriesread,
  LPDWORD totalentries, LPDWORD resume_handle);
-
-typedef NET_API_STATUS (NET_API_FUNCTION *LPNETAPIBUFFERFREE)(LPVOID Buffer);
-
-
-static LPNETSERVERENUM PNetServerEnum = NULL;
 static LPNETSHAREENUM PNetShareEnum = NULL;
+#endif /* DEE_VFSCONFIG_HAVE_NET_SCANSHARE */
+
+#if DEE_VFSCONFIG_HAVE_NET_SCANSERVER\
+ || DEE_VFSCONFIG_HAVE_NET_SCANSHARE
+typedef NET_API_STATUS (NET_API_FUNCTION *LPNETAPIBUFFERFREE)(LPVOID Buffer);
 static LPNETAPIBUFFERFREE PNetApiBufferFree = NULL;
 static struct DeeAtomicOnceFlag PNetApiBufferFree_loaded = DeeAtomicOnceFlag_INIT();
 #define PNetApiBufferFree_LOAD()\
  DeeAtomicOnceFlag_RUN(&PNetApiBufferFree_loaded,{\
   *(void **)&PNetApiBufferFree = DeeSharedLib_Utf8PoolTryImport("Netapi32.dll","NetApiBufferFree");\
  })
+#endif /* ... */
+
+
 
 
 
@@ -84,6 +94,7 @@ static struct DeeVFSNativeNode *DEE_CALL _deevfs_netservernode_vnt_wwalk(
  return result;
 }
 
+#if DEE_VFSCONFIG_HAVE_NET_SCANSHARE
 static int DEE_CALL _deevfs_netserverview_vvt_open(
  struct DeeVFSNetServerView *self) {
  DeeObject *servername; NET_API_STATUS nStatus;
@@ -224,15 +235,25 @@ static int DEE_CALL _deevfs_netserverview_vvt_yield(
  struct DeeVFSNetServerView *self, struct DeeVFSNativeNode **result) {
  return DeeVFSNetServerView_GetCurrentNode(self,result,1);
 }
+#endif /* DEE_VFSCONFIG_HAVE_NET_SCANSHARE */
+
 static struct _DeeVFSViewTypeData _deevfs_netserver_vnt_view = {
+#if DEE_VFSCONFIG_HAVE_NET_SCANSHARE
  sizeof(struct DeeVFSNetServerView),
+#else /* DEE_VFSCONFIG_HAVE_NET_SCANSHARE */
+ sizeof(struct DeeVFSView),
+#endif /* !DEE_VFSCONFIG_HAVE_NET_SCANSHARE */
  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_netservernode_vnt_walk,
  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))&_deevfs_netservernode_vnt_wwalk,
  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_nativenode_vnt_nameof,
+#if DEE_VFSCONFIG_HAVE_NET_SCANSHARE
  (int (DEE_CALL *)(struct DeeVFSView *))                                               &_deevfs_netserverview_vvt_open,
  (void (DEE_CALL *)(struct DeeVFSView *))                                              &_deevfs_netserverview_vvt_quit,
  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_netserverview_vvt_curr,
  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_netserverview_vvt_yield,
+#else /* DEE_VFSCONFIG_HAVE_NET_SCANSHARE */
+ NULL,NULL,NULL,NULL,
+#endif /* !DEE_VFSCONFIG_HAVE_NET_SCANSHARE */
 };
 
 struct DeeVFSNodeType const DeeVFSNetServerNode_Type = {
@@ -269,6 +290,7 @@ static DeeObject *DEE_CALL _deevfs_netmountnode_vnt_nameof(
 }
 
 
+#if DEE_VFSCONFIG_HAVE_NET_SCANSERVER
 static int DEE_CALL _deevfs_netmountview_vvt_open(
  struct DeeVFSNetMountView *self) {
  NET_API_STATUS nStatus;
@@ -396,17 +418,26 @@ static int DEE_CALL _deevfs_netmountview_vvt_yield(
  struct DeeVFSNetMountView *self, struct DeeVFSNetServerNode **result) {
  return DeeVFSNetMountView_GetCurrentNode(self,result,1);
 }
+#endif /* DEE_VFSCONFIG_HAVE_NET_SCANSERVER */
 
 
 static struct _DeeVFSViewTypeData _deevfs_netmount_vnt_view = {
+#if DEE_VFSCONFIG_HAVE_NET_SCANSERVER
  sizeof(struct DeeVFSNetMountView),
+#else /* DEE_VFSCONFIG_HAVE_NET_SCANSERVER */
+ sizeof(struct DeeVFSView),
+#endif /* !DEE_VFSCONFIG_HAVE_NET_SCANSERVER */
  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_netmountnode_vnt_walk,
  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))NULL, // TODO
  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_netmountnode_vnt_nameof,
+#if DEE_VFSCONFIG_HAVE_NET_SCANSERVER
  (int (DEE_CALL *)(struct DeeVFSView *))                                               &_deevfs_netmountview_vvt_open,
  (void (DEE_CALL *)(struct DeeVFSView *))                                              &_deevfs_netmountview_vvt_quit,
  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_netmountview_vvt_curr,
  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_netmountview_vvt_yield,
+#else /* DEE_VFSCONFIG_HAVE_NET_SCANSERVER */
+ NULL,NULL,NULL,NULL,
+#endif /* !DEE_VFSCONFIG_HAVE_NET_SCANSERVER */
 };
 
 struct DeeVFSNodeType const DeeVFSNetMountNode_Type = {
@@ -415,6 +446,7 @@ struct DeeVFSNodeType const DeeVFSNetMountNode_Type = {
 
 
 DEE_DECL_END
+#endif /* DEE_VFSCONFIG_HAVEFILE_NET */
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_NATIVE_NETMOUNT_C_INL */

@@ -23,17 +23,21 @@
 
 #include <deemon/__conf.inl>
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
-
+#include <deemon/vfs/__vfsconf.inl>
+#if DEE_VFSCONFIG_HAVEFILE_NET
 #include <deemon/optional/atomic_mutex.h>
 #include <deemon/string.h>
 #include <deemon/vfs/vfs_core.h>
 
+#if DEE_VFSCONFIG_HAVE_NET_SCANSERVER\
+ || DEE_VFSCONFIG_HAVE_NET_SCANSHARE
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 #include <Windows.h>
 #include <lm.h>
 DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
+#endif /* ... */
 
 DEE_DECL_BEGIN
 
@@ -42,6 +46,7 @@ struct DeeVFSNetServerNode {
  struct DeeVFSNode          vnm_node; /*< Underlying node. */
  DEE_A_REF DeeStringObject *vnm_name; /*< Name of this server. */
 };
+#if DEE_VFSCONFIG_HAVE_NET_SCANSHARE
 struct DeeVFSNetServerView {
  struct DeeVFSView nsv_view;   /*< Underlying view. */
  struct DeeAtomicMutex nsv_lock; /*< Lock for everything below */
@@ -52,6 +57,8 @@ struct DeeVFSNetServerView {
  DWORD             nsv_dwResumeHandle;
  int               nsv_hasresume;
 };
+#endif /* DEE_VFSCONFIG_HAVE_NET_SCANSHARE */
+#if DEE_VFSCONFIG_HAVE_NET_SCANSERVER
 struct DeeVFSNetMountView {
  struct DeeVFSView nmv_view;   /*< Underlying view. */
  struct DeeAtomicMutex nmv_lock; /*< Lock for everything below */
@@ -61,11 +68,13 @@ struct DeeVFSNetMountView {
  DWORD             nmv_dwResumeHandle;
  int               nmv_hasresume;
 };
+#endif /* DEE_VFSCONFIG_HAVE_NET_SCANSERVER */
 
 extern struct DeeVFSNodeType const DeeVFSNetServerNode_Type; /*< "/net/[SERVER]" */
 extern struct DeeVFSNodeType const DeeVFSNetMountNode_Type;  /*< "/net" */
 
 DEE_DECL_END
+#endif /* DEE_VFSCONFIG_HAVEFILE_NET */
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 #endif /* !GUARD_DEEMON_VFS_VFS_NATIVE_NETMOUNT_H */

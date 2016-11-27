@@ -256,6 +256,11 @@
 // - An absolute virtual path always starts with a "/" character, meaning that
 //   in order to access a node from part of the VFS, a path must either start
 //   with "/", or 'chdir' must be used with a path starting with 'chdir'
+// - Any virtual file/feature may not be available depending on what was enabled
+//   when deemon was compiled. Anything not available will cause errors to be thrown
+//   when the user attempts to access/use that feature.
+//   - For a list toggleable features, see Griefer@Work's
+//     deemon source file /src/deemon/vfs/__vfsconf.inl.
 //
 // Host-System integration:
 // - Since most host system don't just allow any string to be set as the

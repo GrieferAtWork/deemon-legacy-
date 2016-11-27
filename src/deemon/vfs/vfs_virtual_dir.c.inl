@@ -32,6 +32,16 @@
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
+DEE_A_RET_EXCEPT_REF struct DeeVFSVirtualDirNode *DeeVFSVirtualDirNode_New(
+ DEE_A_INOUT struct DeeVFSNode *parent, struct DeeVFSVirtualDirEntry const *children) {
+ struct DeeVFSVirtualDirNode *result;
+ if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSVirtualDirNode)) == NULL) return NULL;
+ result->vdn_children = children;
+ DeeVFSNode_InitWithParent(&result->vdn_node,&DeeVFSVirtualDirNode_Type,parent);
+ return result;
+}
+
+
 //////////////////////////////////////////////////////////////////////////
 // Node VTable
 static struct DeeVFSNode *DEE_CALL _deevfs_virtualdirnode_vnt_walk(

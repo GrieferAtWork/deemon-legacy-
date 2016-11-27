@@ -25,6 +25,8 @@
 #endif
 
 #include <deemon/__conf.inl>
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
+#include <deemon/vfs/__vfsconf.inl>
 #include <deemon/__xconf.inl>
 #include <deemon/fs/native_fs.h>
 #include <deemon/vfs/vfs_core.h>
@@ -37,9 +39,9 @@ DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
+#if DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES
 DEE_A_RET_EXCEPT(NULL) char *DeeWin32Sys_GetDriveStrings(void) {
  char *buffer,*new_buffer;
  DWORD req_bufsize,used_bufsize;
@@ -74,6 +76,7 @@ again:
  buffer[req_bufsize] = '\0';
  return buffer;
 }
+#endif /* DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -119,6 +122,8 @@ static DeeObject *DEE_CALL _deevfs_nativemountnode_vnt_nameof(
   return DeeWideString_NewWithLength((Dee_size_t)(iter-begin),begin);
  }
 }
+
+#if DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES
 static int DEE_CALL _deevfs_nativemountview_vvt_open(struct DeeVFSNativeMountView *self) {
  if DEE_UNLIKELY((self->vmv_drives = DeeWin32Sys_GetDriveStrings()) == NULL) return -1;
  self->vmv_drivespos = self->vmv_drives;
@@ -177,16 +182,25 @@ static int DEE_CALL _deevfs_nativemountview_vvt_yield(
  *result = result_node;
  return 0;
 }
+#endif /* DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
 
 static struct _DeeVFSViewTypeData _deevfs_nativemountnode_vnt_view = {
+#if DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES
  sizeof(struct DeeVFSNativeMountView),
+#else /* DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
+ sizeof(struct DeeVFSView),
+#endif /* DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_nativemountnode_vnt_walk,
  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))&_deevfs_nativemountnode_vnt_wwalk,
  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_nativemountnode_vnt_nameof,
+#if DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES
  (int (DEE_CALL *)(struct DeeVFSView *))                                               &_deevfs_nativemountview_vvt_open,
  (void (DEE_CALL *)(struct DeeVFSView *))                                              &_deevfs_nativemountview_vvt_quit,
  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_nativemountview_vvt_curr,
  (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_nativemountview_vvt_yield,
+#else /* DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
+ NULL,NULL,NULL,NULL,
+#endif /* !DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
 };
 
 struct DeeVFSNodeType const DeeVFSNativeMountNode_Type = {

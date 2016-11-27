@@ -22,6 +22,7 @@
 #define GUARD_DEEMON_VFS_VFS_ROOT_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/vfs/__vfsconf.inl>
 #include <deemon/vfs/vfs_virtual_dir.h>
 #include <deemon/vfs/vfs_native_mount.h>
 
@@ -36,7 +37,9 @@ extern struct DeeVFSVirtualDirNode _DeeVFS_Root;
 // NOTE: On windows, this is a folder filled with directories matching all drive names.
 extern struct DeeVFSNode _DeeVFSNative_Root;
 #define DeeVFSNative_Root ((struct DeeVFSNode *)&_DeeVFSNative_Root)
+#if DEE_VFSCONFIG_HAVEFILE_MOUNT
 #define DeeVFS_Mount      DeeVFSNative_Root
+#endif
 
 DEE_DECL_END
 #endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
