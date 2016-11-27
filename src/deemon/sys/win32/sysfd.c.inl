@@ -18,10 +18,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__WIN32_SYSFD_C_INL
-#define GUARD_DEEMON_SYS__WIN32_SYSFD_C_INL 1
+#ifndef GUARD_DEEMON_SYS_WIN32_SYSFD_C_INL
+#define GUARD_DEEMON_SYS_WIN32_SYSFD_C_INL 1
 
-#include <deemon/sys/_win32.sysfd.h>
+#include <deemon/sys/win32/sysfd.h>
 #include <deemon/optional/atomic_once.h>
 
 // NOTE: This file is part of the /src/deemon/file.c compilation unit
@@ -131,8 +131,8 @@ DEE_DECL_END
 
 #ifndef __INTELLISENSE__
 #define WIDE
-#include "_win32.sysfd.filename.impl.inl"
-#include "_win32.sysfd.filename.impl.inl"
+#include "sysfd.filename.impl.inl"
+#include "sysfd.filename.impl.inl"
 #endif
 
-#endif /* !GUARD_DEEMON_SYS__WIN32_SYSFD_C_INL */
+#endif /* !GUARD_DEEMON_SYS_WIN32_SYSFD_C_INL */

@@ -18,40 +18,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS_SYSTLS_H
-#define GUARD_DEEMON_SYS_SYSTLS_H 1
+#ifndef GUARD_DEEMON_SYS_NOTHREAD_SYSTLS_H
+#define GUARD_DEEMON_SYS_NOTHREAD_SYSTLS_H 1
 
 #include <deemon/__conf.inl>
 
 //////////////////////////////////////////////////////////////////////////
-// >> struct DeeSysTLS { ... };
-// >> bool DeeSysTLS_TryInit(struct DeeSysTLS *self);
-// >> void DeeSysTLS_Init(struct DeeSysTLS *self, CODE on_error);
-// >> void DeeSysTLS_Quit(struct DeeSysTLS *self);
-// >> void DeeSysTLS_TryGetNofail(struct DeeSysTLS *self, void *&result);
-// >> bool DeeSysTLS_TryGet(struct DeeSysTLS *self, void *&result);
-// >> bool DeeSysTLS_TrySet(struct DeeSysTLS *self, void *value);
-// >> void DeeSysTLS_Get(struct DeeSysTLS *self, void *&result, CODE on_error);
-// >> void DeeSysTLS_Set(struct DeeSysTLS *self, void *value, CODE on_error);
+// === NoThread ===
+DEE_DECL_BEGIN
 
-#if defined(DEE_WITHOUT_THREADS)
-# include <deemon/sys/nothread/systls.h>
-#elif defined(DEE_PLATFORM_WINDOWS)
-# include <deemon/sys/win32/systls.h>
-#elif DEE_ENVIRONMENT_HAVE_INCLUDE_PTHREAD_H
-# include <deemon/sys/pthread/systls.h>
-#elif 1
-# include <deemon/sys/emulated/systls.h>
-#elif 1
-# include <deemon/sys/stub/systls.h>
-#else
-# error "No TLS implementation for this platform"
-#endif
+struct DeeNoThreadSysTLS { void *ns_value; };
+#define DeeNoThreadSysTLS_TryInit(ob) ((ob)->ns_value = NULL,1)
+#define DeeNoThreadSysTLS_Init(ob,...) do{ (ob)->ns_value = NULL; }while(0)
+#define DeeNoThreadSysTLS_Quit(ob)                (void)(ob)
+#define DeeNoThreadSysTLS_TryGetNofail(ob,result) (void)(*(void **)&(result)=(ob)->ns_value)
+#define DeeNoThreadSysTLS_TryGet(ob,result)       (*(void **)&(result)=(ob)->ns_value,1)
+#define DeeNoThreadSysTLS_TrySet(ob,value)        ((ob)->ns_value=(void *)(value),1)
+#define DeeNoThreadSysTLS_Get(ob,result,...)      do{ *(void **)&(result) = (ob)->ns_value; }while(0)
+#define DeeNoThreadSysTLS_Set(ob,value,...)       do{ (ob)->ns_value = (void *)(value); }while(0)
 
-#ifndef DeeSysTLS_TryGetNofail
-#define DeeSysTLS_TryGetNofail(ob,result) \
- (DeeSysTLS_TryGet(ob,result)?(void)0:(void)((result)=NULL))
-#endif
+#define DeeSysTLS              DeeNoThreadSysTLS
+#define DeeSysTLS_TryInit      DeeNoThreadSysTLS_TryInit
+#define DeeSysTLS_Init         DeeNoThreadSysTLS_Init
+#define DeeSysTLS_Quit         DeeNoThreadSysTLS_Quit
+#define DeeSysTLS_TryGetNofail DeeNoThreadSysTLS_TryGetNofail
+#define DeeSysTLS_TryGet       DeeNoThreadSysTLS_TryGet
+#define DeeSysTLS_TrySet       DeeNoThreadSysTLS_TrySet
+#define DeeSysTLS_Get          DeeNoThreadSysTLS_Get
+#define DeeSysTLS_Set          DeeNoThreadSysTLS_Set
 
+DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_SYS_SYSTLS_H */
+#endif /* !GUARD_DEEMON_SYS_NOTHREAD_SYSTLS_H */

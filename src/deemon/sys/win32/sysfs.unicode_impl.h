@@ -20,7 +20,7 @@
  */
 
 #ifdef __INTELLISENSE__
-#include "_win32.sysfs.h"
+#include "sysfs.h"
 #define WIDE
 #endif
 
@@ -45,52 +45,6 @@
 #endif
 
 DEE_DECL_BEGIN
-
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
-DeeWin32Sys_F(GetEnv)(DEE_A_IN_Z DEE_CHAR const *envname) {
- DWORD error; DeeObject *result;
- if DEE_UNLIKELY((result = DeeString_F(NewSized)(DEE_XCONFIG_FSBUFSIZE_WIN32GETENV)) == NULL) return NULL;
- error = WIN32_F(DeeWin32_GetEnvironmentVariable)(envname,DeeString_F(STR)(result),
-                                                  DEE_XCONFIG_FSBUFSIZE_WIN32GETENV+1);
- if DEE_UNLIKELY(error == 0) {
-not_found: error = DeeSystemError_Win32Consume();
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      DEE_PP_STR(WIN32_F(GetEnvironmentVariable))
-                      "(" DEE_PRINTF_STRQ ") : %K",
-                      envname,DeeSystemError_Win32ToString(error));
-  goto err_r;
- }
- if DEE_UNLIKELY(error > DEE_XCONFIG_FSBUFSIZE_WIN32GETENV) {
-again:
-  if DEE_UNLIKELY(DeeString_F(Resize)(&result,error-1) != 0)
-  {err_r: Dee_DECREF(result); return NULL; }
-  error = WIN32_F(DeeWin32_GetEnvironmentVariable)(envname,DeeString_F(STR)(result),error);
-  if DEE_UNLIKELY(error == 0) goto not_found;
-  // ** this could happen, if the variable changed between the 2 calls
-  if DEE_UNLIKELY(error > DeeString_F(SIZE)(result)) goto again;
- } else if (error < DEE_XCONFIG_FSBUFSIZE_WIN32GETENV) {
-  if DEE_UNLIKELY(DeeString_F(Resize)(&result,error) != 0) goto err_r;
- }
- return result;
-}
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DEESTRINGOBJECT) *)
-DeeWin32Sys_F(TryGetEnv)(DEE_A_IN_Z DEE_CHAR const *envname) {
- DWORD error; DeeObject *result;
- if DEE_UNLIKELY((result = DeeString_F(NewSized)(DEE_XCONFIG_FSBUFSIZE_WIN32GETENV)) == NULL) {err_h: DeeError_HandledOne(); return NULL; }
- error = WIN32_F(DeeWin32_GetEnvironmentVariable)(envname,DeeString_F(STR)(result),DEE_XCONFIG_FSBUFSIZE_WIN32GETENV+1);
- if (error == 0) {not_found: SetLastError(0); Dee_DECREF(result); return NULL; }
- if DEE_UNLIKELY(error > DEE_XCONFIG_FSBUFSIZE_WIN32GETENV) {
-again:
-  if DEE_UNLIKELY(DeeString_F(Resize)(&result,error-1) != 0) {err_r: Dee_DECREF(result); goto err_h; }
-  error = WIN32_F(DeeWin32_GetEnvironmentVariable)(envname,DeeString_F(STR)(result),error);
-  if (error == 0) goto not_found;
-  // ** this could happen, if the variable changed between the 2 calls
-  if (error > DeeString_F(SIZE)(result)) goto again;
- } else if (error < DEE_XCONFIG_FSBUFSIZE_WIN32GETENV) {
-  if DEE_UNLIKELY(DeeString_F(Resize)(&result,error) != 0) goto err_r;
- }
- return result;
-}
 
 DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *)
 DeeWin32Sys_F(GetTokenUserHome)(DEE_A_IN HANDLE hToken) {
@@ -165,10 +119,10 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DEESTRINGOBJECT) *) DeeWin32Sys_F(
  static DEE_CHAR const var_USERPROFILE[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
  static DEE_CHAR const var_HOMEDRIVE[] = {'H','O','M','E','D','R','I','V','E',0};
  static DEE_CHAR const var_HOMEPATH[] = {'H','O','M','E','P','A','T','H',0};
- if ((result = DeeWin32Sys_F(TryGetEnv)(var_HOME)) != NULL) return result;
- if ((result = DeeWin32Sys_F(TryGetEnv)(var_USERPROFILE)) != NULL) return result;
- if ((homedrive = DeeWin32Sys_F(TryGetEnv)(var_HOMEDRIVE)) == NULL) goto win_home_api;
- if ((homepath = DeeWin32Sys_F(TryGetEnv)(var_HOMEPATH)) == NULL) { Dee_DECREF(homedrive); goto win_home_api; }
+ DeeWin32Sys_F(TryGetEnv)(var_HOME,&result); if (result) return result;
+ DeeWin32Sys_F(TryGetEnv)(var_USERPROFILE,&result); if (result) return result;
+ DeeWin32Sys_F(TryGetEnv)(var_HOMEDRIVE,&homedrive); if (!homedrive) goto win_home_api;
+ DeeWin32Sys_F(TryGetEnv)(var_HOMEPATH,&homepath); if (!homepath) { Dee_DECREF(homedrive); goto win_home_api; }
  result = DeeString_F(ConcatWithLength)(homedrive,DeeString_F(SIZE)(homepath),DeeString_F(STR)(homepath));
  Dee_DECREF(homepath);
  Dee_DECREF(homedrive);

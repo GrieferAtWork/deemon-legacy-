@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__WIN32_SYSFS_H
-#define GUARD_DEEMON_SYS__WIN32_SYSFS_H 1
+#ifndef GUARD_DEEMON_SYS_WIN32_SYSFS_H
+#define GUARD_DEEMON_SYS_WIN32_SYSFS_H 1
 
 #include <deemon/__conf.inl>
 #include <deemon/__xconf.inl>
@@ -29,7 +29,7 @@
 #include <deemon/optional/atomic_once.h>
 #include <deemon/string.h>
 #include <deemon/runtime/extern.h>
-#include <deemon/sys/_win32.sysfd.h>
+#include <deemon/sys/win32/sysfd.h>
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
@@ -67,7 +67,6 @@ DEE_DECL_BEGIN
 #define DeeWin32_SetEnvironmentVariableW(lpName,lpValue) \
  (DEE_LVERBOSE_SYS("SetEnvironmentVariableW(%lq,%lq)\n",lpName,lpValue),\
   SetEnvironmentVariableW(lpName,lpValue))
-
 #define DeeWin32_SetCurrentDirectoryA(lpPathName) \
  (DEE_LVERBOSE_SYS("SetCurrentDirectoryA(%q)\n",lpPathName),\
   SetCurrentDirectoryA(lpPathName))
@@ -157,10 +156,92 @@ do{\
  }\
 }while(0)
 
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeWin32Sys_Utf8GetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *) DeeWin32Sys_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *) DeeWin32Sys_Utf8TryGetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname);
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeWideStringObject) *) DeeWin32Sys_WideTryGetEnv(DEE_A_IN_Z Dee_WideChar const *envname);
+#define DeeWin32Sys_Utf8GetEnv(envname,result,...) \
+do{\
+ DWORD _we_error;\
+ if DEE_UNLIKELY((*(result) = DeeUtf8String_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETENV)) == NULL) {__VA_ARGS__;}\
+ while (1) {\
+  _we_error = DeeWin32_GetEnvironmentVariableA(envname,DeeUtf8String_STR(*(result)),\
+                                               DeeUtf8String_SIZE(*(result))+1);\
+  if DEE_UNLIKELY(_we_error == 0) {\
+   _we_error = GetLastError();\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "GetEnvironmentVariableA(%q,...) : %K",\
+                       envname,DeeSystemError_Win32ToString(_we_error));\
+  } else if DEE_UNLIKELY(_we_error > DeeUtf8String_SIZE(*(result))) {\
+   if DEE_UNLIKELY(DeeUtf8String_Resize(result,_we_error-1) == 0) continue;\
+  } else /*if (_we_error < DeeUtf8String_SIZE(*(result)))*/ {\
+   if DEE_UNLIKELY(DeeUtf8String_Resize(result,_we_error) == 0) break;\
+  }\
+  Dee_DECREF(*(result));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#define DeeWin32Sys_WideGetEnv(envname,result,...) \
+do{\
+ DWORD _we_error;\
+ if DEE_UNLIKELY((*(result) = DeeWideString_NewSized(DEE_XCONFIG_FSBUFSIZE_WIN32GETENV)) == NULL) {__VA_ARGS__;}\
+ while (1) {\
+  _we_error = DeeWin32_GetEnvironmentVariableW(envname,DeeWideString_STR(*(result)),\
+                                               DeeWideString_SIZE(*(result))+1);\
+  if DEE_UNLIKELY(_we_error == 0) {\
+   _we_error = GetLastError();\
+   DeeError_SetStringf(&DeeErrorType_SystemError,\
+                       "GetEnvironmentVariableW(%q,...) : %K",\
+                       envname,DeeSystemError_Win32ToString(_we_error));\
+  } else if DEE_UNLIKELY(_we_error > DeeWideString_SIZE(*(result))) {\
+   if DEE_UNLIKELY(DeeWideString_Resize(result,_we_error-1) == 0) continue;\
+  } else /*if (_we_error < DeeWideString_SIZE(*(result)))*/ {\
+   if DEE_UNLIKELY(DeeWideString_Resize(result,_we_error) == 0) break;\
+  }\
+  Dee_DECREF(*(result));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+
+#define DeeWin32Sys_Utf8TryGetEnv(envname,result) \
+do{\
+ DWORD _we_error;\
+ if DEE_LIKELY((*(result) = DeeUtf8String_NewSized(\
+  DEE_XCONFIG_FSBUFSIZE_WIN32GETENV)) == NULL) DeeError_HandledOne();\
+ else while (1) {\
+  _we_error = DeeWin32_GetEnvironmentVariableA(envname,DeeUtf8String_STR(*(result)),\
+                                               DeeUtf8String_SIZE(*(result))+1);\
+  if DEE_UNLIKELY(_we_error > DeeUtf8String_SIZE(*(result))) {\
+   if DEE_UNLIKELY(DeeUtf8String_Resize(result,_we_error-1) == 0) continue;\
+   DeeError_HandledOne();\
+  } else if (_we_error != 0) {\
+   if DEE_UNLIKELY(DeeUtf8String_Resize(result,_we_error) == 0) break;\
+   DeeError_HandledOne();\
+  }\
+  Dee_DECREF(*(result));\
+  *(result) = NULL;\
+  break;\
+ }\
+}while(0)
+#define DeeWin32Sys_WideTryGetEnv(envname,result,...) \
+do{\
+ DWORD _we_error;\
+ if DEE_LIKELY((*(result) = DeeWideString_NewSized(\
+  DEE_XCONFIG_FSBUFSIZE_WIN32GETENV)) == NULL) DeeError_HandledOne();\
+ else while (1) {\
+  _we_error = DeeWin32_GetEnvironmentVariableW(envname,DeeWideString_STR(*(result)),\
+                                               DeeWideString_SIZE(*(result))+1);\
+  if DEE_UNLIKELY(_we_error > DeeWideString_SIZE(*(result))) {\
+   if DEE_UNLIKELY(DeeWideString_Resize(result,_we_error-1) == 0) continue;\
+   DeeError_HandledOne();\
+  } else if (_we_error != 0) {\
+   if DEE_UNLIKELY(DeeWideString_Resize(result,_we_error) == 0) break;\
+   DeeError_HandledOne();\
+  }\
+  Dee_DECREF(*(result));\
+  *(result) = NULL;\
+  break;\
+ }\
+}while(0)
+
+
+
 #define DeeWin32Sys_Utf8HasEnv(envname,result,...) \
 do{\
  if (DeeWin32_GetEnvironmentVariableA(envname,NULL,0)==0) {\
@@ -646,8 +727,8 @@ do{\
 do{\
  static Dee_Utf8Char const _ie_name_PATHEXT[] = {'P','A','T','H','E','X','T',0};\
  DeeObject *_ie_pathext;\
- if DEE_UNLIKELY((_ie_pathext = DeeWin32Sys_Utf8TryGetEnv(_ie_name_PATHEXT)) == NULL) *(result) = 0;\
- else {\
+ DeeWin32Sys_Utf8TryGetEnv(_ie_name_PATHEXT,&_ie_pathext);\
+ if DEE_UNLIKELY(!_ie_pathext) *(result) = 0; else {\
   Dee_Utf8Char *_ie_iter,*_ie_end,*_ie_extstart;\
   Dee_Utf8Char const *_ie_match_end; Dee_size_t _ie_path_size,_ie_extsize;\
   _ie_match_end = (path)+(_ie_path_size = (path_size));\
@@ -671,8 +752,8 @@ do{\
 do{\
  static Dee_WideChar const _ie_name_PATHEXT[] = {'P','A','T','H','E','X','T',0};\
  DeeObject *_ie_pathext;\
- if DEE_UNLIKELY((_ie_pathext = DeeWin32Sys_WideTryGetEnv(_ie_name_PATHEXT)) == NULL) *(result) = 0;\
- else {\
+ DeeWin32Sys_WideTryGetEnv(_ie_name_PATHEXT,&_ie_pathext);\
+ if DEE_UNLIKELY(!_ie_pathext) *(result) = 0; else {\
   Dee_WideChar *_ie_iter,*_ie_end,*_ie_extstart;\
   Dee_WideChar const *_ie_match_end; Dee_size_t _ie_path_size,_ie_extsize;\
   _ie_match_end = (path)+(_ie_path_size = (path_size));\
@@ -1070,8 +1151,8 @@ DEE_DECL_END
 
 #ifndef __INTELLISENSE__
 #define WIDE
-#include "_win32.sysfs.unicode_impl.h"
-#include "_win32.sysfs.unicode_impl.h"
+#include "sysfs.unicode_impl.h"
+#include "sysfs.unicode_impl.h"
 #endif
 
-#endif /* !GUARD_DEEMON_SYS__WIN32_SYSFS_H */
+#endif /* !GUARD_DEEMON_SYS_WIN32_SYSFS_H */

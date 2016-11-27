@@ -34,11 +34,11 @@
 
 
 #if defined(DEE_PLATFORM_WINDOWS)
-# include "_win32.sysinfo.h"
+# include <deemon/sys/win32/sysinfo.h>
 #elif defined(DEE_PLATFORM_UNIX)
-# include "_unix.sysinfo.h"
+# include <deemon/sys/unix/sysinfo.h>
 #elif 1
-# include "_stub.sysinfo.h"
+# include <deemon/sys/stub/sysinfo.h>
 #else
 # error "No Sysinfo implementation for this platform"
 #endif

@@ -112,9 +112,9 @@
 
 
 #if defined(DEE_PLATFORM_WINDOWS)
-# include <deemon/sys/_win32.sysfd.h>
+# include <deemon/sys/win32/sysfd.h>
 #elif defined(DEE_PLATFORM_UNIX)
-# include <deemon/sys/_unix.sysfd.h>
+# include <deemon/sys/unix/sysfd.h>
 #elif 1
 // Stub: Everything is optional...
 #else

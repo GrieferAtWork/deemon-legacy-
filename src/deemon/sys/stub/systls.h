@@ -18,35 +18,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__NOTHREAD_SYSTLS_H
-#define GUARD_DEEMON_SYS__NOTHREAD_SYSTLS_H 1
+#ifndef GUARD_DEEMON_SYS_STUB_SYSTLS_H
+#define GUARD_DEEMON_SYS_STUB_SYSTLS_H 1
 
 #include <deemon/__conf.inl>
+#include <deemon/error.h>
 
 //////////////////////////////////////////////////////////////////////////
-// === NoThread ===
+// === NOT-IMPLEMENTED ===
 DEE_DECL_BEGIN
 
-struct DeeNoThreadSysTLS { void *ns_value; };
-#define DeeNoThreadSysTLS_TryInit(ob) ((ob)->ns_value = NULL,1)
-#define DeeNoThreadSysTLS_Init(ob,...) do{ (ob)->ns_value = NULL; }while(0)
-#define DeeNoThreadSysTLS_Quit(ob)                (void)(ob)
-#define DeeNoThreadSysTLS_TryGetNofail(ob,result) (void)(*(void **)&(result)=(ob)->ns_value)
-#define DeeNoThreadSysTLS_TryGet(ob,result)       (*(void **)&(result)=(ob)->ns_value,1)
-#define DeeNoThreadSysTLS_TrySet(ob,value)        ((ob)->ns_value=(void *)(value),1)
-#define DeeNoThreadSysTLS_Get(ob,result,...)      do{ *(void **)&(result) = (ob)->ns_value; }while(0)
-#define DeeNoThreadSysTLS_Set(ob,value,...)       do{ (ob)->ns_value = (void *)(value); }while(0)
+struct DeeStubSysTLS { int ss_unused; };
+#define DeeStubSysTLS_TryInit(ob)             1
+#define DeeStubSysTLS_Init(ob,...)            do{}while(0)
+#define DeeStubSysTLS_Quit(ob)                (void)(ob)
+#define DeeStubSysTLS_TryGetNofail(ob,result) (void)(*(void **)&(result)=NULL)
+#define DeeStubSysTLS_TryGet(ob,result)       0
+#define DeeStubSysTLS_TrySet(ob,value)        0
+#define DeeStubSysTLS_Get(ob,result,...)      do{ DeeError_NotImplemented_str("systls"); {__VA_ARGS__;} }while(0)
+#define DeeStubSysTLS_Set(ob,value,...)       do{ DeeError_NotImplemented_str("systls"); {__VA_ARGS__;} }while(0)
 
-#define DeeSysTLS              DeeNoThreadSysTLS
-#define DeeSysTLS_TryInit      DeeNoThreadSysTLS_TryInit
-#define DeeSysTLS_Init         DeeNoThreadSysTLS_Init
-#define DeeSysTLS_Quit         DeeNoThreadSysTLS_Quit
-#define DeeSysTLS_TryGetNofail DeeNoThreadSysTLS_TryGetNofail
-#define DeeSysTLS_TryGet       DeeNoThreadSysTLS_TryGet
-#define DeeSysTLS_TrySet       DeeNoThreadSysTLS_TrySet
-#define DeeSysTLS_Get          DeeNoThreadSysTLS_Get
-#define DeeSysTLS_Set          DeeNoThreadSysTLS_Set
+#define DeeSysTLS              DeeStubSysTLS
+#define DeeSysTLS_TryInit      DeeStubSysTLS_TryInit
+#define DeeSysTLS_Init         DeeStubSysTLS_Init
+#define DeeSysTLS_Quit         DeeStubSysTLS_Quit
+#define DeeSysTLS_TryGetNofail DeeStubSysTLS_TryGetNofail
+#define DeeSysTLS_TryGet       DeeStubSysTLS_TryGet
+#define DeeSysTLS_TrySet       DeeStubSysTLS_TrySet
+#define DeeSysTLS_Get          DeeStubSysTLS_Get
+#define DeeSysTLS_Set          DeeStubSysTLS_Set
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_SYS__NOTHREAD_SYSTLS_H */
+#endif /* !GUARD_DEEMON_SYS_STUB_SYSTLS_H */

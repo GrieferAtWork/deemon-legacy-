@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__UNIX_SYSFS_H
-#define GUARD_DEEMON_SYS__UNIX_SYSFS_H 1
+#ifndef GUARD_DEEMON_SYS_UNIX_SYSFS_H
+#define GUARD_DEEMON_SYS_UNIX_SYSFS_H 1
 
 #include <deemon/__conf.inl>
 #include <deemon/__xconf.inl>
@@ -64,27 +64,22 @@
 
 DEE_DECL_BEGIN
 
-DEE_STATIC_INLINE(int) DeeUnixSys_CheckGetCwdError(void) {
- int error = errno;
- switch (error) {
-  case 0: case ERANGE: break;
-  default:
-   DeeError_SetStringf(&DeeErrorType_SystemError,
-                       "getcwd() : %K",
-                       DeeSystemError_ToString(DeeSystemError_Consume()));
-   return -1;
- }
- return 0;
-}
-
 #define DeeUnixSys_Utf8GetCwd(result,...) \
 do{\
  Dee_size_t _uc_bufsize,_uc_last_size = 0; Dee_Utf8Char *_uc_cwd_start; int _uc_error;\
  if DEE_UNLIKELY((*(result) = DeeUtf8String_NewSized((\
   _uc_bufsize = DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD))) == NULL) {__VA_ARGS__;}\
  while DEE_UNLIKELY(!getcwd(DeeUtf8String_STR(*(result)),_uc_bufsize)) {\
-  if DEE_UNLIKELY(DeeUnixSys_CheckGetCwdError() != 0 || DeeUtf8String_Resize(\
-   result,(_uc_bufsize = (_uc_last_size = _uc_bufsize)*2)) != 0) { Dee_DECREF(*(result)); {__VA_ARGS__;} }\
+  _uc_error = errno;\
+  if (_uc_error == 0 || _uc_error == ERANGE) {\
+   if DEE_LIKELY(DeeUtf8String_Resize(\
+    result,(_uc_bufsize = (_uc_last_size = _uc_bufsize)*2)) == 0) continue;\
+  } else {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"getcwd() : %K",\
+                       DeeSystemError_ToString(DeeSystemError_Consume()));\
+  }\
+  Dee_DECREF(*(result));\
+  {__VA_ARGS__;}\
  }\
  _uc_last_size += Dee_Utf8StrLen(DeeUtf8String_STR(*(result))+_uc_last_size);\
  if (_uc_last_size != _uc_bufsize && DEE_UNLIKELY(DeeUtf8String_Resize(\
@@ -99,8 +94,16 @@ do{\
  if DEE_UNLIKELY((*(result) = DeeWideString_NewSized((\
   _uc_bufsize = DEE_XCONFIG_FSBUFSIZE_POSIXGETCWD))) == NULL) {__VA_ARGS__;}\
  while DEE_UNLIKELY(!_wgetcwd(DeeWideString_STR(*(result)),_uc_bufsize)) {\
-  if DEE_UNLIKELY(DeeUnixSys_CheckGetCwdError() != 0 || DeeWideString_Resize(\
-   result,(_uc_bufsize = (_uc_last_size = _uc_bufsize)*2)) != 0) { Dee_DECREF(*(result)); {__VA_ARGS__;} }\
+  _uc_error = errno;\
+  if (_uc_error == 0 || _uc_error == ERANGE) {\
+   if DEE_LIKELY(DeeWideString_Resize(\
+    result,(_uc_bufsize = (_uc_last_size = _uc_bufsize)*2)) == 0) continue;\
+  } else {\
+   DeeError_SetStringf(&DeeErrorType_SystemError,"_wgetcwd() : %K",\
+                       DeeSystemError_ToString(DeeSystemError_Consume()));\
+  }\
+  Dee_DECREF(*(result));\
+  {__VA_ARGS__;}\
  }\
  _uc_last_size += Dee_WideStrLen(DeeWideString_STR(*(result))+_uc_last_size);\
  if (_uc_last_size != _uc_bufsize && DEE_UNLIKELY(DeeWideString_Resize(\
@@ -138,59 +141,73 @@ do{\
 
 
 
-#define DeeUnixSysFS_Utf8GetEnv DeeUnixSys_Utf8GetEnv
-#define DeeUnixSys_Utf8GetEnv   DeeUnixSys_Utf8GetEnv
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *)
-DeeUnixSys_Utf8GetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
- char const *env_value;
- if DEE_UNLIKELY((env_value = getenv(envname)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "getenv(%q) : Env var not found",
-                      envname);
-  return NULL;
- }
- return DeeUtf8String_New(env_value);
-}
-#define DeeUnixSysFS_Utf8TryGetEnv DeeUnixSys_Utf8TryGetEnv
-#define DeeUnixSys_Utf8TryGetEnv   DeeUnixSys_Utf8TryGetEnv
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *)
-DeeUnixSys_Utf8TryGetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname) {
- char const *env_value; DeeObject *result;
- if DEE_UNLIKELY((env_value = getenv(envname)) == NULL) return NULL;
- if DEE_UNLIKELY((result = DeeUtf8String_New(env_value)) == NULL) DeeError_HandledOne();
- return result;
-}
+#define DeeUnixSys_Utf8GetEnv(envname,result,...) \
+do{\
+ char const *_ue_value;\
+ if DEE_UNLIKELY((_ue_value = getenv(envname)) == NULL) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "getenv(%q) : Env var not found",\
+                      envname);\
+  {__VA_ARGS__;}\
+ }\
+ if DEE_UNLIKELY((*(result) = DeeUtf8String_New(\
+  _ue_value)) == NULL) {__VA_ARGS__;}\
+}while(0)
+
+#define DeeUnixSys_Utf8TryGetEnv(envname,result) \
+do{\
+ char const *_ue_value;\
+ if DEE_UNLIKELY((_ue_value = getenv(envname)) == NULL) *(result) = NULL;\
+ else if DEE_UNLIKELY((*(result) = DeeUtf8String_New(\
+  _ue_value)) == NULL) DeeError_HandledOne();\
+}while(0)
 #define DeeUnixSys_Utf8HasEnv(envname,result,...) \
 do{ *(result) = getenv(envname) != NULL; }while(0)
-#define DeeUnixSysFS_Utf8HasEnv    DeeUnixSys_Utf8HasEnv
 
 #if DEE_HAVE__WGETENV
-#define DeeUnixSysFS_WideGetEnv    DeeUnixSys_WideGetEnv
-#define DeeSysFS_WideGetEnv DeeUnixSysFS_WideGetEnv
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *)
-DeeUnixSys_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
- Dee_WideChar const *env_value;
- if DEE_UNLIKELY((env_value = _wgetenv(envname)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
-                      "_wgetenv(%lq) : Env var not found",
-                      envname);
-  return NULL;
- }
- return DeeWideString_New(env_value);
-}
-#define DeeUnixSysFS_WideTryGetEnv DeeUnixSys_WideTryGetEnv
-#define DeeSysFS_WideTryGetEnv DeeUnixSysFS_WideTryGetEnv
-DEE_STATIC_INLINE(DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeWideStringObject) *)
-DeeUnixSys_WideTryGetEnv(DEE_A_IN_Z Dee_WideChar const *envname) {
- Dee_WideChar const *env_value; DeeObject *result;
- if DEE_UNLIKELY((env_value = _wgetenv(envname)) == NULL) return NULL;
- if DEE_UNLIKELY((result = DeeWideString_New(env_value)) == NULL) DeeError_HandledOne();
- return result;
-}
+#define DeeUnixSys_WideGetEnv(envname,result,...) \
+do{\
+ Dee_WideChar const *_ue_value;\
+ if DEE_UNLIKELY((_ue_value = _wgetenv(envname)) == NULL) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "_wgetenv(%lq) : Env var not found",\
+                      envname);\
+  {__VA_ARGS__;}\
+ }\
+ if DEE_UNLIKELY((*(result) = DeeWideString_New(\
+  _ue_value)) == NULL) {__VA_ARGS__;}\
+}while(0)
+
+#define DeeUnixSys_WideTryGetEnv(envname,result) \
+do{\
+ Dee_WideChar const *_ue_value;\
+ if DEE_UNLIKELY((_ue_value = _wgetenv(envname)) == NULL) *(result) = NULL;\
+ else if DEE_UNLIKELY((*(result) = DeeWideString_New(\
+  _ue_value)) == NULL) DeeError_HandledOne();\
+}while(0)
 #define DeeUnixSys_WideHasEnv(envname,result,...) \
-do{ *(result) = (_wgetenv(envname) != NULL); }while(0)
-#define DeeUnixSysFS_WideHasEnv    DeeUnixSys_WideHasEnv
+do{ *(result) = _wgetenv(envname) != NULL; }while(0)
 #endif /* DEE_HAVE__WGETENV */
+
+#ifdef DeeUnixSys_Utf8GetEnv
+#define DeeUnixSysFS_Utf8GetEnv    DeeUnixSys_Utf8GetEnv
+#endif
+#ifdef DeeUnixSys_Utf8TryGetEnv
+#define DeeUnixSysFS_Utf8TryGetEnv DeeUnixSys_Utf8TryGetEnv
+#endif
+#ifdef DeeUnixSys_Utf8HasEnv
+#define DeeUnixSysFS_Utf8HasEnv    DeeUnixSys_Utf8HasEnv
+#endif
+#ifdef DeeUnixSys_WideGetEnv
+#define DeeUnixSysFS_WideGetEnv    DeeUnixSys_WideGetEnv
+#endif
+#ifdef DeeUnixSys_WideTryGetEnv
+#define DeeUnixSysFS_WideTryGetEnv DeeUnixSys_WideTryGetEnv
+#endif
+#ifdef DeeUnixSys_WideHasEnv
+#define DeeUnixSysFS_WideHasEnv    DeeUnixSys_WideHasEnv
+#endif
+
 
 #if DEE_HAVE_UNSETENV
 #define DeeUnixSys_Utf8DelEnv(envname,...) \
@@ -331,7 +348,8 @@ DEE_STATIC_INLINE(DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *) DeeUnixSys
  DeeObject *result;
  struct passwd *pw; Dee_uid_t my_uid;
 #ifdef DeeUnixSys_Utf8TryGetEnv
- if DEE_UNLIKELY((result = DeeUnixSys_Utf8TryGetEnv("HOME")) != NULL) return result;
+ static Dee_Utf8Char const var_HOME[] = {'H','O','M','E',0};
+ DeeUnixSys_Utf8TryGetEnv(var_HOME,&result); if (result) return result;
 #endif
  my_uid = getuid();
  if DEE_UNLIKELY((pw = getpwuid(my_uid)) == NULL) {
@@ -925,8 +943,8 @@ do{\
 #define DeeSysFS_WideIsAbs       DeeUnixSysFS_WideIsAbs
 #endif
 #ifdef DeeUnixSysFS_Utf8IsMount
-#define DeeSysFS_Utf8IsMount       DeeUnixSysFS_Utf8IsMount
-#define DeeSysFS_Utf8IsDrive       DeeUnixSysFS_Utf8IsMount
+#define DeeSysFS_Utf8IsMount     DeeUnixSysFS_Utf8IsMount
+#define DeeSysFS_Utf8IsDrive     DeeUnixSysFS_Utf8IsMount
 #endif
 #ifdef DeeUnixSysFS_Utf8IsMountObject
 #define DeeSysFS_Utf8IsMountObject DeeUnixSysFS_Utf8IsMountObject
@@ -989,4 +1007,4 @@ do{\
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_SYS__WIN32_SYSFS_H */
+#endif /* !GUARD_DEEMON_SYS_WIN32_SYSFS_H */

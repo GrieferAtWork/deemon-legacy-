@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__WIN32_SYSFD_H
-#define GUARD_DEEMON_SYS__WIN32_SYSFD_H 1
+#ifndef GUARD_DEEMON_SYS_WIN32_SYSFD_H
+#define GUARD_DEEMON_SYS_WIN32_SYSFD_H 1
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
@@ -728,8 +728,8 @@ DEE_STATIC_INLINE(HANDLE) DeeWin32Sys_WideTryCreateFileObject(DeeObject const *f
 
 #ifndef __INTELLISENSE__
 #define TRY_CREATE
-#include "_win32.sysfd.createfile.h"
-#include "_win32.sysfd.createfile.h"
+#include "sysfd.createfile.h"
+#include "sysfd.createfile.h"
 #endif
 
 #define DeeWin32SysFileFD_InitCopy(self,right,...) \
@@ -867,4 +867,4 @@ do{\
 DEE_DECL_END
 
 
-#endif /* !GUARD_DEEMON_SYS__WIN32_SYSFD_H */
+#endif /* !GUARD_DEEMON_SYS_WIN32_SYSFD_H */

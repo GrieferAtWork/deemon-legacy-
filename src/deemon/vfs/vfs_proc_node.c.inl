@@ -211,14 +211,16 @@ static void DEE_CALL _deevfs_procpidnode_quit(struct DeeVFSProcPIDNode *self) {
 #define DEE_VFSPROCPIDMEMBER_CMDLINE 1
 #define DEE_VFSPROCPIDMEMBER_CWD     2
 #define DEE_VFSPROCPIDMEMBER_EXE     3
-#define DEE_VFSPROCPIDMEMBER_ROOT    4
+#define DEE_VFSPROCPIDMEMBER_FD      4
+#define DEE_VFSPROCPIDMEMBER_ROOT    5
 #define DEE_VFSPROCPIDMEMBER_BEGIN   1
-#define DEE_VFSPROCPIDMEMBER_END     5
+#define DEE_VFSPROCPIDMEMBER_END     6
 static int DeeVFSProcPIDNode_GetMemberID(char const *name, Dee_size_t name_size) {
 #define CHECK(s) (name_size == (sizeof(s)/sizeof(char))-1 && memcmp(name,s,sizeof(s)-sizeof(char)) == 0)
  if (CHECK("cmdline")) return DEE_VFSPROCPIDMEMBER_CMDLINE;
  if (CHECK("cwd")) return DEE_VFSPROCPIDMEMBER_CWD;
  if (CHECK("exe")) return DEE_VFSPROCPIDMEMBER_EXE;
+ if (CHECK("fd")) return DEE_VFSPROCPIDMEMBER_FD;
  if (CHECK("root")) return DEE_VFSPROCPIDMEMBER_ROOT;
 #undef CHECK
  return DEE_VFSPROCPIDMEMBER_NONE;
@@ -230,6 +232,7 @@ static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
   case DEE_VFSPROCPIDMEMBER_CMDLINE: node_type = &DeeVFSProcPIDNode_Type_cmdline; break;
   case DEE_VFSPROCPIDMEMBER_CWD: node_type = &DeeVFSProcPIDNode_Type_cwd; break;
   case DEE_VFSPROCPIDMEMBER_EXE: node_type = &DeeVFSProcPIDNode_Type_exe; break;
+  case DEE_VFSPROCPIDMEMBER_FD: node_type = &DeeVFSProcPIDNode_Type_fd; break;
   case DEE_VFSPROCPIDMEMBER_ROOT: node_type = &DeeVFSProcPIDNode_Type_root; break;
   default: DEE_BUILTIN_UNREACHABLE();
  }
@@ -244,6 +247,7 @@ static DeeObject *DEE_CALL _deevfs_procpidnode_nameof(
  if (node_type == &DeeVFSProcPIDNode_Type_cwd) DeeReturn_STATIC_STRING("cwd");
  if (node_type == &DeeVFSProcPIDNode_Type_exe) DeeReturn_STATIC_STRING("exe");
  if (node_type == &DeeVFSProcPIDNode_Type_root) DeeReturn_STATIC_STRING("root");
+ if (node_type == &DeeVFSProcPIDNode_Type_fd) DeeReturn_STATIC_STRING("fd");
  DEE_ASSERTF(0,"%R is not a parent of /proc/[PID]",
              DeeVFSNode_Filename(child));
  DEE_BUILTIN_UNREACHABLE();
@@ -359,6 +363,153 @@ struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cmdline = { /*< '/proc/[PID]/
 // --- DeeVFSProcPIDNode_Type ---
 //////////////////////////////////////////////////////////////////////////
 
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////
+static DEE_A_RET_EXCEPT(-1) int
+DeeWin32_GetSystemHandleFromHandleAndProcessID(SYSTEM_HANDLE *result, DWORD pid, WORD hid) {
+ SYSTEM_HANDLE_INFORMATION *hinfo;
+ SYSTEM_HANDLE *iter,*end;
+ // TODO: Is there some way of getting the handle information
+ //       without having to re-query !!EVERYTHING!! ?
+ hinfo = DeeWin32_CaptureSystemHandleInformation();
+ if DEE_UNLIKELY(!hinfo) return -1;
+ end = (iter = hinfo->Handles)+hinfo->Count;
+ while (iter != end) {
+  if (iter->ProcessID == pid && iter->HandleNumber == hid) {
+   *result = *iter;
+   DeeWin32_FreeSystemHandleInformation(hinfo);
+   return 0;
+  }
+  ++iter;
+ }
+ DeeWin32_FreeSystemHandleInformation(hinfo);
+ DeeError_SetStringf(&DeeErrorType_SystemError,
+                     "Failed to find handle: %#I32x:%#I16x",pid,hid);
+ return -1;
+}
+
+static struct DeeVFSProcPIDFDHIDNode *DEE_CALL _deevfs_procpidnode_fd_vnt_walk(
+ struct DeeVFSNode *self, Dee_Utf8Char const *path, Dee_size_t path_size) {
+ DWORD pid; WORD hid; struct DeeVFSProcPIDFDHIDNode *result;
+ DEE_ASSERT(self->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ if DEE_UNLIKELY(DeeUtf8String_ToNumberWithLength(WORD,path_size,path,&hid) != 0) return NULL;
+ pid = DeeProcess_ID((DeeObject *)((struct DeeVFSProcPIDNode *)self->vn_parent)->vpn_proc);
+ if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSProcPIDFDHIDNode)) == NULL) return NULL;
+ if (DeeWin32_GetSystemHandleFromHandleAndProcessID(&result->vpfh_info,pid,hid) != 0) { DeeVFSNode_FREE(result); return NULL; }
+ DeeVFSNode_InitWithParent(&result->vpfh_node,&DeeVFSProcPIDNode_Type_fd_link,self);
+ return result;
+}
+static struct DeeVFSProcPIDFDHIDNode *DEE_CALL _deevfs_procpidnode_fd_vnt_wwalk(
+ struct DeeVFSNode *self, Dee_WideChar const *path, Dee_size_t path_size) {
+ DWORD pid; WORD hid; struct DeeVFSProcPIDFDHIDNode *result;
+ DEE_ASSERT(self->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ if DEE_UNLIKELY(DeeWideString_ToNumberWithLength(WORD,path_size,path,&hid) != 0) return NULL;
+ pid = DeeProcess_ID((DeeObject *)((struct DeeVFSProcPIDNode *)self->vn_parent)->vpn_proc);
+ if DEE_UNLIKELY((result = DeeVFSNode_ALLOC(struct DeeVFSProcPIDFDHIDNode)) == NULL) return NULL;
+ if (DeeWin32_GetSystemHandleFromHandleAndProcessID(&result->vpfh_info,pid,hid) != 0) { DeeVFSNode_FREE(result); return NULL; }
+ DeeVFSNode_InitWithParent(&result->vpfh_node,&DeeVFSProcPIDNode_Type_fd_link,self);
+ return result;
+}
+static DeeObject *DEE_CALL _deevfs_procpidnode_fd_vnt_nameof(
+ struct DeeVFSNode *DEE_UNUSED(self), struct DeeVFSProcPIDFDHIDNode *child) {
+ DEE_ASSERT(child->vpfh_node.vn_type == &DeeVFSProcPIDNode_Type_fd_link);
+ return DeeString_FromUInt16(child->vpfh_info.HandleNumber);
+}
+static int DEE_CALL _deevfs_procpidnode_fd_vnt_open(struct DeeVFSProcPIDFDView *self) {
+ DEE_ASSERTF(self->vpf_view.vv_node &&
+             self->vpf_view.vv_node->vn_parent &&
+             self->vpf_view.vv_node->vn_parent->vn_type == &DeeVFSProcPIDNode_Type,
+             "%R is not a valid \"/proc/[PID]/fd\" node",
+             DeeVFSNode_Filename(self->vpf_view.vv_node));
+ if ((self->vpf_info = DeeWin32_CaptureSystemHandleInformation()) == NULL) return -1;
+ self->vpf_proc = ((struct DeeVFSProcPIDNode *)self->vpf_view.vv_node->vn_parent)->vpn_proc;
+ Dee_INCREF(self->vpf_proc);
+ self->vpf_curr = self->vpf_info->Handles;
+ self->vpf_end = self->vpf_curr+self->vpf_info->Count;
+ self->vpf_pid = DeeProcess_ID((DeeObject *)self->vpf_proc);
+ return 0;
+}
+static void DEE_CALL _deevfs_procpidnode_fd_vnt_quit(struct DeeVFSProcPIDFDView *self) {
+ DeeWin32_FreeSystemHandleInformation(self->vpf_info);
+ Dee_DECREF(self->vpf_proc);
+}
+static SYSTEM_HANDLE *DEE_CALL DeeVFSProcPIDFD_LocateNextHandle(
+ struct DeeVFSProcPIDFDView *self, int advance) {
+ SYSTEM_HANDLE *result,*newpos; int should_return;
+ do {
+  result = (SYSTEM_HANDLE *)DeeAtomicPtr_Load(self->vpf_curr,memory_order_seq_cst);
+  if (result < self->vpf_info->Handles || result >= self->vpf_end) return NULL;
+  should_return = result->ProcessID == self->vpf_pid && DeeWin32_CapturedHandleIsSupported(result);
+  newpos = (advance || !should_return) ? result+1 : result;
+ } while (!DeeAtomicPtr_CompareExchangeStrong(
+  self->vpf_curr,result,newpos,
+  memory_order_seq_cst,memory_order_seq_cst) || !should_return);
+ return result;
+}
+
+static int DEE_CALL _deevfs_procpidnode_fd_vnt_curr(
+ struct DeeVFSProcPIDFDView *self, struct DeeVFSProcPIDFDHIDNode **result) {
+ struct DeeVFSProcPIDFDHIDNode *resultnode; SYSTEM_HANDLE *my_handle;
+ if (( my_handle = DeeVFSProcPIDFD_LocateNextHandle(self,0)) == NULL) return 1; // End of directory
+ if DEE_UNLIKELY((resultnode = DeeVFSNode_ALLOC(struct DeeVFSProcPIDFDHIDNode)) == NULL) return -1;
+ resultnode->vpfh_info = *my_handle;
+ DeeVFSNode_InitWithParent(&resultnode->vpfh_node,
+                           &DeeVFSProcPIDNode_Type_fd_link,
+                           self->vpf_view.vv_node);
+ *result = resultnode;
+ return 0;
+}
+static int DEE_CALL _deevfs_procpidnode_fd_vnt_yield(
+ struct DeeVFSProcPIDFDView *self, struct DeeVFSProcPIDFDHIDNode **result) {
+ struct DeeVFSProcPIDFDHIDNode *resultnode; SYSTEM_HANDLE *my_handle;
+ if (( my_handle = DeeVFSProcPIDFD_LocateNextHandle(self,1)) == NULL) return 1; // End of directory
+ if DEE_UNLIKELY((resultnode = DeeVFSNode_ALLOC(struct DeeVFSProcPIDFDHIDNode)) == NULL) return -1;
+ resultnode->vpfh_info = *my_handle;
+ DeeVFSNode_InitWithParent(&resultnode->vpfh_node,
+                           &DeeVFSProcPIDNode_Type_fd_link,
+                           self->vpf_view.vv_node);
+ *result = resultnode;
+ return 0;
+}
+
+static struct _DeeVFSViewTypeData _deevfs_procpidnode_fd_vnt_view = {
+ sizeof(struct DeeVFSProcPIDFDView),
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_procpidnode_fd_vnt_walk,
+ (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))&_deevfs_procpidnode_fd_vnt_wwalk,
+ (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_procpidnode_fd_vnt_nameof,
+ (int (DEE_CALL *)(struct DeeVFSView *))                                               &_deevfs_procpidnode_fd_vnt_open,
+ (void (DEE_CALL *)(struct DeeVFSView *))                                              &_deevfs_procpidnode_fd_vnt_quit,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_procpidnode_fd_vnt_curr,
+ (int (DEE_CALL *)(struct DeeVFSView *,struct DeeVFSNode **))                          &_deevfs_procpidnode_fd_vnt_yield,
+};
+struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_fd = {
+ {NULL,NULL},NULL,DeeVFSNoopNodeType_FileData,&_deevfs_procpidnode_fd_vnt_view};
+//////////////////////////////////////////////////////////////////////////
+static DEE_A_RET_EXCEPT_REF DeeObject *
+DeeWin32_GetSystemHandleLink(SYSTEM_HANDLE const *h) {
+ DEE_ASSERT(h);
+ // TODO: Proper, type-specific link names
+ // e.g.: An actual file link if it's a FILE-handle
+ return DeeString_Newf("%#I32x:%s:%#I16x",
+                       h->ProcessID,
+                       DeeWin32_GetSystemHandleTypeName(h->HandleType),
+                       h->HandleNumber);
+}
+static DeeObject *_deevfs_procpidnodefd_hid_vnt_readlink(struct DeeVFSProcPIDFDHIDNode *self) {
+ return DeeWin32_GetSystemHandleLink(&self->vpfh_info);
+}
+struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_fd_link = {
+ {NULL,(DeeObject *(*)(struct DeeVFSNode *))&_deevfs_procpidnodefd_hid_vnt_readlink},
+ NULL,DeeVFSNoopNodeType_FileData,NULL};
+//////////////////////////////////////////////////////////////////////////
 
 
 

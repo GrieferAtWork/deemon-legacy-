@@ -74,9 +74,11 @@
 
 
 #if defined(DEE_PLATFORM_WINDOWS)
-# include <deemon/sys/_win32.sysfs.view.h>
+# include <deemon/sys/win32/sysfs.view.h>
 #elif defined(DEE_PLATFORM_UNIX)
-# include <deemon/sys/_unix.sysfs.view.h>
+# include <deemon/sys/unix/sysfs.view.h>
+#elif 1
+// Stub: Everything is optional...
 #else
 # error "No Filesystem implementation for this platform"
 #endif

@@ -18,36 +18,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__STUB_SYSTLS_H
-#define GUARD_DEEMON_SYS__STUB_SYSTLS_H 1
+#ifndef GUARD_DEEMON_VFS_VFS_VIRTUAL_LINK_H
+#define GUARD_DEEMON_VFS_VFS_VIRTUAL_LINK_H 1
 
 #include <deemon/__conf.inl>
-#include <deemon/error.h>
+#include <deemon/vfs/vfs_core.h>
 
-//////////////////////////////////////////////////////////////////////////
-// === NOT-IMPLEMENTED ===
+#if DEE_CONFIG_RUNTIME_HAVE_VFS
 DEE_DECL_BEGIN
 
-struct DeeStubSysTLS { int ss_unused; };
-#define DeeStubSysTLS_TryInit(ob)             1
-#define DeeStubSysTLS_Init(ob,...)            do{}while(0)
-#define DeeStubSysTLS_Quit(ob)                (void)(ob)
-#define DeeStubSysTLS_TryGetNofail(ob,result) (void)(*(void **)&(result)=NULL)
-#define DeeStubSysTLS_TryGet(ob,result)       0
-#define DeeStubSysTLS_TrySet(ob,value)        0
-#define DeeStubSysTLS_Get(ob,result,...)      do{ DeeError_NotImplemented_str("systls"); {__VA_ARGS__;} }while(0)
-#define DeeStubSysTLS_Set(ob,value,...)       do{ DeeError_NotImplemented_str("systls"); {__VA_ARGS__;} }while(0)
-
-#define DeeSysTLS              DeeStubSysTLS
-#define DeeSysTLS_TryInit      DeeStubSysTLS_TryInit
-#define DeeSysTLS_Init         DeeStubSysTLS_Init
-#define DeeSysTLS_Quit         DeeStubSysTLS_Quit
-#define DeeSysTLS_TryGetNofail DeeStubSysTLS_TryGetNofail
-#define DeeSysTLS_TryGet       DeeStubSysTLS_TryGet
-#define DeeSysTLS_TrySet       DeeStubSysTLS_TrySet
-#define DeeSysTLS_Get          DeeStubSysTLS_Get
-#define DeeSysTLS_Set          DeeStubSysTLS_Set
+//////////////////////////////////////////////////////////////////////////
+// Virtual link
+struct DeeVFSVirtualLinkNode {
+ struct DeeVFSNode             vln_node; /*< Underlying node. */
+ DEE_A_REF DeeAnyStringObject *vln_link; /*< [1..1] Link path. */
+};
+extern struct DeeVFSNodeType const DeeVFSVirtualLinkNode_Type;
+extern DEE_A_RET_EXCEPT_REF struct DeeVFSVirtualLinkNode *DeeVFSVirtualLinkNode_New(
+ DEE_A_INOUT struct DeeVFSNode *parent, DEE_A_IN_OBJECT(DeeAnyStringObject) *lnk);
 
 DEE_DECL_END
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
-#endif /* !GUARD_DEEMON_SYS__STUB_SYSTLS_H */
+#endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_LINK_H */

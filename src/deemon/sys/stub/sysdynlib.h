@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__STUB_SYSDYNLIB_H
-#define GUARD_DEEMON_SYS__STUB_SYSDYNLIB_H 1
+#ifndef GUARD_DEEMON_SYS_STUB_SYSDYNLIB_H
+#define GUARD_DEEMON_SYS_STUB_SYSDYNLIB_H 1
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
@@ -104,4 +104,4 @@ struct DeeStubSysDynlibN { int sd_unused; };
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_SYS__STUB_SYSDYNLIB_H */
+#endif /* !GUARD_DEEMON_SYS_STUB_SYSDYNLIB_H */

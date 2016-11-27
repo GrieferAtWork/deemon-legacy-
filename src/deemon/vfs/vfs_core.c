@@ -301,6 +301,7 @@ DEE_DECL_END
 #include "vfs_root.c.inl"
 #include "vfs_virtual_dir.c.inl"
 #include "vfs_virtual_file.c.inl"
+#include "vfs_virtual_link.c.inl"
 #include "vfs_virtual_nullfile.c.inl"
 #include "vfs_virtual_randomfile.c.inl"
 #include "vfs_virtual_stdfile.c.inl"

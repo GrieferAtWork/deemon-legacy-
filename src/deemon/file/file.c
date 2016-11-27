@@ -522,7 +522,7 @@ DEE_DECL_END
 #include "file_type.inl"
 #ifdef DEE_PLATFORM_WINDOWS
 #include "file.win32_debug.c.inl"
-#include "../sys/_win32.sysfd.c.inl"
+#include <deemon/sys/win32/sysfd.c.inl>
 #endif /* DEE_PLATFORM_WINDOWS */
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
 #include "file.vfs.c.inl"

@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__UNIX_SYSINFO_H
-#define GUARD_DEEMON_SYS__UNIX_SYSINFO_H 1
+#ifndef GUARD_DEEMON_SYS_UNIX_SYSINFO_H
+#define GUARD_DEEMON_SYS_UNIX_SYSINFO_H 1
 
 #include <deemon/__conf.inl>
 #include <deemon/__xconf.inl>
@@ -48,11 +48,13 @@
 
 DEE_DECL_BEGIN
 
+#ifndef DEE_UNIXSYS_PRIVATE_ISSHORTBUFERROR
 #ifdef ENAMETOOLONG
-#define DEE_UNIXSYS_PRIVATE_ISSHORTBUFERROR(eno) ((eno) == ENAMETOOLONG || (eno) == EINVAL)
+# define DEE_UNIXSYS_PRIVATE_ISSHORTBUFERROR(eno) ((eno) == ENAMETOOLONG || (eno) == EINVAL)
 #else
-#define DEE_UNIXSYS_PRIVATE_ISSHORTBUFERROR(eno) ((eno) == EINVAL)
+# define DEE_UNIXSYS_PRIVATE_ISSHORTBUFERROR(eno) ((eno) == EINVAL)
 #endif
+#endif /* !DEE_UNIXSYS_PRIVATE_ISSHORTBUFERROR */
 
 #if DEE_HAVE_GETHOSTNAME
 #define DeeUnixSys_Utf8GetHostname(result,...) \
@@ -79,6 +81,9 @@ do{\
 #endif /* DEE_HAVE_GETHOSTNAME */
 #ifdef DeeUnixSys_Utf8GetHostname
 #define DeeUnixSysInfo_Utf8GetHostname DeeUnixSys_Utf8GetHostname
+#endif
+#ifdef DeeUnixSys_WideGetHostname
+#define DeeUnixSysInfo_WideGetHostname DeeUnixSys_WideGetHostname
 #endif
 
 
@@ -116,26 +121,44 @@ do{\
  }\
  if DEE_UNLIKELY((*(result) = DeeUtf8String_New(_un_result)) == NULL) {__VA_ARGS__;}\
 }while(0)
-#elif defined(DeeSysFS_Utf8GetEnv)
+#else
+#ifdef DeeSysFS_Utf8GetEnv
 #define DeeUnixSys_Utf8GetUsername(result,...) \
 do{\
  static Dee_Utf8Char const _un_envname[] = {'L','O','G','N','A','M','E',0};\
- if DEE_UNLIKELY((*(result) = DeeSysFS_Utf8GetEnv(_un_envname)) == NULL) {__VA_ARGS__;}\
+ DeeSysFS_Utf8GetEnv(_un_envname,result,__VA_ARGS__);\
 }while(0)
+#endif /* DeeSysFS_Utf8GetEnv */
+#ifdef DeeSysFS_WideGetEnv
+#define DeeUnixSys_WideGetUsername(result,...) \
+do{\
+ static Dee_WideChar const _un_envname[] = {'L','O','G','N','A','M','E',0};\
+ DeeSysFS_WideGetEnv(_un_envname,result,__VA_ARGS__);\
+}while(0)
+#endif /* DeeSysFS_WideGetEnv */
 #endif /* ... */
 
 #ifdef DeeUnixSys_Utf8GetUsername
 #define DeeUnixSysInfo_Utf8GetUsername DeeUnixSys_Utf8GetUsername
+#endif
+#ifdef DeeUnixSys_WideGetUsername
+#define DeeUnixSysInfo_WideGetUsername DeeUnixSys_WideGetUsername
 #endif
 
 
 #ifdef DeeUnixSysInfo_Utf8GetHostname
 #define DeeSysInfo_Utf8GetHostname DeeUnixSysInfo_Utf8GetHostname
 #endif
+#ifdef DeeUnixSysInfo_WideGetHostname
+#define DeeSysInfo_WideGetHostname DeeUnixSysInfo_WideGetHostname
+#endif
 #ifdef DeeUnixSysInfo_Utf8GetUsername
 #define DeeSysInfo_Utf8GetUsername DeeUnixSysInfo_Utf8GetUsername
+#endif
+#ifdef DeeUnixSysInfo_WideGetUsername
+#define DeeSysInfo_WideGetUsername DeeUnixSysInfo_WideGetUsername
 #endif
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_SYS__UNIX_SYSINFO_H */
+#endif /* !GUARD_DEEMON_SYS_UNIX_SYSINFO_H */

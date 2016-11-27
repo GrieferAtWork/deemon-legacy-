@@ -31,6 +31,7 @@
 #include <deemon/mp/process.h>
 #include <deemon/optional/atomic_mutex.h>
 #include <deemon/fs/native_view.wide.h>
+#include <deemon/sys/win32/w32_process_handles.h>
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
@@ -85,6 +86,21 @@ extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe;     /*< '/proc/[P
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cwd;     /*< '/proc/[PID]/cwd' */
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cmdline; /*< '/proc/[PID]/cmdline' */
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_root;    /*< '/proc/[PID]/root' */
+//////////////////////////////////////////////////////////////////////////
+struct DeeVFSProcPIDFDView {
+ struct DeeVFSView           vpf_view; /*< Underlying view. */
+ DEE_A_REF DeeProcessObject *vpf_proc; /*< Process associated with this node. */
+ SYSTEM_HANDLE_INFORMATION  *vpf_info; /*< [1..1] Handle information. */
+ /*atomic*/SYSTEM_HANDLE    *vpf_curr; /*< [1..1] Current entry. */
+ SYSTEM_HANDLE              *vpf_end;  /*< [1..1] End entry. */
+ DWORD                       vpf_pid;  /*< Process id to search for. */
+};
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_fd;      /*< '/proc/[PID]/fd' */
+struct DeeVFSProcPIDFDHIDNode {
+ struct DeeVFSNode           vpfh_node; /*< Underlying node. */
+ SYSTEM_HANDLE               vpfh_info; /*< Handle information. */
+};
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_fd_link; /*< '/proc/[PID]/fd/[HID]' */
 //////////////////////////////////////////////////////////////////////////
 
 

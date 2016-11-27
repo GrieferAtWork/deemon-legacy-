@@ -20,7 +20,7 @@
  */
 
 #ifdef __INTELLISENSE__
-#include <deemon/sys/_win32.sysfd.c.inl>
+#include <deemon/sys/win32/sysfd.c.inl>
 #endif
 
 #include <deemon/__xconf.inl>

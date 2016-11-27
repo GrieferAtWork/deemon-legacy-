@@ -544,7 +544,7 @@ DEE_DATA_DECL(struct _DeeEmptyWideStringObject)       _Dee_EmptyWideString;
 #define DeeWideString_ToNumber_F(T) DEE_PRIVATE_STRING_CAST_TO_F(Wide,T)
 #define DeeWideString_ToNumber(T,str_,result) DeeWideString_ToNumber_F(T)(str_,result)
 #define DeeWideString_ToNumberWithLength_F(T) DEE_PRIVATE_STRING_WITH_LENGTH_CAST_TO_F(Wide,T)
-#define DeeWideString_ToNumberWithLength(T,str_,len,result) DeeWideString_ToNumberWithLength_F(T)(str_,len,result)
+#define DeeWideString_ToNumberWithLength(T,len,str_,result) DeeWideString_ToNumberWithLength_F(T)(len,str_,result)
 #endif /* DEE_CONFIG_HAVE_ENCODING_WIDE */
 
 #if DEE_CONFIG_HAVE_ENCODING_UTF8
@@ -598,7 +598,7 @@ DEE_DATA_DECL(struct _DeeUtf8StringCharacterObject)   _DeeUtf8String_Characters[
 #define DeeUtf8String_ToNumber_F(T) DEE_PRIVATE_STRING_CAST_TO_F(Utf8,T)
 #define DeeUtf8String_ToNumber(T,str_,result) DeeUtf8String_ToNumber_F(T)(str_,result)
 #define DeeUtf8String_ToNumberWithLength_F(T) DEE_PRIVATE_STRING_WITH_LENGTH_CAST_TO_F(Utf8,T)
-#define DeeUtf8String_ToNumberWithLength(T,str_,len,result) DeeUtf8String_ToNumberWithLength_F(T)(str_,len,result)
+#define DeeUtf8String_ToNumberWithLength(T,len,str_,result) DeeUtf8String_ToNumberWithLength_F(T)(len,str_,result)
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF8 */
 
 #if DEE_CONFIG_HAVE_ENCODING_UTF16
@@ -649,7 +649,7 @@ DEE_DATA_DECL(struct _DeeEmptyUtf16StringObject)       _Dee_EmptyUtf16String;
 #define DeeUtf16String_ToNumber_F(T) DEE_PRIVATE_STRING_CAST_TO_F(Utf16,T)
 #define DeeUtf16String_ToNumber(T,str_,result) DeeUtf16String_ToNumber_F(T)(str_,result)
 #define DeeUtf16String_ToNumberWithLength_F(T) DEE_PRIVATE_STRING_WITH_LENGTH_CAST_TO_F(Utf16,T)
-#define DeeUtf16String_ToNumberWithLength(T,str_,len,result) DeeUtf16String_ToNumberWithLength_F(T)(str_,len,result)
+#define DeeUtf16String_ToNumberWithLength(T,len,str_,result) DeeUtf16String_ToNumberWithLength_F(T)(len,str_,result)
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF16 */
 
 #if DEE_CONFIG_HAVE_ENCODING_UTF32
@@ -700,7 +700,7 @@ DEE_DATA_DECL(struct _DeeEmptyUtf32StringObject)       _Dee_EmptyUtf32String;
 #define DeeUtf32String_ToNumber_F(T) DEE_PRIVATE_STRING_CAST_TO_F(Utf32,T)
 #define DeeUtf32String_ToNumber(T,str_,result) DeeUtf32String_ToNumber_F(T)(str_,result)
 #define DeeUtf32String_ToNumberWithLength_F(T) DEE_PRIVATE_STRING_WITH_LENGTH_CAST_TO_F(Utf32,T)
-#define DeeUtf32String_ToNumberWithLength(T,str_,len,result) DeeUtf32String_ToNumberWithLength_F(T)(str_,len,result)
+#define DeeUtf32String_ToNumberWithLength(T,len,str_,result) DeeUtf32String_ToNumberWithLength_F(T)(len,str_,result)
 #endif /* DEE_CONFIG_HAVE_ENCODING_UTF32 */
 
 

@@ -31,14 +31,14 @@
 // >> [[optional]] void DeeSysFS_Utf8ChdirObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideChdirObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *path, CODE on_error);
 //////////////////////////////////////////////////////////////////////////
-// >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8GetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname);
-// >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname);
-// >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8TryGetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname);
-// >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideTryGetEnv(DEE_A_IN_Z Dee_WideChar const *envname);
-// >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8GetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname);
-// >> [[optional]] DEE_A_RET_OBJECT_EXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname);
-// >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeUtf8StringObject) *DeeSysFS_Utf8TryGetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname);
-// >> [[optional]] DEE_A_RET_OBJECT_NOEXCEPT_REF(DeeWideStringObject) *DeeSysFS_WideTryGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname);
+// >> [[optional]] void DeeSysFS_Utf8GetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname, DEE_A_OUT_OBJECT(DeeUtf8StringObject) **result, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideGetEnv(DEE_A_IN_Z Dee_WideChar const *envname, DEE_A_OUT_OBJECT(DeeWideStringObject) **result, CODE on_error);
+// >> [[optional]] void DeeSysFS_Utf8TryGetEnv(DEE_A_IN_Z Dee_Utf8Char const *envname, DEE_A_OUT_OBJECT(DeeUtf8StringObject) **result);
+// >> [[optional]] void DeeSysFS_WideTryGetEnv(DEE_A_IN_Z Dee_WideChar const *envname, DEE_A_OUT_OBJECT(DeeWideStringObject) **result);
+// >> [[optional]] void DeeSysFS_Utf8GetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname, DEE_A_OUT_OBJECT(DeeUtf8StringObject) **result, CODE on_error);
+// >> [[optional]] void DeeSysFS_WideGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname, DEE_A_OUT_OBJECT(DeeWideStringObject) **result, CODE on_error);
+// >> [[optional]] void DeeSysFS_Utf8TryGetEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname, DEE_A_OUT_OBJECT(DeeUtf8StringObject) **result);
+// >> [[optional]] void DeeSysFS_WideTryGetEnvObject(DEE_A_IN_OBJECT(DeeWideStringObject) const *envname, DEE_A_OUT_OBJECT(DeeWideStringObject) **result);
 // >> [[optional]] void DeeSysFS_Utf8HasEnv(DEE_A_IN_Z Dee_Utf8Char const *envname, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_WideHasEnv(DEE_A_IN_Z Dee_WideChar const *envname, int result, CODE on_error);
 // >> [[optional]] void DeeSysFS_Utf8HasEnvObject(DEE_A_IN_OBJECT(DeeUtf8StringObject) const *envname, int result, CODE on_error);
@@ -195,9 +195,9 @@
 
 
 #if defined(DEE_PLATFORM_WINDOWS)
-# include <deemon/sys/_win32.sysfs.h>
+# include <deemon/sys/win32/sysfs.h>
 #elif defined(DEE_PLATFORM_UNIX)
-# include <deemon/sys/_unix.sysfs.h>
+# include <deemon/sys/unix/sysfs.h>
 #elif 1
 // Stub: Everything is optional...
 #elif !defined(__DEEMON__)
@@ -208,16 +208,16 @@
 //////////////////////////////////////////////////////////////////////////
 // Implement missing, substitutable callbacks
 #if !defined(DeeSysFS_Utf8GetEnvObject) && defined(DeeSysFS_Utf8GetEnv)
-#define DeeSysFS_Utf8GetEnvObject(envname) DeeSysFS_Utf8GetEnv(DeeUtf8String_STR(envname))
+#define DeeSysFS_Utf8GetEnvObject(envname,result,...) DeeSysFS_Utf8GetEnv(DeeUtf8String_STR(envname),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_WideGetEnvObject) && defined(DeeSysFS_WideGetEnv)
-#define DeeSysFS_WideGetEnvObject(envname) DeeSysFS_WideGetEnv(DeeWideString_STR(envname))
+#define DeeSysFS_WideGetEnvObject(envname,result,...) DeeSysFS_WideGetEnv(DeeWideString_STR(envname),result,__VA_ARGS__)
 #endif
 #if !defined(DeeSysFS_Utf8TryGetEnvObject) && defined(DeeSysFS_Utf8TryGetEnv)
-#define DeeSysFS_Utf8TryGetEnvObject(envname) DeeSysFS_Utf8TryGetEnv(DeeUtf8String_STR(envname))
+#define DeeSysFS_Utf8TryGetEnvObject(envname,result) DeeSysFS_Utf8TryGetEnv(DeeUtf8String_STR(envname),result)
 #endif
 #if !defined(DeeSysFS_WideTryGetEnvObject) && defined(DeeSysFS_WideTryGetEnv)
-#define DeeSysFS_WideTryGetEnvObject(envname) DeeSysFS_WideTryGetEnv(DeeWideString_STR(envname))
+#define DeeSysFS_WideTryGetEnvObject(envname,result) DeeSysFS_WideTryGetEnv(DeeWideString_STR(envname),result)
 #endif
 #if !defined(DeeSysFS_Utf8HasEnvObject) && defined(DeeSysFS_Utf8HasEnv)
 #define DeeSysFS_Utf8HasEnvObject(envname,result,...) DeeSysFS_Utf8HasEnv(DeeUtf8String_STR(envname),result,__VA_ARGS__)

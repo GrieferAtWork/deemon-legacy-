@@ -18,8 +18,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_SYS__UNIX_SYSFS_VIEW_H
-#define GUARD_DEEMON_SYS__UNIX_SYSFS_VIEW_H 1
+#ifndef GUARD_DEEMON_SYS_UNIX_SYSFS_VIEW_H
+#define GUARD_DEEMON_SYS_UNIX_SYSFS_VIEW_H 1
 
 #include <deemon/__conf.inl>
 #include <deemon/__xconf.inl>
@@ -205,4 +205,4 @@ do{\
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_SYS__UNIX_SYSFS_VIEW_H */
+#endif /* !GUARD_DEEMON_SYS_UNIX_SYSFS_VIEW_H */

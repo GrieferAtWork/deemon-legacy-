@@ -69,13 +69,13 @@
 #define DeeSysDynlibN_InitFromFilenameObject    DeeSysDynlibN_Utf8InitFromFilenameObject
 
 #if defined(DEE_PLATFORM_WINDOWS)
-# include <deemon/sys/_win32.sysdynlib.h>
+# include <deemon/sys/win32/sysdynlib.h>
 #elif defined(DEE_PLATFORM_UNIX)
-# include <deemon/sys/_unix.sysdynlib.h>
+# include <deemon/sys/unix/sysdynlib.h>
 #elif defined(__HAIKU__)
-# include <deemon/sys/_haiku.sysdynlib.h>
+# include <deemon/sys/haiku/sysdynlib.h>
 #elif 1
-# include <deemon/sys/_stub.sysdynlib.h>
+# include <deemon/sys/stub/sysdynlib.h>
 #else
 # error "No dynlib implementation for this platform"
 #endif
