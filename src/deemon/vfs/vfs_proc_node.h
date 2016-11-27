@@ -123,17 +123,20 @@ extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_fd_link; /*< '/proc/[P
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_FD */
 //////////////////////////////////////////////////////////////////////////
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32
-struct DeeVFSProcPIDWin32View {
+struct DeeVFSProcPIDW32View {
  struct DeeVFSView      vpwv_view; /*< Underlying view. */
  /*atomic*/unsigned int vpwv_curr; /*< Current element index. */
 };
-extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32;          /*< '/proc/[PID]/w32' */
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32;           /*< '/proc/[PID]/w32' */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_CLOSEFD
-extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_closefd;  /*< '/proc/[PID]/w32/closefd' */
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_closefd;   /*< '/proc/[PID]/w32/closefd' */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_CLOSEFD */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
-extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_exitcode; /*< '/proc/[PID]/w32/exitcode' */
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_exitcode;  /*< '/proc/[PID]/w32/exitcode' */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_terminate; /*< '/proc/[PID]/w32/terminate' */
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32 */
 //////////////////////////////////////////////////////////////////////////
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID */

@@ -53,6 +53,7 @@
 #define DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32            DEE_VFSCONFIG_HAVEFILE_PROC_PID     /*< fs::exists("/proc/[PID]/w32"). */
 #define DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_CLOSEFD    DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32 /*< fs::exists("/proc/[PID]/w32/closefd"). */
 #define DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE   DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32 /*< fs::exists("/proc/[PID]/w32/exitcode"). */
+#define DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE  DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32 /*< fs::exists("/proc/[PID]/w32/terminate"). */
 #define DEE_VFSCONFIG_HAVEFILE_PROC_SELF               DEE_VFSCONFIG_HAVEFILE_PROC_PID     /*< fs::exists("/proc/self"). */
 #define DEE_VFSCONFIG_HAVE_PROC_ENUMPIDS               DEE_VFSCONFIG_HAVEFILE_PROC_PID     /*< fs::dir("/proc"). (NOTE: still yields 'self', but doesn't include running pids) */
 #define DEE_VFSCONFIG_HAVEFILE_TMP                     DEE_CONFIG_RUNTIME_HAVE_VFS         /*< fs::exists("/tmp"). */

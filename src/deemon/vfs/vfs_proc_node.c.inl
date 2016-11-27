@@ -34,6 +34,7 @@
 #include <deemon/vfs/vfs_root.h>
 #include <deemon/vfs/vfs_virtual_file.h>
 #include <deemon/sys/win32/sysfd.h>
+#include <deemon/unicode/char_traits.inl>
 
 DEE_DECL_BEGIN
 
@@ -675,6 +676,9 @@ enum{
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
  DEE_VFSPROCPIDWIN32_MEMBER_EXITCODE,
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
+ DEE_VFSPROCPIDWIN32_MEMBER_TERMINATE,
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
  DEE_VFSPROCPIDWIN32_MEMBER_END,
 };
 static unsigned int DeeVFSProcPIDWin32Node_GetMemberID(char const *name, Dee_size_t name_size) {
@@ -685,6 +689,9 @@ static unsigned int DeeVFSProcPIDWin32Node_GetMemberID(char const *name, Dee_siz
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
  if (CHECK("exitcode")) return DEE_VFSPROCPIDWIN32_MEMBER_EXITCODE;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
+ if (CHECK("terminate")) return DEE_VFSPROCPIDWIN32_MEMBER_TERMINATE;
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
 #undef CHECK
  return DEE_VFSPROCPIDWIN32_MEMBER_NONE;
 }
@@ -698,6 +705,9 @@ static struct DeeVFSNode *DeeVFSProcPIDWin32Node_GetMember(
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
   case DEE_VFSPROCPIDWIN32_MEMBER_EXITCODE: node_type = &DeeVFSProcPIDNode_Type_w32_exitcode; break;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
+  case DEE_VFSPROCPIDWIN32_MEMBER_TERMINATE: node_type = &DeeVFSProcPIDNode_Type_w32_terminate; break;
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
   default: DEE_BUILTIN_UNREACHABLE();
  }
  if ((result = DeeVFSNode_ALLOC(struct DeeVFSNode)) == NULL) return NULL;
@@ -725,17 +735,20 @@ static DeeObject *DEE_CALL _deevfs_procpidnode_w32_vnt_nameof(
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
  if (node_type == &DeeVFSProcPIDNode_Type_w32_exitcode) DeeReturn_STATIC_STRING("exitcode");
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
+ if (node_type == &DeeVFSProcPIDNode_Type_w32_terminate) DeeReturn_STATIC_STRING("terminate");
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
  DEE_ASSERTF(0,"%R is not a parent of /proc/[PID]/win32",DeeVFSNode_Filename(child));
  DEE_BUILTIN_UNREACHABLE();
 }
 static int DEE_CALL _deevfs_procpidnode_w32_vnt_open(
- struct DeeVFSProcPIDWin32View *self) {
+ struct DeeVFSProcPIDW32View *self) {
  DEE_ASSERT(self->vpwv_view.vv_node->vn_type == &DeeVFSProcPIDNode_Type_w32);
  self->vpwv_curr = DEE_VFSPROCPIDWIN32_MEMBER_BEGIN;
  return 0;
 }
 static int DEE_CALL _deevfs_procpidnode_w32_vnt_curr(
- struct DeeVFSProcPIDWin32View *self, struct DeeVFSNode **result) {
+ struct DeeVFSProcPIDW32View *self, struct DeeVFSNode **result) {
  unsigned int member_id = (unsigned int)DeeAtomicInt_Load(self->vpwv_curr,memory_order_seq_cst);
  if (member_id >= DEE_VFSPROCPIDWIN32_MEMBER_END) return 1;
  DEE_ASSERT(member_id >= DEE_VFSPROCPIDWIN32_MEMBER_BEGIN);
@@ -743,7 +756,7 @@ static int DEE_CALL _deevfs_procpidnode_w32_vnt_curr(
  return *result ? 0 : -1;
 }
 static int DEE_CALL _deevfs_procpidnode_w32_vnt_yield(
- struct DeeVFSProcPIDWin32View *self, struct DeeVFSNode **result) {
+ struct DeeVFSProcPIDW32View *self, struct DeeVFSNode **result) {
  unsigned int member_id = (unsigned int)DeeAtomicInt_FetchInc(self->vpwv_curr,memory_order_seq_cst);
  if (member_id >= DEE_VFSPROCPIDWIN32_MEMBER_END) { DeeAtomicInt_FetchDec(self->vpwv_curr,memory_order_seq_cst); return 1; }
  DEE_ASSERT(member_id >= DEE_VFSPROCPIDWIN32_MEMBER_BEGIN);
@@ -751,7 +764,7 @@ static int DEE_CALL _deevfs_procpidnode_w32_vnt_yield(
  return *result ? 0 : -1;
 }
 static struct _DeeVFSViewTypeData _deevfs_procpidnode_w32_vnt_view = {
- sizeof(struct DeeVFSProcPIDWin32View),
+ sizeof(struct DeeVFSProcPIDW32View),
  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_Utf8Char const *,Dee_size_t))&_deevfs_procpidnode_w32_vnt_walk,
  (struct DeeVFSNode *(DEE_CALL *)(struct DeeVFSNode *,Dee_WideChar const *,Dee_size_t))NULL,
  (DeeObject *(DEE_CALL *)(struct DeeVFSNode *,struct DeeVFSNode *))                    &_deevfs_procpidnode_w32_vnt_nameof,
@@ -804,27 +817,31 @@ static int DEE_CALL _deevfs_procpidnodew32_closefd_vft_write(
   cmd_begin = cmd_end;
   while (cmd_end != end && (*cmd_end != '\r' && *cmd_end != '\n')) ++cmd_end;
   if (cmd_begin == cmd_end) break;
-  if (DeeString_ToNumberWithLength(Dee_uintptr_t,(Dee_size_t)(cmd_end-cmd_begin),cmd_begin,&hid) != 0) {
+  while (cmd_begin != cmd_end && DEE_CH_IS_SPACE(cmd_begin[0])) ++cmd_begin;
+  while (cmd_begin != cmd_end && DEE_CH_IS_SPACE(cmd_end[-1])) --cmd_end;
+  if (cmd_begin != cmd_end) {
+   if (DeeString_ToNumberWithLength(Dee_uintptr_t,(Dee_size_t)(cmd_end-cmd_begin),cmd_begin,&hid) != 0) {
 err: CloseHandle(hProcess); return -1;
-  }
-  if (DuplicateHandle(hProcess,(HANDLE)hid,hMyProcess,&hClosed,0,FALSE,DUPLICATE_CLOSE_SOURCE)) {
-   // Simply close the transferred handle
-   CloseHandle(hClosed);
-  } else {
-   error = GetLastError();
-   if (error == ERROR_NOT_SUPPORTED) {
-    // Some handles cannot be duplicated.
-    // Although windows doesn't say if this works, even stating that doing this may produce leaks,
-    // lets try to ~duplicate~ the handles without providing destination informations (and possibly skip the copy)
-    if (DuplicateHandle(hProcess,(HANDLE)hid,NULL,NULL,0,FALSE,DUPLICATE_CLOSE_SOURCE)) goto succ;
-    // NOPE! Didn't work...
-    error = GetLastError();
    }
-   DeeError_SetStringf(&DeeErrorType_SystemError,
-                       "DuplicateHandle(%p,%p,%p,...,0,FALSE,DUPLICATE_CLOSE_SOURCE) : %K",
-                       hProcess,(HANDLE)hid,hMyProcess,
-                       DeeSystemError_Win32ToString(error));
-   goto err;
+   if (DuplicateHandle(hProcess,(HANDLE)hid,hMyProcess,&hClosed,0,FALSE,DUPLICATE_CLOSE_SOURCE)) {
+    // Simply close the transferred handle
+    CloseHandle(hClosed);
+   } else {
+    error = GetLastError();
+    if (error == ERROR_NOT_SUPPORTED) {
+     // Some handles cannot be duplicated.
+     // Although windows doesn't say if this works, even stating that doing this may produce leaks,
+     // lets try to ~duplicate~ the handles without providing destination informations (and possibly skip the copy)
+     if (DuplicateHandle(hProcess,(HANDLE)hid,NULL,NULL,0,FALSE,DUPLICATE_CLOSE_SOURCE)) goto succ;
+     // NOPE! Didn't work...
+     error = GetLastError();
+    }
+    DeeError_SetStringf(&DeeErrorType_SystemError,
+                        "DuplicateHandle(%p,%p,%p,...,0,FALSE,DUPLICATE_CLOSE_SOURCE) : %K",
+                        hProcess,(HANDLE)hid,hMyProcess,
+                        DeeSystemError_Win32ToString(error));
+    goto err;
+   }
   }
 succ:;
  } while (cmd_end != end);
@@ -847,9 +864,6 @@ struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_closefd = {
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_CLOSEFD */
 //////////////////////////////////////////////////////////////////////////
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
-static int _deevfs_procpidnodew32_exitcode_vft_open(
- struct DeeVFSFile *DEE_UNUSED(self), Dee_openmode_t DEE_UNUSED(openmode),
- Dee_mode_t DEE_UNUSED(permissions)) { return 0; }
 static int DEE_CALL _deevfs_procpidnodew32_exitcode_vft_read(
  struct DeeVFSFile *self, void *p, Dee_size_t s, Dee_size_t *rs) {
  DeeObject *proc,*result_str; DWORD pid; HANDLE hProcess; DWORD result;
@@ -892,6 +906,58 @@ static struct _DeeVFSFileTypeData _deevfs_procpidnodew32_exitcode_vnt_file = {
 struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_exitcode = {
  {NULL,NULL},NULL,&_deevfs_procpidnodew32_exitcode_vnt_file,NULL};
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+//////////////////////////////////////////////////////////////////////////
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
+static int DEE_CALL _deevfs_procpidnodew32_terminate_vft_write(
+ struct DeeVFSFile *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
+ UINT exitcode; char const *begin,*end; DeeObject *proc; DWORD pid; HANDLE hProcess;
+ end = (begin = (char const *)p)+s;
+ while (begin != end && DEE_CH_IS_SPACE(begin[0])) ++begin;
+ while (begin != end && DEE_CH_IS_SPACE(end[-1])) --end;
+ if (begin == end) exitcode = 0; else if (DeeString_ToNumberWithLength(
+  UINT,(Dee_size_t)(end-begin),begin,(Dee_uint32_t *)&exitcode) != 0) return -1;
+ DEE_ASSERT(self->vf_node->vn_type == &DeeVFSProcPIDNode_Type_w32_terminate);
+ DEE_ASSERT(self->vf_node->vn_parent && self->vf_node->vn_parent->vn_type == &DeeVFSProcPIDNode_Type_w32);
+ DEE_ASSERT(self->vf_node->vn_parent->vn_parent && self->vf_node->vn_parent->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ proc = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vf_node->vn_parent->vn_parent)->vpn_proc;
+ pid = DeeProcess_ID(proc);
+#if !DEE_CONFIG_RUNTIME_HAVE_EXIT
+ if (pid == GetCurrentProcessId()) {
+  DeeError_SET_STRING(&DeeErrorType_SystemError,
+                      "Can't terminate current process");
+  return -1;
+ }
+#endif /* !DEE_CONFIG_RUNTIME_HAVE_EXIT */
+ if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_TERMINATE,FALSE,pid)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "OpenProcess(PROCESS_TERMINATE,FALSE,%lu) : %K",
+                      pid,DeeSystemError_Win32ToString(GetLastError()));
+  return -1;
+ }
+ if DEE_UNLIKELY(!TerminateProcess(hProcess,exitcode)) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "TerminateProcess(%p,%u) : %K",hProcess,exitcode,
+                      DeeSystemError_Win32ToString(GetLastError()));
+  CloseHandle(hProcess);
+  return -1;
+ }
+ *ws = s;
+ CloseHandle(hProcess);
+ return 0;
+}
+static struct _DeeVFSFileTypeData _deevfs_procpidnodew32_terminate_vnt_file = {
+ sizeof(struct DeeVFSFile),
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_genericfile_openwriteonly,
+ (void(DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_procpidnodew32_terminate_vft_write,
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+};
+struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_terminate = {
+ {NULL,NULL},NULL,&_deevfs_procpidnodew32_terminate_vnt_file,NULL};
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
 //////////////////////////////////////////////////////////////////////////
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32 */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID */
