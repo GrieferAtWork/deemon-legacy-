@@ -515,6 +515,10 @@ DeeWin32_GetSystemHandleLink(SYSTEM_HANDLE const *h) {
  switch (type_id) {
   // TODO: Proper, type-specific link names
   // e.g.: An actual file link if it's a FILE-handle
+  case DEE_WIN32_HANDLETYPE_TYPE_THREAD:
+   result = DeeString_Newf("[THREAD %#.4I16x]",h->Handle);
+   break;
+  case DEE_WIN32_HANDLETYPE_TYPE_DIRECTORY:
   case DEE_WIN32_HANDLETYPE_TYPE_FILE:
    result = DeeWin32Sys_WideGetHandleFilename(handle);
    if (!result && DeeError_Catch(&DeeErrorType_SystemError))

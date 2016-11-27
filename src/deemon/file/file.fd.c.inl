@@ -419,7 +419,11 @@ static DeeObject *DEE_CALL _deefilefd_fileno(
  DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
  result = self->fd_descr.w32_handle;
  DeeFileFD_RELEASE_SHARED(self);
+#if 1
+ return DeeObject_New(Dee_uintptr_t,(Dee_uintptr_t)result);
+#else
  return DeeVoidPointer_New(result);
+#endif
 #elif defined(DeeSysFD) && defined(DEE_PLATFORM_UNIX)
  int result;
  if DEE_UNLIKELY(DeeTuple_Unpack(args,":fileno") != 0) return NULL;
@@ -437,7 +441,7 @@ static DeeObject *DEE_CALL _deefilefd_fileno(
 static struct DeeMethodDef const _deefilefd_tp_methods[] = {
 #ifdef DEE_PLATFORM_WINDOWS
  DEE_METHODDEF_v100("fileno",member(&_deefilefd_fileno),
-  "() -> none *\n@return: The win32-HANDLE associated with this file"),
+  "() -> uintptr_t\n@return: The win32-HANDLE associated with this file"),
 #elif defined(DEE_PLATFORM_UNIX)
  DEE_METHODDEF_v100("fileno",member(&_deefilefd_fileno),
   "() -> int\n@return: The unix-file-descriptor associated with this file"),

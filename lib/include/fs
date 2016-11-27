@@ -419,6 +419,25 @@
 //  |    |    |        - A link, that when read, points to the absolute path of
 //  |    |    |          the executable run by PID.
 //  |    |    |
+//  |    |    +----# [D] "/proc/[PID]/fd"
+//  |    |    |    |   - A directory capable of listing all handles opened by a given process.
+//  |    |    |    |   - The files are symbolic links that, when read, return a description
+//  |    |    |    |     of the associated handle, or the filename of the file opened by the handle.
+//  |    |    |    |
+//  |    |    |    +----# [L] "/proc/[PID]/fd/[FD]" --> "..."
+//  |    |    |             - A symbolic link pointing to the absolute (and real) path of a file
+//  |    |    |               opened by the process 'PID' and its file-descriptor 'FD'.
+//  |    |    |             - If 'PID' describes 'self' and 'FD' was opened in usercode,
+//  |    |    |               you can think of it like this:
+//  |    |    |               >> local fp = file.open("somefile.txt","r");
+//  |    |    |               >> // The following two lines print the same.
+//  |    |    |               >> print fs::readlink("/proc/self/fd/"+fp.fileno());
+//  |    |    |               >> print fp.filename;
+//  |    |    |             NOTE: Because windows doesn't have file-descriptors per-sé,
+//  |    |    |                   the deemon runtime simply uses windows' HANDLEs as
+//  |    |    |                   numbers. So on windows fp.fileno() returns a 'uintptr_t',
+//  |    |    |                   unlike on unix, where it returns an 'in'.
+//  |    |    |
 //  |    |    +----# [L] "/proc/[PID]/root" --> "[fs::path::head(fs::getcwd(PID))]"
 //  |    |             - Alias for cwd, but points to the drive's root
 //  |    |               associated with "/proc/[PID]/cwd".

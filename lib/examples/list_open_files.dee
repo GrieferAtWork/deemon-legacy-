@@ -1,0 +1,77 @@
+#!/usr/bin/deemon
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+*/
+
+// Showcase of the cross-platform capabilities of the '/proc' (virtual) filesystem.
+// >> On windows, the deemon runtime is emulating a virtual filesystem under '/'
+//    For more information, read the VFS documentation in <fs>
+
+
+#include <fs>
+#include <file>
+
+// Find the pid of associated with a given executable name
+// >> Platform-independent; Also works on windows
+function find_pid(name) {
+	name = name.lower();
+	for (local p: fs::dir("/proc")) if (p.isdigit()) {
+		local exe;
+		try exe = fs::readlink("/proc/"+p+"/exe");
+		catch (...) continue;
+		if (fs::path::file(exe).lower() == name)
+			return p;
+	}
+	throw "No running process matching "+repr name;
+}
+
+// List all files opened by a given process
+// >> Platform-independent; Also works on windows
+//    NOTE: This function requires new parts of the VFS only added in v102
+#if defined(__WINDOWS__) && __DEEMON__ < 102
+#	warning "Available VFS does not support '/proc/[PID]/fd'"
+#endif
+function open_files(proc) {
+	for (local fd: fs::dir("/proc/"+proc+"/fd")) {
+		local name;
+		try name = fs::readlink("/proc/"+proc+"/fd/"+fd);
+		catch (...) continue;
+		if (!name.wmatch("[*]")) yield pack fd,name;
+	}
+}
+
+// The fileno we've just opened (this script file) will show up in the list below
+[[used]] open_fp = file.open(__FILE__);
+print "Opened file:",open_fp.fileno();
+
+// List all files opened by a given process
+// NOTE: 'open_files("self")' would also work!
+// WARNING: Files opened by a different instance of deemon may be listed
+for (local fd,name: open_files(find_pid("deemon"))) {
+	print "Open file",fd,":",repr name;
+}
+
+
+
+
+
+
+
+
