@@ -53,7 +53,7 @@ function open_files(proc) {
 		local name;
 		try name = fs::readlink("/proc/"+proc+"/fd/"+fd);
 		catch (...) continue;
-		if (!name.wmatch("[*]")) yield pack fd,name;
+		if (!name.wmatch("*[*]")) yield pack fd,name;
 	}
 }
 

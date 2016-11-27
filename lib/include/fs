@@ -423,6 +423,23 @@
 //  |    |    |    |   - A directory capable of listing all handles opened by a given process.
 //  |    |    |    |   - The files are symbolic links that, when read, return a description
 //  |    |    |    |     of the associated handle, or the filename of the file opened by the handle.
+//  |    |    |    |   - NOTE, that due to the way windows handles work, you will see more than just
+//  |    |    |    |     things that would use file-descriptors on linux, such as threads, processes,
+//  |    |    |    |     and more.
+//  |    |    |    |   - HINT: A rule of thumb enforced within deemon's VFS, that also seems to
+//  |    |    |    |           apply to linux is that the link of any file-descriptor that isn't
+//  |    |    |    |           a file can be detected as such using the following trick:
+//  |    |    |    |           >> for (local x: fs::dir("/proc/self/fd")) {
+//  |    |    |    |           >>   try x = fs::readlink("/proc/self/fd/"+x);
+//  |    |    |    |           >>   catch (...) continue;
+//  |    |    |    |           >>   // Anything that isn't a file usually includes
+//  |    |    |    |           >>   // some kind of block wrapped in brackets []
+//  |    |    |    |           >>   if (!x.wmatch("*[*]")) {
+//  |    |    |    |           >>     print "Opened file:",repr x;
+//  |    |    |    |           >>   }
+//  |    |    |    |           >> }
+//  |    |    |    |           
+//  |    |    |    |           
 //  |    |    |    |
 //  |    |    |    +----# [L] "/proc/[PID]/fd/[FD]" --> "..."
 //  |    |    |             - A symbolic link pointing to the absolute (and real) path of a file
