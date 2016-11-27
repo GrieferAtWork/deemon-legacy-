@@ -98,7 +98,7 @@ struct DeeVFSProcPIDFDView {
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_fd;      /*< '/proc/[PID]/fd' */
 struct DeeVFSProcPIDFDHIDNode {
  struct DeeVFSNode           vpfh_node; /*< Underlying node. */
- SYSTEM_HANDLE               vpfh_info; /*< Handle information. */
+ SYSTEM_HANDLE               vpfh_info; /*< Handle information (only has 'ProcessId', 'ObjectTypeNumber' and 'Handle'). */
 };
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_fd_link; /*< '/proc/[PID]/fd/[HID]' */
 //////////////////////////////////////////////////////////////////////////

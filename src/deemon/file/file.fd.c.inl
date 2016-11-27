@@ -411,62 +411,44 @@ static DeeObject *DEE_CALL _deefilefd_size(
 }
 #endif /* DeeSysFileFD_GetSize */
 
-#ifdef DEE_PLATFORM_WINDOWS
-#define _deefilefd_win32_handle _deefilefd_win32_handle
-static DeeObject *DEE_CALL _deefilefd_win32_handle(
+static DeeObject *DEE_CALL _deefilefd_fileno(
  DeeFileFDObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
-#ifdef DeeSysFD
+#if defined(DeeSysFD) && defined(DEE_PLATFORM_WINDOWS)
  HANDLE result;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,":win32_handle") != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":fileno") != 0) return NULL;
  DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
  result = self->fd_descr.w32_handle;
  DeeFileFD_RELEASE_SHARED(self);
  return DeeVoidPointer_New(result);
-#else
- (void)self,args;
- DeeError_NotImplemented_str("fd");
- return NULL;
-#endif
-}
-#endif
-
-#ifdef DEE_PLATFORM_UNIX
-#define _deefilefd_posix_fileno _deefilefd_posix_fileno
-static DeeObject *DEE_CALL _deefilefd_posix_fileno(
- DeeFileFDObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
-#ifdef DeeSysFD
+#elif defined(DeeSysFD) && defined(DEE_PLATFORM_UNIX)
  int result;
- if DEE_UNLIKELY(DeeTuple_Unpack(args,":posix_fileno") != 0) return NULL;
+ if DEE_UNLIKELY(DeeTuple_Unpack(args,":fileno") != 0) return NULL;
  DeeFileFD_ACQUIRE_SHARED(self,{ DeeError_Throw(DeeErrorInstance_FileFDAlreadyClosed); return NULL; });
  result = self->fd_descr.unx_fd;
  DeeFileFD_RELEASE_SHARED(self);
  return DeeObject_New(int,result);
 #else
  (void)self,args;
- DeeError_NotImplemented_str("fd");
+ DeeError_NotImplemented_str("fileno");
  return NULL;
 #endif
 }
-#endif
 
-#if defined(_deefilefd_size)\
- || defined(_deefilefd_win32_handle)\
- || defined(_deefilefd_posix_fileno)
 static struct DeeMethodDef const _deefilefd_tp_methods[] = {
-#ifdef _deefilefd_win32_handle
- DEE_METHODDEF_v100("win32_handle",member(&_deefilefd_win32_handle),"() -> HANDLE"),
-#endif
-#ifdef _deefilefd_posix_fileno
- DEE_METHODDEF_v100("posix_fileno",member(&_deefilefd_posix_fileno),"() -> int"),
+#ifdef DEE_PLATFORM_WINDOWS
+ DEE_METHODDEF_v100("fileno",member(&_deefilefd_fileno),
+  "() -> none *\n@return: The win32-HANDLE associated with this file"),
+#elif defined(DEE_PLATFORM_UNIX)
+ DEE_METHODDEF_v100("fileno",member(&_deefilefd_fileno),
+  "() -> int\n@return: The unix-file-descriptor associated with this file"),
+#else
+ DEE_METHODDEF_v100("fileno",member(&_deefilefd_fileno),"() -> object"),
 #endif
 #ifdef _deefilefd_size
  DEE_METHODDEF_v100("size",member(&_deefilefd_size),"() -> uint64_t"),
 #endif
  DEE_METHODDEF_END_v100
 };
-#else
-#define _deefilefd_tp_methods DeeType_DEFAULT_SLOT(tp_methods)
-#endif
 
 
 

@@ -31,69 +31,331 @@
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
 #include <Windows.h>
+#include <Winternl.h>
 DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 #include DEE_INCLUDE_MEMORY_API()
 
 DEE_DECL_BEGIN
 
-//////////////////////////////////////////////////////////////////////////
-// Based on source code referred here:
-// >> http://stackoverflow.com/questions/733384/how-to-enumerate-process-handles
-//////////////////////////////////////////////////////////////////////////
-// The code & stackoverflow page referred to this disclaimer
-// >> Though this being C and not C++, my version is a complete rewrite...
-//////////////////////////////////////////////////////////////////////////////////////
-// Written by Zoltan Csizmadia, zoltan_csizmadia@yahoo.com
-// For companies(Austin,TX): If you would like to get my resume, send an email.
-//
-// The source is free, but if you want to use it, mention my name and e-mail address
-//
-//////////////////////////////////////////////////////////////////////////////////////
 
-#define DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN          0
-#define DEE_WIN32_HANDLETYPE_TYPE_TYPE             1
-#define DEE_WIN32_HANDLETYPE_TYPE_DIRECTORY        2
-#define DEE_WIN32_HANDLETYPE_TYPE_SYMBOLIC_LINK    3
-#define DEE_WIN32_HANDLETYPE_TYPE_TOKEN            4
-#define DEE_WIN32_HANDLETYPE_TYPE_PROCESS          5
-#define DEE_WIN32_HANDLETYPE_TYPE_THREAD           6
-#define DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN_7        7
-#define DEE_WIN32_HANDLETYPE_TYPE_EVENT            8
-#define DEE_WIN32_HANDLETYPE_TYPE_EVENT_PAIR       9
-#define DEE_WIN32_HANDLETYPE_TYPE_MUTANT           10
-#define DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN_11       11
-#define DEE_WIN32_HANDLETYPE_TYPE_SEMAPHORE        12
-#define DEE_WIN32_HANDLETYPE_TYPE_TIMER            13
-#define DEE_WIN32_HANDLETYPE_TYPE_PROFILE          14
-#define DEE_WIN32_HANDLETYPE_TYPE_WINDOW_STATION   15
-#define DEE_WIN32_HANDLETYPE_TYPE_DESKTOP          16
-#define DEE_WIN32_HANDLETYPE_TYPE_SECTION          17
-#define DEE_WIN32_HANDLETYPE_TYPE_KEY              18
-#define DEE_WIN32_HANDLETYPE_TYPE_PORT             19
-#define DEE_WIN32_HANDLETYPE_TYPE_WAITABLE_PORT    20
-#define DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN_21       21
-#define DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN_22       22
-#define DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN_23       23
-#define DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN_24       24
-//#define DEE_WIN32_HANDLETYPE_OB_TYPE_CONTROLLER  ??
-//#define DEE_WIN32_HANDLETYPE_OB_TYPE_DEVICE      ??
-//#define DEE_WIN32_HANDLETYPE_OB_TYPE_DRIVER      ??
-#define DEE_WIN32_HANDLETYPE_TYPE_IO_COMPLETION    25
-#define DEE_WIN32_HANDLETYPE_TYPE_FILE             26
+#ifndef STATUS_INFO_LENGTH_MISMATCH
+#define STATUS_INFO_LENGTH_MISMATCH 0xC0000004
+#endif
+#ifndef SystemHandleInformation
+#define SystemHandleInformation ((SYSTEM_INFORMATION_CLASS)16)
+#endif
+typedef NTSTATUS (NTAPI *LPNTQUERYSYSTEMINFORMATION)(
+ SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation,
+ ULONG SystemInformationLength, PULONG ReturnLength);
+typedef NTSTATUS (NTAPI *LPNTQUERYOBJECT)(
+ HANDLE Handle, OBJECT_INFORMATION_CLASS ObjectInformationClass,
+ PVOID ObjectInformation, ULONG ObjectInformationLength, PULONG ReturnLength);
 
+static LPNTQUERYSYSTEMINFORMATION pNtQuerySystemInformation = NULL;
+static LPNTQUERYOBJECT pNtQueryObject = NULL;
 
 typedef struct _SYSTEM_HANDLE {
- DWORD	ProcessID;
- WORD	 HandleType;
- WORD	 HandleNumber;  // Can be used as a HANDLE (yes, it sounds weird, but it works)
- DWORD	KernelAddress;
- DWORD	Flags;
+ ULONG       ProcessId;
+ BYTE        ObjectTypeNumber;
+ BYTE        Flags;
+ USHORT      Handle; // Can be used as a HANDLE (yes, it sounds weird, but it works)
+ PVOID       Object;
+ ACCESS_MASK GrantedAccess;
 } SYSTEM_HANDLE;
 typedef struct _SYSTEM_HANDLE_INFORMATION {
  DWORD			      Count;
  SYSTEM_HANDLE	Handles[1];
 } SYSTEM_HANDLE_INFORMATION;
+
+DEE_STATIC_INLINE(HANDLE)
+DeeWin32_SystemHandle_Open(SYSTEM_HANDLE const *self) {
+ HANDLE result,hProcess;
+ hProcess = OpenProcess(PROCESS_DUP_HANDLE,FALSE,self->ProcessId);
+ if DEE_UNLIKELY(!hProcess) return INVALID_HANDLE_VALUE;
+ if (!DuplicateHandle(hProcess,(HANDLE)self->Handle,
+  GetCurrentProcess(),&result,0,0,0)) result = INVALID_HANDLE_VALUE;
+ CloseHandle(hProcess);
+ return result;
+}
+
+
+typedef struct _OBJECT_TYPE_INFORMATION {
+ UNICODE_STRING Name;
+ ULONG TotalNumberOfObjects;
+ ULONG TotalNumberOfHandles;
+ ULONG TotalPagedPoolUsage;
+ ULONG TotalNonPagedPoolUsage;
+ ULONG TotalNamePoolUsage;
+ ULONG TotalHandleTableUsage;
+ ULONG HighWaterNumberOfObjects;
+ ULONG HighWaterNumberOfHandles;
+ ULONG HighWaterPagedPoolUsage;
+ ULONG HighWaterNonPagedPoolUsage;
+ ULONG HighWaterNamePoolUsage;
+ ULONG HighWaterHandleTableUsage;
+ ULONG InvalidAttributes;
+ GENERIC_MAPPING GenericMapping;
+ ULONG ValidAccess;
+ BOOLEAN SecurityRequired;
+ BOOLEAN MaintainHandleCount;
+ USHORT MaintainTypeList;
+ int PoolType;
+ ULONG PagedPoolUsage;
+ ULONG NonPagedPoolUsage;
+} OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// Based on various sources all over the internet, like these:
+// >> http://stackoverflow.com/questions/733384/how-to-enumerate-process-handles
+// >> http://forum.sysinternals.com/howto-enumerate-handles_topic18892.html
+// >> https://code.msdn.microsoft.com/windowsapps/CppFileHandle-03c8ea0b
+//////////////////////////////////////////////////////////////////////////////////////
+
+// NOTE: The ids marked with a 'Confirmed' text are confirmed to match
+//       their internal counterparts for the listed versions of windows.
+// >> If something goes wrong during type id discovery, deemon
+//    will re-use these ids as mappings.
+//    Essentially, the closer these are to the real thing, the more likely
+//    everything is going to work out correctly if the discovery fails.
+
+#define/*hidden*/DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN 0
+#define DEE_WIN32_HANDLETYPE_TYPE_TYPE            1
+#define DEE_WIN32_HANDLETYPE_TYPE_SYMBOLIC_LINK   2
+#define DEE_WIN32_HANDLETYPE_TYPE_DIRECTORY       3 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_TOKEN           5 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_PROCESS         7 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_THREAD          8 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_EVENT          12 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_EVENT_PAIR      9
+#define DEE_WIN32_HANDLETYPE_TYPE_MUTANT         13 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_SEMAPHORE      15 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_TIMER          16 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_PROFILE        14
+#define DEE_WIN32_HANDLETYPE_TYPE_WINDOW_STATION 20 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_DESKTOP        21 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_SECTION        35 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_KEY            37 /* Confirmed: w8.1 (x64) */
+#define DEE_WIN32_HANDLETYPE_TYPE_PORT           19
+#define DEE_WIN32_HANDLETYPE_TYPE_WAITABLE_PORT  22
+#define DEE_WIN32_HANDLETYPE_TYPE_CONTROLLER     25
+#define DEE_WIN32_HANDLETYPE_TYPE_DEVICE         26
+#define DEE_WIN32_HANDLETYPE_TYPE_DRIVER         27
+#define DEE_WIN32_HANDLETYPE_TYPE_IO_COMPLETION  28
+#define DEE_WIN32_HANDLETYPE_TYPE_FILE           30 /* Confirmed: w8.1 (x64) */
+
+/*
+Unknown handle type name 0x11(17) "IRTimer"
+Unknown handle type name 0x16(22) "Composition"
+Unknown handle type name 0x17(23) "TpWorkerFactory"
+Unknown handle type name 0x1d(29) "WaitCompletionPacket"
+Unknown handle type name 0x26(38) "ALPC Port"
+Unknown handle type name 0x28(40) "WmiGuid"
+Unknown handle type name 0x0b(11) "DebugObject"
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Smart, version-independent mapping of handle types to constant values above.
+
+static BYTE DeeWin32_HandleTypeMap[256] = {
+/*[[[deemon print " 0x00"+((" "+("0xFF,"*16)+"\n")*16).lsstrip(" 0xFF"),; ]]]*/
+ 0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+//[[[end]]]
+};
+#define DeeWin32_GetHandleType(syshandle)\
+  (DeeWin32_HandleTypeMap[syshandle->ObjectTypeNumber] != 0xFF ? DeeWin32_HandleTypeMap[syshandle->ObjectTypeNumber] \
+ : DeeWin32_HandleTypeMap[syshandle->ObjectTypeNumber] = DeeWin32_GetEffectiveSystemHandleTypeID(syshandle))
+
+
+// wide-string-insensitive-lower-compare-utf8
+// >> Returns TRUE/FALSE if equal
+static BOOL _dee_wstrilcmp8(PWSTR s, USHORT len, char const *match) {
+ PWSTR iter = s,end = s+len; char a,b;
+ char const *matchiter = match;
+ while (iter != end) {
+  b = (char)*iter++;
+  while ((b == ' '  || b == '\n'
+       || b == '\t' || b == '_'
+       ) && iter != end) b = (char)*iter++;
+  a = *matchiter++; if (!a) return iter == end;
+  if (b >= 'A' && b <= 'Z') b += ('a'-'A');
+  if (a != b) return FALSE;
+ }
+ return iter == end;
+}
+
+static BYTE DeeWin32_GetHandleTypeFromWindowsName(PWSTR s, USHORT len) {
+/*[[[deemon
+#include <file>
+#include <util>
+local found = [];
+for (local line: file.open(__FILE__)) {
+  local name;
+  try name = line.scanf(" # define DEE_WIN32_HANDLETYPE_TYPE_%[^ ]")...;
+  catch (e...) continue;
+  found.append(name);
+}
+found2 = [(for (local x: found) x.replace("_","").lower())...];
+local max_size = (for (x: found2) #repr x) > ...;
+for (local a,b: util::zip(found2,found)) {
+   local defname = "DEE_WIN32_HANDLETYPE_TYPE_"+b.upper();
+   print "#ifdef "+defname;
+   print " if (_dee_wstrilcmp8(s,len,"+repr(a).ljust(max_size)+")) return "+defname+";";
+   print "#endif";
+}
+]]]*/
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_TYPE
+ if (_dee_wstrilcmp8(s,len,"type"         )) return DEE_WIN32_HANDLETYPE_TYPE_TYPE;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_SYMBOLIC_LINK
+ if (_dee_wstrilcmp8(s,len,"symboliclink" )) return DEE_WIN32_HANDLETYPE_TYPE_SYMBOLIC_LINK;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_DIRECTORY
+ if (_dee_wstrilcmp8(s,len,"directory"    )) return DEE_WIN32_HANDLETYPE_TYPE_DIRECTORY;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_TOKEN
+ if (_dee_wstrilcmp8(s,len,"token"        )) return DEE_WIN32_HANDLETYPE_TYPE_TOKEN;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_PROCESS
+ if (_dee_wstrilcmp8(s,len,"process"      )) return DEE_WIN32_HANDLETYPE_TYPE_PROCESS;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_THREAD
+ if (_dee_wstrilcmp8(s,len,"thread"       )) return DEE_WIN32_HANDLETYPE_TYPE_THREAD;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_EVENT
+ if (_dee_wstrilcmp8(s,len,"event"        )) return DEE_WIN32_HANDLETYPE_TYPE_EVENT;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_EVENT_PAIR
+ if (_dee_wstrilcmp8(s,len,"eventpair"    )) return DEE_WIN32_HANDLETYPE_TYPE_EVENT_PAIR;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_MUTANT
+ if (_dee_wstrilcmp8(s,len,"mutant"       )) return DEE_WIN32_HANDLETYPE_TYPE_MUTANT;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_SEMAPHORE
+ if (_dee_wstrilcmp8(s,len,"semaphore"    )) return DEE_WIN32_HANDLETYPE_TYPE_SEMAPHORE;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_TIMER
+ if (_dee_wstrilcmp8(s,len,"timer"        )) return DEE_WIN32_HANDLETYPE_TYPE_TIMER;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_PROFILE
+ if (_dee_wstrilcmp8(s,len,"profile"      )) return DEE_WIN32_HANDLETYPE_TYPE_PROFILE;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_WINDOW_STATION
+ if (_dee_wstrilcmp8(s,len,"windowstation")) return DEE_WIN32_HANDLETYPE_TYPE_WINDOW_STATION;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_DESKTOP
+ if (_dee_wstrilcmp8(s,len,"desktop"      )) return DEE_WIN32_HANDLETYPE_TYPE_DESKTOP;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_SECTION
+ if (_dee_wstrilcmp8(s,len,"section"      )) return DEE_WIN32_HANDLETYPE_TYPE_SECTION;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_KEY
+ if (_dee_wstrilcmp8(s,len,"key"          )) return DEE_WIN32_HANDLETYPE_TYPE_KEY;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_PORT
+ if (_dee_wstrilcmp8(s,len,"port"         )) return DEE_WIN32_HANDLETYPE_TYPE_PORT;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_WAITABLE_PORT
+ if (_dee_wstrilcmp8(s,len,"waitableport" )) return DEE_WIN32_HANDLETYPE_TYPE_WAITABLE_PORT;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_CONTROLLER
+ if (_dee_wstrilcmp8(s,len,"controller"   )) return DEE_WIN32_HANDLETYPE_TYPE_CONTROLLER;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_DEVICE
+ if (_dee_wstrilcmp8(s,len,"device"       )) return DEE_WIN32_HANDLETYPE_TYPE_DEVICE;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_DRIVER
+ if (_dee_wstrilcmp8(s,len,"driver"       )) return DEE_WIN32_HANDLETYPE_TYPE_DRIVER;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_IO_COMPLETION
+ if (_dee_wstrilcmp8(s,len,"iocompletion" )) return DEE_WIN32_HANDLETYPE_TYPE_IO_COMPLETION;
+#endif
+#ifdef DEE_WIN32_HANDLETYPE_TYPE_FILE
+ if (_dee_wstrilcmp8(s,len,"file"         )) return DEE_WIN32_HANDLETYPE_TYPE_FILE;
+#endif
+//[[[end]]]
+ return DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN;
+}
+
+static BYTE DeeWin32_GetEffectiveHandleTypeID(HANDLE handle) {
+ BYTE result; OBJECT_TYPE_INFORMATION *objectTypeInfo;
+ DEE_ATOMIC_ONCE({
+  *(FARPROC *)&pNtQueryObject = GetProcAddress(
+   GetModuleHandleA("ntdll.dll"),"NtQueryObject");
+ });
+ if (!pNtQueryObject) return DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN;
+ if ((objectTypeInfo = (POBJECT_TYPE_INFORMATION)malloc_nz(0x1000)) != NULL)  {
+  // Retrieve information about the type name and match it against a list of known types
+  if (NT_SUCCESS((*pNtQueryObject)(handle,ObjectTypeInformation,objectTypeInfo,0x1000,NULL))) {
+   result = DeeWin32_GetHandleTypeFromWindowsName(
+    objectTypeInfo->Name.Buffer,
+    objectTypeInfo->Name.Length/sizeof(WCHAR));
+#ifdef DEE_DEBUG
+   if (result != DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN) {
+    DEE_LVERBOSE3("Discovered handle type ID %#.2I8x(%I8u) for %l$q\n",
+                  result,result,objectTypeInfo->Name.Length/sizeof(WCHAR),
+                  objectTypeInfo->Name.Buffer);
+   } else {
+    DEE_LVERBOSE3("Unknown handle type name %l$q\n",
+                  objectTypeInfo->Name.Length/sizeof(WCHAR),
+                  objectTypeInfo->Name.Buffer);
+   }
+#endif
+  } else result = DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN;
+  free_nn(objectTypeInfo);
+ } else result = DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN;
+ return result;
+}
+
+static BYTE DeeWin32_GetEffectivePHIDTypeID(DWORD pid, WORD hid) {
+ HANDLE my_handle,proc_handle; BYTE result;
+ proc_handle = OpenProcess(PROCESS_DUP_HANDLE,FALSE,pid);
+ if DEE_UNLIKELY(!proc_handle) return 0xFF;
+ if (DuplicateHandle(proc_handle,(HANDLE)hid,GetCurrentProcess(),&my_handle,0,0,0)) {
+  result = DeeWin32_GetEffectiveHandleTypeID(my_handle);
+  CloseHandle(my_handle);
+ } else if (GetLastError() == ERROR_NOT_SUPPORTED) {
+  result = DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN;
+ } else {
+  result = 0xFF;
+ }
+ CloseHandle(proc_handle);
+ return result;
+}
+static BYTE DeeWin32_GetEffectiveSystemHandleTypeID(SYSTEM_HANDLE const *handle) {
+ HANDLE my_handle,proc_handle; BYTE result;
+ proc_handle = OpenProcess(PROCESS_DUP_HANDLE,FALSE,handle->ProcessId);
+ if DEE_UNLIKELY(!proc_handle) goto fallback;
+ if (DuplicateHandle(proc_handle,(HANDLE)handle->Handle,GetCurrentProcess(),&my_handle,0,0,0)) {
+  result = DeeWin32_GetEffectiveHandleTypeID(my_handle);
+  CloseHandle(my_handle);
+ } else {
+  result = DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN;
+ }
+ CloseHandle(proc_handle);
+ if (result != DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN) return result;
+fallback:
+ if (handle->ObjectTypeNumber == 0xFF) return 0; // Shouldn't happen?
+ return handle->ObjectTypeNumber;
+}
+
 
 
 DEE_COMPILER_MSVC_WARNING_PUSH(4996)
@@ -117,46 +379,16 @@ DEE_STATIC_INLINE(BOOL) DeeWin32_CapturedHandleIsSupported(SYSTEM_HANDLE const *
  DEE_ATOMIC_ONCE({ dwNTMajorVersion = GetNTMajorVersion(); });
  if (dwNTMajorVersion >= 5) return TRUE; // Windows 2000 supports everything
  //NT4 System process doesn't like if we bother his internal security
- if (handle->ProcessID == 2 && handle->HandleType == 16) return FALSE;
+ if (handle->ProcessId == 2 && handle->ObjectTypeNumber == 16) return FALSE;
  return TRUE;
 }
 
-typedef DWORD (WINAPI *LPNTQUERYSYSTEMINFORMATION)(DWORD,VOID*,DWORD,ULONG*);
-
-DEE_STATIC_INLINE(DEE_A_RET_Z_OPT char const *)
-DeeWin32_GetSystemHandleTypeName(WORD ty) {
- switch (ty) {
-  case DEE_WIN32_HANDLETYPE_TYPE_TYPE           : return "TYPE";
-  case DEE_WIN32_HANDLETYPE_TYPE_DIRECTORY      : return "DIRECTORY";
-  case DEE_WIN32_HANDLETYPE_TYPE_SYMBOLIC_LINK  : return "SYMBOLIC_LINK";
-  case DEE_WIN32_HANDLETYPE_TYPE_TOKEN          : return "TOKEN";
-  case DEE_WIN32_HANDLETYPE_TYPE_PROCESS        : return "PROCESS";
-  case DEE_WIN32_HANDLETYPE_TYPE_THREAD         : return "THREAD";
-  case DEE_WIN32_HANDLETYPE_TYPE_EVENT          : return "EVENT";
-  case DEE_WIN32_HANDLETYPE_TYPE_EVENT_PAIR     : return "EVENT_PAIR";
-  case DEE_WIN32_HANDLETYPE_TYPE_MUTANT         : return "MUTANT";
-  case DEE_WIN32_HANDLETYPE_TYPE_SEMAPHORE      : return "SEMAPHORE";
-  case DEE_WIN32_HANDLETYPE_TYPE_TIMER          : return "TIMER";
-  case DEE_WIN32_HANDLETYPE_TYPE_PROFILE        : return "PROFILE";
-  case DEE_WIN32_HANDLETYPE_TYPE_WINDOW_STATION : return "WINDOW_STATION";
-  case DEE_WIN32_HANDLETYPE_TYPE_DESKTOP        : return "DESKTOP";
-  case DEE_WIN32_HANDLETYPE_TYPE_SECTION        : return "SECTION";
-  case DEE_WIN32_HANDLETYPE_TYPE_KEY            : return "KEY";
-  case DEE_WIN32_HANDLETYPE_TYPE_PORT           : return "PORT";
-  case DEE_WIN32_HANDLETYPE_TYPE_WAITABLE_PORT  : return "WAITABLE_PORT";
-  case DEE_WIN32_HANDLETYPE_TYPE_IO_COMPLETION  : return "IO_COMPLETION";
-  case DEE_WIN32_HANDLETYPE_TYPE_FILE           : return "FILE";
-  default: break;
- }
- return NULL;
-}
 
 #define DeeWin32_FreeSystemHandleInformation(info) free_nn(info)
 DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(NULL) SYSTEM_HANDLE_INFORMATION *)
 DeeWin32_CaptureSystemHandleInformation(void) {
  SYSTEM_HANDLE_INFORMATION *result,*newresult;
- DWORD size = 0x2000,needed;
- static LPNTQUERYSYSTEMINFORMATION pNtQuerySystemInformation = NULL;
+ ULONG size = 0x2000,needed; NTSTATUS error;
  DEE_ATOMIC_ONCE({
   *(FARPROC *)&pNtQuerySystemInformation = GetProcAddress(
    GetModuleHandleA("ntdll.dll"),"NtQuerySystemInformation");
@@ -171,24 +403,20 @@ DeeWin32_CaptureSystemHandleInformation(void) {
   return NULL;
  }
  // Query the needed buffer size for the objects (system wide)
- while ((*pNtQuerySystemInformation)(16,result,size,&needed) != 0) {
-  if DEE_UNLIKELY(needed == 0) { // No handles?
-   // TODO: This is probably meant for errors, right? (GetLastError()...)
+ while (1) {
+  error = (*pNtQuerySystemInformation)(SystemHandleInformation,result,size,&needed);
+  if (error == STATUS_INFO_LENGTH_MISMATCH) {
+   size *= 2;
+   newresult = (SYSTEM_HANDLE_INFORMATION*)realloc_nnz(result,size);
+   if DEE_UNLIKELY(!newresult) {/*err_r:*/ free_nn(result); return FALSE; }
+   result = newresult;
+  } else if (error != 0) {
    free_nn(result);
-   while ((result = (SYSTEM_HANDLE_INFORMATION*)malloc_nz(
-    Dee_OFFSETOF(SYSTEM_HANDLE_INFORMATION,Handles))) == NULL) {
-    if DEE_LIKELY(Dee_CollectMemory()) continue;
-    DeeError_NoMemory();
-    return NULL;
-   }
-   result->Count = 0;
-   return result;
-  }
-  VirtualFree(result,0,MEM_RELEASE);
-  size = needed+256;
-  newresult = (SYSTEM_HANDLE_INFORMATION*)realloc_nnz(result,size);
-  if DEE_UNLIKELY(!newresult) {/*err_r:*/ free_nn(result); return FALSE; }
-  result = newresult;
+   DeeError_SetStringf(&DeeErrorType_SystemError,
+                       "NtQuerySystemInformation(16,...) : %K",
+                       DeeSystemError_Win32ToString((DWORD)error));
+   return NULL;
+  } else break;
  }
  return result;
 }

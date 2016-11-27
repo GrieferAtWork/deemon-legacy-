@@ -96,6 +96,7 @@ gfpbh_again:
                                        VOLUME_NAME_DOS);
   if DEE_UNLIKELY(!error) {
    if ((error = GetLastError()) == 0) {
+    Dee_DECREF(result);
 #ifdef WIDE
     DeeReturn_EmptyWideString;
 #else
@@ -106,6 +107,7 @@ gfpbh_again:
                        "%s(%p,...,%Iu,VOLUME_NAME_DOS) : %K",sGetFinalPathNameByHandle,hFile,
                        DeeString_F(SIZE)(result),
                        DeeSystemError_Win32ToString(error));
+   Dee_DECREF(result);
    return NULL;
   }
   if ((Dee_size_t)error < DeeString_F(SIZE)(result)) {

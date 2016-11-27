@@ -31,6 +31,7 @@
 #include <deemon/vfs/vfs_proc_node.h>
 #include <deemon/vfs/vfs_root.h>
 #include <deemon/vfs/vfs_virtual_file.h>
+#include <deemon/sys/win32/sysfd.h>
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
@@ -375,15 +376,24 @@ struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cmdline = { /*< '/proc/[PID]/
 //////////////////////////////////////////////////////////////////////////
 static DEE_A_RET_EXCEPT(-1) int
 DeeWin32_GetSystemHandleFromHandleAndProcessID(SYSTEM_HANDLE *result, DWORD pid, WORD hid) {
- SYSTEM_HANDLE_INFORMATION *hinfo;
- SYSTEM_HANDLE *iter,*end;
+ SYSTEM_HANDLE_INFORMATION *hinfo; SYSTEM_HANDLE *iter,*end;
+ if (pid == GetCurrentProcessId()) {
+  result->ObjectTypeNumber = DeeWin32_GetEffectiveHandleTypeID((HANDLE)hid);
+  result->Handle = hid;
+  result->ProcessId = pid;
+  return 0;
+ } else if ((result->ObjectTypeNumber = DeeWin32_GetEffectivePHIDTypeID(pid,hid)) != 0xFF) {
+  result->Handle = hid;
+  result->ProcessId = pid;
+  return 0;
+ }
  // TODO: Is there some way of getting the handle information
  //       without having to re-query !!EVERYTHING!! ?
  hinfo = DeeWin32_CaptureSystemHandleInformation();
  if DEE_UNLIKELY(!hinfo) return -1;
  end = (iter = hinfo->Handles)+hinfo->Count;
  while (iter != end) {
-  if (iter->ProcessID == pid && iter->HandleNumber == hid) {
+  if (iter->ProcessId == pid && iter->Handle == hid) {
    *result = *iter;
    DeeWin32_FreeSystemHandleInformation(hinfo);
    return 0;
@@ -421,7 +431,7 @@ static struct DeeVFSProcPIDFDHIDNode *DEE_CALL _deevfs_procpidnode_fd_vnt_wwalk(
 static DeeObject *DEE_CALL _deevfs_procpidnode_fd_vnt_nameof(
  struct DeeVFSNode *DEE_UNUSED(self), struct DeeVFSProcPIDFDHIDNode *child) {
  DEE_ASSERT(child->vpfh_node.vn_type == &DeeVFSProcPIDNode_Type_fd_link);
- return DeeString_FromUInt16(child->vpfh_info.HandleNumber);
+ return DeeString_FromUInt16(child->vpfh_info.Handle);
 }
 static int DEE_CALL _deevfs_procpidnode_fd_vnt_open(struct DeeVFSProcPIDFDView *self) {
  DEE_ASSERTF(self->vpf_view.vv_node &&
@@ -447,7 +457,7 @@ static SYSTEM_HANDLE *DEE_CALL DeeVFSProcPIDFD_LocateNextHandle(
  do {
   result = (SYSTEM_HANDLE *)DeeAtomicPtr_Load(self->vpf_curr,memory_order_seq_cst);
   if (result < self->vpf_info->Handles || result >= self->vpf_end) return NULL;
-  should_return = result->ProcessID == self->vpf_pid && DeeWin32_CapturedHandleIsSupported(result);
+  should_return = result->ProcessId == self->vpf_pid && DeeWin32_CapturedHandleIsSupported(result);
   newpos = (advance || !should_return) ? result+1 : result;
  } while (!DeeAtomicPtr_CompareExchangeStrong(
   self->vpf_curr,result,newpos,
@@ -495,13 +505,27 @@ struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_fd = {
 //////////////////////////////////////////////////////////////////////////
 static DEE_A_RET_EXCEPT_REF DeeObject *
 DeeWin32_GetSystemHandleLink(SYSTEM_HANDLE const *h) {
+ BYTE type_id; HANDLE handle; int owns_handle;
+ DeeObject *result;
  DEE_ASSERT(h);
- // TODO: Proper, type-specific link names
- // e.g.: An actual file link if it's a FILE-handle
- return DeeString_Newf("%#I32x:%s:%#I16x",
-                       h->ProcessID,
-                       DeeWin32_GetSystemHandleTypeName(h->HandleType),
-                       h->HandleNumber);
+ type_id = DeeWin32_GetHandleType(h);
+ owns_handle = (h->ProcessId != GetCurrentProcessId());
+ if (owns_handle) handle = DeeWin32_SystemHandle_Open(h);
+ else handle = (HANDLE)h->Handle;
+ switch (type_id) {
+  // TODO: Proper, type-specific link names
+  // e.g.: An actual file link if it's a FILE-handle
+  case DEE_WIN32_HANDLETYPE_TYPE_FILE:
+   result = DeeWin32Sys_WideGetHandleFilename(handle);
+   if (!result && DeeError_Catch(&DeeErrorType_SystemError))
+    result = DeeString_Newf("[FILE %#.4I16x]",h->Handle);
+   break;
+  default:
+   result = DeeString_Newf("[??" "?(%#.4I16x)]",h->Handle);
+   break;
+ }
+ if (owns_handle) CloseHandle(handle);
+ return result;
 }
 static DeeObject *_deevfs_procpidnodefd_hid_vnt_readlink(struct DeeVFSProcPIDFDHIDNode *self) {
  return DeeWin32_GetSystemHandleLink(&self->vpfh_info);
