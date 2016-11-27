@@ -49,7 +49,7 @@ static int DEE_CALL _deevfs_virtualstdfilefile_vft_open(
 static struct _DeeVFSFileTypeData _deevfs_virtualstdfile_vft_file = {
  sizeof(struct DeeVFSNativeFile),// vnt_file
  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_virtualstdfilefile_vft_open,
- (void(DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_nativefile_quit,
+ (void(DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
  (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_nativefile_vft_read,
  (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_nativefile_vft_write,
  (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &_deevfs_nativefile_vft_seek,
