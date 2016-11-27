@@ -183,7 +183,9 @@ do{\
 do{\
  if DEE_UNLIKELY((*(Dee_ssize_t *)(rs) = (Dee_ssize_t)pread(fd,p,s,(off_t)(pos))) == -1) {\
   int _fd_error = errno;\
-  if (_fd_error != 0) {\
+  /* v Must be done to correctly handle writing to memory maps */\
+  if (_fd_error == EIO) *(ws) = 0;\
+  else if (_fd_error != 0) {\
    DeeError_SetStringf(&DeeErrorType_IOError,\
                        "pread(%d,%p,%Iu) : %K",\
                        fd,p,(Dee_size_t)(s),\
@@ -199,7 +201,9 @@ do{\
 do{\
  if DEE_UNLIKELY((*(Dee_ssize_t *)(rs) = (Dee_ssize_t)pwrite(fd,p,s,(off_t)(pos))) == -1) {\
   int _fd_error = errno;\
-  if (_fd_error != 0) {\
+  /* v Must be done to correctly handle writing to memory maps */\
+  if (_fd_error == EIO) *(ws) = 0;\
+  else if (_fd_error != 0) {\
    DeeError_SetStringf(&DeeErrorType_IOError,\
                        "pwrite(%d,%p,%Iu) : %K",\
                        fd,p,(Dee_size_t)(s),\
@@ -353,7 +357,7 @@ do{\
 DEE_STATIC_INLINE(void) _deeunix_quick_itos(char *out, int v) {
  int used_v = v,len = 0; char *used_out;
  do ++len; while ((used_v /= 10) != 0);
- used_v = v,used_out = out+len;
+ used_v = v,used_out = out+len,*used_out = 0;
  do *--out = '0'+(used_v%10); while ((used_v /= 10) != 0);
 }
 
