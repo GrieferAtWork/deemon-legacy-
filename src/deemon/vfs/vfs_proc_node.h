@@ -107,6 +107,8 @@ struct DeeVFSProcPIDMemFile {
 };
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_mem;     /*< '/proc/[PID]/mem' */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM */
+// TODO: /proc/[PID]/maps
+//    >> http://reverseengineering.stackexchange.com/questions/8297/proc-self-maps-equivalent-on-windows
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_root;    /*< '/proc/[PID]/root' */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT */

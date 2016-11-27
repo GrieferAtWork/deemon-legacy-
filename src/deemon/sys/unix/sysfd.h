@@ -126,7 +126,8 @@ do{\
  if DEE_UNLIKELY(_fd_newpos == -1) {\
   int _fd_error = errno;\
   if (_fd_error != 0) {\
-   if (_fd_error == ESPIPE) {\
+   if (_fd_error == ESPIPE || /*< can't seek | v can't seek to end of file */\
+      (_fd_error == EINVAL && (off) == 0 && (whence) == SEEK_END)) {\
     DeeError_NotImplemented_str("seek");\
    } else {\
     DeeError_SetStringf(&DeeErrorType_IOError,\
@@ -146,7 +147,9 @@ do{\
 do{\
  if DEE_UNLIKELY((*(Dee_ssize_t *)(rs) = (Dee_ssize_t)read(fd,p,s)) == -1) {\
   int _fd_error = errno;\
-  if (_fd_error != 0) {\
+  /* v Must be done to correctly handle reading from memory maps */\
+  if (_fd_error == EIO) *(rs) = 0;\
+  else if (_fd_error != 0) {\
    DeeError_SetStringf(&DeeErrorType_IOError,\
                        "read(%d,%p,%Iu) : %K",\
                        fd,p,(Dee_size_t)(s),\
@@ -162,7 +165,9 @@ do{\
 do{\
  if DEE_UNLIKELY((*(Dee_ssize_t *)(ws) = (Dee_ssize_t)write(fd,p,s)) == -1) {\
   int _fd_error = errno;\
-  if (_fd_error != 0) {\
+  /* v Must be done to correctly handle writing to memory maps */\
+  if (_fd_error == EIO) *(ws) = 0;\
+  else if (_fd_error != 0) {\
    DeeError_SetStringf(&DeeErrorType_IOError,\
                        "write(%d,%p,%Iu:%.*q) : %K",\
                        fd,p,(Dee_size_t)(s),(unsigned)(s),p,\
