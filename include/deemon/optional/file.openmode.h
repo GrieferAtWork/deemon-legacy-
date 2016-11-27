@@ -37,6 +37,8 @@ typedef DEE_TYPES_UINT16_T Dee_openmode_t;                // =file_state= | =per
 #define DEE_OPENMODE_ISAPPEND(mode)  (((mode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_APPEND)
 #define DEE_OPENMODE_ISCREATE(mode)  (((mode)&DEE_OPENMODE_MASKMODE)==DEE_OPENMODE_CREATE)
 #define DEE_OPENMODE_HASUPDATE(mode) (((mode)&DEE_OPENMODE_FLAG_UPDATE)!=0)
+#define DEE_OPENMODE_HASREAD(mode)   (DEE_OPENMODE_ISREAD(mode)||DEE_OPENMODE_HASUPDATE(mode))
+#define DEE_OPENMODE_HASWRITE(mode)  (DEE_OPENMODE_ISWRITE(mode)||DEE_OPENMODE_HASUPDATE(mode))
 
 //////////////////////////////////////////////////////////////////////////
 // >> Dee_openmode_t DEE_OPENMODE(char rwa, bool update);

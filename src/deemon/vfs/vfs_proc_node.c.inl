@@ -240,6 +240,9 @@ enum{
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_FD
  DEE_VFSPROCPID_MEMBER_FD,
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_FD */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM
+ DEE_VFSPROCPID_MEMBER_MEM,
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT
  DEE_VFSPROCPID_MEMBER_ROOT,
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT */
@@ -262,6 +265,9 @@ static unsigned int DeeVFSProcPIDNode_GetMemberID(char const *name, Dee_size_t n
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_FD
  if (CHECK("fd")) return DEE_VFSPROCPID_MEMBER_FD;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_FD */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM
+ if (CHECK("mem")) return DEE_VFSPROCPID_MEMBER_MEM;
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT
  if (CHECK("root")) return DEE_VFSPROCPID_MEMBER_ROOT;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT */
@@ -296,6 +302,9 @@ static struct DeeVFSNode *DeeVFSProcPIDNode_GetMember(
    node_type = &DeeVFSProcPIDNode_Type_fd;
    break;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_FD */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM
+  case DEE_VFSPROCPID_MEMBER_MEM: node_type = &DeeVFSProcPIDNode_Type_mem; break;
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT
   case DEE_VFSPROCPID_MEMBER_ROOT: node_type = &DeeVFSProcPIDNode_Type_root; break;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT */
@@ -320,6 +329,9 @@ static DeeObject *DEE_CALL _deevfs_procpidnode_nameof(
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_EXE
  if (node_type == &DeeVFSProcPIDNode_Type_exe) DeeReturn_STATIC_STRING("exe");
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_EXE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM
+ if (node_type == &DeeVFSProcPIDNode_Type_mem) DeeReturn_STATIC_STRING("mem");
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT
  if (node_type == &DeeVFSProcPIDNode_Type_root) DeeReturn_STATIC_STRING("root");
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT */
@@ -426,6 +438,100 @@ struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe = { /*< '/proc/[PID]/exe'
  {NULL,(DeeObject *(DEE_CALL *)(struct DeeVFSNode *))&_deevfs_procpidnode_exe_readlink},
  NULL,DeeVFSNoopNodeType_FileData,NULL};
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_EXE */
+//////////////////////////////////////////////////////////////////////////
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM
+static int DEE_CALL _deevfs_procpidnode_mem_vft_open(
+ struct DeeVFSProcPIDMemFile *self, Dee_openmode_t openmode, Dee_mode_t DEE_UNUSED(permissions)) {
+ DWORD rights,pid; DeeObject *process;
+ DEE_ASSERT(self->vpm_file.vf_node->vn_parent &&
+            self->vpm_file.vf_node->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ process = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vpm_file.vf_node->vn_parent)->vpn_proc;
+ pid = DeeProcess_ID(process),rights = 0; // Calculate required permissions
+ if (DEE_OPENMODE_HASREAD(openmode)) rights |= PROCESS_VM_READ;
+ if (DEE_OPENMODE_HASWRITE(openmode)) rights |= PROCESS_VM_WRITE;
+ // Open the process with the requested rights
+ if ((self->vpm_proc = OpenProcess(rights,FALSE,pid)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_IOError,
+                      "OpenProcess(%lu,FALSE,%lu) : %K",rights,pid,
+                      DeeSystemError_Win32ToString(GetLastError()));
+  return -1;
+ }
+ self->vpm_addr = 0;
+ return 0;
+}
+static void DEE_CALL _deevfs_procpidnode_mem_vft_quit(
+ struct DeeVFSProcPIDMemFile *self) {
+ // Close the process handle
+ CloseHandle(self->vpm_proc);
+}
+static int  DEE_CALL _deevfs_procpidnode_mem_vft_read(
+ struct DeeVFSProcPIDMemFile *self, void *p, Dee_size_t s, Dee_size_t *rs) {
+ // TODO: WOW64
+ if (!ReadProcessMemory(self->vpm_proc,(LPCVOID)self->vpm_addr,p,(SIZE_T)s,(SIZE_T *)rs)) {
+  DWORD error = GetLastError();
+  if (error != ERROR_PARTIAL_COPY) {
+   DeeError_SetStringf(&DeeErrorType_IOError,
+                       "ReadProcessMemory(%p,%p,%p,%Iu,...) : %K",
+                       self->vpm_proc,(LPCVOID)self->vpm_addr,p,(SIZE_T)s,
+                       DeeSystemError_Win32ToString(error));
+   return -1;
+  }
+ }
+ self->vpm_addr += (Dee_uint64_t)*rs;
+ return 0;
+}
+static int  DEE_CALL _deevfs_procpidnode_mem_vft_write(
+ struct DeeVFSProcPIDMemFile *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
+ // TODO: WOW64
+ if (!WriteProcessMemory(self->vpm_proc,(LPVOID)self->vpm_addr,p,(SIZE_T)s,(SIZE_T *)ws)) {
+  DWORD error = GetLastError();
+  if (error != ERROR_PARTIAL_COPY) {
+   DeeError_SetStringf(&DeeErrorType_IOError,
+                       "WriteProcessMemory(%p,%p,%p,%Iu,...) : %K",
+                       self->vpm_proc,(LPVOID)self->vpm_addr,p,(SIZE_T)s,
+                       DeeSystemError_Win32ToString(GetLastError()));
+   return -1;
+  }
+ }
+ self->vpm_addr += (Dee_uint64_t)*ws;
+ return 0;
+}
+static int DEE_CALL _deevfs_procpidnode_mem_vft_seek(
+ struct DeeVFSProcPIDMemFile *self, Dee_int64_t off, int whence, Dee_uint64_t *pos) {
+ Dee_uint64_t new_addr;
+ // TODO: WOW64
+ switch (whence) {
+  case DEE_SEEK_SET: new_addr = *(Dee_uint64_t *)&off; break;
+  case DEE_SEEK_CUR:
+   if (off < 0 && (Dee_uint64_t)-off > self->vpm_addr) {
+    DeeError_SET_STRING(&DeeErrorType_IOError,"Negative seek position");
+    return -1;
+   }
+   *(Dee_int64_t *)&new_addr = (*(Dee_int64_t *)&self->vpm_addr)+off;
+   break;
+  default:
+   DeeError_SetStringf(&DeeErrorType_NotImplemented,
+                       "Unsupported seek mode for virtual memory file: %d",
+                       whence);
+   return -1;
+ }
+ self->vpm_addr = new_addr;
+ if (pos) *pos = new_addr;
+ return 0;
+}
+static struct _DeeVFSFileTypeData _deevfs_procpidnode_mem_vnt_file = {
+ sizeof(struct DeeVFSVirtualFile),
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_procpidnode_mem_vft_open,
+ (void(DEE_CALL *)(struct DeeVFSFile *))                                     &_deevfs_procpidnode_mem_vft_quit,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_procpidnode_mem_vft_read,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_procpidnode_mem_vft_write,
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      &_deevfs_procpidnode_mem_vft_seek,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+};
+struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_mem = { /*< '/proc/[PID]/root' */
+ {NULL,NULL},NULL,&_deevfs_procpidnode_mem_vnt_file,NULL};
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM */
 //////////////////////////////////////////////////////////////////////////
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT
 static DeeObject *DEE_CALL _deevfs_procpidnode_root_readlink(struct DeeVFSNode *self) {
@@ -831,7 +937,7 @@ static int DEE_CALL _deevfs_procpidnodew32_closefd_vft_write(
   return -1;
 #endif
  } else if ((hProcess = OpenProcess(PROCESS_DUP_HANDLE,FALSE,pid)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "OpenProcess(PROCESS_DUP_HANDLE,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
   return -1;
@@ -860,7 +966,7 @@ err: CloseHandle(hProcess); return -1;
      // NOPE! Didn't work...
      error = GetLastError();
     }
-    DeeError_SetStringf(&DeeErrorType_SystemError,
+    DeeError_SetStringf(&DeeErrorType_IOError,
                         "DuplicateHandle(%p,%p,%p,...,0,FALSE,DUPLICATE_CLOSE_SOURCE) : %K",
                         hProcess,(HANDLE)hid,hMyProcess,
                         DeeSystemError_Win32ToString(error));
@@ -898,13 +1004,13 @@ static int DEE_CALL _deevfs_procpidnodew32_exitcode_vft_read(
  pid = DeeProcess_ID(proc);
  if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL
               && (hProcess = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,pid)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
   return -1;
  }
  if DEE_UNLIKELY(!GetExitCodeProcess(hProcess,&result)) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "GetExitCodeProcess(%p,...) : %K",
                       hProcess,DeeSystemError_Win32ToString(GetLastError()));
   CloseHandle(hProcess);
@@ -943,13 +1049,13 @@ static int DEE_CALL _deevfs_procpidnodew32_priorityboost_vft_read(
  pid = DeeProcess_ID(proc);
  if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL
               && (hProcess = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,pid)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
   return -1;
  }
  if DEE_UNLIKELY(!GetProcessPriorityBoost(hProcess,&result)) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "GetProcessPriorityBoost(%p,...) : %K",
                       hProcess,DeeSystemError_Win32ToString(GetLastError()));
   CloseHandle(hProcess);
@@ -972,13 +1078,13 @@ static int DEE_CALL _deevfs_procpidnodew32_priorityboost_vft_write(
  while (begin != end && DEE_CH_IS_SPACE(end[-1])) --end;
  if (DeeString_ToNumberWithLength(int,(Dee_size_t)(end-begin),begin,&value) != 0) return -1;
  if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_SET_INFORMATION,FALSE,pid)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "OpenProcess(PROCESS_SET_INFORMATION,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
   return -1;
  }
  if DEE_UNLIKELY(!SetProcessPriorityBoost(hProcess,value ? FALSE : TRUE)) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "SetProcessPriorityBoost(%p,%s) : %K",
                       hProcess,value ? "FALSE" : "TRUE",
                       DeeSystemError_Win32ToString(GetLastError()));
@@ -1014,13 +1120,13 @@ static int DEE_CALL _deevfs_procpidnodew32_priorityclass_vft_read(
  pid = DeeProcess_ID(proc);
  if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL
               && (hProcess = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,pid)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
   return -1;
  }
  if DEE_UNLIKELY((result = GetPriorityClass(hProcess)) == 0) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "GetPriorityClass(%p) : %K",hProcess,
                       DeeSystemError_Win32ToString(GetLastError()));
   CloseHandle(hProcess);
@@ -1048,13 +1154,13 @@ static int DEE_CALL _deevfs_procpidnodew32_priorityclass_vft_write(
  if (DeeString_ToNumberWithLength(DWORD,(Dee_size_t)(
   end-begin),begin,(Dee_uint32_t *)&value) != 0) return -1;
  if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_SET_INFORMATION,FALSE,pid)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "OpenProcess(PROCESS_SET_INFORMATION,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
   return -1;
  }
  if DEE_UNLIKELY(!SetPriorityClass(hProcess,value)) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "SetProcessPriority(%p,%lu) : %K",hProcess,value,
                       DeeSystemError_Win32ToString(GetLastError()));
   CloseHandle(hProcess);
@@ -1100,13 +1206,13 @@ static int DEE_CALL _deevfs_procpidnodew32_terminate_vft_write(
  }
 #endif /* !DEE_CONFIG_RUNTIME_HAVE_EXIT */
  if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_TERMINATE,FALSE,pid)) == NULL) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "OpenProcess(PROCESS_TERMINATE,FALSE,%lu) : %K",
                       pid,DeeSystemError_Win32ToString(GetLastError()));
   return -1;
  }
  if DEE_UNLIKELY(!TerminateProcess(hProcess,exitcode)) {
-  DeeError_SetStringf(&DeeErrorType_SystemError,
+  DeeError_SetStringf(&DeeErrorType_IOError,
                       "TerminateProcess(%p,%u) : %K",hProcess,exitcode,
                       DeeSystemError_Win32ToString(GetLastError()));
   CloseHandle(hProcess);

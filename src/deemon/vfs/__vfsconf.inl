@@ -49,6 +49,7 @@
 #define DEE_VFSCONFIG_HAVEFILE_PROC_PID_FD                DEE_VFSCONFIG_HAVEFILE_PROC_PID     /*< fs::exists("/proc/[PID]/fd"). */
 #define DEE_VFSCONFIG_HAVE_PROC_PID_FD_ENUMFDS            DEE_VFSCONFIG_HAVEFILE_PROC_PID_FD  /*< fs::dir("/proc/[PID]/fd"). */
 #define DEE_VFSCONFIG_HAVE_PROC_PID_FD_NOSELF             DEE_VFSCONFIG_HAVEFILE_PROC_PID_FD  /*< "/proc/[PID]/fd" is available for any process and not just "/proc/self" */
+#define DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM               DEE_VFSCONFIG_HAVEFILE_PROC_PID     /*< fs::exists("/proc/[PID]/mem"). */
 #define DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT              DEE_VFSCONFIG_HAVEFILE_PROC_PID     /*< fs::exists("/proc/[PID]/root"). */
 #define DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32               DEE_VFSCONFIG_HAVEFILE_PROC_PID     /*< fs::exists("/proc/[PID]/w32"). */
 #define DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_CLOSEFD       DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32 /*< fs::exists("/proc/[PID]/w32/closefd"). */

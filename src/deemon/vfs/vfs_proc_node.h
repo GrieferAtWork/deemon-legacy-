@@ -99,6 +99,14 @@ extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_cwd;     /*< '/proc/[P
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_EXE
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_exe;     /*< '/proc/[PID]/exe' */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_EXE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM
+struct DeeVFSProcPIDMemFile {
+ struct DeeVFSFile           vpm_file; /*< Underlying file. */
+ HANDLE                      vpm_proc; /*< [1..1] Associated process handle (with 'PROCESS_VM_WRITE'/'PROCESS_VM_READ' rights). */
+ Dee_uint64_t                vpm_addr; /*< Address offset (64-bit to accommodate for x64 from x86; aka. WOW64). */
+};
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_mem;     /*< '/proc/[PID]/mem' */
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_MEM */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_root;    /*< '/proc/[PID]/root' */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_ROOT */
