@@ -124,6 +124,9 @@ struct DeeVFSNodeType {
 };
 extern struct _DeeVFSFileTypeData _DeeVFSNoopNodeType_FileData;
 #define DeeVFSNoopNodeType_FileData (&_DeeVFSNoopNodeType_FileData)
+extern int DEE_CALL _deevfs_genericfile_openreadonly(struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t permissions);
+extern int DEE_CALL _deevfs_genericfile_openwriteonly(struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t permissions);
+
 
 
 #define DeeVFSNodeType_AllocFile(self) ((struct DeeVFSFile *)(DEE_ASSERTF((self)->vnt_file.vft_size,"Node type doesn't support file-routines"),malloc_nz((self)->vnt_file.vft_size)))

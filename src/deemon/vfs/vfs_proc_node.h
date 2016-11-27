@@ -131,6 +131,9 @@ extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32;          /*< '/pr
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_CLOSEFD
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_closefd;  /*< '/proc/[PID]/w32/closefd' */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_CLOSEFD */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_exitcode; /*< '/proc/[PID]/w32/exitcode' */
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32 */
 //////////////////////////////////////////////////////////////////////////
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID */

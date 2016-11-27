@@ -285,6 +285,28 @@ struct _DeeVFSFileTypeData _DeeVFSNoopNodeType_FileData = {
  sizeof(struct DeeVFSFile),&_deevfs_noopnode_vft_open,
  NULL,NULL,NULL,NULL,NULL,NULL};
 
+int DEE_CALL _deevfs_genericfile_openreadonly(
+ struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t DEE_UNUSED(permissions)) {
+ if (!DEE_OPENMODE_ISREAD(openmode)) {
+  DeeError_SetStringf(&DeeErrorType_IOError,
+                      "Virtual file %R is read-only",
+                      DeeVFSNode_Filename(self->vf_node));
+  return -1;
+ }
+ return 0;
+}
+int DEE_CALL _deevfs_genericfile_openwriteonly(
+ struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t DEE_UNUSED(permissions)) {
+ if (DEE_OPENMODE_ISREAD(openmode)) {
+  DeeError_SetStringf(&DeeErrorType_IOError,
+                      "Virtual file %R is write-only",
+                      DeeVFSNode_Filename(self->vf_node));
+  return -1;
+ }
+ return 0;
+}
+
+
 
 
 DEE_DECL_END
