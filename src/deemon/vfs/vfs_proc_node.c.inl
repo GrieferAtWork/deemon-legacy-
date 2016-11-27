@@ -676,6 +676,12 @@ enum{
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
  DEE_VFSPROCPIDWIN32_MEMBER_EXITCODE,
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST
+ DEE_VFSPROCPIDWIN32_MEMBER_PRIORITYBOOST,
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS
+ DEE_VFSPROCPIDWIN32_MEMBER_PRIORITYCLASS,
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
  DEE_VFSPROCPIDWIN32_MEMBER_TERMINATE,
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
@@ -689,6 +695,12 @@ static unsigned int DeeVFSProcPIDWin32Node_GetMemberID(char const *name, Dee_siz
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
  if (CHECK("exitcode")) return DEE_VFSPROCPIDWIN32_MEMBER_EXITCODE;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST
+ if (CHECK("priority_boost")) return DEE_VFSPROCPIDWIN32_MEMBER_PRIORITYBOOST;
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS
+ if (CHECK("priority_class")) return DEE_VFSPROCPIDWIN32_MEMBER_PRIORITYCLASS;
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
  if (CHECK("terminate")) return DEE_VFSPROCPIDWIN32_MEMBER_TERMINATE;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
@@ -705,6 +717,12 @@ static struct DeeVFSNode *DeeVFSProcPIDWin32Node_GetMember(
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
   case DEE_VFSPROCPIDWIN32_MEMBER_EXITCODE: node_type = &DeeVFSProcPIDNode_Type_w32_exitcode; break;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST
+  case DEE_VFSPROCPIDWIN32_MEMBER_PRIORITYBOOST: node_type = &DeeVFSProcPIDNode_Type_w32_priorityboost; break;
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS
+  case DEE_VFSPROCPIDWIN32_MEMBER_PRIORITYCLASS: node_type = &DeeVFSProcPIDNode_Type_w32_priorityclass; break;
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
   case DEE_VFSPROCPIDWIN32_MEMBER_TERMINATE: node_type = &DeeVFSProcPIDNode_Type_w32_terminate; break;
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
@@ -735,6 +753,12 @@ static DeeObject *DEE_CALL _deevfs_procpidnode_w32_vnt_nameof(
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
  if (node_type == &DeeVFSProcPIDNode_Type_w32_exitcode) DeeReturn_STATIC_STRING("exitcode");
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST
+ if (node_type == &DeeVFSProcPIDNode_Type_w32_priorityboost) DeeReturn_STATIC_STRING("priority_boost");
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS
+ if (node_type == &DeeVFSProcPIDNode_Type_w32_priorityclass) DeeReturn_STATIC_STRING("priority_class");
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
  if (node_type == &DeeVFSProcPIDNode_Type_w32_terminate) DeeReturn_STATIC_STRING("terminate");
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
@@ -906,6 +930,150 @@ static struct _DeeVFSFileTypeData _deevfs_procpidnodew32_exitcode_vnt_file = {
 struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_exitcode = {
  {NULL,NULL},NULL,&_deevfs_procpidnodew32_exitcode_vnt_file,NULL};
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+//////////////////////////////////////////////////////////////////////////
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST
+static int DEE_CALL _deevfs_procpidnodew32_priorityboost_vft_read(
+ struct DeeVFSFile *self, void *p, Dee_size_t s, Dee_size_t *rs) {
+ DeeObject *proc; DWORD pid; HANDLE hProcess; BOOL result;
+ DEE_ASSERT(self->vf_node->vn_type == &DeeVFSProcPIDNode_Type_w32_priorityboost);
+ DEE_ASSERT(self->vf_node->vn_parent && self->vf_node->vn_parent->vn_type == &DeeVFSProcPIDNode_Type_w32);
+ DEE_ASSERT(self->vf_node->vn_parent->vn_parent && self->vf_node->vn_parent->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ proc = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vf_node->vn_parent->vn_parent)->vpn_proc;
+ pid = DeeProcess_ID(proc);
+ if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,%lu) : %K",
+                      pid,DeeSystemError_Win32ToString(GetLastError()));
+  return -1;
+ }
+ if DEE_UNLIKELY(!GetProcessPriorityBoost(hProcess,&result)) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "GetProcessPriorityBoost(%p,...) : %K",
+                      hProcess,DeeSystemError_Win32ToString(GetLastError()));
+  CloseHandle(hProcess);
+  return -1;
+ }
+ CloseHandle(hProcess);
+ if ((*rs = (Dee_size_t)(s ? 1 : 0)) != 0) *(char *)p = result ? '0' : '1';
+ return 0;
+}
+static int DEE_CALL _deevfs_procpidnodew32_priorityboost_vft_write(
+ struct DeeVFSFile *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
+ int value; char const *begin,*end; DeeObject *proc; DWORD pid; HANDLE hProcess;
+ DEE_ASSERT(self->vf_node->vn_type == &DeeVFSProcPIDNode_Type_w32_priorityboost);
+ DEE_ASSERT(self->vf_node->vn_parent && self->vf_node->vn_parent->vn_type == &DeeVFSProcPIDNode_Type_w32);
+ DEE_ASSERT(self->vf_node->vn_parent->vn_parent && self->vf_node->vn_parent->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ proc = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vf_node->vn_parent->vn_parent)->vpn_proc;
+ pid = DeeProcess_ID(proc);
+ end = (begin = (char const *)p)+s;
+ while (begin != end && DEE_CH_IS_SPACE(begin[0])) ++begin;
+ while (begin != end && DEE_CH_IS_SPACE(end[-1])) --end;
+ if (DeeString_ToNumberWithLength(int,(Dee_size_t)(end-begin),begin,&value) != 0) return -1;
+ if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_SET_INFORMATION,FALSE,pid)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "OpenProcess(PROCESS_SET_INFORMATION,FALSE,%lu) : %K",
+                      pid,DeeSystemError_Win32ToString(GetLastError()));
+  return -1;
+ }
+ if DEE_UNLIKELY(!SetProcessPriorityBoost(hProcess,value ? FALSE : TRUE)) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "SetProcessPriorityBoost(%p,%s) : %K",
+                      hProcess,value ? "FALSE" : "TRUE",
+                      DeeSystemError_Win32ToString(GetLastError()));
+  CloseHandle(hProcess);
+  return -1;
+ }
+ CloseHandle(hProcess);
+ *ws = s;
+ return 0;
+}
+static struct _DeeVFSFileTypeData _deevfs_procpidnodew32_priorityboost_vnt_file = {
+ sizeof(struct DeeVFSFile),
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_genericfile_openreadwrite,
+ (void(DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_procpidnodew32_priorityboost_vft_read,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_procpidnodew32_priorityboost_vft_write,
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+};
+struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_priorityboost = {
+ {NULL,NULL},NULL,&_deevfs_procpidnodew32_priorityboost_vnt_file,NULL};
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST */
+//////////////////////////////////////////////////////////////////////////
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS
+static int DEE_CALL _deevfs_procpidnodew32_priorityclass_vft_read(
+ struct DeeVFSFile *self, void *p, Dee_size_t s, Dee_size_t *rs) {
+ DeeObject *proc,*result_str; DWORD pid; HANDLE hProcess; DWORD result;
+ DEE_ASSERT(self->vf_node->vn_type == &DeeVFSProcPIDNode_Type_w32_priorityclass);
+ DEE_ASSERT(self->vf_node->vn_parent && self->vf_node->vn_parent->vn_type == &DeeVFSProcPIDNode_Type_w32);
+ DEE_ASSERT(self->vf_node->vn_parent->vn_parent && self->vf_node->vn_parent->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ proc = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vf_node->vn_parent->vn_parent)->vpn_proc;
+ pid = DeeProcess_ID(proc);
+ if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,%lu) : %K",
+                      pid,DeeSystemError_Win32ToString(GetLastError()));
+  return -1;
+ }
+ if DEE_UNLIKELY((result = GetPriorityClass(hProcess)) == 0) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "GetPriorityClass(%p) : %K",hProcess,
+                      DeeSystemError_Win32ToString(GetLastError()));
+  CloseHandle(hProcess);
+  return -1;
+ }
+ CloseHandle(hProcess);
+ result_str = DeeString_FromUInt32(result);
+ if DEE_UNLIKELY(!result_str) return -1;
+ *rs = DeeString_SIZE(result_str) > s ? s : DeeString_SIZE(result_str);
+ memcpy(p,DeeString_STR(result_str),*rs);
+ Dee_DECREF(result_str);
+ return 0;
+}
+static int DEE_CALL _deevfs_procpidnodew32_priorityclass_vft_write(
+ struct DeeVFSFile *self, void const *p, Dee_size_t s, Dee_size_t *ws) {
+ DWORD value; char const *begin,*end; DeeObject *proc; DWORD pid; HANDLE hProcess;
+ DEE_ASSERT(self->vf_node->vn_type == &DeeVFSProcPIDNode_Type_w32_priorityclass);
+ DEE_ASSERT(self->vf_node->vn_parent && self->vf_node->vn_parent->vn_type == &DeeVFSProcPIDNode_Type_w32);
+ DEE_ASSERT(self->vf_node->vn_parent->vn_parent && self->vf_node->vn_parent->vn_parent->vn_type == &DeeVFSProcPIDNode_Type);
+ proc = (DeeObject *)((struct DeeVFSProcPIDNode *)self->vf_node->vn_parent->vn_parent)->vpn_proc;
+ pid = DeeProcess_ID(proc);
+ end = (begin = (char const *)p)+s;
+ while (begin != end && DEE_CH_IS_SPACE(begin[0])) ++begin;
+ while (begin != end && DEE_CH_IS_SPACE(end[-1])) --end;
+ if (DeeString_ToNumberWithLength(DWORD,(Dee_size_t)(
+  end-begin),begin,(Dee_uint32_t *)&value) != 0) return -1;
+ if DEE_UNLIKELY((hProcess = OpenProcess(PROCESS_SET_INFORMATION,FALSE,pid)) == NULL) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "OpenProcess(PROCESS_SET_INFORMATION,FALSE,%lu) : %K",
+                      pid,DeeSystemError_Win32ToString(GetLastError()));
+  return -1;
+ }
+ if DEE_UNLIKELY(!SetPriorityClass(hProcess,value)) {
+  DeeError_SetStringf(&DeeErrorType_SystemError,
+                      "SetProcessPriority(%p,%lu) : %K",hProcess,value,
+                      DeeSystemError_Win32ToString(GetLastError()));
+  CloseHandle(hProcess);
+  return -1;
+ }
+ CloseHandle(hProcess);
+ *ws = s;
+ return 0;
+}
+static struct _DeeVFSFileTypeData _deevfs_procpidnodew32_priorityclass_vnt_file = {
+ sizeof(struct DeeVFSFile),
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_openmode_t,Dee_mode_t))           &_deevfs_genericfile_openreadwrite,
+ (void(DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void *,Dee_size_t,Dee_size_t *))      &_deevfs_procpidnodew32_priorityclass_vft_read,
+ (int (DEE_CALL *)(struct DeeVFSFile *,void const *,Dee_size_t,Dee_size_t *))&_deevfs_procpidnodew32_priorityclass_vft_write,
+ (int (DEE_CALL *)(struct DeeVFSFile *,Dee_int64_t,int,Dee_uint64_t *))      NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+ (int (DEE_CALL *)(struct DeeVFSFile *))                                     NULL,
+};
+struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_priorityclass = {
+ {NULL,NULL},NULL,&_deevfs_procpidnodew32_priorityclass_vnt_file,NULL};
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS */
 //////////////////////////////////////////////////////////////////////////
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
 static int DEE_CALL _deevfs_procpidnodew32_terminate_vft_write(

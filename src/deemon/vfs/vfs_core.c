@@ -297,9 +297,19 @@ int DEE_CALL _deevfs_genericfile_openreadonly(
 }
 int DEE_CALL _deevfs_genericfile_openwriteonly(
  struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t DEE_UNUSED(permissions)) {
- if (DEE_OPENMODE_ISREAD(openmode)) {
+ if (!DEE_OPENMODE_ISWRITE(openmode)) {
   DeeError_SetStringf(&DeeErrorType_IOError,
                       "Virtual file %R is write-only",
+                      DeeVFSNode_Filename(self->vf_node));
+  return -1;
+ }
+ return 0;
+}
+int DEE_CALL _deevfs_genericfile_openreadwrite(
+ struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t DEE_UNUSED(permissions)) {
+ if (!DEE_OPENMODE_ISREAD(openmode) && !DEE_OPENMODE_ISWRITE(openmode)) {
+  DeeError_SetStringf(&DeeErrorType_IOError,
+                      "Virtual file %R is read/write",
                       DeeVFSNode_Filename(self->vf_node));
   return -1;
  }

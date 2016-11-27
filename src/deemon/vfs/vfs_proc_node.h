@@ -134,6 +134,12 @@ extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_closefd;   /*< '/p
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_exitcode;  /*< '/proc/[PID]/w32/exitcode' */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_EXITCODE */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_priorityboost; /*< '/proc/[PID]/w32/priority_boost' */
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYBOOST */
+#if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS
+extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_priorityclass; /*< '/proc/[PID]/w32/priority' */
+#endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_PRIORITYCLASS */
 #if DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE
 extern struct DeeVFSNodeType const DeeVFSProcPIDNode_Type_w32_terminate; /*< '/proc/[PID]/w32/terminate' */
 #endif /* DEE_VFSCONFIG_HAVEFILE_PROC_PID_W32_TERMINATE */
