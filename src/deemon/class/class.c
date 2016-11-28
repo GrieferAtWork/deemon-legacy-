@@ -328,7 +328,7 @@ static int _deeinstance_tp_seq_iter_next(DeeInstanceObject *self, DeeObject **re
 
 // Slot: tp_str
 static DeeObject * _deeinstance_tp_str(DeeInstanceObject *self) {
- DeeObject *result;
+ DeeObject *result,*newresult;
  DEE_ASSERT(DeeObject_Check(self) && DeeInstance_Check(self));
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
  DEE_ASSERTF(DeeObject_Check(DeeClass_SUFFIX(Dee_TYPE(self))->cs_cast.ctp_str),"Missing slot: tp_str");
@@ -337,18 +337,21 @@ static DeeObject * _deeinstance_tp_str(DeeInstanceObject *self) {
  result = DeeObject_ThisCall(DeeClassSuffix_GetKnownVirtOperator(DeeClass_SUFFIX(Dee_TYPE(self)),DeeType_SLOT_ID(tp_str)),(DeeObject *)self,Dee_EmptyTuple);
 #endif
  if DEE_UNLIKELY(result && !DeeString_Check(result)) {
-  DeeError_SetStringf(&DeeErrorType_TypeError,
-                      "%#q.operator __str__() returned an instance of %q instead of a string",
-                      DeeType_NAME(Dee_TYPE(self)),DeeType_NAME(Dee_TYPE(result)));
+  if DEE_UNLIKELY((newresult = DeeString_Cast(result)) == NULL
+                && DeeError_Catch(&DeeErrorType_TypeError)) {
+   DeeError_SetStringf(&DeeErrorType_TypeError,
+                       "%#q.operator __str__() returned an instance of %q instead of a string",
+                       DeeType_NAME(Dee_TYPE(self)),DeeType_NAME(Dee_TYPE(result)));
+  }
   Dee_DECREF(result);
-  return NULL;
+  return newresult;
  }
  return result;
 }
 
 // Slot: tp_repr
 static DeeObject * _deeinstance_tp_repr(DeeInstanceObject *self) {
- DeeObject *result;
+ DeeObject *result,*newresult;
  DEE_ASSERT(DeeObject_Check(self) && DeeInstance_Check(self));
 #if DEE_CONFIG_RUNTIME_HAVE_CLASS_STATIC_VTABLE
  DEE_ASSERTF(DeeObject_Check(DeeClass_SUFFIX(Dee_TYPE(self))->cs_cast.ctp_repr),"Missing slot: tp_repr");
@@ -357,11 +360,14 @@ static DeeObject * _deeinstance_tp_repr(DeeInstanceObject *self) {
  result = DeeObject_ThisCall(DeeClassSuffix_GetKnownVirtOperator(DeeClass_SUFFIX(Dee_TYPE(self)),DeeType_SLOT_ID(tp_repr)),(DeeObject *)self,Dee_EmptyTuple);
 #endif
  if DEE_UNLIKELY(result && !DeeString_Check(result)) {
-  DeeError_SetStringf(&DeeErrorType_TypeError,
+  if DEE_UNLIKELY((newresult = DeeString_Cast(result)) == NULL
+                && DeeError_Catch(&DeeErrorType_TypeError)) {
+   DeeError_SetStringf(&DeeErrorType_TypeError,
                       "%#q.operator __repr__() returned an instance of %q instead of a string",
-                      DeeType_NAME(Dee_TYPE(self)),DeeType_NAME(Dee_TYPE(result)));
+                       DeeType_NAME(Dee_TYPE(self)),DeeType_NAME(Dee_TYPE(result)));
+  }
   Dee_DECREF(result);
-  return NULL;
+  return newresult;
  }
  return result;
 }
