@@ -279,7 +279,9 @@ void _DeeError_DropOneHandlingException(
 void DeeError_Throw(DEE_A_INOUT DeeObject *error) {
  struct DeeRaisedException *entry;
  DeeThreadObject *thread_self;
- DEE_LVERBOSE1("Throwing error: %k\n",error);
+ DEE_ASSERT(DeeObject_Check(error));
+ DEE_LVERBOSE1("Throwing error: %q: %k\n",
+               DeeType_NAME(Dee_TYPE(error)),error);
  if DEE_UNLIKELY((thread_self = DeeThread_SELF()) == NULL) return;
  // TODO: Recursion on out-of-memory
  if DEE_UNLIKELY((entry = _DeeRaisedException_TryAlloc()) == NULL) {

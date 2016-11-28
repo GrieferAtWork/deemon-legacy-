@@ -20,7 +20,6 @@
  */
 #ifndef GUARD_DEEMON_POSIX_FEATURES_INL
 #define GUARD_DEEMON_POSIX_FEATURES_INL 1
-#define DEE_LIMITED_API 1
 
 #include <deemon/__conf.inl>
 

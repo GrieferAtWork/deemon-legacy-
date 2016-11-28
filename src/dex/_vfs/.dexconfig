@@ -1,0 +1,4 @@
+
+# The VFS is only used on windows
+platform  WINDOWS
+

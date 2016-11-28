@@ -1,0 +1,229 @@
+/* Copyright (c) 2016 - deemon by Griefer@Work                                    *
+ *                                                                                *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy   *
+ * of this software and associated documentation files (the "Software"), to deal  *
+ * in the Software without restriction, including without limitation the rights   *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      *
+ * copies of the Software, and to permit persons to whom the Software is          *
+ * furnished to do so, subject to the following conditions:                       *
+ *                                                                                *
+ * The above copyright notice and this permission notice shall be included in all *
+ * copies or substantial portions of the Software.                                *
+ *                                                                                *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
+ * SOFTWARE.                                                                      *
+ */
+#ifdef __INTELLISENSE__
+#ifndef GUARD_DEEMON_FS_API_H
+#include <deemon/fs_api.h>
+#endif
+#ifndef GUARD_DEEMON_FILE_H
+#include <deemon/file.h>
+#endif
+#ifndef REG_ENTRY
+#define REG_ENTRY(T,name)
+#endif
+#ifndef DIR_ENTRY
+#define DIR_ENTRY(T,name)
+#endif
+#ifndef IND_ENTRY
+#define IND_ENTRY(T,name)
+#endif
+#endif
+
+#ifndef REG_ENTRY /* regular entry (used for NFS) */
+#error "Must #define REG_ENTRY(T,name) before #including this file"
+#endif
+#ifndef DIR_ENTRY /* direct entry (used for XFS) */
+#error "Must #define DIR_ENTRY(T,name) before #including this file"
+#endif
+#ifndef IND_ENTRY /* indirect entry (used for VFS) */
+#error "Must #define IND_ENTRY(T,name) before #including this file"
+#endif
+
+
+DIR_ENTRY(PDEEFS_UTF8GETCWD,           Utf8GetCwd)
+DIR_ENTRY(PDEEFS_WIDEGETCWD,           WideGetCwd)
+IND_ENTRY(PDEEFS_UTF8CHDIR,            Utf8Chdir)
+IND_ENTRY(PDEEFS_WIDECHDIR,            WideChdir)
+IND_ENTRY(PDEEFS_UTF8CHDIROBJECT,      Utf8ChdirObject)
+IND_ENTRY(PDEEFS_WIDECHDIROBJECT,      WideChdirObject)
+DIR_ENTRY(PDEEFS_UTF8CHDIR,            Utf8Chdir)
+DIR_ENTRY(PDEEFS_WIDECHDIR,            WideChdir)
+DIR_ENTRY(PDEEFS_UTF8CHDIROBJECT,      Utf8ChdirObject)
+DIR_ENTRY(PDEEFS_WIDECHDIROBJECT,      WideChdirObject)
+REG_ENTRY(PDEEFS_UTF8GETHOME,          Utf8GetHome)
+REG_ENTRY(PDEEFS_WIDEGETHOME,          WideGetHome)
+REG_ENTRY(PDEEFS_UTF8GETUSERHOME,      Utf8GetUserHome)
+REG_ENTRY(PDEEFS_WIDEGETUSERHOME,      WideGetUserHome)
+REG_ENTRY(PDEEFS_UTF8GETUSERHOMEOBJECT,Utf8GetUserHomeObject)
+REG_ENTRY(PDEEFS_WIDEGETUSERHOMEOBJECT,WideGetUserHomeObject)
+REG_ENTRY(PDEEFS_UTF8GETTMP,           Utf8GetTmp)
+REG_ENTRY(PDEEFS_WIDEGETTMP,           WideGetTmp)
+REG_ENTRY(PDEEFS_UTF8ENUMENV,          Utf8EnumEnv)
+REG_ENTRY(PDEEFS_WIDEENUMENV,          WideEnumEnv)
+REG_ENTRY(PDEEFS_UTF8GETENV,           Utf8GetEnv)
+REG_ENTRY(PDEEFS_WIDEGETENV,           WideGetEnv)
+REG_ENTRY(PDEEFS_UTF8GETENVOBJECT,     Utf8GetEnvObject)
+REG_ENTRY(PDEEFS_WIDEGETENVOBJECT,     WideGetEnvObject)
+REG_ENTRY(PDEEFS_UTF8HASENV,           Utf8HasEnv)
+REG_ENTRY(PDEEFS_WIDEHASENV,           WideHasEnv)
+REG_ENTRY(PDEEFS_UTF8HASENVOBJECT,     Utf8HasEnvObject)
+REG_ENTRY(PDEEFS_WIDEHASENVOBJECT,     WideHasEnvObject)
+REG_ENTRY(PDEEFS_UTF8DELENV,           Utf8DelEnv)
+REG_ENTRY(PDEEFS_WIDEDELENV,           WideDelEnv)
+REG_ENTRY(PDEEFS_UTF8DELENVOBJECT,     Utf8DelEnvObject)
+REG_ENTRY(PDEEFS_WIDEDELENVOBJECT,     WideDelEnvObject)
+REG_ENTRY(PDEEFS_UTF8SETENV,           Utf8SetEnv)
+REG_ENTRY(PDEEFS_WIDESETENV,           WideSetEnv)
+REG_ENTRY(PDEEFS_UTF8SETENVOBJECT,     Utf8SetEnvObject)
+REG_ENTRY(PDEEFS_WIDESETENVOBJECT,     WideSetEnvObject)
+REG_ENTRY(PDEEFS_UTF8TRYGETENV,        Utf8TryGetEnv)
+REG_ENTRY(PDEEFS_WIDETRYGETENV,        WideTryGetEnv)
+REG_ENTRY(PDEEFS_UTF8TRYGETENVOBJECT,  Utf8TryGetEnvObject)
+REG_ENTRY(PDEEFS_WIDETRYGETENVOBJECT,  WideTryGetEnvObject)
+IND_ENTRY(PDEEFS_UTF8GETTIMES,         Utf8GetTimes)
+IND_ENTRY(PDEEFS_WIDEGETTIMES,         WideGetTimes)
+IND_ENTRY(PDEEFS_UTF8GETTIMESOBJECT,   Utf8GetTimesObject)
+IND_ENTRY(PDEEFS_WIDEGETTIMESOBJECT,   WideGetTimesObject)
+DIR_ENTRY(PDEEFS_UTF8GETTIMES,         Utf8GetTimes)
+DIR_ENTRY(PDEEFS_WIDEGETTIMES,         WideGetTimes)
+DIR_ENTRY(PDEEFS_UTF8GETTIMESOBJECT,   Utf8GetTimesObject)
+DIR_ENTRY(PDEEFS_WIDEGETTIMESOBJECT,   WideGetTimesObject)
+IND_ENTRY(PDEEFS_UTF8SETTIMES,         Utf8SetTimes)
+IND_ENTRY(PDEEFS_WIDESETTIMES,         WideSetTimes)
+IND_ENTRY(PDEEFS_UTF8SETTIMESOBJECT,   Utf8SetTimesObject)
+IND_ENTRY(PDEEFS_WIDESETTIMESOBJECT,   WideSetTimesObject)
+DIR_ENTRY(PDEEFS_UTF8SETTIMES,         Utf8SetTimes)
+DIR_ENTRY(PDEEFS_WIDESETTIMES,         WideSetTimes)
+DIR_ENTRY(PDEEFS_UTF8SETTIMESOBJECT,   Utf8SetTimesObject)
+DIR_ENTRY(PDEEFS_WIDESETTIMESOBJECT,   WideSetTimesObject)
+IND_ENTRY(PDEEFS_UTF8HASPROPERTY,      Utf8HasProperty)
+IND_ENTRY(PDEEFS_WIDEHASPROPERTY,      WideHasProperty)
+IND_ENTRY(PDEEFS_UTF8HASPROPERTYOBJECT,Utf8HasPropertyObject)
+IND_ENTRY(PDEEFS_WIDEHASPROPERTYOBJECT,WideHasPropertyObject)
+DIR_ENTRY(PDEEFS_UTF8HASPROPERTY,      Utf8HasProperty)
+DIR_ENTRY(PDEEFS_WIDEHASPROPERTY,      WideHasProperty)
+DIR_ENTRY(PDEEFS_UTF8HASPROPERTYOBJECT,Utf8HasPropertyObject)
+DIR_ENTRY(PDEEFS_WIDEHASPROPERTYOBJECT,WideHasPropertyObject)
+IND_ENTRY(PDEEFS_UTF8PATHFUN,          Utf8Remove)
+IND_ENTRY(PDEEFS_WIDEPATHFUN,          WideRemove)
+IND_ENTRY(PDEEFS_UTF8PATHFUNOBJECT,    Utf8RemoveObject)
+IND_ENTRY(PDEEFS_WIDEPATHFUNOBJECT,    WideRemoveObject)
+DIR_ENTRY(PDEEFS_UTF8PATHFUN,          Utf8Remove)
+DIR_ENTRY(PDEEFS_WIDEPATHFUN,          WideRemove)
+DIR_ENTRY(PDEEFS_UTF8PATHFUNOBJECT,    Utf8RemoveObject)
+DIR_ENTRY(PDEEFS_WIDEPATHFUNOBJECT,    WideRemoveObject)
+IND_ENTRY(PDEEFS_UTF8PATHFUN,          Utf8Unlink)
+IND_ENTRY(PDEEFS_WIDEPATHFUN,          WideUnlink)
+IND_ENTRY(PDEEFS_UTF8PATHFUNOBJECT,    Utf8UnlinkObject)
+IND_ENTRY(PDEEFS_WIDEPATHFUNOBJECT,    WideUnlinkObject)
+DIR_ENTRY(PDEEFS_UTF8PATHFUN,          Utf8Unlink)
+DIR_ENTRY(PDEEFS_WIDEPATHFUN,          WideUnlink)
+DIR_ENTRY(PDEEFS_UTF8PATHFUNOBJECT,    Utf8UnlinkObject)
+DIR_ENTRY(PDEEFS_WIDEPATHFUNOBJECT,    WideUnlinkObject)
+IND_ENTRY(PDEEFS_UTF8PATHFUN,          Utf8RmDir)
+IND_ENTRY(PDEEFS_WIDEPATHFUN,          WideRmDir)
+IND_ENTRY(PDEEFS_UTF8PATHFUNOBJECT,    Utf8RmDirObject)
+IND_ENTRY(PDEEFS_WIDEPATHFUNOBJECT,    WideRmDirObject)
+DIR_ENTRY(PDEEFS_UTF8PATHFUN,          Utf8RmDir)
+DIR_ENTRY(PDEEFS_WIDEPATHFUN,          WideRmDir)
+DIR_ENTRY(PDEEFS_UTF8PATHFUNOBJECT,    Utf8RmDirObject)
+DIR_ENTRY(PDEEFS_WIDEPATHFUNOBJECT,    WideRmDirObject)
+IND_ENTRY(PDEEFS_UTF8MKDIR,            Utf8MkDir)
+IND_ENTRY(PDEEFS_WIDEMKDIR,            WideMkDir)
+IND_ENTRY(PDEEFS_UTF8MKDIROBJECT,      Utf8MkDirObject)
+IND_ENTRY(PDEEFS_WIDEMKDIROBJECT,      WideMkDirObject)
+DIR_ENTRY(PDEEFS_UTF8MKDIR,            Utf8MkDir)
+DIR_ENTRY(PDEEFS_WIDEMKDIR,            WideMkDir)
+DIR_ENTRY(PDEEFS_UTF8MKDIROBJECT,      Utf8MkDirObject)
+DIR_ENTRY(PDEEFS_WIDEMKDIROBJECT,      WideMkDirObject)
+IND_ENTRY(PDEEFS_UTF8GETMOD,           Utf8GetMod)
+IND_ENTRY(PDEEFS_WIDEGETMOD,           WideGetMod)
+IND_ENTRY(PDEEFS_UTF8GETMODOBJECT,     Utf8GetModObject)
+IND_ENTRY(PDEEFS_WIDEGETMODOBJECT,     WideGetModObject)
+DIR_ENTRY(PDEEFS_UTF8GETMOD,           Utf8GetMod)
+DIR_ENTRY(PDEEFS_WIDEGETMOD,           WideGetMod)
+DIR_ENTRY(PDEEFS_UTF8GETMODOBJECT,     Utf8GetModObject)
+DIR_ENTRY(PDEEFS_WIDEGETMODOBJECT,     WideGetModObject)
+IND_ENTRY(PDEEFS_UTF8CHMOD,            Utf8Chmod)
+IND_ENTRY(PDEEFS_WIDECHMOD,            WideChmod)
+IND_ENTRY(PDEEFS_UTF8CHMODOBJECT,      Utf8ChmodObject)
+IND_ENTRY(PDEEFS_WIDECHMODOBJECT,      WideChmodObject)
+DIR_ENTRY(PDEEFS_UTF8CHMOD,            Utf8Chmod)
+DIR_ENTRY(PDEEFS_WIDECHMOD,            WideChmod)
+DIR_ENTRY(PDEEFS_UTF8CHMODOBJECT,      Utf8ChmodObject)
+DIR_ENTRY(PDEEFS_WIDECHMODOBJECT,      WideChmodObject)
+IND_ENTRY(PDEEFS_UTF8GETOWN,           Utf8GetOwn)
+IND_ENTRY(PDEEFS_WIDEGETOWN,           WideGetOwn)
+IND_ENTRY(PDEEFS_UTF8GETOWNOBJECT,     Utf8GetOwnObject)
+IND_ENTRY(PDEEFS_WIDEGETOWNOBJECT,     WideGetOwnObject)
+DIR_ENTRY(PDEEFS_UTF8GETOWN,           Utf8GetOwn)
+DIR_ENTRY(PDEEFS_WIDEGETOWN,           WideGetOwn)
+DIR_ENTRY(PDEEFS_UTF8GETOWNOBJECT,     Utf8GetOwnObject)
+DIR_ENTRY(PDEEFS_WIDEGETOWNOBJECT,     WideGetOwnObject)
+IND_ENTRY(PDEEFS_UTF8CHOWN,            Utf8Chown)
+IND_ENTRY(PDEEFS_WIDECHOWN,            WideChown)
+IND_ENTRY(PDEEFS_UTF8CHOWNOBJECT,      Utf8ChownObject)
+IND_ENTRY(PDEEFS_WIDECHOWNOBJECT,      WideChownObject)
+DIR_ENTRY(PDEEFS_UTF8CHOWN,            Utf8Chown)
+DIR_ENTRY(PDEEFS_WIDECHOWN,            WideChown)
+DIR_ENTRY(PDEEFS_UTF8CHOWNOBJECT,      Utf8ChownObject)
+DIR_ENTRY(PDEEFS_WIDECHOWNOBJECT,      WideChownObject)
+IND_ENTRY(PDEEFS_UTF8COPY,             Utf8Copy)
+IND_ENTRY(PDEEFS_WIDECOPY,             WideCopy)
+IND_ENTRY(PDEEFS_UTF8COPYOBJECT,       Utf8CopyObject)
+IND_ENTRY(PDEEFS_WIDECOPYOBJECT,       WideCopyObject)
+DIR_ENTRY(PDEEFS_UTF8COPY,             Utf8Copy)
+DIR_ENTRY(PDEEFS_WIDECOPY,             WideCopy)
+DIR_ENTRY(PDEEFS_UTF8COPYOBJECT,       Utf8CopyObject)
+DIR_ENTRY(PDEEFS_WIDECOPYOBJECT,       WideCopyObject)
+IND_ENTRY(PDEEFS_UTF8COPY,             Utf8Move)
+IND_ENTRY(PDEEFS_WIDECOPY,             WideMove)
+IND_ENTRY(PDEEFS_UTF8COPYOBJECT,       Utf8MoveObject)
+IND_ENTRY(PDEEFS_WIDECOPYOBJECT,       WideMoveObject)
+DIR_ENTRY(PDEEFS_UTF8COPY,             Utf8Move)
+DIR_ENTRY(PDEEFS_WIDECOPY,             WideMove)
+DIR_ENTRY(PDEEFS_UTF8COPYOBJECT,       Utf8MoveObject)
+DIR_ENTRY(PDEEFS_WIDECOPYOBJECT,       WideMoveObject)
+IND_ENTRY(PDEEFS_UTF8LINK,             Utf8Link)
+IND_ENTRY(PDEEFS_WIDELINK,             WideLink)
+IND_ENTRY(PDEEFS_UTF8LINKOBJECT,       Utf8LinkObject)
+IND_ENTRY(PDEEFS_WIDELINKOBJECT,       WideLinkObject)
+DIR_ENTRY(PDEEFS_UTF8LINK,             Utf8Link)
+DIR_ENTRY(PDEEFS_WIDELINK,             WideLink)
+DIR_ENTRY(PDEEFS_UTF8LINKOBJECT,       Utf8LinkObject)
+DIR_ENTRY(PDEEFS_WIDELINKOBJECT,       WideLinkObject)
+IND_ENTRY(PDEEFS_UTF8OPENDIR,          Utf8Opendir)
+IND_ENTRY(PDEEFS_WIDEOPENDIR,          WideOpendir)
+IND_ENTRY(PDEEFS_UTF8OPENDIROBJECT,    Utf8OpendirObject)
+IND_ENTRY(PDEEFS_WIDEOPENDIROBJECT,    WideOpendirObject)
+DIR_ENTRY(PDEEFS_UTF8OPENDIR,          Utf8Opendir)
+DIR_ENTRY(PDEEFS_WIDEOPENDIR,          WideOpendir)
+DIR_ENTRY(PDEEFS_UTF8OPENDIROBJECT,    Utf8OpendirObject)
+DIR_ENTRY(PDEEFS_WIDEOPENDIROBJECT,    WideOpendirObject)
+IND_ENTRY(PDEEFILE_UTF8OPENEX,         Utf8Open)
+IND_ENTRY(PDEEFILE_WIDEOPENEX,         WideOpen)
+IND_ENTRY(PDEEFILE_UTF8OPENEXOBJECT,   Utf8OpenObject)
+IND_ENTRY(PDEEFILE_WIDEOPENEXOBJECT,   WideOpenObject)
+DIR_ENTRY(PDEEFILE_UTF8OPENEX,         Utf8Open)
+DIR_ENTRY(PDEEFILE_WIDEOPENEX,         WideOpen)
+DIR_ENTRY(PDEEFILE_UTF8OPENEXOBJECT,   Utf8OpenObject)
+DIR_ENTRY(PDEEFILE_WIDEOPENEXOBJECT,   WideOpenObject)
+IND_ENTRY(PDEEFS_UTF8READLINK,         Utf8Readlink)
+IND_ENTRY(PDEEFS_WIDEREADLINK,         WideReadlink)
+IND_ENTRY(PDEEFS_UTF8READLINKOBJECT,   Utf8ReadlinkObject)
+IND_ENTRY(PDEEFS_WIDEREADLINKOBJECT,   WideReadlinkObject)
+DIR_ENTRY(PDEEFS_UTF8READLINK,         Utf8Readlink)
+DIR_ENTRY(PDEEFS_WIDEREADLINK,         WideReadlink)
+DIR_ENTRY(PDEEFS_UTF8READLINKOBJECT,   Utf8ReadlinkObject)
+DIR_ENTRY(PDEEFS_WIDEREADLINKOBJECT,   WideReadlinkObject)
+
+#undef REG_ENTRY
+#undef DIR_ENTRY
+#undef IND_ENTRY

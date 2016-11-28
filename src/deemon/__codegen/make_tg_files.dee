@@ -424,7 +424,7 @@ a("INT_PTR","intptr_t");
 a("UINT_PTR","uintptr_t");
 a("LONG_PTR","intptr_t");
 a("ULONG_PTR","uintptr_t");
-a("DWORD","ulong");
+a("DWORD","uint32_t");
 a("DWORD64","uint64_t");
 a("WPARAM","UINT_PTR");
 a("LPARAM","ULONG_PTR");

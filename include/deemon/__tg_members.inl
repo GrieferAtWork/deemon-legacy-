@@ -295,7 +295,7 @@
  DeeMemberType_UINT_PTR = DeeMemberType_uintptr_t,
  DeeMemberType_LONG_PTR = DeeMemberType_intptr_t,
  DeeMemberType_ULONG_PTR = DeeMemberType_uintptr_t,
- DeeMemberType_DWORD = DeeMemberType_ulong,
+ DeeMemberType_DWORD = DeeMemberType_uint32_t,
  DeeMemberType_DWORD64 = DeeMemberType_uint64_t,
  DeeMemberType_WPARAM = DeeMemberType_UINT_PTR,
  DeeMemberType_LPARAM = DeeMemberType_ULONG_PTR,

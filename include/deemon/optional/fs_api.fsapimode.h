@@ -44,6 +44,18 @@ typedef DEE_TYPES_UINT16_T Dee_fsapimode_t;
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_fsapimode_t) DeeFS_GetAPIMode(void);
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(-1) int) DeeFS_SetAPIMode(DEE_A_IN Dee_fsapimode_t mode);
 
+//////////////////////////////////////////////////////////////////////////
+// Returns the internal API definition for a given version and mode.
+//  - This data returned by this functions depends on 'version'
+//  - An in valid version causes an Error.ValueError to be thrown.
+//  - If provided, '*required_size' is always filled with the required/used size.
+//  - If the given buffer 'p' isn't large enough to fit the entire
+//    buffer, the function will return '1' without throwing an error.
+DEE_FUNC_DECL(DEE_A_RET_EXCEPT_FAIL(-1,1) int) DeeFS_GetApi(
+ DEE_A_IN int version, DEE_A_IN Dee_fsapimode_t mode,
+ DEE_A_OUT_W(s) void *p, DEE_A_IN DEE_A_IN DEE_TYPES_UINT(DEE_TYPES_SIZEOF_SIZE_T) s,
+ DEE_A_OUT_OPT DEE_A_IN DEE_TYPES_UINT(DEE_TYPES_SIZEOF_SIZE_T) *required_size);
+
 typedef void (*DeeFunPointer)(void);
 //////////////////////////////////////////////////////////////////////////
 // Returns the function pointer of a given ID, associated with the selected FS-API mode.

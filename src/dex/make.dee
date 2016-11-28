@@ -42,6 +42,7 @@ fs::chdir(fs::path::head(sys::argv[0]));
 
 // List of recognized attributes
 local const ATTRIBUTE_REQUIRE   = "require";          // [dexconfig|source] Specify a required header
+local const ATTRIBUTE_PLATFORM  = "platform";         // [dexconfig|source] Specify a list of platform that use this source/dex
 local const ATTRIBUTE_COMFLAGS  = "compiler_flags";   // [dexconfig|source] Set of additional flags passed to the compiler
 local const ATTRIBUTE_INCPATH   = "compiler_incpath"; // [dexconfig|source] List of paths added to the include search path of the compiler
 local const ATTRIBUTE_COMDEFINE = "compiler_define";  // [dexconfig|source] Specify an additional pre-defined #define value
@@ -309,9 +310,43 @@ function check_dependencies(depname,deps) {
 	}
 }
 
+#ifdef __WINDOWS__
+const my_platform = ["WINDOWS"];
+#elif defined(__POSIX__)
+const my_platform = ["POSIX"];
+#else
+const my_platform = [];
+#endif
+
+function compare_platform_names(a,b) {
+	return a.strip().upper() == b.strip().upper();
+}
+function should_compile_platform(platforms) {
+	local result;
+	for (local p: platforms) {
+		if (p.startswith("!")) {
+			p = p[1:];
+			for (local x: my_platform) {
+				if (compare_platform_names(x,p))
+					result = false;
+			}
+			if (!__builtin_bound(result)) result = true;
+		} else {
+			for (local x: my_platform) {
+				if (compare_platform_names(x,p))
+					return true;
+			}
+		}
+	}
+	if (!__builtin_bound(result)) result = false;
+	return result;
+}
+
+
 function compile_sourcefile(sourcefile,dexconfig,globalconfig) {
 	assert sourcefile is SourceFile;
 	local config = read_sourcefileconfig(sourcefile.sourcename);
+	if (!should_compile_platform(config.get(ATTRIBUTE_PLATFORM,[]))) return;
 	check_dependencies(sourcefile.sourcename,config.get(ATTRIBUTE_REQUIRE,[]));
 	sourcepath = fs::path::head(sourcefile.sourcename);
 	function scriptrel_tp_sourcerel(path) ->
@@ -350,6 +385,7 @@ function compile_sourcefile(sourcefile,dexconfig,globalconfig) {
 function compile_dex(path,globalconfig) {
 	local dexname = fs::path::tail(path);
 	local dexconfig = read_config(fs::path::join(path,DEXCONFIG_FILENAME));
+	if (!should_compile_platform(dexconfig.get(ATTRIBUTE_PLATFORM,[]))) return;
 	check_dependencies(dexname,dexconfig.get(ATTRIBUTE_REQUIRE,[]));
 	local sources = [(for (local x: dexconfig["source"]) SourceFile(dexname,x))...];
 	local has_changes = false;

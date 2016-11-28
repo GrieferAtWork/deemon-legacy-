@@ -73,9 +73,6 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include <deemon/__xconf.inl>
 #include <deemon/compiler/xast.h>
 #include <deemon/compiler/sast.h>
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
-#include <deemon/vfs/vfs_core.h>
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
 // */ (nano...)
 
@@ -339,6 +336,16 @@ DEE_A_RET_EXCEPT(-1) int Dee_InitializeEx(DEE_A_IN Dee_uint32_t flags) {
   return -1;
  }
 
+ // Enable the VFS extension
+#if DEE_CONFIG_RUNTIME_HAVE_VFS && ((\
+    DEE_FSAPIMODE_DEFAULT&DEE_FSAPIMODE_ENABLEVFS)!=0)
+ if DEE_UNLIKELY(DeeFS_SetAPIMode(DEE_FSAPIMODE_DEFAULT) != 0) {
+  // Ignore errors during this initialization
+  while (!DeeError_Print("Failed to configure fs-api",1));
+ }
+#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
+
+
 #if DEE_XCONFIG_RUNTIME_HAVE_INIT_QUIT_RECURSION
  // Set the flag that the library is now initialized
  DeeAtomicInt_Store(_dee_initialized,1,memory_order_seq_cst);
@@ -465,11 +472,6 @@ void Dee_FinalizeEx(DEE_A_IN Dee_uint32_t flags) {
  //       so no user code should be able to run here!
  _DeeClassType_Finalize();
 #endif
-
-#if DEE_CONFIG_RUNTIME_HAVE_VFS
- // Shutdown the virtual file system.
- DeeVFS_Shutdown();
-#endif /* DEE_CONFIG_RUNTIME_HAVE_VFS */
 
  // Clear all structured type caches (pointer types, lvalue types, foreign_function types, ...)
  DeeStructuredType_Shutdown();

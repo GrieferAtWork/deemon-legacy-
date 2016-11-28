@@ -20,9 +20,6 @@
  */
 #ifndef GUARD_DEEMON_FS_NATIVE_VIEW_WIDE_H
 #define GUARD_DEEMON_FS_NATIVE_VIEW_WIDE_H 1
-#ifndef DEE_LIMITED_API
-#define DEE_LIMITED_API 1
-#endif
 
 #include <deemon/__conf.inl>
 #include <deemon/type.h>

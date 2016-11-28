@@ -55,32 +55,32 @@ typedef NTSTATUS (NTAPI *LPNTQUERYOBJECT)(
 static LPNTQUERYSYSTEMINFORMATION pNtQuerySystemInformation = NULL;
 static LPNTQUERYOBJECT pNtQueryObject = NULL;
 
-typedef struct _SYSTEM_HANDLE {
+typedef struct _WIN32_SYSTEM_HANDLE {
  ULONG       ProcessId;
  BYTE        ObjectTypeNumber;
  BYTE        Flags;
  USHORT      Handle; // Can be used as a HANDLE (yes, it sounds weird, but it works)
  PVOID       Object;
  ACCESS_MASK GrantedAccess;
-} SYSTEM_HANDLE;
-typedef struct _SYSTEM_HANDLE_INFORMATION {
+} WIN32_SYSTEM_HANDLE;
+typedef struct _WIN32_SYSTEM_HANDLE_INFORMATION {
  DWORD			      Count;
- SYSTEM_HANDLE	Handles[1];
-} SYSTEM_HANDLE_INFORMATION;
+ WIN32_SYSTEM_HANDLE	Handles[1];
+} WIN32_SYSTEM_HANDLE_INFORMATION;
 
 DEE_STATIC_INLINE(HANDLE)
-DeeWin32_SystemHandle_Open(SYSTEM_HANDLE const *self) {
+DeeWin32_SystemHandle_Open(WIN32_SYSTEM_HANDLE const *self) {
  HANDLE result,hProcess;
  hProcess = OpenProcess(PROCESS_DUP_HANDLE,FALSE,self->ProcessId);
  if DEE_UNLIKELY(!hProcess) return INVALID_HANDLE_VALUE;
- if (!DuplicateHandle(hProcess,(HANDLE)self->Handle,
+ if (!DuplicateHandle(hProcess,(HANDLE)(Dee_uintptr_t)self->Handle,
   GetCurrentProcess(),&result,0,0,0)) result = INVALID_HANDLE_VALUE;
  CloseHandle(hProcess);
  return result;
 }
 
 
-typedef struct _OBJECT_TYPE_INFORMATION {
+typedef struct _WIN32_OBJECT_TYPE_INFORMATION {
  UNICODE_STRING Name;
  ULONG TotalNumberOfObjects;
  ULONG TotalNumberOfHandles;
@@ -103,7 +103,7 @@ typedef struct _OBJECT_TYPE_INFORMATION {
  int PoolType;
  ULONG PagedPoolUsage;
  ULONG NonPagedPoolUsage;
-} OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
+} WIN32_OBJECT_TYPE_INFORMATION, *PWIN32_OBJECT_TYPE_INFORMATION;
 
 
 
@@ -180,8 +180,8 @@ static BYTE DeeWin32_HandleTypeMap[256] = {
 //[[[end]]]
 };
 #define DeeWin32_GetHandleType(syshandle)\
-  (DeeWin32_HandleTypeMap[syshandle->ObjectTypeNumber] != 0xFF ? DeeWin32_HandleTypeMap[syshandle->ObjectTypeNumber] \
- : DeeWin32_HandleTypeMap[syshandle->ObjectTypeNumber] = DeeWin32_GetEffectiveSystemHandleTypeID(syshandle))
+   (DeeWin32_HandleTypeMap[syshandle->ObjectTypeNumber] != 0xFF ? DeeWin32_HandleTypeMap[syshandle->ObjectTypeNumber] \
+ : (DeeWin32_HandleTypeMap[syshandle->ObjectTypeNumber] = DeeWin32_GetEffectiveSystemHandleTypeID(syshandle)))
 
 
 // wide-string-insensitive-lower-compare-utf8
@@ -295,13 +295,13 @@ for (local a,b: util::zip(found2,found)) {
 }
 
 static BYTE DeeWin32_GetEffectiveHandleTypeID(HANDLE handle) {
- BYTE result; OBJECT_TYPE_INFORMATION *objectTypeInfo;
+ BYTE result; WIN32_OBJECT_TYPE_INFORMATION *objectTypeInfo;
  DEE_ATOMIC_ONCE({
   *(FARPROC *)&pNtQueryObject = GetProcAddress(
    GetModuleHandleA("ntdll.dll"),"NtQueryObject");
  });
  if (!pNtQueryObject) return DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN;
- if ((objectTypeInfo = (POBJECT_TYPE_INFORMATION)malloc_nz(0x1000)) != NULL)  {
+ if ((objectTypeInfo = (PWIN32_OBJECT_TYPE_INFORMATION)malloc_nz(0x1000)) != NULL)  {
   // Retrieve information about the type name and match it against a list of known types
   if (NT_SUCCESS((*pNtQueryObject)(handle,ObjectTypeInformation,objectTypeInfo,0x1000,NULL))) {
    result = DeeWin32_GetHandleTypeFromWindowsName(
@@ -328,7 +328,7 @@ static BYTE DeeWin32_GetEffectivePHIDTypeID(DWORD pid, WORD hid) {
  HANDLE my_handle,proc_handle; BYTE result;
  proc_handle = OpenProcess(PROCESS_DUP_HANDLE,FALSE,pid);
  if DEE_UNLIKELY(!proc_handle) return 0xFF;
- if (DuplicateHandle(proc_handle,(HANDLE)hid,GetCurrentProcess(),&my_handle,0,0,0)) {
+ if (DuplicateHandle(proc_handle,(HANDLE)(Dee_uintptr_t)hid,GetCurrentProcess(),&my_handle,0,0,0)) {
   result = DeeWin32_GetEffectiveHandleTypeID(my_handle);
   CloseHandle(my_handle);
  } else if (GetLastError() == ERROR_NOT_SUPPORTED) {
@@ -339,11 +339,11 @@ static BYTE DeeWin32_GetEffectivePHIDTypeID(DWORD pid, WORD hid) {
  CloseHandle(proc_handle);
  return result;
 }
-static BYTE DeeWin32_GetEffectiveSystemHandleTypeID(SYSTEM_HANDLE const *handle) {
+static BYTE DeeWin32_GetEffectiveSystemHandleTypeID(WIN32_SYSTEM_HANDLE const *handle) {
  HANDLE my_handle,proc_handle; BYTE result;
  proc_handle = OpenProcess(PROCESS_DUP_HANDLE,FALSE,handle->ProcessId);
  if DEE_UNLIKELY(!proc_handle) goto fallback;
- if (DuplicateHandle(proc_handle,(HANDLE)handle->Handle,GetCurrentProcess(),&my_handle,0,0,0)) {
+ if (DuplicateHandle(proc_handle,(HANDLE)(Dee_uintptr_t)handle->Handle,GetCurrentProcess(),&my_handle,0,0,0)) {
   result = DeeWin32_GetEffectiveHandleTypeID(my_handle);
   CloseHandle(my_handle);
  } else {
@@ -374,7 +374,7 @@ DEE_STATIC_INLINE(DWORD) GetNTMajorVersion(void) {
 DEE_COMPILER_MSVC_WARNING_POP
 
 
-DEE_STATIC_INLINE(BOOL) DeeWin32_CapturedHandleIsSupported(SYSTEM_HANDLE const *handle) {
+DEE_STATIC_INLINE(BOOL) DeeWin32_CapturedHandleIsSupported(WIN32_SYSTEM_HANDLE const *handle) {
  static DWORD dwNTMajorVersion;
  DEE_ATOMIC_ONCE({ dwNTMajorVersion = GetNTMajorVersion(); });
  if (dwNTMajorVersion >= 5) return TRUE; // Windows 2000 supports everything
@@ -385,9 +385,9 @@ DEE_STATIC_INLINE(BOOL) DeeWin32_CapturedHandleIsSupported(SYSTEM_HANDLE const *
 
 
 #define DeeWin32_FreeSystemHandleInformation(info) free_nn(info)
-DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(NULL) SYSTEM_HANDLE_INFORMATION *)
+DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(NULL) WIN32_SYSTEM_HANDLE_INFORMATION *)
 DeeWin32_CaptureSystemHandleInformation(void) {
- SYSTEM_HANDLE_INFORMATION *result,*newresult;
+ WIN32_SYSTEM_HANDLE_INFORMATION *result,*newresult;
  ULONG size = 0x2000,needed; NTSTATUS error;
  DEE_ATOMIC_ONCE({
   *(FARPROC *)&pNtQuerySystemInformation = GetProcAddress(
@@ -397,7 +397,7 @@ DeeWin32_CaptureSystemHandleInformation(void) {
   DeeError_NotImplemented_str("NtQuerySystemInformation");
   return NULL;
  }
- while ((result = (SYSTEM_HANDLE_INFORMATION*)malloc_nz(size)) == NULL) {
+ while ((result = (WIN32_SYSTEM_HANDLE_INFORMATION*)malloc_nz(size)) == NULL) {
   if DEE_LIKELY(Dee_CollectMemory()) continue;
   DeeError_NoMemory();
   return NULL;
@@ -407,7 +407,7 @@ DeeWin32_CaptureSystemHandleInformation(void) {
   error = (*pNtQuerySystemInformation)(SystemHandleInformation,result,size,&needed);
   if (error == STATUS_INFO_LENGTH_MISMATCH) {
    size *= 2;
-   newresult = (SYSTEM_HANDLE_INFORMATION*)realloc_nnz(result,size);
+   newresult = (WIN32_SYSTEM_HANDLE_INFORMATION*)realloc_nnz(result,size);
    if DEE_UNLIKELY(!newresult) {/*err_r:*/ free_nn(result); return FALSE; }
    result = newresult;
   } else if (error != 0) {

@@ -304,8 +304,6 @@ compile_deemon() {
 	update_object_file "$source_path/deemon/fs/expand_fs.c"
 	update_object_file "$source_path/deemon/fs/native_fs.c"
 	update_object_file "$source_path/deemon/fs/objects/native_view.c"
-	update_object_file "$source_path/deemon/fs/objects/vfs_view.c"
-	update_object_file "$source_path/deemon/fs/virtual_fs.c"
 	update_object_file "$source_path/deemon/fs_api.c"
 	update_object_file "$source_path/deemon/gc.c"
 	update_object_file "$source_path/deemon/generic_vtable.c"
@@ -379,8 +377,6 @@ link_deemon() {
 		"$build_path/expand_fs.c.o" \
 		"$build_path/native_fs.c.o" \
 		"$build_path/native_view.c.o" \
-		"$build_path/vfs_view.c.o" \
-		"$build_path/virtual_fs.c.o" \
 		"$build_path/fs_api.c.o" \
 		"$build_path/gc.c.o" \
 		"$build_path/generic_vtable.c.o" \
@@ -455,8 +451,6 @@ link_deemon_static() {
 		"$build_path/expand_fs.c.o" \
 		"$build_path/native_fs.c.o" \
 		"$build_path/native_view.c.o" \
-		"$build_path/vfs_view.c.o" \
-		"$build_path/virtual_fs.c.o" \
 		"$build_path/fs_api.c.o" \
 		"$build_path/gc.c.o" \
 		"$build_path/generic_vtable.c.o" \

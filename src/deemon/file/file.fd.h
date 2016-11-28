@@ -20,9 +20,6 @@
  */
 #ifndef GUARD_DEEMON_FILE_FD_H
 #define GUARD_DEEMON_FILE_FD_H 1
-#ifndef DEE_LIMITED_API
-#define DEE_LIMITED_API 1
-#endif
 
 #include <deemon/__conf.inl>
 #include <deemon/error.h>
@@ -67,6 +64,7 @@ do{\
 
 
 
+#ifdef DEE_LIMITED_DEX
 #ifdef DeeSysFD
 #define DEE_FILE_FD_OBJECT_HEAD \
  DEE_FILE_OBJECT_HEAD \
@@ -206,6 +204,7 @@ extern int DEE_CALL _deefilefd_tp_copy_assign(
 extern DeeObject *_deefilefd_tp_str(DeeFileFDObject *self);
 #else
 #define _pdeefilefd_tp_str  DeeType_DEFAULT_SLOT(tp_str)
+#endif
 #endif
 
 

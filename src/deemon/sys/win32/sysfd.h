@@ -99,12 +99,12 @@ DEE_STATIC_INLINE(BOOL) DeeWin32Sys_TryHandleLargeWrite64(
  HANDLE hFile, void const *p, Dee_uint64_t s, Dee_uint64_t *ws) {
  DWORD temp,act_size; DEE_ASSERTF(s > DWORD_MAX,"Not a large64 write");
  if DEE_UNLIKELY(!WriteFile(hFile,p,DWORD_MAX,(LPDWORD)&temp,NULL)) return FALSE;
- if ((*rs = temp) != DWORD_MAX) return TRUE;
+ if ((*ws = temp) != DWORD_MAX) return TRUE;
  while (s > temp && temp) {
   *(uintptr_t *)&p += temp; s -= temp;
   act_size = s >= DWORD_MAX ? (DWORD)DWORD_MAX : (DWORD)s;
   if DEE_UNLIKELY(!WriteFile(hFile,p,act_size,(LPDWORD)&temp,NULL)) return FALSE;
-  *rs += temp;
+  *ws += temp;
   if (temp != act_size) return TRUE;
  }
  return TRUE;
