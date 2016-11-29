@@ -18,95 +18,80 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_CHMOD_C_INL
-#define GUARD_DEEMON_FS_VIRTUAL_FS_CHMOD_C_INL 1
+#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_MKDIR_C_INL
+#define GUARD_DEEMON_FS_VIRTUAL_FS_MKDIR_C_INL 1
+#ifndef DEE_EXTENSION
 #define DEE_EXTENSION 1
+#endif
 
 #include <deemon/__conf.inl>
-#include "virtual_fs.h"
-#include "vfs_core.h"
-#include "native_hooks.h"
-#include <deemon/error.h>
 #include <deemon/string.h>
 #include <deemon/type.h>
+#include "native_hooks.h"
+#include "virtual_fs.h"
+#include "vfs_core.h"
 
 DEE_DECL_BEGIN
 
-DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8Chmod(
+DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8MkDir(
  DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_IN Dee_mode_t mode) {
- struct DeeVFSNode *cwd,*filenode; int error;
+ DeeObject *native_path; struct DeeVFSNode *cwd; int error;
+ DEE_ASSERT(path);
  if (DeeVFS_Utf8IsAbsoluteNativePath(path)) {
-call_native: return DeeHFS_Utf8Chmod(path,mode);
+call_native: return DeeHFS_Utf8MkDir(path,mode);
  }
  if (DeeVFS_Utf8IsVirtualPath(path)) {
-  filenode = DeeVFS_Utf8Locate(path);
+  native_path = DeeVFS_Utf8ForceNativeRootPath(path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  filenode = DeeVFS_Utf8LocateWithCWD(cwd,path);
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
+  native_path = DeeVFS_Utf8ForceNativePathWithCwd(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
- if DEE_UNLIKELY(!filenode) return -1;
- error = DeeVFSNode_Chmod(filenode,mode);
- DeeVFSNode_DECREF(filenode);
+ if DEE_UNLIKELY(!native_path) return -1;
+ error = DeeHFS_Utf8MkDirObject(native_path,mode);
+ Dee_DECREF(native_path);
  return error;
 }
-DEE_A_RET_EXCEPT(-1) int DeeVFS_WideChmod(
+DEE_A_RET_EXCEPT(-1) int DeeVFS_WideMkDir(
  DEE_A_IN_Z Dee_WideChar const *path, DEE_A_IN Dee_mode_t mode) {
- struct DeeVFSNode *cwd,*filenode; int error;
+ DeeObject *native_path; struct DeeVFSNode *cwd; int error;
+ DEE_ASSERT(path);
  if (DeeVFS_WideIsAbsoluteNativePath(path)) {
-call_native: return DeeHFS_WideChmod(path,mode);
+call_native: return DeeHFS_WideMkDir(path,mode);
  }
  if (DeeVFS_WideIsVirtualPath(path)) {
-  filenode = DeeVFS_WideLocate(path);
+  native_path = DeeVFS_WideForceNativeRootPath(path);
  } else {
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  filenode = DeeVFS_WideLocateWithCWD(cwd,path);
+  // if (DeeVFSNode_IsNative(cwd)) { DeeVFSNode_DECREF(cwd); goto call_native; }
+  native_path = DeeVFS_WideForceNativePathWithCwd(cwd,path);
   DeeVFSNode_DECREF(cwd);
  }
- if DEE_UNLIKELY(!filenode) return -1;
- error = DeeVFSNode_Chmod(filenode,mode);
- DeeVFSNode_DECREF(filenode);
+ if DEE_UNLIKELY(!native_path) return -1;
+ error = DeeHFS_WideMkDirObject(native_path,mode);
+ Dee_DECREF(native_path);
  return error;
 }
-DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8ChmodObject(
+DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8MkDirObject(
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_IN Dee_mode_t mode) {
- struct DeeVFSNode *cwd,*filenode; int error;
+ DeeObject *native_path; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
- if (DeeVFS_Utf8IsAbsoluteNativePathObject(path)) {
-call_native: return DeeHFS_Utf8ChmodObject(path,mode);
- }
- if (DeeVFS_Utf8IsVirtualPathObject(path)) {
-  filenode = DeeVFS_Utf8LocateObject(path);
- } else {
-  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  filenode = DeeVFS_Utf8LocateWithCWDObject(cwd,path);
-  DeeVFSNode_DECREF(cwd);
- }
- if DEE_UNLIKELY(!filenode) return -1;
- error = DeeVFSNode_Chmod(filenode,mode);
- DeeVFSNode_DECREF(filenode);
+ if DEE_UNLIKELY((native_path = DeeVFS_Utf8ForceNativePathObject(path)) == NULL) return -1;
+ error = DeeHFS_Utf8MkDirObject(native_path,mode);
+ Dee_DECREF(native_path);
  return error;
 }
-DEE_A_RET_EXCEPT(-1) int DeeVFS_WideChmodObject(
+DEE_A_RET_EXCEPT(-1) int DeeVFS_WideMkDirObject(
  DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_IN Dee_mode_t mode) {
- struct DeeVFSNode *cwd,*filenode; int error;
+ DeeObject *native_path; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
- if (DeeVFS_WideIsAbsoluteNativePathObject(path)) {
-call_native: return DeeHFS_WideChmodObject(path,mode);
- }
- if (DeeVFS_WideIsVirtualPathObject(path)) {
-  filenode = DeeVFS_WideLocateObject(path);
- } else {
-  if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) goto call_native;
-  filenode = DeeVFS_WideLocateWithCWDObject(cwd,path);
-  DeeVFSNode_DECREF(cwd);
- }
- if DEE_UNLIKELY(!filenode) return -1;
- error = DeeVFSNode_Chmod(filenode,mode);
- DeeVFSNode_DECREF(filenode);
+ if DEE_UNLIKELY((native_path = DeeVFS_WideForceNativePathObject(path)) == NULL) return -1;
+ error = DeeHFS_WideMkDirObject(native_path,mode);
+ Dee_DECREF(native_path);
  return error;
 }
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_CHMOD_C_INL */
+#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_MKDIR_C_INL */

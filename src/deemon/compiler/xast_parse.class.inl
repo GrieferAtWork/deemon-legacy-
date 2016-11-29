@@ -66,7 +66,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXAst_ParseClassPropertyBlockEntry(
  int result;
  struct DeeAttributeDecl attr = DeeAttributeDecl_INIT();
  // Predefined attributes
- attr.a_fun_flags = DeeFunctionFlags_THISCALL;
+ attr.a_fun_flags = DEE_FUNCTIONFLAGS_FLAG_THISCALL;
  Dee_INCREF(attr.a_super = class_base);
  result = DeeXAst_ParseClassPropertyBlockEntryWithAttribute(self,&attr,DEE_PARSER_ARGS);
  _DeeAttributeDecl_Quit(&attr);

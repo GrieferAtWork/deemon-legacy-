@@ -18,9 +18,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_GETMOD_C_INL
-#define GUARD_DEEMON_FS_VIRTUAL_FS_GETMOD_C_INL 1
+#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_CHOWN_C_INL
+#define GUARD_DEEMON_FS_VIRTUAL_FS_CHOWN_C_INL 1
+#ifndef DEE_EXTENSION
 #define DEE_EXTENSION 1
+#endif
 
 #include <deemon/__conf.inl>
 #include "vfs_core.h"
@@ -32,11 +34,12 @@
 
 DEE_DECL_BEGIN
 
-DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8GetMod(
- DEE_A_IN_Z Dee_Utf8Char const *path, DEE_A_OUT Dee_mode_t *mode) {
+DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8Chown(
+ DEE_A_IN_Z Dee_Utf8Char const *path,
+ DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
  struct DeeVFSNode *cwd,*filenode; int error;
  if (DeeVFS_Utf8IsAbsoluteNativePath(path)) {
-call_native: return DeeHFS_Utf8GetMod(path,mode);
+call_native: return DeeHFS_Utf8Chown(path,owner,group);
  }
  if (DeeVFS_Utf8IsVirtualPath(path)) {
   filenode = DeeVFS_Utf8Locate(path);
@@ -46,15 +49,16 @@ call_native: return DeeHFS_Utf8GetMod(path,mode);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!filenode) return -1;
- error = DeeVFSNode_GetMod(filenode,mode);
+ error = DeeVFSNode_Chown(filenode,owner,group);
  DeeVFSNode_DECREF(filenode);
  return error;
 }
-DEE_A_RET_EXCEPT(-1) int DeeVFS_WideGetMod(
- DEE_A_IN_Z Dee_WideChar const *path, DEE_A_OUT Dee_mode_t *mode) {
+DEE_A_RET_EXCEPT(-1) int DeeVFS_WideChown(
+ DEE_A_IN_Z Dee_WideChar const *path,
+ DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
  struct DeeVFSNode *cwd,*filenode; int error;
  if (DeeVFS_WideIsAbsoluteNativePath(path)) {
-call_native: return DeeHFS_WideGetMod(path,mode);
+call_native: return DeeHFS_WideChown(path,owner,group);
  }
  if (DeeVFS_WideIsVirtualPath(path)) {
   filenode = DeeVFS_WideLocate(path);
@@ -64,16 +68,17 @@ call_native: return DeeHFS_WideGetMod(path,mode);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!filenode) return -1;
- error = DeeVFSNode_GetMod(filenode,mode);
+ error = DeeVFSNode_Chown(filenode,owner,group);
  DeeVFSNode_DECREF(filenode);
  return error;
 }
-DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8GetModObject(
- DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path, DEE_A_OUT Dee_mode_t *mode) {
+DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8ChownObject(
+ DEE_A_IN_OBJECT(DeeUtf8StringObject) const *path,
+ DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
  struct DeeVFSNode *cwd,*filenode; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeUtf8String_Check(path));
  if (DeeVFS_Utf8IsAbsoluteNativePathObject(path)) {
-call_native: return DeeHFS_Utf8GetModObject(path,mode);
+call_native: return DeeHFS_Utf8ChownObject(path,owner,group);
  }
  if (DeeVFS_Utf8IsVirtualPathObject(path)) {
   filenode = DeeVFS_Utf8LocateObject(path);
@@ -83,16 +88,17 @@ call_native: return DeeHFS_Utf8GetModObject(path,mode);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!filenode) return -1;
- error = DeeVFSNode_GetMod(filenode,mode);
+ error = DeeVFSNode_Chown(filenode,owner,group);
  DeeVFSNode_DECREF(filenode);
  return error;
 }
-DEE_A_RET_EXCEPT(-1) int DeeVFS_WideGetModObject(
- DEE_A_IN_OBJECT(DeeWideStringObject) const *path, DEE_A_OUT Dee_mode_t *mode) {
+DEE_A_RET_EXCEPT(-1) int DeeVFS_WideChownObject(
+ DEE_A_IN_OBJECT(DeeWideStringObject) const *path,
+ DEE_A_IN Dee_uid_t owner, DEE_A_IN Dee_gid_t group) {
  struct DeeVFSNode *cwd,*filenode; int error;
  DEE_ASSERT(DeeObject_Check(path) && DeeWideString_Check(path));
  if (DeeVFS_WideIsAbsoluteNativePathObject(path)) {
-call_native: return DeeHFS_WideGetModObject(path,mode);
+call_native: return DeeHFS_WideChownObject(path,owner,group);
  }
  if (DeeVFS_WideIsVirtualPathObject(path)) {
   filenode = DeeVFS_WideLocateObject(path);
@@ -102,11 +108,11 @@ call_native: return DeeHFS_WideGetModObject(path,mode);
   DeeVFSNode_DECREF(cwd);
  }
  if DEE_UNLIKELY(!filenode) return -1;
- error = DeeVFSNode_GetMod(filenode,mode);
+ error = DeeVFSNode_Chown(filenode,owner,group);
  DeeVFSNode_DECREF(filenode);
  return error;
 }
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_GETMOD_C_INL */
+#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_CHOWN_C_INL */

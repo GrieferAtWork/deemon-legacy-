@@ -28,6 +28,7 @@
 #include <deemon/__bswap_intrin.inl>
 #include <deemon/optional/string_forward.h>
 #include <deemon/optional/uuid.h>
+#include <deemon/optional/functionflags.h>
 
 DEE_DECL_BEGIN
 DEE_COMPILER_STRUCTURE_PACKED_BEGIN
@@ -145,12 +146,8 @@ struct DeeMarshalHeaderMarshalType {
  struct DeeMarshalHeaderMarshalType_ mhmt_block;  /*< Marshal-type block. */
 };
 
-#ifdef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-#undef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-#endif
 struct DeeMarshalHeaderForeignFunctionType_ {
- DeeFunctionFlags mhfft_flags; /*< Function flags. */
+ Dee_funflags_t mhfft_flags; /*< Function flags. */
  //Small64        mhfft_argc;  /*< Argument count. */
 };
 struct DeeMarshalHeaderForeignFunctionType {

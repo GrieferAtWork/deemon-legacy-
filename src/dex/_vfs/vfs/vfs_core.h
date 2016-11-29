@@ -126,6 +126,7 @@ extern struct _DeeVFSFileTypeData _DeeVFSNoopNodeType_FileData;
 extern int DEE_CALL _deevfs_genericfile_openreadonly(struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t permissions);
 extern int DEE_CALL _deevfs_genericfile_openwriteonly(struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t permissions);
 extern int DEE_CALL _deevfs_genericfile_openreadwrite(struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t permissions);
+extern int DEE_CALL _deevfs_genericfile_openany(struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t permissions);
 
 
 

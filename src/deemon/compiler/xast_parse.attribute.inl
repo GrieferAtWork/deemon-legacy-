@@ -50,8 +50,8 @@ err_cast:
     _DeeError_HandleAndReturnType()) != 0) goto err_ast;
    goto end;
   }
-  if (new_noreturn) self->a_fun_flags |= DeeFunctionFlags_NORETURN;
-  else self->a_fun_flags &= ~DeeFunctionFlags_NORETURN;
+  if (new_noreturn) self->a_fun_flags |= DEE_FUNCTIONFLAGS_FLAG_NORETURN;
+  else self->a_fun_flags &= ~DEE_FUNCTIONFLAGS_FLAG_NORETURN;
  }
 end: Dee_DECREF(constant_ast);
  return 0;
@@ -82,8 +82,8 @@ err_cast:
     _DeeError_HandleAndReturnType()) != 0) goto err_ast;
    goto end;
   }
-  if (new_nothrow) self->a_fun_flags |= DeeFunctionFlags_NOEXCEPT;
-  else self->a_fun_flags &= ~DeeFunctionFlags_NOEXCEPT;
+  if (new_nothrow) self->a_fun_flags |= DEE_FUNCTIONFLAGS_FLAG_NOEXCEPT;
+  else self->a_fun_flags &= ~DEE_FUNCTIONFLAGS_FLAG_NOEXCEPT;
  }
 end: Dee_DECREF(constant_ast);
  return 0;
@@ -175,11 +175,11 @@ warn_used_with_unused:
 
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
   case KWD_add_result_reference: {
-   if DEE_UNLIKELY((self->a_fun_flags&DeeFunctionFlags_ADD_RESULT_REFERENCE) != 0) {
+   if DEE_UNLIKELY((self->a_fun_flags&DEE_FUNCTIONFLAGS_FLAG_ADD_RESULT_REFERENCE) != 0) {
     if DEE_UNLIKELY(DeeError_CompilerError(DEE_WARNING_ATTRIBUTE_ADD_RESULT_REFERENCE_ALREADY_USED,
      (DeeObject *)lexer,(DeeObject *)token_ob,
      "__attribute__((add_result_reference)) was already used") != 0) return -1;
-   } else self->a_fun_flags |= DeeFunctionFlags_ADD_RESULT_REFERENCE;
+   } else self->a_fun_flags |= DEE_FUNCTIONFLAGS_FLAG_ADD_RESULT_REFERENCE;
   } goto y1;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
 
@@ -425,17 +425,17 @@ err_uuid_temp: Dee_DECREF(temp); return -1;
 
   { // Calling conventions
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
-   if (0) { case KWD_syssv:    self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_SYSV); }
-   if (0) { case KWD_stdcall:  self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_STDCALL); }
-   if (0) { case KWD_thiscall: self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_THISCALL); }
-   if (0) { case KWD_fastcall: self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_FASTCALL); }
-   if (0) { case KWD_cdecl:    self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_MS_CDECL); }
-   if (0) { case KWD_pascal:   self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_PASCAL); }
-   if (0) { case KWD_register: self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_REGISTER); }
-   if (0) { case KWD_win64:    self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_WIN64); }
-   if (0) { case KWD_unix64:   self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_UNIX64); }
+   if (0) { case KWD_syssv:    self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_SYSV); }
+   if (0) { case KWD_stdcall:  self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_STDCALL); }
+   if (0) { case KWD_thiscall: self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_THISCALL); }
+   if (0) { case KWD_fastcall: self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_FASTCALL); }
+   if (0) { case KWD_cdecl:    self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_MS_CDECL); }
+   if (0) { case KWD_pascal:   self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_PASCAL); }
+   if (0) { case KWD_register: self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_REGISTER); }
+   if (0) { case KWD_win64:    self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_WIN64); }
+   if (0) { case KWD_unix64:   self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_UNIX64); }
 #else /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
-   if (0) { case KWD_thiscall: self->a_fun_flags = (DeeFunctionFlags)(self->a_fun_flags|DeeFunctionFlags_THISCALL); }
+   if (0) { case KWD_thiscall: self->a_fun_flags = (Dee_funflags_t)(self->a_fun_flags|DEE_FUNCTIONFLAGS_FLAG_THISCALL); }
 #endif /* !DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
    if (0) { case KWD_packed:   self->a_alignment = 1; }
 y1: if DEE_UNLIKELY(!yield()) return -1;
@@ -466,7 +466,7 @@ y1: if DEE_UNLIKELY(!yield()) return -1;
       (DeeObject *)lexer,(DeeObject *)token_ob,
       "Expected ')' after '__attribute__((nothrow(...'") != 0) return -1;
     } else if DEE_UNLIKELY(!yield()) return -1;
-   } else self->a_fun_flags |= DeeFunctionFlags_NOEXCEPT;
+   } else self->a_fun_flags |= DEE_FUNCTIONFLAGS_FLAG_NOEXCEPT;
   } break;
 
   case KWD_noreturn: {
@@ -479,7 +479,7 @@ y1: if DEE_UNLIKELY(!yield()) return -1;
       (DeeObject *)lexer,(DeeObject *)token_ob,
       "Expected ')' after '__attribute__((noreturn(...'") != 0) return -1;
     } else if DEE_UNLIKELY(!yield()) return -1;
-   } else self->a_fun_flags |= DeeFunctionFlags_NORETURN;
+   } else self->a_fun_flags |= DEE_FUNCTIONFLAGS_FLAG_NORETURN;
   } break;
 
   default: {
@@ -537,7 +537,7 @@ again: switch (token.tk_id) {
       (DeeObject *)lexer,(DeeObject *)token_ob,
       "Expected ')' after '_Noreturn(...'") != 0) return -1;
     } else if DEE_UNLIKELY(!yield()) return -1;
-   } else self->a_flags |= DeeFunctionFlags_NORETURN;
+   } else self->a_flags |= DEE_FUNCTIONFLAGS_FLAG_NORETURN;
   } goto again;
 
   case KWD__Noexcept: {
@@ -550,7 +550,7 @@ again: switch (token.tk_id) {
       (DeeObject *)lexer,(DeeObject *)token_ob,
       "Expected ')' after '_Noreturn(...'") != 0) return -1;
     } else if DEE_UNLIKELY(!yield()) return -1;
-   } else self->a_flags |= DeeFunctionFlags_NOEXCEPT;
+   } else self->a_flags |= DEE_FUNCTIONFLAGS_FLAG_NOEXCEPT;
   } goto again;
 
   case KWD__Alignas: {
@@ -637,17 +637,17 @@ again: switch (token.tk_id) {
 
   { // Function calling convention flags
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(syssv)    self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_SYSV); }
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(stdcall)  self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_STDCALL); }
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(thiscall) self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_THISCALL); }
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(fastcall) self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_FASTCALL); }
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(cdecl)    self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_MS_CDECL); }
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(pascal)   self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_PASCAL); }
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(register) self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_REGISTER); }
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(win64)    self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_WIN64); }
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(unix64)   self->a_fun_flags = (DeeFunctionFlags)((self->a_fun_flags&~DeeFunctionFlags_CC_MASK)|DeeFunctionFlags_UNIX64); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(syssv)    self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_SYSV); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(stdcall)  self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_STDCALL); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(thiscall) self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_THISCALL); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(fastcall) self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_FASTCALL); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(cdecl)    self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_MS_CDECL); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(pascal)   self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_PASCAL); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(register) self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_REGISTER); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(win64)    self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_WIN64); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(unix64)   self->a_fun_flags = (Dee_funflags_t)((self->a_fun_flags&~DEE_FUNCTIONFLAGS_FLAG_CC_MASK)|DEE_FUNCTIONFLAGS_FLAG_UNIX64); }
 #else /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
-   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(thiscall) self->a_fun_flags = (DeeFunctionFlags)(self->a_fun_flags|DeeFunctionFlags_THISCALL); }
+   if (0) { DEE_PARSE_TOKENID_CASE_CC_SOME(thiscall) self->a_fun_flags = (Dee_funflags_t)(self->a_fun_flags|DEE_FUNCTIONFLAGS_FLAG_THISCALL); }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
    if DEE_UNLIKELY(!yield()) return -1;
   } goto again;

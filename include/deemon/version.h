@@ -156,7 +156,11 @@
 //////////////////////////////////////////////////////////////////////////
 // Enables documentation strings (accessible through. __builtin_doc / DeeObject_Doc)
 #ifndef DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS
-#define DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS 1
+#if !defined(__OPTIMIZE_SIZE__)
+# define DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS 1
+#else
+# define DEE_CONFIG_RUNTIME_HAVE_DOCSTRINGS 0
+#endif
 #endif
 
 //////////////////////////////////////////////////////////////////////////

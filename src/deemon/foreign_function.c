@@ -106,10 +106,10 @@ DEE_DECL_BEGIN
 
 DEE_STATIC_INLINE(int) DeeForeignFunctionType_Init(
  DeeForeignFunctionTypeObject *self,
- DeeFunctionFlags flags, DeeTypeObject const *return_type,
+ Dee_funflags_t flags, DeeTypeObject const *return_type,
  Dee_size_t arg_types_c, DeeTypeObject const *const *arg_types_v);
 DEE_A_RET_TYPEOBJECT_EXCEPT_REF(DeeForeignFunctionTypeObject) *_DeeForeignFunctionType_New(
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN DeeTypeObject const *return_type,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN DeeTypeObject const *return_type,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DeeForeignFunctionTypeObject *result;
  if ((result = DeeObject_MALLOC(DeeForeignFunctionTypeObject)) != NULL) {
@@ -188,47 +188,47 @@ DEE_STATIC_INLINE(ffi_type **) _DeeForeignFunction_GetFFITypes(
 }
 
 DEE_STATIC_INLINE(char *) _DeeForeignFunctionType_GenerateName(
- DeeFunctionFlags flags, DeeTypeObject const *return_type,
+ Dee_funflags_t flags, DeeTypeObject const *return_type,
  Dee_size_t arg_types_c, DeeTypeObject const *const *arg_types_v) {
  char *result;
  DeeStringWriter writer = DeeStringWriter_INIT();
 #if 1
- if ((DeeStringWriter_WriteObjectRepr(&writer,(DeeObject *)return_type)) != 0) goto err;
+ if DEE_UNLIKELY(DeeStringWriter_WriteObjectRepr(&writer,(DeeObject *)return_type) != 0) goto err;
 #else
- if ((DeeStringWriter_WriteString(&writer,DeeType_NAME(return_type))) != 0) goto err;
+ if DEE_UNLIKELY(DeeStringWriter_WriteString(&writer,DeeType_NAME(return_type)) != 0) goto err;
 #endif
- if ((flags&DeeFunctionFlags_NOEXCEPT)!=0 && DeeStringWriter_WRITE_STRING(&writer," [[noexcept]]") != 0) goto err;
- if ((flags&DeeFunctionFlags_NORETURN)!=0 && DeeStringWriter_WRITE_STRING(&writer," [[noreturn]]") != 0) goto err;
- switch (flags&DeeFunctionFlags_CC_MASK) {
-  case DeeFunctionFlags_SYSV:     if (DeeStringWriter_WRITE_STRING(&writer," __sysv") != 0) goto err; break;
-  case DeeFunctionFlags_STDCALL:  if (DeeStringWriter_WRITE_STRING(&writer," __stdcall") != 0) goto err; break;
-  case DeeFunctionFlags_THISCALL: if (DeeStringWriter_WRITE_STRING(&writer," __thiscall") != 0) goto err; break;
-  case DeeFunctionFlags_FASTCALL: if (DeeStringWriter_WRITE_STRING(&writer," __fastcall") != 0) goto err; break;
-  case DeeFunctionFlags_MS_CDECL: if (DeeStringWriter_WRITE_STRING(&writer," __cdecl") != 0) goto err; break;
-  case DeeFunctionFlags_PASCAL:   if (DeeStringWriter_WRITE_STRING(&writer," __pascal") != 0) goto err; break;
-  case DeeFunctionFlags_REGISTER: if (DeeStringWriter_WRITE_STRING(&writer," __register") != 0) goto err; break;
-  case DeeFunctionFlags_WIN64:    if (DeeStringWriter_WRITE_STRING(&writer," __win64") != 0) goto err; break;
-  case DeeFunctionFlags_UNIX64:   if (DeeStringWriter_WRITE_STRING(&writer," __unix64") != 0) goto err; break;
+ if (DEE_FUNCTIONFLAGS_ISNOEXCEPT(flags) && DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," [[noexcept]]") != 0)) goto err;
+ if (DEE_FUNCTIONFLAGS_ISNORETURN(flags) && DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," [[noreturn]]") != 0)) goto err;
+ switch (DEE_FUNCTIONFLAGS_GETCC(flags)) {
+  case DEE_FUNCTIONFLAGS_FLAG_SYSV:     if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," __sysv") != 0) goto err; break;
+  case DEE_FUNCTIONFLAGS_FLAG_STDCALL:  if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," __stdcall") != 0) goto err; break;
+  case DEE_FUNCTIONFLAGS_FLAG_THISCALL: if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," __thiscall") != 0) goto err; break;
+  case DEE_FUNCTIONFLAGS_FLAG_FASTCALL: if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," __fastcall") != 0) goto err; break;
+  case DEE_FUNCTIONFLAGS_FLAG_MS_CDECL: if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," __cdecl") != 0) goto err; break;
+  case DEE_FUNCTIONFLAGS_FLAG_PASCAL:   if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," __pascal") != 0) goto err; break;
+  case DEE_FUNCTIONFLAGS_FLAG_REGISTER: if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," __register") != 0) goto err; break;
+  case DEE_FUNCTIONFLAGS_FLAG_WIN64:    if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," __win64") != 0) goto err; break;
+  case DEE_FUNCTIONFLAGS_FLAG_UNIX64:   if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer," __unix64") != 0) goto err; break;
   default: break;
  }
- if ((DeeStringWriter_WRITE_STRING(&writer,"(")) != 0) goto err;
+ if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,"(") != 0) goto err;
  if (arg_types_c) {
   while (1) {
 #if 1
-   if ((DeeStringWriter_WriteObjectRepr(&writer,(DeeObject *)*arg_types_v)) != 0) goto err;
+   if DEE_UNLIKELY(DeeStringWriter_WriteObjectRepr(&writer,(DeeObject *)*arg_types_v) != 0) goto err;
 #else
-   if ((DeeStringWriter_WriteString(&writer,DeeType_NAME(*arg_types_v))) != 0) goto err;
+   if DEE_UNLIKELY(DeeStringWriter_WriteString(&writer,DeeType_NAME(*arg_types_v)) != 0) goto err;
 #endif
    if (!--arg_types_c) break; ++arg_types_v;
-   if ((DeeStringWriter_WRITE_STRING(&writer,", ")) != 0) goto err;
+   if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,", ") != 0) goto err;
   }
-  if ((flags&DeeFunctionFlags_VARARGS)!=0 &&
-      (DeeStringWriter_WRITE_STRING(&writer,", ...")) != 0) goto err;
+  if ((flags&DEE_FUNCTIONFLAGS_FLAG_VARARGS)!=0 &&
+      DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,", ...") != 0)) goto err;
  } else {
-  if ((flags&DeeFunctionFlags_VARARGS)!=0 &&
-      (DeeStringWriter_WRITE_STRING(&writer,"...")) != 0) goto err;
+  if ((flags&DEE_FUNCTIONFLAGS_FLAG_VARARGS)!=0 &&
+      DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,"...") != 0)) goto err;
  }
- if ((DeeStringWriter_WRITE_STRING(&writer,")")) != 0) goto err;
+ if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,")") != 0) goto err;
  result = _DeeStringWriter_PackCString(&writer,NULL);
 end: DeeStringWriter_Quit(&writer);
  return result;
@@ -321,34 +321,34 @@ static DeeObject *_deeforeignfunction_tp_p_call_nv(DeeForeignFunctionTypeObject 
 #endif
 
 DEE_STATIC_INLINE(DEE_A_RET_WUNUSED ffi_abi)
-_DeeForeignFunction_GetFFIAbiFromFlags(DEE_A_IN DeeFunctionFlags flags) {
- switch (flags&DeeFunctionFlags_CC_MASK) {
+_DeeForeignFunction_GetFFIAbiFromFlags(DEE_A_IN Dee_funflags_t flags) {
+ switch (DEE_FUNCTIONFLAGS_GETCC(flags)) {
 #if DEE_HAVE_FFI_SYSV
-  case DeeFunctionFlags_SYSV: return FFI_SYSV;
+  case DEE_FUNCTIONFLAGS_FLAG_SYSV: return FFI_SYSV;
 #endif
 #if DEE_HAVE_FFI_STDCALL
-  case DeeFunctionFlags_STDCALL: return FFI_STDCALL;
+  case DEE_FUNCTIONFLAGS_FLAG_STDCALL: return FFI_STDCALL;
 #endif
 #if DEE_HAVE_FFI_THISCALL
-  case DeeFunctionFlags_THISCALL: return FFI_THISCALL;
+  case DEE_FUNCTIONFLAGS_FLAG_THISCALL: return FFI_THISCALL;
 #endif
 #if DEE_HAVE_FFI_FASTCALL
-  case DeeFunctionFlags_FASTCALL: return FFI_FASTCALL;
+  case DEE_FUNCTIONFLAGS_FLAG_FASTCALL: return FFI_FASTCALL;
 #endif
 #if DEE_HAVE_FFI_MS_CDECL
-  case DeeFunctionFlags_MS_CDECL: return FFI_MS_CDECL;
+  case DEE_FUNCTIONFLAGS_FLAG_MS_CDECL: return FFI_MS_CDECL;
 #endif
 #if DEE_HAVE_FFI_PASCAL
-  case DeeFunctionFlags_PASCAL: return FFI_PASCAL;
+  case DEE_FUNCTIONFLAGS_FLAG_PASCAL: return FFI_PASCAL;
 #endif
 #if DEE_HAVE_FFI_REGISTER
-  case DeeFunctionFlags_REGISTER: return FFI_REGISTER;
+  case DEE_FUNCTIONFLAGS_FLAG_REGISTER: return FFI_REGISTER;
 #endif
 #if DEE_HAVE_FFI_WIN64
-  case DeeFunctionFlags_WIN64: return FFI_WIN64;
+  case DEE_FUNCTIONFLAGS_FLAG_WIN64: return FFI_WIN64;
 #endif
 #if DEE_HAVE_FFI_UNIX64
-  case DeeFunctionFlags_UNIX64: return FFI_UNIX64;
+  case DEE_FUNCTIONFLAGS_FLAG_UNIX64: return FFI_UNIX64;
 #endif
   default: break;
  }
@@ -380,14 +380,14 @@ _DeeForeignFunctionType_ArgTypeof(DEE_A_IN DeeTypeObject *tp) {
 
 DEE_STATIC_INLINE(int) DeeForeignFunctionType_Init(
  DeeForeignFunctionTypeObject *self,
- DeeFunctionFlags flags, DeeTypeObject const *return_type,
+ Dee_funflags_t flags, DeeTypeObject const *return_type,
  Dee_size_t arg_types_c, DeeTypeObject const *const *arg_types_v) {
  DeeTypeObject **arg_copy; ffi_abi abi;
  DeeTypeObject const *const *iter,*const *end;
  char *new_name; ffi_status error;
 #define return_kind    self->fft_return_kind
-#define is_varargs   ((flags&DeeFunctionFlags_VARARGS)!=0)
-#define is_noexcept  ((flags&DeeFunctionFlags_NOEXCEPT)!=0)
+#define is_varargs   ((flags&DEE_FUNCTIONFLAGS_FLAG_VARARGS)!=0)
+#define is_noexcept  ((flags&DEE_FUNCTIONFLAGS_FLAG_NOEXCEPT)!=0)
  if ((*DeeType_GET_SLOT(&DeeStructuredType_Type,tp_ctor))(
   &DeeStructuredType_Type,(DeeObject *)self) != 0) return -1;
  self->fft_flags = flags;
@@ -488,7 +488,7 @@ err_2: free(self->fft_ffi_arg_type_v);
   return_kind = DEE_FOREIGN_RETURN_KIND_UTF32STRING_FROM_POINTER;
  } else if (return_type == &DeeObject_Type) {
 return_object:
-  return_kind = ((flags&DeeFunctionFlags_ADD_RESULT_REFERENCE)!=0)
+  return_kind = ((flags&DEE_FUNCTIONFLAGS_FLAG_ADD_RESULT_REFERENCE)!=0)
    ? DEE_FOREIGN_RETURN_KIND_OBJECT_ADDREF
    : DEE_FOREIGN_RETURN_KIND_OBJECT;
  } else if (DeeStructuredType_Check(return_type)) {
@@ -537,7 +537,7 @@ static int _deeforeignfunctiontype_tp_any_ctor(
  if (DeeObject_InplaceGetInstance(&arg_types,&DeeTuple_Type) != 0) return -1;
  end = (iter = DeeTuple_ELEM(arg_types))+DeeTuple_SIZE(arg_types);
  while (iter != end) { if (DeeError_TypeError_CheckType(*iter,&DeeType_Type) != 0) return -1; ++iter; }
- return DeeForeignFunctionType_Init(self,(DeeFunctionFlags)flags,return_type,
+ return DeeForeignFunctionType_Init(self,(Dee_funflags_t)flags,return_type,
   DeeTuple_SIZE(arg_types),(DeeTypeObject const* const*)DeeTuple_ELEM(arg_types));
 }
 #endif
@@ -560,7 +560,7 @@ DEE_VISIT_PROC(_deeforeignfunctiontype_tp_visit,DeeForeignFunctionTypeObject *se
 
 static struct DeeMemberDef const _deeforeignfunctiontype_tp_members[] = {
  DEE_MEMBERDEF_NAMED_RO_v100("rett",DeeForeignFunctionTypeObject,fft_return_type,object),
- DEE_MEMBERDEF_RO_v100(DeeForeignFunctionTypeObject,fft_flags,DeeFunctionFlags),
+ DEE_MEMBERDEF_RO_v100(DeeForeignFunctionTypeObject,fft_flags,Dee_funflags_t),
  DEE_MEMBERDEF_RO_v100(DeeForeignFunctionTypeObject,fft_return_type,object),
  DEE_MEMBERDEF_RO_v100(DeeForeignFunctionTypeObject,fft_arg_type_c,Dee_size_t),
  DEE_MEMBERDEF_RO_v100(DeeForeignFunctionTypeObject,fft_arg_type_v,p2(void)),

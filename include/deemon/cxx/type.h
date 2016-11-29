@@ -25,15 +25,9 @@
 #include <deemon/cxx/__features.inl>
 #include <deemon/cxx/object.h>
 #include <deemon/optional/type_slots.h>
+#include <deemon/optional/functionflags.h>
 
 #if DEE_HAVE_CXX_API
-#ifdef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-DEE_DECL_BEGIN
-DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-DEE_DECL_END
-#undef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-#endif
-
 DEE_DECL_CXX_BEGIN
 namespace deemon {
 
@@ -64,9 +58,9 @@ struct type: object {
   inline DEE_A_RET_WUNUSED type foreign_function(DEE_A_IN tuple const &arg_types) const;
   inline DEE_A_RET_WUNUSED type foreign_function(DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) type const *arg_types) const;
   inline DEE_A_RET_WUNUSED type foreign_function(DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) ::DeeTypeObject *const *arg_types) const;
-  inline DEE_A_RET_WUNUSED type foreign_function(DEE_A_IN ::DeeFunctionFlags flags, DEE_A_IN tuple const &arg_types) const;
-  inline DEE_A_RET_WUNUSED type foreign_function(DEE_A_IN ::DeeFunctionFlags flags, DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) type const *arg_types) const;
-  inline DEE_A_RET_WUNUSED type foreign_function(DEE_A_IN ::DeeFunctionFlags flags, DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) ::DeeTypeObject *const *arg_types) const;
+  inline DEE_A_RET_WUNUSED type foreign_function(DEE_A_IN ::Dee_funflags_t flags, DEE_A_IN tuple const &arg_types) const;
+  inline DEE_A_RET_WUNUSED type foreign_function(DEE_A_IN ::Dee_funflags_t flags, DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) type const *arg_types) const;
+  inline DEE_A_RET_WUNUSED type foreign_function(DEE_A_IN ::Dee_funflags_t flags, DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) ::DeeTypeObject *const *arg_types) const;
  public: /* public constructor / destructor */
   DEE_OBJECT_SUBCLASS_DEFAULT_CTOR(type,object,DeeType_Check)
   inline type &operator = (DEE_A_IN ::DeeTypeObject *ob) DEE_CXX11_NOEXCEPT { DEE_ASSERT(DeeObject_Check(ob) && DeeType_Check(ob)); this->priv_assign_ptr((::DeeObject *)ob); return *this; }

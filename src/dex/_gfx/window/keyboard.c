@@ -21,6 +21,7 @@
 #ifndef GUARD_DEEMON_DEX_GFX_WINDOW_SCANBOARD_C
 #define GUARD_DEEMON_DEX_GFX_WINDOW_SCANBOARD_C 1
 #define DEE_EXTENSION 1
+#define DEE_LIMITED_DEX_GFX 1
 
 #include <deemon/__conf.inl>
 #include "keyboard.h"

@@ -298,6 +298,7 @@
     <ClInclude Include="..\include\deemon\optional\fs_api.fileproperty.h" />
     <ClInclude Include="..\include\deemon\optional\fs_api.fsapimode.h" />
     <ClInclude Include="..\include\deemon\optional\fs_api.modechange.h" />
+    <ClInclude Include="..\include\deemon\optional\functionflags.h" />
     <ClInclude Include="..\include\deemon\optional\hashmap.h" />
     <ClInclude Include="..\include\deemon\optional\hashset.h" />
     <ClInclude Include="..\include\deemon\optional\integer_decl.h" />
@@ -329,6 +330,7 @@
     <ClInclude Include="..\include\deemon\optional\structured_pointer_decl.h" />
     <ClInclude Include="..\include\deemon\optional\type_decl.h" />
     <ClInclude Include="..\include\deemon\optional\type_flags.h" />
+    <ClInclude Include="..\include\deemon\optional\type_newinstance.h" />
     <ClInclude Include="..\include\deemon\optional\type_slots.h" />
     <ClInclude Include="..\include\deemon\optional\type_util.h" />
     <ClInclude Include="..\include\deemon\optional\uuid.h" />
@@ -386,6 +388,7 @@
     <ClInclude Include="..\src\deemon\sys\sysfs.h" />
     <ClInclude Include="..\src\deemon\sys\sysfs.view.h" />
     <ClInclude Include="..\src\deemon\sys\sysinfo.h" />
+    <ClInclude Include="..\src\deemon\sys\systhread.h" />
     <ClInclude Include="..\src\deemon\sys\systls.h" />
     <ClInclude Include="..\src\deemon\sys\unix\sysdynlib.h" />
     <ClInclude Include="..\src\deemon\sys\unix\sysfd.h" />
@@ -399,6 +402,7 @@
     <ClInclude Include="..\src\deemon\sys\win32\sysfs.unicode_impl.h" />
     <ClInclude Include="..\src\deemon\sys\win32\sysfs.view.h" />
     <ClInclude Include="..\src\deemon\sys\win32\sysinfo.h" />
+    <ClInclude Include="..\src\deemon\sys\win32\systhread.h" />
     <ClInclude Include="..\src\deemon\sys\win32\systls.h" />
     <ClInclude Include="..\src\deemon\sys\win32\w32_process_handles.h" />
     <ClInclude Include="..\src\deemon\uuid_list.h" />

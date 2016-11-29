@@ -106,8 +106,8 @@ inline DEE_A_RET_WUNUSED string::utf32 string::utf32::format(DEE_A_IN tuple cons
 #endif
 #endif
 #ifdef GUARD_DEEMON_CXX_STRUCTURED_H
-inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN tuple const &arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,DeeFunctionFlags_DEFAULT,DeeTuple_SIZE(arg_types.priv_get()),(::DeeTypeObject *const *)DeeTuple_ELEM(arg_types.priv_get())),detail::tag_check_error()); }
-inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN ::DeeFunctionFlags flags, DEE_A_IN tuple const &arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,flags,DeeTuple_SIZE(arg_types.priv_get()),(::DeeTypeObject *const *)DeeTuple_ELEM(arg_types.priv_get())),detail::tag_check_error()); }
+inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN tuple const &arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,DEE_FUNCTIONFLAGS_DEFAULT,DeeTuple_SIZE(arg_types.priv_get()),(::DeeTypeObject *const *)DeeTuple_ELEM(arg_types.priv_get())),detail::tag_check_error()); }
+inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN ::Dee_funflags_t flags, DEE_A_IN tuple const &arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,flags,DeeTuple_SIZE(arg_types.priv_get()),(::DeeTypeObject *const *)DeeTuple_ELEM(arg_types.priv_get())),detail::tag_check_error()); }
 #endif
 #ifdef GUARD_DEEMON_CXX_LIST_H
 inline DEE_A_RET_WUNUSED tuple list::as_tuple() const { return tuple(::DeeList_AsTuple(this->ob_ptr),detail::tag_ref_or_err()); }

@@ -18,31 +18,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_HASPROPERTY_C_INL
-#define GUARD_DEEMON_FS_VIRTUAL_FS_HASPROPERTY_C_INL 1
-#ifndef DEE_EXTENSION
+#ifndef GUARD_DEEMON_VFS_VIRTUAL_FS_C
+#define GUARD_DEEMON_VFS_VIRTUAL_FS_C 1
 #define DEE_EXTENSION 1
-#endif
 
 #include <deemon/__conf.inl>
-#include <deemon/error.h>
-#include <deemon/optional/fs_api.fileproperty.h>
-#include <deemon/string.h>
-#include <deemon/type.h>
-#include "native_hooks.h"
-#include "vfs_core.h"
-#include "vfs_native_node.h"
-#include "virtual_fs.h"
+
+DEE_DECL_BEGIN
+DEE_DECL_END
 
 #ifndef __INTELLISENSE__
-#define WIDE
-#define OBJECT
-#include "virtual_fs.hasproperty.impl.inl"
-#define WIDE
-#include "virtual_fs.hasproperty.impl.inl"
-#define OBJECT
-#include "virtual_fs.hasproperty.impl.inl"
-#include "virtual_fs.hasproperty.impl.inl"
+#include "virtual_fs_chdir.c.inl"
+#include "virtual_fs_chmod.c.inl"
+#include "virtual_fs_chown.c.inl"
+#include "virtual_fs_copy.c.inl"
+#include "virtual_fs_getmod.c.inl"
+#include "virtual_fs_getown.c.inl"
+#include "virtual_fs_gettimes.c.inl"
+#include "virtual_fs_hasproperty.c.inl"
+#include "virtual_fs_link.c.inl"
+#include "virtual_fs_mkdir.c.inl"
+#include "virtual_fs_move.c.inl"
+#include "virtual_fs_open.c.inl"
+#include "virtual_fs_opendir.c.inl"
+#include "virtual_fs_readlink.c.inl"
+#include "virtual_fs_remove.c.inl"
+#include "virtual_fs_rmdir.c.inl"
+#include "virtual_fs_settimes.c.inl"
+#include "virtual_fs_unlink.c.inl"
 #endif
 
-#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_ISBLOCKDEV_C_INL */
+
+#endif /* !GUARD_DEEMON_VFS_VIRTUAL_FS_C */

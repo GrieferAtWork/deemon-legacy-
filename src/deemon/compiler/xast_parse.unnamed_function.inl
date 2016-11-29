@@ -36,7 +36,7 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(-1) int) _DeeScope_InitializeAttributes(
  // Create the this-variable in [[thiscall]] functions
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
 #endif /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
- if (DeeAttributeDecl_GET_CALLING_CONVENTION(attr) == DeeFunctionFlags_THISCALL &&
+ if (DeeAttributeDecl_GET_CALLING_CONVENTION(attr) == DEE_FUNCTIONFLAGS_FLAG_THISCALL &&
      (self->sc_flags&DEE_SCOPE_FLAG_FOUND_THIS) == 0) {
   DeeLocalVarObject *this_var;
   self->sc_flags |= DEE_SCOPE_FLAG_FOUND_THIS;

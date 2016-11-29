@@ -33,24 +33,7 @@
     <ClCompile Include="..\src\dex\_vfs\vfs\vfs_virtual_nullfile.c" />
     <ClCompile Include="..\src\dex\_vfs\vfs\vfs_virtual_randomfile.c" />
     <ClCompile Include="..\src\dex\_vfs\vfs\vfs_virtual_stdfile.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_chdir.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_chmod.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_chown.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_copy.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_getmod.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_getown.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_gettimes.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_hasproperty.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_link.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_mkdir.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_move.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_open.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_opendir.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_readlink.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_remove.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_rmdir.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_settimes.c" />
-    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs_unlink.c" />
+    <ClCompile Include="..\src\dex\_vfs\vfs\virtual_fs.c" />
     <ClCompile Include="..\src\dex\_vfs\_vfs.c" />
   </ItemGroup>
   <ItemGroup>
@@ -75,7 +58,25 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\dex\_vfs\vfs\vfs_core.unicode_impl.inl" />
-    <None Include="..\src\dex\_vfs\vfs\virtual_fs.hasproperty.impl.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_chdir.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_chmod.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_chown.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_copy.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_getmod.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_getown.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_gettimes.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_hasproperty.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_hasproperty.impl.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_link.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_mkdir.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_move.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_open.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_opendir.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_readlink.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_remove.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_rmdir.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_settimes.c.inl" />
+    <None Include="..\src\dex\_vfs\vfs\virtual_fs_unlink.c.inl" />
     <None Include="..\src\dex\_vfs\vfs\__vfsconf.inl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

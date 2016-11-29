@@ -18,9 +18,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_COPY_C_INL
-#define GUARD_DEEMON_FS_VIRTUAL_FS_COPY_C_INL 1
+#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_MOVE_C_INL
+#define GUARD_DEEMON_FS_VIRTUAL_FS_MOVE_C_INL 1
+#ifndef DEE_EXTENSION
 #define DEE_EXTENSION 1
+#endif
 
 #include <deemon/__conf.inl>
 #include <deemon/string.h>
@@ -31,15 +33,13 @@
 
 DEE_DECL_BEGIN
 
-// TODO: Copying a virtual file into the real FS should be allowed!
-
-DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8Copy(
+DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8Move(
  DEE_A_IN_Z Dee_Utf8Char const *src, DEE_A_IN_Z Dee_Utf8Char const *dst) {
  DeeObject *native_src,*native_dst; struct DeeVFSNode *cwd; int error;
  DEE_ASSERT(src); DEE_ASSERT(dst);
  if (DeeVFS_Utf8IsAbsoluteNativePath(src)
   && DeeVFS_Utf8IsAbsoluteNativePath(dst)) {
-call_native: return DeeHFS_Utf8Copy(src,dst);
+call_native: return DeeHFS_Utf8Move(src,dst);
  }
  if (DeeVFS_Utf8IsVirtualPath(src)) {
   if ((native_src = DeeVFS_Utf8ForceNativeRootPath(src)) == NULL) return -1;
@@ -51,7 +51,7 @@ call_native: return DeeHFS_Utf8Copy(src,dst);
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
 //call_native_dst:
    if (!native_dst) goto call_native;
-   error = DeeHFS_Utf8Copy(src,DeeUtf8String_STR(native_dst));
+   error = DeeHFS_Utf8Move(src,DeeUtf8String_STR(native_dst));
    Dee_DECREF(native_dst);
    return error;
   }
@@ -63,7 +63,7 @@ call_native: return DeeHFS_Utf8Copy(src,dst);
   if (!cwd) {
    if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
 //call_native_src:
-    error = DeeHFS_Utf8Copy(DeeUtf8String_STR(native_src),dst);
+    error = DeeHFS_Utf8Move(DeeUtf8String_STR(native_src),dst);
     Dee_DECREF(native_src);
     return error;
    }
@@ -73,18 +73,18 @@ call_native: return DeeHFS_Utf8Copy(src,dst);
   DeeVFSNode_DECREF(cwd);
   if DEE_UNLIKELY(!native_dst) { error = -1; goto end_nativesrc; }
  } else if (cwd) DeeVFSNode_DECREF(cwd);
- error = DeeHFS_Utf8CopyObject(native_src,native_dst);
+ error = DeeHFS_Utf8MoveObject(native_src,native_dst);
  Dee_DECREF(native_dst);
 end_nativesrc: Dee_DECREF(native_src);
  return error;
 }
-DEE_A_RET_EXCEPT(-1) int DeeVFS_WideCopy(
+DEE_A_RET_EXCEPT(-1) int DeeVFS_WideMove(
  DEE_A_IN_Z Dee_WideChar const *src, DEE_A_IN_Z Dee_WideChar const *dst) {
  DeeObject *native_src,*native_dst; struct DeeVFSNode *cwd; int error;
  DEE_ASSERT(src); DEE_ASSERT(dst);
  if (DeeVFS_WideIsAbsoluteNativePath(src)
   && DeeVFS_WideIsAbsoluteNativePath(dst)) {
-call_native: return DeeHFS_WideCopy(src,dst);
+call_native: return DeeHFS_WideMove(src,dst);
  }
  if (DeeVFS_WideIsVirtualPath(src)) {
   if ((native_src = DeeVFS_WideForceNativeRootPath(src)) == NULL) return -1;
@@ -96,7 +96,7 @@ call_native: return DeeHFS_WideCopy(src,dst);
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
 //call_native_dst:
    if (!native_dst) goto call_native;
-   error = DeeHFS_WideCopy(src,DeeWideString_STR(native_dst));
+   error = DeeHFS_WideMove(src,DeeWideString_STR(native_dst));
    Dee_DECREF(native_dst);
    return error;
   }
@@ -108,7 +108,7 @@ call_native: return DeeHFS_WideCopy(src,dst);
   if (!cwd) {
    if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
 //call_native_src:
-    error = DeeHFS_WideCopy(DeeWideString_STR(native_src),dst);
+    error = DeeHFS_WideMove(DeeWideString_STR(native_src),dst);
     Dee_DECREF(native_src);
     return error;
    }
@@ -118,12 +118,12 @@ call_native: return DeeHFS_WideCopy(src,dst);
   DeeVFSNode_DECREF(cwd);
   if DEE_UNLIKELY(!native_dst) { error = -1; goto end_nativesrc; }
  } else if (cwd) DeeVFSNode_DECREF(cwd);
- error = DeeHFS_WideCopyObject(native_src,native_dst);
+ error = DeeHFS_WideMoveObject(native_src,native_dst);
  Dee_DECREF(native_dst);
 end_nativesrc: Dee_DECREF(native_src);
  return error;
 }
-DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8CopyObject(
+DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8MoveObject(
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *src,
  DEE_A_IN_OBJECT(DeeUtf8StringObject) const *dst) {
  DeeObject *native_src,*native_dst; struct DeeVFSNode *cwd; int error;
@@ -131,7 +131,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_Utf8CopyObject(
  DEE_ASSERT(DeeObject_Check(dst) && DeeUtf8String_Check(dst));
  if (DeeVFS_Utf8IsAbsoluteNativePathObject(src)
   && DeeVFS_Utf8IsAbsoluteNativePathObject(dst)) {
-call_native: return DeeHFS_Utf8CopyObject(src,dst);
+call_native: return DeeHFS_Utf8MoveObject(src,dst);
  }
  if (DeeVFS_Utf8IsVirtualPathObject(src)) {
   if ((native_src = DeeVFS_Utf8ForceNativeRootPathObject(src)) == NULL) return -1;
@@ -143,7 +143,7 @@ call_native: return DeeHFS_Utf8CopyObject(src,dst);
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
 //call_native_dst:
    if (!native_dst) goto call_native;
-   error = DeeHFS_Utf8CopyObject(src,native_dst);
+   error = DeeHFS_Utf8MoveObject(src,native_dst);
    Dee_DECREF(native_dst);
    return error;
   }
@@ -155,7 +155,7 @@ call_native: return DeeHFS_Utf8CopyObject(src,dst);
   if (!cwd) {
    if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
 //call_native_src:
-    error = DeeHFS_Utf8CopyObject(native_src,dst);
+    error = DeeHFS_Utf8MoveObject(native_src,dst);
     Dee_DECREF(native_src);
     return error;
    }
@@ -165,12 +165,12 @@ call_native: return DeeHFS_Utf8CopyObject(src,dst);
   DeeVFSNode_DECREF(cwd);
   if DEE_UNLIKELY(!native_dst) { error = -1; goto end_nativesrc; }
  } else if (cwd) DeeVFSNode_DECREF(cwd);
- error = DeeHFS_Utf8CopyObject(native_src,native_dst);
+ error = DeeHFS_Utf8MoveObject(native_src,native_dst);
  Dee_DECREF(native_dst);
 end_nativesrc: Dee_DECREF(native_src);
  return error;
 }
-DEE_A_RET_EXCEPT(-1) int DeeVFS_WideCopyObject(
+DEE_A_RET_EXCEPT(-1) int DeeVFS_WideMoveObject(
  DEE_A_IN_OBJECT(DeeWideStringObject) const *src,
  DEE_A_IN_OBJECT(DeeWideStringObject) const *dst) {
  DeeObject *native_src,*native_dst; struct DeeVFSNode *cwd; int error;
@@ -178,7 +178,7 @@ DEE_A_RET_EXCEPT(-1) int DeeVFS_WideCopyObject(
  DEE_ASSERT(DeeObject_Check(dst) && DeeWideString_Check(dst));
  if (DeeVFS_WideIsAbsoluteNativePathObject(src)
   && DeeVFS_WideIsAbsoluteNativePathObject(dst)) {
-call_native: return DeeHFS_WideCopyObject(src,dst);
+call_native: return DeeHFS_WideMoveObject(src,dst);
  }
  if (DeeVFS_WideIsVirtualPathObject(src)) {
   if ((native_src = DeeVFS_WideForceNativeRootPathObject(src)) == NULL) return -1;
@@ -190,7 +190,7 @@ call_native: return DeeHFS_WideCopyObject(src,dst);
   if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
 //call_native_dst:
    if (!native_dst) goto call_native;
-   error = DeeHFS_WideCopyObject(src,native_dst);
+   error = DeeHFS_WideMoveObject(src,native_dst);
    Dee_DECREF(native_dst);
    return error;
   }
@@ -202,7 +202,7 @@ call_native: return DeeHFS_WideCopyObject(src,dst);
   if (!cwd) {
    if ((cwd = DeeVFS_GetActiveCwdNode()) == NULL) {
 //call_native_src:
-    error = DeeHFS_WideCopyObject(native_src,dst);
+    error = DeeHFS_WideMoveObject(native_src,dst);
     Dee_DECREF(native_src);
     return error;
    }
@@ -212,7 +212,7 @@ call_native: return DeeHFS_WideCopyObject(src,dst);
   DeeVFSNode_DECREF(cwd);
   if DEE_UNLIKELY(!native_dst) { error = -1; goto end_nativesrc; }
  } else if (cwd) DeeVFSNode_DECREF(cwd);
- error = DeeHFS_WideCopyObject(native_src,native_dst);
+ error = DeeHFS_WideMoveObject(native_src,native_dst);
  Dee_DECREF(native_dst);
 end_nativesrc: Dee_DECREF(native_src);
  return error;
@@ -220,4 +220,4 @@ end_nativesrc: Dee_DECREF(native_src);
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_COPY_C_INL */
+#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_MOVE_C_INL */

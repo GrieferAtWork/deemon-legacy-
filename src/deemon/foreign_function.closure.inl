@@ -202,7 +202,7 @@ on_err:
 ignore_error:
    // Ignore errors that occurred inside the closure callback (since we have no way of reporting them)
    DeeError_Print("[Ignored] Unhandled exception in foreign function closure callback",1);
-  } else if ((ff_type->fft_flags&DeeFunctionFlags_NOEXCEPT)!=0) {
+  } else if ((ff_type->fft_flags&DEE_FUNCTIONFLAGS_FLAG_NOEXCEPT)!=0) {
    // Return none on error
    returnl(DeeObject *) = Dee_None;
    if (ff_type->fft_return_kind == DEE_FOREIGN_RETURN_KIND_OBJECT)

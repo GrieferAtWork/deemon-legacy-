@@ -34,7 +34,7 @@ DEE_DECL_BEGIN
 struct DeeEmulatedSysTLSEntry;
 struct DeeEmulatedSysTLSEntry {
  struct DeeEmulatedSysTLSEntry *este_next;   /*< [0..1][owned] Next thread entry. */
- DeeThreadID                    este_thread; /*< Id of the thread this entry referrs to. */
+ Dee_tid_t                    este_thread; /*< Id of the thread this entry referrs to. */
  void                          *este_value;  /*< [?..?] Value thread-local to 'este_thread'. */
 };
 struct DeeEmulatedSysTLS {
@@ -58,7 +58,7 @@ do{\
 
 DEE_STATIC_INLINE(void *) DeeEmulatedSysTLS_GetValue(struct DeeEmulatedSysTLS *self) {
  struct DeeEmulatedSysTLSEntry *iter;
- DeeThreadID tid = DeeThread_SelfID();
+ Dee_tid_t tid = DeeThread_SelfID();
  iter = self->est_threads;
  while (iter) {
   if (iter->este_thread == tid) return iter->este_value;
@@ -69,7 +69,7 @@ DEE_STATIC_INLINE(void *) DeeEmulatedSysTLS_GetValue(struct DeeEmulatedSysTLS *s
 DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(0) int) DeeEmulatedSysTLS_SetValue(
  struct DeeEmulatedSysTLS *self, void *value) {
  struct DeeEmulatedSysTLSEntry *iter;
- DeeThreadID tid = DeeThread_SelfID();
+ Dee_tid_t tid = DeeThread_SelfID();
  iter = self->est_threads;
  while (iter) {
   if (iter->este_thread == tid) {

@@ -20,7 +20,7 @@
  */
 
 #ifdef __INTELLISENSE__
-#include "virtual_fs.hasproperty.c.inl"
+#include "virtual_fs_hasproperty.c.inl"
 #define WIDE
 #define OBJECT
 #endif

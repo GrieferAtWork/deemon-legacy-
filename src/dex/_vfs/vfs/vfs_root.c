@@ -69,6 +69,9 @@ static struct DeeVFSNode _deevfs_dev_random = DeeVFSNode_INIT(&DeeVFSVirtualRand
 #if DEE_VFSCONFIG_HAVEFILE_DEV_URANDOM
 static struct DeeVFSNode _deevfs_dev_urandom = DeeVFSNode_INIT(&DeeVFSVirtualURandomFileNode_Type,(struct DeeVFSNode *)&_DeeVFS_Dev);
 #endif
+#if DEE_VFSCONFIG_HAVEFILE_DEV_FULL
+static struct DeeVFSNode _deevfs_dev_full = DeeVFSNode_INIT(&DeeVFSVirtualFULLFileNode_Type,(struct DeeVFSNode *)&_DeeVFS_Dev);
+#endif
 #if DEE_VFSCONFIG_HAVEFILE_DEV_NULL
 static struct DeeVFSNode _deevfs_dev_null = DeeVFSNode_INIT(&DeeVFSVirtualNULLFileNode_Type,(struct DeeVFSNode *)&_DeeVFS_Dev);
 #endif
@@ -80,6 +83,9 @@ static struct DeeVFSNode _deevfs_dev_zero = DeeVFSNode_INIT(&DeeVFSVirtualZEROFi
 
 #if DEE_VFSCONFIG_HAVEFILE_DEV
 static struct DeeVFSVirtualDirEntry _deevfs_dev_nodes[] = {
+#if DEE_VFSCONFIG_HAVEFILE_DEV_FULL
+ {"full",   (struct DeeVFSNode *)&_deevfs_dev_full},
+#endif
 #if DEE_VFSCONFIG_HAVEFILE_DEV_NULL
  {"null",   (struct DeeVFSNode *)&_deevfs_dev_null},
 #endif

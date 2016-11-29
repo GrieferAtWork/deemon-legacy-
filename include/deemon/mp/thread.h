@@ -289,22 +289,22 @@ DEE_FUNC_DECL(DEE_A_RET_EXCEPT_FAIL(-1,1) int) DeeThread_Start(
  DEE_A_INOUT_OBJECT(DeeThreadObject) *self) DEE_ATTRIBUTE_NONNULL((1));
 #endif /* !DEE_WITHOUT_THREADS */
 
-#ifdef DEE_PRIVATE_DECL_DEE_THREAD_ID
-DEE_PRIVATE_DECL_DEE_THREAD_ID
-#undef DEE_PRIVATE_DECL_DEE_THREAD_ID
+#ifdef DEE_PRIVATE_DECL_DEE_TID_T
+DEE_PRIVATE_DECL_DEE_TID_T
+#undef DEE_PRIVATE_DECL_DEE_TID_T
 #endif
 
 #ifndef DEE_WITHOUT_THREADS
 //////////////////////////////////////////////////////////////////////////
 // noexcept: Returns a unique (preferable meaningful) thread-id for "self"
-// Returns (DeeThreadID)-1, but doesn't set an error if the thread wasn't started or is detached
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED DeeThreadID) DeeThread_ID(
+// Returns (Dee_tid_t)-1, but doesn't set an error if the thread wasn't started or is detached
+DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_tid_t) DeeThread_ID(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
 
 //////////////////////////////////////////////////////////////////////////
 // noexcept: Returns a unique (preferable meaningful) thread-id for the calling thread
 // - Same as "DeeThread_ID(DeeThread_Self())", but is normally faster
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED DeeThreadID) DeeThread_SelfID(void);
+DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_tid_t) DeeThread_SelfID(void);
 
 //////////////////////////////////////////////////////////////////////////
 // Check is the thread was already started
@@ -500,7 +500,7 @@ DEE_DECL_END
 // Some optimizations, by inlining calls to windows functions
 #define DeeThread_Yield             (void)SwitchToThread
 #define DeeThread_SleepNoInterrupt  Sleep
-#define DeeThread_SelfID            (DeeThreadID)GetCurrentThreadId
+#define DeeThread_SelfID            (Dee_tid_t)GetCurrentThreadId
 #endif
 #endif /* !DEE_WITHOUT_THREADS */
 

@@ -20,7 +20,9 @@
  */
 #ifndef GUARD_DEEMON_FS_VIRTUAL_FS_CHDIR_C_INL
 #define GUARD_DEEMON_FS_VIRTUAL_FS_CHDIR_C_INL 1
+#ifndef DEE_EXTENSION
 #define DEE_EXTENSION 1
+#endif
 
 #include <deemon/__conf.inl>
 #include "virtual_fs.h"

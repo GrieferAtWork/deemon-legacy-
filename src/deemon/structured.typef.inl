@@ -212,7 +212,7 @@ again:
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_ARRAYS */
 #if DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION
   case '(': {
-   DeeFunctionFlags flags = DeeFunctionFlags_NONE;
+   Dee_funflags_t flags = DEE_FUNCTIONFLAGS_NONE;
    DeeTypeObject **argty_v,**new_argty_v; Dee_size_t argty_c,argty_a;
    ++fmt;
    if (*fmt == '!') { ++fmt; } // TODO: Parse function flags

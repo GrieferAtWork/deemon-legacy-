@@ -41,7 +41,7 @@ DEE_A_RET_EXCEPT(-1) int DeeXAst_ParseClassEntry(
  int result;
  struct DeeAttributeDecl attr = DeeAttributeDecl_INIT();
  // Predefined attributes
- attr.a_fun_flags = DeeFunctionFlags_THISCALL;
+ attr.a_fun_flags = DEE_FUNCTIONFLAGS_FLAG_THISCALL;
  Dee_INCREF(attr.a_super = class_base);
  if (DeeAttributeDecl_Parse(&attr,DEE_PARSER_ARGS) == 0)
 #ifdef CONST_ENTRY
@@ -194,7 +194,7 @@ parse_operator:
    if DEE_UNLIKELY(operator_name == DEE_XAST_TYPESLOT_SUPERARGS) {
     DEE_ASSERT(DeeObject_Check(attr->a_super) && DeeXAst_Check(attr->a_super));
     //Special operator: This one isn't a [[thiscall]]
-    attr->a_fun_flags &= ~DeeFunctionFlags_CC_MASK; // Delete cc-attributes
+    attr->a_fun_flags &= ~DEE_FUNCTIONFLAGS_FLAG_CC_MASK; // Delete cc-attributes
     // v Not really required...
     //Dee_CLEAR(attr->a_super); // Delete the super type
    }

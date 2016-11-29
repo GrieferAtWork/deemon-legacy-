@@ -57,21 +57,20 @@
  DeeMemberType_ullong = DeeMemberType_UINT(DEE_TYPES_SIZEOF_LLONG),
 #endif
  DeeMemberType_Dee_intmax_t = DeeMemberType_INT(DEE_TYPES_SIZEOF_INTMAX_T),
- DeeMemberType_intmax_t = DeeMemberType_Dee_intmax_t,
  DeeMemberType_Dee_uintmax_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_INTMAX_T),
- DeeMemberType_uintmax_t = DeeMemberType_Dee_uintmax_t,
  DeeMemberType_Dee_intptr_t = DeeMemberType_INT(DEE_TYPES_SIZEOF_INTPTR_T),
- DeeMemberType_intptr_t = DeeMemberType_Dee_intptr_t,
  DeeMemberType_Dee_uintptr_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_INTPTR_T),
- DeeMemberType_uintptr_t = DeeMemberType_Dee_uintptr_t,
  DeeMemberType_Dee_ptrdiff_t = DeeMemberType_INT(DEE_TYPES_SIZEOF_PTRDIFF_T),
- DeeMemberType_ptrdiff_t = DeeMemberType_Dee_ptrdiff_t,
  DeeMemberType_Dee_size_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_SIZE_T),
- DeeMemberType_size_t = DeeMemberType_Dee_size_t,
  DeeMemberType_Dee_ssize_t = DeeMemberType_INT(DEE_TYPES_SIZEOF_SSIZE_T),
- DeeMemberType_ssize_t = DeeMemberType_Dee_ssize_t,
- DeeMemberType_DeeThreadID = DeeMemberType_UINT(DEE_TYPES_SIZEOF_THREADID),
  DeeMemberType_Dee_hash_t = DeeMemberType_UINT(DEE_CONFIG_SIZEOF_DEE_HASH_T),
+ DeeMemberType_intmax_t = DeeMemberType_Dee_intmax_t,
+ DeeMemberType_uintmax_t = DeeMemberType_Dee_uintmax_t,
+ DeeMemberType_intptr_t = DeeMemberType_Dee_intptr_t,
+ DeeMemberType_uintptr_t = DeeMemberType_Dee_uintptr_t,
+ DeeMemberType_ptrdiff_t = DeeMemberType_Dee_ptrdiff_t,
+ DeeMemberType_size_t = DeeMemberType_Dee_size_t,
+ DeeMemberType_ssize_t = DeeMemberType_Dee_ssize_t,
  DeeMemberType_Dee_Utf8Char = DeeMemberType_char,
  DeeMemberType_Dee_Utf16Char = DeeMemberType_uint16_t,
  DeeMemberType_Dee_Utf32Char = DeeMemberType_uint32_t,
@@ -123,6 +122,12 @@
  DeeMemberType_Dee_rt_uint_least64_t = DeeMemberType_UINT(DEE_CONFIG_RT_SIZEOF_INT_LEAST64_T),
  DeeMemberType_Dee_refcnt_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_REFCNT),
  DeeMemberType_Dee_weakcnt_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_WEAKCNT),
+#ifdef DEE_TYPES_SIZEOF_TID_T
+ DeeMemberType_Dee_tid_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_TID_T),
+#endif
+#ifdef DEE_TYPES_SIZEOF_PID_T
+ DeeMemberType_Dee_pid_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_PID_T),
+#endif
 #ifdef DEE_TYPES_SIZEOF_UID_T
  DeeMemberType_Dee_uid_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_UID_T),
 #endif
@@ -132,14 +137,18 @@
 #ifdef DEE_TYPES_SIZEOF_MODE_T
  DeeMemberType_Dee_mode_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_MODE_T),
 #endif
+#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN
+ DeeMemberType_DeeProcessReturn = DeeMemberType_UINT(DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN),
+#endif
+#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE
+ DeeMemberType_DeeProcessHandle = DeeMemberType_UINT(DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE),
+#endif
  DeeMemberType_uid_t = DeeMemberType_Dee_uid_t,
  DeeMemberType_gid_t = DeeMemberType_Dee_gid_t,
+ DeeMemberType_pid_t = DeeMemberType_Dee_pid_t,
  DeeMemberType_mode_t = DeeMemberType_Dee_mode_t,
  DeeMemberType_sa_family_t = DeeMemberType_ushort,
  DeeMemberType_in_port_t = DeeMemberType_uint16_t,
-#ifdef DEE_TYPES_SIZEOF_PID_T
- DeeMemberType_pid_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_PID_T),
-#endif
 #ifdef DEE_TYPES_SIZEOF_SOCKLEN_T
  DeeMemberType_socklen_t = DeeMemberType_INT(DEE_TYPES_SIZEOF_SOCKLEN_T),
 #endif
@@ -171,17 +180,8 @@
  DeeMemberType_uint_least16_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_INT_LEAST16_T),
  DeeMemberType_uint_least32_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_INT_LEAST32_T),
  DeeMemberType_uint_least64_t = DeeMemberType_UINT(DEE_TYPES_SIZEOF_INT_LEAST64_T),
-#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_ID
- DeeMemberType_DeeProcessID = DeeMemberType_UINT(DEE_TYPES_SIZEOF_DEE_PROCESS_ID),
-#endif
-#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN
- DeeMemberType_DeeProcessReturn = DeeMemberType_UINT(DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN),
-#endif
-#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE
- DeeMemberType_DeeProcessHandle = DeeMemberType_UINT(DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE),
-#endif
+ DeeMemberType_Dee_funflags_t = DeeMemberType_int16_t,
  DeeMemberType_DeeExceptionHandlerKind = DeeMemberType_int,
- DeeMemberType_DeeFunctionFlags = DeeMemberType_int16_t,
  DeeMemberType_DeeExprAstKind = DeeMemberType_int,
  DeeMemberType_DeeStmtAstKind = DeeMemberType_enum,
  DeeMemberType_DeeAstAttribute = DeeMemberType_uint32_t,

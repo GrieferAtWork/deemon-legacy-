@@ -244,7 +244,7 @@ void DeeForeignFunctionTypeList_Clear(
  }
 }
 DEE_STATIC_INLINE(DeeForeignFunctionTypeObject *) _DeeForeignFunctionTypeList_Find_AlreadyLocked(
- struct DeeForeignFunctionTypeList *self, DEE_A_IN DeeFunctionFlags flags,
+ struct DeeForeignFunctionTypeList *self, DEE_A_IN Dee_funflags_t flags,
 #ifdef DEE_DEBUG
  DeeTypeObject const *return_type,
 #endif
@@ -282,7 +282,7 @@ no_match:;
 DEE_A_RET_EXCEPT(NULL) struct DeeForeignFunctionTypeObject *
 DeeForeignFunctionTypeList_FindOrAddToGlobalCache(
  DEE_A_INOUT struct DeeForeignFunctionTypeList *self,
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN DeeTypeObject const *return_type,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN DeeTypeObject const *return_type,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DeeForeignFunctionTypeObject *result,*temp;
  DEE_ASSERT(self);
@@ -436,7 +436,7 @@ add_new_at:
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
 struct DeeForeignFunctionTypeList _generic_foreign_function_list = DeeForeignFunctionTypeList_INIT();
 DEE_STATIC_INLINE(DeeForeignFunctionTypeObject *) _DeeForeignFunctionTypeList_FindDefault_AlreadyLocked(
- DEE_A_IN DeeFunctionFlags flags, DeeTypeObject const *return_type, Dee_size_t argc, DeeTypeObject const *const *argv) {
+ DEE_A_IN Dee_funflags_t flags, DeeTypeObject const *return_type, Dee_size_t argc, DeeTypeObject const *const *argv) {
  DeeForeignFunctionTypeObject *result,**iter,**end;
  DeeTypeObject const *const *argv_end;
  argv_end = argv+argc;
@@ -464,7 +464,7 @@ no_match:;
 
 DEE_A_RET_EXCEPT(NULL) struct DeeForeignFunctionTypeObject *
 DeeForeignFunctionTypeList_FindOrAddToGlobalCacheDefault(
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN DeeTypeObject const *return_type,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN DeeTypeObject const *return_type,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DeeForeignFunctionTypeObject *result,*temp;
  DeeAtomicMutex_AcquireRelaxed(&_generic_foreign_function_list.fftl_lock);
@@ -941,7 +941,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeePointerTypeObject) *DeeLValueType_Pointer(
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
 DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *DeeStructuredType_ForeignFunction(
  DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *self,
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN Dee_size_t argc,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN Dee_size_t argc,
  DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DEE_ASSERT(DeeObject_Check(self) && DeeStructuredType_Check(self));
  return (DeeTypeObject *)DeeForeignFunctionTypeList_FindOrAddToGlobalCache(
@@ -950,7 +950,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *DeeStructuredType_For
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
 DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *DeeLValueType_ForeignFunction(
  DEE_A_IN_TYPEOBJECT(DeeLValueTypeObject) const *self,
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN Dee_size_t argc,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN Dee_size_t argc,
  DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DEE_ASSERT(DeeObject_Check(self) && DeeLValueType_Check(self));
  return (DeeTypeObject *)DeeForeignFunctionTypeList_FindOrAddToGlobalCache(
@@ -958,7 +958,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *DeeLValueType_Foreign
 }
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
 DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *_DeeType_ForeignFunctionDefault(
- DEE_A_IN DeeTypeObject const *self, DEE_A_IN DeeFunctionFlags flags,
+ DEE_A_IN DeeTypeObject const *self, DEE_A_IN Dee_funflags_t flags,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DEE_ASSERT(DeeObject_Check(self));
  DEE_ASSERTF(!DeeStructuredType_Check(self),"Use 'DeeStructuredType_ForeignFunction(...)'");
@@ -969,7 +969,7 @@ DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *_DeeType_ForeignFunct
 }
 
 DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *DeeType_TForeignFunction(
- DEE_A_IN DeeTypeObject const *tp_self, DEE_A_IN DeeTypeObject const *self, DEE_A_IN DeeFunctionFlags flags,
+ DEE_A_IN DeeTypeObject const *tp_self, DEE_A_IN DeeTypeObject const *self, DEE_A_IN Dee_funflags_t flags,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) {
  DEE_ASSERT(DeeObject_Check(tp_self) && DeeType_Check(tp_self));
  DEE_ASSERT(DeeObject_Check(self));

@@ -294,7 +294,7 @@ void DeeNativeMutex_Quit(DEE_A_IN struct DeeNativeMutex *self) {
  DeeNativeSemaphore_Quit(&self->m_semaphore);
 }
 DEE_A_RET_NOEXCEPT(1) int DeeNativeMutex_TryAcquireNoexcept(DEE_A_INOUT struct DeeNativeMutex *self) {
- DeeThreadID tid;
+ Dee_tid_t tid;
  DEE_ASSERT(self);
  tid = DeeThread_SelfID();
  if (self->m_owner == tid) {
@@ -312,7 +312,7 @@ DEE_A_RET_NOEXCEPT(1) int DeeNativeMutex_TryAcquireNoexcept(DEE_A_INOUT struct D
  return 0;
 }
 void DeeNativeMutex_AcquireNoexcept(DEE_A_INOUT struct DeeNativeMutex *self) {
- DeeThreadID tid;
+ Dee_tid_t tid;
  DEE_ASSERT(self);
  tid = DeeThread_SelfID();
  if (DeeAtomicInt_IncFetch(self->m_counter,memory_order_acquire) > 1) {
@@ -336,7 +336,7 @@ void DeeNativeMutex_ReleaseNoexcept(DEE_A_INOUT struct DeeNativeMutex *self) {
 
 DEE_A_INTERRUPT DEE_A_RET_EXCEPT(-1)
 int DeeNativeMutex_Acquire(DEE_A_INOUT struct DeeNativeMutex *self) {
- DeeThreadID tid;
+ Dee_tid_t tid;
  DEE_ASSERT(self);
  tid = DeeThread_SelfID();
  if (DeeAtomicInt_IncFetch(self->m_counter,memory_order_acquire) > 1) {
@@ -354,7 +354,7 @@ int DeeNativeMutex_Acquire(DEE_A_INOUT struct DeeNativeMutex *self) {
 }
 DEE_A_INTERRUPT DEE_A_RET_EXCEPT_FAIL(-1,1)
 int DeeNativeMutex_AcquireTimed(DEE_A_INOUT struct DeeNativeMutex *self, DEE_A_IN unsigned int msecs) {
- DeeThreadID tid; int error;
+ Dee_tid_t tid; int error;
  DEE_ASSERT(self);
  tid = DeeThread_SelfID();
  if (DeeAtomicInt_IncFetch(self->m_counter,memory_order_acquire) > 1) {
@@ -395,7 +395,7 @@ DEE_A_RET_EXCEPT(-1) int DeeNativeMutex_Release(DEE_A_INOUT struct DeeNativeMute
  return 0;
 }
 DEE_A_RET_EXCEPT(-1) int DeeNativeMutex_ReleaseWithError(DEE_A_INOUT struct DeeNativeMutex *self) {
- unsigned int recur; DeeThreadID tid;
+ unsigned int recur; Dee_tid_t tid;
  DEE_ASSERT(self); tid = DeeThread_SelfID();
  if (self->m_owner != tid) {
   DeeError_NEW_STATIC(_not_owner,&DeeErrorType_ValueError,"Calling thread is not the owner");
@@ -663,7 +663,7 @@ static DEE_A_REF DeeObject *DEE_CALL _deemutex_release(
 #else /* !DEE_XCONFIG_HAVE_HIDDEN_MEMBERS */
 static struct DeeMemberDef _deemutex_tp_members[] = {
  DEE_MEMBERDEF_NAMED_RO_v100("__m_mutex_m_counter",DeeMutexObject,m_mutex.m_counter,atomic(uint)),
- DEE_MEMBERDEF_NAMED_RO_v100("__m_mutex_m_owner",DeeMutexObject,m_mutex.m_owner,DeeThreadID),
+ DEE_MEMBERDEF_NAMED_RO_v100("__m_mutex_m_owner",DeeMutexObject,m_mutex.m_owner,Dee_tid_t),
  DEE_MEMBERDEF_NAMED_RO_v100("__m_mutex_m_recursion",DeeMutexObject,m_mutex.m_recursion,uint),
 #ifdef DEE_PLATFORM_WINDOWS
  DEE_MEMBERDEF_NAMED_RO_v100("__m_mutex_m_semaphore_s_handle",DeeMutexObject,m_mutex.m_semaphore.s_handle,HANDLE),

@@ -69,7 +69,7 @@ struct _typeof_impl<ReturnType(Args...)>: _typeof_impl<ReturnType> {
   if ((result = _typeof_impl<T>::type_()) != NULL) {
    DeeTypeObject *arg_types[sizeof...(Args)];
    if (::deemon::detail::_arg_types_fill<Args...>::fill(arg_types) == -1) return NULL;
-   result = ::DeeType_ForeignFunction(result,DeeFunctionFlags_NONE,sizeof...(Args),arg_types);
+   result = ::DeeType_ForeignFunction(result,DEE_FUNCTIONFLAGS_NONE,sizeof...(Args),arg_types);
   }
   return result;
  }
@@ -111,13 +111,13 @@ inline DEE_A_RET_WUNUSED object object::operator & () const { return object(::De
 inline DEE_A_RET_WUNUSED type type::pointer() const { return type(::DeeType_Pointer((::DeeTypeObject *)this->ob_ptr),detail::tag_check_error()); }
 inline DEE_A_RET_WUNUSED type type::lvalue() const { return type(::DeeType_LValue((::DeeTypeObject *)this->ob_ptr),detail::tag_check_error()); }
 inline DEE_A_RET_WUNUSED type type::array(DEE_A_IN Dee_size_t n_elem) const { return type(::DeeType_Array((::DeeTypeObject *)this->ob_ptr,n_elem),detail::tag_check_error()); }
-inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) type const *arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,DeeFunctionFlags_DEFAULT,n_args,reinterpret_cast< ::DeeTypeObject *const *>(arg_types)),detail::tag_check_error()); }
-inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) ::DeeTypeObject *const *arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,DeeFunctionFlags_DEFAULT,n_args,arg_types),detail::tag_check_error()); }
-inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN ::DeeFunctionFlags flags, DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) type const *arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,flags,n_args,reinterpret_cast< ::DeeTypeObject *const *>(arg_types)),detail::tag_check_error()); }
-inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN ::DeeFunctionFlags flags, DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) ::DeeTypeObject *const *arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,flags,n_args,arg_types),detail::tag_check_error()); }
+inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) type const *arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,DEE_FUNCTIONFLAGS_DEFAULT,n_args,reinterpret_cast< ::DeeTypeObject *const *>(arg_types)),detail::tag_check_error()); }
+inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) ::DeeTypeObject *const *arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,DEE_FUNCTIONFLAGS_DEFAULT,n_args,arg_types),detail::tag_check_error()); }
+inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN ::Dee_funflags_t flags, DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) type const *arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,flags,n_args,reinterpret_cast< ::DeeTypeObject *const *>(arg_types)),detail::tag_check_error()); }
+inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN ::Dee_funflags_t flags, DEE_A_IN Dee_size_t n_args, DEE_A_IN_R(n_args) ::DeeTypeObject *const *arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,flags,n_args,arg_types),detail::tag_check_error()); }
 #ifdef GUARD_DEEMON_CXX_TUPLE_H
-inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN tuple const &arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,DeeFunctionFlags_DEFAULT,DeeTuple_SIZE(arg_types.priv_get()),(DeeTypeObject *const *)DeeTuple_ELEM(arg_types.priv_get())),detail::tag_check_error()); }
-inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN ::DeeFunctionFlags flags, DEE_A_IN tuple const &arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,flags,DeeTuple_SIZE(arg_types.priv_get()),(DeeTypeObject *const *)DeeTuple_ELEM(arg_types.priv_get())),detail::tag_check_error()); }
+inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN tuple const &arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,DEE_FUNCTIONFLAGS_DEFAULT,DeeTuple_SIZE(arg_types.priv_get()),(DeeTypeObject *const *)DeeTuple_ELEM(arg_types.priv_get())),detail::tag_check_error()); }
+inline DEE_A_RET_WUNUSED type type::foreign_function(DEE_A_IN ::Dee_funflags_t flags, DEE_A_IN tuple const &arg_types) const { return type(::DeeType_ForeignFunction((::DeeTypeObject *)this->ob_ptr,flags,DeeTuple_SIZE(arg_types.priv_get()),(DeeTypeObject *const *)DeeTuple_ELEM(arg_types.priv_get())),detail::tag_check_error()); }
 #endif
 
 }

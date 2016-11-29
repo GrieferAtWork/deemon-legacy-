@@ -1702,7 +1702,7 @@ normal_ast:
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewForeignFunctionFromInheritedArgv(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLexerObject *lexer,
  DEE_A_IN Dee_uint32_t parser_flags, DEE_A_INOUT DeeXAstObject *base,
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN Dee_size_t argc,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN Dee_size_t argc,
  DEE_A_IN_R(argc) DeeXAstObject **argv) {
  DeeXAstObject *result,**iter,**end;
  DeeTypeObject const *predicted_type;
@@ -1788,7 +1788,7 @@ normal_ast:
 DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewForeignFunction(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLexerObject *lexer,
  DEE_A_IN Dee_uint32_t parser_flags, DEE_A_INOUT DeeXAstObject *base,
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN Dee_size_t argc,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN Dee_size_t argc,
  DEE_A_IN_R(argc) DeeXAstObject *const *argv) {
  DeeXAstObject *result,**my_argv,**iter,**end;
  if (argc) {
@@ -3419,7 +3419,7 @@ static struct DeeMemberDef const _deexast_tp_members[] = {
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_delvar_d_var",DeeXAstObject,ast_delvar.d_var,object,"-> local_var"),
 #if DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_foreignfunction_ff_base",DeeXAstObject,ast_foreignfunction.ff_base,object,"-> xast"),
- DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_foreignfunction_ff_flags",DeeXAstObject,ast_foreignfunction.ff_flags,DeeFunctionFlags,"-> DeeFunctionFlags"),
+ DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_foreignfunction_ff_flags",DeeXAstObject,ast_foreignfunction.ff_flags,Dee_funflags_t,"-> Dee_funflags_t"),
  DEE_MEMBERDEF_NAMED_RO_v100("__ast_foreignfunction_ff_argc",DeeXAstObject,ast_foreignfunction.ff_argc,Dee_size_t),
  DEE_MEMBERDEF_NAMED_DOC_RO_v100("__ast_foreignfunction_ff_argv",DeeXAstObject,ast_foreignfunction.ff_argv,p2(void),"-> DeeXAstObject **"),
 #endif /* DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION */

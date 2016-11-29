@@ -34,6 +34,7 @@
 #include <deemon/optional/type_slots.h>
 #endif
 #ifdef GUARD_DEEMON_OBJECT_H
+#include <deemon/optional/type_newinstance.h>
 #include <deemon/optional/type_flags.h>
 #include <deemon/optional/type_slots.h>
 #endif
@@ -115,20 +116,6 @@ DEE_FUNC_DECL(DEE_A_RET_WUNUSED int) DeeObject_Is(
 DEE_FUNC_DECL(DEE_A_RET_EXCEPT(NULL) DeeObject *) DeeObject_TGetInstance(
  DEE_A_IN DeeTypeObject const *tp_self, DEE_A_IN DeeObject *self,
  DEE_A_IN DeeTypeObject const *tp_instance) DEE_ATTRIBUTE_NONNULL((1,2,3));
-
-
-//////////////////////////////////////////////////////////////////////////
-// v allocates and returns a new instance of "self" with "args"
-DEE_FUNC_DECL(DEE_A_DEEMON("self(args...)") DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstance(
- DEE_A_IN DeeTypeObject const *self, DEE_A_INOUT_OBJECT(DeeTupleObject) *args) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_DEEMON("self()") DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstanceDefault(
- DEE_A_IN DeeTypeObject const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstancef(DEE_A_IN DeeTypeObject const *self, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstanceObjArgs(DEE_A_IN DeeTypeObject const *self, ...) DEE_ATTRIBUTE_SENTINAL DEE_ATTRIBUTE_NONNULL((1));
-#if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_VNewInstancef(DEE_A_IN DeeTypeObject const *self, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
-DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_VNewInstanceObjArgs(DEE_A_IN DeeTypeObject const *self, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1));
-#endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
 
 
 #ifdef DEE_LIMITED_API

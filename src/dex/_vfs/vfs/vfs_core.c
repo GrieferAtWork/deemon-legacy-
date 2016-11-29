@@ -271,16 +271,9 @@ void DeeVFS_Shutdown(void) {
 
 
 
-static int DEE_CALL _deevfs_noopnode_vft_open(
- struct DeeVFSFile *DEE_UNUSED(self),
- Dee_openmode_t DEE_UNUSED(openmode),
- Dee_mode_t DEE_UNUSED(permissions)) {
- return 0;
-}
 struct _DeeVFSFileTypeData _DeeVFSNoopNodeType_FileData = {
- sizeof(struct DeeVFSFile),&_deevfs_noopnode_vft_open,
+ sizeof(struct DeeVFSFile),&_deevfs_genericfile_openany,
  NULL,NULL,NULL,NULL,NULL,NULL};
-
 int DEE_CALL _deevfs_genericfile_openreadonly(
  struct DeeVFSFile *self, Dee_openmode_t openmode, Dee_mode_t DEE_UNUSED(permissions)) {
  if (!DEE_OPENMODE_ISREAD(openmode)) {
@@ -309,6 +302,12 @@ int DEE_CALL _deevfs_genericfile_openreadwrite(
                       DeeVFSNode_Filename(self->vf_node));
   return -1;
  }
+ return 0;
+}
+int DEE_CALL _deevfs_genericfile_openany(
+ struct DeeVFSFile *DEE_UNUSED(self),
+ Dee_openmode_t DEE_UNUSED(openmode),
+ Dee_mode_t DEE_UNUSED(permissions)) {
  return 0;
 }
 

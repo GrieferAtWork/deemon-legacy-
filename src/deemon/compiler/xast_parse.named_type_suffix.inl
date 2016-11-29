@@ -482,7 +482,7 @@ err_argv:
   }
   if (token.tk_id == TPP_TOK_DOTS) {
    // Varargs (terminates the argument list)
-   ff->ff_flags |= DeeFunctionFlags_VARARGS;
+   ff->ff_flags |= DEE_FUNCTIONFLAGS_FLAG_VARARGS;
    if DEE_UNLIKELY(!yield()) goto err_argv;
    break;
   }

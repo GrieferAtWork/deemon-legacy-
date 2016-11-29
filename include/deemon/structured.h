@@ -24,6 +24,7 @@
 #include <deemon/__conf.inl>
 #include <deemon/optional/structured_decl.h>
 #include <deemon/optional/std/stdarg.h>
+#include <deemon/optional/functionflags.h>
 #ifdef DEE_LIMITED_API
 #include <deemon/object.h>
 #include <deemon/optional/type_decl.h>
@@ -58,10 +59,6 @@ DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 #ifdef DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 #undef DEE_PRIVATE_DECL_DEE_SIZE_TYPES
-#endif
-#ifdef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-#undef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
 #endif
 
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
@@ -123,11 +120,11 @@ extern void DeeForeignFunctionTypeList_Clear(DEE_A_IN struct DeeForeignFunctionT
 extern DEE_A_RET_EXCEPT(NULL) struct DeeForeignFunctionTypeObject *
 DeeForeignFunctionTypeList_FindOrAddToGlobalCache(
  DEE_A_INOUT struct DeeForeignFunctionTypeList *self,
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN DeeTypeObject const *return_type,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN DeeTypeObject const *return_type,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv);
 extern DEE_A_RET_EXCEPT(NULL) struct DeeForeignFunctionTypeObject *
 DeeForeignFunctionTypeList_FindOrAddToGlobalCacheDefault(
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN DeeTypeObject const *return_type,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN DeeTypeObject const *return_type,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv);
 #endif /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
 #endif
@@ -554,16 +551,16 @@ DEE_FUNC_DECL(DEE_A_RET_TYPEOBJECT_EXCEPT(DeeLValueTypeObject) *) DeeStructuredT
 
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
 DEE_FUNC_DECL(DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *) DeeStructuredType_ForeignFunction(
- DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *self, DEE_A_IN DeeFunctionFlags flags,
+ DEE_A_IN_TYPEOBJECT(DeeStructuredTypeObject) const *self, DEE_A_IN Dee_funflags_t flags,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) DEE_ATTRIBUTE_NONNULL((1,4));
 #if DEE_CONFIG_RUNTIME_HAVE_POINTERS
 #define DeePointerType_ForeignFunction DeeStructuredType_ForeignFunction /*< Because pointers are structured types. */
 DEE_FUNC_DECL(DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *) DeeLValueType_ForeignFunction(
- DEE_A_IN_TYPEOBJECT(DeeLValueTypeObject) const *self, DEE_A_IN DeeFunctionFlags flags,
+ DEE_A_IN_TYPEOBJECT(DeeLValueTypeObject) const *self, DEE_A_IN Dee_funflags_t flags,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) DEE_ATTRIBUTE_NONNULL((1,4));
 #endif /* DEE_CONFIG_RUNTIME_HAVE_POINTERS */
 DEE_FUNC_DECL(DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *) _DeeType_ForeignFunctionDefault(
- DEE_A_IN DeeTypeObject const *self, DEE_A_IN DeeFunctionFlags flags,
+ DEE_A_IN DeeTypeObject const *self, DEE_A_IN Dee_funflags_t flags,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) DEE_ATTRIBUTE_NONNULL((1,4));
 #endif /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
 
@@ -661,7 +658,7 @@ DEE_FUNC_DECL(DEE_A_RET_TYPEOBJECT_EXCEPT(DeeStructuredTypeObject) *) DeeType_TW
 // Returns a foreign_function type with the given properties, returning 'self'
 #define DeeType_ForeignFunction(ob,flags,argc,argv) DeeType_TForeignFunction(Dee_TYPE(ob),ob,flags,argc,argv)
 DEE_FUNC_DECL(DEE_A_RET_TYPEOBJECT_EXCEPT(DeeForeignFunctionTypeObject) *) DeeType_TForeignFunction(
- DEE_A_IN DeeTypeObject const *tp_self, DEE_A_IN DeeTypeObject const *self, DEE_A_IN DeeFunctionFlags flags,
+ DEE_A_IN DeeTypeObject const *tp_self, DEE_A_IN DeeTypeObject const *self, DEE_A_IN Dee_funflags_t flags,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) DEE_ATTRIBUTE_NONNULL((1,2));
 #endif
 

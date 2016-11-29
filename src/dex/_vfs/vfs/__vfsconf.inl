@@ -28,6 +28,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #define DEE_VFSCONFIG_HAVEFILE_DEV                        1                                   /*< fs::exists("/dev"). */
+#define DEE_VFSCONFIG_HAVEFILE_DEV_FULL                   DEE_VFSCONFIG_HAVEFILE_DEV          /*< fs::exists("/dev/full"). */
 #define DEE_VFSCONFIG_HAVEFILE_DEV_NULL                   DEE_VFSCONFIG_HAVEFILE_DEV          /*< fs::exists("/dev/null"). */
 #define DEE_VFSCONFIG_HAVEFILE_DEV_RANDOM                 DEE_VFSCONFIG_HAVEFILE_DEV          /*< fs::exists("/dev/random"). */
 #define DEE_VFSCONFIG_HAVEFILE_DEV_STDERR                 DEE_VFSCONFIG_HAVEFILE_DEV          /*< fs::exists("/dev/stderr"). */

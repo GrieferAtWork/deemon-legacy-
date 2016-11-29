@@ -232,7 +232,7 @@ DEPRECATED_EXPORT(DeeTypeObject *,DeeType_Pointer,(DeeTypeObject const *ob)) { r
 DEPRECATED_EXPORT(DeeTypeObject *,DeeType_LValue,(DeeTypeObject const *ob)) { return DeeType_TLValue(Dee_TYPE(ob),ob); }
 DEPRECATED_EXPORT(DeeTypeObject *,DeeType_WithoutPointer,(DeeTypeObject const *ob)) { return DeeType_TWithoutLValue(Dee_TYPE(ob),ob); }
 DEPRECATED_EXPORT(DeeTypeObject *,DeeType_WithoutLValue,(DeeTypeObject const *ob)) { return DeeType_TWithoutPointer(Dee_TYPE(ob),ob); }
-DEPRECATED_EXPORT(DeeTypeObject *,DeeType_ForeignFunction,(DeeTypeObject const *self, DeeFunctionFlags flags, Dee_size_t argc, DeeTypeObject const *const *argv)) { return DeeType_TForeignFunction(Dee_TYPE(self),self,flags,argc,argv); }
+DEPRECATED_EXPORT(DeeTypeObject *,DeeType_ForeignFunction,(DeeTypeObject const *self, Dee_funflags_t flags, Dee_size_t argc, DeeTypeObject const *const *argv)) { return DeeType_TForeignFunction(Dee_TYPE(self),self,flags,argc,argv); }
 DEPRECATED_EXPORT(DeeTypeObject *,DeeType_Array,(DeeTypeObject const *self, Dee_size_t array_size)) { return DeeType_TArray(Dee_TYPE(self),self,array_size); }
 DEPRECATED_EXPORT(DeeTypeObject *,DeeType_VArray,(DeeTypeObject const *self)) { return DeeType_TVArray(Dee_TYPE(self),self); }
 

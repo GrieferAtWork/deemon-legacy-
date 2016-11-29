@@ -60,9 +60,9 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 #undef DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 #endif
-#ifdef DEE_PRIVATE_DECL_DEE_THREAD_ID
-DEE_PRIVATE_DECL_DEE_THREAD_ID
-#undef DEE_PRIVATE_DECL_DEE_THREAD_ID
+#ifdef DEE_PRIVATE_DECL_DEE_TID_T
+DEE_PRIVATE_DECL_DEE_TID_T
+#undef DEE_PRIVATE_DECL_DEE_TID_T
 #endif
 
 DEE_OBJECT_DEF(DeeSemaphoreObject);
@@ -101,7 +101,7 @@ DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT(1) int) DeeNativeSemaphore_TryAcquireNoExcept(D
 // Native Mutex object
 struct DeeNativeMutex {
  /*atomic*/ unsigned int   m_counter;
-            DeeThreadID    m_owner;
+            Dee_tid_t    m_owner;
  unsigned int              m_recursion;
  struct DeeNativeSemaphore m_semaphore;
 };

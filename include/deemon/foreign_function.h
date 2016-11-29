@@ -26,6 +26,7 @@
 #if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
 #ifdef DEE_LIMITED_API
 #include <deemon/object.h>
+#include <deemon/optional/functionflags.h>
 #include <deemon/structured.h>
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 #if defined(_MSC_VER) && defined(DEE_PLATFORM_WINDOWS)
@@ -42,10 +43,6 @@ DEE_COMPILER_MSVC_WARNING_POP
 
 DEE_DECL_BEGIN
 
-#ifdef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-#undef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-#endif
 #ifdef DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 DEE_PRIVATE_DECL_DEE_SIZE_TYPES
 #undef DEE_PRIVATE_DECL_DEE_SIZE_TYPES
@@ -75,7 +72,7 @@ enum DeeForeignFunctionReturnTypeKind {
 DEE_COMPILER_MSVC_WARNING_PUSH(4201)
 struct DeeForeignFunctionTypeObject {
  DeeStructuredTypeObject   fft_type;
- DeeFunctionFlags          fft_flags;           /*< Function flags. */
+ Dee_funflags_t          fft_flags;           /*< Function flags. */
  DEE_A_REF DeeTypeObject  *fft_return_type;     /*< [1..1] Return type. */
  Dee_size_t                fft_arg_type_c;      /*< Argument count. */
  DEE_A_REF DeeTypeObject **fft_arg_type_v;      /*< [1..1][0..ob_argc][owned] Argument types. */
@@ -177,9 +174,9 @@ DEE_DATA_DECL(DeeTypeObject) DeeForeignFunctionClosure_Type;
 #endif /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTIONCLOSURE */
 
 #ifdef DEE_LIMITED_API
-// NOTE: Setting the 'DeeFunctionFlags_NOEXCEPT' flag causes os-signals to not be handled by deemon
+// NOTE: Setting the 'DEE_FUNCTIONFLAGS_FLAG_NOEXCEPT' flag causes os-signals to not be handled by deemon
 extern DEE_A_EXEC DEE_A_RET_TYPEOBJECT_EXCEPT_REF(DeeForeignFunctionTypeObject) *_DeeForeignFunctionType_New(
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN DeeTypeObject const *return_type,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN DeeTypeObject const *return_type,
  DEE_A_IN Dee_size_t argc, DEE_A_IN_R(argc) DeeTypeObject const *const *argv) DEE_ATTRIBUTE_NONNULL((2));
 extern DEE_A_RET_EXCEPT(NULL) DeeTypeObject *_DeeForeignFunctionType_ArgTypeof(DEE_A_IN DeeTypeObject *tp) DEE_ATTRIBUTE_NONNULL((1));
 #endif

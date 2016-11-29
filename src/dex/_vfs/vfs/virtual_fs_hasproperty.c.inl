@@ -18,16 +18,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_C
-#define GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_C 1
+#ifndef GUARD_DEEMON_FS_VIRTUAL_FS_HASPROPERTY_C_INL
+#define GUARD_DEEMON_FS_VIRTUAL_FS_HASPROPERTY_C_INL 1
+#ifndef DEE_EXTENSION
 #define DEE_EXTENSION 1
-#define DEE_LIMITED_DEX_GFX 1
+#endif
 
 #include <deemon/__conf.inl>
-#include "window.h"
+#include <deemon/error.h>
+#include <deemon/optional/fs_api.fileproperty.h>
+#include <deemon/string.h>
+#include <deemon/type.h>
+#include "native_hooks.h"
+#include "vfs_core.h"
+#include "vfs_native_node.h"
+#include "virtual_fs.h"
 
-DEE_DECL_BEGIN
+#ifndef __INTELLISENSE__
+#define WIDE
+#define OBJECT
+#include "virtual_fs_hasproperty.impl.inl"
+#define WIDE
+#include "virtual_fs_hasproperty.impl.inl"
+#define OBJECT
+#include "virtual_fs_hasproperty.impl.inl"
+#include "virtual_fs_hasproperty.impl.inl"
+#endif
 
-DEE_DECL_END
-
-#endif /* !GUARD_DEEMON_DEX_GFX_WINDOW_EVENT_C */
+#endif /* !GUARD_DEEMON_FS_VIRTUAL_FS_ISBLOCKDEV_C_INL */

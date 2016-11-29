@@ -37,6 +37,9 @@
 #include <deemon/object.h>
 #include <deemon/optional/string_forward.h>
 #include <deemon/type.h>
+#if DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION
+#include <deemon/optional/functionflags.h>
+#endif /* DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION */
 
 //////////////////////////////////////////////////////////////////////////
 // XAst -- v102+ Expression Ast replacement
@@ -580,14 +583,10 @@ struct DeeXAstDelVarAst {
  DEE_A_REF DeeLocalVarObject *d_var;   /*< [1..1] Variable that should supposed to be deleted. */
 };
 #if DEE_CONFIG_LANGUAGE_HAVE_FOREIGNFUNCTION
-#ifdef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-#undef DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS
-#endif
 struct DeeXAstForeignFunctionAst {
  DEE_XAST_AST_HEAD
  DEE_A_REF DeeXAstObject  *ff_base;  /*< [1..1] Base/Return type of the foreign function. */
- DeeFunctionFlags          ff_flags; /*< Foreign function flags. */
+ Dee_funflags_t          ff_flags; /*< Foreign function flags. */
  Dee_size_t                ff_argc;  /*< Argument count. */
  DEE_A_REF DeeXAstObject **ff_argv;  /*< [1..1][owned][0..ff_argc][owned] Vector of argument types. */
 };
@@ -1263,12 +1262,12 @@ extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewSeqRangeSet(
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewForeignFunctionFromInheritedArgv(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLexerObject *lexer,
  DEE_A_IN Dee_uint32_t parser_flags, DEE_A_INOUT DeeXAstObject *base,
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN Dee_size_t argc,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN Dee_size_t argc,
  DEE_A_IN_R(argc) DeeXAstObject **argv);
 extern DEE_A_RET_EXCEPT_REF DeeXAstObject *DeeXAst_NewForeignFunction(
  DEE_A_INOUT DeeTokenObject *tk, DEE_A_INOUT DeeLexerObject *lexer,
  DEE_A_IN Dee_uint32_t parser_flags, DEE_A_INOUT DeeXAstObject *base,
- DEE_A_IN DeeFunctionFlags flags, DEE_A_IN Dee_size_t argc,
+ DEE_A_IN Dee_funflags_t flags, DEE_A_IN Dee_size_t argc,
  DEE_A_IN_R(argc) DeeXAstObject *const *argv);
 #endif
 
@@ -1693,12 +1692,8 @@ struct DeeAttributeDecl {
  DEE_A_REF struct DeeStringObject  *a_name;      /*< [0..1] Name override. */
  DEE_A_REF struct DeeStringObject  *a_depr;      /*< [0..1] Deprecation reason. */
  DEE_A_REF struct DeeXAstObject    *a_super;     /*< [0..1] Super class type. */
- DeeFunctionFlags                   a_fun_flags; /*< Function flags (used in extern functions). */
-#if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
-#define DeeAttributeDecl_GET_CALLING_CONVENTION(ob) ((ob)->a_fun_flags&DeeFunctionFlags_CC_MASK)
-#else
-#define DeeAttributeDecl_GET_CALLING_CONVENTION(ob) ((DeeFunctionFlags)(ob)->a_fun_flags)
-#endif
+ Dee_funflags_t                     a_fun_flags; /*< Function flags (used in extern functions). */
+#define DeeAttributeDecl_GET_CALLING_CONVENTION(ob) DEE_FUNCTIONFLAGS_GETCC((ob)->a_fun_flags)
 #define DEE_ATTRIBUTE_DECL_FLAG_NONE       DEE_UINT32_C(0x00000000)
 #define DEE_ATTRIBUTE_DECL_FLAG_UUID       DEE_UINT32_C(0x00000001) /*< UUID has been set. */
 #define DEE_ATTRIBUTE_DECL_FLAG_COPYABLE   DEE_UINT32_C(0x00000002) /*< __attribute__((__copyable__)). */
@@ -1711,11 +1706,11 @@ struct DeeAttributeDecl {
  struct DeeUUID                     a_uuid;      /*< UUID attribute. */
 };
 #define DeeAttributeDecl_GET_FUNCTION_FLAGS(ob) \
-(DeeAttributeDecl_GET_CALLING_CONVENTION(ob)==DeeFunctionFlags_THISCALL \
+(DeeAttributeDecl_GET_CALLING_CONVENTION(ob)==DEE_FUNCTIONFLAGS_FLAG_THISCALL \
  ? DEE_FUNCTION_FLAG_THIS : DEE_FUNCTION_FLAG_NONE)
 
 #define DeeAttributeDecl_INIT() \
- {NULL,NULL,NULL,DeeFunctionFlags_DEFAULT,\
+ {NULL,NULL,NULL,DEE_FUNCTIONFLAGS_DEFAULT,\
   DEE_ATTRIBUTE_DECL_FLAG_NONE,0,DeeUUID_INIT()}
 #define _DeeAttributeDecl_InitCopy(ob,right)\
 do{\
@@ -2191,7 +2186,7 @@ struct DeeXAstTypeOperationsForeignFunctionArgument {
 #define _DeeXAstTypeOperationsForeignFunctionArgument_Quit(ob)\
 do{ Dee_DECREF((ob)->ffa_type); Dee_XDECREF((ob)->ffa_name); }while(0)
 struct DeeXAstTypeOperationsForeignFunctionEntry {
- DeeFunctionFlags                                     ff_flags; /*< Special function flags (set through attributes). */
+ Dee_funflags_t                                     ff_flags; /*< Special function flags (set through attributes). */
  Dee_size_t                                           ff_argc;  /*< Argument count. */
  struct DeeXAstTypeOperationsForeignFunctionArgument *ff_argv;  /*< [0..ff_argc] Argument vector. */
 };

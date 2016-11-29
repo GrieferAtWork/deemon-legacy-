@@ -57,8 +57,12 @@ DEE_PRIVATE_DECL_DEE_OBJECT
 DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 #undef DEE_PRIVATE_DECL_DEE_TYPEOBJECT
 #endif
+#ifdef DEE_PRIVATE_DECL_DEE_PID_T
+DEE_PRIVATE_DECL_DEE_PID_T
+#undef DEE_PRIVATE_DECL_DEE_PID_T
+#endif
 
-#ifdef DEE_TYPES_SIZEOF_PID_T
+#ifdef DEE_PLATFORM_UNIX
 DEE_STATIC_ASSERT(sizeof(pid_t) == DEE_TYPES_SIZEOF_PID_T);
 #endif
 
@@ -69,12 +73,10 @@ typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN) DeeProcessReturn;
 DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 #undef DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 #endif
-typedef Dee_uint32_t DeeProcessID;
 typedef void *DeeProcessHandle;
 #define DEE_PROCESS_INVALID_ID      0
 #define DEE_PROCESS_INVALID_HANDLE  NULL
 #elif defined(DEE_PLATFORM_UNIX)
-typedef pid_t DeeProcessID;
 typedef pid_t DeeProcessHandle;
 #define DEE_PROCESS_INVALID_ID      ((pid_t)-1)
 #define DEE_PROCESS_INVALID_HANDLE  ((pid_t)-1)
@@ -135,7 +137,7 @@ DEE_DATA_DECL(DeeTypeObject) DeeProcess_Type;
 #ifdef DEE_PLATFORM_WINDOWS
 //////////////////////////////////////////////////////////////////////////
 // Returns a process reference to a given win32 Process ID
-DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeProcessObject) *) DeeProcess_Win32NewFromID(DEE_A_IN DeeProcessID id);
+DEE_FUNC_DECL(DEE_A_RET_OBJECT_EXCEPT_REF(DeeProcessObject) *) DeeProcess_Win32NewFromID(DEE_A_IN Dee_pid_t id);
 #endif
 #ifdef DEE_PLATFORM_UNIX
 //////////////////////////////////////////////////////////////////////////
@@ -252,8 +254,8 @@ DEE_FUNC_DECL(DEE_A_RET_OBJECT_NOEXCEPT(DeeProcessObject) *) DeeProcess_Self(voi
 //////////////////////////////////////////////////////////////////////////
 // Returns the platform-specific process id of a given or the current process
 // NOTE: Can be called on any running process; causes non-critical undefined behavior for terminated processes
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED DeeProcessID) DeeProcess_ID(DEE_A_IN_OBJECT(DeeProcessObject) const *self);
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED DeeProcessID) DeeProcess_SelfID(void);
+DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_pid_t) DeeProcess_ID(DEE_A_IN_OBJECT(DeeProcessObject) const *self);
+DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_pid_t) DeeProcess_SelfID(void);
 
 //////////////////////////////////////////////////////////////////////////
 // Returns a list of all running processes (elements are process.ref objects)
@@ -284,7 +286,7 @@ DEE_DECL_END
 #if !defined(__INTELLISENSE__)
 #if defined(DEE_PLATFORM_WINDOWS)
 #ifdef _INC_WINDOWS
-#define DeeProcess_SelfID     (DeeProcessID)GetCurrentProcessId
+#define DeeProcess_SelfID     (Dee_pid_t)GetCurrentProcessId
 #endif
 #elif defined(DEE_PLATFORM_UNIX)
 #ifdef DeeProcess_HANDLE

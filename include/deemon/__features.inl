@@ -1519,8 +1519,6 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #endif
 #endif
 
-#define DEE_TYPES_SIZEOF_THREADID  4
-
 #ifndef DEE_TYPES_SIZEOF_INTMAX_T
 #if DEE_TYPES_HAVE(8)
 # define DEE_TYPES_SIZEOF_INTMAX_T  8
@@ -1537,7 +1535,12 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #define DEE_TYPES_SIZEOF_UINTMAX_T DEE_TYPES_SIZEOF_INTMAX_T
 #endif
 
-#ifdef DEE_PLATFORM_UNIX
+#ifdef DEE_PLATFORM_WINDOWS
+# define DEE_TYPES_SIZEOF_TID_T              4 /* DWORD */
+# define DEE_TYPES_SIZEOF_PID_T              4 /* DWORD */
+# define DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN 4 /* DWORD */
+/*REMOVEME*/# define DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE DEE_TYPES_SIZEOF_POINTER /* HANDLE */
+#elif defined(DEE_PLATFORM_UNIX)
 #if DEE_ENVIRONMENT_HAVE_INCLUDE_FEATURES_H
 #if DEE_USE_DEBUG_NEW || defined(GUARD_DEBUG_NEW_H)
 # include <debug_new_disable.inl>
@@ -1549,8 +1552,12 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_FEATURES_H */
 # define DEE_TYPES_SIZEOF_UID_T      4
 # define DEE_TYPES_SIZEOF_GID_T      4
-# define DEE_TYPES_SIZEOF_MODE_T     4
+// Must be int because used in varargs of 'open'
+// >> c requires integral constants in varargs to be 'int',
+//    which is a context where this type is allowed to be used.
+# define DEE_TYPES_SIZEOF_MODE_T     DEE_TYPES_SIZEOF_INT
 # define DEE_TYPES_SIZEOF_PID_T      4
+# define DEE_TYPES_SIZEOF_TID_T      4 /* Always the same as pid_t */
 # define DEE_TYPES_SIZEOF_SOCKLEN_T  4
 # define DEE_TYPES_SIZEOF_USECONDS_T 4
 #ifdef __USE_FILE_OFFSET64
@@ -1559,16 +1566,8 @@ static __intellisense__BOOL_ONLY __intellisense__DEE_UNLIKELY(bool x);
 # define DEE_TYPES_SIZEOF_OFF_T      4
 #endif
 # define DEE_TYPES_SIZEOF_OFF64_T    8
-#endif
-
-#ifdef DEE_PLATFORM_WINDOWS
-# define DEE_TYPES_SIZEOF_DEE_PROCESS_ID     4
 # define DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN 4
-# define DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE DEE_TYPES_SIZEOF_POINTER
-#elif defined(DEE_PLATFORM_UNIX)
-# define DEE_TYPES_SIZEOF_DEE_PROCESS_ID     DEE_TYPES_SIZEOF_PID_T
-# define DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN 4
-# define DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE DEE_TYPES_SIZEOF_PID_T
+/*REMOVEME*/# define DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE DEE_TYPES_SIZEOF_PID_T
 #endif
 
 

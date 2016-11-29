@@ -740,7 +740,7 @@ DeeProcess_PosixNewFromPid(DEE_A_IN DeeProcessHandle handle) {
 
 #ifdef DEE_PLATFORM_WINDOWS
 DEE_A_RET_OBJECT_EXCEPT_REF(DeeProcessObject) *
-DeeProcess_Win32NewFromID(DEE_A_IN DeeProcessID id) {
+DeeProcess_Win32NewFromID(DEE_A_IN Dee_pid_t id) {
  HANDLE process_handle; // Open the process as a handle (use the lowest possible access right)
  DeeObject *result;
  if (id == GetCurrentProcessId()) { Dee_INCREF(&_DeeProcess_Self); return (DeeObject *)&_DeeProcess_Self; }
@@ -1958,7 +1958,7 @@ DEE_VISIT_PROC(_deeprocess_tp_visit,DeeProcessObject *self) {
  }
 }
 static DeeObject *DEE_CALL _deeprocess_tp_str(DeeProcessObject *self) {
- return DeeString_Newf("<process(%R) -> " DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_DEE_PROCESS_ID) ">",
+ return DeeString_Newf("<process(%R) -> " DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_PID_T) ">",
                        DeeProcess_Cmd((DeeObject *)self),DeeProcess_ID((DeeObject *)self));
 }
 static DeeObject *DEE_CALL _deeprocess_tp_cmp_lo(DeeProcessObject *self, DeeProcessObject *right) { if (DeeObject_InplaceGetInstance(&right,&DeeProcess_Type) != 0) return NULL; DeeReturn_Bool(DeeProcess_ID((DeeObject *)self) <  DeeProcess_ID((DeeObject *)right)); }
@@ -2017,7 +2017,7 @@ static DeeObject *DEE_CALL _deeprocess_join_timed(
 static DeeObject *DEE_CALL _deeprocess_id(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
  if (DeeTuple_Unpack(args,":id") != 0) return NULL;
- return DeeObject_New(DeeProcessID,DeeProcess_ID((DeeObject *)self));
+ return DeeObject_New(Dee_pid_t,DeeProcess_ID((DeeObject *)self));
 }
 static DeeObject *DEE_CALL _deeprocess_terminate(
  DeeProcessObject *self, DeeObject *args, void *DEE_UNUSED(closure)) {
@@ -2315,7 +2315,7 @@ DeeTypeObject DeeProcess_Type = {
 #endif
 
 #undef DeeProcess_ID
-DEE_A_RET_WUNUSED DeeProcessID DeeProcess_ID(
+DEE_A_RET_WUNUSED Dee_pid_t DeeProcess_ID(
  DEE_A_IN_OBJECT(DeeProcessObject) const *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
 #ifdef DEE_PLATFORM_WINDOWS
@@ -2326,7 +2326,7 @@ DEE_A_RET_WUNUSED DeeProcessID DeeProcess_ID(
 }
 
 #undef DeeProcess_SelfID
-DEE_A_RET_WUNUSED DeeProcessID DeeProcess_SelfID(void) {
+DEE_A_RET_WUNUSED Dee_pid_t DeeProcess_SelfID(void) {
 #ifdef DEE_PLATFORM_WINDOWS
  return GetCurrentProcessId();
 #elif defined(DEE_PLATFORM_UNIX)

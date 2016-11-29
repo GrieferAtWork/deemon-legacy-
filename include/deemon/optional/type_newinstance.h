@@ -18,30 +18,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  */
-#ifndef GUARD_DEEMON_VFS_VFS_VIRTUAL_NULLFILE_H
-#define GUARD_DEEMON_VFS_VFS_VIRTUAL_NULLFILE_H 1
+#ifndef GUARD_DEEMON_OPTIONAL_TYPE_NEWINSTANCE_H
+#define GUARD_DEEMON_OPTIONAL_TYPE_NEWINSTANCE_H 1
 
 #include <deemon/__conf.inl>
-#include "vfs_core.h"
-#include "__vfsconf.inl"
+#include <deemon/optional/std/stdarg.h>
 
 DEE_DECL_BEGIN
 
+#ifdef DEE_PRIVATE_DECL_DEE_OBJECT
+DEE_PRIVATE_DECL_DEE_OBJECT
+#undef DEE_PRIVATE_DECL_DEE_OBJECT
+#endif
+#ifdef DEE_PRIVATE_DECL_DEE_TYPEOBJECT
+DEE_PRIVATE_DECL_DEE_TYPEOBJECT
+#undef DEE_PRIVATE_DECL_DEE_TYPEOBJECT
+#endif
+
 //////////////////////////////////////////////////////////////////////////
-// NULLFile VFS node: A file node that drops all io-requests
-// Difference between these is described here:
-// >> http://unix.stackexchange.com/questions/254384/difference-between-dev-null-and-dev-zero
-// >> https://en.wikipedia.org/wiki//dev/full
-#if DEE_VFSCONFIG_HAVEFILE_DEV_NULL
-extern struct DeeVFSNodeType const DeeVFSVirtualNULLFileNode_Type;
-#endif /* DEE_VFSCONFIG_HAVEFILE_DEV_NULL */
-#if DEE_VFSCONFIG_HAVEFILE_DEV_ZERO
-extern struct DeeVFSNodeType const DeeVFSVirtualZEROFileNode_Type;
-#endif /* DEE_VFSCONFIG_HAVEFILE_DEV_ZERO */
-#if DEE_VFSCONFIG_HAVEFILE_DEV_FULL
-extern struct DeeVFSNodeType const DeeVFSVirtualFULLFileNode_Type;
-#endif /* DEE_VFSCONFIG_HAVEFILE_DEV_FULL */
+// v allocates and returns a new instance of "self" with "args"
+DEE_FUNC_DECL(DEE_A_DEEMON("self(args...)") DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstance(
+ DEE_A_IN DeeTypeObject const *self, DEE_A_INOUT_OBJECT(DeeTupleObject) *args) DEE_ATTRIBUTE_NONNULL((1,2));
+DEE_FUNC_DECL(DEE_A_DEEMON("self()") DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstanceDefault(
+ DEE_A_IN DeeTypeObject const *self) DEE_ATTRIBUTE_NONNULL((1));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstancef(DEE_A_IN DeeTypeObject const *self, DEE_A_IN_BUILDTUPLEF char const *fmt, ...) DEE_ATTRIBUTE_NONNULL((1,2));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_NewInstanceObjArgs(DEE_A_IN DeeTypeObject const *self, ...) DEE_ATTRIBUTE_SENTINAL DEE_ATTRIBUTE_NONNULL((1));
+#if DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_VNewInstancef(DEE_A_IN DeeTypeObject const *self, DEE_A_IN_BUILDTUPLEF char const *fmt, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
+DEE_FUNC_DECL(DEE_A_EXEC DEE_A_RET_EXCEPT_REF DeeObject *) DeeType_VNewInstanceObjArgs(DEE_A_IN DeeTypeObject const *self, DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1));
+#endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
+
 
 DEE_DECL_END
 
-#endif /* !GUARD_DEEMON_VFS_VFS_VIRTUAL_NULLFILE_H */
+#endif /* !GUARD_DEEMON_OPTIONAL_TYPE_NEWINSTANCE_H */

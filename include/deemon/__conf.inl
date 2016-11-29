@@ -502,47 +502,18 @@ static void __intellisense__DEE_LVERBOSE(char const *fmt, ...);
  typedef DEE_TYPES_UINT(DEE_CONFIG_RT_SIZEOF_INT_LEAST32_T) Dee_rt_uint_least32_t;\
  typedef DEE_TYPES_UINT(DEE_CONFIG_RT_SIZEOF_INT_LEAST64_T) Dee_rt_uint_least64_t;
 #ifndef DEE_WITHOUT_THREADS
-#define DEE_PRIVATE_DECL_DEE_THREAD_ID  typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_THREADID) DeeThreadID;
+#define DEE_PRIVATE_DECL_DEE_TID_T      typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_TID_T) Dee_tid_t;
 #endif
-#define DEE_PRIVATE_DECL_DEE_MODE_T     typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_MODE_T) Dee_mode_t;
+#define DEE_PRIVATE_DECL_DEE_PID_T      typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_PID_T) Dee_pid_t;
 #define DEE_PRIVATE_DECL_DEE_UID_T      typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_UID_T) Dee_uid_t;
 #define DEE_PRIVATE_DECL_DEE_GID_T      typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_GID_T) Dee_gid_t;
+#define DEE_PRIVATE_DECL_DEE_MODE_T     typedef DEE_TYPES_UINT(DEE_TYPES_SIZEOF_MODE_T) Dee_mode_t;
 #define DEE_PRIVATE_DECL_DEE_TIMETICK_T typedef DEE_TYPES_UINT64_T Dee_timetick_t;
 #define DEE_PRIVATE_DECL_DEE_OBJECT                DEE_OBJECT_DEF(DeeObject);
 #define DEE_PRIVATE_DECL_DEE_TYPEOBJECT            DEE_OBJECT_DEF(DeeTypeObject);
 #define DEE_PRIVATE_DECL_DEE_FILE_TYPEOBJECT       DEE_OBJECT_DEF(DeeFileTypeObject);
 #define DEE_PRIVATE_DECL_DEE_STRUCTURED_OBJECT     DEE_OBJECT_DEF(DeeStructuredObject);
 #define DEE_PRIVATE_DECL_DEE_STRUCTURED_TYPEOBJECT DEE_OBJECT_DEF(DeeStructuredTypeObject);
-#if DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION
-#define DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS \
-typedef DEE_TYPES_UINT16_T DeeFunctionFlags; enum{\
- DeeFunctionFlags_NONE                 = 0x0000,\
- DeeFunctionFlags_DEFAULT              = 0x0000,\
- DeeFunctionFlags_SYSV                 = 0x0001,\
- DeeFunctionFlags_STDCALL              = 0x0002,\
- DeeFunctionFlags_THISCALL             = 0x0003,\
- DeeFunctionFlags_FASTCALL             = 0x0004,\
- DeeFunctionFlags_MS_CDECL             = 0x0005,\
- DeeFunctionFlags_PASCAL               = 0x0006,\
- DeeFunctionFlags_REGISTER             = 0x0007,\
- DeeFunctionFlags_WIN64                = 0x0008,\
- DeeFunctionFlags_UNIX64               = 0x0009,\
- DeeFunctionFlags_CC_MASK              = 0x000F,\
- DeeFunctionFlags_ADD_RESULT_REFERENCE = 0x0010,\
- DeeFunctionFlags_VARARGS              = 0x0020,\
- DeeFunctionFlags_NOEXCEPT             = 0x0040,\
- DeeFunctionFlags_NORETURN             = 0x0080,\
-};
-#else /* DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
-#define DEE_PRIVATE_DECL_DEE_FUNCTION_FLAGS \
-typedef DEE_TYPES_UINT16_T DeeFunctionFlags; enum{\
- DeeFunctionFlags_NONE     = 0x0000,\
- DeeFunctionFlags_DEFAULT  = 0x0000,\
- DeeFunctionFlags_THISCALL = 0x0003,\
- DeeFunctionFlags_NOEXCEPT = 0x0040,\
- DeeFunctionFlags_NORETURN = 0x0080,\
-};
-#endif /* !DEE_CONFIG_RUNTIME_HAVE_FOREIGNFUNCTION */
 #define DEE_PRIVATE_DECL_DEE_VISIT_PROC\
  struct DeeObject; typedef int (DEE_CALL *DeeVisitProc)(struct DeeObject*,void*);
 #define DEE_PRIVATE_DECL_DEE_CFUNCTION\

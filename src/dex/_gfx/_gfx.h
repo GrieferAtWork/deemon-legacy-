@@ -28,6 +28,7 @@
 #include <deemon/optional/object_decl.h>
 #include <deemon/optional/type_decl.h>
 #include <deemon/optional/object_refcnt.h>
+#include <deemon/optional/type_newinstance.h>
 #include <deemon/type.h>
 #include <deemon/__bswap_intrin.inl>
 

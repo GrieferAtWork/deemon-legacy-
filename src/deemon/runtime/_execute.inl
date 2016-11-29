@@ -2124,7 +2124,7 @@ EXTERN_END;
    RT_DEBUG_CHECK_STACK(1+rt_arg); // return_type+argv
 EXTERN_BEGIN;
    rt_temp = (DeeObject *)DeeType_ForeignFunction((DeeTypeObject *)RT_STACK_SLOT(rt_arg),
-                                                  (DeeFunctionFlags)0,(Dee_size_t)rt_arg,
+                                                  (Dee_funflags_t)0,(Dee_size_t)rt_arg,
                                                   (DeeTypeObject const *const *)RT_STACK_ADDR(rt_arg));
 EXTERN_END;
 push_foreign_function:
@@ -2635,7 +2635,7 @@ EXTERN_END;
      RT_DEBUG_CHECK_STACK(1+rt_arg); // return_type+argv
 EXTERN_BEGIN;
      rt_temp = (DeeObject *)DeeType_ForeignFunction(
-      (DeeTypeObject *)RT_STACK_SLOT(rt_arg),(DeeFunctionFlags)specarg,
+      (DeeTypeObject *)RT_STACK_SLOT(rt_arg),(Dee_funflags_t)specarg,
       (Dee_size_t)rt_arg,(DeeTypeObject const *const *)RT_STACK_ADDR(rt_arg));
 EXTERN_END;
      goto push_foreign_function;

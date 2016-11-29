@@ -622,21 +622,21 @@ err_0: Dee_DECREF(self);
 }
 
 
-DEE_A_RET_WUNUSED DeeThreadID DeeThread_ID(
+DEE_A_RET_WUNUSED Dee_tid_t DeeThread_ID(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  DeeAtomicMutex_Acquire(&((DeeThreadObject *)self)->t_lock);
  if DEE_UNLIKELY((DeeThread_STATE_A(self)&DeeThreadState_STARTED) != DeeThreadState_STARTED) {
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
-  return (DeeThreadID)-1;
+  return (Dee_tid_t)-1;
  }
  {
 #ifdef DEE_PLATFORM_WINDOWS
-  DeeThreadID result;
+  Dee_tid_t result;
 #if 1
   result = ((DeeThreadObject *)self)->t_id;
 #else
-  result = (DeeThreadID)_win32_GetThreadId(DeeThread_HANDLE(self));
+  result = (Dee_tid_t)_win32_GetThreadId(DeeThread_HANDLE(self));
 #endif
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
   return result;
@@ -644,11 +644,11 @@ DEE_A_RET_WUNUSED DeeThreadID DeeThread_ID(
   pthread_id_np_t tid;
   pthread_getunique_np(&((DeeThreadObject *)self)->t_handle,&tid);
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
-  return *(DeeThreadID*)&tid;
+  return *(Dee_tid_t*)&tid;
 #else
-  DeeThreadID result;
+  Dee_tid_t result;
   // Not really an ID, but can still be used in output
-  result = (DeeThreadID)((Dee_size_t)&((DeeThreadObject *)self)->t_handle);
+  result = (Dee_tid_t)((Dee_size_t)&((DeeThreadObject *)self)->t_handle);
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
   return result;
 #endif
@@ -657,16 +657,16 @@ DEE_A_RET_WUNUSED DeeThreadID DeeThread_ID(
 
 
 #undef DeeThread_SelfID
-DEE_A_RET_WUNUSED DeeThreadID DeeThread_SelfID(void) {
+DEE_A_RET_WUNUSED Dee_tid_t DeeThread_SelfID(void) {
 #ifdef DEE_PLATFORM_WINDOWS
  _win32_load_GetThreadId();
  // Keep it consistently incorrect
  return DEE_LIKELY(p_GetThreadId)
-  ? (DeeThreadID)GetCurrentThreadId()
-  : (DeeThreadID)_win32_threadid_cast_handle(GetCurrentThread());
+  ? (Dee_tid_t)GetCurrentThreadId()
+  : (Dee_tid_t)_win32_threadid_cast_handle(GetCurrentThread());
 #elif DEE_HAVE_PTHREAD_GETUNIQUE_NP
  pthread_id_np_t tid = pthread_getthreadid_np();
- return *(DeeThreadID*)&tid;
+ return *(Dee_tid_t*)&tid;
 #else
  return DeeThread_ID(DeeThread_Self());
 #endif
@@ -1326,7 +1326,7 @@ DeeString_NEW_STATIC(_deethread_unnamed_name,"__unnamed__");
 DeeObject *_deethread_tp_str(DeeThreadObject *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  if (DeeThread_STARTED(self)) {
-  return DeeString_Newf("<thread(%r," DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_THREADID) ")>",self->t_name
+  return DeeString_Newf("<thread(%r," DEE_TYPES_IUPRINTF(DEE_TYPES_SIZEOF_TID_T) ")>",self->t_name
                         ? (DeeObject *)self->t_name
                         : (DeeObject *)&_deethread_unnamed_name,
                         DeeThread_ID((DeeObject *)self));
@@ -1345,7 +1345,7 @@ DeeObject *_deethread_tp_repr(DeeThreadObject *self) {
  if (!name) name = (DeeObject *)&_deethread_unnamed_name;
  if ((state&DeeThreadState_STARTED)!=0) {
   if DEE_UNLIKELY(DeeStringWriter_Writef(&writer,"<thread(%r," DEE_TYPES_IUPRINTF(
-   DEE_TYPES_SIZEOF_THREADID) ") [",name,DeeThread_ID((DeeObject *)self)) != 0) goto err;
+   DEE_TYPES_SIZEOF_TID_T) ") [",name,DeeThread_ID((DeeObject *)self)) != 0) goto err;
  } else {
   if DEE_UNLIKELY(DeeStringWriter_Writef(&writer,"<thread(%r) [",name) != 0) goto err;
  }

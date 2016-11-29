@@ -214,7 +214,7 @@ void DeeRandomNumberGenerator_Randomize(
 
 /*
  // Add some more entropy using our platform-given thread-id
- ((DeeThreadID *)&new_seed)[new_seed % (8-sizeof(DeeThreadID))] ^= DeeThread_SelfID();
+ ((Dee_tid_t *)&new_seed)[new_seed % (8-sizeof(Dee_tid_t))] ^= DeeThread_SelfID();
 
 #ifdef DEE_PLATFORM_WINDOWS
  ADD_POINTER(new_seed,(Dee_uintptr_t)GetCurrentThread());

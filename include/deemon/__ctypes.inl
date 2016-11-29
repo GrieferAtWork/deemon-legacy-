@@ -124,36 +124,34 @@
 #endif
 #define DEE_PRIVATE_TYPEDEF_Dee_intmax_t        (auto,1,DEE_TYPES_SIZEOF_INTMAX_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_intmax_t (auto,1,DEE_TYPES_SIZEOF_INTMAX_T,1,0)
-#define DEE_PRIVATE_TYPEDEF_intmax_t DEE_PRIVATE_TYPEDEF_Dee_intmax_t
-#define DEE_PRIVATE_TYPEDEF_atomic_intmax_t DEE_PRIVATE_TYPEDEF_atomic_Dee_intmax_t
 #define DEE_PRIVATE_TYPEDEF_Dee_uintmax_t        (auto,0,DEE_TYPES_SIZEOF_INTMAX_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_uintmax_t (auto,0,DEE_TYPES_SIZEOF_INTMAX_T,1,0)
-#define DEE_PRIVATE_TYPEDEF_uintmax_t DEE_PRIVATE_TYPEDEF_Dee_uintmax_t
-#define DEE_PRIVATE_TYPEDEF_atomic_uintmax_t DEE_PRIVATE_TYPEDEF_atomic_Dee_uintmax_t
 #define DEE_PRIVATE_TYPEDEF_Dee_intptr_t        (auto,1,DEE_TYPES_SIZEOF_INTPTR_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_intptr_t (auto,1,DEE_TYPES_SIZEOF_INTPTR_T,1,0)
-#define DEE_PRIVATE_TYPEDEF_intptr_t DEE_PRIVATE_TYPEDEF_Dee_intptr_t
-#define DEE_PRIVATE_TYPEDEF_atomic_intptr_t DEE_PRIVATE_TYPEDEF_atomic_Dee_intptr_t
 #define DEE_PRIVATE_TYPEDEF_Dee_uintptr_t        (auto,0,DEE_TYPES_SIZEOF_INTPTR_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_uintptr_t (auto,0,DEE_TYPES_SIZEOF_INTPTR_T,1,0)
-#define DEE_PRIVATE_TYPEDEF_uintptr_t DEE_PRIVATE_TYPEDEF_Dee_uintptr_t
-#define DEE_PRIVATE_TYPEDEF_atomic_uintptr_t DEE_PRIVATE_TYPEDEF_atomic_Dee_uintptr_t
 #define DEE_PRIVATE_TYPEDEF_Dee_ptrdiff_t        (auto,1,DEE_TYPES_SIZEOF_PTRDIFF_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_ptrdiff_t (auto,1,DEE_TYPES_SIZEOF_PTRDIFF_T,1,0)
-#define DEE_PRIVATE_TYPEDEF_ptrdiff_t DEE_PRIVATE_TYPEDEF_Dee_ptrdiff_t
-#define DEE_PRIVATE_TYPEDEF_atomic_ptrdiff_t DEE_PRIVATE_TYPEDEF_atomic_Dee_ptrdiff_t
 #define DEE_PRIVATE_TYPEDEF_Dee_size_t        (auto,0,DEE_TYPES_SIZEOF_SIZE_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_size_t (auto,0,DEE_TYPES_SIZEOF_SIZE_T,1,0)
-#define DEE_PRIVATE_TYPEDEF_size_t DEE_PRIVATE_TYPEDEF_Dee_size_t
-#define DEE_PRIVATE_TYPEDEF_atomic_size_t DEE_PRIVATE_TYPEDEF_atomic_Dee_size_t
 #define DEE_PRIVATE_TYPEDEF_Dee_ssize_t        (auto,1,DEE_TYPES_SIZEOF_SSIZE_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_ssize_t (auto,1,DEE_TYPES_SIZEOF_SSIZE_T,1,0)
-#define DEE_PRIVATE_TYPEDEF_ssize_t DEE_PRIVATE_TYPEDEF_Dee_ssize_t
-#define DEE_PRIVATE_TYPEDEF_atomic_ssize_t DEE_PRIVATE_TYPEDEF_atomic_Dee_ssize_t
-#define DEE_PRIVATE_TYPEDEF_DeeThreadID        (auto,0,DEE_TYPES_SIZEOF_THREADID,0,0)
-#define DEE_PRIVATE_TYPEDEF_atomic_DeeThreadID (auto,0,DEE_TYPES_SIZEOF_THREADID,1,0)
 #define DEE_PRIVATE_TYPEDEF_Dee_hash_t        (auto,0,DEE_CONFIG_SIZEOF_DEE_HASH_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_hash_t (auto,0,DEE_CONFIG_SIZEOF_DEE_HASH_T,1,0)
+#define DEE_PRIVATE_TYPEDEF_intmax_t DEE_PRIVATE_TYPEDEF_Dee_intmax_t
+#define DEE_PRIVATE_TYPEDEF_atomic_intmax_t DEE_PRIVATE_TYPEDEF_atomic_Dee_intmax_t
+#define DEE_PRIVATE_TYPEDEF_uintmax_t DEE_PRIVATE_TYPEDEF_Dee_uintmax_t
+#define DEE_PRIVATE_TYPEDEF_atomic_uintmax_t DEE_PRIVATE_TYPEDEF_atomic_Dee_uintmax_t
+#define DEE_PRIVATE_TYPEDEF_intptr_t DEE_PRIVATE_TYPEDEF_Dee_intptr_t
+#define DEE_PRIVATE_TYPEDEF_atomic_intptr_t DEE_PRIVATE_TYPEDEF_atomic_Dee_intptr_t
+#define DEE_PRIVATE_TYPEDEF_uintptr_t DEE_PRIVATE_TYPEDEF_Dee_uintptr_t
+#define DEE_PRIVATE_TYPEDEF_atomic_uintptr_t DEE_PRIVATE_TYPEDEF_atomic_Dee_uintptr_t
+#define DEE_PRIVATE_TYPEDEF_ptrdiff_t DEE_PRIVATE_TYPEDEF_Dee_ptrdiff_t
+#define DEE_PRIVATE_TYPEDEF_atomic_ptrdiff_t DEE_PRIVATE_TYPEDEF_atomic_Dee_ptrdiff_t
+#define DEE_PRIVATE_TYPEDEF_size_t DEE_PRIVATE_TYPEDEF_Dee_size_t
+#define DEE_PRIVATE_TYPEDEF_atomic_size_t DEE_PRIVATE_TYPEDEF_atomic_Dee_size_t
+#define DEE_PRIVATE_TYPEDEF_ssize_t DEE_PRIVATE_TYPEDEF_Dee_ssize_t
+#define DEE_PRIVATE_TYPEDEF_atomic_ssize_t DEE_PRIVATE_TYPEDEF_atomic_Dee_ssize_t
 #define DEE_PRIVATE_TYPEDEF_Dee_Utf8Char DEE_PRIVATE_TYPEDEF_char
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_Utf8Char DEE_PRIVATE_TYPEDEF_atomic_char
 #define DEE_PRIVATE_TYPEDEF_Dee_Utf16Char DEE_PRIVATE_TYPEDEF_uint16_t
@@ -256,6 +254,14 @@
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_refcnt_t (auto,0,DEE_TYPES_SIZEOF_REFCNT,1,0)
 #define DEE_PRIVATE_TYPEDEF_Dee_weakcnt_t        (auto,0,DEE_TYPES_SIZEOF_WEAKCNT,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_weakcnt_t (auto,0,DEE_TYPES_SIZEOF_WEAKCNT,1,0)
+#ifdef DEE_TYPES_SIZEOF_TID_T
+#define DEE_PRIVATE_TYPEDEF_Dee_tid_t        (auto,0,DEE_TYPES_SIZEOF_TID_T,0,0)
+#define DEE_PRIVATE_TYPEDEF_atomic_Dee_tid_t (auto,0,DEE_TYPES_SIZEOF_TID_T,1,0)
+#endif
+#ifdef DEE_TYPES_SIZEOF_PID_T
+#define DEE_PRIVATE_TYPEDEF_Dee_pid_t        (auto,0,DEE_TYPES_SIZEOF_PID_T,0,0)
+#define DEE_PRIVATE_TYPEDEF_atomic_Dee_pid_t (auto,0,DEE_TYPES_SIZEOF_PID_T,1,0)
+#endif
 #ifdef DEE_TYPES_SIZEOF_UID_T
 #define DEE_PRIVATE_TYPEDEF_Dee_uid_t        (auto,0,DEE_TYPES_SIZEOF_UID_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_uid_t (auto,0,DEE_TYPES_SIZEOF_UID_T,1,0)
@@ -268,20 +274,26 @@
 #define DEE_PRIVATE_TYPEDEF_Dee_mode_t        (auto,0,DEE_TYPES_SIZEOF_MODE_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_Dee_mode_t (auto,0,DEE_TYPES_SIZEOF_MODE_T,1,0)
 #endif
+#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN
+#define DEE_PRIVATE_TYPEDEF_DeeProcessReturn        (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN,0,0)
+#define DEE_PRIVATE_TYPEDEF_atomic_DeeProcessReturn (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN,1,0)
+#endif
+#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE
+#define DEE_PRIVATE_TYPEDEF_DeeProcessHandle        (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE,0,0)
+#define DEE_PRIVATE_TYPEDEF_atomic_DeeProcessHandle (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE,1,0)
+#endif
 #define DEE_PRIVATE_TYPEDEF_uid_t DEE_PRIVATE_TYPEDEF_Dee_uid_t
 #define DEE_PRIVATE_TYPEDEF_atomic_uid_t DEE_PRIVATE_TYPEDEF_atomic_Dee_uid_t
 #define DEE_PRIVATE_TYPEDEF_gid_t DEE_PRIVATE_TYPEDEF_Dee_gid_t
 #define DEE_PRIVATE_TYPEDEF_atomic_gid_t DEE_PRIVATE_TYPEDEF_atomic_Dee_gid_t
+#define DEE_PRIVATE_TYPEDEF_pid_t DEE_PRIVATE_TYPEDEF_Dee_pid_t
+#define DEE_PRIVATE_TYPEDEF_atomic_pid_t DEE_PRIVATE_TYPEDEF_atomic_Dee_pid_t
 #define DEE_PRIVATE_TYPEDEF_mode_t DEE_PRIVATE_TYPEDEF_Dee_mode_t
 #define DEE_PRIVATE_TYPEDEF_atomic_mode_t DEE_PRIVATE_TYPEDEF_atomic_Dee_mode_t
 #define DEE_PRIVATE_TYPEDEF_sa_family_t DEE_PRIVATE_TYPEDEF_ushort
 #define DEE_PRIVATE_TYPEDEF_atomic_sa_family_t DEE_PRIVATE_TYPEDEF_atomic_ushort
 #define DEE_PRIVATE_TYPEDEF_in_port_t DEE_PRIVATE_TYPEDEF_uint16_t
 #define DEE_PRIVATE_TYPEDEF_atomic_in_port_t DEE_PRIVATE_TYPEDEF_atomic_uint16_t
-#ifdef DEE_TYPES_SIZEOF_PID_T
-#define DEE_PRIVATE_TYPEDEF_pid_t        (auto,0,DEE_TYPES_SIZEOF_PID_T,0,0)
-#define DEE_PRIVATE_TYPEDEF_atomic_pid_t (auto,0,DEE_TYPES_SIZEOF_PID_T,1,0)
-#endif
 #ifdef DEE_TYPES_SIZEOF_SOCKLEN_T
 #define DEE_PRIVATE_TYPEDEF_socklen_t        (auto,1,DEE_TYPES_SIZEOF_SOCKLEN_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_socklen_t (auto,1,DEE_TYPES_SIZEOF_SOCKLEN_T,1,0)
@@ -336,22 +348,10 @@
 #define DEE_PRIVATE_TYPEDEF_atomic_uint_least32_t (auto,0,DEE_TYPES_SIZEOF_INT_LEAST32_T,1,0)
 #define DEE_PRIVATE_TYPEDEF_uint_least64_t        (auto,0,DEE_TYPES_SIZEOF_INT_LEAST64_T,0,0)
 #define DEE_PRIVATE_TYPEDEF_atomic_uint_least64_t (auto,0,DEE_TYPES_SIZEOF_INT_LEAST64_T,1,0)
-#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_ID
-#define DEE_PRIVATE_TYPEDEF_DeeProcessID        (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_ID,0,0)
-#define DEE_PRIVATE_TYPEDEF_atomic_DeeProcessID (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_ID,1,0)
-#endif
-#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN
-#define DEE_PRIVATE_TYPEDEF_DeeProcessReturn        (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN,0,0)
-#define DEE_PRIVATE_TYPEDEF_atomic_DeeProcessReturn (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_RETURN,1,0)
-#endif
-#ifdef DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE
-#define DEE_PRIVATE_TYPEDEF_DeeProcessHandle        (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE,0,0)
-#define DEE_PRIVATE_TYPEDEF_atomic_DeeProcessHandle (auto,0,DEE_TYPES_SIZEOF_DEE_PROCESS_HANDLE,1,0)
-#endif
+#define DEE_PRIVATE_TYPEDEF_Dee_funflags_t DEE_PRIVATE_TYPEDEF_int16_t
+#define DEE_PRIVATE_TYPEDEF_atomic_Dee_funflags_t DEE_PRIVATE_TYPEDEF_atomic_int16_t
 #define DEE_PRIVATE_TYPEDEF_DeeExceptionHandlerKind DEE_PRIVATE_TYPEDEF_int
 #define DEE_PRIVATE_TYPEDEF_atomic_DeeExceptionHandlerKind DEE_PRIVATE_TYPEDEF_atomic_int
-#define DEE_PRIVATE_TYPEDEF_DeeFunctionFlags DEE_PRIVATE_TYPEDEF_int16_t
-#define DEE_PRIVATE_TYPEDEF_atomic_DeeFunctionFlags DEE_PRIVATE_TYPEDEF_atomic_int16_t
 #define DEE_PRIVATE_TYPEDEF_DeeExprAstKind DEE_PRIVATE_TYPEDEF_int
 #define DEE_PRIVATE_TYPEDEF_atomic_DeeExprAstKind DEE_PRIVATE_TYPEDEF_atomic_int
 #define DEE_PRIVATE_TYPEDEF_DeeStmtAstKind DEE_PRIVATE_TYPEDEF_enum

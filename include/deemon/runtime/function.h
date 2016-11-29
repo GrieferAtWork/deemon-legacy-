@@ -72,7 +72,7 @@ struct DeeFunctionObject {
  // The following two are not protected by the lock
  Dee_uint32_t                     fn_flags; /*< Function flags. */
  Dee_size_t                       fn_argc;  /*< Argument count required to properly execute the code. */
- // TODO: add support for 'DeeFunctionFlags_NOEXCEPT' / '__attribute__((__nothrow__))'.
+ // TODO: add support for 'DEE_FUNCTIONFLAGS_FLAG_NOEXCEPT' / '__attribute__((__nothrow__))'.
  //       Should work by simply dumping unhandled exceptions at the end of a call.
  // TODO: defaults
 };

@@ -29,7 +29,7 @@
 function run_and_output_to_file(cmd,outfile_filename) {
 	print "CMD:",cmd,">",outfile_filename;
 	local p = process(cmd);
-	p.stdout = file.io(outfile_filename,"w");
+	p.stdout = file.open(outfile_filename,"w");
 	p.start();
 	return p.join();
 }

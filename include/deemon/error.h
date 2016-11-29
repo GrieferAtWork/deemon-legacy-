@@ -23,6 +23,7 @@
 
 #include <deemon/__conf.inl>
 #include <deemon/optional/std/stdarg.h>
+#include <deemon/optional/type_newinstance.h>
 #ifdef DEE_LIMITED_DEX
 #include <deemon/object.h>
 #include <deemon/tuple.h>
@@ -482,6 +483,15 @@ DEE_FUNC_DECL(DEE_A_EXEC void) DeeError_VSetStringf(
  DEE_A_INOUT DeeTypeObject *type_, DEE_A_IN_PRINTF char const *fmt,
  DEE_A_INOUT va_list args) DEE_ATTRIBUTE_NONNULL((1,2));
 #endif /* DEE_ENVIRONMENT_HAVE_INCLUDE_STDARG_H */
+
+#define DeeError_ThrowNewInstancef(ty,...) \
+do{\
+ DeeObject *_det_instance;\
+ if ((_det_instance = DeeType_NewInstancef(ty,__VA_ARGS__)) != NULL) {\
+  DeeError_Throw(_det_instance);\
+  Dee_DECREF(_det_instance);\
+ }\
+}while(0)
 
 
 #define DeeError_RuntimeError(message)\
