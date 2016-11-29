@@ -2770,7 +2770,7 @@ static DeeObject *DEE_CALL _deelist_remove(
  if DEE_UNLIKELY((result = ((DeeNone_Check(pred) || pred == (DeeObject *)&DeeBuiltinFunction___eq__)
   ? DeeList_Remove((DeeObject *)self,elem)
   : DeeList_RemovePred((DeeObject *)self,elem,pred)
-  )) != 0) return NULL;
+  )) < 0) return NULL;
  DeeReturn_Bool(result == 0);
 }
 static DeeObject *DEE_CALL _deelist_insert(
