@@ -1804,6 +1804,18 @@ static int _DeeSysSocket_Configure(DEE_A_INOUT DeeSocketObject *self) {
  if DEE_UNLIKELY(DeeSocket_SetSendTimeout((DeeObject *)self,
   DEE_XCONFIG_SOCKET_DEFAULT_SEND_TIMEOUT) != 0) return -1;
 #endif
+ // Disable non-blocking IO (We what these to block with out custom timeouts)
+ // >> Required for closing a socket currently being blocked by an 'accept()' call
+ // TODO: Throw an error if these fail
+#if defined(__BEOS__) && defined(SO_NONBLOCK)
+ { long no = 0; setsockopt(self->s_socket,SOL_SOCKET,SO_NONBLOCK,&no,sizeof(no)); }
+#elif defined(O_NONBLOCK)
+ { fcntl(self->s_socket,F_SETFL,fcntl(sock,F_GETFL) & ~(O_NONBLOCK)); }
+#elif defined(DEE_PLATFORM_WINDOWS)
+ { unsigned long no = 0; ioctlsocket(self->s_socket,FIONBIO,&no); }
+#elif defined(__OS2__)
+ { int no = 0; ioctl(self->s_socket,FIONBIO,&no); }
+#endif
 #if DEE_HAVE_IPv6_DUALSTACK
  if (DeeSocket_GET_ADDRESS_FAMILY(self) == AF_INET6) {
   int value = 0; socklen_t optlen = sizeof(value);
