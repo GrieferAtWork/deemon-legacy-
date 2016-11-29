@@ -75,6 +75,11 @@ DEE_A_RET_EXCEPT(-1) int DeeFS_DoGetApi_v102(
                       "Invalid FS-ApiMode: %#.8I32x",mode);
   return -1;
  }
+ // Load regular entries
+#define DIR_ENTRY(T,name) /* nothing */
+#define REG_ENTRY(T,name) api->fs102_##name = &DeeNFS_##name;
+#define IND_ENTRY(T,name) /* nothing */
+#include "dynamic_fs.v102.inl"
 #if DEE_CONFIG_RUNTIME_HAVE_VFS
  if ((mode&DEE_FSAPIMODE_ENABLEVFS)!=0) {
   typedef DeeFunPointer (DEE_CALL *LPDEEVFS_GETFUNCTION_V102)(Dee_size_t id);
