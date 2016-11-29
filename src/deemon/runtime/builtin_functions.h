@@ -464,7 +464,7 @@ fs::chdir(fs::path::head(__FILE__));
 local mappings = list();
 
 local longest_name = 0;
-for (local line: file.io("builtins.c","r")) {
+for (local line: file.open("builtins.c","r")) {
   local id,name;
   try id,name = line.scanf(" /" "* %[xX0-9a-fA-F] *" "/ ( DeeObject * ) & DeeBuiltinFunction_%[^, ]")...;
   catch (...) continue;

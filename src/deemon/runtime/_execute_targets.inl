@@ -26,7 +26,7 @@ const UNKNOWN_TARGET = "_unknown_target";
 #include <fs>
 fs::chdir(fs::path::head(__FILE__));
 local opcodes = [none]*256;
-for (local line: file.io("../compiler/__opcode.inl","r")) {
+for (local line: file.open("../compiler/__opcode.inl","r")) {
   local name,code;
   try {
     name,code = line.scanf(" # define %s %[Xx0-9]")...;

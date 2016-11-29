@@ -25,7 +25,7 @@
 #include <file>
 file.io.stdout.write(
 	"\n".join(
-		file.io("/dev/stdin")
+		file.open("/dev/stdin")
 			.read()
 			.splitlines(false)
 			.sorted()

@@ -34,7 +34,7 @@ DEE_DECL_BEGIN
 struct DeeEmulatedSysTLSEntry;
 struct DeeEmulatedSysTLSEntry {
  struct DeeEmulatedSysTLSEntry *este_next;   /*< [0..1][owned] Next thread entry. */
- Dee_tid_t                    este_thread; /*< Id of the thread this entry referrs to. */
+ Dee_tid_t                      este_thread; /*< Id of the thread this entry referrs to. */
  void                          *este_value;  /*< [?..?] Value thread-local to 'este_thread'. */
 };
 struct DeeEmulatedSysTLS {

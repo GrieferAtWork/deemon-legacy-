@@ -984,15 +984,15 @@ static int _deesignal_tp_copy_ctor(DeeTypeObject *DEE_UNUSED(tp_self), DeeObject
 #ifndef DEE_WITHOUT_THREADS
 extern /*atomic*/Dee_uint16_t _deethread_itrpcounter;
 static void _deeiterruptsignal_tp_dtor(DeeSignalObject *self) {
- DeeThreadObject *thread_self; Dee_uint8_t state;
+ DeeThreadObject *thread_self; Dee_threadstate_t state;
  if ((thread_self = DeeThread_SELF()) == NULL) return;
  if (self != thread_self->t_sys_interrupt) return; // not the internal interrupt signal
  thread_self->t_sys_interrupt = NULL;
  do { // Must restore the interrupt flag in the current thread, so it get thrown again
-  state = (Dee_uint8_t)DeeAtomic8_Load(thread_self->t_state,memory_order_seq_cst);
-  if ((state&DeeThreadState_TERMINATED) != 0) return; // Thread has already terminated (don't restore interrupt!)
+  state = (Dee_threadstate_t)DeeAtomic8_Load(thread_self->t_state,memory_order_seq_cst);
+  if ((state&DEE_THREADSTATE_TERMINATED) != 0) return; // Thread has already terminated (don't restore interrupt!)
  } while (!DeeAtomic8_CompareExchangeWeak(
-  thread_self->t_state,state,state&~DeeThreadState_INTERRUPT_HANDLED,
+  thread_self->t_state,state,state&~DEE_THREADSTATE_INTERRUPT_HANDLED,
   memory_order_seq_cst,memory_order_seq_cst));
  DEE_THREADITRP_COUNTER_INC(); // +1 threads with unhandled interrupt signals
  DEE_LVERBOSE2("Restored interrupt signal in thread: %k\n",thread_self);

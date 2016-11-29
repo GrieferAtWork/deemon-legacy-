@@ -97,7 +97,7 @@ static if (__FILE__ == __BASE_FILE__) {
 	if (#sys.argv < 2) {
 		print "Usage:",sys.argv[0],"<infile>";
 	} else {
-		local data = file.io(sys.argv[1],"r").read();
+		local data = file.open(sys.argv[1],"r").read();
 		brain_exec(data);
 	}
 }

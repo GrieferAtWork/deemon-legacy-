@@ -297,7 +297,8 @@ d("uint_least32_t",false,"DEE_TYPES_SIZEOF_INT_LEAST32_T");
 d("uint_least64_t",false,"DEE_TYPES_SIZEOF_INT_LEAST64_T");
 
 // Type aliases
-a("Dee_funflags_t", "int16_t");
+a("Dee_funflags_t",   "int16_t");
+a("Dee_threadstate_t","uint8_t");
 
 // TODO: Rename all of these to match the new Dee_*_t convention
 a("DeeExceptionHandlerKind","int");
@@ -307,7 +308,6 @@ a("DeeAstAttribute",  "uint32_t");
 a("DeeXAstKind",      "uint32_t");
 a("DeeSAstKind",      "uint32_t");
 a("TPPTokenID",       "int");
-a("DeeThreadState",   "uint8_t");
 a("DeeSempahoreCount","ulong");
 a("DeeMarshalVersion","uint16_t");
 a("TPP_rt_int8_t",  "int8_t");

@@ -2902,7 +2902,7 @@ static struct DeeMemberDef const _deexast_tp_class_members[] = {
 #include <file>
 const prefix = "#define DEE_XASTKIND_";
 const max_line_length = 100;
-for (local name: file.io("xast.h")) {
+for (local name: file.open("xast.h")) {
   name = name.strip();
   if (name.startswith(prefix)) {
     name = name[#prefix:];

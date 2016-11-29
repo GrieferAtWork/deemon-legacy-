@@ -181,7 +181,7 @@ function def_crc(names,width,poly,args...) {
   print " {"+repr main_name+","+alias_names+","+width+",DEE_CRCHASHER_SIZE_"+(size*8)+","+flag_names+",\n"
         " {(DeeCRCHashFunc8)&"+hashfunc+"}},"+CODEINT(init)+","+CODEINT(xorout)+","+CODEINT(width_mask)+",";
   algo_filename = fs::path::join(algo_folder,"algorithm."+main_name.replace("\\","_").replace("/","_")+".inl");
-  algo_file = file.io(algo_filename,"w");
+  algo_file = file.open(algo_filename,"w");
   print algo_file: "{";
   local line = 0;
   for (x: DEEMON_GENERATE_CRC(width,(poly_type)poly,refin)) {

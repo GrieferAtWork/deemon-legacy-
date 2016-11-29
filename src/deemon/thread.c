@@ -395,9 +395,9 @@ void *DeeThreadMain(DeeThreadObject *self)
   // Add the terminated flag & check if we were interrupted
   // NOTE: The terminated flag prevents new TLS variables from being assigned
   if ((DeeAtomic8_FetchOr(self->t_state,
-   DeeThreadState_TERMINATED,memory_order_seq_cst)&(
-   DeeThreadState_INTERRUPTED|DeeThreadState_INTERRUPT_HANDLED
-   ))==DeeThreadState_INTERRUPTED) {
+   DEE_THREADSTATE_TERMINATED,memory_order_seq_cst)&(
+   DEE_THREADSTATE_INTERRUPTED|DEE_THREADSTATE_INTERRUPT_HANDLED
+   ))==DEE_THREADSTATE_INTERRUPTED) {
    // This thread had its interrupt flag set, but not its interrupt_handled
    DEE_LVERBOSE2("Semi-Interrupted thread has terminated: %r\n",self);
    // Notify the runtime that an interrupted thread has terminated
@@ -499,7 +499,7 @@ DEE_A_RET_OBJECT_MAYBE(DeeThreadObject) *DeeThread_Self(void) {
   if DEE_LIKELY((result = (DeeThreadObject *)DeeObject_TryWeakMalloc(sizeof(DeeThreadObject))) != NULL) {
    DeeObject_INIT(result,&DeeThread_Type);
    // Detached, because we don't have control over this thread
-   result->t_state = (DeeThreadState_STARTED|DeeThreadState_DETACHED);
+   result->t_state = (DEE_THREADSTATE_STARTED|DEE_THREADSTATE_DETACHED);
 #ifdef DEE_PLATFORM_WINDOWS
    result->t_id = GetCurrentThreadId();
    result->t_handle = GetCurrentThread();
@@ -526,7 +526,7 @@ do{\
  DEE_ASSERT(DeeObject_Check(callback));\
  DEE_ASSERT(DeeObject_Check(args) && DeeTuple_Check(args));\
  DEE_LVERBOSE2("Initializing thread calling %k with %k\n",callback,args);\
- (ob)->t_state = DeeThreadState_INITIAL;\
+ (ob)->t_state = DEE_THREADSTATE_INITIAL;\
  Dee_INCREF((ob)->t_callback_func = callback);\
  Dee_INCREF((ob)->t_callback_args = (DeeTupleObject *)args);\
  _DeeThread_INIT_COMMON(ob);\
@@ -549,8 +549,8 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeThread_Start(
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  thread = (DeeThreadObject *)self;
  DeeAtomicMutex_Acquire(&thread->t_lock);
- if DEE_UNLIKELY((DeeAtomic8_FetchOr(thread->t_state,DeeThreadState_STARTED,
-  memory_order_seq_cst)&DeeThreadState_STARTED) != 0) {
+ if DEE_UNLIKELY((DeeAtomic8_FetchOr(thread->t_state,DEE_THREADSTATE_STARTED,
+  memory_order_seq_cst)&DEE_THREADSTATE_STARTED) != 0) {
   DeeAtomicMutex_Release(&thread->t_lock);
   return 1; // Thread already started/starting
  }
@@ -562,7 +562,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeThread_Start(
 do{\
  Dee_DECREF(self);\
  DEE_THREAD_COUNTER_DEC();\
- DeeAtomic8_FetchAdd(thread->t_state,~DeeThreadState_STARTED,memory_order_seq_cst);\
+ DeeAtomic8_FetchAdd(thread->t_state,~DEE_THREADSTATE_STARTED,memory_order_seq_cst);\
  DeeAtomicMutex_Release(&thread->t_lock);\
 }while(0)
   HANDLE new_handle;
@@ -601,7 +601,7 @@ cleanup_handle:
    DeeError_SystemErrorExplicit("pthread_attr_init",error);
 err_0: Dee_DECREF(self);
    DEE_THREAD_COUNTER_DEC();
-   DeeAtomic8_FetchAdd(thread->t_state,~DeeThreadState_STARTED,memory_order_seq_cst);
+   DeeAtomic8_FetchAdd(thread->t_state,~DEE_THREADSTATE_STARTED,memory_order_seq_cst);
    DeeAtomicMutex_Release(&thread->t_lock);
    return -1;
   }
@@ -626,7 +626,7 @@ DEE_A_RET_WUNUSED Dee_tid_t DeeThread_ID(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  DeeAtomicMutex_Acquire(&((DeeThreadObject *)self)->t_lock);
- if DEE_UNLIKELY((DeeThread_STATE_A(self)&DeeThreadState_STARTED) != DeeThreadState_STARTED) {
+ if DEE_UNLIKELY((DeeThread_STATE_A(self)&DEE_THREADSTATE_STARTED) != DEE_THREADSTATE_STARTED) {
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
   return (Dee_tid_t)-1;
  }
@@ -699,7 +699,7 @@ DEE_A_RET_WUNUSED int DeeThread_Crashed(
  if DEE_UNLIKELY(!DeeThread_TERMINATED(self)) return 0;
  return ((DeeThreadObject *)self)->t_exception != NULL;
 }
-DEE_A_RET_WUNUSED DeeThreadState DeeThread_State(
+DEE_A_RET_WUNUSED Dee_threadstate_t DeeThread_State(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) {
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  return DeeThread_STATE_A(self);
@@ -728,19 +728,19 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeThread_GetError(
 DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeThread_Interrupt(
  DEE_A_INOUT_OBJECT(DeeThreadObject) *self) {
  DeeThreadObject *thread;
- DeeThreadState state;
+ Dee_threadstate_t state;
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  thread = (DeeThreadObject *)self;
  do {
   state = DeeThread_STATE_A(thread);
-  if DEE_UNLIKELY((state & (DeeThreadState_STARTED|
-   DeeThreadState_DETACHED))!=DeeThreadState_STARTED) {
+  if DEE_UNLIKELY((state & (DEE_THREADSTATE_STARTED|
+   DEE_THREADSTATE_DETACHED))!=DEE_THREADSTATE_STARTED) {
    DeeError_SetStringf(&DeeErrorType_ValueError,"Thread %k not started or detached",thread);
    return -1;
   }
-  if DEE_UNLIKELY((state & DeeThreadState_INTERRUPTED)!=0) return 1; // already interrupted
+  if DEE_UNLIKELY((state & DEE_THREADSTATE_INTERRUPTED)!=0) return 1; // already interrupted
  } while DEE_UNLIKELY(!DeeAtomic8_CompareExchangeWeak(
-  thread->t_state,state,state|DeeThreadState_INTERRUPTED, // Set the interrupted flag
+  thread->t_state,state,state|DEE_THREADSTATE_INTERRUPTED, // Set the interrupted flag
   memory_order_seq_cst,memory_order_seq_cst));
  // Notify the runtime of the new interrupted thread
  DEE_THREADITRP_COUNTER_INC();
@@ -750,7 +750,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeThread_Interrupt(
 
 DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeThread_Detach(
  DEE_A_INOUT_OBJECT(DeeThreadObject) *self) {
- DeeThreadObject *thread; DeeThreadState state;
+ DeeThreadObject *thread; Dee_threadstate_t state;
 #ifndef DEE_PLATFORM_WINDOWS
  int error;
 #endif
@@ -758,13 +758,13 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeThread_Detach(
  thread = (DeeThreadObject *)self;
  do {
   state = DeeThread_STATE_A(thread);
-  if DEE_UNLIKELY((state & DeeThreadState_STARTED)==0) {
+  if DEE_UNLIKELY((state & DEE_THREADSTATE_STARTED)==0) {
    DeeError_SetStringf(&DeeErrorType_ValueError,"Thread %k not started",thread);
    return -1;
   }
-  if DEE_UNLIKELY((state & DeeThreadState_DETACHED)!=0) return 1; // already detached
+  if DEE_UNLIKELY((state & DEE_THREADSTATE_DETACHED)!=0) return 1; // already detached
  } while DEE_UNLIKELY(!DeeAtomic8_CompareExchangeWeak(
-  thread->t_state,state,state|DeeThreadState_DETACHED, // Set the detached flag
+  thread->t_state,state,state|DEE_THREADSTATE_DETACHED, // Set the detached flag
   memory_order_seq_cst,memory_order_seq_cst));
  {
 #ifdef DEE_PLATFORM_WINDOWS
@@ -794,24 +794,24 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeThread_Detach(
 
 
 static int _deethread_setup_join_or_detach(DeeThreadObject *self) {
- DeeThreadState state;
+ Dee_threadstate_t state;
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  do {
   state = DeeThread_STATE_A(self);
-  if DEE_UNLIKELY((state & (DeeThreadState_STARTED|
-   DeeThreadState_DETACHED))!=DeeThreadState_STARTED) {
+  if DEE_UNLIKELY((state & (DEE_THREADSTATE_STARTED|
+   DEE_THREADSTATE_DETACHED))!=DEE_THREADSTATE_STARTED) {
    DeeError_SetStringf(&DeeErrorType_ValueError,
                        "Thread %k not started or detached/joined",
                        self);
    return -1;
   }
  } while DEE_UNLIKELY(!DeeAtomic8_CompareExchangeWeak(
-  self->t_state,state,state|DeeThreadState_DETACHED, // Set the detached flag
+  self->t_state,state,state|DEE_THREADSTATE_DETACHED, // Set the detached flag
   memory_order_seq_cst,memory_order_seq_cst));
  return 0;
 }
 #define _deethread_undo_join_or_detach(self)\
- DeeAtomic8_FetchAnd((self)->t_state,~DeeThreadState_DETACHED,memory_order_seq_cst);
+ DeeAtomic8_FetchAnd((self)->t_state,~DEE_THREADSTATE_DETACHED,memory_order_seq_cst);
 
 #define _DeeThread_StoreReturn(self,return_value)\
 do{\
@@ -842,7 +842,7 @@ DEE_A_RET_EXCEPT(-1) int DeeThread_Join(
 #ifdef DEE_PLATFORM_WINDOWS
  return DeeThread_JoinTimed(self,INFINITE,return_value);
 #else
- DeeThreadState state; int error;
+ Dee_threadstate_t state; int error;
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  if DEE_UNLIKELY(DeeThread_CheckInterrupt() != 0) return -1;
  if DEE_UNLIKELY(_deethread_setup_join_or_detach((DeeThreadObject *)self) != 0) return -1;
@@ -879,7 +879,7 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeThread_TryJoin(
  _DeeThread_StoreReturn(self,return_value);
  return 0;
 #else
- if ((DeeThread_STATE_A(self)&DeeThreadState_TERMINATED)!=0) {
+ if ((DeeThread_STATE_A(self)&DEE_THREADSTATE_TERMINATED)!=0) {
   // Thread has terminated (we can simply join to simulate a try_join)
   error = pthread_join(((DeeThreadObject *)self)->t_handle,NULL);
   if DEE_UNLIKELY(error != 0) {
@@ -947,20 +947,20 @@ DEE_A_RET_EXCEPT_FAIL(-1,1) int DeeThread_JoinTimed(
 DEE_A_RET_EXCEPT(-1) double DeeThread_GetPriority(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) {
  double result;
- DeeThreadObject *thread; DeeThreadState state;
+ DeeThreadObject *thread; Dee_threadstate_t state;
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  thread = (DeeThreadObject *)self;
  DeeAtomicMutex_Acquire(&thread->t_lock);
  state = DeeThread_STATE_A(thread);
  // Make sure the thread isn't detached
- if DEE_UNLIKELY((state&DeeThreadState_DETACHED)!=0) {
+ if DEE_UNLIKELY((state&DEE_THREADSTATE_DETACHED)!=0) {
   DeeAtomicMutex_Release(&thread->t_lock);
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Thread %k detached/joined",
                       thread);
   return -1.0;
  }
- if ((state&DeeThreadState_STARTED)!=0) {
+ if ((state&DEE_THREADSTATE_STARTED)!=0) {
 #ifdef DEE_PLATFORM_WINDOWS
   int error = GetThreadPriority(thread->t_handle);
   if DEE_UNLIKELY(error == THREAD_PRIORITY_ERROR_RETURN) {
@@ -982,7 +982,7 @@ DEE_A_RET_EXCEPT(-1) double DeeThread_GetPriority(
 }
 DEE_A_RET_EXCEPT(-1) int DeeThread_SetPriority(
  DEE_A_INOUT_OBJECT(DeeThreadObject) *self, DEE_A_IN double priority) {
- DeeThreadObject *thread; DeeThreadState state;
+ DeeThreadObject *thread; Dee_threadstate_t state;
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  thread = (DeeThreadObject *)self;
  if DEE_UNLIKELY(priority < 0.0f) priority = 0.0f; else
@@ -990,14 +990,14 @@ DEE_A_RET_EXCEPT(-1) int DeeThread_SetPriority(
  DeeAtomicMutex_Acquire(&thread->t_lock);
  state = DeeThread_STATE_A(thread);
  // Make sure the thread isn't detached
- if DEE_UNLIKELY((state&DeeThreadState_DETACHED)!=0) {
+ if DEE_UNLIKELY((state&DEE_THREADSTATE_DETACHED)!=0) {
   DeeAtomicMutex_Release(&thread->t_lock);
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Thread %k detached/joined",
                       thread);
   return -1;
  }
- if ((state & DeeThreadState_STARTED) != 0) {
+ if ((state & DEE_THREADSTATE_STARTED) != 0) {
 #ifdef DEE_PLATFORM_WINDOWS
   if DEE_UNLIKELY(!SetThreadPriority(thread->t_handle,DeeThread_Win32PriorityFromFloat(priority))) {
    DWORD error = DeeSystemError_Win32Consume();
@@ -1036,7 +1036,7 @@ DEE_A_RET_EXCEPT(-1) int DeeThread_SetName(
  DEE_ASSERT(DeeObject_Check(name) && DeeString_Check(name));
  // Make sure the thread isn't started
  DeeAtomicMutex_Acquire(&((DeeThreadObject *)self)->t_lock);
- if DEE_UNLIKELY((DeeThread_STATE_A(self) & DeeThreadState_STARTED)!=0) {
+ if DEE_UNLIKELY((DeeThread_STATE_A(self) & DEE_THREADSTATE_STARTED)!=0) {
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Thread %k already started",
@@ -1054,7 +1054,7 @@ DEE_A_RET_EXCEPT(-1) int _DeeThread_DoCheckInterrupt(void) {
  DeeThreadObject *thread; DeeObject *interrupt_signal;
  DeeSysTLS_TryGetNofail(&_dee_thread_threadself_tls,thread);
  if DEE_LIKELY(thread != NULL) {
-  DeeThreadState state;
+  Dee_threadstate_t state;
   do {
    state = DeeThread_STATE_A(thread);
    // Only allow interrupt if:
@@ -1062,12 +1062,12 @@ DEE_A_RET_EXCEPT(-1) int _DeeThread_DoCheckInterrupt(void) {
    //  - we actually are being interrupted
    //  - we haven't already handled the interrupt
    if DEE_LIKELY((state & (
-    DeeThreadState_NOINTERRUPT|
-    DeeThreadState_INTERRUPTED|
-    DeeThreadState_INTERRUPT_HANDLED
-    )) != DeeThreadState_INTERRUPTED) return 0;
+    DEE_THREADSTATE_NOINTERRUPT|
+    DEE_THREADSTATE_INTERRUPTED|
+    DEE_THREADSTATE_INTERRUPT_HANDLED
+    )) != DEE_THREADSTATE_INTERRUPTED) return 0;
   } while DEE_UNLIKELY(!DeeAtomic8_CompareExchangeWeak(
-  thread->t_state,state,state|DeeThreadState_INTERRUPT_HANDLED, // Set the interrupted_handled flag
+  thread->t_state,state,state|DEE_THREADSTATE_INTERRUPT_HANDLED, // Set the interrupted_handled flag
   memory_order_seq_cst,memory_order_seq_cst));
   // This thread is no longer interrupted
   // >> Disable the optimized lookup for interrupted threads
@@ -1100,12 +1100,12 @@ DEE_A_RET_EXCEPT(-1) int DeeThread_CheckInterrupt(void)
 void DeeThread_NoInterruptBegin(void) {
  DeeThreadObject *thread_self = DeeThread_SELF();
  if (DEE_LIKELY(thread_self) && ++thread_self->t_nointerrupt_rec == 1)
-  DeeAtomic8_FetchOr(thread_self->t_state,DeeThreadState_NOINTERRUPT,memory_order_seq_cst);
+  DeeAtomic8_FetchOr(thread_self->t_state,DEE_THREADSTATE_NOINTERRUPT,memory_order_seq_cst);
 }
 void DeeThread_NoInterruptEnd(void) {
  DeeThreadObject *thread_self = DeeThread_SELF();
  if (DEE_LIKELY(thread_self) && --thread_self->t_nointerrupt_rec == 0)
-  DeeAtomic8_FetchAnd(thread_self->t_state,~DeeThreadState_NOINTERRUPT,memory_order_seq_cst);
+  DeeAtomic8_FetchAnd(thread_self->t_state,~DEE_THREADSTATE_NOINTERRUPT,memory_order_seq_cst);
 }
 #ifdef DEE_PLATFORM_WINDOWS
 DEE_A_RET_EXCEPT(-1) int DeeThread_Win32Times(
@@ -1117,8 +1117,8 @@ DEE_A_RET_EXCEPT(-1) int DeeThread_Win32Times(
  FILETIME tc,te,tk,tu; BOOL temp;
  DEE_ASSERT(DeeObject_Check(self) && DeeThread_Check(self));
  DeeAtomicMutex_Acquire(&((DeeThreadObject *)self)->t_lock);
- if DEE_UNLIKELY((DeeThread_STATE_A(self)&(DeeThreadState_STARTED|
-              DeeThreadState_DETACHED)) != DeeThreadState_STARTED) {
+ if DEE_UNLIKELY((DeeThread_STATE_A(self)&(DEE_THREADSTATE_STARTED|
+              DEE_THREADSTATE_DETACHED)) != DEE_THREADSTATE_STARTED) {
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Thread %k not started or detached",
@@ -1142,8 +1142,8 @@ DEE_A_RET_EXCEPT(-1) int DeeThread_Win32PendingIO(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) {
  BOOL result,temp;
  DeeAtomicMutex_Acquire(&((DeeThreadObject *)self)->t_lock);
- if DEE_UNLIKELY((DeeThread_STATE_A(self)&(DeeThreadState_STARTED|
-              DeeThreadState_DETACHED)) != DeeThreadState_STARTED) {
+ if DEE_UNLIKELY((DeeThread_STATE_A(self)&(DEE_THREADSTATE_STARTED|
+              DEE_THREADSTATE_DETACHED)) != DEE_THREADSTATE_STARTED) {
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Thread %k not started or detached",
@@ -1159,8 +1159,8 @@ DEE_A_RET_EXCEPT_FAIL(-1,0) int DeeThread_Win32GetPriorityBoost(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) {
  BOOL result,temp;
  DeeAtomicMutex_Acquire(&((DeeThreadObject *)self)->t_lock);
- if DEE_UNLIKELY((DeeThread_STATE_A(self)&(DeeThreadState_STARTED|
-              DeeThreadState_DETACHED)) != DeeThreadState_STARTED) {
+ if DEE_UNLIKELY((DeeThread_STATE_A(self)&(DEE_THREADSTATE_STARTED|
+              DEE_THREADSTATE_DETACHED)) != DEE_THREADSTATE_STARTED) {
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Thread %k not started or detached",
@@ -1176,8 +1176,8 @@ DEE_A_RET_EXCEPT(-1) int DeeThread_Win32SetPriorityBoost(
  DEE_A_INOUT_OBJECT(DeeThreadObject) *self, DEE_A_IN int enabled) {
  BOOL temp;
  DeeAtomicMutex_Acquire(&((DeeThreadObject *)self)->t_lock);
- if DEE_UNLIKELY((DeeThread_STATE_A(self)&(DeeThreadState_STARTED|
-              DeeThreadState_DETACHED)) != DeeThreadState_STARTED) {
+ if DEE_UNLIKELY((DeeThread_STATE_A(self)&(DEE_THREADSTATE_STARTED|
+              DEE_THREADSTATE_DETACHED)) != DEE_THREADSTATE_STARTED) {
   DeeAtomicMutex_Release(&((DeeThreadObject *)self)->t_lock);
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Thread %k not started or detached",
@@ -1274,8 +1274,8 @@ void _deethread_tp_dtor(DeeThreadObject *self) {
  Dee_XDECREF(self->t_name);
  Dee_XDECREF(self->t_rt_return);
  Dee_XDECREF(self->t_rt_rand);
- if ((DeeThread_STATE(self)&(DeeThreadState_STARTED|
-  DeeThreadState_DETACHED))==DeeThreadState_STARTED) {
+ if ((DeeThread_STATE(self)&(DEE_THREADSTATE_STARTED|
+  DEE_THREADSTATE_DETACHED))==DEE_THREADSTATE_STARTED) {
 #if defined(DEE_PLATFORM_WINDOWS)
   if (!CloseHandle(self->t_handle)) SetLastError(0);
 #else
@@ -1341,15 +1341,15 @@ DeeObject *_deethread_tp_repr(DeeThreadObject *self) {
  DeeObject *result; int first_tag = 1;
  DeeObject *name = (DeeObject *)self->t_name;
  DeeStringWriter writer = DeeStringWriter_INIT();
- DeeThreadState state = (DeeThreadState)DeeAtomic8_Load(self->t_state,memory_order_seq_cst);
+ Dee_threadstate_t state = (Dee_threadstate_t)DeeAtomic8_Load(self->t_state,memory_order_seq_cst);
  if (!name) name = (DeeObject *)&_deethread_unnamed_name;
- if ((state&DeeThreadState_STARTED)!=0) {
+ if ((state&DEE_THREADSTATE_STARTED)!=0) {
   if DEE_UNLIKELY(DeeStringWriter_Writef(&writer,"<thread(%r," DEE_TYPES_IUPRINTF(
    DEE_TYPES_SIZEOF_TID_T) ") [",name,DeeThread_ID((DeeObject *)self)) != 0) goto err;
  } else {
   if DEE_UNLIKELY(DeeStringWriter_Writef(&writer,"<thread(%r) [",name) != 0) goto err;
  }
- if ((state&DeeThreadState_STARTED)!=0) {
+ if ((state&DEE_THREADSTATE_STARTED)!=0) {
   if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,"STARTED") != 0) goto err;
   first_tag = 0;
  }
@@ -1360,11 +1360,11 @@ DeeObject *_deethread_tp_repr(DeeThreadObject *self) {
   } else first_tag = 0;\
   if DEE_UNLIKELY(DeeStringWriter_WRITE_STRING(&writer,str) != 0) goto err;\
  }
- CHECK_FLAG(DeeThreadState_INTERRUPTED,"INTERRUPTED")
- CHECK_FLAG(DeeThreadState_INTERRUPT_HANDLED,"INTERRUPTED_HANDLED")
- CHECK_FLAG(DeeThreadState_DETACHED,"DETACHED")
- CHECK_FLAG(DeeThreadState_NOINTERRUPT,"NOINTERRUPT")
- CHECK_FLAG(DeeThreadState_TERMINATED,"TERMINATED")
+ CHECK_FLAG(DEE_THREADSTATE_INTERRUPTED,"INTERRUPTED")
+ CHECK_FLAG(DEE_THREADSTATE_INTERRUPT_HANDLED,"INTERRUPTED_HANDLED")
+ CHECK_FLAG(DEE_THREADSTATE_DETACHED,"DETACHED")
+ CHECK_FLAG(DEE_THREADSTATE_NOINTERRUPT,"NOINTERRUPT")
+ CHECK_FLAG(DEE_THREADSTATE_TERMINATED,"TERMINATED")
 #undef CHECK_FLAG
  if (DeeStringWriter_WRITE_STRING(&writer,"]>") == -1) goto err;
  result = DeeStringWriter_Pack(&writer);
@@ -1606,9 +1606,9 @@ static int _deethread_win32_priority_boost_set(
 
 static struct DeeMemberDef const _deethread_tp_members[] =  {
 #ifndef DEE_WITHOUT_THREADS
- DEE_MEMBERDEF_NAMED_RO_v100("state",DeeThreadObject,t_state,atomic(DeeThreadState)),
+ DEE_MEMBERDEF_NAMED_RO_v100("state",DeeThreadObject,t_state,atomic(Dee_threadstate_t)),
 #if DEE_XCONFIG_HAVE_HIDDEN_MEMBERS
- DEE_MEMBERDEF_NAMED_RO_v100("__t_state",DeeThreadObject,t_state,atomic(DeeThreadState)),
+ DEE_MEMBERDEF_NAMED_RO_v100("__t_state",DeeThreadObject,t_state,atomic(Dee_threadstate_t)),
 #ifndef DEE_WITHOUT_THREADS
  DEE_MEMBERDEF_NAMED_RO_v100("__t_lock",DeeThreadObject,t_lock,DeeAtomicMutex),
 #endif /* !DEE_WITHOUT_THREADS */
@@ -1655,13 +1655,13 @@ static struct DeeMemberDef const _deethread_tp_members[] =  {
  DEE_MEMBERDEF_END_v100
 };
 static struct DeeMemberDef const _deethreadclass_tp_members[] =  {
- DEE_MEMBERDEF_CONST_v100("STATE_INITIAL",          DeeThreadState,DeeThreadState_INITIAL),
- DEE_MEMBERDEF_CONST_v100("STATE_STARTED",          DeeThreadState,DeeThreadState_STARTED),
- DEE_MEMBERDEF_CONST_v100("STATE_INTERRUPTED",      DeeThreadState,DeeThreadState_INTERRUPTED),
- DEE_MEMBERDEF_CONST_v100("STATE_INTERRUPT_HANDLED",DeeThreadState,DeeThreadState_INTERRUPT_HANDLED),
- DEE_MEMBERDEF_CONST_v100("STATE_DETACHED",         DeeThreadState,DeeThreadState_DETACHED),
- DEE_MEMBERDEF_CONST_v100("STATE_NOINTERRUPT",      DeeThreadState,DeeThreadState_NOINTERRUPT),
- DEE_MEMBERDEF_CONST_v100("STATE_TERMINATED",       DeeThreadState,DeeThreadState_TERMINATED),
+ DEE_MEMBERDEF_CONST_v100("STATE_INITIAL",          Dee_threadstate_t,DEE_THREADSTATE_INITIAL),
+ DEE_MEMBERDEF_CONST_v100("STATE_STARTED",          Dee_threadstate_t,DEE_THREADSTATE_STARTED),
+ DEE_MEMBERDEF_CONST_v100("STATE_INTERRUPTED",      Dee_threadstate_t,DEE_THREADSTATE_INTERRUPTED),
+ DEE_MEMBERDEF_CONST_v100("STATE_INTERRUPT_HANDLED",Dee_threadstate_t,DEE_THREADSTATE_INTERRUPT_HANDLED),
+ DEE_MEMBERDEF_CONST_v100("STATE_DETACHED",         Dee_threadstate_t,DEE_THREADSTATE_DETACHED),
+ DEE_MEMBERDEF_CONST_v100("STATE_NOINTERRUPT",      Dee_threadstate_t,DEE_THREADSTATE_NOINTERRUPT),
+ DEE_MEMBERDEF_CONST_v100("STATE_TERMINATED",       Dee_threadstate_t,DEE_THREADSTATE_TERMINATED),
  DEE_MEMBERDEF_END_v100
 };
 static struct DeeMethodDef const _deethread_tp_methods[] =  {

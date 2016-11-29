@@ -32,7 +32,7 @@ DEE_DECL_BEGIN
 const MAX_F_KEYS = 64;
 
 private_keys = [];
-for (local line: file.io("_curses.h","r")) {
+for (local line: file.open("_curses.h","r")) {
   line = line.strip();
   if (line.startswith("#define CURSES_PUBLIC_KEY_")) {
     line = line[#"#define CURSES_PUBLIC_":];

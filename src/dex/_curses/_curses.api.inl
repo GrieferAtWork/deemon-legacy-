@@ -42,7 +42,7 @@ fs::chdir(fs::path::head(__FILE__));
 
 found_exports = []; // list { tuple { int id, string name, string rett, string callc, string args } }
 local in_exports = false;
-for (local line: file.io("_curses.h")) {
+for (local line: file.open("_curses.h")) {
   line = line.strip();
   if (in_exports) {
     if (line == "//@autoexport end") in_exports = false;

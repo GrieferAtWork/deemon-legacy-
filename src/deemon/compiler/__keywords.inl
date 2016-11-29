@@ -629,7 +629,7 @@ TPP_MACRO_DEF(KWD___DEEMON_DEBUG__,"__DEEMON_DEBUG__")
 fs::chdir(fs::path::head(__FILE__));
 language_features = [];
 runtime_features = [];
-for (local line: file.io("../../../include/deemon/version.h","r")) {
+for (local line: file.open("../../../include/deemon/version.h","r")) {
   line = line.strip();
   if (line.startswith("#define DEE_CONFIG_RUNTIME_HAVE_")) {
     line = line[#"#define DEE_CONFIG_RUNTIME_HAVE_":];

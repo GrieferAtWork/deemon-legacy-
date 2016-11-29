@@ -28,7 +28,9 @@
 #include <deemon/object.h>
 #include <deemon/tuple.h>
 #include <deemon/string.h>
+#ifndef GUARD_DEEMON_MP_THREAD_H
 #include <deemon/mp/thread.h>
+#endif
 #ifdef DEE_WITHOUT_THREADS
 #include <deemon/optional/raised_exception.h>
 #endif

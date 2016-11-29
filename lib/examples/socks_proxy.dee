@@ -116,7 +116,7 @@ const class Socks5ProxyClient {
 #if LOG_TO_FILE
 		local logfile_name = fs::path::join(
 			logs_folder,socket.strpeeraddr.replace(":","_")+".log");
-		this._logfile = file.io(logfile_name,"a");
+		this._logfile = file.open(logfile_name,"a");
 #endif
 		this._loglock = mutex();
 		this._threads = [thread(this._threadmain)];

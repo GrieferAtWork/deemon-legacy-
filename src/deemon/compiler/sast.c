@@ -1382,7 +1382,7 @@ static struct DeeMemberDef const _deesast_tp_class_members[] = {
 const prefix = "#define DEE_SASTKIND_";
 const max_line_length = 100;
 local line_length = 0;
-for (local name: file.io("sast.h")) {
+for (local name: file.open("sast.h")) {
   name = name.strip();
   if (name.startswith(prefix)) {
     name = name[#prefix:].partition(" ")[0];

@@ -62,16 +62,14 @@ DEE_PRIVATE_DECL_DEE_INTEGRAL_TYPES
 DEE_OBJECT_DEF(DeeThreadObject);
 
 #ifndef DEE_WITHOUT_THREADS
-typedef Dee_uint8_t DeeThreadState; enum{
- DeeThreadState_INITIAL           = 0x00,
- DeeThreadState_STARTED           = 0x01, // Thread was started
- DeeThreadState_INTERRUPTED       = 0x02, // Interrupt signal was send
- DeeThreadState_INTERRUPT_HANDLED = 0x04, // Interrupt signal was received
- DeeThreadState_DETACHED          = 0x08, // Thread was detached / joined
- DeeThreadState_NOINTERRUPT       = 0x10, // Thread may not be interrupted right now
- DeeThreadState_TERMINATED        = 0x20, // Thread has run its course
- DeeThreadState_DEBUGGING         = 0x40, // The interactive debugger is running on this thread
-};
+typedef Dee_uint16_t Dee_threadstate_t;
+#define DEE_THREADSTATE_INITIAL           0x0000
+#define DEE_THREADSTATE_STARTED           0x0001 /*< Thread was started. */
+#define DEE_THREADSTATE_INTERRUPTED       0x0002 /*< Interrupt signal was send. */
+#define DEE_THREADSTATE_INTERRUPT_HANDLED 0x0004 /*< Interrupt signal was received. */
+#define DEE_THREADSTATE_DETACHED          0x0008 /*< Thread was detached / joined. */
+#define DEE_THREADSTATE_NOINTERRUPT       0x0010 /*< Thread may not be interrupted right now. */
+#define DEE_THREADSTATE_TERMINATED        0x0020 /*< Thread has run its course. */
 #endif /* !DEE_WITHOUT_THREADS */
 
 #ifdef DEE_LIMITED_DEX
@@ -116,17 +114,17 @@ struct DeeThreadObject {
 
  // Atomic variable describing the current state of the thread
  // NOTE: Flags are never removed and kept throughout the various stages
- // Exception: DeeThreadState_NOINTERRUPT|DeeThreadState_INTERRUPT_HANDLED
- // >> Before start():                 |=  DeeThreadState_INITIAL
- // >> After start():                  |=  DeeThreadState_STARTED
- // >> After join()/detach():          |=  DeeThreadState_DETACHED
- // >> After interrupt():              |=  DeeThreadState_INTERRUPTED
- // >> After check_interrupt():        |=  DeeThreadState_INTERRUPT_HANDLED
- // >> After return-from-callback:     |=  DeeThreadState_TERMINATED
- // >> After nointerrupt_begin():      |=  DeeThreadState_NOINTERRUPT
- // >> After nointerrupt_end():        &= ~DeeThreadState_NOINTERRUPT
- // >> After Signal.Interrupt.tp_dtor: &= ~DeeThreadState_INTERRUPT_HANDLED  // NOTE: Only if the signal was thrown by 'thread.check_interrupt()'
- /*atomic*/DeeThreadState   t_state;   /*< State of this thread. */
+ // Exception: DEE_THREADSTATE_NOINTERRUPT|DEE_THREADSTATE_INTERRUPT_HANDLED
+ // >> Before start():                 |=  DEE_THREADSTATE_INITIAL
+ // >> After start():                  |=  DEE_THREADSTATE_STARTED
+ // >> After join()/detach():          |=  DEE_THREADSTATE_DETACHED
+ // >> After interrupt():              |=  DEE_THREADSTATE_INTERRUPTED
+ // >> After check_interrupt():        |=  DEE_THREADSTATE_INTERRUPT_HANDLED
+ // >> After return-from-callback:     |=  DEE_THREADSTATE_TERMINATED
+ // >> After nointerrupt_begin():      |=  DEE_THREADSTATE_NOINTERRUPT
+ // >> After nointerrupt_end():        &= ~DEE_THREADSTATE_NOINTERRUPT
+ // >> After Signal.Interrupt.tp_dtor: &= ~DEE_THREADSTATE_INTERRUPT_HANDLED  // NOTE: Only if the signal was thrown by 'thread.check_interrupt()'
+ /*atomic*/Dee_threadstate_t t_state;   /*< State of this thread. */
 
  // Member variables used at all times during the lifetime of a thread
  // >> These include the callback, name and system-dependent thread-handle
@@ -247,11 +245,11 @@ do{\
 
 #ifndef DEE_WITHOUT_THREADS
 #define DeeThread_STATE(ob)       ((DeeThreadObject *)Dee_REQUIRES_POINTER(ob))->t_state
-#define DeeThread_STATE_A(ob)     (DeeThreadState)DeeAtomic8_Load(DeeThread_STATE(ob),memory_order_acquire)
-#define DeeThread_STARTED(ob)     ((DeeThread_STATE_A(ob)&DeeThreadState_STARTED)!=0)
-#define DeeThread_DETACHED(ob)    ((DeeThread_STATE_A(ob)&DeeThreadState_DETACHED)!=0)
-#define DeeThread_TERMINATED(ob)  ((DeeThread_STATE_A(ob)&DeeThreadState_TERMINATED)!=0)
-#define DeeThread_INTERRUPTED(ob) ((DeeThread_STATE_A(ob)&DeeThreadState_INTERRUPTED)!=0)
+#define DeeThread_STATE_A(ob)     (Dee_threadstate_t)DeeAtomic16_Load(DeeThread_STATE(ob),memory_order_acquire)
+#define DeeThread_STARTED(ob)     ((DeeThread_STATE_A(ob)&DEE_THREADSTATE_STARTED)!=0)
+#define DeeThread_DETACHED(ob)    ((DeeThread_STATE_A(ob)&DEE_THREADSTATE_DETACHED)!=0)
+#define DeeThread_TERMINATED(ob)  ((DeeThread_STATE_A(ob)&DEE_THREADSTATE_TERMINATED)!=0)
+#define DeeThread_INTERRUPTED(ob) ((DeeThread_STATE_A(ob)&DEE_THREADSTATE_INTERRUPTED)!=0)
 #define DeeThread_NAME(ob)        (DeeObject *)((DeeThreadObject *)Dee_REQUIRES_POINTER(ob))->t_name
 #define DeeThread_HANDLE(ob)      ((DeeThreadObject *)Dee_REQUIRES_POINTER(ob))->t_handle
 #endif /* !DEE_WITHOUT_THREADS */
@@ -319,7 +317,7 @@ DEE_FUNC_DECL(DEE_A_RET_WUNUSED int) DeeThread_Interrupted(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
 DEE_FUNC_DECL(DEE_A_RET_WUNUSED int) DeeThread_Crashed(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
-DEE_FUNC_DECL(DEE_A_RET_WUNUSED DeeThreadState) DeeThread_State(
+DEE_FUNC_DECL(DEE_A_RET_WUNUSED Dee_threadstate_t) DeeThread_State(
  DEE_A_IN_OBJECT(DeeThreadObject) const *self) DEE_ATTRIBUTE_NONNULL((1));
 
 //////////////////////////////////////////////////////////////////////////
@@ -464,11 +462,13 @@ DEE_FUNC_DECL(void) DeeThread_NoInterruptEnd(void);
 #endif /* DEE_WITHOUT_THREADS */
 
 
+#ifdef DEE_LIMITED_API
 #ifndef DEE_WITHOUT_THREADS
-DEE_FUNC_DECL(DEE_A_RET_NOEXCEPT(-1) int) DeeThread_Initialize(void);
-DEE_FUNC_DECL(void) DeeThread_PrepareFinalize(void);
+extern DEE_A_RET_NOEXCEPT(-1) int DeeThread_Initialize(void);
+extern void DeeThread_PrepareFinalize(void);
 #endif /* !DEE_WITHOUT_THREADS */
-DEE_FUNC_DECL(void) DeeThread_Finalize(void);
+extern void DeeThread_Finalize(void);
+#endif /* DEE_LIMITED_API */
 
 
 #ifndef DEE_WITHOUT_THREADS

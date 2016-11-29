@@ -67,7 +67,7 @@ function run_cmd_output(cmd...) {
 const class dc_error: Error {};
 
 // Returns the prefix send to a client's command line
-function status() -> fs::user()+"@"+fs::machine()+":"+fs::getcwd()+"> ";
+function status() -> fs::user()+"@"+fs::host()+":"+fs::getcwd()+"> ";
 function start_server(port) {
 	local connections = [];
 	// Tries to send a message to all connected clients
@@ -135,6 +135,21 @@ function start_server(port) {
 			} else {
 				this.cwd_stack.append(fs::getcwd());
 				fs::chdir(cwd);
+			}
+			print "chdir",fs::getcwd();
+		}
+		
+		myls(path) {
+			local sockfile = this._socket.file;
+			for (local name: fs::dir(path)) {
+				local filename = path.rstrip("/")+"/"+name;
+				if (fs::isdir(filename))  print sockfile: "d ",;
+				else if (fs::isfile(filename)) print sockfile: "f ",;
+				else if (fs::islink(filename)) print sockfile: "l ",;
+				else print sockfile: "? ",;
+				print sockfile: filename.ljust(25),;
+				if (fs::islink(filename)) print sockfile: "->",fs::readlink(filename),;
+				print sockfile:;
 			}
 		}
 
@@ -264,8 +279,12 @@ function start_server(port) {
 									local cd_dir = l[#"cd ":];
 									if (!cd_dir) cd_dir = "~";
 									this.mychdir(cd_dir);
+								} else if (l == "ls") {
+									this.myls(".");
+								} else if (l.startswith("ls ")) {
+									this.myls(l[#"cd ":]);
 								} else if (l) {
-									for (o: run_cmd_output(l))
+									for (local o: run_cmd_output(l))
 										sockfile.write(o);
 								}
 							}

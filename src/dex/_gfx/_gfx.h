@@ -282,7 +282,7 @@ struct DeePixel { Dee_uint8_t r,g,b,a; };
 #ifdef __DEEMON__
 // Used for autoformat: Returns a sequence of all builtin pixel names
 #define COLLECT_PIXEL_NAMES()\
-(for (local line: file.io("_gfx.h")) ({\
+(for (local line: file.open("_gfx.h")) ({\
   local name,r,g,b,a;\
   try name,r,g,b,a = line.scanf(" # define DeePixel_%[A-Za-z0-9] ( ( struct DeePixel const * ) \"\\x%[a-fA-F0-9]\\x%[a-fA-F0-9]\\x%[a-fA-F0-9]\\x%[a-fA-F0-9]\" )")...;\
   catch (e...) continue;\
