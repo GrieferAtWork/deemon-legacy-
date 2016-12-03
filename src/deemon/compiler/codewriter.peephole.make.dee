@@ -34,7 +34,6 @@ file.io.stdout = file.io("codewriter.peephole.generated.inl","w");
 
 const indent = " ";
 local dict opcode2name,name2opcode;
-local dict opext2name,name2opext;
 
 for (local line: file.io("__opcode.inl")) {
 	local name,value;
@@ -49,13 +48,24 @@ for (local line: file.io("__opcode.inl")) {
 		continue;
 	}
 	
+	if (name.startswith("OPFLAG") || name.startswith("GUARD")) continue;
+	if (name in ["OPREG","OPARG","OPEXT"]) continue;
+	
 	try value = (int)value;
 	catch (...) {
 		try {
-			value = value.scanf(" ( Dee_uint8_t ) ( OPFLAG_ARG | %[XxA-Fa-f0-9] )")...;
-			value = int(value)|0x80;
+			local group;
+			group,value = value.scanf(" %[A-Za-z0-9_] ( %[XxA-Fa-f0-9] )")...;
+			switch (group) {
+				case "OPREG": value = ((int)value); break;
+				case "OPARG": value = ((int)value)|0x80; break;
+				case "OPEXT": value = ((int)value); break;
+				default:
+					print file.io.stderr: "Unknown opcode id group:",repr group;
+					break;
+			}
 		} catch (...) {
-			print repr name,repr value;
+			print file.io.stderr: repr name,repr value;
 			if (value in name2opcode) continue;
 			throw;
 		}
@@ -64,9 +74,8 @@ for (local line: file.io("__opcode.inl")) {
 		opcode2name[value] = name;
 		name2opcode[name] = value;
 	} else if (name.startswith("OPEXT_")) {
-		opext2name[value] = name;
-		name2opext[name] = value;
-	} else if (!name.startswith("OPFLAG") && !name.startswith("GUARD")) {
+		continue;
+	} else {
 		print file.io.stderr: "Unknown opcode group:",repr name,"=",repr value;
 	}
 }

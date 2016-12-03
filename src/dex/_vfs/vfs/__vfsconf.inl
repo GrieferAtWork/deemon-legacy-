@@ -36,8 +36,8 @@
 #define DEE_VFSCONFIG_HAVEFILE_DEV_STDOUT                 DEE_VFSCONFIG_HAVEFILE_DEV          /*< fs::exists("/dev/stdout"). */
 #define DEE_VFSCONFIG_HAVEFILE_DEV_URANDOM                DEE_VFSCONFIG_HAVEFILE_DEV          /*< fs::exists("/dev/urandom"). */
 #define DEE_VFSCONFIG_HAVEFILE_DEV_ZERO                   DEE_VFSCONFIG_HAVEFILE_DEV          /*< fs::exists("/dev/zero"). */
-#define DEE_VFSCONFIG_HAVEFILE_MOUNT                      1                                   /*< fs::exists("/mount"). */
-#define DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES               DEE_VFSCONFIG_HAVEFILE_MOUNT        /*< fs::dir("/mount"). */
+#define DEE_VFSCONFIG_HAVEFILE_MNT                        1                                   /*< fs::exists("/mnt"). */
+#define DEE_VFSCONFIG_HAVE_MNT_SCANDRIVES                 DEE_VFSCONFIG_HAVEFILE_MNT          /*< fs::dir("/mnt"). */
 #define DEE_VFSCONFIG_HAVEFILE_HOME                       1                                   /*< fs::exists("/home"). */
 #define DEE_VFSCONFIG_HAVEFILE_NET                        1                                   /*< fs::exists("/net"). */
 #define DEE_VFSCONFIG_HAVE_NET_SCANSERVER                 DEE_VFSCONFIG_HAVEFILE_NET          /*< fs::dir("/dev"). */

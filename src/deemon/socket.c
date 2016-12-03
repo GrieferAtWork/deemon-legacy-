@@ -1810,7 +1810,7 @@ static int _DeeSysSocket_Configure(DEE_A_INOUT DeeSocketObject *self) {
 #if defined(__BEOS__) && defined(SO_NONBLOCK)
  { long no = 0; setsockopt(self->s_socket,SOL_SOCKET,SO_NONBLOCK,&no,sizeof(no)); }
 #elif defined(O_NONBLOCK)
- { fcntl(self->s_socket,F_SETFL,fcntl(sock,F_GETFL) & ~(O_NONBLOCK)); }
+ { fcntl(self->s_socket,F_SETFL,fcntl(self->s_socket,F_GETFL) & ~(O_NONBLOCK)); }
 #elif defined(DEE_PLATFORM_WINDOWS)
  { unsigned long no = 0; ioctlsocket(self->s_socket,FIONBIO,&no); }
 #elif defined(__OS2__)

@@ -496,6 +496,15 @@
 #endif
 #endif
 
+#ifndef DEE_HAVE_LINK
+#if (DEE_ENVIRONMENT_HAVE_INCLUDE_UNISTD_H) \
+ || (defined(DEE_PLATFORM_UNIX))
+# define DEE_HAVE_LINK 1
+#else
+# define DEE_HAVE_LINK 0
+#endif
+#endif
+
 #ifndef DEE_HAVE_CLOSE
 #if defined(DEE_PLATFORM_UNIX)\
  || defined(_MSC_VER)

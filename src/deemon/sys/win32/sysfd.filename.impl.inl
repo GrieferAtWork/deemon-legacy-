@@ -20,6 +20,7 @@
  */
 
 #ifdef __INTELLISENSE__
+#define DEE_LIMITED_API 1
 #include <deemon/sys/win32/sysfd.c.inl>
 #endif
 
@@ -27,6 +28,7 @@
 #include <deemon/optional/atomic_mutex.h>
 #include <deemon/optional/atomic_once.h>
 #include <deemon/runtime/extern.h>
+#include <deemon/string.h>
 
 #include DEE_INCLUDE_MEMORY_API_DISABLE()
 DEE_COMPILER_MSVC_WARNING_PUSH(4201 4820 4255 4668)
@@ -35,6 +37,10 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API_ENABLE()
 
 DEE_DECL_BEGIN
+
+#ifndef SIZEOF_DWORD
+#define SIZEOF_DWORD 4
+#endif
 
 #ifndef DEE_PRIVATE_WIN32_GETFINALPATHNAMEBYHANDLEA_PROTOTYPES_DEFINED
 #define DEE_PRIVATE_WIN32_GETFINALPATHNAMEBYHANDLEA_PROTOTYPES_DEFINED 1
@@ -46,14 +52,27 @@ static LPGETFINALPATHNAMEBYHANDLEW pGetFinalPathNameByHandleW = NULL;
 static LPGETFINALPATHNAMEBYHANDLEA pGetFinalPathNameByHandleA = NULL;
 static LPGETMAPPEDFILENAMEA pGetMappedFileNameA = NULL;
 static LPGETMAPPEDFILENAMEW pGetMappedFileNameW = NULL;
-static char const *sGetFinalPathNameByHandleA = "GetFinalPathNameByHandleA";;
-static char const *sGetFinalPathNameByHandleW = "GetFinalPathNameByHandleW";;
-static char const *sGetMappedFileNameA        = "GetMappedFileNameA";
-static char const *sGetMappedFileNameW        = "GetMappedFileNameW";
-static char const *sK32GetMappedFileNameA     = "K32GetMappedFileNameA";
-static char const *sK32GetMappedFileNameW     = "K32GetMappedFileNameW";
+static char const *const sGetFinalPathNameByHandleA = "GetFinalPathNameByHandleA";;
+static char const *const sGetFinalPathNameByHandleW = "GetFinalPathNameByHandleW";;
+static char const *const sGetMappedFileNameA        = "GetMappedFileNameA";
+static char const *const sGetMappedFileNameW        = "GetMappedFileNameW";
+static char const *const sK32GetMappedFileNameA     = "K32GetMappedFileNameA";
+static char const *const sK32GetMappedFileNameW     = "K32GetMappedFileNameW";
 static Dee_WideChar const ws_KERNAL32[] = {'K','E','R','N','E','L','3','2',0};
 static Dee_WideChar const ws_Psapi_dll[] = {'P','s','a','p','i','.','d','l','l',0};
+
+typedef BOOL (WINAPI *LPGETFILEINFORMATIONBYHANDLEEX)(
+ HANDLE hFile, /*FILE_INFO_BY_HANDLE_CLASS*/int FileInformationClass,
+ LPVOID lpFileInformation, DWORD dwBufferSize);
+static LPGETFILEINFORMATIONBYHANDLEEX pGetFileInformationByHandleEx = NULL;
+static char const *const sGetFileInformationByHandleEx = "GetFileInformationByHandleEx";
+static DeeAtomicOnceFlag pGetFileInformationByHandleEx_loaded = DeeAtomicOnceFlag_INIT();
+#define pGetFileInformationByHandleEx_load() \
+ DeeAtomicOnceFlag_RUN(&pGetFileInformationByHandleEx_loaded,{\
+  *(FARPROC *)&pGetFileInformationByHandleEx = GetProcAddress(\
+   GetModuleHandleW(ws_KERNAL32),sGetFileInformationByHandleEx);\
+ })
+
 #endif
 
 #ifdef WIDE
@@ -82,6 +101,57 @@ DeeObject *DeeWin32Sys_Utf8GetHandleFilename
 (HANDLE hFile) {
  HANDLE hFileMap,hCurrProcess; DWORD error;
  DeeObject *result; void *pMem; DEE_CHAR *name;
+
+ // TODO: Use this: http://stackoverflow.com/questions/65170/how-to-get-name-associated-with-open-handle/5286888#5286888
+
+#if 0
+ pGetFileInformationByHandleEx_load();
+ if (pGetFileInformationByHandleEx) {
+  typedef struct _DEE_WIN32_FILE_NAME_INFO {
+   DWORD FileNameLength;
+   WCHAR FileName[1];
+  } DEE_WIN32_FILE_NAME_INFO,*PDEE_WIN32_FILE_NAME_INFO;
+  if DEE_UNLIKELY((result = DeeWideString_NewSized(
+   DEE_XCONFIG_FSBUFSIZE_WIN32PGETFILEINFORMATIONBYHANDLEEX)) == NULL) return NULL;
+#define GET_FILENAMEINFO_DATA(wstr_ob)\
+ ((DEE_WIN32_FILE_NAME_INFO *)(((Dee_uintptr_t)DeeWideString_STR(\
+   wstr_ob))-Dee_OFFSETOF(DEE_WIN32_FILE_NAME_INFO,FileName)))
+  while DEE_UNLIKELY(!(*pGetFileInformationByHandleEx)(hFile,/*FileNameInfo*/2,
+   (LPVOID)GET_FILENAMEINFO_DATA(result),(DWORD)(
+   Dee_OFFSETOF(DEE_WIN32_FILE_NAME_INFO,FileName)+
+   DeeWideString_SIZE(result)*sizeof(Dee_WideChar)))) {
+   error = GetLastError();
+   if (error == ERROR_BUFFER_OVERFLOW
+    || error == ERROR_INSUFFICIENT_BUFFER
+    || error == ERROR_MORE_DATA) {
+    if DEE_UNLIKELY(DeeWideString_Resize(&result,DeeWideString_SIZE(result)*2) != 0) goto err_r;
+   } else {
+    DeeError_SetStringf(&DeeErrorType_SystemError,
+                        "GetFileInformationByHandleEx(%p,FileNameInfo,%p,%lu) : %K",
+                        hFile,(LPVOID)GET_FILENAMEINFO_DATA(result),Dee_OFFSETOF(DEE_WIN32_FILE_NAME_INFO,FileName)+
+                        (DWORD)(Dee_OFFSETOF(DEE_WIN32_FILE_NAME_INFO,FileName)+DeeWideString_SIZE(result)*sizeof(Dee_WideChar)),
+                        DeeSystemError_Win32ToString(error));
+    goto err_r;
+   }
+  }                           
+#if SIZEOF_DWORD != DEE_TYPES_SIZEOF_SIZE_T
+  ((DeeWideStringObject *)result)->s_len = GET_FILENAMEINFO_DATA(result)->FileNameLength;
+#endif
+#ifndef WIDE
+  {
+   DeeObject *newresult;
+   newresult = DeeUtf8String_FromWideStringWithLength(DeeWideString_SIZE(result),
+                                                      DeeWideString_STR(result));
+   Dee_DECREF(result);
+   return newresult;
+  }
+#else
+  return result;
+#endif
+#undef GET_FILENAMEINFO_DATA
+ }
+#endif
+
  // NOTE: We prefer the GetFinalPathNameByHandle functions,
  //       because those work for empty files...
  DEE_ATOMIC_ONCE({
@@ -107,6 +177,7 @@ gfpbh_again:
                        "%s(%p,...,%Iu,VOLUME_NAME_DOS) : %K",sGetFinalPathNameByHandle,hFile,
                        DeeString_F(SIZE)(result),
                        DeeSystemError_Win32ToString(error));
+/*err_r:*/
    Dee_DECREF(result);
    return NULL;
   }
@@ -179,8 +250,8 @@ mapfilename_again:
                                (DWORD)(DeeString_F(SIZE)(result)+1));
  if DEE_UNLIKELY(error == 0) {
   error = GetLastError();
-  Dee_DECREF(result);
   if (error == 0) {
+   Dee_DECREF(result);
 #ifdef WIDE
    Dee_INCREF(result = Dee_EmptyWideString);
 #else
@@ -197,6 +268,7 @@ err_r_unmap_vof: Dee_DECREF(result); goto err_unmap_vof;
    }
    goto mapfilename_again;
   }
+  Dee_DECREF(result);
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "%s(%p,%p,...,%lu) : %K",
                       sGetMappedFileName,pMem,(DWORD)(DeeString_F(SIZE)(result)+1),

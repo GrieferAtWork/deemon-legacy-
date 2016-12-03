@@ -28,6 +28,7 @@
 #include "__vfsconf.inl"
 #if DEE_VFSCONFIG_HAVEFILE_PROC
 #include <deemon/sys/win32/sysfd.h>
+#include <deemon/sys/win32/w32_handle_name.h>
 #include <deemon/unicode/char_traits.inl>
 #include "vfs_core.h"
 #include "vfs_proc_node.h"
@@ -771,20 +772,35 @@ DeeWin32_GetSystemHandleLink(WIN32_SYSTEM_HANDLE const *h) {
  owns_handle = (h->ProcessId != GetCurrentProcessId());
  if (owns_handle) handle = DeeWin32_SystemHandle_Open(h);
  else handle = (HANDLE)(Dee_uintptr_t)h->Handle;
- switch (type_id) {
+ result = DeeWin32_WideGetDosPathFromHandle(handle);
+ if (!result && DeeError_Catch(&DeeErrorType_SystemError)) switch (type_id) {
   // TODO: Proper, type-specific link names
   // e.g.: An actual file link if it's a FILE-handle
-  case DEE_WIN32_HANDLETYPE_TYPE_THREAD:
-   result = DeeString_Newf("[THREAD %#.4I16x]",h->Handle);
-   break;
-  case DEE_WIN32_HANDLETYPE_TYPE_DIRECTORY:
-  case DEE_WIN32_HANDLETYPE_TYPE_FILE:
-   result = DeeWin32Sys_WideGetHandleFilename(handle);
-   if (!result && DeeError_Catch(&DeeErrorType_SystemError))
-    result = DeeString_Newf("[FILE %#.4I16x]",h->Handle);
-   break;
+  case DEE_WIN32_HANDLETYPE_TYPE_TYPE          : result = DeeString_Newf("[TYPE %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_SYMBOLIC_LINK : result = DeeString_Newf("[SYMBOLIC_LINK %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_DIRECTORY     : result = DeeString_Newf("[DIRECTORY %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_TOKEN         : result = DeeString_Newf("[TOKEN %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_PROCESS       : result = DeeString_Newf("[PROCESS %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_THREAD        : result = DeeString_Newf("[THREAD %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_EVENT         : result = DeeString_Newf("[EVENT %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_EVENT_PAIR    : result = DeeString_Newf("[EVENT_PAIR %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_MUTANT        : result = DeeString_Newf("[MUTANT %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_SEMAPHORE     : result = DeeString_Newf("[SEMAPHORE %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_TIMER         : result = DeeString_Newf("[TIMER %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_PROFILE       : result = DeeString_Newf("[PROFILE %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_WINDOW_STATION: result = DeeString_Newf("[WINDOW_STATION %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_DESKTOP       : result = DeeString_Newf("[DESKTOP %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_SECTION       : result = DeeString_Newf("[SECTION %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_KEY           : result = DeeString_Newf("[KEY %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_PORT          : result = DeeString_Newf("[PORT %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_WAITABLE_PORT : result = DeeString_Newf("[WAITABLE_PORT %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_CONTROLLER    : result = DeeString_Newf("[CONTROLLER %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_DEVICE        : result = DeeString_Newf("[DEVICE %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_DRIVER        : result = DeeString_Newf("[DRIVER %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_IO_COMPLETION : result = DeeString_Newf("[IO_COMPLETION %#.4I16x]",h->Handle); break;
+  case DEE_WIN32_HANDLETYPE_TYPE_FILE          : result = DeeString_Newf("[FILE %#.4I16x]",h->Handle); break;
   default:
-   result = DeeString_Newf("[??" "?(%#.4I16x)]",h->Handle);
+   result = DeeString_Newf("[??" "? %#.4I16x]",h->Handle);
    break;
  }
  if (owns_handle) CloseHandle(handle);

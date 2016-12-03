@@ -158,9 +158,9 @@ static struct DeeVFSVirtualDirEntry _deevfs_root_nodes[] = {
 #if DEE_VFSCONFIG_HAVEFILE_HOME
  {"home", (struct DeeVFSNode *)&_DeeVFS_Home},
 #endif /* DEE_VFSCONFIG_HAVEFILE_HOME */
-#if DEE_VFSCONFIG_HAVEFILE_MOUNT
- {"mount",DeeVFS_Mount},
-#endif /* DEE_VFSCONFIG_HAVEFILE_MOUNT */
+#if DEE_VFSCONFIG_HAVEFILE_MNT
+ {"mnt",DeeVFS_Mnt},
+#endif /* DEE_VFSCONFIG_HAVEFILE_MNT */
 #if DEE_VFSCONFIG_HAVEFILE_NET
  {"net",  (struct DeeVFSNode *)&_DeeVFS_Net},
 #endif /* DEE_VFSCONFIG_HAVEFILE_NET */

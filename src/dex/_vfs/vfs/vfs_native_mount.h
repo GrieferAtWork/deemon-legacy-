@@ -31,21 +31,21 @@ DEE_DECL_BEGIN
 
 //////////////////////////////////////////////////////////////////////////
 // Native VFS node: A filesystem node that points back into the 
-#if DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES
+#if DEE_VFSCONFIG_HAVE_MNT_SCANDRIVES
 struct DeeVFSNativeMountView {
  struct DeeVFSView          vmv_view;      /*< Underlying view. */
  char                      *vmv_drives;    /*< [1..1] Drive strings. */
  char                      *vmv_drivespos; /*< [1..1] Next drive string. */
  struct DeeAtomicMutex      vmv_lock;      /*< Yield lock. */
 };
-#endif /* DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
+#endif /* DEE_VFSCONFIG_HAVE_MNT_SCANDRIVES */
 
 extern struct DeeVFSNodeType const DeeVFSNativeMountNode_Type;
 
-#if DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES
+#if DEE_VFSCONFIG_HAVE_MNT_SCANDRIVES
 extern DEE_A_RET_EXCEPT(NULL) char *DeeWin32Sys_GetDriveStrings(void);
 #define DeeWin32Sys_FreeDriveStrings(drives) free_nn(drives)
-#endif /* DEE_VFSCONFIG_HAVE_MOUNT_SCANDRIVES */
+#endif /* DEE_VFSCONFIG_HAVE_MNT_SCANDRIVES */
 
 DEE_DECL_END
 

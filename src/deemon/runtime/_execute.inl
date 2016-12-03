@@ -596,7 +596,6 @@ EXTERN_END;
    RT_DEBUG_CHECK_STACK(1);\
 EXTERN_BEGIN;\
    rt_temp = func(RT_TOP);\
-EXTERN_END;\
    goto unary_end
 #else
 #define MAKE_UNARY_OP(func)\
@@ -615,8 +614,8 @@ EXTERN_END;\
    RT_DEBUG_CHECK_STACK(1);
 EXTERN_BEGIN;
    rt_temp = DeeObject_Str(RT_TOP);
-EXTERN_END;
 unary_end:
+EXTERN_END;
    if DEE_UNLIKELY(!rt_temp) RT_HANDLE_EXCEPTION;
    Dee_DECREF(RT_TOP);
    Dee_INHERIT_REF(RT_TOP,rt_temp);
@@ -722,7 +721,6 @@ unary_end:
    RT_DEBUG_CHECK_STACK(2);\
 EXTERN_BEGIN;\
    rt_temp = func(RT_SECOND,RT_TOP);\
-EXTERN_END;\
    goto binary_end
 #else
 #define MAKE_BIARY_OP(func)\
@@ -741,8 +739,8 @@ EXTERN_END;\
    RT_DEBUG_CHECK_STACK(2);
 EXTERN_BEGIN;
    rt_temp = DeeObject_Add(RT_SECOND,RT_TOP);
-EXTERN_END;
 binary_end:
+EXTERN_END;
    if DEE_UNLIKELY(!rt_temp) RT_HANDLE_EXCEPTION;
    Dee_DECREF(RT_TOP); RT_POP_1();
    Dee_DECREF(RT_TOP); Dee_INHERIT_REF(RT_TOP,rt_temp);
@@ -1307,19 +1305,6 @@ EXTERN_END;
   }
 #endif
 
-#ifdef OP_STORE_LOC_POP
-  TARGET(OP_STORE_LOC_POP) {
-   RT_DEBUG_CHECK_STACK(1);
-   rt_arg = RT_READ_ARG();
-   RT_DEBUG_CHECK_VALID_LOCAL(rt_arg);
-   rt_temp = frame.f_localv[rt_arg];
-   Dee_INHERIT_REF(frame.f_localv[rt_arg],RT_TOP);
-   Dee_XDECREF(rt_temp);
-   RT_POP_1();
-   DISPATCH();
-  }
-#endif
-
 #ifdef OP_LOAD_ARG
   TARGET(OP_LOAD_ARG) {
    // Read-only access (no need to lock)
@@ -1346,23 +1331,6 @@ EXTERN_BEGIN;
    frame.f_constv[rt_arg] = RT_TOP;
    DeeAtomicMutex_Release(&frame.f_code->co_consts_lock);
 EXTERN_END;
-   Dee_DECREF(rt_temp); // Always assigned
-   DISPATCH();
-  }
-#endif
-
-#ifdef OP_STORE_CST_POP
-  TARGET(OP_STORE_CST_POP) {
-   RT_DEBUG_CHECK_STACK(1);
-   rt_arg = RT_READ_ARG();
-   RT_DEBUG_CHECK_VALID_CONST(rt_arg);
-EXTERN_BEGIN;
-   DeeAtomicMutex_Acquire(&frame.f_code->co_consts_lock);
-   rt_temp = frame.f_constv[rt_arg];
-   frame.f_constv[rt_arg] = RT_TOP; //< inherit reference...
-   DeeAtomicMutex_Release(&frame.f_code->co_consts_lock);
-EXTERN_END;
-   RT_POP_1();
    Dee_DECREF(rt_temp); // Always assigned
    DISPATCH();
   }
@@ -1488,34 +1456,6 @@ EXTERN_END;
   }
 #endif
 
-#ifdef OP_JUMP_IF_TT
-  TARGET(OP_JUMP_IF_TT) {
-   RT_DEBUG_CHECK_STACK(1);
-EXTERN_BEGIN;
-   rt_itemp = DeeObject_Bool(RT_TOP);
-EXTERN_END;
-   if DEE_UNLIKELY(rt_itemp < 0) {
-skip_arg_err: RT_SKIP_ARG(); RT_HANDLE_EXCEPTION;
-   }
-   if (rt_itemp) RT_CODE_ADDR() += (RT_PEEK_SARG()-1);
-   else RT_SKIP_ARG();
-   DISPATCH();
-  }
-#endif
-
-#ifdef OP_JUMP_IF_FF
-  TARGET(OP_JUMP_IF_FF) {
-   RT_DEBUG_CHECK_STACK(1);
-EXTERN_BEGIN;
-   rt_itemp = DeeObject_Bool(RT_TOP);
-EXTERN_END;
-   if DEE_UNLIKELY(rt_itemp < 0) goto skip_arg_err;
-   if (!rt_itemp) RT_CODE_ADDR() += (RT_PEEK_SARG()-1);
-   else RT_SKIP_ARG();
-   DISPATCH();
-  }
-#endif
-
 #ifdef OP_JUMP_IF_TT_POP
   TARGET(OP_JUMP_IF_TT_POP) {
    RT_DEBUG_CHECK_STACK(1);
@@ -1523,9 +1463,12 @@ EXTERN_BEGIN;
    rt_itemp = DeeObject_Bool(RT_TOP);
 EXTERN_END;
    Dee_DECREF(RT_TOP); RT_POP_1();
-   if DEE_UNLIKELY(rt_itemp < 0) goto skip_arg_err;
-   if (rt_itemp) RT_CODE_ADDR() += (RT_PEEK_SARG()-1);
-   else RT_SKIP_ARG();
+   if (rt_itemp) {
+    if DEE_UNLIKELY(rt_itemp < 0) {
+skip_arg_err: RT_SKIP_ARG(); RT_HANDLE_EXCEPTION;
+    }
+    RT_CODE_ADDR() += (RT_PEEK_SARG()-1);
+   } else RT_SKIP_ARG();
    DISPATCH();
   }
 #endif
@@ -1537,9 +1480,11 @@ EXTERN_BEGIN;
    rt_itemp = DeeObject_Bool(RT_TOP);
 EXTERN_END;
    Dee_DECREF(RT_TOP); RT_POP_1();
-   if DEE_UNLIKELY(rt_itemp < 0) goto skip_arg_err;
    if (!rt_itemp) RT_CODE_ADDR() += (RT_PEEK_SARG()-1);
-   else RT_SKIP_ARG();
+   else {
+    if DEE_UNLIKELY(rt_itemp < 0) goto skip_arg_err;
+    RT_SKIP_ARG();
+   }
    DISPATCH();
   }
 #endif
@@ -2770,18 +2715,6 @@ EXTERN_END;
      break;
 #endif
 
-#ifdef OP_STORE_LOC_POP
-    case OP_STORE_LOC_POP:
-     RT_DEBUG_CHECK_STACK(1);
-     rt_arg32 = RT_READ_ARG32();
-     RT_DEBUG_CHECK_VALID_LOCAL32(rt_arg32);
-     rt_temp = frame.f_localv[rt_arg32];
-     Dee_INHERIT_REF(frame.f_localv[rt_arg32],RT_TOP);
-     Dee_XDECREF(rt_temp);
-     RT_POP_1();
-     break;
-#endif
-
 #ifdef OP_STORE_CST
     case OP_STORE_CST:
      RT_DEBUG_CHECK_STACK(1);
@@ -2790,18 +2723,6 @@ EXTERN_END;
      rt_temp = frame.f_constv[rt_arg32];
      Dee_INCREF(frame.f_constv[rt_arg32] = RT_TOP);
      Dee_XDECREF(rt_temp);
-     break;
-#endif
-
-#ifdef OP_STORE_CST_POP
-    case OP_STORE_CST_POP:
-     RT_DEBUG_CHECK_STACK(1);
-     rt_arg32 = RT_READ_ARG32();
-     RT_DEBUG_CHECK_VALID_CONST32(rt_arg32);
-     rt_temp = frame.f_constv[rt_arg32];
-     Dee_INHERIT_REF(frame.f_constv[rt_arg32],RT_TOP);
-     Dee_XDECREF(rt_temp);
-     RT_POP_1();
      break;
 #endif
 
@@ -3008,32 +2929,6 @@ EXTERN_END;
      break;
 #endif
 
-#ifdef OP_JUMP_IF_TT
-    case OP_JUMP_IF_TT:
-     RT_DEBUG_CHECK_STACK(1);
-EXTERN_BEGIN;
-     rt_itemp = DeeObject_Bool(RT_TOP);
-EXTERN_END;
-     if DEE_UNLIKELY(rt_itemp < 0) {
-skip_arg32_err: RT_SKIP_ARG32(); RT_HANDLE_EXCEPTION;
-     }
-     if (rt_itemp) RT_CODE_ADDR() += (RT_PEEK_SARG32()-4);
-     else RT_SKIP_ARG32();
-     break;
-#endif
-
-#ifdef OP_JUMP_IF_FF
-    case OP_JUMP_IF_FF:
-     RT_DEBUG_CHECK_STACK(1);
-EXTERN_BEGIN;
-     rt_itemp = DeeObject_Bool(RT_TOP);
-EXTERN_END;
-     if DEE_UNLIKELY(rt_itemp < 0) goto skip_arg32_err;
-     if (!rt_itemp) RT_CODE_ADDR() += (RT_PEEK_SARG32()-4);
-     else RT_SKIP_ARG32();
-     break;
-#endif
-
 #ifdef OP_JUMP_IF_TT_POP
     case OP_JUMP_IF_TT_POP:
      RT_DEBUG_CHECK_STACK(1);
@@ -3041,9 +2936,12 @@ EXTERN_BEGIN;
      rt_itemp = DeeObject_Bool(RT_TOP);
 EXTERN_END;
      Dee_DECREF(RT_TOP); RT_POP_1();
-     if DEE_UNLIKELY(rt_itemp < 0) goto skip_arg32_err;
-     if (rt_itemp) RT_CODE_ADDR() += (RT_PEEK_SARG32()-4);
-     else RT_SKIP_ARG32();
+     if (rt_itemp) {
+      if DEE_UNLIKELY(rt_itemp < 0) {
+skip_arg32_err: RT_SKIP_ARG32(); RT_HANDLE_EXCEPTION;
+      }
+      RT_CODE_ADDR() += (RT_PEEK_SARG32()-4);
+     } else RT_SKIP_ARG32();
      break;
 #endif
 
@@ -3054,9 +2952,11 @@ EXTERN_BEGIN;
      rt_itemp = DeeObject_Bool(RT_TOP);
 EXTERN_END;
      Dee_DECREF(RT_TOP); RT_POP_1();
-     if DEE_UNLIKELY(rt_itemp < 0) goto skip_arg32_err;
      if (!rt_itemp) RT_CODE_ADDR() += (RT_PEEK_SARG32()-4);
-     else RT_SKIP_ARG32();
+     else {
+      if DEE_UNLIKELY(rt_itemp < 0) goto skip_arg32_err;
+      RT_SKIP_ARG32();
+     }
      break;
 #endif
 

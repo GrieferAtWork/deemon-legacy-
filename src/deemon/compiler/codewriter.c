@@ -1295,12 +1295,12 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVarPop(
      ) == (Dee_size_t)-1) return -1;
     var->lv_flags |= DEE_LOCALVAR_FLAG_INITIALIZED;
    }
-   if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(self,OP_STORE_LOC_POP,var->lv_loc_id) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_DoStoreLocPopID(self,var->lv_loc_id) != 0) return -1;
    break;
 
   case DEE_LOCALVAR_KIND_RETVAL: // Return value variable
    DEE_ASSERTF(DeeLocalVar_IS_COMPILERINIT(var),"Return value variable not initialized");
-   if DEE_UNLIKELY(DeeCodeWriter_WriteOp(self,OP_STORE_RET_POP) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_DoStoreRetPop(self) != 0) return -1;
    break;
 
   case DEE_LOCALVAR_KIND_STATIC: // Static variable
@@ -1310,7 +1310,7 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVarPop(
      TPPLexer_TokenIDStr(DeeLexer_LEXER(lexer),var->lv_name) : NULL)) == (Dee_size_t)-1) return -1;
     var->lv_flags |= DEE_LOCALVAR_FLAG_INITIALIZED;
    }
-   if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(self,OP_STORE_CST_POP,var->lv_loc_id) != 0) return -1;
+   if DEE_UNLIKELY(DeeCodeWriter_DoStoreCstPopID(self,var->lv_loc_id) != 0) return -1;
    break;
 
   case DEE_LOCALVAR_KIND_STACK: // Stack variable

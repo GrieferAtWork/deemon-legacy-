@@ -451,20 +451,37 @@ extern DEE_A_RET_EXCEPT(-1) Dee_size_t DeeCodeWriter_AllocOrGetReference(DEE_A_I
 #define DeeCodeWriter_GetRefName(ob,id)        DeeCodeWriterDebugVarNames_GetVarname(&(ob)->cw_debug.cwd_refs,id)
 #define DeeCodeWriter_GetArgName(ob,id)        DeeCodeWriterDebugVarNames_GetVarname(&(ob)->cw_debug.cwd_args,id)
 
+#ifdef OP_STORE_RET_POP
+#define DeeCodeWriter_DoStoreRetPop(ob)      DeeCodeWriter_WriteOp(ob,OP_STORE_RET_POP)
+#else
+#define DeeCodeWriter_DoStoreRetPop(ob)      ((DeeCodeWriter_WriteOp(ob,OP_STORE_RET) == 0 && DeeCodeWriter_WriteOp(ob,OP_POP) == 0) ? 0 : -1)
+#endif
+#ifdef OP_STORE_LOC_POP
+#define DeeCodeWriter_DoStoreLocPopID(ob,id) DeeCodeWriter_WriteOpWithSizeArg(ob,OP_STORE_LOC_POP,id)
+#else
+#define DeeCodeWriter_DoStoreLocPopID(ob,id) ((DeeCodeWriter_WriteOpWithSizeArg(ob,OP_STORE_LOC,id) == 0 && DeeCodeWriter_WriteOp(ob,OP_POP) == 0) ? 0 : -1)
+#endif
+#ifdef OP_STORE_CST_POP
+#define DeeCodeWriter_DoStoreCstPopID(ob,id) DeeCodeWriter_WriteOpWithSizeArg(ob,OP_STORE_CST_POP,id)
+#else
+#define DeeCodeWriter_DoStoreCstPopID(ob,id) ((DeeCodeWriter_WriteOpWithSizeArg(ob,OP_STORE_CST,id) == 0 && DeeCodeWriter_WriteOp(ob,OP_POP) == 0) ? 0 : -1)
+#endif
+
 // Generate variable class operations (NOTE: operations illegal in certain classes are asserted)
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DelVar(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN Dee_uint32_t compiler_flags) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_LoadVar(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN_OPT struct DeeLexerObject const *lexer) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVar(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN_OPT struct DeeLexerObject const *lexer) DEE_ATTRIBUTE_NONNULL((1,2));
 extern DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_StoreVarPop(DEE_A_INOUT struct DeeCodeWriter *self, DEE_A_IN struct DeeLocalVarObject *var, DEE_A_IN_OPT struct DeeLexerObject const *lexer) DEE_ATTRIBUTE_NONNULL((1,2));
-#define DeeCodeWriter_LoadThis(ob)         (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOp(ob,OP_LOAD_THIS))
-#define DeeCodeWriter_LoadRet(ob)          (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOp(ob,OP_LOAD_RET))
-#define DeeCodeWriter_LoadArgID(ob,id)     (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOpWithSizeArg(ob,OP_LOAD_ARG,id))
-#define DeeCodeWriter_LoadRefID(ob,id)     (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOpWithSizeArg(ob,OP_LOAD_REF,id))
-#define DeeCodeWriter_LoadLocID(ob,id)     (DeeCodeWriter_INCSTACK(ob),DeeCodeWriter_WriteOpWithSizeArg(ob,OP_LOAD_LOC,id))
-#define DeeCodeWriter_StoreRet(ob)          DeeCodeWriter_WriteOp(ob,OP_STORE_RET)
-#define DeeCodeWriter_StoreLocID(ob,id)     DeeCodeWriter_WriteOpWithSizeArg(ob,OP_STORE_LOC,id)
-#define DeeCodeWriter_StoreRetPop(ob)      (DeeCodeWriter_DECSTACK(ob),DeeCodeWriter_WriteOp(ob,OP_STORE_RET_POP))
-#define DeeCodeWriter_StoreLocPopID(ob,id) (DeeCodeWriter_DECSTACK(ob),DeeCodeWriter_WriteOpWithSizeArg(ob,OP_STORE_LOC_POP,id))
+#define DeeCodeWriter_LoadThis(self)         (DeeCodeWriter_INCSTACK(self),DeeCodeWriter_WriteOp(self,OP_LOAD_THIS))
+#define DeeCodeWriter_LoadRet(self)          (DeeCodeWriter_INCSTACK(self),DeeCodeWriter_WriteOp(self,OP_LOAD_RET))
+#define DeeCodeWriter_LoadArgID(self,id)     (DeeCodeWriter_INCSTACK(self),DeeCodeWriter_WriteOpWithSizeArg(self,OP_LOAD_ARG,id))
+#define DeeCodeWriter_LoadRefID(self,id)     (DeeCodeWriter_INCSTACK(self),DeeCodeWriter_WriteOpWithSizeArg(self,OP_LOAD_REF,id))
+#define DeeCodeWriter_LoadLocID(self,id)     (DeeCodeWriter_INCSTACK(self),DeeCodeWriter_WriteOpWithSizeArg(self,OP_LOAD_LOC,id))
+#define DeeCodeWriter_StoreRet(self)          DeeCodeWriter_WriteOp(self,OP_STORE_RET)
+#define DeeCodeWriter_StoreLocID(self,id)     DeeCodeWriter_WriteOpWithSizeArg(self,OP_STORE_LOC,id)
+#define DeeCodeWriter_StoreRetPop(self)      (DeeCodeWriter_DECSTACK(self),DeeCodeWriter_DoStoreRetPop(self))
+#define DeeCodeWriter_StoreLocPopID(self,id) (DeeCodeWriter_DECSTACK(self),DeeCodeWriter_DoStoreLocPopID(self,id))
+#define DeeCodeWriter_StoreCstPopID(self,id) (DeeCodeWriter_DECSTACK(self),DeeCodeWriter_DoStoreCstPopID(self,id))
 
 //////////////////////////////////////////////////////////////////////////
 // 1. Pop stack(stack_id) from the tack

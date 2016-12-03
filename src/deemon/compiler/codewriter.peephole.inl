@@ -137,11 +137,8 @@ DEE_A_RET_EXCEPT(-1) int DeeCodeWriter_DoPeepholeOptimizationWithProtectedAddrLi
     {
      Dee_int16_t jmp_off;
      Dee_uint8_t *jmp_dst;
-    case OP_JUMP_IF_TT: case OP_JUMP_IF_TT_POP:
-    case OP_JUMP_IF_FF: case OP_JUMP_IF_FF_POP:
-    case OP_JUMP: case OP_SEQ_ITER_WALK:
-    case OP_JUMP_IF_CASE_COMPARE:
-    case OP_JUMP_IF_RCASE_COMPARE:
+    // Opcodes with a jmp argument
+    DEE_OPCODE_CASE_HAS_JMPARG
      RT_DO_READ_BEGIN();
      jmp_off = RT_READ_SARG();
      if (before_opcode == OP_JUMP && jmp_off == sizeof(Dee_int16_t)) {

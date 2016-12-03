@@ -595,9 +595,7 @@ compile_default_vardecl:
         if DEE_UNLIKELY(DeeXAst_Compile(self->ast_vardecl.vd_init,
          DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
         // Store its value in the static variable
-        if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithSizeArg(
-         writer,OP_STORE_CST_POP,init_var->lv_loc_id) != 0) return -1;
-        DeeCodeWriter_DECSTACK(writer);
+        if DEE_UNLIKELY(DeeCodeWriter_StoreCstPopID(writer,init_var->lv_loc_id) != 0) return -1;
         if DEE_UNLIKELY(DeeCodeWriter_AtomicOnceEnd(
          writer,&ao_block,compiler_flags) != 0) return -1;
        }
@@ -637,9 +635,16 @@ compile_default_vardecl:
    // Compile the condition code
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_if.if_cond,
     DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
+#ifdef OP_JUMP_IF_FF
    succ_pos = DeeCodeWriter_ADDR(writer); // setup the jump if the check fails
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithFutureSizeArg(writer,(Dee_uint8_t)(
     self->ast_if.if_succ ? OP_JUMP_IF_FF_POP : OP_JUMP_IF_FF),&succ_jmparg) != 0) return -1;
+#else
+   if (!self->ast_if.if_succ && DeeCodeWriter_Dup(writer) != 0) return -1;
+   succ_pos = DeeCodeWriter_ADDR(writer); // setup the jump if the check fails
+   if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithFutureSizeArg(writer,OP_JUMP_IF_FF_POP,&succ_jmparg) != 0) return -1;
+   if (!self->ast_if.if_succ) DeeCodeWriter_DECSTACK(writer);
+#endif
    if (self->ast_if.if_succ) {
     DeeCodeWriter_DECSTACK(writer); // 'OP_JUMP_IF_FF_POP' popped this one
     // Write the true branch
@@ -940,12 +945,23 @@ unary_operator_ext:
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_operator.op_a,
     DEE_COMPILER_ARGS_EX(compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
    if (ret_used && DEE_UNLIKELY(DeeCodeWriter_UnaryOp(writer,OP_BOOL) != 0)) return -1; // cast lhs to bool
+#if defined(OP_JUMP_IF_FF) && defined(OP_JUMP_IF_TT)
    succ_pos = DeeCodeWriter_ADDR(writer); // Jump over the rhs AST if we know it'll result in false
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithFutureSizeArg(writer,(Dee_uint8_t)(
     self->ast_kind == DEE_XASTKIND_LAND
     ? (ret_used ? OP_JUMP_IF_FF : OP_JUMP_IF_FF_POP) // a && b (skip b if a is false)
     : (ret_used ? OP_JUMP_IF_TT : OP_JUMP_IF_TT_POP) // a || b (skip b if a is true)
     ),&succ_jmparg) != 0) return -1;
+#else
+   if (ret_used && DEE_UNLIKELY(DeeCodeWriter_Dup(writer) != 0)) return -1;
+   succ_pos = DeeCodeWriter_ADDR(writer); // Jump over the rhs AST if we know it'll result in false
+   if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithFutureSizeArg(writer,(Dee_uint8_t)(
+    self->ast_kind == DEE_XASTKIND_LAND
+    ? OP_JUMP_IF_FF_POP // a && b (skip b if a is false)
+    : OP_JUMP_IF_TT_POP // a || b (skip b if a is true)
+    ),&succ_jmparg) != 0) return -1;
+   if (ret_used) DeeCodeWriter_DECSTACK(writer);
+#endif
    if (!ret_used) {
     // 'OP_JUMP_IF_FF_POP' / 'OP_JUMP_IF_TT_POP' popped this one
     DeeCodeWriter_DECSTACK(writer);

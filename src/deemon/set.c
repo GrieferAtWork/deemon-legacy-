@@ -488,9 +488,11 @@ DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(-1) int) _DeeHashSet_TryRehash(
  old_buckets_end = self->hs_valid_buckets_end;
  // Actually start rehashing this shit
  while (1) {
+  DEE_ASSERT(!old_buckets->hsb_entryc || old_buckets->hsb_entryv);
   end = (iter = old_buckets->hsb_entryv)+old_buckets->hsb_entryc;
   old_hash = (Dee_size_t)(old_buckets-self->hs_buckets);
   while (iter != end) {
+   DEE_ASSERT(end != NULL);
    new_hash = iter->sbe_hash % new_bucket_count;
    DEE_ASSERT(old_hash == iter->sbe_hash % self->hs_bucket_count);
    if (new_hash != old_hash) {
@@ -513,6 +515,7 @@ DEE_STATIC_INLINE(DEE_A_RET_NOEXCEPT(-1) int) _DeeHashSet_TryRehash(
     }
     end = old_buckets->hsb_entryv+old_buckets->hsb_entryc;
     iter = old_buckets->hsb_entryv+src_index;
+    if (iter >= end) break;
    }
    ++iter;
   }

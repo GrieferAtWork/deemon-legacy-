@@ -261,8 +261,15 @@ yield_default:
    Dee_size_t check_pos,check_jmparg;
    if DEE_UNLIKELY(DeeXAst_Compile(self->ast_assert.a_check,DEE_COMPILER_ARGS_EX(
     compiler_flags|DEE_COMPILER_FLAG_USED)) != 0) return -1;
+#ifdef OP_JUMP_IF_TT
    check_pos = DeeCodeWriter_ADDR(writer); // setup the jump if the check fails
    if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithFutureSizeArg(writer,OP_JUMP_IF_TT,&check_jmparg) != 0) return -1;
+#else
+   if DEE_UNLIKELY(DeeCodeWriter_Dup(writer) != 0) return -1;
+   check_pos = DeeCodeWriter_ADDR(writer); // setup the jump if the check fails
+   if DEE_UNLIKELY(DeeCodeWriter_WriteOpWithFutureSizeArg(writer,OP_JUMP_IF_TT_POP,&check_jmparg) != 0) return -1;
+   DeeCodeWriter_DECSTACK(writer);
+#endif
    // Assertion failed --> Compile the message (if there is one)
    if (self->ast_assert.a_message) {
     if DEE_UNLIKELY(DeeXAst_Compile(self->ast_assert.a_message,DEE_COMPILER_ARGS_EX(

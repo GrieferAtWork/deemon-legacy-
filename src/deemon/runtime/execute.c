@@ -500,7 +500,10 @@ static int _DeeCode_IsStaticID(DeeCodeObject *code, DeeVarID const_id) {
  while (code_iter < code_end) switch ((op = *code_iter++)) {
   case OP_LOAD_CST_LOCKED:
   case OP_STORE_CST:
-  case OP_STORE_CST_POP: {
+#ifdef OP_STORE_CST_POP
+  case OP_STORE_CST_POP:
+#endif
+  {
    Dee_uint16_t var16 = *(Dee_uint16_t *)code_iter;
    if ((const_id&DEE_UINT32_C(0xFFFF0000))==0 &&
        var16 == (Dee_uint16_t)const_id) return 1;
@@ -514,7 +517,9 @@ static int _DeeCode_IsStaticID(DeeCodeObject *code, DeeVarID const_id) {
    switch (op) {
     case OP_LOAD_CST_LOCKED:
     case OP_STORE_CST:
+#ifdef OP_STORE_CST_POP
     case OP_STORE_CST_POP:
+#endif
      var32 = ((Dee_uint32_t)significant_work << 16) |
               (Dee_uint32_t)*(Dee_uint16_t *)code_iter;
      if (var32 == const_id) return 1;

@@ -824,6 +824,8 @@ do{\
   if (!CopyFileW(_c_new_src,_c_new_dst,fail_if_exists)) {\
    DeeError_SetStringf(&DeeErrorType_SystemError,_c_errorfmt,_c_new_src,_c_new_dst,(int)(fail_if_exists),\
                        DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));\
+   if (_c_new_dst != (Dee_WideChar *)(dst)) free_nn(_c_new_dst);\
+   if (_c_new_src != (Dee_WideChar *)(src)) free_nn(_c_new_src);\
    {__VA_ARGS__;}\
   }\
   if (_c_new_dst != (Dee_WideChar *)(dst)) free_nn(_c_new_dst);\

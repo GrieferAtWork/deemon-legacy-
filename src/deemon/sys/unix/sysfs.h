@@ -522,6 +522,38 @@ do{\
 #define DeeUnixSysFS_Utf8SetTimes DeeUnixSys_Utf8SetTimes
 #endif
 
+#if DEE_HAVE_RENAME
+#define DeeUnixSys_Utf8Move(src,dst,...) \
+do{\
+ if DEE_UNLIKELY(rename(src,dst) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "rename(%q,%q) : %K",src,dst,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif
+
+#if DEE_HAVE_LINK
+#define DeeUnixSys_Utf8Link(link_name,target_name,...) \
+do{\
+ if DEE_UNLIKELY(link(link_name,target_name) == -1) {\
+  DeeError_SetStringf(&DeeErrorType_SystemError,\
+                      "link(%q,%q) : %K",link_name,target_name,\
+                      DeeSystemError_ToString(DeeSystemError_Consume()));\
+  {__VA_ARGS__;}\
+ }\
+}while(0)
+#endif
+
+#ifdef DeeUnixSys_Utf8Move
+#define DeeUnixSysFS_Utf8Move DeeUnixSys_Utf8Move
+#endif
+
+#ifdef DeeUnixSys_Utf8Link
+#define DeeUnixSysFS_Utf8Link DeeUnixSys_Utf8Link
+#endif
+
 #if DEE_HAVE_READLINK
 #define DeeUnixSysFS_Utf8Readlink DeeUnixSys_Utf8Readlink
 #define DeeUnixSys_Utf8Readlink(path,result,...) \
@@ -932,6 +964,12 @@ do{\
 #endif
 #ifdef DeeUnixSysFS_Utf8SetTimes
 #define DeeSysFS_Utf8SetTimes    DeeUnixSysFS_Utf8SetTimes
+#endif
+#ifdef DeeUnixSysFS_Utf8Move
+#define DeeSysFS_Utf8Move        DeeUnixSysFS_Utf8Move
+#endif
+#ifdef DeeUnixSysFS_Utf8Link
+#define DeeSysFS_Utf8Link        DeeUnixSysFS_Utf8Link
 #endif
 #ifdef DeeUnixSysFS_Utf8Readlink
 #define DeeSysFS_Utf8Readlink    DeeUnixSysFS_Utf8Readlink

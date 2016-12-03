@@ -25,6 +25,7 @@
 #include <deemon/deemonrun.h>
 #include <deemon/error.h>
 #include <deemon/optional/atomic_once.h>
+#include <deemon/sys/win32/w32_ntdll.h>
 
 //////////////////////////////////////////////////////////////////////////
 // === Win32 ===
@@ -37,23 +38,6 @@ DEE_COMPILER_MSVC_WARNING_POP
 #include DEE_INCLUDE_MEMORY_API()
 
 DEE_DECL_BEGIN
-
-
-#ifndef STATUS_INFO_LENGTH_MISMATCH
-#define STATUS_INFO_LENGTH_MISMATCH 0xC0000004
-#endif
-#ifndef SystemHandleInformation
-#define SystemHandleInformation ((SYSTEM_INFORMATION_CLASS)16)
-#endif
-typedef NTSTATUS (NTAPI *LPNTQUERYSYSTEMINFORMATION)(
- SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation,
- ULONG SystemInformationLength, PULONG ReturnLength);
-typedef NTSTATUS (NTAPI *LPNTQUERYOBJECT)(
- HANDLE Handle, OBJECT_INFORMATION_CLASS ObjectInformationClass,
- PVOID ObjectInformation, ULONG ObjectInformationLength, PULONG ReturnLength);
-
-static LPNTQUERYSYSTEMINFORMATION pNtQuerySystemInformation = NULL;
-static LPNTQUERYOBJECT pNtQueryObject = NULL;
 
 typedef struct _WIN32_SYSTEM_HANDLE {
  ULONG       ProcessId;
@@ -296,14 +280,11 @@ for (local a,b: util::zip(found2,found)) {
 
 static BYTE DeeWin32_GetEffectiveHandleTypeID(HANDLE handle) {
  BYTE result; WIN32_OBJECT_TYPE_INFORMATION *objectTypeInfo;
- DEE_ATOMIC_ONCE({
-  *(FARPROC *)&pNtQueryObject = GetProcAddress(
-   GetModuleHandleA("ntdll.dll"),"NtQueryObject");
- });
- if (!pNtQueryObject) return DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN;
+ DeeWin32Load_NtQueryObject();
+ if (!DeeWin32_NtQueryObject) return DEE_WIN32_HANDLETYPE_TYPE_UNKNOWN;
  if ((objectTypeInfo = (PWIN32_OBJECT_TYPE_INFORMATION)malloc_nz(0x1000)) != NULL)  {
   // Retrieve information about the type name and match it against a list of known types
-  if (NT_SUCCESS((*pNtQueryObject)(handle,ObjectTypeInformation,objectTypeInfo,0x1000,NULL))) {
+  if (NT_SUCCESS((*DeeWin32_NtQueryObject)(handle,ObjectTypeInformation,objectTypeInfo,0x1000,NULL))) {
    result = DeeWin32_GetHandleTypeFromWindowsName(
     objectTypeInfo->Name.Buffer,
     objectTypeInfo->Name.Length/sizeof(WCHAR));
@@ -389,12 +370,9 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT(NULL) WIN32_SYSTEM_HANDLE_INFORMATION *)
 DeeWin32_CaptureSystemHandleInformation(void) {
  WIN32_SYSTEM_HANDLE_INFORMATION *result,*newresult;
  ULONG size = 0x2000,needed; NTSTATUS error;
- DEE_ATOMIC_ONCE({
-  *(FARPROC *)&pNtQuerySystemInformation = GetProcAddress(
-   GetModuleHandleA("ntdll.dll"),"NtQuerySystemInformation");
- });
- if (!pNtQuerySystemInformation) {
-  DeeError_NotImplemented_str("NtQuerySystemInformation");
+ DeeWin32Load_NtQuerySystemInformation();
+ if (!DeeWin32_NtQuerySystemInformation) {
+  DeeError_SetString(&DeeErrorType_NotImplemented,DeeWin32Name_NtQuerySystemInformation);
   return NULL;
  }
  while ((result = (WIN32_SYSTEM_HANDLE_INFORMATION*)malloc_nz(size)) == NULL) {
@@ -404,8 +382,8 @@ DeeWin32_CaptureSystemHandleInformation(void) {
  }
  // Query the needed buffer size for the objects (system wide)
  while (1) {
-  error = (*pNtQuerySystemInformation)(SystemHandleInformation,result,size,&needed);
-  if (error == STATUS_INFO_LENGTH_MISMATCH) {
+  error = (*DeeWin32_NtQuerySystemInformation)(DeeWin32_SystemHandleInformation,result,size,&needed);
+  if (error == DEE_WIN32_STATUS_INFO_LENGTH_MISMATCH) {
    size *= 2;
    newresult = (WIN32_SYSTEM_HANDLE_INFORMATION*)realloc_nnz(result,size);
    if DEE_UNLIKELY(!newresult) {/*err_r:*/ free_nn(result); return FALSE; }
@@ -413,7 +391,8 @@ DeeWin32_CaptureSystemHandleInformation(void) {
   } else if (error != 0) {
    free_nn(result);
    DeeError_SetStringf(&DeeErrorType_SystemError,
-                       "NtQuerySystemInformation(16,...) : %K",
+                       "%s(16,...) : %K",
+                       DeeWin32Name_NtQuerySystemInformation,
                        DeeSystemError_Win32ToString((DWORD)error));
    return NULL;
   } else break;

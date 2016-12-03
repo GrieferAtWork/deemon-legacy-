@@ -947,8 +947,8 @@ do{\
    usedcwd ? DeeUtf8String_STR(usedcwd) : NULL,
    (LPSTARTUPINFOA)&info,&pinfo);
  }
- Dee_XDECREF(env_strings);
  if (!temp) {
+  DWORD error = GetLastError();
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "CreateProcess%s(" /*%r*/ "NULL,%r,NULL,NULL,%d,%lu,%K,%K) : %K",
                       DeeUtf8String_Check(appname) ? "A" : "W",
@@ -956,9 +956,11 @@ do{\
                       _DeeProcess_Win32FloatToPriority(_self->p_priority),
                       env_strings ? DeeString_Repr(env_strings) : DeeString_NEW("NULL"),
                       usedcwd ? DeeString_Repr(usedcwd) : DeeString_NEW("NULL"),
-                      DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
+                      DeeSystemError_Win32ToString(error));
+  Dee_XDECREF(env_strings);
   goto err_ulock_files;
  }
+ Dee_XDECREF(env_strings);
  _self ->p_handle = detached ? DEE_PROCESS_INVALID_HANDLE : pinfo.hProcess;
  DeeProcess_RELEASE(self);
 

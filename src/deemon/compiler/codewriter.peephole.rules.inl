@@ -76,8 +76,6 @@
 #define OPGROUP_LOAD_ARG      (OPGROUP_LOAD_CST|OP_LOAD_LOC|OP_LOAD_ARG|OP_LOAD_BLTIN)
 #define OPGROUP_STORE         (OP_STORE_RET)
 #define OPGROUP_STORE_ARG     (OP_STORE_LOC|OP_STORE_CST)
-#define OPGROUP_STORE_POP     (OP_STORE_RET_POP)
-#define OPGROUP_STORE_ARG_POP (OP_STORE_LOC_POP|OP_STORE_CST_POP)
 
 //////////////////////////////////////////////////////////////////////////
 // Stack-effect opgroups
@@ -85,9 +83,12 @@
 #define /* +1   */OPGROUP_SE_P1        (OPGROUP_LOAD)
 #define /* +1   */OPGROUP_SE_P1_ARG    (OPGROUP_LOAD_ARG)
 #define /* -1   */OPGROUP_SE_M1       \
- (OP_POP|OPGROUP_STORE_POP|OP_YIELD|OP_PRINT_ONE|OP_PRINT_ONE_SEP\
- |OP_PRINT_ONE_END|OP_PRINT_ALL|OP_PRINT_ALL_SEP|OP_PRINT_ALL_END|OP_PRINT_END_F)
-#define /* -1   */OPGROUP_SE_M1_ARG    (OPGROUP_STORE_ARG_POP)
+ (OP_POP|OP_YIELD|OP_PRINT_ONE|OP_PRINT_ONE_SEP\
+ |OP_PRINT_ONE_END|OP_PRINT_ALL|OP_PRINT_ALL_SEP\
+ |OP_PRINT_ALL_END|OP_PRINT_END_F)
+#define /* -1   */OPGROUP_SE_M1_ARG    ()
+#define /* -1+1 */OPGROUP_SE_M1_P1     (OPGROUP_STORE)
+#define /* -1+1 */OPGROUP_SE_M1_P1_ARG (OPGROUP_STORE_ARG)
 #define /* -1+2 */OPGROUP_SE_M1_P2     (OP_DUP)
 #define /* -1+2 */OPGROUP_SE_M1_P2_ARG ()
 
@@ -113,8 +114,8 @@ RULE({OP_BOOL,OP_NOT,OP_NOT} --> {OP_BOOL});
 // The conditional jump opcodes already perform their own to-bool cast
 // NOTE: The prefixed OP_NOOP are required to keep the jump offsets aligned
 //       Though they are optimized away later, when all other no-ops are removed
-RULE({OP_BOOL,OP_JUMP_IF_TT,$off} --> {OP_NOOP,OP_JUMP_IF_TT,$off});
-RULE({OP_BOOL,OP_JUMP_IF_FF,$off} --> {OP_NOOP,OP_JUMP_IF_FF,$off});
+//RULE({OP_BOOL,OP_JUMP_IF_TT,$off} --> {OP_NOOP,OP_JUMP_IF_TT,$off});
+//RULE({OP_BOOL,OP_JUMP_IF_FF,$off} --> {OP_NOOP,OP_JUMP_IF_FF,$off});
 RULE({OP_BOOL,OP_JUMP_IF_TT_POP,$off} --> {OP_NOOP,OP_JUMP_IF_TT_POP,$off});
 RULE({OP_BOOL,OP_JUMP_IF_FF_POP,$off} --> {OP_NOOP,OP_JUMP_IF_FF_POP,$off});
 
@@ -122,8 +123,8 @@ RULE({OP_BOOL,OP_JUMP_IF_FF_POP,$off} --> {OP_NOOP,OP_JUMP_IF_FF_POP,$off});
 // Invert the condition of the jump opcode (and remove the OP_BOOL)
 // NOTE: The prefixed OP_NOOP are required to keep the jump offsets aligned
 //       Though they are optimized away later, when all other no-ops are removed
-RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_TT,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_FF,$off});
-RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_FF,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_TT,$off});
+//RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_TT,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_FF,$off});
+//RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_FF,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_TT,$off});
 RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_TT_POP,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_FF_POP,$off});
 RULE({OP_BOOL,OP_NOT,OP_JUMP_IF_FF_POP,$off} --> {OP_NOOP,OP_NOOP,OP_JUMP_IF_TT_POP,$off});
 
@@ -141,6 +142,15 @@ DEFINE_LOAD_RULES(OP_LOAD_CST_LOCKED);
 DEFINE_LOAD_RULES(OP_LOAD_BLTIN);
 DEFINE_LOAD_RULES(OP_LOAD_ARG);
 
+//////////////////////////////////////////////////////////////////////////
+// Optimizations for code like:
+// >> local x = 42;
+// >> x = x; // totally unnecessary
+RULE({OP_LOAD_RET,OP_STORE_RET} --> {OP_LOAD_RET});
+RULE({OP_LOAD_LOC,$loc,OP_STORE_LOC,$loc} --> {OP_LOAD_LOC,$loc});
+RULE({OP_LOAD_CST,$loc,OP_STORE_CST,$loc} --> {OP_LOAD_LOC,$loc});
+
+
 RULE({OP_LOAD_THIS,OP_POP} --> {});
 RULE({OP_LOAD_THIS,OP_DUP...,OP_LOAD_THIS} --> {OP_LOAD_THIS,OP_DUP...,OP_DUP});
 RULE({OP_LOAD_RET,OP_POP} --> {});
@@ -156,7 +166,7 @@ RULE({OP_LOAD_RET,OP_DUP...,OP_LOAD_RET} --> {OP_LOAD_RET,OP_DUP...,OP_DUP});
 RULE({OP_DUP,OP_POP} --> {});
 RULE({OP_DUP,OP_ROT_2} --> {OP_DUP});
 RULE({OP_DUP,OPGROUP_SE_M1,OP_POP} --> {OP_NOOP,*,OP_NOOP});
-RULE({OP_DUP,OPGROUP_SE_M1_ARG,$searg1,OP_POP} --> {OP_NOOP,*,$searg1,OP_NOOP});
+//RULE({OP_DUP,OPGROUP_SE_M1_ARG,$searg1,OP_POP} --> {OP_NOOP,*,$searg1,OP_NOOP});
 
 //////////////////////////////////////////////////////////////////////////
 // Optimize away rotations that cancel each other out
@@ -174,12 +184,6 @@ RULE({OP_LROT_4,OP_POP,OP_POP,OP_POP,OP_POP} --> {OP_POP,OP_POP,OP_POP,OP_POP});
 RULE({OP_RROT_4,OP_POP,OP_POP,OP_POP,OP_POP} --> {OP_POP,OP_POP,OP_POP,OP_POP});
 
 //////////////////////////////////////////////////////////////////////////
-// Optimize store + pop --> store_pop
-RULE({OP_STORE_LOC,$locid,OP_POP} --> {OP_STORE_LOC_POP,$locid});
-RULE({OP_STORE_CST,$cstid,OP_POP} --> {OP_STORE_CST_POP,$cstid});
-RULE({OP_STORE_RET,OP_POP} --> {OP_STORE_RET_POP});
-
-//////////////////////////////////////////////////////////////////////////
 // Optimize sequence T1+cast T2 --> sequence T2
 RULE({OP_TUPLE,$size,OP_CAST_TUPLE} --> {OP_TUPLE,$size});
 RULE({OP_TUPLE,$size,OP_CAST_LIST} --> {OP_LIST,$size});
@@ -192,24 +196,24 @@ RULE({OP_SET,$size,OP_CAST_LIST} --> {OP_LIST,$size});
 RULE({OP_SET,$size,OP_CAST_SET} --> {OP_SET,$size});
 
 //////////////////////////////////////////////////////////////////////////
-// Optimize store_pop + load --> store
-RULE({OP_STORE_LOC_POP,$locid,OP_LOAD_LOC,$locid} --> {OP_STORE_LOC,$locid});
-RULE({OP_STORE_CST_POP,$cstid,OPGROUP_LOAD_CST,$cstid} --> {OP_STORE_CST,$cstid});
-RULE({OP_STORE_RET_POP,OP_LOAD_RET} --> {OP_STORE_RET});
+// Optimize store + pop + load --> store
+RULE({OP_STORE_LOC,$locid,OP_POP,OP_LOAD_LOC,$locid} --> {OP_STORE_LOC,$locid});
+RULE({OP_STORE_CST,$cstid,OP_POP,OPGROUP_LOAD_CST,$cstid} --> {OP_STORE_CST,$cstid});
+RULE({OP_STORE_RET,OP_POP,OP_LOAD_RET} --> {OP_STORE_RET});
 
 //////////////////////////////////////////////////////////////////////////
-// Optimize pop_store x + s+1 + load x  --> store x + s+1 + rot 2
-RULE({OP_STORE_LOC_POP,$locid,OPGROUP_SE_P1,OP_LOAD_LOC,$locid} --> {OP_STORE_LOC,$locid,*,OP_ROT_2});
-RULE({OP_STORE_CST_POP,$locid,OPGROUP_SE_P1,OPGROUP_LOAD_CST,$locid} --> {OP_STORE_CST,$locid,*,OP_ROT_2});
-RULE({OP_STORE_RET_POP,OPGROUP_SE_P1,OP_LOAD_RET} --> {OP_STORE_RET,*,OP_ROT_2});
-RULE({OP_STORE_LOC_POP,$locid,OPGROUP_SE_P1_ARG,$searg1,OP_LOAD_LOC,$locid} --> {OP_STORE_LOC,$locid,*,$searg1,OP_ROT_2});
-RULE({OP_STORE_CST_POP,$locid,OPGROUP_SE_P1_ARG,$searg1,OPGROUP_LOAD_CST,$locid} --> {OP_STORE_CST,$locid,*,$searg1,OP_ROT_2});
-RULE({OP_STORE_RET_POP,OPGROUP_SE_P1_ARG,$searg1,OP_LOAD_RET} --> {OP_STORE_RET,*,$searg1,OP_ROT_2});
+// Optimize store x + pop + s+1 + load x  --> store x + s+1 + rot 2
+RULE({OP_STORE_LOC,$locid,OP_POP,OPGROUP_SE_P1,OP_LOAD_LOC,$locid} --> {OP_STORE_LOC,$locid,*,OP_ROT_2});
+RULE({OP_STORE_CST,$locid,OP_POP,OPGROUP_SE_P1,OPGROUP_LOAD_CST,$locid} --> {OP_STORE_CST,$locid,*,OP_ROT_2});
+RULE({OP_STORE_RET,OP_POP,OPGROUP_SE_P1,OP_LOAD_RET} --> {OP_STORE_RET,*,OP_ROT_2});
+RULE({OP_STORE_LOC,$locid,OP_POP,OPGROUP_SE_P1_ARG,$searg1,OP_LOAD_LOC,$locid} --> {OP_STORE_LOC,$locid,*,$searg1,OP_ROT_2});
+RULE({OP_STORE_CST,$locid,OP_POP,OPGROUP_SE_P1_ARG,$searg1,OPGROUP_LOAD_CST,$locid} --> {OP_STORE_CST,$locid,*,$searg1,OP_ROT_2});
+RULE({OP_STORE_RET,OP_POP,OPGROUP_SE_P1_ARG,$searg1,OP_LOAD_RET} --> {OP_STORE_RET,*,$searg1,OP_ROT_2});
 
 
 //////////////////////////////////////////////////////////////////////////
 // Optimize return form a retvar function
-RULE({OP_STORE_RET_POP,OP_RETVAREXIT} --> {OP_RET});
+RULE({OP_STORE_RET,OP_POP,OP_RETVAREXIT} --> {OP_RET});
 
 
 //////////////////////////////////////////////////////////////////////////

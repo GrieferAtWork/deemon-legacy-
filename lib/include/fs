@@ -352,17 +352,17 @@
 //  |                        read all of it will result in all available memory
 //  |                        being consumed before an Error.NoMemory is thrown.
 //  |
-//  +----# [D] "/mount" (entry point to the host filesystem)
+//  +----# [D] "/mnt" (entry point to the host filesystem)
 //  |    |
-//  |    +----# [D|N] "/mount/[DRIVE_LETTER]"
+//  |    +----# [D|N] "/mnt/[DRIVE_LETTER]"
 //  |             - Referrs to the root directory of a given drive.
 //  |             - Note, that paths located beyond (and including) this point
 //  |               are special, in that they can be used to referr to real
 //  |               files required by the host system when passed though deemon.
 //  |               Also note, that changing the cwd to be located past this point
 //  |               will inform the host of that change.
-//  |             - Calling 'fs::ismount("/mount/[DRIVE_LETTER]")' will return true
-//  |             HINT: You can use 'fs::dir("/mount")' to enumerate all available
+//  |             - Calling 'fs::ismount("/mnt/[DRIVE_LETTER]")' will return true
+//  |             HINT: You can use 'fs::dir("/mnt")' to enumerate all available
 //  |                   drives letters, just as returned by 'fs::win32::drives()'.
 //  |
 //  +----# [D] "/net" (entry point to windows' share system)

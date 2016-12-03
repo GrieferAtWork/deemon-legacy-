@@ -379,6 +379,8 @@
     <ClInclude Include="..\src\deemon\sys\emulated\systls.h" />
     <ClInclude Include="..\src\deemon\sys\haiku\sysdynlib.h" />
     <ClInclude Include="..\src\deemon\sys\nothread\systls.h" />
+    <ClInclude Include="..\src\deemon\sys\pthread\highlight_pthread.h" />
+    <ClInclude Include="..\src\deemon\sys\pthread\systhread.h" />
     <ClInclude Include="..\src\deemon\sys\pthread\systls.h" />
     <ClInclude Include="..\src\deemon\sys\stub\sysdynlib.h" />
     <ClInclude Include="..\src\deemon\sys\stub\sysinfo.h" />
@@ -404,6 +406,8 @@
     <ClInclude Include="..\src\deemon\sys\win32\sysinfo.h" />
     <ClInclude Include="..\src\deemon\sys\win32\systhread.h" />
     <ClInclude Include="..\src\deemon\sys\win32\systls.h" />
+    <ClInclude Include="..\src\deemon\sys\win32\w32_handle_name.h" />
+    <ClInclude Include="..\src\deemon\sys\win32\w32_ntdll.h" />
     <ClInclude Include="..\src\deemon\sys\win32\w32_process_handles.h" />
     <ClInclude Include="..\src\deemon\uuid_list.h" />
     <ClInclude Include="..\src\tpp\tpp.h" />

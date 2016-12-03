@@ -185,7 +185,6 @@ DeeCode_AsmRepr(DEE_A_IN_OBJECT(DeeCodeObject) const *self) {
    case OP_CAST_TUPLE       : put("push @tuple pop 1"); break;
    case OP_LOAD_RET         : put("push @return"); break;
    case OP_STORE_RET        : put("store @return"); break;
-   case OP_STORE_RET_POP    : put("pop store @return"); break;
    case OP_UNREACHABLE      : put("UNREACHABLE"); break;
    case OP_LOAD_THIS        : put("push @this"); break;
    case OP_DUP              : put("dup top"); break;
@@ -232,16 +231,12 @@ DeeCode_AsmRepr(DEE_A_IN_OBJECT(DeeCodeObject) const *self) {
    } break;
    case OP_LOAD_ARG         : uarg = RT_READ_ARG(); putf("push @arg %s@%u",_DeeCode_ArgName(self,uarg),(unsigned)uarg); break;
    case OP_STORE_LOC        : uarg = RT_READ_ARG(); putf("store @local %s@%u",_DeeCode_LocalName(self,uarg),(unsigned)uarg); break;
-   case OP_STORE_LOC_POP    : uarg = RT_READ_ARG(); putf("pop store @local %s@%u",_DeeCode_LocalName(self,uarg),(unsigned)uarg); break;
    case OP_STORE_CST        : uarg = RT_READ_ARG(); putf("locked store @const %s@%u",_DeeCode_ConstName(self,uarg),(unsigned)uarg); break;
-   case OP_STORE_CST_POP    : uarg = RT_READ_ARG(); putf("pop store @const %s@%u",_DeeCode_ConstName(self,uarg),(unsigned)uarg); break;
    case OP_DEL_LOCAL        : uarg = RT_READ_ARG(); putf("del @local %s@%u",_DeeCode_LocalName(self,uarg),(unsigned)uarg); break;
    case OP_TUPLE            : uarg = RT_READ_ARG(); putf("push tuple(pop %I16u)",uarg); break;
    case OP_LIST             : uarg = RT_READ_ARG(); putf("push list(pop %I16u)",uarg); break;
    case OP_DICT             : uarg = RT_READ_ARG(); putf("push dict(pop %u)",(unsigned)(uarg*2)); break;
    case OP_JUMP             : arg = RT_READ_SARG(); putf("jmp %.4x",(unsigned)((unsigned)((code-DeeCode_CODE(self))-3)+(arg))); break;
-   case OP_JUMP_IF_TT       : arg = RT_READ_SARG(); putf("if peek 1: jmp %.4x",(unsigned)((unsigned)((code-DeeCode_CODE(self))-3)+(arg))); break;
-   case OP_JUMP_IF_FF       : arg = RT_READ_SARG(); putf("if !peek 1: jmp %.4x",(unsigned)((unsigned)((code-DeeCode_CODE(self))-3)+(arg))); break;
    case OP_JUMP_IF_TT_POP   : arg = RT_READ_SARG(); putf("if pop 1: jmp %.4x",(unsigned)((unsigned)((code-DeeCode_CODE(self))-3)+(arg))); break;
    case OP_JUMP_IF_FF_POP   : arg = RT_READ_SARG(); putf("if !pop 1: jmp %.4x",(unsigned)((unsigned)((code-DeeCode_CODE(self))-3)+(arg))); break;
    case OP_ATTR_GET_C       : uarg = RT_READ_ARG(); putf("push @op __getattr__ pop 1 %r",DeeTuple_GET(((DeeCodeObject *)self)->co_consts,uarg)); break;

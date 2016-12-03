@@ -46,10 +46,27 @@ DeeVFS_GetFunction_v102(DEE_A_IN DEE_TYPES_UINT(DEE_TYPES_SIZEOF_SIZE_T) id) {
  return *(DeeFunPointer *)(((Dee_uintptr_t)&DeeVFSApi_Exports)+id);
 }
 
+DEE_DECL_END
+
+#include <deemon/none.h>
+#include <deemon/sys/systhread.h>
+
+DEE_DECL_BEGIN
+static DeeObject *DEE_CALL test(DeeObject *) {
+ struct DeeSysThread _tid_self; Dee_tid_t a,b;
+ DeeSysThread_GetSelf(&_tid_self);
+ DeeSysThread_GetTID(&_tid_self,&a);
+ DeeSysThread_GetSelfTID(&b);
+ DEE_LDEBUG("a: %lu\n",a);
+ DEE_LDEBUG("b: %lu\n",b);
+
+ DeeReturn_None;
+}
 
 //////////////////////////////////////////////////////////////////////////
 // Module exports
 struct DeeDexExportDef DeeDex_Exports[] = {
+ DeeDex_EXPORT_FUNCTION("test",&test,"() -> none"),
  DeeDex_EXPORT_END
 };
 
