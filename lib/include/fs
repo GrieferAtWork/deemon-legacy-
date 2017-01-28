@@ -1221,7 +1221,11 @@ module fs {
 		this(__pattern) { this.__pattern = __pattern; }
 		operator for() {
 			local __pat = fs::path::tail(this.__pattern);
-			for (local __name: fs::dir(fs::path::head(this.__pattern))) {
+			local path = fs::path::head(this.__pattern);
+#ifdef __WINDOWS__
+			path = path.replace("/","\\");
+#endif
+			for (local __name: fs::dir(path)) {
 				if (__name.wmatch(__pat)) yield __name;
 			}
 		}

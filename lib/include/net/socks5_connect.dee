@@ -21,6 +21,7 @@
 #pragma once
 #include <net/socket>
 #include <net/proxy>
+#include <__builtin_bswap.dee>
 
 #if __API_VERSION__ < 101
 #	error "API Version too old for this header"
@@ -74,11 +75,15 @@ module net::proxy {
 		if (__chosenauth[1] != "\x00") throw "Socks requests passwords... (not implemented)";
 		// Now we can request the actual connection
 		local __req = "\x05\x01\x00";
-		local __destaddr,__destport = socket.resolve(__dest)...;
+		local __dest = sockaddr.resolve(__dest);
+		local __destaddr = __dest.inet_host;
+		local __destport = __dest.inet_port;
 		__req += "\x01";
-		__req += string.from_data((char *)&__destaddr,4);
-		__req += string.from_data((char *)&__destport,2);
-		print "Connecting proxy:",socket.inet_ntoa(__destaddr,__destport);
+		local x = __builtin_bswap32(__destaddr);
+		__req += string.from_data((char *)(&x),4);
+		local x = __builtin_bswap16(__destport);
+		__req += string.from_data((char *)(&x),2);
+		print "Connecting proxy:",sockaddr.inet_ntoa(__destaddr,__destport);
 		__sf.write(__req);
 		
 		local boundaddr;
@@ -98,8 +103,8 @@ module net::proxy {
 			throw GeneralProxyError(_generalerrors[1]);
 		}
 		local boundport = *(uint16_t *)((char *)__sf.readall(2));
-		local proxysockname = socket.inet_ntoa(*(uint32_t *)(char *)boundaddr,boundport);
-		local proxypeername = socket.inet_ntoa(__destaddr,__destport);
+		local proxysockname = sockaddr.inet_ntoa(*(uint32_t *)(char *)boundaddr,boundport);
+		local proxypeername = sockaddr.inet_ntoa(__destaddr,__destport);
 		return pack proxysockname,proxypeername;
 	}
 

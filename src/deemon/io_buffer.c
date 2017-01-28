@@ -243,7 +243,7 @@ startover:
   // We'll have to wrap during the write
   memcpy(self->iob_rpos,p,max_write_before);
   memcpy(self->iob_buf,(void *)((Dee_uintptr_t)p+max_write_before),s-max_write_before);
-  self->iob_rpos = self->iob_buf+(s-max_write_before);
+  self->iob_wpos = self->iob_buf+(s-max_write_before);
  }
 
  ++self->iob_uses;
