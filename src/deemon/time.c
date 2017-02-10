@@ -374,8 +374,8 @@ DEE_A_RET_OBJECT_EXCEPT_REF(struct DeeStringObject) *DeeTime_Format(
          DEE_ASSERT(attribval < 12);
          repr_value = repr_mode == 'S' ? full_month_names[attribval] : abbr_month_names[attribval];
         } else if (attribute_id == DEE_TIMEATTRID_WDAY) {
-         repr_value = repr_mode == 'S' ? full_wday_names[attribval] : abbr_wday_names[attribval];
          DEE_ASSERT(attribval < 7);
+         repr_value = repr_mode == 'S' ? full_wday_names[attribval] : abbr_wday_names[attribval];
         } else {
          DeeError_SetStringf(&DeeErrorType_ValueError,
                              "Cannot use attribute %.*q with 's'/'S' in '%%[%#.*q]'",
