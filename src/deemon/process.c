@@ -1263,25 +1263,26 @@ DEE_STATIC_INLINE(DEE_A_RET_EXCEPT_FAIL(-1,1) int) _DeeProcess_JoinTimedImpl(
  {
 #ifdef DEE_PLATFORM_WINDOWS
   DEE_LVERBOSE1("Joining process (timed: %u): %k\n",msecs,self);
-  DeeProcess_ACQUIRE(self);
+  /* TODO: Processor locking here could only be fixed by an R/W-lock (with this being a read-access). */
+  //DeeProcess_ACQUIRE(self);
   switch (WaitForSingleObject(DeeProcess_HANDLE(self),msecs)) {
    case WAIT_ABANDONED:
    case WAIT_OBJECT_0:
     if (retval && !GetExitCodeProcess(DeeProcess_HANDLE(self),(LPDWORD)retval)) {
-     DeeProcess_RELEASE(self);
+     //DeeProcess_RELEASE(self);
      DeeError_SystemError("GetExitCodeProcess");
      return -1;
     }
     if (!CloseHandle(DeeProcess_HANDLE(self))) SetLastError(0);
     _self->p_handle = NULL;
-    DeeProcess_RELEASE(self);
+    //DeeProcess_RELEASE(self);
     return 0;
    case WAIT_TIMEOUT: 
-    DeeProcess_RELEASE(self);
+    //DeeProcess_RELEASE(self);
     return 1;
    default: break;
   }
-  DeeProcess_RELEASE(self);
+  //DeeProcess_RELEASE(self);
   DeeError_SetStringf(&DeeErrorType_SystemError,
                       "WaitForSingleObject(%k,%u) : %K",self,msecs,
                       DeeSystemError_Win32ToString(DeeSystemError_Win32Consume()));
@@ -1457,6 +1458,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_DelStdin(
  DEE_LVERBOSE2("Deleting process handle : stdin : %k -> NULL\n",self);
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) {
+  DeeProcess_RELEASE(self);
   _deeprocess_error_cant_change_running((DeeProcessObject *)self,"stdin");
   return -1;
  }
@@ -1475,6 +1477,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_DelStdout(
  DEE_LVERBOSE2("Deleting process handle : stdout : %k -> NULL\n",self);
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) {
+  DeeProcess_RELEASE(self);
   _deeprocess_error_cant_change_running((DeeProcessObject *)self,"stdout");
   return -1;
  }
@@ -1493,6 +1496,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_DelStderr(
  DEE_LVERBOSE2("Deleting process handle : stderr : %k -> NULL\n",self);
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) {
+  DeeProcess_RELEASE(self);
   _deeprocess_error_cant_change_running((DeeProcessObject *)self,"stderr");
   return -1;
  }
@@ -1653,6 +1657,7 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_SetEnviron(
 #endif
  DeeProcess_ACQUIRE(self);
  if (DeeProcess_STARTED(self)) {
+  DeeProcess_RELEASE(self);
   DeeError_SetStringf(&DeeErrorType_ValueError,
                       "Can't set environ of %k to %k",
                       self,env);
@@ -1669,7 +1674,6 @@ DEE_A_RET_EXCEPT(-1) int DeeProcess_DelEnviron(
  DEE_A_IN_OBJECT(DeeProcessObject) *self) {
  DeeListObject *old_environ; int result;
  DEE_ASSERT(DeeObject_Check(self) && DeeProcess_Check(self));
- DeeProcess_ACQUIRE(self);
  if (DeeProcess_IS_SELF(self)) {
   if ((old_environ = (DeeListObject *)DeeList_NewEmpty()) == NULL) return -1;
   result = DeeFS_SetListEnv((DeeObject *)old_environ);
