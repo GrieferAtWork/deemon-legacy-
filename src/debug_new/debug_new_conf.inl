@@ -19,6 +19,8 @@
 #ifndef GUARD_DEBUG_NEW_CONF_INL
 #define GUARD_DEBUG_NEW_CONF_INL 1
 
+#define DEBUG_NEW_FASTCFG_DISABLED 1
+
 //////////////////////////////////////////////////////////////////////////
 // Enable, to get all the old (non-conforming) macros
 #ifndef DEBUG_NEW_CONFIG_HAVE_DEPRECATED
