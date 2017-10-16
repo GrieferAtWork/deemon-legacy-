@@ -4054,7 +4054,12 @@ EXTERN_END;
 fast_exec_handler_novar:
    // Align the stack
    required_stack_end = stack+handler->e_stack;
-   DEE_ASSERT(stack_end >= required_stack_end);
+   DEE_ASSERTF(stack_end >= required_stack_end,
+               "%O(%I32d) : %O : +%.4Ix : HERE\n",
+               _DeeStackFrame_File(&frame),
+               _DeeStackFrame_Line(&frame)+1,
+               _DeeStackFrame_Func(&frame),
+               (Dee_size_t)((code-1)-frame.f_code->co_code));
 #ifdef DEE_DEBUG
    if (stack_end != required_stack_end)
     DEE_LVERBOSE1("Aligning stack for exception handler (dropping %Iu slot(s))\n",

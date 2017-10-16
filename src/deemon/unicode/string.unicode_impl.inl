@@ -1832,7 +1832,7 @@ DEE_A_RET_WUNUSED /*noexcept*/Dee_size_t DeeString_F(Count)(
  size = DEE_STRING_SIZE(self),sub_len = DEE_STRING_SIZE(sub);
  if DEE_UNLIKELY(sub_len > size) return 0;
  substr = DEE_STRING_STR(sub);
- send = (sbegin = DEE_STRING_STR(self))+(size-sub_len);
+ send = (sbegin = DEE_STRING_STR(self)+begin)+((end-begin)-sub_len);
  result = 0;
  do if (memcmp(sbegin,substr,sub_len) == 0) ++result;
  while (sbegin++ != send);
